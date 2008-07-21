@@ -1,5 +1,10 @@
-#include <os2.h>
-
+#define APIRET short
+#define APIENTRY _System
+#define CHAR char
+#define VOID void
+#define PVOID void far *
+#define USHORT unsigned short
+#define PSZ char far *
 
 /*
 INT 21 U - OS/2 v1.x FAPI - OS/2 FILE SYSTEM JOIN/SUBST
@@ -24,13 +29,13 @@ Notes:  used by JOIN and SUBST to communicate with the OS/2 file system
         also supported by OS/2 v2.0+ Virtual DOS Machines
 */
 
-APIRET APIENTRY VdmJoinQuery(CHAR Drive, USHORT usBufferSize, PVOID Buffer);
-APIRET APIENTRY VdmJoinSet(CHAR Drive, USHORT usBufferSize, PVOID Buffer);
-APIRET APIENTRY VdmJoinDelete(CHAR Drive);
+APIRET APIENTRY VdmJoinQuery(CHAR cDrive, USHORT usBufferSize, PVOID Buffer);
+APIRET APIENTRY VdmJoinSet(CHAR cDrive, PSZ pszPath);
+APIRET APIENTRY VdmJoinDelete(CHAR cDrive);
 
-APIRET APIENTRY VdmSubstQuery(CHAR Drive, USHORT usBufferSize, PVOID Buffer);
-APIRET APIENTRY VdmSubstSet(CHAR Drive, USHORT usBufferSize, PVOID Buffer);
-APIRET APIENTRY VdmSubstDelete(CHAR Drive);
+APIRET APIENTRY VdmSubstQuery(CHAR cDrive, USHORT usBufferSize, PVOID Buffer);
+APIRET APIENTRY VdmSubstSet(CHAR cDrive, PSZ pszPath);
+APIRET APIENTRY VdmSubstDelete(CHAR cDrive);
 
 /*
 INT 21 U - OS/2 v2.0+ Virtual DOS Machine - ENABLE AUTOMATIC TITLE SWITCH
@@ -91,8 +96,9 @@ Notes:  if CX is not 636Ch on entry, INT 21/AH=6Ch is invoked, because a bug
 SeeAlso: AH=52h
 */
 
-APIRET APIENTRY VdmQueryLastDrive(PCHAR pszTitle);
+APIRET APIENTRY VdmQueryLastDrive(CHAR cDrive);
 
+/*
 --------O-2164--DX0004-----------------------
 INT 21 U - OS/2 v2.1+ Virtual DOS Machine - GET SIZE OF PTDA JFT
         AH = 64h
@@ -507,3 +513,4 @@ Notes:  this function was introduced by LAN Manager but is also supported by
         not documented in the LAN Manager Toolkit
 SeeAlso: AX=5F39h,AX=5F3Bh,INT 2F/AX=118Fh
 */
+
