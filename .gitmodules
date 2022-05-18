@@ -1,6 +1,3 @@
 [submodule "fapi"]
 	path = fapi
 	url = https://github.com/osfree-project/FamilyAPI.git
-[submodule "Win16"]
-	path = Win16
-	url = https://github.com/osfree-project/Win16.git
