@@ -1,0 +1,3 @@
+[submodule "tests"]
+	path = tests
+	url = https://github.com/osfree-project/win16test.git
