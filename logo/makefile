@@ -6,10 +6,10 @@
 
 PROJ        = logo
 TRGT        = $(PROJ).com
-DESC        = Windows Boot Logo screen
 srcfiles    = $(p)logo$(e)
 JWASM       = 1
 COM         = 1
+NOLIBS      = 1
 INSTALL_ADD = 1
 DEST        = os2$(SEP)mdos$(SEP)winos2
 
@@ -24,4 +24,4 @@ install_add: .symbolic
  @$(CP) $(PATH)$(PROJ).com $(PATH)$(PROJ).lgo
  @$(CP) $(PATH)$(PROJ).lgo $(DEST)
 
-$(PATH)$(PROJ).exe: .symbolic
+#$(PATH)$(PROJ).exe: .symbolic
