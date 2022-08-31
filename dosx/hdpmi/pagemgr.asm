@@ -34,7 +34,7 @@
 @seg SEG16
 
 ifndef ?USEINVLPG
-?USEINVLPG = 1 		;use invlpg opcode (80486+)
+?USEINVLPG = 0 		;use invlpg opcode (80486+)
 endif
 
 ;--- PHYSBLK: describes a block of physical memory
@@ -1344,248 +1344,6 @@ error:
 AllocUserAddrSpace endp
 
 
-if ?DPMI10
-
-		@ResetTrace
-
-;--- get page entry attributes to es:edx
-;--- ebx = linear address
-;--- ecx = size in pages
-;--- attributes (WORD):
-;--- bit 0+1: 00=uncommitted, 01=committed, 02=mapped
-;--- bit 3: writable
-;--- bit 4: bit 5+6 valid (accessed+dirty)
-
-_getpageattributes proc public
-		@strout <"#pm, getpageattributes: lin addr %lX - copy %lX attr to %lX:%lX",lf>,ebx, ecx, es, edx
-		mov eax, ebx
-		call _Linear2PT
-		jc exit
-		push byte ptr _FLATSEL_
-		pop ds
-		mov esi, edi
-		mov edi, edx
-		jecxz done
-nextitem:
-		lodsd
-		mov edx, eax
-		mov al, 10h 			;accessed + dirty supplied
-		test dl, PTF_WRITEABLE
-		setnz ah
-		shl ah,3
-		or al, ah
-		and dl, PTF_DIRTY or PTF_ACCESSED or PTF_PRESENT
-		or al, dl
-		test al,PTF_PRESENT
-		jz @F
-		test dh,_XMSFLAG_ or _VCPIFLAG_
-		setz ah
-		add al,ah	;for mapped pages, convert committed (01) to mapped (02)
-		mov ah,0
-@@:
-		stosw
-		loopd nextitem
-done:
-		clc
-exit:
-		ret
-		align 4
-_getpageattributes endp
-
-if 0
-
-		@ResetTrace
-
-;--- test BX:CX region, size SI:DI
-;--- AX=bits whose value will be set (mask), dx=new value of bits
-
-;--- this is for DPMI functions 06xx and 07xx
-
-_setregionattributes proc public
-		pushad
-		push bx
-		push cx
-		pop eax		;start in eax
-		push si
-		push di
-		pop ecx		;size in ECX
-		@strout <"#pm, setregionattributes: addr %lX, size %lX",lf>, eax, ecx
-		add ecx, eax
-		jc exit		;overflow
-		test dh,80h	;80h=1 -> include partial pages
-		jnz @F
-		add eax,1000h-1	;align to next page boundary
-		jmp noal1
-@@:
-		add ecx,1000h-1	;align to next page boundary
-noal1:
-		and ax,0F000h
-		and cx,0F000h
-		sub ecx, eax
-		jbe exit
-		shr ecx, 12		;get no of pages in ecx
-
-		@strout <"#pm, setregionattributes, adjusted: addr %lX, size(pg) %lX",lf>, eax, ecx
-
-		call _Linear2PT	;get PTE address in EDI
-		jc exit
-		push byte ptr _FLATSEL_
-		pop ds
-		mov esi, edi
-		push ecx
-@@:
-		lodsd
-		test al,PTF_PRESENT
-		loopnzd @B
-		pop ecx
-		stc
-		jz exit	;at least one page is not committed
-		mov esi, edi
-		mov bx, [esp+1Ch]
-		xor bx, -1
-		or bh, 0F0h
-		and dh, 0F0h
-@@:
-		lodsd
-		and ax, bx
-		or ax, dx
-		mov [esi-4],eax
-		loopd @B
-exit:
-		popad
-		ret
-		align 4
-_setregionattributes endp
-
-endif
-
-;--- clear tlb for linear address ebx, size ecx pages
-
-updatetlb proc
-if ?USEINVLPG
-		cmp ecx,10	;it's faster to avoid INVLPG for 10+ pages
-		jnc noinvlpg
-		test ss:[fMode2],FM2_NOINVLPG	;option -g or cpu=80386?
-		jnz noinvlpg
-		push ds	
-		push byte ptr _FLATSEL_
-		pop ds
-@@:
-		invlpg ds:[ebx]
-		add ebx, 1000h
-		loopd @B
-		pop ds
-		ret
-noinvlpg:
-endif
-		mov eax, cr3
-		mov cr3, eax
-		ret
-		align 4
-updatetlb endp
-
-;--- int 31h, ax=0507: set page entry attributes
-;--- ebx = linear address
-;--- ecx = size in pages
-;--- es:edx -> table of WORDS with attributes for each page
-;--- all std registers + DS, but not ES may be modified here
-;--- out: NC = ok
-;--- C = failure
-
-		@ResetTrace
-
-_setpageattributes proc public
-		@strout <"#pm, setpageattr: lin addr %lX - copy %lX attr from %lX:%lX",lf>,ebx, ecx, es, edx
-		mov eax, ebx
-		call _Linear2PT	;shouldn't fail since ebx was verified to be valid
-		jc exit
-		push byte ptr _FLATSEL_
-		pop ds
-		mov esi, edx
-		mov ebp, ecx
-nextitem:
-		and ecx, ecx
-		jz done
-		mov ax, es:[esi]
-		inc esi
-		inc esi
-		mov edx,[edi]		;get PTE
-		push ss
-		pop ds
-		mov ah,al
-		and ah,7		   ;001 = committed, 000=uncommitted
-		cmp ah,1			;should page be committed?
-		jnz @F
-		test dl,PTF_PRESENT
-		jnz step1			;jmp if page is already committed
-		push ecx
-		push eax
-		mov eax, edx
-		call getphyspagex	;expects in ECX a hint for XMS block size
-		mov edx, eax
-		pop eax
-		pop ecx
-		jc error		;error, out of physical pages!
-		@strout <"#pm, setpageattr: page %lX [old=%lX] committed [pt=%lX]",lf>,eax, edx, edi
-		or dl, PTF_PRESENT or PTF_USER
-		jmp step1
-@@:
-		cmp ah,0			;should page be uncommitted?
-		jnz nouncommit
-		test dl,PTF_PRESENT
-		jz nouncommit		;jump if it is already uncommitted
-		push eax
-if _LTRACE_
-		mov eax, edi
-		push ecx
-		call PT2Linear
-		pop ecx
-		@strout <"#pm, setpageattr: page %lX, lin addr=%lX uncommitted [pt=%lX]",lf>,edx, eax, edi
-endif
-		mov  eax, edx
-		call freephyspage
-		lea edx, [edi+4]
-		cmp edx, ss:pPoolMax
-		jc @F
-		mov ss:pPoolMax, edx
-@@:
-		mov edx, eax
-		pop eax
-nouncommit:
-step1:
-		and dl, not PTF_WRITEABLE
-		test al,08h
-		jz @F
-		or dl, PTF_WRITEABLE
-@@:
-		test al,10h 			;accessed + dirty bits supplied
-		jz @F
-		and dl, not (PTF_ACCESSED or PTF_DIRTY)
-		and al,PTF_ACCESSED or PTF_DIRTY
-		or dl, al
-@@:
-		push byte ptr _FLATSEL_
-		pop ds
-		mov [edi], edx
-		add edi, 4
-		dec ecx
-		jmp nextitem
-done:
-		mov ecx, ebp
-		call updatetlb
-		clc
-exit:
-		ret
-error:
-		sub ebp,ecx
-		mov ecx,ebp		;return pages changed in ECX
-		stc
-		ret
-		align 4
-
-_setpageattributes endp
-
-endif
 
 ;-------------------------------------------------------
 
@@ -1721,7 +1479,7 @@ nextpage:
 		@strout <"#pm, UncommitRegion: pPoolMax=%lX",lf>,ss:pPoolMax
 		pop ecx
 		mov ebx, edx
-		call updatetlb
+;		call updatetlb
 		pop ebx
 		pop es
 exit:
@@ -1760,7 +1518,7 @@ _MovePTEs proc public uses es esi edi ebx
 
 		pop ecx
 		pop ebx
-		call updatetlb
+;		call updatetlb
 ;		@strout <"#pm, MovePTEs: exit",lf>
 		ret
 		align 4
@@ -2122,12 +1880,7 @@ endif
 		mov es:[(?SYSTEMSPACE+4)*100000h+1000h],ecx
 		inc ecx
 		mov ebx, ?SYSTEMSPACE*100000h
-		call updatetlb
-if 0
-		mov ecx, 1
-		lea ebx, [esi-1000h]
-		call updatetlb
-endif
+;		call updatetlb
 		pop ds
 		popad
 		clc
@@ -2212,13 +1965,6 @@ nextitem:
 		mov es:[ebp], eax
 		and cl, not PTF_PRESENT
 		mov es:[esi], ecx	;save the old PTE in the pool
-if 1
-		push ebx
-		mov ebx, edx
-		mov ecx, 1
-		call updatetlb
-		pop ebx
-endif
 		pop ecx
 		pop edx
 		jmp nextitem

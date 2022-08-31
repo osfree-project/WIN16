@@ -1,7 +1,7 @@
 
 ;--- initialization code
 
-	.486P
+	.386P
 
 	include hdpmi.inc
 	include external.inc
@@ -97,10 +97,6 @@ if ?EXC10FRAME
 	or dword ptr wExcHdlr, -1
 endif
 	@stroutrm <"dpmi version set to 1.0",lf>
-@@:
-	test ah, ENVF2_NOMEM10
-	jz @F
-	call disablemem10
 @@:
 if ?CR0_NE
 	test ah, ENVF2_NOCR0NE
@@ -1171,15 +1167,6 @@ endif
 IsHDPMIDisabled endp
 endif
 
-disablemem10 proc
-	push ds
-	mov ds, wHostSeg32	;GROUP32
-	assume ds:GROUP32
-	mov dpmi5functions, 4	;allow int 31h, ax=0500-503 only
-	pop ds
-	assume ds:GROUP16
-	retn
-disablemem10 endp
 
 ;--- get end of resident part (paragraph) in DX
 

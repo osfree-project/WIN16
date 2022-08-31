@@ -69,8 +69,8 @@ if ?WDEB386
 else                        
 ?USEDEBUGOUTPUT equ 0
 endif                        
-?DPMI10			equ 1	;std=1, support some DPMI 1.0 functions (0504-0507)
-?DPMI10EX		equ 1	;std=1, support more DPMI 1.0 functions (0508-050B)
+?DPMI10			equ 0	;std=1, support some DPMI 1.0 functions (0504-0507)
+?DPMI10EX		equ 0	;std=1, support more DPMI 1.0 functions (0508-050B)
 ?DPMI10EXX		equ 1	;std=1, support even more DPMI 1.0 functions (0210-0213)
 ?CATCHLDTACCESS	equ 0	;std=0, 1=catch LDT write access if LDT is r/o
 ?LDTROSEL		equ 0	;std=0, 1=LDT alias selector is r/o

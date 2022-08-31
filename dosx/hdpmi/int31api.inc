@@ -85,18 +85,6 @@ endif
 @proto allocmem				;0501
 @proto freemem				;0502
 @proto resizemem			;0503
-if ?DPMI10
-@proto allocmemx       		;0504
-@proto resizememx      		;0505
-@proto getpageattr	   		;0506
-@proto setpageattr     		;0507
-if ?DPMI10EX
-@proto mapphysx        		;0508
-@proto mapdos          		;0509
-@proto getmemsize      		;050A
-@proto getmeminfox     		;050B
-endif
-endif
 
 ;--- ah=08
 
@@ -121,9 +109,4 @@ endif
 @proto _AllocMem		
 ;@proto _AllocMemEx		
 
-if ?DPMI10
-_TEXT32 segment dword use32 public 'CODE'
-externdef   dpmi5functions:byte
-_TEXT32	ends
-endif
 
