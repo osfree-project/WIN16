@@ -260,9 +260,6 @@ func00:
 ;--- interrupt (IDT) functions
 
 func02:
-if ?ENHANCED
-	and al,7Fh
-endif
 	push offset jmpvector2
 	push byte ptr _FLATSEL_
 	pop ds

@@ -718,24 +718,6 @@ endif
 _RETF_	equ ($ - offset spectab) / 2 + 200h
 		@defx _srtask, _SRTSK_		;save/restore task state (call)
 		@defx _I2f168A, _I2F168A_		;DPMI extensions entry (retf)
-if ?SUPI2F16840001
-		@defx _vxd_0001, _I2F1684_0001_
-endif
-if ?SUPI2F16840009
-		@defx _vxd_0009, _I2F1684_0009_
-endif
-if ?SUPI2F16840017
-		@defx _vxd_0017, _I2F1684_0017_
-endif
-if ?SUPI2F16840021
-		@defx _vxd_0021, _I2F1684_0021_
-endif
-if ?SUPI2F1684002A
-		@defx _vxd_002A, _I2F1684_002A_
-endif
-if ?SUPI2F16840442
-		@defx _vxd_0442, _I2F1684_0442_
-endif
 ;--- here start PMBREAKs with no frame
 _JMPF_	equ ($ - offset spectab) / 2 + 200h
 		@defx rpmstacki,_RTINT_		;switch from LPMS to PMS after IRQ

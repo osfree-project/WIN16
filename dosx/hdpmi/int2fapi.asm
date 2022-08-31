@@ -11,11 +11,6 @@
 
 ?IDLEFILTER    = 0  ;std=0, 1=dont route all int 2Fh, ax=1689 to real-mode 
 ?SUPI2F1683    = 1  ;std=1, 1=support int 2F,ax=1683 (get vm id)
-if ?ENHANCED
-?SUPI2F1684    = 1  ;1=support int 2F,ax=1684 (vxds)
-else
-?SUPI2F1684    = 0  ;0=dont support int 2F,ax=1684 (vxds)
-endif
 ?SUPI2F168A    = 1  ;std=1, support int 2F,ax=168A
 ?SUPI2F168A100 = 1  ;std=1, int 2f,ax=168A,bx=100 ("Get LDT Selector")
 ?SUPI2F4300    = 1	;std=1, int 2f,ax=4300: don't route to real-mode
@@ -100,17 +95,6 @@ if ?SUPI2F1683
 @@:
 endif
 
-if ?SUPI2F1684
-        cmp al,84h            ;1684?
-        jnz @F
-        call checkvxd
-        push eax
-        lahf
-        mov byte ptr [esp+4].IRET32.rFL,ah
-        pop eax
-        iretd
-@@:
-endif
 
 if ?IDLEFILTER
         cmp al,89h            ;1689 - VM idle?

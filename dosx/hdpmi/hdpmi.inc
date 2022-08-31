@@ -19,15 +19,9 @@ _TGATE_ = _TGATE16_
 ifndef ?ENHANCED
 ?ENHANCED		equ 0	;std=0, 1=simulate Win386 (enhanced mode)
 endif
-if ?ENHANCED
-?SUPI2F1600		equ 1	;int 2F,ax=1600 support (win enh mode) - real mode
-?SUPI2F160A		equ 1	;int 2F,ax=160A support (get version) - real mode
-?WINMODE		equ 3	;3=enhanced mode (Pharlab TNT has problems with this)
-else
 ?SUPI2F1600		equ 0
 ?SUPI2F160A		equ 1	;used by win.com to detect if windows is running
 ?WINMODE		equ 2	;2=standard mode
-endif
 if ?SUPI2F1600
 ifndef ?2F1600VER
 ?2F1600VER		equ 0A03h
@@ -124,22 +118,6 @@ ifndef ?MPICBASE
 endif
 ifndef ?SPICBASE                        
 ?SPICBASE	= 70h   	;std 70: slave PIC base
-endif
-
-if ?ENHANCED
-?SUPI2F16840001	equ 1	;std=1, support int 2f,ax=1684,bx=1 (vmm)
-?SUPI2F16840009	equ 1	;std=1, support int 2f,ax=1684,bx=9 (reboot)
-?SUPI2F16840017	equ 1	;std=1, support int 2f,ax=1684,bx=17 (shell)
-?SUPI2F16840021	equ 1	;std=1, support int 2f,ax=1684,bx=21 (pagefile)
-?SUPI2F1684002A	equ 0	;std=0, support int 2f,ax=1684,bx=2A (vwin32)
-?SUPI2F16840442	equ 1	;std=1, support int 2f,ax=1684,bx=442 (vtdapi)
-else
-?SUPI2F16840001	equ 0	;std=0, support int 2f,ax=1684,bx=17 (vmm)
-?SUPI2F16840009	equ 0	;std=0, support int 2f,ax=1684,bx=9 (reboot)
-?SUPI2F16840017	equ 0	;std=0, support int 2f,ax=1684,bx=17 (shell)
-?SUPI2F16840021	equ 0	;std=0, support int 2f,ax=1684,bx=21 (pagefile)
-?SUPI2F1684002A	equ 0	;std=0, support int 2f,ax=1684,bx=2A (vwin32)
-?SUPI2F16840442	equ 0	;std=0, support int 2f,ax=1684,bx=442 (vtdapi)
 endif
 
 ?GPBIT			equ 04h	;set USER (04) (if ?GUARDPAGE0 = 1)
