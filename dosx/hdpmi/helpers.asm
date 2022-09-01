@@ -14,35 +14,6 @@
 
 _TEXT32 segment
 
-if 0
-
-copy_far32_2_tlbxx	;copy xx bytes src FAR32   dst tlb:xx
-copy_tlbxx_2_esdi	;copy xx bytes src tlb:yy  dst es:di
-
-copy_tlbdta_2_dta	;copy xx bytes src tlbdta  dst dta
-copy_dta_2_tlbdta	;copy xx bytes src dta     dst tlbdta
-
-copy_dsdx_2_tlb 	;copy cx bytes src ds:dx   dst tlb:0,v86-ds=TLB
-copy_tlb_2_dsdx 	;copy cx bytes src tlb:0   dst ds:dx
-copy_esdi_2_tlb 	;copy cx bytes src es:di   dst tlb:0,v86-es=TLB
-copy_tlb_2_esdi 	;copy cx bytes src tlb:0   dst es:di
-
-copy_far32_2_flat	;copy cx bytes src FAR32   dst SEGM
-copy_flat_2_far32	;copy cx bytes src SEGM    dst FAR32
-
-copyz_far32_2_tlbxx	;copy asciiz   src FAR32   dst tlb:xx
-copyz_tlbxx_2_far32	;copy asciiz   src tlb:xx  dst FAR32
-
-copyz_dsdx_2_tlb	;copy asciiz   src ds:dx   dst tlb:0,v86-ds=TLB,dx=0
-copyz_dssi_2_tlb	;copy asciiz   src ds:si   dst tlb:0,v86-ds=TLB,si=0
-copyz_tlb_2_dssi	;copy asciiz   src tlb:0   dst ds:si
-copy$_dsdx_2_tlb	;copy dosstr   src ds:dx   dst tlb:0
-
-getlinaddr			;get linear address in eax from selector at [esp+4]
-getpspsel			;
-setpspsel			;save selector in bx,segment in dx in rm selector table
-
-endif
 
 _LTRACE_ = 0
 

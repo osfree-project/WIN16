@@ -8,6 +8,8 @@
 		include external.inc
         include debugsys.inc
 
+		.286
+
 		option proc:private
 
 @seg	SEG16
@@ -77,7 +79,9 @@ if ?MONOOUT
         mov		bh,80
         mov		bl,0
 else
-		movzx 	bx,byte ptr ds:[BIOSPAGE]
+		xor	bx,bx
+		mov	bl, byte ptr ds:[BIOSPAGE]	
+;		movzx 	bx,byte ptr ds:[BIOSPAGE]
 		add 	bx,bx
 		mov 	ds:[BX+BIOSCSR],ax 	;set cursor pos
 		mov 	bh,ds:[BIOSCOLS]
@@ -118,18 +122,24 @@ if ?MONOOUT
 else
 		mov 	ch,ds:[BIOSROWS]		;rows-1
 		mov 	cl,ds:[BIOSCOLS]		;cols
-		movzx 	bx,byte ptr ds:[BIOSPAGE]
+		xor	bx,bx
+;		movzx 	bx,byte ptr ds:[BIOSPAGE]
+		mov 	bl,byte ptr ds:[BIOSPAGE]
 		add 	bx,bx
 		mov 	bx,ds:[BX+BIOSCSR]		;cursor pos (row in BH)
 endif        
 		mov 	byte ptr rows,ch
 		xchg	bl,bh
-		movzx 	ax,bl
+		xor	ax,ax
+;		movzx 	ax,bl
+		mov 	al,bl
 		mov 	ch,00
 		mov 	cols,cx
 		mul 	cl
 		add 	ax,ax
-		movzx 	bx,bh
+;		movzx 	bx,bh
+		mov	bl,bh
+		mov	bh, 0
 		add 	bx,bx
 		add 	bx,ax
 if ?MONOOUT

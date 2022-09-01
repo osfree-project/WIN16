@@ -16,9 +16,6 @@ _TGATE_ = _TGATE16_
 ?386SWAT		equ 0	;std=0, 1=support 386SWAT
 ?KDSUPP			equ ?WDEB386+?386SWAT
 ?WINDBG			equ 0	;std=0, 1=support Win386 pm int 22h debug API
-ifndef ?ENHANCED
-?ENHANCED		equ 0	;std=0, 1=simulate Win386 (enhanced mode)
-endif
 ?SUPI2F1600		equ 0
 ?SUPI2F160A		equ 1	;used by win.com to detect if windows is running
 ?WINMODE		equ 2	;2=standard mode

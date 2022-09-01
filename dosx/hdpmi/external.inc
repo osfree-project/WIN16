@@ -199,12 +199,13 @@ externdef   _RETCB_:abs
 externdef   _RMSWT_:abs
 externdef   _SRTSK_:abs
 externdef   _I2F168A_:abs
-externdef   _I2F1684_0001_:abs
-externdef   _I2F1684_0009_:abs
-externdef   _I2F1684_0017_:abs
-externdef   _I2F1684_0021_:abs
-externdef   _I2F1684_002A_:abs
-externdef   _I2F1684_0442_:abs
+;externdef   _I2F1684_0001_:abs
+;externdef   _I2F1684_0009_:abs
+;externdef   _I2F1684_0017_:abs
+;externdef   _I2F1684_0021_:abs
+;externdef   _I2F1684_002A_:abs
+;externdef   _I2F1684_0442_:abs
+
 ;externdef   SIZESTDRMCB:abs
 ;externdef	RMCBMOUSE:abs
 
