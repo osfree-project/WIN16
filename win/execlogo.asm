@@ -85,8 +85,17 @@ main:
 	pop	es
 	lea	dx, szKernel
 	lea	bx, exeparams
+	mov	[seg1s], cs
+	mov	[seg2s], cs
+	mov	[seg3s], cs
+	mov	[tmpSS], ss
+	mov     [tmpSP], sp
 	mov	ax, 4b00h		; Execute program
 	int	21h
+	mov	ss, [tmpSS]
+	mov     sp, [tmpSP]
+	push	cs
+	pop	ds
 	jc	ExecErr
 
 ; exit from windows kernel
@@ -129,16 +138,12 @@ CallLogo:
 	push	bx
 
 	push	ds			; LOGO code segment
-	mov	ax, dx
-	push	ax			; Show logo entry
+	push	dx			; Show logo entry
 	retf				; Simulate far jump to LogoStart:0004h
 
 ; Return from LOGO
 LogoRet:
 	pop	ds			; Restore our data segment (stored in ShowLogo)
-
-; free unneeded memory (part of LOGO code/data) pointed by AX
-
 	retn
 
 
@@ -150,6 +155,9 @@ seg1s	dw	?
 seg2s	dw	?
 	dw	6Ch
 seg3s	dw	?
+
+tmpSS	dw	?
+tmpSP	dw	?
 
 PanicMsg:
 	db	'Panic! Unrecoverable error!$'
