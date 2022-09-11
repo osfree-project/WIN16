@@ -1,5 +1,5 @@
-Windows 1.01 LGO format
-=======================
+Windows 1.01-3.11 LGO format
+============================
 
 LGO is a LOGO file format which executed during boot of Windows and executed by WIN.COM.
 LGO is a raw binary file, attached to WIN.COM. WIN.COM adjust CS for LGO and pass control

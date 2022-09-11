@@ -1,7 +1,7 @@
 #
 # A Makefile for WIN.COM
 # (c) osFree project,
-# author, date
+# Yuri Prokuskev, 11.09.2022
 #
 
 PROJ       = win
