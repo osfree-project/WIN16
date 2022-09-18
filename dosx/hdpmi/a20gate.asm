@@ -6,6 +6,8 @@
 	include hdpmi.inc
 	include external.inc
 
+	.286
+
 	option proc:private
 
 ?USEGLOBAL		equ 0	;1=use xms A20 "global" functions

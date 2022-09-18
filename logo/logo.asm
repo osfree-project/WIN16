@@ -30,7 +30,7 @@ Init:			push	ds
 			pop	ds
 			@GetMode
 		        mov     [CurrentVideoMode],al
-			@SetMode 2
+			@SetMode 3
 			lea	dx, Hello
 			mov	ah,09H
 			int	21H
