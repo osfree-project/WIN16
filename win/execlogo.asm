@@ -1,6 +1,15 @@
+;/*!
+;   @file
 ;
-; This is Windows loader
+;   @brief Windows loader
 ;
+;   (c) osFree Project 2002-2022, <http://www.osFree.org>
+;   for licence see licence.txt in root directory, or project website
+;
+;   @author Yuri Prokushev (yuri.prokushev@gmail.com)
+;
+;*/
+
 .8086
 
 WINVER		equ	101		; Windows 1.01
@@ -253,7 +262,7 @@ Die:
 stackend:
 	db	200h dup (0)
 stackstart:
-; LOGO wil be attached here. Because it must start on para start it must be aligned to 16 bytes
+; LOGO will be attached here. Because it must start on para start it must be aligned to 16 bytes
 	align 16
 LogoStart:
 code	ends
