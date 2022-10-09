@@ -12,6 +12,10 @@
 
 .8086
 
+		; MacroLib
+		include bios.inc
+		include dos.inc
+
 WINVER		equ	101		; Windows 1.01
 ;WINVER		equ	102		; Windows 1.02
 ;WINVER		equ	103		; Windows 1.03
@@ -67,40 +71,30 @@ main:
 
 	add	ax, LogoStart        	; End of our code (aligned to 16)
 	mov	cl, 4
-	shr	ax, cl
-	mov	bx, ax			; number of used para
+	shr	ax, cl			; number of used para
 	push	cs
 	pop	es
-	mov	ah, 4Ah
-	int	21h
+	@ModBlok ax			; Modify memory block
 
 ; check memory for Windows Kernel
-	mov	ah, 48h			; Allocate memory
-	mov	bx, 0ffffh		; Impossible value of memory
-	int	21h
+	@GetBlok 0FFFFH			; Allocate impossible value of memory
 	jnc	panic			; Something wrong, it is not possible to have so many memory
 	cmp	bx, MIN_CONV_MEM	; kb in para
 	jb	NoMem
 
 ; search KERNEL.EXE
-	mov	ah, 4eh			; Find first file entry
-	lea	dx, szKernel		; Filename
-	xor	cx, cx
-	int	21h
+	@GetFirst szKernel		; Find first file entry
 	jc	NoKernel
 
 ; load and execute KERNEL.EXE
 	push	ds
 	pop	es
-	lea	dx, szKernel
-	lea	bx, exeparams
 	mov	[seg1s], cs
 	mov	[seg2s], cs
 	mov	[seg3s], cs
 	mov	[tmpSS], ss
 	mov     [tmpSP], sp
-	mov	ax, 4b00h		; Execute program
-	int	21h
+	@Exec	szKernel, exeparams		; Execute program
 	mov	ss, [tmpSS]
 	mov     sp, [tmpSP]
 	push	cs
@@ -109,8 +103,7 @@ main:
 
 ; exit from windows kernel
 	call	HideLogo
-	mov	ax, 4c00h			; die
-	int	21h
+	@Exit	0			; die
 
 ; Call HideLogo
 HideLogo:
@@ -247,16 +240,13 @@ Die:
 	push	dx
 	call	HideLogo
 
-	mov	ax, 0003h
-	int	10h		; Switch to video mode 3
+	@SetMode		; Switch to video mode 3
 
 	pop	dx
 
-	mov	ah, 09h
-	int	21h		; Print message
+	@DispStr dx		; Print message
 
-	mov	ax, 4c00h			; die
-	int	21h
+	@Exit	0		; die
 
 ; Stack
 stackend:

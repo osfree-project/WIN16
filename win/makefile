@@ -12,7 +12,8 @@ JWASM      = 1
 COM        = 1
 NOLIBS     = 1
 DEST       = os2$(SEP)mdos$(SEP)winos2
+ADD_ASMOPT = -I=$(MYDIR)..$(SEP)..$(SEP)macrolib
 
 !include $(%ROOT)/mk/appsdos.mk
 
-$(PATH)$(PROJ).exe: .symbolic
+#$(PATH)$(PROJ).exe: .symbolic
