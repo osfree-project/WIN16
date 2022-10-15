@@ -33,6 +33,7 @@
 
 #include <i86.h>
 #include <win16.h>
+#include <win_private.h>
 
 //#include "windef.h"
 //#include "winbase.h"
@@ -57,18 +58,6 @@ void far * memset (void far *start, int c, int len);
 #define ATOMTOHANDLE(atom)        ((HANDLE)(atom) << 2)
 #define HANDLETOATOM(handle)      ((ATOM)(0xc000 | ((handle) >> 2)))
 
-/* this structure is always located at offset 0 of the DGROUP segment */
-typedef struct
-{
-    WORD null;        /* Always 0 */
-    WORD old_sp;      /* Stack pointer; used by SwitchTaskTo() */
-    WORD old_ss;
-    WORD heap;        /* Pointer to the local heap information (if any) */
-    WORD atomtable;   /* Pointer to the local atom table (if any) */
-    WORD stacktop;    /* Top of the stack */
-    WORD stackmin;    /* Lowest stack address used so far */
-    WORD stackbottom; /* Bottom of the stack */
-} INSTANCEDATA;
 
 typedef struct
 {

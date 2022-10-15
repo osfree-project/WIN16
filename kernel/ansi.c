@@ -21,6 +21,8 @@
 #include <i86.h>
 #include <win16.h>
 
+#include <win_private.h>
+
 int tolower (int c);
 int toupper (int c);
 

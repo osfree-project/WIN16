@@ -471,6 +471,8 @@ CCONST ends
 
 _TEXT segment
 
+externdef pascal kernelmain:far
+
 ;*** if the loader is loaded as overlay (by DPMIST32.BIN)
 ;*** DS:DX will point to full path of DPMILDXX.EXE
 ;*** and DS:BX will have path of program to load
@@ -713,8 +715,11 @@ main_1:
 endif
 	mov szPath,0
 if ?KERNEL16
-	call InitKernel	   ;init MD for KERNEL
+;moved to kernelmain
+;	call InitKernel	   ;init MD for KERNEL
 endif
+	call kernelmain		; C-part initialization
+
 	call GetPgmParms	   ;program name -> szPgmName, exec parm init
 	jc main_err3	   ;---> error: no program name given
 	call setvec21	   ;now set int 21h vector

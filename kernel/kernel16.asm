@@ -4,6 +4,10 @@
 ;--- since the latter supports loading of 16bit dlls
 ;--- best viewed with TABSIZE 4
 
+	; MacroLib
+	include dos.inc
+	include dpmi.inc
+
 if ?REAL
 		.8086
 else
@@ -61,7 +65,6 @@ _DATA segment word public 'DATA'
 _DATA ends
 
 	include ascii.inc
-	include dpmi.inc
 	include fixups.inc
 	include dpmildr.inc
 	include kernel16.inc
@@ -150,16 +153,14 @@ FatalAppExit endp
 FatalExit proc far pascal
 	mov ds,cs:[wLdrDS]
 	@strout_err <lf,"Fatal exit from application",lf>
-	mov ax,4C00h + RC_FATAL
-	int 21h
+	@Exit RC_FATAL
 FatalExit endp
 
 GetVersion proc far pascal
-	mov ah,30h
-	int 21h
+	@GetVer
 	mov dx,ax
 	xchg dh,dl
-	mov ax,0A03h
+	mov ax,0A03h		; Windows 3.10
 	ret
 GetVersion endp
 
@@ -858,8 +859,7 @@ if ?32BIT
 	movzx ebx,bx
 	movzx edx,dx
 endif
-	mov ax,4B00h
-	int 21h
+	@Exec
 	mov ds,cs:[wLdrDS]
 	mov [fLoadMod],0
 	ret
@@ -873,8 +873,7 @@ if ?32BIT
 	movzx edx, dx
 	movzx ebx, bx
 endif
-	mov ax,4B00h
-	int 21h
+	@Exec
 	ret
 LoadLibrary endp
 
@@ -1024,8 +1023,9 @@ endif
   endif
 	xchg bx,ax
 endif
-	mov ah,48h				;alloc with DOS call, so we need no
-	int 21h 				;handle management (ebx paras)
+	
+	@GetBlok				;alloc with DOS call, so we need no
+						;handle management (ebx paras)
 	jc error
 allocok:
 	mov cx,[parm2]
@@ -1199,9 +1199,7 @@ endif
 @@:
 endif
 	push es
-	mov es,bx
-	mov ah,49h
-	int 21h
+	@FreeBlok bx
 	pop ax
 if ?REAL
 			; no access check
@@ -1497,8 +1495,7 @@ endif
 	xchg bx,ax
 endif
 	push es
-	mov ah,4Ah
-	int 21h
+	@ModBlok
 	pop ax
 	jnc exit
 
@@ -1618,8 +1615,7 @@ if ?32BIT eq 0
 _lclose proc far pascal
 	@loadbx
 	@loadparm 0,bx
-	mov ah,3Eh
-	int 21h
+	@ClosFil
 	jnc @F
 	mov ax,-1
 @@:
@@ -1633,8 +1629,7 @@ _lread proc far pascal
 	@loadparm 2,dx
 	@loadparm 4,ds
 	@loadparm 6,bx
-	mov ah,3Fh
-	int 21h
+	@Read
 	jnc @F
 	mov ax,-1
 @@:
@@ -1649,8 +1644,7 @@ _lwrite proc far pascal
 	@loadparm 2,dx
 	@loadparm 4,ds
 	@loadparm 6,bx
-	mov ah,40h
-	int 21h
+	@Write
 	jnc @F
 	mov ax,-1
 @@:
@@ -1816,7 +1810,7 @@ endif
 SIZESEGS equ ($ - segments) / 4
 
 
-InitKernel proc public
+InitKernel_ proc public
 	@push_a
 	mov KernelNE.ne_cseg, 1
 	mov KernelNE.ne_segtab, KernelSeg -  KernelNE
@@ -1897,7 +1891,7 @@ endif
 exit:
 	@pop_a
 	ret
-InitKernel endp
+InitKernel_ endp
 
 _ITEXT ends
 
