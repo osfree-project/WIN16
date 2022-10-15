@@ -35,8 +35,8 @@ endif
 if ?32BIT                        
 ?DOS4G			= 1		;1, 1=support DOS4G                        
 ?DOS4GMEM		= 0		;0, 1=support DOS4G data segment in GS
-?LOCALHEAP	 	= 0		;0, 1=implement local heap as in windows
-_PROFSTRING_	= 0		;0, 1=support Get-/WritePrivateProfileString
+?LOCALHEAP	 	= 1		;0, 1=implement local heap as in windows
+_PROFSTRING_	= 1		;0, 1=support Get-/WritePrivateProfileString
 else
 ?DOS4G			= 0
 ?LOCALHEAP	 	= 1		;1, 1=implement local heap as in windows

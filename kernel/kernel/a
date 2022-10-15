@@ -1,0 +1,56 @@
+
+C:\yuri\osfree\DOS\WIN16\kernel\kernel>set root=..\..\..\.. 
+
+C:\yuri\osfree\DOS\WIN16\kernel\kernel>set path=..\..\..\..\conf\scripts;C:\Program Files\Far Manager\;C:\Program Files\Broadcom\Broadcom 802.11;C:\Program Files (x86)\Intel\iCLS Client\;C:\Program Files\Intel\iCLS Client\;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Program Files\Hewlett-Packard\SimplePass\;C:\Program Files\Intel\Intel(R) Management Engine Components\DAL;C:\Program Files\Intel\Intel(R) Management Engine Components\IPT;C:\Program Files (x86)\Intel\Intel(R) Management Engine Components\DAL;C:\Program Files (x86)\Intel\Intel(R) Management Engine Components\IPT;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files (x86)\QuickTime\QTSystem\;C:\Program Files\Git\cmd;C:\Program Files\TortoiseGit\bin;C:\FPC\3.2.2\bin\i386-Win32;C:\REXX;C:\Program Files\dotnet\;C:\Program Files\TortoiseSVN\bin;C:\Users\Дарья\.dotnet\tools 
+
+C:\yuri\osfree\DOS\WIN16\kernel\kernel>call build          
+CD       DOS\WIN16\kernel\kernel\ 
+CC       atom.obj 
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(94): Warning! W131: No prototype found for function 'MapSL'
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(94): Warning! W131: No prototype found for function 'MAKESEGPTR'
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(94): Error! E1011: Symbol 'CURRENT_DS' has not been declared
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(94): Warning! W102: Type mismatch (warning)
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(94): Note! N2003: source conversion type is 'int '
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(94): Note! N2004: target conversion type is 'INSTANCEDATA *'
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(103): Warning! W102: Type mismatch (warning)
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(103): Note! N2003: source conversion type is 'int '
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(103): Note! N2004: target conversion type is 'INSTANCEDATA *'
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(120): Warning! W131: No prototype found for function 'TRACE'
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(122): Warning! W131: No prototype found for function 'RtlUpperChar'
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(144): Error! E1011: Symbol 'MAXINTATOM' has not been declared
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(146): Warning! W131: No prototype found for function 'SetLastError'
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(146): Error! E1011: Symbol 'ERROR_INVALID_PARAMETER' has not been declared
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(159): Error! E1009: Expecting ',' but found 'handle'
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(161): Error! E1011: Symbol 'CURRENT_DS' has not been declared
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(161): Error! E1011: Symbol 'handle' has not been declared
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(161): Warning! W102: Type mismatch (warning)
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(161): Note! N2003: source conversion type is 'int '
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(161): Note! N2004: target conversion type is 'ATOMENTRY []'
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(169): Error! E1062: Inconsistent return type for function 'InitAtomTable'
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(169): Note! N2003: source conversion type is 'unsigned short '
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(169): Note! N2004: target conversion type is 'int '
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(169): Note! N2002: 'InitAtomTable' defined in: c:\watcom\h\win\win16.h(832)
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(169): Error! E1071: Type of parameter 1 does not agree with previous definition
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(169): Note! N2003: source conversion type is 'unsigned short '
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(169): Note! N2004: target conversion type is 'int '
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(171): Error! E1011: Symbol 'HANDLE16' has not been declared
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(171): Error! E1009: Expecting ';' but found 'handle'
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(172): Error! E1058: Cannot use typedef 'ATOMTABLE' as a variable
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(172): Error! E1011: Symbol 'table' has not been declared
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(172): Warning! W111: Meaningless use of an expression
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(177): Error! E1011: Symbol 'handle' has not been declared
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(177): Warning! W131: No prototype found for function 'FIELD_OFFSET'
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(177): Error! E1058: Cannot use typedef 'ATOMTABLE' as a variable
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(177): Error! E1009: Expecting ')' but found 'ATOMTABLE'
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(177): Note! N2002: 'FIELD_OFFSET' defined in: C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(177)
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(177): Error! E1045: Subscript on non-array
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(177): Error! E1009: Expecting ';' but found ')'
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(179): Error! E1011: Symbol 'CURRENT_DS' has not been declared
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(180): Error! E1033: Expression for '->' must be 'pointer to struct or union'
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(181): Error! E1033: Expression for '->' must be 'pointer to struct or union'
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(181): Warning! W111: Meaningless use of an expression
+C:\yuri\osfree\DOS\WIN16\kernel\kernel\..\atom.c(181): Error! E1147: Too many errors: compilation aborted
+Error(E42): Last command making (C:\yuri\osfree\build\DOS\WIN16\kernel\kernel\atom.obj) returned a bad status
+Should this file be deleted [Yes/No] ? Error(E02): Make execution terminated
+Error(E42): Last command making (targets) returned a bad status
+Error(E02): Make execution terminated

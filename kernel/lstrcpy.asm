@@ -1,9 +1,5 @@
 
-if ?REAL
 		.8086
-else
-		.286
-endif
 
 _TEXT	segment word public 'CODE'
 

@@ -18,13 +18,20 @@ else
 ?LARGEALLOC	equ 1	;1=allow more than 1 MB with GlobalAlloc/Realloc/Free
 endif
 
-ife ?32BIT
+public LocalAlloc
+public LocalFree
+
 externdef pascal _hmemset:far
 externdef pascal lstrcpy:far
 externdef pascal lstrcat:far
 externdef pascal lstrlen:far
 externdef discardmem:near
-endif
+externdef pascal InitAtomTable:far
+externdef pascal FindAtom:far
+externdef pascal AddAtom:far
+externdef pascal DeleteAtom:far
+externdef pascal GetAtomName:far
+externdef pascal GetAtomHandle:far
 
 WF_PMODE	equ 1
 WF_CPU286	equ 2
@@ -544,9 +551,7 @@ endif
 	jz @F
 	inc ax
 @@:
-	mov bx,ax
-	mov ax,0100h	;alloc dos memory
-	int 31h
+	@DPMI_DOSALLOC ax	;alloc dos memory
 	xchg ax,dx
 	jnc @F
 	xor ax,ax
@@ -560,8 +565,7 @@ GlobalDOSFree proc far pascal
 	pop dx
 	push cx
 	push bx
-	mov ax,0101h		;free dos memory
-	int 31h
+	@DPMI_DOSFREE dx		;free dos memory
 	mov ax,dx
 	jc @F
 	xor ax,ax			;return 0 on success
@@ -663,8 +667,7 @@ AllocSelectorArray proc far pascal
 	pop cx
 	push ax
 	push dx
-	xor ax,ax
-	int 31h
+	@DPMI_AllocDesc cx
 	ret
 AllocSelectorArray endp
 
@@ -677,9 +680,7 @@ AllocSelector proc far pascal
 	pop bx
 	push dx
 	push cx
-	mov cx,0001
-	xor ax,ax
-	int 31h
+	@DPMI_AllocDesc
 	jc error
 	and bx,bx
 	jz @F
@@ -703,8 +704,7 @@ FreeSelector proc far pascal
 	pop bx
 	push dx
 	push cx
-	mov ax,0001
-	int 31h
+        @DPMI_FreeDesc bx
 	mov ax,0000
 	jnc @F
 	mov ax,bx
@@ -720,8 +720,7 @@ GetSelectorBase proc far pascal
 	pop bx
 	push cx
 	push dx
-	mov ax,0006
-	int 31h
+        @DPMI_GetBase
 	jc @F
 	mov ax,dx
 	mov dx,cx
@@ -741,8 +740,7 @@ SetSelectorBase proc far pascal
 	@loadparm 0,dx
 	@loadparm 2,cx
 	@loadparm 4,bx
-	mov ax,0007
-	int 31h
+        @DPMI_SetBase
 	mov ax,0000
 	jc @F
 	mov ax,bx
@@ -775,8 +773,7 @@ else
 	mov di,sp
 	push ss
 	pop es
-	mov ax,000Bh	 ;get descriptor
-	int 31h
+	@DPMI_GetDescriptor
 	jc error
 	mov ax,es:[di+0]
 	mov dl,es:[di+6]
@@ -801,8 +798,7 @@ SetSelectorLimit proc far pascal
 	@loadparm 0,dx
 	@loadparm 2,cx
 	@loadparm 4,bx
-	mov ax,0008
-	int 31h
+	@DPMI_SetLimit
 	mov ax,0000
 if 0
 	jc @F
@@ -1911,7 +1907,6 @@ KernelEntries label byte
 	db 1,1
 	ENTRY <1,FatalExit>
 	db 1,0
-ife ?32BIT
 	db 8,1
 	ENTRY <1,GetVersion>		;3
 	ENTRY <1,LocalInit>			;4
@@ -1925,11 +1920,6 @@ ife ?32BIT
 	db 1,1
 	ENTRY <1,LocalCompact>		;13
 	db 1,0
-else
-	db 1,1
-	ENTRY <1,GetVersion>		;3
-	db 11,0
-endif
 	db 7,1
 	ENTRY <1,GlobalAlloc>		;15
 	ENTRY <1,GlobalReAlloc>
@@ -1939,19 +1929,11 @@ endif
 	ENTRY <1,GlobalSize>
 	ENTRY <1,GlobalHandle>		;21
 	db 1,0
-ife ?32BIT
 	db 3,1
-else
-	db 2,1
-endif
 	ENTRY <1,LockSegment>		;23
 	ENTRY <1,UnlockSegment>
-ife ?32BIT
 	ENTRY <1,GlobalCompact>		;25
 	db 4,0						;26-29
-else
-	db 5,0						;26-29
-endif
 	db 1,1
 	ENTRY <1,WaitEvent>			;30
 	db 5,0
@@ -1967,8 +1949,15 @@ endif
 	ENTRY <1,GetModuleUsage>
 	ENTRY <1,GetModuleFileName>
 	ENTRY <1,GetProcAddress>	;50
-	db 30,0						;51-80
-ife ?32BIT
+	db 17,0						;51-67
+	db 6,1
+	ENTRY <1, InitAtomTable>			;68
+	ENTRY <1, FindAtom>				;69
+	ENTRY <1, AddAtom>				;70
+	ENTRY <1, DeleteAtom>				;71
+	ENTRY <1, GetAtomName>				;72
+	ENTRY <1, GetAtomHandle>			;73
+	db 7,0						;74-80
 	db 6,1
 	ENTRY <1,_lclose>			;81
 	ENTRY <1,_lread>
@@ -1983,9 +1972,6 @@ ife ?32BIT
 	ENTRY <1,lstrlen>			;90
 	ENTRY <1,InitTask>			;91
 	db 3,0						;92-94
-else
-	db 14,0						;81-94
-endif
 	db 2,1
 	ENTRY <1,LoadLibrary>
 	ENTRY <1,FreeLibrary>		;96
@@ -2023,23 +2009,15 @@ endif
 	db 3,0						;134-136
 	db 1,1
 	ENTRY <1,FatalAppExit>		;137
-ife ?32BIT
 	db 31,0						;138-168
 	db 1,1
 	ENTRY <1,GetFreeSpace>		;169
-else
-	db 32,0						;138-169
-endif
 	db 2,1
 	ENTRY <1,AllocCSToDSAlias>
 	ENTRY <1,AllocDSToCSAlias>
-if ?32BIT eq 0
 	db 2,0						;172-173
 	db 1,-2
 eA000 ENTRY <1,00h>				;_A000H
-else
-	db 3,0						;172-174
-endif
 	db 3,1
 	ENTRY <1,AllocSelector>		;175
 	ENTRY <1,FreeSelector>
@@ -2047,15 +2025,11 @@ endif
 	db 1,-2
 eWinFlags ENTRY <1,0>			;178 __WINFLAGS
 
-if ?32BIT eq 0
 	db 2,0						;179-180
 	db 3,-2
 eB000 ENTRY <1,0>				;181 _B000H
 eB800 ENTRY <1,0>				;182 _B800H
 e0000 ENTRY <1,0>				;183 _0000H
-else
-	db 5,0						;179-193
-endif
 	db 6,1
 	ENTRY <1,GlobalDOSAlloc>	;184
 	ENTRY <1,GlobalDOSFree>		;185
@@ -2064,16 +2038,10 @@ endif
 	ENTRY <1,GetSelectorLimit>	;188
 	ENTRY <1,SetSelectorLimit>	;189
 	db 3,0						;190-192
-ife ?32BIT
 	db 3,-2
 e0040 ENTRY <1,0040h>			;193
 eF000 ENTRY <1,0>				;194 _F000H
 eC000 ENTRY <1,0>				;195 _C000H
-else
-	db 1,-2
-e0040 ENTRY <1,0040h>			;193
-	db 2,0
-endif
 	db 1,0						;196
 	db 2,1
 	ENTRY <1,GlobalFix>			;197
@@ -2099,7 +2067,6 @@ KernelNames label byte
 	NENAME "KERNEL"    ,0
 	NENAME "FATALEXIT" ,1
 	NENAME "GETVERSION",3
-ife ?32BIT
 	NENAME "LOCALINIT"   ,4
 	NENAME "LOCALALLOC"  ,5
 	NENAME "LOCALREALLOC",6
@@ -2108,7 +2075,6 @@ ife ?32BIT
 	NENAME "LOCALUNLOCK" ,9
 	NENAME "LOCALSIZE"   ,10
 	NENAME "LOCALCOMPACT",13
-endif
 	NENAME "GLOBALALLOC"  ,15
 	NENAME "GLOBALREALLOC",16
 	NENAME "GLOBALFREE"   ,17
@@ -2118,9 +2084,7 @@ endif
 	NENAME "GLOBALHANDLE" ,21
 	NENAME "LOCKSEGMENT"  ,23
 	NENAME "UNLOCKSEGMENT",24
-ife ?32BIT
 	NENAME "GLOBALCOMPACT",25
-endif
 	NENAME "WAITEVENT"        ,30
 	NENAME "GETCURRENTTASK"   ,36
 	NENAME "GETCURRENTPDB"    ,37
@@ -2129,7 +2093,12 @@ endif
 	NENAME "GETMODULEUSAGE"   ,48
 	NENAME "GETMODULEFILENAME",49
 	NENAME "GETPROCADDRESS"   ,50
-ife ?32BIT
+	NENAME "INITATOMTABLE", 68
+	NENAME "FINDATOM", 69
+	NENAME "ADDATOM", 70
+	NENAME "DELETEATOM", 71
+	NENAME "GETATOMNAME", 72
+	NENAME "GETATOMHANDLE", 73
 	NENAME "_LCLOSE",81
 	NENAME "_LREAD" ,82
 	NENAME "_LCREAT",83
@@ -2140,7 +2109,6 @@ ife ?32BIT
 	NENAME "LSTRCAT",89
 	NENAME "LSTRLEN",90
 	NENAME "INITTASK"    ,91
-endif
 	NENAME "LOADLIBRARY" ,95
 	NENAME "FREELIBRARY" ,96
 	NENAME "DOS3CALL"    ,102
@@ -2159,23 +2127,17 @@ endif
 	NENAME "GETWINFLAGS"      , 132
 	NENAME "GETEXEPTR"        , 133
 	NENAME "FATALAPPEXIT"     , 137
-ife ?32BIT
 	NENAME "GETFREESPACE"     , 169
-endif
 	NENAME "ALLOCCSTODSALIAS" , 170
 	NENAME "ALLOCDSTOCSALIAS" , 171
-if ?32BIT eq 0
 	NENAME "__A000H", 174
-endif
 	NENAME "ALLOCSELECTOR"       , 175
 	NENAME "FREESELECTOR"        , 176
 	NENAME "PRESTOCHANGOSELECTOR", 177
 	NENAME "__WINFLAGS"          , 178
-if ?32BIT eq 0
 	NENAME "__B000H", 181
 	NENAME "__B800H", 182
 	NENAME "__0000H", 183
-endif
 	NENAME "GLOBALDOSALLOC"   ,184
 	NENAME "GLOBALDOSFREE"    ,185
 	NENAME "GETSELECTORBASE"  ,186
@@ -2183,10 +2145,8 @@ endif
 	NENAME "GETSELECTORLIMIT" ,188
 	NENAME "SETSELECTORLIMIT" ,189
 	NENAME "__0040H"          ,193
-ife ?32BIT
 	NENAME "__F000H", 194
 	NENAME "__C000H", 195
-endif
 	NENAME "GLOBALFIX"          ,197
 	NENAME "GLOBALUNFIX"        ,198
 	NENAME "DEBUGBREAK"         ,203
