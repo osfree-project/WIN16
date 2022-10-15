@@ -71,7 +71,7 @@ EXPORTS
     OPENFILE                       @74
     OPENPATHNAME                   @75
     DELETEPATHNAME                 @76
-    RESERVED1                      @77
+    RESERVED1                      @77	+ AnsiNext
     RESERVED2                      @78
     RESERVED3                      @79
     RESERVED4                      @80

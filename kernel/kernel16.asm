@@ -34,6 +34,10 @@ externdef pascal GetAtomName:far
 externdef pascal GetAtomHandle:far
 externdef pascal GetProfileString:far
 externdef pascal WriteProfileString:far
+externdef pascal AnsiNext:far
+externdef pascal AnsiPrev:far
+externdef pascal AnsiUpper:far
+externdef pascal AnsiLower:far
 
 WF_PMODE	equ 1
 WF_CPU286	equ 2
@@ -1963,8 +1967,12 @@ KernelEntries label byte
 	ENTRY <1, DeleteAtom>				;71
 	ENTRY <1, GetAtomName>				;72
 	ENTRY <1, GetAtomHandle>			;73
-	db 7,0						;74-80
-	db 6,1
+	db 3,0						;74-76
+	db 10,1
+	ENTRY <1,AnsiNext>		; 77
+	ENTRY <1,AnsiPrev>		; 78
+	ENTRY <1,AnsiUpper>		; 79
+	ENTRY <1,AnsiLower>		; 80
 	ENTRY <1,_lclose>			;81
 	ENTRY <1,_lread>
 	ENTRY <1,_lcreat>
@@ -2107,6 +2115,10 @@ KernelNames label byte
 	NENAME "DELETEATOM", 71
 	NENAME "GETATOMNAME", 72
 	NENAME "GETATOMHANDLE", 73
+	NENAME "ANSINEXT",77
+	NENAME "ANSIPREV",78
+	NENAME "ANSIUPPER",79
+	NENAME "ANSILOWER",80
 	NENAME "_LCLOSE",81
 	NENAME "_LREAD" ,82
 	NENAME "_LCREAT",83
