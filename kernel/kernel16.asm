@@ -109,10 +109,8 @@ endif
 
 _TEXT segment
 
-if _PROFSTRING_
 	externdef pascal GetPrivateProfileString:far
 	externdef pascal WritePrivateProfileString:far
-endif
 
 GetDOSEnvironment proc far pascal
 	mov ah,51h
@@ -2009,15 +2007,11 @@ eINCR	ENTRY <1,8>				;114 _AHINCR
 	db 1,0						;121
 	db 1,1
 	ENTRY <1,IsTaskLocked>		;122
-if _PROFSTRING_
 	db 5,0						;123-127
 	db 2,1
 	ENTRY <1,GetPrivateProfileString>	;128
 	ENTRY <1,WritePrivateProfileString>	;129
 	db 1,0						;130
-else
-	db 8,0						;123-130
-endif
 	db 3,1
 	ENTRY <1,GetDOSEnvironment>	;131
 	ENTRY <1,GetWinFlags>		;132
@@ -2154,14 +2148,11 @@ KernelNames label byte
 	NENAME "SETERRORMODE",107
 	NENAME "__AHSHIFT"   ,113
 	NENAME "__AHINCR"    ,114
-
 	NENAME "OUTPUTDEBUGSTRING", 115
 	NENAME "UNDEFDYNLINK",      120
 	NENAME "ISTASKLOCKED",      122
-if _PROFSTRING_
 	NENAME "GETPRIVATEPROFILESTRING"  ,128
 	NENAME "WRITEPRIVATEPROFILESTRING",129
-endif
 	NENAME "GETDOSENVIRONMENT", 131
 	NENAME "GETWINFLAGS"      , 132
 	NENAME "GETEXEPTR"        , 133
