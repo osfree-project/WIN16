@@ -38,6 +38,7 @@ externdef pascal AnsiNext:far
 externdef pascal AnsiPrev:far
 externdef pascal AnsiUpper:far
 externdef pascal AnsiLower:far
+externdef pascal lstrcmp: far
 
 WF_PMODE	equ 1
 WF_CPU286	equ 2
@@ -1968,7 +1969,7 @@ KernelEntries label byte
 	ENTRY <1, GetAtomName>				;72
 	ENTRY <1, GetAtomHandle>			;73
 	db 3,0						;74-76
-	db 10,1
+	db 15,1
 	ENTRY <1,AnsiNext>		; 77
 	ENTRY <1,AnsiPrev>		; 78
 	ENTRY <1,AnsiUpper>		; 79
@@ -1979,10 +1980,9 @@ KernelEntries label byte
 	ENTRY <1,_llseek>
 	ENTRY <1,_lopen>
 	ENTRY <1,_lwrite>			;86
-	db 1,0						;87
-	db 4,1
-	ENTRY <1,lstrcpy>
-	ENTRY <1,lstrcat>
+	ENTRY <1,lstrcmp>			;87
+	ENTRY <1,lstrcpy>			;88
+	ENTRY <1,lstrcat>			;88
 	ENTRY <1,lstrlen>			;90
 	ENTRY <1,InitTask>			;91
 	db 3,0						;92-94
@@ -2125,6 +2125,7 @@ KernelNames label byte
 	NENAME "_LLSEEK",84
 	NENAME "_LOPEN" ,85
 	NENAME "_LWRITE",86
+	NENAME "LSTRCMP",87
 	NENAME "LSTRCPY",88
 	NENAME "LSTRCAT",89
 	NENAME "LSTRLEN",90

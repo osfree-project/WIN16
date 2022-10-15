@@ -10,7 +10,7 @@ TRGT = $(PROJ).exe
 DESC = Windows Real Mode Kernel
 srcfiles = $(p)dpmildr$(e) $(p)hmemset$(e) $(p)lstrcat$(e) $(p)lstrcpy$(e) $(p)lstrlen$(e) $(p)profstrg$(e) $(p)kernel16$(e) &
 $(p)smallcode$(e) $(p)atom$(e) $(p)lstrcpyn$(e) $(p)memset$(e) $(p)toupper$(e) $(p)strnicmp$(e) $(p)memcpy$(e) &
-$(p)profile$(e) $(p)ansi$(e) $(p)tolower$(e)
+$(p)profile$(e) $(p)ansi$(e) $(p)tolower$(e) $(p)lstrcmp$(e)
 
 ADD_ASMOPT = -D?32BIT=0 -D?DEBUG=0 -D?REAL=1 -I=$(MYDIR)..$(SEP)..$(SEP)..$(SEP)macrolib
 ADD_COPT = -s -0 -I=$(%WATCOM)$(SEP)h$(SEP)win

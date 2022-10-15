@@ -72,16 +72,16 @@ EXPORTS
     OPENPATHNAME                   @75
     DELETEPATHNAME                 @76
     RESERVED1                      @77	+ AnsiNext
-    RESERVED2                      @78
-    RESERVED3                      @79
-    RESERVED4                      @80
+    RESERVED2                      @78	+ AnsiPrev
+    RESERVED3                      @79	+ AnsiUpper
+    RESERVED4                      @80	+ AnsiLower
     _LCLOSE                        @81	+
     _LREAD                         @82	+
     _LCREAT                        @83	+
     _LLSEEK                        @84	+
     _LOPEN                         @85	+
     _LWRITE                        @86	+
-    RESERVED5                      @87
+    RESERVED5                      @87	+ lstrcmp
     LSTRCPY                        @88	+
     LSTRCAT                        @89	+
     LSTRLEN                        @90	+
