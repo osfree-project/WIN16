@@ -158,13 +158,13 @@ EXPORTS
     ALLOCCSTODSALIAS               @170	+
     ALLOCDSTOCSALIAS               @171	+
     ALLOCALIAS                     @172
-    __ROMBIOS                      @173
+    __ROMBIOS                      @173	+
     __A000H                        @174	+
     ALLOCSELECTOR                  @175	+
     FREESELECTOR                   @176	+
     PRESTOCHANGOSELECTOR           @177	+
     __WINFLAGS                     @178	+
-    __D000H                        @179
+    __D000H                        @179 +
     LONGPTRADD                     @180
     __B000H                        @181	+
     __B800H                        @182	+
@@ -175,7 +175,7 @@ EXPORTS
     SETSELECTORBASE                @187	+
     GETSELECTORLIMIT               @188	+
     SETSELECTORLIMIT               @189	+
-    __E000H                        @190
+    __E000H                        @190	+
     GLOBALPAGELOCK                 @191
     GLOBALPAGEUNLOCK               @192
     __0040H                        @193	+

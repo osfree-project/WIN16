@@ -1805,7 +1805,10 @@ ife ?32BIT
 	dw eB800, 0B800h
 	dw e0000, 00000h
 	dw eF000, 0F000h
+	dw eROMBIOS, 0F000h
 	dw eC000, 0C000h
+	dw eD000, 0D000h
+	dw eE000, 0E000h
 endif
 SIZESEGS equ ($ - segments) / 4
 
@@ -2030,9 +2033,10 @@ endif
 	db 2,1
 	ENTRY <1,AllocCSToDSAlias>
 	ENTRY <1,AllocDSToCSAlias>
-	db 2,0						;172-173
-	db 1,-2
-eA000 ENTRY <1,00h>				;_A000H
+	db 1,0						;172
+	db 2,-2
+eROMBIOS ENTRY <1,0>				;173 _ROMBIOS
+eA000 ENTRY <1,00h>				;174 _A000H
 	db 3,1
 	ENTRY <1,AllocSelector>		;175
 	ENTRY <1,FreeSelector>
@@ -2040,7 +2044,9 @@ eA000 ENTRY <1,00h>				;_A000H
 	db 1,-2
 eWinFlags ENTRY <1,0>			;178 __WINFLAGS
 
-	db 2,0						;179-180
+	db 1,-2
+eD000 ENTRY <1,0>			;179
+	db 1,0				;180
 	db 3,-2
 eB000 ENTRY <1,0>				;181 _B000H
 eB800 ENTRY <1,0>				;182 _B800H
@@ -2052,7 +2058,9 @@ e0000 ENTRY <1,0>				;183 _0000H
 	ENTRY <1,SetSelectorBase>	;187
 	ENTRY <1,GetSelectorLimit>	;188
 	ENTRY <1,SetSelectorLimit>	;189
-	db 3,0						;190-192
+	db 1,-2
+eE000 ENTRY <1,0>				;190 _E000H
+	db 2,0						;191-192
 	db 3,-2
 e0040 ENTRY <1,0040h>			;193
 eF000 ENTRY <1,0>				;194 _F000H
@@ -2163,11 +2171,13 @@ endif
 	NENAME "GETFREESPACE"     , 169
 	NENAME "ALLOCCSTODSALIAS" , 170
 	NENAME "ALLOCDSTOCSALIAS" , 171
+	NENAME "__ROMBIOS", 173
 	NENAME "__A000H", 174
 	NENAME "ALLOCSELECTOR"       , 175
 	NENAME "FREESELECTOR"        , 176
 	NENAME "PRESTOCHANGOSELECTOR", 177
 	NENAME "__WINFLAGS"          , 178
+	NENAME "__D000H", 179
 	NENAME "__B000H", 181
 	NENAME "__B800H", 182
 	NENAME "__0000H", 183
@@ -2177,6 +2187,7 @@ endif
 	NENAME "SETSELECTORBASE"  ,187
 	NENAME "GETSELECTORLIMIT" ,188
 	NENAME "SETSELECTORLIMIT" ,189
+	NENAME "__E000H", 190
 	NENAME "__0040H"          ,193
 	NENAME "__F000H", 194
 	NENAME "__C000H", 195
