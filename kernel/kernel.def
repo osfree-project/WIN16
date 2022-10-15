@@ -52,8 +52,8 @@ EXPORTS
     CATCH                          @55
     THROW                          @56
     GETPROFILEINT                  @57
-    GETPROFILESTRING               @58
-    WRITEPROFILESTRING             @59
+    GETPROFILESTRING               @58	+
+    WRITEPROFILESTRING             @59	+
     FINDRESOURCE                   @60
     LOADRESOURCE                   @61
     LOCKRESOURCE                   @62
@@ -62,12 +62,12 @@ EXPORTS
     SIZEOFRESOURCE                 @65
     ALLOCRESOURCE                  @66
     SETRESOURCEHANDLER             @67
-    INITATOMTABLE                  @68
-    FINDATOM                       @69
-    ADDATOM                        @70
-    DELETEATOM                     @71
-    GETATOMNAME                    @72
-    GETATOMHANDLE                  @73
+    INITATOMTABLE                  @68	+
+    FINDATOM                       @69	+
+    ADDATOM                        @70	+
+    DELETEATOM                     @71	+
+    GETATOMNAME                    @72	+
+    GETATOMHANDLE                  @73	+
     OPENFILE                       @74
     OPENPATHNAME                   @75
     DELETEPATHNAME                 @76

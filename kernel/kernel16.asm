@@ -32,6 +32,8 @@ externdef pascal AddAtom:far
 externdef pascal DeleteAtom:far
 externdef pascal GetAtomName:far
 externdef pascal GetAtomHandle:far
+externdef pascal GetProfileString:far
+externdef pascal WriteProfileString:far
 
 WF_PMODE	equ 1
 WF_CPU286	equ 2
@@ -1949,7 +1951,11 @@ KernelEntries label byte
 	ENTRY <1,GetModuleUsage>
 	ENTRY <1,GetModuleFileName>
 	ENTRY <1,GetProcAddress>	;50
-	db 17,0						;51-67
+	db 7,0						;51-57
+	db 2,1
+	ENTRY <1, GetProfileString>			;58
+	ENTRY <1, WriteProfileString>			;59
+	db 8,0						;60-67
 	db 6,1
 	ENTRY <1, InitAtomTable>			;68
 	ENTRY <1, FindAtom>				;69
@@ -2093,6 +2099,8 @@ KernelNames label byte
 	NENAME "GETMODULEUSAGE"   ,48
 	NENAME "GETMODULEFILENAME",49
 	NENAME "GETPROCADDRESS"   ,50
+	NENAME "GETPROFILESTRING", 58
+	NENAME "WRITEPROFILESTRING", 59
 	NENAME "INITATOMTABLE", 68
 	NENAME "FINDATOM", 69
 	NENAME "ADDATOM", 70
