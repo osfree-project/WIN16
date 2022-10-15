@@ -1,3 +1,8 @@
+Most of code ported from WINE and TWIN
+
+  WINE comes under GNU LGPL 2.1
+  TWIN comes under GNU LGPL 2
+
 License from DPMI16.TXT
 
   DPMILD16.EXE is part of HX DOS extender. This extender is freeware.

@@ -128,8 +128,8 @@ EXPORTS
     GETDOSENVIRONMENT              @131	+
     GETWINFLAGS                    @132	+
     GETEXEPTR                      @133	+
-    GETWINDOWSDIRECTORY            @134
-    GETSYSTEMDIRECTORY             @135
+    GETWINDOWSDIRECTORY            @134	+
+    GETSYSTEMDIRECTORY             @135	+
     GETDRIVETYPE                   @136
     FATALAPPEXIT                   @137	+
     GETHEAPSPACES                  @138

@@ -42,6 +42,8 @@ externdef pascal AnsiLower:far
 externdef pascal lstrcmp: far
 externdef pascal IsRomModule: far
 externdef pascal IsRomFile: far
+externdef pascal GetWindowsDirectory: far
+externdef pascal GetSystemDirectory: far
 
 WF_PMODE	equ 1
 WF_CPU286	equ 2
@@ -2023,7 +2025,9 @@ endif
 	ENTRY <1,GetDOSEnvironment>	;131
 	ENTRY <1,GetWinFlags>		;132
 	ENTRY <1,GetExePtr>			;133
-	db 3,0						;134-136
+	ENTRY <1,GetWindowsDirectory>           ;134
+	ENTRY <1,GetSystemDirectory>			;135
+	db 1,0						;136
 	db 1,1
 	ENTRY <1,FatalAppExit>		;137
 	db 31,0						;138-168
@@ -2159,6 +2163,8 @@ endif
 	NENAME "GETDOSENVIRONMENT", 131
 	NENAME "GETWINFLAGS"      , 132
 	NENAME "GETEXEPTR"        , 133
+	NENAME "GETWINDOWSDIRECTORY"            ,134
+	NENAME "GETSYSTEMDIRECTORY"            ,135
 	NENAME "FATALAPPEXIT"     , 137
 	NENAME "GETFREESPACE"     , 169
 	NENAME "ALLOCCSTODSALIAS" , 170
