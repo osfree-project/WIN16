@@ -201,10 +201,10 @@ EXPORTS
     FATALEXITHOOK                  @318
     FLUSHCACHEDFILEHANDLE          @319
     ISTASK                         @320
-    ISROMMODULE                    @323
+    ISROMMODULE                    @323	+
     LOGERROR                       @324
     LOGPARAMERROR                  @325
-    ISROMFILE                      @326
+    ISROMFILE                      @326	+
     K327                           @327
     _DEBUGOUTPUT                   @328
     K329                           @329
@@ -227,7 +227,7 @@ EXPORTS
     _HREAD                         @349
     _HWRITE                        @350
     BUNNY_351                      @351
-    LSTRCPYN                       @353
+    LSTRCPYN                       @353	+
     GETAPPCOMPATFLAGS              @354
     GETWINDEBUGINFO                @355
     SETWINDEBUGINFO                @356

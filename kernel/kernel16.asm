@@ -25,6 +25,7 @@ externdef pascal _hmemset:far
 externdef pascal lstrcpy:far
 externdef pascal lstrcat:far
 externdef pascal lstrlen:far
+externdef pascal lstrcpyn:far
 externdef discardmem:near
 externdef pascal InitAtomTable:far
 externdef pascal FindAtom:far
@@ -39,6 +40,8 @@ externdef pascal AnsiPrev:far
 externdef pascal AnsiUpper:far
 externdef pascal AnsiLower:far
 externdef pascal lstrcmp: far
+externdef pascal IsRomModule: far
+externdef pascal IsRomFile: far
 
 WF_PMODE	equ 1
 WF_CPU286	equ 2
@@ -2066,6 +2069,15 @@ eC000 ENTRY <1,0>				;195 _C000H
 	db 2,0						;204-205
 	db 1,1
 	ENTRY <1,AllocSelectorArray>;206
+	db 120,0					;207-322
+	db 1,1
+	ENTRY <1,IsRomModule>		; 323
+	db 2,0						;324-325
+	db 1,1
+	ENTRY <1,IsRomFile>		; 326
+	db 26,0						;327-352
+	db 1,1
+	ENTRY <1,lstrcpyn>		; 353
 	db 0
 
 NENAME macro name, export
@@ -2172,6 +2184,9 @@ endif
 	NENAME "GLOBALUNFIX"        ,198
 	NENAME "DEBUGBREAK"         ,203
 	NENAME "ALLOCSELECTORARRAY" ,206
+	NENAME "ISROMMODULE" ,323
+	NENAME "ISROMFILE" ,326
+	NENAME "LSTRCPYN" ,353
 	db 0
 
 EndKernelNE equ $
