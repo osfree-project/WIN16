@@ -3,6 +3,11 @@ Most of code ported from WINE and TWIN
   WINE comes under GNU LGPL 2.1
   TWIN comes under GNU LGPL 2
 
+License from DPMILD16.TXT
+
+  DPMILD16.EXE is part of HX DOS extender. This extender is freeware.
+  View HXRT.TXT for licence details.
+
 License from DPMI16.TXT
 
   DPMILD16.EXE is part of HX DOS extender. This extender is freeware.
@@ -13,3 +18,10 @@ License from HXRT.TXT
   The HX DOS extender runtime is freeware and may be used for any purpose.
   Copyright Japheth 1996-2010. The HX runtime can be freely distributed
   with any application.
+
+License for MTHREAD.C
+
+  A minimal Borland/Turbo C multithreading library for DOS program.
+  Written and placed into the public domain by J Ting. Please read
+  the files README.TXT and MTHREAD.TXT for more information.
+

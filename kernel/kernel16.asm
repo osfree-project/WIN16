@@ -834,6 +834,11 @@ Dos3Call proc far pascal
 	ret
 Dos3Call endp
 
+NetBiosCall proc far pascal
+	int 5ch
+	ret
+NetBiosCall endp
+
 SetErrorMode proc far pascal
 	pop cx
 	pop ax
@@ -1990,9 +1995,10 @@ KernelEntries label byte
 	ENTRY <1,LoadLibrary>
 	ENTRY <1,FreeLibrary>		;96
 	db 5,0						;97-101
-	db 1,1
+	db 2,1
 	ENTRY <1,Dos3Call>			;102
-	db 4,0						;103-106
+	ENTRY <1,NetBiosCall>			;103
+	db 3,0						;104-106
 	db 1,1
 	ENTRY <1,SetErrorMode>		;107
 	db 5,0						;108-112
@@ -2145,6 +2151,7 @@ KernelNames label byte
 	NENAME "LOADLIBRARY" ,95
 	NENAME "FREELIBRARY" ,96
 	NENAME "DOS3CALL"    ,102
+	NENAME "NETBIOSCALL" ,103
 	NENAME "SETERRORMODE",107
 	NENAME "__AHSHIFT"   ,113
 	NENAME "__AHINCR"    ,114

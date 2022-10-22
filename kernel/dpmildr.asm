@@ -26,7 +26,7 @@ endif
 ifndef ?SERVER
 ?SERVER			 = 1	;1 1=load DPMI host HDPMIXX.EXE if no DPMI installed
 endif
-?CLOSEALLFILES	 = 0	;0 1=close all files before fatal exit
+?CLOSEALLFILES	 = 1	;0 1=close all files before fatal exit
 _CLEARENV_		 = 0	;0 if ?MULTPSP=1: clear PSP:[002C] on exit task
 _LOADERPARENT_	 = 1	;1 if ?MULTPSP=1: set PSP:[0016] to ldr PSP on exit task
 _SETPSP_		 = 1	;1 if ?MULTPSP=1: set owner in MCB to current PSP
