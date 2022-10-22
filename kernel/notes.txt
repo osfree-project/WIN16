@@ -1,6 +1,7 @@
 Resources
 
 https://devblogs.microsoft.com/oldnewthing/20040202-00/?p=40783
+https://devblogs.microsoft.com/oldnewthing/20131001-00/?p=3063
 
 GetSystemDirectory
 
@@ -29,9 +30,25 @@ dll
 https://devblogs.microsoft.com/oldnewthing/20060717-13/?p=30503
 https://devblogs.microsoft.com/oldnewthing/20060714-16/?p=30513
 
-exe loading
+16-bit exe startup
 https://devblogs.microsoft.com/oldnewthing/20071203-00/?p=24323
 
-makeprocinstance
-
+makeprocinstance and multiple data segments
+https://devblogs.microsoft.com/oldnewthing/20080208-00/?p=23513
 https://devblogs.microsoft.com/oldnewthing/20080207-00/?p=23533
+
+https://devblogs.microsoft.com/oldnewthing/20180423-00/?p=98575
+
+
+switchtothiswindow
+
+https://devblogs.microsoft.com/oldnewthing/20111107-00/?p=9183
+
+WEP function in DLLs
+
+https://devblogs.microsoft.com/oldnewthing/20180919-00/?p=99775
+
+
+More about data/instancedata
+
+https://devblogs.microsoft.com/oldnewthing/20181220-00/?p=100525
