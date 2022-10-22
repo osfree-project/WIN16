@@ -23,7 +23,8 @@
 #include <i86.h>
 #include <win16.h>
 
-#if 0
+int atoi(char *h);
+
 /***********************************************************************
  *           GetProfileInt   (KERNEL.57)
  */
@@ -31,7 +32,31 @@ UINT WINAPI GetProfileInt( LPCSTR section, LPCSTR entry, int def_val )
 {
     return GetPrivateProfileInt( section, entry, def_val, "win.ini" );
 }
-#endif
+
+/***********************************************************************
+ *           GetPrivateProfileInt   (KERNEL.127)
+ */
+UINT WINAPI GetPrivateProfileInt( LPCSTR section, LPCSTR entry,
+                                      int def_val, LPCSTR filename )
+{
+    char buffer[30];
+
+    /* we used to have some elaborate return value limitation (<= -32768 etc.)
+     * here, but Win98SE doesn't care about this at all, so I deleted it.
+     * AFAIR versions prior to Win9x had these limits, though. */
+
+
+    if (GetPrivateProfileString( section, entry, "", buffer, sizeof( buffer ), filename ) == 0) return def_val;
+
+    /* FIXME: if entry can be found but it's empty, then Win16 is
+     * supposed to return 0 instead of def_val ! Difficult/problematic
+     * to implement (every other failure also returns zero buffer),
+     * thus wait until testing framework avail for making sure nothing
+     * else gets broken that way. */
+    if (!buffer[0]) return (UINT)def_val;
+
+    return atoi(buffer);
+}
 
 /***********************************************************************
  *           GetProfileString   (KERNEL.58)

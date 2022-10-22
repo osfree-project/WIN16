@@ -1,0 +1,37 @@
+Resources
+
+https://devblogs.microsoft.com/oldnewthing/20040202-00/?p=40783
+
+GetSystemDirectory
+
+https://devblogs.microsoft.com/oldnewthing/20041008-00/?p=37623
+
+LocalAlloc GlobalAlloc
+
+https://devblogs.microsoft.com/oldnewthing/20041101-00/?p=37433
+
+GMEM_SHARED
+
+https://devblogs.microsoft.com/oldnewthing/20041102-00/?p=37413
+
+GlobalLock
+
+https://devblogs.microsoft.com/oldnewthing/20041104-00/?p=37393
+https://devblogs.microsoft.com/oldnewthing/20041105-00/?p=37383
+https://devblogs.microsoft.com/oldnewthing/20041105-00/?p=37383
+https://devblogs.microsoft.com/oldnewthing/20041109-00/?p=37353
+
+GlobalWire
+
+https://devblogs.microsoft.com/oldnewthing/20051108-05/?p=33423
+
+dll
+https://devblogs.microsoft.com/oldnewthing/20060717-13/?p=30503
+https://devblogs.microsoft.com/oldnewthing/20060714-16/?p=30513
+
+exe loading
+https://devblogs.microsoft.com/oldnewthing/20071203-00/?p=24323
+
+makeprocinstance
+
+https://devblogs.microsoft.com/oldnewthing/20080207-00/?p=23533

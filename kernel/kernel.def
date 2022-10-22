@@ -51,7 +51,7 @@ EXPORTS
     GETINSTANCEDATA                @54
     CATCH                          @55
     THROW                          @56
-    GETPROFILEINT                  @57
+    GETPROFILEINT                  @57	+
     GETPROFILESTRING               @58	+
     WRITEPROFILESTRING             @59	+
     FINDRESOURCE                   @60
@@ -97,7 +97,7 @@ EXPORTS
     VALIDATECODESEGMENTS           @100
     NOHOOKDOSCALL                  @101
     DOS3CALL                       @102	+
-    NETBIOSCALL                    @103
+    NETBIOSCALL                    @103	+
     GETCODEINFO                    @104
     GETEXEVERSION                  @105
     SETSWAPAREASIZE                @106
@@ -121,7 +121,7 @@ EXPORTS
     ENABLEKERNEL                   @124
     DISABLEKERNEL                  @125
     MEMORYFREED                    @126
-    GETPRIVATEPROFILEINT           @127
+    GETPRIVATEPROFILEINT           @127	+
     GETPRIVATEPROFILESTRING        @128	+
     WRITEPRIVATEPROFILESTRING      @129	+
     FILECDR                        @130

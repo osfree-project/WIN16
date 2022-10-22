@@ -37,6 +37,8 @@ externdef pascal AddAtom:far
 externdef pascal DeleteAtom:far
 externdef pascal GetAtomName:far
 externdef pascal GetAtomHandle:far
+externdef pascal GetProfileInt:far
+externdef pascal GetPrivateProfileInt:far
 externdef pascal GetProfileString:far
 externdef pascal WriteProfileString:far
 externdef pascal AnsiNext:far
@@ -1961,8 +1963,9 @@ KernelEntries label byte
 	ENTRY <1,GetModuleUsage>
 	ENTRY <1,GetModuleFileName>
 	ENTRY <1,GetProcAddress>	;50
-	db 7,0						;51-57
-	db 2,1
+	db 6,0						;51-56
+	db 3,1
+	ENTRY <1, GetProfileInt>			;57
 	ENTRY <1, GetProfileString>			;58
 	ENTRY <1, WriteProfileString>			;59
 	db 8,0						;60-67
@@ -2013,8 +2016,9 @@ eINCR	ENTRY <1,8>				;114 _AHINCR
 	db 1,0						;121
 	db 1,1
 	ENTRY <1,IsTaskLocked>		;122
-	db 5,0						;123-127
-	db 2,1
+	db 4,0						;123-126
+	db 3,1
+	ENTRY <1,GetPrivateProfileInt>	;127
 	ENTRY <1,GetPrivateProfileString>	;128
 	ENTRY <1,WritePrivateProfileString>	;129
 	db 1,0						;130
@@ -2125,6 +2129,7 @@ KernelNames label byte
 	NENAME "GETMODULEUSAGE"   ,48
 	NENAME "GETMODULEFILENAME",49
 	NENAME "GETPROCADDRESS"   ,50
+	NENAME "GETPROFILEINT", 57
 	NENAME "GETPROFILESTRING", 58
 	NENAME "WRITEPROFILESTRING", 59
 	NENAME "INITATOMTABLE", 68
@@ -2158,6 +2163,7 @@ KernelNames label byte
 	NENAME "OUTPUTDEBUGSTRING", 115
 	NENAME "UNDEFDYNLINK",      120
 	NENAME "ISTASKLOCKED",      122
+	NENAME "GETPRIVATEPROFILEINT"  ,127
 	NENAME "GETPRIVATEPROFILESTRING"  ,128
 	NENAME "WRITEPRIVATEPROFILESTRING",129
 	NENAME "GETDOSENVIRONMENT", 131
