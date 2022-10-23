@@ -11,19 +11,13 @@ ifndef ?LFN
   endif
 endif
 
-ifndef ?STUB
-?STUB			= 0		;0, 1=assume to be loaded as a stub
-endif
 ifndef _FILEHANDLES_
 _FILEHANDLES_	= 20	;20 initial no of file handles for a task
 endif
-
 ?INT24RES		= 1		;1, restore int 24 when task exits
 ?INT23RES		= 1		;1, restore int 23
 ?INT41SUPPORT	= 1		;1, support Int 41h debugging messages
 ?SUPAPPTITLE	= 1		;1, support for "application title" (win9x only, in rm!)
-;--- once HDPMI=32 works reliably, ?DISABLESERVER=1 is no longer needed
-?DISABLESERVER	= 0		;1, 1=disable DPMI server for next task (DPMILDR=8)
 ?SETDTA			= 1		;1, 1=for ?MULTPSP: init DTA to PSP:80 on start
 ?ZEROHIWORDEBP  = 1		;1, 1=if ?32BIT clear hiword(ebp) before 16-bit proc is called.
                         ;   this is essentially for ENTER/LEAVE instructions!
@@ -36,11 +30,9 @@ if ?32BIT
 ?DOS4G			= 1		;1, 1=support DOS4G                        
 ?DOS4GMEM		= 0		;0, 1=support DOS4G data segment in GS
 ?LOCALHEAP	 	= 1		;0, 1=implement local heap as in windows
-_PROFSTRING_	= 1		;0, 1=support Get-/WritePrivateProfileString
 else
 ?DOS4G			= 0
 ?LOCALHEAP	 	= 1		;1, 1=implement local heap as in windows
-_PROFSTRING_	= 1		;1, 1=support Get-/WritePrivateProfileString
 endif
 
 
@@ -114,7 +106,7 @@ RC_FATAL   equ 0FFh	;FatalExit/FatalAppExit called (16bit only)
 ;********** publics/externals **********
 
 _DATA segment
-externdef	wLdrDS:word
+externdef	wKernelDS:word
 externdef	wTDStk:word
 externdef	starttaskstk:byte
 externdef	wMDSta:word

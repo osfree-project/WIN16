@@ -1,13 +1,12 @@
 
 ;--- implements Win16 kernel emulation
-;--- this is used by both DPMILD16 and DPMILD32
-;--- since the latter supports loading of 16bit dlls
 ;--- best viewed with TABSIZE 4
 
 	; MacroLib
 	include dos.inc
 	include dpmi.inc
 
+	; Kernel macros
 	include macros.inc
 
 if ?REAL
@@ -27,30 +26,40 @@ endif
 public eWinFlags
 
 externdef pascal _hmemset:far
+externdef discardmem:near
+
+; Long versions of string functions
+externdef pascal lstrcmp: far
 externdef pascal lstrcpy:far
 externdef pascal lstrcat:far
 externdef pascal lstrlen:far
 externdef pascal lstrcpyn:far
-externdef discardmem:near
+; Atoms
 externdef pascal InitAtomTable:far
 externdef pascal FindAtom:far
 externdef pascal AddAtom:far
 externdef pascal DeleteAtom:far
 externdef pascal GetAtomName:far
 externdef pascal GetAtomHandle:far
+; Profiles
 externdef pascal GetProfileInt:far
-externdef pascal GetPrivateProfileInt:far
 externdef pascal GetProfileString:far
 externdef pascal WriteProfileString:far
+externdef pascal GetPrivateProfileInt:far
+externdef pascal GetPrivateProfileString:far
+externdef pascal WritePrivateProfileString:far
+; ANSI
 externdef pascal AnsiNext:far
 externdef pascal AnsiPrev:far
 externdef pascal AnsiUpper:far
 externdef pascal AnsiLower:far
-externdef pascal lstrcmp: far
+
 externdef pascal IsRomModule: far
 externdef pascal IsRomFile: far
 externdef pascal GetWindowsDirectory: far
 externdef pascal GetSystemDirectory: far
+
+; Global Heap
 externdef pascal GlobalSize: far
 externdef pascal GlobalDOSAlloc: far
 externdef pascal GlobalDOSFree: far
@@ -66,6 +75,7 @@ externdef pascal GlobalCompact: far
 
 externdef pascal GetFreeSpace: far
 
+; Local Heap
 externdef pascal LocalAlloc: far
 externdef pascal LocalReAlloc: far
 externdef pascal LocalFree: far
@@ -75,8 +85,6 @@ externdef pascal LocalUnlock: far
 externdef pascal LocalSize: far
 externdef pascal LocalCompact: far
 
-externdef pascal GetPrivateProfileString:far
-externdef pascal WritePrivateProfileString:far
 
 
 _TEXT segment word public 'CODE'
@@ -114,8 +122,7 @@ _TEXT segment
 
 
 GetDOSEnvironment proc far pascal
-	mov ah,51h
-	int 21h
+	GET_PSP
 	mov es,bx
 	mov dx,es:[002Ch]
 	xor ax,ax
@@ -150,7 +157,7 @@ FatalAppExit proc far pascal
 FatalAppExit endp
 
 FatalExit proc far pascal
-	mov ds,cs:[wLdrDS]
+	@SetKernelDS
 	@strout_err <lf,"Fatal exit from application",lf>
 	@Exit RC_FATAL
 FatalExit endp
@@ -279,7 +286,7 @@ AllocSelector proc far pascal
 	and bx,bx
 	jz @F
 	push ds
-	mov ds,cs:[wLdrDS]
+	@SetKernelDS
 	call CopyDescriptor	;copy BX -> AX
 	pop ds
 @@:
@@ -437,7 +444,7 @@ SetErrorMode endp
 
 LoadModule proc far pascal uses ds lpszModuleName:far ptr byte, lpParameterBlock:far ptr
 
-	mov ds,cs:[wLdrDS]
+	@SetKernelDS
 	mov [fLoadMod],1	;use a asciiz command line
 	lds dx, lpszModuleName
 	les bx, lpParameterBlock
@@ -446,7 +453,7 @@ if ?32BIT
 	movzx edx,dx
 endif
 	@Exec
-	mov ds,cs:[wLdrDS]
+	@SetKernelDS
 	mov [fLoadMod],0
 	ret
 LoadModule endp
@@ -493,21 +500,17 @@ GetProcAddress proc far pascal uses ds hInst:word, lpszProcName:far ptr byte
 GetProcAddress endp
 
 GetCurrentTask proc far pascal
-	mov ah,51h
-	int 21h
+	GET_PSP
 	mov ax,bx
 	ret
 GetCurrentTask endp
 
 GetCurrentPDB proc far pascal
-	mov ah,51h
-	int 21h
+	GET_PSP
 	mov ax,bx
 	mov dx,cs:[wLdrPSP]
 	ret
 GetCurrentPDB endp
-
-
 
 AllocCSToDSAlias proc far pascal
 	pop cx
@@ -551,7 +554,6 @@ PrestoChangoSelector proc far pascal
 
 PrestoChangoSelector endp
 
-if ?32BIT eq 0
 
 _lclose proc far pascal
 	@loadbx
@@ -639,8 +641,6 @@ _lcreat proc far pascal
 	@return 6
 _lcreat endp
 
-endif
-
 ;*** InitTask - this should be called by DPMI16 apps only.
 ;*** DPMI16 may be splitted to RTM and Win16 compatibles.
 ;*** this makes the initialization a bit confusing
@@ -653,13 +653,29 @@ endif
 ;*** DS: DGROUP or PSP (if RTM compatible)
 ;*** SS: DGROUP
 ;*** SP: top of Stack
+;
+;From https://devblogs.microsoft.com/oldnewthing/20071203-00/?p=24323
+;
+;AX	zero (used to contain even geekier information in Windows 2)
+;BX	stack size
+;CX	heap size
+;DX	unused (reserved)
+;SI	previous instance handle
+;DI	instance handle
+;BP	zero (for stack walking)
+;DS	application data segment
+;ES	selector of program segment prefix
+;SS	application data segment (SS=DS)
+;SP	top of stack
+;
+;
 ;*** Out: CX=stack limit
 ;*** SI=0 (previous instance)
 ;*** DI=module Handle
 ;*** ES=PSP
 ;*** ES:BX=CmdLine
-
-ife ?32BIT
+;
+;
 
 InitTask proc far pascal uses ds
 
@@ -671,15 +687,16 @@ InitTask proc far pascal uses ds
 	mov dx,ax
 	sub dx,bx
 	add dx,60h
-	cmp word ptr ds:[0004],5
+	cmp word ptr ds:[0004],5 ; What is this? Why skip if SS equal to 5?
 	jnz @F
+;INSTANCEDATA
 	mov ds:[000Ah],dx	;stack bottom
 	mov ds:[000Ch],ax
 	mov ds:[000Eh],ax	;stack top
 @@:
 	push dx
-if ?LOCALHEAP
-	jcxz @F
+
+	jcxz @F			; No local heap
 	push ds			;data segment
 	xor ax,ax
 	push ax			;start
@@ -687,7 +704,7 @@ if ?LOCALHEAP
 	push cs
 	call near ptr LocalInit	;preserves ES
 @@:
-endif
+
 	call InitDlls
 	pop cx		;stack limit
 	mov ax,0
@@ -702,8 +719,6 @@ exit:
 	ret
 
 InitTask endp
-
-endif
 
 _TEXT ends
 
@@ -721,8 +736,7 @@ SetWinFlags proc
 	mov cl,3
 @@:
 	shl al,cl				;processor (2=286,4=386,8=486)
-	or al,WF_PMODE or WF_STANDARD
-;	mov [WinFlags],ax
+	or al,WF_PMODE or WF_STANDARD		;@todo depends on compilation mode
 	mov [eWinFlags.wOfs],ax
 	ret
 SetWinFlags endp
@@ -781,8 +795,7 @@ nextseg:
 	loop nextseg
 endif
 
-	mov ax,0003 		   ;get AHINC value
-	int 31h
+	@DPMI_GetIncValue	   ;get AHINC value
 	jc @F
 	mov [eINCR.wOfs],ax
 @@:
@@ -790,24 +803,19 @@ endif
 if ?MEMFORKERNEL
 	xor bx,bx
 	mov cx,1000h
-	mov ax,501h
-	int 31h
+	@DPMI_ALLOCMEM
 	jc exit
 	mov word ptr KernelNE.MEMHDL+0,si
 	mov word ptr KernelNE.MEMHDL+2,di
 	push bx
 	push cx
-	mov cx,1
-	xor ax,ax
-	int 31h
+	@DPMI_AllocDesc
 	pop dx
 	pop cx
 	jc exit
 	mov bx,ax
 else
-	mov cx,1
-	xor ax,ax
-	int 31h
+	@DPMI_AllocDesc
 	jc exit
 	push ax
 	mov bx,cs
@@ -817,7 +825,7 @@ else
 	add dx,offset KernelNE
 	adc cx,0
 endif
-	mov ax,7
+	mov ax,0007h
 	int 31h
 	mov dx,(EndKernelNE - KernelNE) - 1
 	or dl,0Fh

@@ -130,7 +130,7 @@ _wordout proc public
 		mov 	bp,sp
 		pushf
 		push	ds
-		mov 	ds,cs:[wLdrDS]
+		@SetKernelDS
 if ?32BIT
 		mov 	ax,[esp+22]
 else

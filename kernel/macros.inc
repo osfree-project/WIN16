@@ -33,3 +33,11 @@ WF_CPU386	equ 4
 WF_CPU486	equ 8
 WF_STANDARD equ 10h
 WF_ENHANCED	equ 20h
+
+@SetKernelDS	macro segm
+		ifnb <segm>
+			mov segm,cs:[wKernelDS]
+		else
+			mov ds,cs:[wKernelDS]
+		endif
+		endm

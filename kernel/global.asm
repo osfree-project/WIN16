@@ -590,13 +590,13 @@ resizemodulesegm proc uses di
 	mov di, ss			;switch to loader stack
 if ?32BIT
 	mov esi,esp
-	mov ss,cs:[wLdrDS]
+	@SetKernelDS ss
 	mov esp,cs:[dStktop]
 	push di
 	push esi
 else
 	mov si,sp
-	mov ss,cs:[wLdrDS]
+	@SetKernelDS ss
 	mov sp,cs:[wStktop]
 	push di
 	push si
@@ -735,7 +735,7 @@ GlobalCompact proc far pascal dwMinFree:DWORD
 	inc cx
 	jnz @F
 	push ds
-	mov ds,cs:[wLdrDS]
+	@SetKernelDS
 	call discardmem
 	pop ds
 @@:
