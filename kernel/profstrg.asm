@@ -1,4 +1,8 @@
-include pusha.inc
+        ; MacroLib
+	include dos.inc
+
+
+	include pusha.inc
 if ?REAL
 		.8086
 else
@@ -119,7 +123,7 @@ searchentry_er:
 
 GetPrivateProfileString proc far pascal uses ds es lpszSection:far ptr byte,
 		lpszEntry:far ptr byte, lpszDefault:far ptr byte,
-        retbuff:far ptr byte, bufsize:word,
+		retbuff:far ptr byte, bufsize:word,
 		lpszFilename:far ptr byte
 
 local	rc:word
@@ -128,23 +132,23 @@ local	sel:word
         @push_a
         xor     ax,ax
         mov     rc,ax
-        mov     ah,48h
-        mov     bx,1000h                ;64k allokieren als puffer
-        int     21h
+	@GetBlok 1000h			;64k allokieren als puffer
         jc      getpps_ex               ;fehler: kein freier speicher
 ;        @cstrout <"allokierung 64k ok",cr,lf>
         mov     sel,ax
         lds     dx,lpszFilename
         mov     ax,3Dh*100h + O_RDONLY
         int     21h
+;	@OpenFil
         jc      getpps_ex1              ;fehler: file not found
 ;        @cstrout <"open ok",cr,lf>
-        mov     bx,ax
-        mov     ds,sel
-        xor     dx,dx
-        mov     cx,0FFF0h
-        mov     ah,3Fh
-        int     21h
+;        mov     bx,ax
+;        mov     ds,sel
+;        xor     dx,dx
+;        mov     cx, 0FFF0h
+;        mov     ah,3Fh
+;        int     21h
+	@Read	0, 0FFF0h, ax, sel
         jc      getpps_ex2             ;fehler: read error
 ;        @cstrout <"read ok",cr,lf>
         mov     cx,ax
@@ -193,18 +197,15 @@ getpps_6:
         stosb
         mov     rc,dx
 getpps_ex2:
-        mov     ah,3eh                  ;close file
-        int     21h
+        @ClosFil                  ;close file
 getpps_ex1:
-        mov     es,sel
-        mov     ah,49h
-        int     21h
+	@FreeBlok sel
 getpps_ex:
         @pop_a
         mov     ax,rc
         ret
 
-GetprivateProfileString endp
+GetPrivateProfileString endp
 
 WritePrivateProfileString proc far pascal uses ds es lpszSection:far ptr byte,
         lpszEntry:far ptr byte, lpszString:far ptr byte, lpszFilename:far ptr byte
@@ -216,9 +217,7 @@ local	lbuf:word
         @push_a
         xor     ax,ax
         mov     rc,ax
-        mov     ah,48h
-        mov     bx,1000h                ;64k allokieren als puffer
-        int     21h
+	@GetBlok 1000h			;64k allokieren als puffer
         jc      writepps_ex             ;fehler: kein freier speicher
 ;        @cstrout <"allokierung 64k ok",cr,lf>
         mov     sel,ax
@@ -227,12 +226,13 @@ local	lbuf:word
         int     21h
         jc      writepps_1              ;file nicht da
 ;        @cstrout <"open ok",cr,lf>
-        mov     bx,ax
-        mov     ds,sel
-        xor		dx,dx
-        mov     cx,0FFF0h
-        mov     ah,3Fh
-        int     21h
+;        mov     bx,ax
+;        mov     ds,sel
+;        xor	dx,dx
+;        mov     cx,0FFF0h
+;        mov     ah,3Fh
+;        int     21h
+	@Read	0, 0FFF0h, ax, sel
         jc      writepps_ex2              ;fehler: read error
 ;        @cstrout <"read ok",cr,lf>
         mov     cx,ax
@@ -259,6 +259,7 @@ local	lbuf:word
 writepps_1:                             ;create file
         mov     ax,3C00h
         int     21h
+;	@MakFil
         jc      writepps_ex1
         mov     bx,ax
 ;        @cstrout <"create ok",cr,lf>
@@ -270,12 +271,9 @@ writepps_3:                             ;entry not found
 writepps_4:
         call    writerest
 writepps_ex2:
-        mov     ah,3eh                  ;close file
-        int     21h
+        @ClosFil                  	;close file
 writepps_ex1:
-        mov     es,sel
-        mov     ah,49h
-        int     21h
+	@FreeBlok sel
 writepps_ex:
         @pop_a
         mov     ax,rc
@@ -288,12 +286,10 @@ writerest:
         pop     ds
         call    getstrlen
         jcxz    @F
-        mov     ah,40h
-        int     21h
-		xor		cx,cx
+	@Write
+	xor	cx,cx
 @@:
-        mov     ah,40h		;write with CX=0 will truncate file
-        int     21h
+	@Write		;write with CX=0 will truncate file
         retn
 writeseckap:
 ;        @cstrout <"write section capital",cr,lf>
@@ -302,8 +298,7 @@ writeseckap:
         lds     dx,lpszSection
         call    getstrlen
         jcxz    @F
-        mov     ah,40h
-        int     21h
+	@Write
 @@:
         mov     al,']'
         call    writechar
@@ -314,8 +309,7 @@ writeentry:
         lds     dx,lpszEntry
         call    getstrlen
         jcxz    @F
-        mov     ah,40h
-        int     21h
+	@Write
 @@:
         mov     al,'='
         call    writechar
@@ -324,8 +318,7 @@ writevalue:
 ;        @cstrout <"write value",cr,lf>
         lds     dx,lpszString
         call    getstrlen
-        mov     ah,40h
-        int     21h
+	@Write
         call    writecrlf
         retn
 writecrlf:
@@ -341,12 +334,11 @@ writechar:
         mov     byte ptr lbuf,al
         lea     dx,lbuf
         mov     cx,1
-        mov     ah,40h
-        int     21h
+	@Write
         pop     ds
         retn
 getstrlen:
-		xor		cx,cx
+	xor	cx,cx
         push    bx
         mov     bx,dx
 @@:

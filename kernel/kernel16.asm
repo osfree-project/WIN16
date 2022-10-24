@@ -601,8 +601,7 @@ _llseek proc far pascal
 	@loadparm 2,dx
 	@loadparm 4,cx
 	@loadparm 6,bx
-	mov ah,42h
-	int 21h
+	@MovePtr
 	jnc @F
 	mov ax,-1
 @@:
@@ -615,9 +614,7 @@ _lopen proc far pascal
 	@loadparm 0,al
 	@loadparm 2,dx
 	@loadparm 4,ds
-	mov ah,3Dh
-	int 21h
-;	@OpenFil
+	@OpenFil
 	jnc @F
 	mov ax,-1
 @@:
@@ -631,9 +628,7 @@ _lcreat proc far pascal
 	@loadparm 0,al
 	@loadparm 2,dx
 	@loadparm 4,ds
-	mov ah,3Ch
-	int 21h
-;	@MakFil
+	@MakFil
 	jnc @F
 	mov ax,-1
 @@:
@@ -786,8 +781,7 @@ nextseg:
 	push ax
 	lodsw
 	xchg bx,ax
-	mov ax,0002	;alloc rm selector
-	int 31h
+	@DPMI_Seg2Desc		;alloc rm selector
 	pop bx
 	jc @F
 	mov [bx].ENTRY.wOfs,ax
@@ -819,19 +813,16 @@ else
 	jc exit
 	push ax
 	mov bx,cs
-	mov ax,0006h
-	int 31h
+	@DPMI_GetBase
 	pop bx
 	add dx,offset KernelNE
 	adc cx,0
 endif
-	mov ax,0007h
-	int 31h
+	@DPMI_SetBase
 	mov dx,(EndKernelNE - KernelNE) - 1
 	or dl,0Fh
 	xor cx,cx
-	mov ax,8
-	int 31h
+	@DPMI_SetLimit
 	mov es,bx
 	mov [wMDSta],bx
 if ?MEMFORKERNEL
