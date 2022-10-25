@@ -292,8 +292,7 @@ endif
 	push cx
 	add cx,8h		;add 8 bytes as prefix
 	adc bx,0
-	mov ax,0501h
-	int 31h
+	@DPMI_ALLOCMEM
 	jc failed
 	push bx			;save linear address
 	push cx
@@ -303,14 +302,12 @@ endif
 	inc cx
 @@:
 	mov [bp-2],cx
-	xor ax,ax
-	int 31h
+	@DPMI_AllocDesc
 	jc failed2
 	mov bx,ax
 	pop dx
 	pop cx
-	mov ax,7		;set base
-	int 31h
+	@DPMI_SetBase		;set base
 	pop dx
 	pop cx
 	push cx
@@ -324,12 +321,10 @@ endif
 	mov es:[4],bx	;save selector
 	mov si,[bp-2]
 	mov es:[6],si	;save no of selectors
-	mov ax,6
-	int 31h
+	@DPMI_GetBase
 	add dx,8
 	adc cx,0
-	mov ax,7
-	int 31h
+	@DPMI_SetBase
 	push cx
 	mov di,dx
 nextdesc:
@@ -340,9 +335,7 @@ nextdesc:
 	inc cx
 	push cx
 	mov dx,di
-	mov ax,7
-	int 31h
-	mov ax,8
+	@DPMI_SetBase
 	mov dx,-1
 	cmp si,1
 	jnz @F
@@ -354,7 +347,7 @@ else
 endif
 @@:
 	mov cx,0
-	int 31h
+	@DPMI_SetLimit
 	jmp nextdesc
 done:
 	mov sp,bp
@@ -362,8 +355,7 @@ done:
 	@pop_a
 	jmp allocok
 failed2:
-	mov ax,0502h
-	int 31h
+	@DPMI_FREEMEM
 failed:
 	mov sp,bp
 	@pop_a
@@ -418,17 +410,14 @@ if ?LARGEALLOC
 failed: 
 	add dx,8
 	adc cx,0
-	mov ax,7
-	int 31h
+	@DPMI_SetBase
 	jmp error
 largefree:
-	mov ax,6		;get base
-	int 31h
+	@DPMI_GetBase		;get base
 	jc error
 	sub dx,8
 	sbb cx,0
-	mov ax,7		;set base
-	int 31h
+	@DPMI_SetBase		;set base
 	mov es,bx
 	cmp bx,es:[4]
 	jnz failed
@@ -439,11 +428,9 @@ largefree:
 	mov cx,ax
 	mov di,es:[0]
 	mov si,es:[2]
-	mov ax,0502h
-	int 31h
+	@DPMI_FREEMEM
 @@:
-	mov ax,1
-	int 31h
+	@DPMI_FreeDesc
 	add bx,8
 	loop @B
 	@pop_a
@@ -488,7 +475,7 @@ endif
 @@:
 	mov dx,es:[bx].SEGITEM.wDosSel
 	xchg ax,bx
-	mov ax,0102h
+	mov ax,0102h		; @todo ???
 	int 31h
 	jc error
 	mov ax,dx
@@ -519,7 +506,7 @@ resizeextmemblock proc
 	mov di,word ptr es:[bx].SEGITEM.dwHdl+0
 	mov cx,ax
 	mov bx,dx
-	mov ax,0503h		;resize dpmi memory block
+	mov ax,0503h		;@todo?? resize dpmi memory block
 	int 31h
 	mov dx,cx			;base address -> cx:dx
 	mov cx,bx
@@ -531,12 +518,10 @@ resizeextmemblock proc
 	and ax,ax
 	jz @F
 	mov bx,ax
-	mov ax,0007h		;set segment base address
-	int 31h
+	@DPMI_SetBase		;set segment base address
 @@:
 	pop bx				;selector 1
-	mov ax,0007h		;set segment base address
-	int 31h
+	@DPMI_SetBase		;set segment base address
 	jc error1
 if ?32BIT
 	pop ecx 			;new requested size
@@ -553,8 +538,7 @@ else
 	sub dx,1
 	sbb cx,0
 endif
-	mov ax,0008h		;set limit
-	int 31h
+	@DPMI_SetLimit		;set limit
 	jc error2
 	mov ax,bx
 exit:
@@ -752,8 +736,7 @@ GetFreeSpace proc far pascal
 	mov di,sp
 	push ss
 	pop es
-	mov ax,0500h
-	int 31h
+	@DPMI_GETFREEMEMINFO
 	pop ax		;get the first dword in DX:AX
 	pop dx
 	add sp,48-4
