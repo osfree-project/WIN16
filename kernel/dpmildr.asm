@@ -66,7 +66,6 @@ _RESIZEPSP_ 	 = 1	;1 1=resize loader psp to 120h after moved in ext. memory
 ?DOSEMUSUPP		= 1		;1 1=support DOSEMU
 ?PHARLABTNT		= 1		;1 1=support PharLab TNT executables (PL) (32bit only)
 ?HIDENEASWELL	= 1		;1 1=hide loader and server for NE exes if DPMILDR=8
-?CHECKCALLER	= 0		;0 1=??? (had this ever worked?)
 ?SETINIT		= 1		;1 1=set init flag for Dlls
 ?SLOADERR		= 1		;1 1=display exact error why HDPMI cannot be loaded
 ?MAKENEWENV		= 1		;1 1=make new environment if task > 0
@@ -473,10 +472,6 @@ endif
 endoflowcode label byte
 
 
-if ?CHECKCALLER
-ctxt	db "DPMILDR"
-lctxt	equ $ - ctxt
-endif
 
 overlayentry:
 	push es
@@ -1559,12 +1554,6 @@ l214c_3:
 ;*** QWORD fcb2        ; FCB 2         (-> PSP:6C)
 
 int214b proc
-if ?CHECKCALLER
-	call checkcaller	;called by loader?
-	jnz @F
-	jmp jmpprevint21	;jmp to previous int21 handler
-@@:
-endif
 	push ds
 	push es
 if ?32BIT
@@ -7342,37 +7331,6 @@ modnameout endp
 
 	include trace.inc
 
-;--- check if int 21/4bh has been called by loader
-;--- possibly redundant
-
-if ?CHECKCALLER
-checkcaller proc
-	push ds
-	push es
-	cld
-	push cs
-	pop ds
-if ?32BIT
-	pushad
-	les edi,[esp+8*4+2*2+2]		;get cs:eip of caller
-	mov esi,offset ctxt
-	mov ecx,lctxt
-	repz cmps byte ptr [edi],[esi]
-	popad
-else
-	@push_a
-	mov bp,sp
-	mov si,offset ctxt
-	les di,[bp+8*2+2*2+2]
-	mov cx,lctxt
-	repz cmpsb
-	@pop_a
-endif
-	pop es
-	pop ds
-	ret
-checkcaller endp
-endif
 
 ;*** terminate program (int 21h, ah=4Ch) psp security check 
 ;*** search current psp in task list!

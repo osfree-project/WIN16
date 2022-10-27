@@ -49,6 +49,11 @@ int strnicmp(char far *s1, const char far *s2, int n);
 void memcpy(void far * s1, void far * s2, unsigned length);
 void far * memset (void far *start, int c, int len);
 
+extern  unsigned short          GetDS( void );
+#pragma aux GetDS               = \
+        "mov    ax,ds"          \
+        value                   [ax];
+
 //WINE_DEFAULT_DEBUG_CHANNEL(atom);
 
 #define DEFAULT_ATOMTABLE_SIZE    37
@@ -87,10 +92,8 @@ typedef struct
 static ATOMTABLE *ATOM_GetTable( BOOL create  /* [in] Create */ )
 {
     INSTANCEDATA far *ptr;
-    WORD s;
 
-    __asm {mov s,ds};
-    ptr=MAKELP(s, 0);
+    ptr=MAKELP(GetDS(), 0);
 
 //    INSTANCEDATA *ptr = MapSL( MAKESEGPTR( CURRENT_DS, 0 ) );
     if (ptr->atomtable)
@@ -159,9 +162,7 @@ static BOOL ATOM_IsIntAtomA(LPCSTR atomstr,WORD *atomid)
  */
 ATOMENTRY far *ATOM_MakePtr( HANDLE handle /* [in] Handle */ )
 {
-    WORD CURRENT_DS;
-    __asm { mov CURRENT_DS, DS };
-    return MAKELP(CURRENT_DS, handle);
+    return MAKELP(GetDS(), handle);
 }
 
 
@@ -173,21 +174,19 @@ BOOL WINAPI InitAtomTable( int entries )
     int i;
     HANDLE handle;
     ATOMTABLE far *table;
-    WORD CURRENT_DS;
-    __asm { mov CURRENT_DS, DS };
 
       /* Allocate the table */
 
     if (!entries) entries = DEFAULT_ATOMTABLE_SIZE;  /* sanity check */
     handle = LocalAlloc( LMEM_FIXED, FIELDOFFSET( ATOMTABLE, entries[entries] ));
     if (!handle) return 0;
-    table = MAKELP( CURRENT_DS, handle );
+    table = MAKELP( GetDS(), handle );
     table->size = entries;
     for (i = 0; i < entries; i++) table->entries[i] = 0;
 
       /* Store a pointer to the table in the instance data */
 
-    ((INSTANCEDATA far *) MAKELP( CURRENT_DS, 0 ))->atomtable = handle;
+    ((INSTANCEDATA far *) MAKELP(GetDS(), 0 ))->atomtable = handle;
     return handle;
 }
 
