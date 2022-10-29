@@ -426,11 +426,6 @@ externdef pascal kernelmain:far
 ; 10 THHOOK structure
 ; ?? wKernelDS - address of Kernel DS
 
-;*** if the loader is loaded as overlay (by DPMIST32.BIN)
-;*** DS:DX will point to full path of DPMILDXX.EXE
-;*** and DS:BX will have path of program to load
-;*** (bad design, but cannot be changed anymore)
-
 ; INSTANCEDATA structure, samoe for each task
 ID_NULL		dw	0		; 00 /* Always 0 */
 ID_OLDSP	dw	?		; 02 /* Stack pointer; used by SwitchTaskTo() */
@@ -456,6 +451,12 @@ TH_LockTDB	dw	?		;  /* 14 hLockedTask */
 ; Kernel specific data
 
 wKernelDS label word
+
+;*** if the loader is loaded as overlay (by DPMIST32.BIN)
+;*** DS:DX will point to full path of DPMILDXX.EXE
+;*** and DS:BX will have path of program to load
+;*** (bad design, but cannot be changed anymore)
+
 	jmp overlayentry
 
 
@@ -627,14 +628,6 @@ if ?32BIT
 	test fMode, FMODE_ISNT or FMODE_ISWIN9X
 	jnz @F
 	or bEnvFlgs2, ENVFL2_ALLOWGUI
-@@:
-endif
-if 0	;not needed currently
-	mov ax,004Fh
-	int 41h
-	cmp ax,0F386h
-	jnz @F
-	or fMode, FMODE_DEBUGGER
 @@:
 endif
 	call InitProtMode	;init vectors, alloc internal selectors
@@ -1001,7 +994,7 @@ endif
 	pop dx
 	@iret
 ischarout:
-	mov ah,2
+	@DispCh
 	int 21h
 	@iret
 myint41 endp
@@ -1042,8 +1035,7 @@ do2131 proc
 	mov es,bx
 	mov ah,50h
 	int 21h
-	mov ax,0306h				;get real mode entry point
-	int 31h
+	@DPMI_GETRMSA				;get real mode entry point
 	pop ax
 if ?32BIT
 	push esi
@@ -1360,8 +1352,7 @@ if ?32BIT
 	push eax
 	pop di
 	pop si
-	mov ax,0502h			;free stack handle
-	int 31h
+	@DPMI_FREEMEM				;free stack handle
 	pop si
 	jmp i214c_2
 @@:
@@ -1716,8 +1707,7 @@ if 0
 	jmp retf2ex 		  ;exit function 4B with Carry set
 else
 StartApp_ErrExit:
-	mov ax,4C00h+RC_INITAPP
-	int 21h
+	@Exit RC_INITAPP
 endif
 
 ;*** start new NE application
@@ -2158,13 +2148,10 @@ if ?REAL
 else
 	shr ax,4
 endif
-	mov bx,ax
   if ?LOWENV
-	mov ax,100h
-	int 31h
+	@DPMI_DOSALLOC ax
   else
-	mov ah,48h
-	int 21h
+	@GetBlok ax
   endif
 	jc done
 	push es
@@ -2238,9 +2225,7 @@ if ?USE1PSP
 	test bEnvFlgs, ENVFL_LOAD1APPONLY
 	jnz pspdone
 endif
-	mov bx,10h
-	mov ax,0100h			;alloc DOS memory for PSP
-	int 31h
+	@DPMI_DOSALLOC 10h			;alloc DOS memory for PSP
 	jc error1
 	push ax					;DX = selector, AX = segment
 	push si
@@ -2330,14 +2315,12 @@ else
 	movsw
 	@pop_a
 	pop ds
-	mov ax,0001
-	int 31h
+	@DPMI_FreeDesc
 endif
 createpsp_1:
 endif
 if ?SETDTA
-	mov ah,2fh
-	int 21h
+	@GetDTA
 if ?32BIT
 	mov dword ptr [si.TASK.dta+0],ebx
 	mov word ptr [si.TASK.dta+4],es
@@ -2352,8 +2335,7 @@ if ?32BIT
 else
 	mov dx,0080h
 endif
-	mov ah,1Ah
-	int 21h 				;set DTA
+	@SetDTA				;set DTA
 	pop ds
 endif
 	clc
@@ -2551,9 +2533,7 @@ resetvecs endp
 
 if ?CHECKTOP
 areweontop proc
-	mov bl,21h
-	mov ax,0204h
-	int 31h
+	@DPMI_GetPMIntVec 21h
 	mov ax, cs
 	cmp ax, cx
 	ret
@@ -2566,8 +2546,7 @@ if ?CLOSEALLFILES
 CloseAllFiles proc
 	mov bx,5				;close open files >= 5 
 @@:
-	mov ah,3Eh
-	int 21h
+	@ClosFil
 	inc bx
 	cmp bx,_FILEHANDLES_
 	jnz @B
@@ -3002,10 +2981,7 @@ endif
 	mov edi, ebp
 	push ss
 	pop es
-	mov bx,0021h
-	xor cx,cx
-	mov ax,0300h
-	int 31h
+	@DPMI_SimRMInt 21h, 0
 	mov ax,[ebp].RMCS.rAX
 	test [ebp].RMCS.rFlags, 1
 	lea esp, [esp+32+2]
@@ -3047,8 +3023,7 @@ nont:
 	jnz done
 nolfn:
 endif
-	MOV AX,3D00h or _SFLAGS_	;open a file for read
-	int 21h
+	@OpenFil , _SFLAGS_	;open a file for read
 done:
 	ret
 openfile endp
@@ -3174,8 +3149,7 @@ getcurrentdir proc
 	@trace_s <"enter getcurrentdir",lf>
 	push dx
 	push si
-	mov ah,19h
-	int 21h
+	@GetDrv
 	@trace_s <"int 21,ah=19h called",lf>
 	mov dl,al
 	inc dl
@@ -3184,8 +3158,7 @@ getcurrentdir proc
 	mov ax,"\:"
 	mov [si+1],ax
 	add si,3
-	mov ah,47h
-	int 21h
+	@GetDir
 	@trace_s <"int 21,ah=47h called",lf>
 	mov ah,-1
 @@:
@@ -3347,8 +3320,7 @@ checkoutoffh proc
 	jnz exit
 	@push_a
 	push es
-	mov ah,62h
-	int 21h
+	GET_PSP
 	mov es,bx
 	mov bx,es:[32h]
 	cmp bx,0EFh			;can it be increased?
@@ -3495,8 +3467,7 @@ endif
 @@:
 	mov bx,0FFFFh
 	xchg bx,es:[NEHDR.ne_hFile]
-	mov ah,3Eh			;close file
-	int 21h
+	@ClosFil			;close file
 	jc error1
 	@trace_s <"module ">
 	@tracemodule
@@ -3525,8 +3496,7 @@ error2:
 	ret
 error3:
 	push ax
-	mov ah,3Eh			;close file
-	int 21h
+	@ClosFil			;close file
 	pop ax
 	jmp errorx
 error1:
@@ -3575,8 +3545,7 @@ ReadHdrs proc
 	mov [NEHdrOfs],ax	;init offset NE-Header
 	mov cx,0040h
 	mov dx,offset MZ_Hdr
-	mov ah,3Fh			;read MZ hdr
-	int 21h
+	@Read				;read MZ hdr
 	jc error1			;DOS read error
 	cmp ax,cx			;could read 40h bytes?
 	jnz error2
@@ -3599,8 +3568,7 @@ ReadHdrs proc
 	@trace_s <"trying to read NE-Header",lf>
 	mov cx,0040h
 	mov dx,offset NE_Hdr
-	mov ah,3Fh			;read
-	int 21h
+	@Read				;read
 	jc error6			;DOS read error
 	cmp ax,cx
 	jnz error7
@@ -3686,8 +3654,7 @@ endif
 	push ax
 	push ss
 	pop es
-	mov ax,000Bh			  ;get BX desc -> ES:(E)DI
-	int 31h
+	@DPMI_GetDescriptor			  ;get BX desc -> ES:(E)DI
 	jc exit
 	@trace_s <"CreateAlias, get descriptor ok",lf>
 if ?32BIT
@@ -3698,8 +3665,7 @@ endif
 	pop bx					  ;AX -> BX
 	push bx
 
-	mov ax,000Ch			  ;set BX desc <- ES:(E)DI
-	int 31h
+	@DPMI_SetDescriptor			  ;set BX desc <- ES:(E)DI
 if _TRACE_
 	jc exit
 	@trace_s <"CreateAlias, set descriptor ok",lf>
@@ -3943,8 +3909,7 @@ LoadSegmTable proc
 	shl ax,1
 	mov cx,ax
 	mov dx,offset segtable
-	mov ah,3Fh					;read table
-	int 21h
+	@Read						;read table
 	jc error1
 done:
 	ret
@@ -4270,8 +4235,7 @@ if _DISCARD_
 	mov dl,2
 tryagain:
 endif
-	mov ax,0501h		;alloc memory (BX:CX bytes)
-	int 31h
+	@DPMI_ALLOCMEM		;alloc memory (BX:CX bytes)
 if _DISCARD_
 	jnc @F
 	dec dl
@@ -4367,8 +4331,7 @@ else
 	shl dx,4
 endif
 	mov bx, [aliassel]
-	mov ax,7
-	int 31h
+	@DPMI_SetBase
 	mov ax, [wRMPSP]
 	push ds
 	mov ds,bx
@@ -4494,9 +4457,7 @@ if ?32BIT eq 0
 ;*** out: BX=Selector  ***
 
 AllocRMSegment proc uses cx dx
-	xor ax,ax
-	mov cx,0001 			;alloc selector
-	int 31h
+	@DPMI_AllocDesc 			;alloc selector
 	jc exit
 	xchg ax,bx				;segment in bx
 	mov dx,ax				;zu addr in cx:dx
@@ -4525,13 +4486,11 @@ if ?REAL
 else
 	shl dx,4
 endif
-	mov ax,0007
-	int 31h 				;set base
+	@DPMI_SetBase			;set base
 	jc exit
 	mov dx,-1
 	xor cx,cx
-	mov ax,0008 			;set limit to 64k
-	int 31h
+	@DPMI_SetLimit 			;set limit to 64k
 exit:
 	ret
 AllocRMSegment endp
@@ -4762,8 +4721,7 @@ closefile proc
 	xchg bx,es:[NEHDR.ne_hFile]
 	cmp bx,-1
 	jz exit
-	mov ah,3Eh					   ;close file
-	int 21h
+	@ClosFil					   ;close file
 exit:
 	ret
 closefile endp
@@ -4847,13 +4805,11 @@ endif
 	and cx,cx						;is it 64 kB?
 	jnz @F
 	mov cx,08000h
-	mov ah,3Fh
-	int 21h							;then do it in 2 reads
+	@Read							;then do it in 2 reads
 	mov dx,8000h
 	mov cx,dx
 @@:
-	mov ah,3Fh						;read segment (CX bytes)
-	int 21h
+	@Read							;read segment (CX bytes)
 readdone:
 	pop ds
 if _TRACE_
@@ -4936,16 +4892,14 @@ nextitem:
 	mov dx,sp		;this is 16-bit only
 	push ss
 	pop ds
-	mov ah,3Fh
-	int 21h
+	@Read
 	pop bp			;number of iterations
 	pop cx			;size in bytes
 	jc error
 	push es
 	pop ds
 	mov dx,si
-	mov ah,3Fh
-	int 21h
+	@Read
 	jc error
 	sub di,ax
 	jc error
@@ -5029,8 +4983,8 @@ else
 	shl bx,12
 endif
 	or bx,cx
-	mov ax,0102h		   ;the address cannot change
-	int 31h 			   ;server will do the selector tiling
+	@DPMI_DOSSIZE			   ;the address cannot change
+		 			   ;server will do the selector tiling
 	jc ReallocMem_err
 	mov ax,dx
 	jmp reallocmem_exx

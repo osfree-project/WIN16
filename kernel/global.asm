@@ -379,7 +379,7 @@ if ?LARGEALLOC
 	jnz error
 ;	test eax,0FFF00000h	;limit >= 100000h
 ;	jnz largefree
-	cmp eax,0FFFEFh			;largest block for int 21h
+	cmp eax,0FFFEFh			;largest block for DOS int
 	jnc largefree
 if ?REAL
 	.8086
