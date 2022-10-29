@@ -137,17 +137,9 @@ local	sel:word
 ;        @cstrout <"allokierung 64k ok",cr,lf>
         mov     sel,ax
         lds     dx,lpszFilename
-        mov     ax,3Dh*100h + O_RDONLY
-        int     21h
-;	@OpenFil
+	@OpenFil ,O_RDONLY
         jc      getpps_ex1              ;fehler: file not found
 ;        @cstrout <"open ok",cr,lf>
-;        mov     bx,ax
-;        mov     ds,sel
-;        xor     dx,dx
-;        mov     cx, 0FFF0h
-;        mov     ah,3Fh
-;        int     21h
 	@Read	0, 0FFF0h, ax, sel
         jc      getpps_ex2             ;fehler: read error
 ;        @cstrout <"read ok",cr,lf>
@@ -222,16 +214,9 @@ local	lbuf:word
 ;        @cstrout <"allokierung 64k ok",cr,lf>
         mov     sel,ax
         lds     dx,lpszFilename
-        mov     ax,3Dh*100h + O_RDWR
-        int     21h
+	@OpenFil ,O_RDWR
         jc      writepps_1              ;file nicht da
 ;        @cstrout <"open ok",cr,lf>
-;        mov     bx,ax
-;        mov     ds,sel
-;        xor	dx,dx
-;        mov     cx,0FFF0h
-;        mov     ah,3Fh
-;        int     21h
 	@Read	0, 0FFF0h, ax, sel
         jc      writepps_ex2              ;fehler: read error
 ;        @cstrout <"read ok",cr,lf>
@@ -246,10 +231,7 @@ local	lbuf:word
         call    searchentry
         pushf
         jcxz    @F
-        mov     dx,di
-        mov     cx,0
-        mov     ax,4200h
-        int     21h
+        @MovePtr ,0,di,0
 @@:
         popf
         jc      writepps_3              ;eintrag nicht gefunden
@@ -257,9 +239,7 @@ local	lbuf:word
         call    skipline
         jmp     writepps_4
 writepps_1:                             ;create file
-        mov     ax,3C00h
-        int     21h
-;	@MakFil
+	@MakFil 
         jc      writepps_ex1
         mov     bx,ax
 ;        @cstrout <"create ok",cr,lf>

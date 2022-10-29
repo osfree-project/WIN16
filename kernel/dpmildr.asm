@@ -465,8 +465,7 @@ psp_rou:
 	mov ax,1
 	int 31h
 	pop ax
-	mov ah,4Ch
-	int 21h
+	@Exit
 endif
 
 endoflowcode label byte
@@ -588,8 +587,7 @@ endif
 	jnc @F
 main_err1:
 	call strout_err
-	mov ax,4C00h + RC_INITRM
-	int 21h
+	@Exit RC_INITRM
 @@:
 if ?DOSAPI
 	mov si,offset szDOSstr
@@ -598,8 +596,7 @@ if ?DOSAPI
 	cmp al,0
 	jz @F
 	@trace_s <"fatal: no DOS API translation",lf>
-	mov ax,4C00h + RC_INITPM	;just exit, dont display anything
-	int 21h
+	@Exit RC_INITPM	;just exit, dont display anything
 @@:
 	@trace_s <"DOS API translation initiated",lf>
 endif
@@ -609,8 +606,7 @@ endif
 	call getnum
 	mov wEnvFlgs,ax
 @@:
-	mov ax,3306h
-	int 21h
+	CTRL_C_CK 6
 	cmp bx,3205h				;NT, 2k, XP?
 	jnz @F
 	or fMode, FMODE_ISNT
@@ -665,11 +661,9 @@ if ?32BIT
 endif
 	push ds
 	pop es
-	mov ax,4B00h	;launch program
-	int 21h
+	@Exec	;launch program
 	jc @F
-	mov ah,4Dh
-	int 21h
+	@GetRet
 @@:
 fatalerror:
 	push ax
@@ -681,8 +675,7 @@ if ?CHECKTOP
 	call areweontop
 	jz @F
 	pop ax
-	mov ah,4Ch
-	int 21h
+	@Exit
 @@:
 endif
 	call resetvecs
@@ -692,8 +685,7 @@ if _COPY2PSP_		;free all memory (problem: we are running in
 					;it!)
 	call copy_to_psp_and_exit
 endif
-	mov ah,4Ch
-	int 21h 		;and exit loader
+	@Exit	 		;and exit loader
 main_err6:			;protected mode init error
 	mov ax,offset szInitErr
 main_err3:
@@ -927,8 +919,7 @@ if ?CLOSEALLFILES
 	call CloseAllFiles
 endif
 ;	int 3
-	mov ax,4C00h + RC_EXC0B
-	int 21h
+	@Exit RC_EXC0B
 
 exc0berrorexit endp
 
@@ -999,9 +990,7 @@ nextitem:
 endif
 	and al,al
 	jz done
-	mov dl,al
-	mov ah,2
-	int 21h
+	@DispCh al
 	jmp nextitem
 done:
 if ?32BIT

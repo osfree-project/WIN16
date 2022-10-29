@@ -313,8 +313,7 @@ endif
 	push cx
 	sub dx,1		;calc limit
 	sbb cx,0
-	mov ax,8		;set limit
-	int 31h
+	@DPMI_SetLimit		;set limit
 	mov es,bx
 	mov es:[0],di	;save DPMI handle
 	mov es:[2],si
@@ -473,10 +472,9 @@ endif
 	inc ax
 	jz error
 @@:
-	mov dx,es:[bx].SEGITEM.wDosSel
+;	mov dx,
 	xchg ax,bx
-	mov ax,0102h		; @todo ???
-	int 31h
+	@DPMI_DOSSIZE es:[bx].SEGITEM.wDosSel	; @todo ???
 	jc error
 	mov ax,dx
 	ret
@@ -506,8 +504,7 @@ resizeextmemblock proc
 	mov di,word ptr es:[bx].SEGITEM.dwHdl+0
 	mov cx,ax
 	mov bx,dx
-	mov ax,0503h		;@todo?? resize dpmi memory block
-	int 31h
+	@DPMI_SIZE			;resize dpmi memory block
 	mov dx,cx			;base address -> cx:dx
 	mov cx,bx
 	pop bx

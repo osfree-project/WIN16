@@ -52,3 +52,7 @@ https://devblogs.microsoft.com/oldnewthing/20180919-00/?p=99775
 More about data/instancedata
 
 https://devblogs.microsoft.com/oldnewthing/20181220-00/?p=100525
+
+GlobalDosAlloc example
+
+https://jeffpar.github.io/kbarchive/kb/095/Q95545/
