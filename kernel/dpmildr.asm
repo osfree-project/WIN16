@@ -463,8 +463,7 @@ wKernelDS label word
 if _COPY2PSP_
 psp_rou:
 	int 31h		;free extended memory
-	mov ax,1
-	int 31h
+	@DPMI_FreeDesc
 	pop ax
 	@Exit
 endif
@@ -995,7 +994,6 @@ endif
 	@iret
 ischarout:
 	@DispCh
-	int 21h
 	@iret
 myint41 endp
 endif
@@ -3562,8 +3560,7 @@ ReadHdrs proc
 	and dx,dx
 	jz error4
 	mov [NEHdrOfs],dx	;offset NE-Headers
-	mov ax,4200h		;lseek NE hdr
-	int 21h
+	@MovePtr ,,,0		;lseek NE hdr
 	jc error5			;DOS lseek error, no NE binary
 	@trace_s <"trying to read NE-Header",lf>
 	mov cx,0040h
@@ -3898,8 +3895,7 @@ LoadSegmTable proc
 	mov dx,[NEHdrOfs]
 	add dx,es:[NEHDR.ne_segtab]	;offset segment table
 	adc cx,cx
-	mov ax,4200h				;lseek
-	int 21h
+	@MovePtr ,,,0			;lseek
 	jc error1
 	mov ax,es:[NEHDR.ne_cseg]
 	cmp ax,?MAXSEG
@@ -4773,8 +4769,7 @@ ls_2:
 	rcl ax,1
 	loop @B
 	mov cx,ax
-	mov ax,4200h					;lseek
-	int 21h
+	@MovePtr ,,,0					;lseek
 if _TRACE_
 	jnc @F
 	@trace_s <"Load_Segm, lseek() failed",lf>
@@ -4983,8 +4978,7 @@ else
 	shl bx,12
 endif
 	or bx,cx
-	@DPMI_DOSSIZE			   ;the address cannot change
-		 			   ;server will do the selector tiling
+	@DPMI_DOSSIZE			;the address cannot change server will do the selector tiling
 	jc ReallocMem_err
 	mov ax,dx
 	jmp reallocmem_exx
@@ -5405,8 +5399,8 @@ DoRelocs proc
 	mov [wlError],0
 	mov cx,sizeof wCnReloc
 	mov dx,offset wCnReloc		;read 2 Bytes (# of relocs)
-	mov ah,3Fh					;this can be done without lseek
-	int 21h 					;since segment was read just before
+	@Read					;this can be done without lseek
+	 					;since segment was read just before
 	jc error3
 	mov cx,wCnReloc
 	jcxz error2					;this may not be null
@@ -5462,8 +5456,7 @@ else
 	shl cx,3					;each entry requirest 8 bytes
 endif
 	mov dx,offset relbuf
-	mov ah,3Fh
-	int 21h 					;read relocations
+	@Read 					;read relocations
 	jc exit
 	mov di,offset relbuf
 rr_1:
@@ -5785,8 +5778,8 @@ endif
 	mov dx,[NEHdrOfs]
 	add dx,ax
 	adc cx,cx
-	mov ax,4200h		   ;lseek
-	int 21h
+			   ;lseek
+	@MovePtr ,,,0
 	pop cx				   ;laenge restore
 	jc readmd_er1
 ;	mov bx,es:[NEHDR.ne_hFile]
@@ -5794,8 +5787,7 @@ endif
 	push ds
 	push es
 	pop ds
-	mov ah,3Fh			   ;read file
-	int 21h
+	@Read			   ;read file
 	pop ds
 	jc readmd_er2
 	add di,cx			   ;new position to di
@@ -5887,8 +5879,7 @@ LoadNResNames proc
 	mov bx,es:[NEHDR.ne_hFile]
 	mov cx,word ptr es:[NEHDR.NRESADR+2]
 	mov dx,word ptr es:[NEHDR.NRESADR+0]
-	mov ax,4200h
-	int 21h
+	@MovePtr ,,,0
 	pop cx
 	jc error
 ;	mov bx,es:[NEHDR.ne_hFile]
@@ -5896,8 +5887,7 @@ LoadNResNames proc
 	push ds
 	push es
 	pop ds
-	mov ah,3Fh
-	int 21h
+	@Read
 	pop ds
 	jc error
 	add di,cx
@@ -7157,17 +7147,14 @@ if ?32BIT
 	mov edx,esp
 	mov ecx,1
 	mov bx,2		;stderr
-	mov ah,40h
-	int 21h
+	@Write
 	pop eax
 	pop edx
 	pop ecx
 	pop bx
 	pop ds
 else
-	mov dl,al
-	mov ah,02
-	int 21h
+	@DispCh al
 endif
 	ret
 printchar endp
@@ -7435,8 +7422,7 @@ moveinextmem proc
 	xor bx,bx
 	mov cx,[wCSlim] 			;alloc memory
 	inc cx
-	mov ax,0501h
-	int 31h
+	@DPMI_ALLOCMEM
 	jc exit
 	@trace_s <"extload: high memory allocated",lf>
 	mov word ptr [dwMemHdl+0],di
@@ -7446,16 +7432,13 @@ moveinextmem proc
 	mov word ptr [blkaddr+0],cx
 	mov dx,cx
 	mov cx,bx
-	mov bx,[aliassel]
-
-	mov ax,0007h				;set base
-	int 31h
+	mov bx, [aliassel]
+	@DPMI_SetBase
 	jc exit
 	@trace_s <"extload: set base ok",lf>
 	xor cx,cx
 	mov dx,[wCSlim]
-	mov ax,0008h				;set limit
-	int 31h
+	@DPMI_SetLimit				;set limit
 	jc exit
 	@trace_s <"extload: set limit ok",lf>
 
@@ -7475,9 +7458,9 @@ if ?FASTCSCHANGE
 	call CreateAlias				;descriptor BX -> AX
 	jc exit
 else
-	mov cx,1					;do it the safe way, get a temp sel
-	xor ax,ax					;alloc selector
-	int 31h
+						;do it the safe way, get a temp sel
+						;alloc selector
+	@DPMI_AllocDesc
 	jc exit
 	@trace_s <"extload: alloc temp selector ok",lf>
 	call CreateAlias				;[BX] -> [AX], AX=Codesel
@@ -7499,8 +7482,7 @@ nextsm:
 	retf
 nextsm2:
 	@trace_s <"extload: nextsm2 reached",lf>
-	mov ax,0001					;free temp selector
-	int 31h
+	@DPMI_FreeDesc					;free temp selector
 	pop bx
 endif
 if ?32BIT
@@ -7879,8 +7861,7 @@ JumpToPM_3:
 	test si,si
 	jz @F
 	mov bx,si
-	mov ah,48h				  ;alloc real-mode mem block
-	int 21h
+	@GetBlok				  ;alloc real-mode mem block
 	jc ERROR1
 	mov es,ax
 @@:
@@ -7940,9 +7921,9 @@ InitProtMode proc
 
 	@trace_s <"enter initialize PM",lf>
 
-	mov bl,21h				;get int 21 PM vector
-	mov ax,0204h			;get pm int
-	int 31h
+	@DPMI_GetPMIntVec 21h				;get int 21 PM vector
+				;get pm int
+	
 if ?32BIT
 	mov dword ptr [oldint21+0],edx
 	mov word ptr [oldint21+4],cx
@@ -7950,8 +7931,7 @@ else
 	mov word ptr [oldint21+0],dx
 	mov word ptr [oldint21+2],cx
 endif
-	mov bl,31h				;get int 31 PM vector
-	int 31h
+	@DPMI_GetPMIntVec 31h				;get int 31 PM vector
 if ?32BIT
 	mov dword ptr [oldint31+0],edx
 	mov word ptr [oldint31+4],cx
@@ -7960,8 +7940,7 @@ else
 	mov word ptr [oldint31+2],cx
 endif
 if ?DEBUG
-	mov bl,41h
-	int 31h
+	@DPMI_GetPMIntVec 41h
   if ?32BIT
 	mov dword ptr [oldint41+0],edx
 	mov word ptr [oldint41+4],cx
@@ -7980,19 +7959,15 @@ if _SETCSLIM_
 	mov bx,cs
 	xor cx,cx
 	mov dx,[wCSlim]
-	mov ax,0008h			;set limit	
-	int 31h
+	@DPMI_SetLimit			;set limit	
 endif
 if _SETDSLIM_
 	mov bx,ds
 	xor cx,cx
 	mov dx,[wCSlim]
-	mov ax,0008h			;set limit
-	int 31h
+	@DPMI_SetLimit			;set limit
 endif
-	mov cx,0001 			;get a selector for ALIAS segments
-	mov ax,0000
-	int 31h
+	@DPMI_AllocDesc			;get a selector for ALIAS segments
 	jc initprex
 	mov [aliassel],ax
 ;--- for 32bit clients: clear bits FF00h (dosemu + cwsdpmi)
@@ -8001,8 +7976,7 @@ if ?32BIT
 	mov bx,ax
 	lar cx,ax
 	shr cx,8
-	mov ax,0009				;set acc rights
-	int 31h
+	@DPMI_SetAccRights			;set acc rights
 endif
 endif
 
@@ -8022,9 +7996,7 @@ if ?PESUPP
 	call InitPELoader
 endif
 if _TRAPEXC0D_
-	mov bl,0Dh
-	mov ax,0202h		   ;get Exception 0D
-	int 31h
+	@DPMI_GetExcVec 0Dh	   ;get Exception 0D
   if ?32BIT		 
 	mov dword ptr oldexc0D+0,edx
 	mov word ptr oldexc0D+4,cx
@@ -8039,9 +8011,7 @@ if _TRAPEXC0D_
 	jc initprex
 endif
 if ?EXC01RESET
-	mov bl,01h
-	mov ax,0202h		   ;get Exception 01
-	int 31h
+	@DPMI_GetExcVec 01h	   ;get Exception 01
   if ?32BIT
 	mov dword ptr oldexc01+0,edx
 	mov word ptr oldexc01+4,cx
