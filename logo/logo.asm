@@ -13,7 +13,9 @@
 ;
 
 .8086
-			include	video.inc
+			; MacroLib
+			include	bios.inc
+
 code			segment
 			org	0h
 

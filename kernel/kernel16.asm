@@ -85,6 +85,8 @@ externdef pascal LocalUnlock: far
 externdef pascal LocalSize: far
 externdef pascal LocalCompact: far
 
+externdef pascal Catch: far
+externdef pascal Throw: far
 
 
 _TEXT segment word public 'CODE'
@@ -895,8 +897,10 @@ KernelEntries label byte
 	ENTRY <1,GetModuleUsage>
 	ENTRY <1,GetModuleFileName>
 	ENTRY <1,GetProcAddress>	;50
-	db 6,0						;51-56
-	db 3,1
+	db 4,0						;51-54
+	db 5,1
+	ENTRY <1, Catch>            ;55
+    	ENTRY <1, Throw>            ;56
 	ENTRY <1, GetProfileInt>			;57
 	ENTRY <1, GetProfileString>			;58
 	ENTRY <1, WriteProfileString>			;59
@@ -1061,6 +1065,8 @@ KernelNames label byte
 	NENAME "GETMODULEUSAGE"   ,48
 	NENAME "GETMODULEFILENAME",49
 	NENAME "GETPROCADDRESS"   ,50
+	NENAME "CATCH"            ,55
+    	NENAME "THROW"            ,56
 	NENAME "GETPROFILEINT", 57
 	NENAME "GETPROFILESTRING", 58
 	NENAME "WRITEPROFILESTRING", 59

@@ -51,6 +51,7 @@ int WINAPI Catch( LPCATCHBUF lpbuf )
 
     __asm {
       pop ax			// is this correct?
+      push ax
       mov word ptr lpbuf[0], ax
       mov ax, cs
       mov word ptr lpbuf[1], ax
