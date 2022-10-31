@@ -32,6 +32,18 @@
 
 #include <win16.h>
 
+#define GlobalPtrHandle(lp) \
+  ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))
+
+#define     GlobalUnlockPtr(lp)      \
+                GlobalUnlock(GlobalPtrHandle(lp))
+
+#define GlobalFreePtr(lp) \
+  (GlobalUnlockPtr(lp),(BOOL)GlobalFree(GlobalPtrHandle(lp)))
+
+#define GlobalAllocPtr(flags, cb) \
+  (GlobalLock(GlobalAlloc((flags), (cb))))
+
 void ctrlbrk(int (*fptr)(void))
 {
 	setvect(0x23, (void (__interrupt __far *))fptr);
@@ -108,9 +120,9 @@ typedef struct {
   unsigned priority;  /* priority: 1,2,3,4 or 5 */
   enum ThreadStatus status;
   unsigned semaphore; /* blocking semaphore */
-  void *pOwnStack;
+  void far *pOwnStack;
   PThreadFunc pFunc; /* pointer to the thread function */
-  void *pArg;   /* pointer argument passed to the thread function */
+  void far *pArg;   /* pointer argument passed to the thread function */
   void *pMsg;
   unsigned msgSize;
   unsigned long wakeUpTime;  /* time to wake the sleeping thread up */
@@ -448,12 +460,12 @@ static void TidyUp(void)
   for(i=0; i<MAX_THREADS; i++) {
     if(threads[i].pOwnStack != NULL) {
 //      free(threads[i].pOwnStack);
-      GlobalDosFree(threads[i].pOwnStack);
+      GlobalFreePtr(threads[i].pOwnStack);
       threads[i].pOwnStack = NULL;
     }
     if(threads[i].pArg != NULL) {
 //      free(threads[i].pArg);
-      GlobalDosFree(threads[i].pArg);
+      GlobalFreePtr(threads[i].pArg);
       threads[i].pArg = NULL;
     }
     threads[i].status = INVALID;
@@ -499,7 +511,7 @@ void ThreadShell(void)
   MTEndThread();
 }
 
-static void CopyMem(char *pDest, char *pSource, unsigned nBytes)
+static void CopyMem(char far *pDest, char *pSource, unsigned nBytes)
 {
 
   unsigned i;
@@ -515,7 +527,7 @@ int MTAddNewThread(PThreadFunc pThreadFunc, unsigned priority,
 {
   RegsOnStack *pRegs;
   unsigned threadID, i;
-  void *pNewStack, *pArgMem;
+  void far *pNewStack, far *pArgMem;
 
   if (bMTInitialised){
     MTWait(semaCRunTimeLib);
@@ -536,7 +548,7 @@ int MTAddNewThread(PThreadFunc pThreadFunc, unsigned priority,
     }
     /* allocate a new stack for the thread.*/
 //    pNewStack = malloc(THREAD_STACK_SIZE + sizeof(RegsOnStack));
-    pNewStack = GlobalDosAlloc(THREAD_STACK_SIZE + sizeof(RegsOnStack));
+    pNewStack = GlobalAllocPtr(GMEM_FIXED, THREAD_STACK_SIZE + sizeof(RegsOnStack));
     if (pNewStack==NULL){
       MTLeaveCritical();
       MTSignal(semaCRunTimeLib);
@@ -544,10 +556,10 @@ int MTAddNewThread(PThreadFunc pThreadFunc, unsigned priority,
     }
     if (sizeArg && pArg) {
 //      pArgMem = malloc(sizeArg);
-      pArgMem = GlobalDosAlloc(sizeArg);
+      pArgMem = GlobalAllocPtr(GMEM_FIXED, sizeArg);
       if (pArgMem==NULL){
 //        free(pNewStack);
-        GlobalDosFree(pNewStack);
+        GlobalFreePtr(pNewStack);
         MTLeaveCritical();
         MTSignal(semaCRunTimeLib);
         return 0;  /* failed */
@@ -659,12 +671,12 @@ void MTKillThread(unsigned threadID)
     threads[threadID].status = TERMINATED;
     if(threads[threadID].pOwnStack)
 //      free(threads[threadID].pOwnStack);
-      GlobalDosFree(threads[threadID].pOwnStack);
+      GlobalFreePtr(threads[threadID].pOwnStack);
     threads[threadID].pOwnStack = NULL;
     threads[threadID].ss=0;
     if(threads[threadID].pArg)
 //      free(threads[threadID].pArg);
-      GlobalDosFree(threads[threadID].pArg);
+      GlobalFreePtr(threads[threadID].pArg);
     threads[threadID].pArg = NULL;
     MTLeaveCritical();
     MTSignal(semaCRunTimeLib);

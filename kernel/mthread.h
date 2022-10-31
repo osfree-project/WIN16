@@ -55,7 +55,7 @@ extern void setcbrk( int ax );
     __parm __caller     [__ax] \
 
 /* pointer type to a thread function */
-typedef int (far *PThreadFunc) (void *pArg);
+typedef int (far *PThreadFunc) (void far *pArg);
 
 /* The semaphore type. */
 typedef unsigned int Semaphore;
