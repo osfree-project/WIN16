@@ -354,6 +354,7 @@ local NewStr
   ifnb <bIsDefined>
 if ?REAL
 	push bx
+	push bx
 	push bp
 	mov bp ,sp
 	mov bx, offset String
@@ -370,8 +371,9 @@ NewStr  db String
 CCONST   ends
 if ?REAL
 	push bx
+	push bx
 	push bp
-	mov bp ,sp
+	mov bp, sp
 	mov bx, offset NewStr
 	xchg bx,[bp+4]
 	pop bp
