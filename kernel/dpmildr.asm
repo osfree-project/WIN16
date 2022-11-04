@@ -450,15 +450,7 @@ TH_LockTDB	dw	?		;  /* 14 hLockedTask */
 
 ; Kernel specific data
 
-wKernelDS label word
-
-;*** if the loader is loaded as overlay (by DPMIST32.BIN)
-;*** DS:DX will point to full path of DPMILDXX.EXE
-;*** and DS:BX will have path of program to load
-;*** (bad design, but cannot be changed anymore)
-
-	jmp overlayentry
-
+wKernelDS 	dw	?		; Kernel Data segment
 
 if _COPY2PSP_
 psp_rou:
@@ -470,31 +462,7 @@ endif
 
 endoflowcode label byte
 
-
-
-overlayentry:
-	push es
-	mov di,offset KernelNE.szModPath
-	push cs
-	pop es
-	mov si,dx
-@@:
-	lodsb
-	stosb
-	and al,al
-	jnz @B
-	mov di,offset szPgmName
-	mov si,bx
-@@:
-	lodsb
-	stosb
-	and al,al
-	jnz @B
-	pop es
-	or byte ptr cs:[fMode],FMODE_OVERLAY
-	jmp step2
-
-;--- entry for .EXE
+;--- Main entry point
 
 main:
 	cld

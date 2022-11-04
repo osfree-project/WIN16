@@ -9,6 +9,7 @@ _TEXT ends
 	include debug.inc
 	include pusha.inc
 	include dpmildr.inc
+	include ascii.inc
 
 if ?REAL
 		.8086

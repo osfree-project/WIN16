@@ -14,10 +14,11 @@ $(p)profile$(e) $(p)ansi$(e) $(p)tolower$(e) $(p)lstrcmp$(e) $(p)rom$(e) $(p)fil
 $(p)strlen$(e) $(p)atoi$(e) $(p)global$(e) $(p)local$(e) $(p)catch$(e) &
 $(p)mthread$(e)
 
-ADD_ASMOPT = -D?32BIT=0 -D?DEBUG=0 -D?REAL=1 -I=$(MYDIR)..$(SEP)..$(SEP)..$(SEP)macrolib
+ADD_ASMOPT = -Zd -Zi3 -Fl -D?32BIT=0 -D?DEBUG=1 -D?REAL=1 -I=$(MYDIR)..$(SEP)..$(SEP)..$(SEP)macrolib
 ADD_COPT = -s -0 -I=$(%WATCOM)$(SEP)h$(SEP)win
 JWASM = 1
 DEST        = os2$(SEP)mdos$(SEP)winos2$(SEP)system
+DEBUG = all
 
 !include $(%ROOT)/mk/appsdos.mk
 

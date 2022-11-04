@@ -30,7 +30,7 @@ endif
 ;--- display string in ds:(e)bx
 
 _trace_s_bx proc public
-		pusha
+		@pusha
 		push	es
 		pushf
 if _USESTROUT_
@@ -58,7 +58,7 @@ endif
 done:
 		popf
 		pop 	es
-		popa
+		@popa
 		ret
 _trace_s_bx	endp
 
@@ -126,7 +126,7 @@ endif
 _dwordout endp
 
 _wordout proc public
-		pusha
+		@pusha
 		mov 	bp,sp
 		pushf
 		push	ds
@@ -151,7 +151,7 @@ if ?32BIT
 endif
 		pop 	ds
 		popf
-		popa
+		@popa
 		ret 	2
 _wordout endp
 
