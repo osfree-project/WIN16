@@ -2,6 +2,8 @@
 	include dos.inc
 	include dpmi.inc
 
+	include ascii.inc
+
 _TEXT segment word public 'CODE'
 _TEXT ends
 
