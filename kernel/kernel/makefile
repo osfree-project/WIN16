@@ -11,10 +11,10 @@ DESC = Windows Real Mode Kernel
 srcfiles = $(p)dpmildr$(e) $(p)hmemset$(e) $(p)lstrcat$(e) $(p)lstrcpy$(e) $(p)lstrlen$(e) $(p)profstrg$(e) $(p)kernel16$(e) &
 $(p)smallcode$(e) $(p)atom$(e) $(p)lstrcpyn$(e) $(p)memset$(e) $(p)toupper$(e) $(p)strnicmp$(e) $(p)memcpy$(e) &
 $(p)profile$(e) $(p)ansi$(e) $(p)tolower$(e) $(p)lstrcmp$(e) $(p)rom$(e) $(p)file$(e) $(p)main$(e) &
-$(p)strlen$(e) $(p)atoi$(e) $(p)global$(e) $(p)local$(e) $(p)catch$(e) $(p)nls$(e) &
+$(p)strlen$(e) $(p)atoi$(e) $(p)global$(e) $(p)local$(e) $(p)catch$(e) $(p)nls$(e) $(p)selector$(e) &
 $(p)mthread$(e)
 
-ADD_ASMOPT = -Zi -Zd -Fl -D?32BIT=0 -D?DEBUG=1 -D?REAL=1 -I=$(MYDIR)..$(SEP)..$(SEP)..$(SEP)macrolib
+ADD_ASMOPT = -Zi -Zd -Fl -D?32BIT=0 -D?DEBUG=1 -D?REAL=1 -I=$(MYDIR).. -I=$(MYDIR)..$(SEP)..$(SEP)..$(SEP)macrolib
 ADD_COPT = -d3 -s -0 -I=$(%WATCOM)$(SEP)h$(SEP)win
 JWASM = 1
 DEBUG = all
@@ -23,6 +23,6 @@ DEBUG = all
 
 !include $(%ROOT)/mk/appsdos.mk
 
-.asm: $(MYDIR)..
+.asm: $(MYDIR);$(MYDIR)..
 .c: $(MYDIR)..
 
