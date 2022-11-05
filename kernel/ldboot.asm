@@ -2,7 +2,7 @@
 ; osFree Windows Kernel
 ;
 ; ?REAL	- produce real mode kernel for real CPU mode, else standard/enchanced kernel for protected CPU mode
-; ?32BIT - use 80386-specific code
+; ?32BIT - use 80386-specific code (in original loader this mean create 32-bit client. We always 16-bit client)
 ;
 
 
@@ -337,8 +337,11 @@ versionstring textequ @CatStr(!",%?VERMAJOR,.,%?VERMINOR,.,%?VERMINOR2,!")
 szHello    db lf
 		   db 'osFree Windows Kernel version ', versionstring, lf
 		   db 'Copyright (C) 2022 osFree', lf
-		   db 'Based on HX DPMI loader', lf
-		   db 'Copyright (C) 1993-2010 Japheth',lf,lf,00
+		   db 'Based on HX DPMI loader, WINE and TWIN', lf
+		   db 'Copyright (C) 1993-2010 Japheth',lf
+		   db 'Copyright (C) 1993-2022 the Wine project authors',lf
+		   db 'Copyright (C) 1997 Willows Software, Inc. ',lf,lf,00
+
 szInitErr  db 'Error in initialization, loading aborted',lf,00
 szShrkErr  db 'memory shrink Error',lf,00
 szNoDPMI   db 'No DPMI server available',lf,00
@@ -420,7 +423,7 @@ endif
 
 endoflowcode label byte
 
-;--- Main entry point
+;--- Main entry point. Named as BootStrap() by Matt Pietrek
 ;
 ; On entry:
 ;
@@ -431,10 +434,29 @@ endoflowcode label byte
 ; (note: AX is always 0000h under DESQview)
 ;
 
-main:
+BootStrap:
+if	?DEBUG
+	jmp short skipdbg
+szEntryHello:
+	db	"Windows Kernel Entry", 13, 10, 0
+skipdbg:
+endif
 	cld
-
 	push es				; Save PSP segment
+
+if	?DEBUG
+	@GetInt 68h			; Get interrupt vector
+	mov ax, es
+	or ax, bx			; if =0
+	jnz @F				; then skip
+	push cs
+	pop es
+	mov si, szEntryHello		; Inform debugger
+	mov ah, 47h
+	int 68h
+@@:
+endif
+
 	mov es,ds:[ENVIRON]		; get environment
 	xor di,di
 	or  cx,-1
@@ -6735,6 +6757,12 @@ SearchNEExport endp
 ;--- else first byte is number of entries
 ;--- and second byte determines if entries are 3 or 6 bytes long
 
+;
+; Here only normal protected mode support.
+; For real mode kerenl it is required to modify entry table to support LRU
+; and 3FH interrupt to support movable and discardable segments.
+;
+
 GetProcAddr16 proc uses dx si di
 
 	and ax,ax
@@ -7879,5 +7907,5 @@ InitProtMode endp
 
 _ITEXT ends
 
-end  main
+end  BootStrap
 

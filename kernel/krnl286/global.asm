@@ -46,12 +46,7 @@ if ?32BIT
 	pop dx
 else
 	xor dx,dx
-if ?REAL
-	xor ax, ax
-	mov ax, 0FFFFH		; Emulate segment limit
-else
 	lsl ax,ax
-endif
 	jnz @F
 endif
 	add ax,1
@@ -75,27 +70,8 @@ GlobalDOSAlloc proc far pascal
 	push cx
 	push bx
 	mov cl,al
-if ?REAL
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-else
 	shr ax,4
 	shl dx,12		;skip bits 4-15 of DX
-endif
 	or ax,dx
 	test cl,0Fh
 	jz @F
@@ -130,11 +106,7 @@ GlobalLock proc far pascal
 	push bx
 	push cx
 	xor ax,ax
-if ?REAL
-				; Emulate readable (ZF=1)
-else
 	verr dx
-endif
 	jnz @F
 	retf
 @@:
@@ -186,27 +158,8 @@ else
   else
 	jnz error
   endif
-if ?REAL
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-else
 	shr ax,4
 	shl dx,12
-endif
 	or ax,dx
 	test cl,0Fh
 	jz @F
@@ -251,14 +204,8 @@ public __AHINCR
 __AHINCR equ 8
 
 	push ax		;selector
-if ?REAL
-	xor ax,ax
-	push ax
-	push ax
-else
 	push 0		;offset
 	push 0		;value
-endif
 	mov ax,[parm1+0]
 	mov dx,[parm1+2]
 	push dx		;HiWord(cnt)
@@ -285,12 +232,7 @@ largealloc:
 	jnz error
 	@push_a
 	mov bp,sp
-if ?REAL
-	xor ax,ax
-	push ax
-else
 	push 0
-endif
 	push bx
 	push cx
 	add cx,8h		;add 8 bytes as prefix
@@ -342,11 +284,7 @@ nextdesc:
 	cmp si,1
 	jnz @F
 	mov cx,es
-if ?REAL
-	mov dx, 0FFFFH		; Emulate segment size
-else
 	lsl dx,cx
-endif
 @@:
 	mov cx,0
 	@DPMI_SetLimit
@@ -384,11 +322,7 @@ if ?LARGEALLOC
 ;	jnz largefree
 	cmp eax,0FFFEFh			;largest block for DOS int
 	jnc largefree
-if ?REAL
-	.8086
-else
 	.286
-endif
 @@:
 endif
 	push es
@@ -448,27 +382,8 @@ resizedosblock proc
 	test dx,0FFF0h					;size > 1 MB is impossible
 	jnz error
 	mov cl,al
-if ?REAL
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-else
 	shr ax,4
 	shl dx,12
-endif
 	or ax,dx
 	test cl,0Fh
 	jz @F
@@ -610,12 +525,7 @@ resizemodulesegm endp
 ;--- todo: if block increases and GMEM_ZEROINIT is set, additional memory
 ;--- should be zeroed.
 
-if ?32BIT
-GlobalReAlloc proc far pascal uses esi hMem:WORD, dwNewsize:DWORD, uiMode:WORD 
-else
 GlobalReAlloc proc far pascal uses si hMem:WORD, dwNewsize:DWORD, uiMode:WORD 
-endif
-
 	mov si, hMem
 	mov dx, word ptr dwNewsize+2
 	mov ax, word ptr dwNewsize+0
@@ -648,27 +558,8 @@ else
 	test dx,0FFF0h
 	jnz globalreallocerr		;for 16-bit 1 MB - 10h is maximum
 	mov cl,al
-if ?REAL
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-	shl dx,1
-else
 	shr ax,4
 	shl dx,12
-endif
 	or ax,dx
 	test cl,0Fh					;since no D bit exists
 	jz @F
