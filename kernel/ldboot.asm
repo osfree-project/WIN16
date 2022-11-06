@@ -449,12 +449,14 @@ if	?DEBUG
 	mov ax, es
 	or ax, bx			; if =0
 	jnz @F				; then skip
-	push cs
+	push cs 
 	pop es
-	mov si, szEntryHello		; Inform debugger
+	mov si, cs:szEntryHello		; ES:SI Inform debugger
 	mov ah, 47h
 	int 68h
 @@:
+	pop es
+	push es
 endif
 
 	mov es,ds:[ENVIRON]		; get environment

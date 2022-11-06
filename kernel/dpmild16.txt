@@ -344,6 +344,7 @@ _BSS	ends
 STACK	segment para @use16 stack  'STACK'
 STACK	ends
 
+ Main entry point is BootStrap in LDBOOT.ASM.
 
  9.  History
 
