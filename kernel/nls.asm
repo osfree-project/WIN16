@@ -1,5 +1,9 @@
 	include ascii.inc
 
+public errstr2
+public errstr3
+public szDOSstr
+public szNoDPMI
 public szTerm	
 public szErr31    
 public szErr311   
@@ -149,5 +153,14 @@ errstr42   db 'PMtoRMCallTHUNK: Cannot call real mode procedure',lf,00
 errstr43   db 'PMtoRMCallTHUNK: Invalid THUNK instruction',lf,00
 
 CCONST ends
+
+
+_ITEXT segment
+szNoDPMI   db 'No DPMI server available',lf,00
+;szAPIerr	db "DOS API translation not supported",lf,00
+szDOSstr	db "MS-DOS",00
+errstr2    db 'Error allocating memory for DPMI server',lf,00
+errstr3    db 'Error switching to protected mode',lf,00
+_ITEXT ends
 
 	end

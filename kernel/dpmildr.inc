@@ -36,6 +36,7 @@ else
 endif
 
 
+
 if ?LFN
 ?MAXPATH	equ 260
 ?MAXNAME	equ 255
@@ -119,7 +120,7 @@ externdef	wErrMode:word
 externdef	szPath:byte
 externdef	segtable:byte
 externdef	fMode:byte
-externdef	wLdrPSP:word
+externdef	TH_TOPPDB:word
 externdef	wCurPSP:word
 externdef	fLoadMod:byte
 externdef	wEquip:word

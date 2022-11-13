@@ -4,6 +4,8 @@
 ; ?REAL	- produce real mode kernel for real CPU mode, else standard/enchanced kernel for protected CPU mode
 ; ?32BIT - use 80386-specific code (in original loader this mean create 32-bit client. We always 16-bit client)
 ;
+; This code heavely uses Matt Pietrek books
+;
 
 
 		; MacroLib
@@ -14,6 +16,8 @@
 		; Kernel macros
 		include macros.inc
 
+public blksize
+
 if ?DEBUG
 ?EXTLOAD		 = 0	;0 dont move loader in extended memory
 else
@@ -21,7 +25,6 @@ else
 endif
 
 ?RMSEGMENTS		 = 0	;0 1=support realmode segments (doesn't work!)
-?DOSAPI			 = 1	;1 1=activate DOS API translation, required for OS/2
 ifndef ?LOADDBGDLL
 ?LOADDBGDLL		 = 1	;1 load DEBUGOUT.DLL on startup if DPMILDR=256
 endif
@@ -173,6 +176,9 @@ extern nullstr: near
 extern errstr41: near
 extern errstr42: near
 extern errstr43: near
+ife ?REAL
+extern SwitchToPMode: near
+endif
 
 		include ascii.inc
 		include fixups.inc
@@ -231,11 +237,7 @@ _DATA segment
 ;*** global constants, initialized during start
 
 aliassel dw 0			;selector for data alias code segments
-if ?32BIT
-dStktop  dd 0			;top stack pointer
-else
 wStktop  dw 0			;top stack pointer
-endif
 
 ;*** global variables
 
@@ -278,8 +280,6 @@ _BSS segment
 
 ;*** global constants, initialized during start
 
-wDPMIFlg	dw ?			;DPMI init call CX flags (CL=CPU[2,3,4],CH=??)
-wDPMIVer	dw ?			;DPMI init call DX Flags (DPMI version)
 wEquip		dw ?			;Int 11h Equipment flags (only bit 1 used)
 wCSlim		dw ?			;limit CS (=CSSIZE-1), size of loader segment incl. stack
 wVersion	dw ?			;DOS version major+minor
@@ -292,7 +292,6 @@ wlError		dw ?			;error code (for function 4B00h)
 ife ?MULTPSP
 wCurPSP	label word
 endif
-wLdrPSP		dw ?			;PSP selector of loader
 wRMPSP	 	dw ?			;PSP segment of loader
 if ?MULTPSP
 wCurPSP  	dw ?			;PSP selector of current app
@@ -326,11 +325,7 @@ _BSS ends
 _ITEXT segment
 
 if ?LOADDBGDLL
-if ?32BIT
-szDbgout   db '.\DEBUGO32.DLL',0
-else
 szDbgout   db '.\DEBUGOUT.DLL',0
-endif
 endif
 
 versionstring textequ @CatStr(!",%?VERMAJOR,.,%?VERMINOR,.,%?VERMINOR2,!")
@@ -344,17 +339,7 @@ szHello    db lf
 
 szInitErr  db 'Error in initialization, loading aborted',lf,00
 szShrkErr  db 'memory shrink Error',lf,00
-szNoDPMI   db 'No DPMI server available',lf,00
-if ?32BIT
-szNo32Bit  db "DPMI server doesn't support 32-bit apps",lf,00
-endif
-errstr2    db 'Error allocating memory for DPMI server',lf,00
-errstr3    db 'Error switching to protected mode',lf,00
 errstr8    db 'Filename missing or invalid',lf,00
-if ?DOSAPI
-;szAPIerr	db "DOS API translation not supported",lf,00
-szDOSstr	db "MS-DOS",00
-endif
 szLoader	db 'DPMILDR=',0
 if ?DOSEMUSUPP
 szDosEmuDate db "02/25/93"
@@ -380,8 +365,9 @@ _TEXT segment
 
 externdef pascal kernelmain:far
 
-; In original loader here is overley support. In osFree Windows Kernel
+; In original loader here is overlay support. In osFree Windows Kernel
 ; here is a data segment start. Segment structure (offsets in hex:
+;
 ; 00 INSTANCEDATA
 ; 10 THHOOK structure
 ; ?? wKernelDS - address of Kernel DS
@@ -429,7 +415,7 @@ endoflowcode label byte
 ;
 ; AL = 00h if first FCB has valid drive letter, FFh if not
 ; AH = 00h if second FCB has valid drive letter, FFh if not
-; DS,ES = PSP segment
+; DS,ES = PSP/PDB segment
 ; SS:SP as defined in .EXE header
 ; (note: AX is always 0000h under DESQview)
 ;
@@ -442,9 +428,22 @@ szEntryHello:
 skipdbg:
 endif
 	cld
-	push es				; Save PSP segment
+	push es				; Save PSP/PDB segment
 
 if	?DEBUG
+
+;
+;INT 68 - MS Windows debugging kernel - OUTPUT STRING
+;
+;	AH = 47h
+;	ES:SI -> string
+;Notes:	output a string (to inform a debugger of some events)
+;	KERNEL outputs "Windows Kernel Entry\r\n" on startup
+;
+	push	ax
+	push	bx
+	push	si
+
 	@GetInt 68h			; Get interrupt vector
 	mov ax, es
 	or ax, bx			; if =0
@@ -455,9 +454,26 @@ if	?DEBUG
 	mov ah, 47h
 	int 68h
 @@:
+	pop si
+	pop bx
+	pop ax
+
 	pop es
 	push es
 endif
+
+; Original Windows kernel loaded via DOS MZ STUB, but we just construct NE structures in memory,
+; so no need DOS STUB communication protocol
+
+if 0
+	cmp ax, 04b4fh			; "OK"
+	jz  @F
+	xor ax, ax
+	retf
+@@:
+endif
+
+	mov wKernelDS,cs		; Store for future usage
 
 	mov es,ds:[ENVIRON]		; get environment
 	xor di,di
@@ -486,39 +502,30 @@ step2:
 	pop ss
 	mov sp,offset stacktop		; Set initial stack value
 	mov [wRMPSP],es
-	mov [wLdrPSP],es		; this will be changed to a selector
-	@GetVer
-	mov [wVersion],ax		; Get dos version
+	mov [TH_TOPPDB],es		; this will be changed to a selector
 
 	mov ax,sp
 	dec ax
 	mov [wCSlim],ax			; store CS segment limit
 	sub ax,001Fh			; important: make 32 bytes room on stack
-if ?32BIT
-;	movzx eax,ax
-	mov word ptr [dStktop],ax
-else
 	mov [wStktop],ax
-endif
 	mov bx,sp
-if ?REAL
-	shr bx, 1
-	shr bx, 1
-	shr bx, 1
-	shr bx, 1
-else
+IF  @Cpu AND 00000010B			; 80186+
 	shr bx,4
+else
+	mov cl, 4
+	shr bx, cl
 endif
 	add bx,10h			; + PSP
 	@ModBlok			; now shrink memory (Real Mode)
 	mov bx,offset szShrkErr
 	jc main_err1			;shrink error (can this happen?)
 if ?DOSEMUSUPP
-if ?REAL
+IF  @Cpu AND 00000010B			; 80186+
+	push 0F000h
+else
 	mov cx, 0F000h
 	push cx
-else
-	push 0F000h
 endif
 	pop es
 	mov di,0FFF5h
@@ -541,28 +548,22 @@ if ?LFN
 	or fMode, FMODE_LFN
 @@:              
 endif
+
 	@Equipment 			; get equipment flags (MPC)
 	mov [wEquip],ax
 
+	@GetVer
+	mov [wVersion],ax		; Get dos version
+
 ; Switch and configure for protected mode kernels
 ife ?REAL
-	call JumpToPM			; initial switch to protected mode
+	call SwitchToPMode			; initial switch to protected mode
 	jnc @F
 
 	jmp main_err1
 
 @@:
-if ?DOSAPI
-	mov si,offset szDOSstr
-	mov ax,168Ah
-	int 2Fh
-	cmp al,0
-	jz @F
-	@trace_s <"fatal: no DOS API translation",lf>
-	@Exit RC_INITPM	;just exit, dont display anything
-@@:
-	@trace_s <"DOS API translation initiated",lf>
-endif
+
 	mov dx,offset szLoader	;find env variable "DPMILDR="
 	call GetLdrEnvironmentVariable
 	jc @F
@@ -687,7 +688,7 @@ setldrpsp proc
 	push ax
 	GET_PSP
 	push bx
-	mov bx,[wLdrPSP]
+	mov bx,[TH_TOPPDB]
 	mov ah,50h
 	int 21h
 	pop bx
@@ -792,12 +793,7 @@ else
 	@trace_w EXCSP
 endif
 	@trace_s <" ***",lf>
-if ?REAL
-	xor ax, ax
-	push ax
-else
-	push 0
-endif
+	@PUSHC	0
 	pop es
 	mov ax,cs
 	and al,03
@@ -890,13 +886,11 @@ displaymodandseg proc
 	call modnameout			;expects ES=NE hdr
 	mov ax, si
 	sub ax, es:[NEHDR.ne_segtab]
-if ?REAL
-	shr ax, 1				;size of segment table in ES is 16!!!
-	shr ax, 1
-	shr ax, 1
-	shr ax, 1
-else
+IF  @Cpu AND 00000010B			; 80186+
 	shr ax, 3+1				;size of segment table in ES is 16!!!
+else
+	mov cl, 3+1
+	shr ax, cl				;size of segment table in ES is 16!!!
 endif
 	inc ax
 	mov di, offset SegNo
@@ -997,7 +991,7 @@ do2131 proc
 	ret
 @@:
 	push ax
-	mov bx,[wLdrPSP]			;set psp of loader
+	mov bx,[TH_TOPPDB]			;set psp of loader
 	mov es,bx
 	mov ah,50h
 	int 21h
@@ -1328,11 +1322,7 @@ else
 endif
 	push ds					;FreeLibrary may free the stack mem block
 	pop ss					;so set the loader stack here
-if ?32BIT
-	mov esp,[dStktop]
-else
 	mov sp,[wStktop]
-endif
 	call FreeLib16
 i214c_2:
 if ?INT24RES or ?INT23RES
@@ -1350,7 +1340,7 @@ if 0							;win31, 9x, NT, XP work with selector
 	test fMode, FMODE_ISNT
 	jz @F
 endif
-	mov ax,[wLdrPSP]			;use loader psp selector for NT!!!
+	mov ax,[TH_TOPPDB]			;use loader psp selector for NT!!!
 @@:
 	mov es:[PARPSP],ax
 
@@ -1372,7 +1362,7 @@ else
 	push bx
 
 if _LOADERPARENT_
-	mov ax,[wLdrPSP]
+	mov ax,[TH_TOPPDB]
 	mov bx,[wTDStk]
 	cmp bx,offset starttaskstk
 	jz @F
@@ -1844,12 +1834,7 @@ ife ?32BIT
 	cmp al,es:[bx]
 	jnz @B
 	inc bx
-if ?REAL
-	xor ax, ax
-	push ax
-else
-	push 0
-endif
+	@PUSHC	0
 	mov ax,es
 	pop es
 notos2:
@@ -2106,13 +2091,11 @@ CopyPgmInEnv proc
 	add ax,dx
 	add ax,15		;paragraph align
 	and al,0F0h
-if ?REAL
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shr ax,1
-else
+IF  @Cpu AND 00000010B			; 80186+
 	shr ax,4
+else
+	mov cl, 4
+	shr ax,cl
 endif
   if ?LOWENV
 	@DPMI_DOSALLOC ax
@@ -2419,7 +2402,7 @@ if ?USE1PSP
 	jnz @F
 endif
 	@trace_s <"restoring loader PSP=">
-	mov bx,[wLdrPSP]
+	mov bx,[TH_TOPPDB]
 	@trace_w bx
 	@trace_s <", segm=">
 	@trace_w [wRMPSP]
@@ -2859,7 +2842,7 @@ GetSSSP endp
 ;--- modifies DI, AX
 
 GetLdrEnvironmentVariable proc
-	mov es,[wLdrPSP]
+	mov es,[TH_TOPPDB]
 GetEnvironmentVariable::	;<--- entry with ES=PSP 	   
 	mov es,es:[ENVIRON] 	;environment
 	SUB DI,DI				;start with es:[0]
@@ -2929,7 +2912,7 @@ if ?LFN
 	mov cx,80h
 	mov [ebp].RMCS.rSI,cx
 	mov di, 80h
-	mov es, cs:[wLdrPSP]
+	mov es, cs:[TH_TOPPDB]
 	mov esi, edx
 @@:
 if ?32BIT
@@ -4425,21 +4408,11 @@ AllocRMSegment proc uses cx dx
 	jc exit
 	xchg ax,bx				;segment in bx
 	mov dx,ax				;zu addr in cx:dx
-if ?REAL
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shr ax,1
-else
+IF  @Cpu AND 00000010B			; 80186+
 	shr ax,12
+else
+	mov cl, 12
+	shr ax, cl
 endif
 	mov cx,ax
 if ?REAL
@@ -5238,12 +5211,7 @@ done:
 	@trace_s lf
 	mov si,word ptr es:[NEHDR.MEMHDL+0] ;now do MD itself
 	mov di,word ptr es:[NEHDR.MEMHDL+2]
-if ?REAL
-	mov bx, 0
-	push bx
-else
-	push 0
-endif
+	@PUSHC	0
 	mov bx,es
 	pop es						  ;clear es before dpmi call
 	mov ax,0001
@@ -6987,7 +6955,7 @@ copy_to_psp_and_exit proc
 	ret
 @@:
 	@trace_s <"critical section: create code alias for PSP and jump",lf>
-	mov bx,[wLdrPSP]
+	mov bx,[TH_TOPPDB]
 	mov ss,bx
 if ?32BIT
 	mov esp,100h
@@ -7296,7 +7264,7 @@ nextitem:
   if ?USE1PSP        
 	and ax,ax
 	jnz @F
-	mov ax,wLdrPSP
+	mov ax,TH_TOPPDB
 @@:
   endif
 	call getpspr
@@ -7483,7 +7451,7 @@ if _RESIZEPSP_
 	inc bx
 @@:
 	add bl,10h
-	mov dx,[wLdrPSP]
+	mov dx,[TH_TOPPDB]
 	mov ax,0102h				;resize dos memory block
 if _SUPRESDOSERR_
 	or fMode, FMODE_NOERRDISP
@@ -7559,7 +7527,7 @@ GetPgmParms proc uses ds
 	@trace_s <"GetPgmParms enter",lf>
 
 	mov fCmdLOpt,0
-	mov ds,[wLdrPSP]
+	mov ds,[TH_TOPPDB]
 	mov si,0080h
 ;	test cs:[fMode],FMODE_OVERLAY	;loaded as overlay?
 ;	jnz gpp_1						;then PSP is ok
@@ -7683,119 +7651,6 @@ endif
 	ret
 GetPgmParms endp
 
-
-changememstrat proc
-	mov ax,5802h			 ;save umb link state
-	int 21h
-	xor ah,ah
-	mov word ptr [blksize+0],ax
-	mov ax,5800h			 ;save memory alloc strategie
-	int 21h
-	xor ah,ah
-	mov word ptr [blksize+2],ax
-	mov ax,5803h			 ;set umb link state
-	mov bx,0001h
-	int 21h
-	mov ax,5801h			 ;set "fit best" strategy
-	mov bx,0081h			 ;first high, then low
-	int 21h
-	ret
-changememstrat endp
-
-restorememstrat proc
-	mov bx,word ptr [blksize+2]
-	mov ax,5801h			  ;memory alloc strat restore
-	int 21h
-	mov bx,word ptr [blksize+0]
-	mov ax,5803h			  ;umb link restore
-	int 21h
-	ret
-restorememstrat endp
-
-;*** JumpToPM
-;--- returns C on errors, bx->error msg 
-
-JumpToPM proc
-	call changememstrat
-JumpToPM_1:
-	push cx
-	mov ax,1687h			;get address of PM entry in ES:DI
-	int 2Fh
-	pop cx
-	mov bp,offset szNoDPMI  ;message "no dpmi server"
-if ?32BIT
-	and ax,ax				;ax=0 -> DPMI server installed
-	jnz JumpToPM_2
-	mov bp,offset szNo32Bit ;message "no 32 bit apps supported"
-	test bl,1
-	jnz JumpToPM_3			;jmp if ok
-else
-	and ax,ax
-	jz JumpToPM_3			;ok, DPMI host found
-endif
-JumpToPM_2:
-	mov ax,bp
-	jmp ERROR0
-
-JumpToPM_3:
-	push es
-	push di
-	test si,si
-	jz @F
-	mov bx,si
-	@GetBlok				  ;alloc real-mode mem block
-	jc ERROR1
-	mov es,ax
-@@:
-	call restorememstrat
-if ?32BIT
-	mov ax,0001
-else
-	xor ax,ax
-endif
-	mov bp,sp
-	call dword ptr [bp]
-	mov ax,offset errstr3		;cannot switch to prot-mode
-	jc ERROR3
-	@int3 _INT03JMPPM_
-	mov [wKernelDS],ds
-	mov [wDPMIFlg],cx			;DPMI Flags
-	mov [wDPMIVer],dx			;dito
-	mov [wLdrPSP],es			;psp
-if 1;?USE1PSP
-	mov [wCurPSP],es
-endif
-if ?32BIT
-	movzx eax,ax
-	movzx ebx,bx
-	movzx ecx,cx
-	movzx edx,dx
-	movzx esi,si
-	movzx edi,di
-endif
-	@trace_s <lf,"------------------------------------",lf>
-	@trace_s <"KERNEL now in protected mode, PSP=">
-	@trace_w es
-	@trace_s <",CS=">
-	@trace_w cs
-	@trace_s <",SS=">
-	@trace_w ss
-	@trace_s <",DS=">
-	@trace_w ds
-	@trace_s <lf>
-	add sp,4
-	ret
-ERROR1:
-	mov ax,offset errstr2	;insufficient DOS memory
-ERROR3:
-	add sp,4
-ERROR0:
-	push ax
-	call restorememstrat
-	pop bx
-	stc
-	ret
-JumpToPM endp
 
 ;*** global constructor ***
 

@@ -374,7 +374,7 @@ GetCurrentTask endp
 GetCurrentPDB proc far pascal
 	GET_PSP
 	mov ax,bx
-	mov dx,cs:[wLdrPSP]
+	mov dx,cs:[TH_TOPPDB]
 	ret
 GetCurrentPDB endp
 
