@@ -24,6 +24,7 @@ else
 endif
 
 public eWinFlags
+public GetCurrentTask
 
 externdef pascal _hmemset:far
 externdef discardmem:near
@@ -89,6 +90,7 @@ externdef pascal Catch: far
 externdef pascal Throw: far
 
 externdef pascal IsTask: far
+externdef pascal GetExeVersion: far
 
 ; Selectors
 externdef pascal AllocSelector: far
@@ -760,7 +762,10 @@ KernelEntries label byte
 	db 2,1
 	ENTRY <1,Dos3Call>			;102
 	ENTRY <1,NetBiosCall>			;103
-	db 3,0						;104-106
+	db 1,0						;104
+	db 1,1
+	ENTRY <1,GetExeVersion>				;105
+	db 1,0						;106
 	db 1,1
 	ENTRY <1,SetErrorMode>		;107
 	db 5,0						;108-112
@@ -921,6 +926,7 @@ KernelNames label byte
 	NENAME "FREELIBRARY" ,96
 	NENAME "DOS3CALL"    ,102
 	NENAME "NETBIOSCALL" ,103
+	NENAME "GETEXEVERSION",105
 	NENAME "SETERRORMODE",107
 	NENAME "__AHSHIFT"   ,113
 	NENAME "__AHINCR"    ,114

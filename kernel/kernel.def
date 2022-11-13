@@ -99,7 +99,7 @@ EXPORTS
     DOS3CALL                       @102	+
     NETBIOSCALL                    @103	+
     GETCODEINFO                    @104
-    GETEXEVERSION                  @105
+    GETEXEVERSION                  @105 +
     SETSWAPAREASIZE                @106
     SETERRORMODE                   @107	+
     SWITCHSTACKTO                  @108
