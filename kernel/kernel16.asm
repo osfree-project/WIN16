@@ -88,6 +88,8 @@ externdef pascal LocalCompact: far
 externdef pascal Catch: far
 externdef pascal Throw: far
 
+externdef pascal IsTask: far
+
 ; Selectors
 externdef pascal AllocSelector: far
 externdef pascal FreeSelector: far
@@ -113,7 +115,7 @@ _DATA ends
 	include dpmildr.inc
 	include kernel16.inc
 	include debug.inc
-	include debugsys.inc
+	include debuger.inc
 	include version.inc
 	include pusha.inc
 
@@ -836,7 +838,10 @@ eC000 ENTRY <1,0>				;195 _C000H
 	db 2,0						;204-205
 	db 1,1
 	ENTRY <1,AllocSelectorArray>;206
-	db 120,0					;207-322
+	db 113,0					;207-319
+	db 1,1
+	ENTRY <1, IsTask>		; 320
+	db 2,0					;321-322
 	db 1,1
 	ENTRY <1,IsRomModule>		; 323
 	db 2,0						;324-325
@@ -958,6 +963,7 @@ KernelNames label byte
 	NENAME "GLOBALUNFIX"        ,198
 	NENAME "DEBUGBREAK"         ,203
 	NENAME "ALLOCSELECTORARRAY" ,206
+	NENAME "ISTASK" ,320
 	NENAME "ISROMMODULE" ,323
 	NENAME "ISROMFILE" ,326
 	NENAME "LSTRCPYN" ,353

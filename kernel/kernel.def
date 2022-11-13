@@ -200,7 +200,7 @@ EXPORTS
     GETFREEMEMINFO                 @316
     FATALEXITHOOK                  @318
     FLUSHCACHEDFILEHANDLE          @319
-    ISTASK                         @320
+    ISTASK                         @320 +
     ISROMMODULE                    @323	+
     LOGERROR                       @324
     LOGPARAMERROR                  @325

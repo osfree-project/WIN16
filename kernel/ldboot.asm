@@ -184,7 +184,7 @@ endif
 		include fixups.inc
 		include dpmildr.inc
 		include debug.inc
-		include debugsys.inc
+		include debuger.inc
 		include version.inc
 		include kernel16.inc
 if ?PESUPP
