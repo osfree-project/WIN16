@@ -13,7 +13,7 @@ EXPORTS
     LOCALHANDLE                    @11
     LOCALFLAGS                     @12
     LOCALCOMPACT                   @13	+
-    LOCALNOTIFY                    @14
+    LOCALNOTIFY                    @14  +
     GLOBALALLOC                    @15	+
     GLOBALREALLOC                  @16	+
     GLOBALFREE                     @17	+
@@ -165,7 +165,7 @@ EXPORTS
     PRESTOCHANGOSELECTOR           @177	+
     __WINFLAGS                     @178	+
     __D000H                        @179 +
-    LONGPTRADD                     @180
+    LONGPTRADD                     @180 +
     __B000H                        @181	+
     __B800H                        @182	+
     __0000H                        @183	+

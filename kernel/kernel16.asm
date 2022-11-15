@@ -85,6 +85,7 @@ externdef pascal LocalLock: far
 externdef pascal LocalUnlock: far
 externdef pascal LocalSize: far
 externdef pascal LocalCompact: far
+externdef pascal LocalNotify: far
 
 externdef pascal Catch: far
 externdef pascal Throw: far
@@ -104,6 +105,7 @@ externdef pascal PrestoChangoSelector: far
 externdef pascal AllocDSToCSAlias: far
 externdef pascal AllocCSToDSAlias: far
 
+externdef pascal LongPtrAdd: far
 
 _TEXT segment word public 'CODE'
 _TEXT ends
@@ -683,17 +685,16 @@ KernelEntries label byte
 	db 8,1
 	ENTRY <1,GetVersion>		;3
 	ENTRY <1,LocalInit>			;4
-	ENTRY <1,LocalAlloc>
-	ENTRY <1,LocalReAlloc>
-	ENTRY <1,LocalFree>
-	ENTRY <1,LocalLock>
-	ENTRY <1,LocalUnlock>
-	ENTRY <1,LocalSize>			;10
+	ENTRY <1,LocalAlloc>		;5
+	ENTRY <1,LocalReAlloc>		;6
+	ENTRY <1,LocalFree>		;7
+	ENTRY <1,LocalLock>		;8
+	ENTRY <1,LocalUnlock>		;9
+	ENTRY <1,LocalSize>		;10
 	db 2,0
-	db 1,1
+	db 9,1
 	ENTRY <1,LocalCompact>		;13
-	db 1,0
-	db 7,1
+	ENTRY <1,LocalNotify>		;14
 	ENTRY <1,GlobalAlloc>		;15
 	ENTRY <1,GlobalReAlloc>
 	ENTRY <1,GlobalFree>
@@ -813,12 +814,13 @@ eA000 ENTRY <1,00h>				;174 _A000H
 eWinFlags ENTRY <1,0>			;178 __WINFLAGS
 
 	db 1,-2
-eD000 ENTRY <1,0>			;179
-	db 1,0				;180
+eD000	ENTRY <1,0>			;179
+	db 1,1
+	ENTRY <1, LongPtrAdd>		;180
 	db 3,-2
-eB000 ENTRY <1,0>				;181 _B000H
-eB800 ENTRY <1,0>				;182 _B800H
-e0000 ENTRY <1,0>				;183 _0000H
+eB000	ENTRY <1,0>				;181 _B000H
+eB800	ENTRY <1,0>				;182 _B800H
+e0000	ENTRY <1,0>				;183 _0000H
 	db 6,1
 	ENTRY <1,GlobalDOSAlloc>	;184
 	ENTRY <1,GlobalDOSFree>		;185
@@ -878,6 +880,7 @@ KernelNames label byte
 	NENAME "LOCALUNLOCK" ,9
 	NENAME "LOCALSIZE"   ,10
 	NENAME "LOCALCOMPACT",13
+	NENAME "LOCALNOTIFY", 14
 	NENAME "GLOBALALLOC"  ,15
 	NENAME "GLOBALREALLOC",16
 	NENAME "GLOBALFREE"   ,17
@@ -952,6 +955,7 @@ KernelNames label byte
 	NENAME "PRESTOCHANGOSELECTOR", 177
 	NENAME "__WINFLAGS"          , 178
 	NENAME "__D000H", 179
+	NENAME "LONGPTRADD", 180
 	NENAME "__B000H", 181
 	NENAME "__B800H", 182
 	NENAME "__0000H", 183

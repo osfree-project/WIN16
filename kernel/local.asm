@@ -13,6 +13,7 @@ public LocalCompact
 public LocalSize
 public LocalLock
 public LocalUnlock
+public LocalNotify
 
 externdef pascal GlobalReAlloc: far
 
@@ -340,6 +341,16 @@ localcompact_2:
 localcompact_ex:
 	@return 2
 LocalCompact endp
+
+LocalNotify proc far pascal
+	mov bx, sp
+	mov ax, ss:[bx+4]	;lpNotifyFunc
+	mov dx, ss:[bx+6]	;lpNotifyFunc+2
+	mov bx, ds:[6]		; plocalheap Shulman error here. Was dx.
+	xchg ax, [bx+18h]	; 1eh for krnl386 @todo
+	xchg dx, [bx+18h+2]	; 1eh for krnl386 @todo
+	retf 4
+LocalNotify endp
 
 _TEXT ends
 
