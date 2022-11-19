@@ -14,7 +14,6 @@ $(p)profile$(e) $(p)ansi$(e) $(p)tolower$(e) $(p)lstrcmp$(e) $(p)rom$(e) $(p)fil
 $(p)strlen$(e) $(p)atoi$(e) $(p)local$(e) $(p)catch$(e) $(p)nls$(e) &
 $(p)mthread$(e) $(p)2protect$(e) $(p)2ginterf$(e) $(p)istask$(e)  $(p)GetExeVersion$(e)  $(p)longptradd$(e)
 
-
 ADD_ASMOPT = -D?32BIT=0 -D?DEBUG=0 -D?REAL=0 -I=$(MYDIR).. -I=$(MYDIR)..$(SEP)..$(SEP)..$(SEP)macrolib
 ADD_COPT = -s -2 -I=$(%WATCOM)$(SEP)h$(SEP)win
 JWASM = 1
