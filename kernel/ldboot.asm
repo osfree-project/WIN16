@@ -13,8 +13,8 @@
 		include dos.inc
 		include dpmi.inc
 
-		; Kernel macros
-		include macros.inc
+		; Kernel defines
+		include kernel.inc
 
 public blksize
 
@@ -105,17 +105,10 @@ else
 endif
 		
 ?PESUPP = 0
-@use16	textequ <>
 endif
 		option casemap:none
 		option proc:private
 
-_TEXT	segment dword @use16 public 'CODE'
-_TEXT	ends
-CCONST	segment word @use16 public 'CODE'
-CCONST	ends
-_DATA	segment word @use16 public 'DATA'
-_DATA	ends
 
 extern eWinFlags: ENTRY
 
@@ -184,26 +177,15 @@ endif
 
 		include ascii.inc
 		include fixups.inc
-		include dpmildr.inc
 		include debug.inc
 		include debuger.inc
 		include version.inc
-		include kernel16.inc
 if ?PESUPP
 		include peload.inc
 		include winnt.inc
 		include mzhdr32.inc
 endif
 
-_ITEXT	segment word @use16 public 'DATA'	;use 'DATA' (OPTLINK bug)
-_ITEXT	ends
-_BSS	segment word @use16 public 'BSS'
-_BSS	ends
-STACK	segment para @use16 stack  'STACK'
-STACK	ends
-
-
-DGROUP	group _TEXT,CCONST,_DATA,_ITEXT,_BSS,STACK
 
 ife ?EXTLOAD
 _COPY2PSP_		 = 0

@@ -4,15 +4,10 @@
 
 	include ascii.inc
 
-DGROUP	group _TEXT,_DATA
 
-_TEXT segment word public 'CODE'
-_TEXT ends
-
-	include macros.inc
+	include kernel.inc
 	include debug.inc
 	include pusha.inc
-	include dpmildr.inc
 	include ascii.inc
 
 if ?REAL
@@ -32,7 +27,7 @@ else
 ?LARGEALLOC	equ 1	;1=allow more than 1 MB with GlobalAlloc/Realloc/Free
 endif
 
-_TEXT segment word public 'CODE'
+_TEXT segment
 
 GlobalSize proc far pascal
 	pop bx

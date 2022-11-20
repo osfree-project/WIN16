@@ -1,4 +1,4 @@
-	include macros.inc
+	include kernel.inc
 
 if ?REAL
 		.8086
@@ -17,7 +17,7 @@ public LocalNotify
 
 externdef pascal GlobalReAlloc: far
 
-_TEXT segment word public 'CODE'
+_TEXT segment
 
 ;*****************************
 ;*** Local Heap functions  ***

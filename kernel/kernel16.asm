@@ -7,7 +7,7 @@
 	include dpmi.inc
 
 	; Kernel macros
-	include macros.inc
+	include kernel.inc
 
 if ?REAL
 		.8086
@@ -107,24 +107,13 @@ externdef pascal AllocCSToDSAlias: far
 
 externdef pascal LongPtrAdd: far
 
-_TEXT segment word public 'CODE'
-_TEXT ends
-CCONST segment word public 'CODE'
-CCONST ends
-_DATA segment word public 'DATA'
-_DATA ends
 
 	include ascii.inc
 	include fixups.inc
-	include dpmildr.inc
-	include kernel16.inc
 	include debug.inc
 	include debuger.inc
 	include version.inc
 	include pusha.inc
-
-_ITEXT segment word public 'DATA'	;use 'DATA' (OPTLINK bug)
-_ITEXT ends
 
 DGROUP group _TEXT,CCONST,_DATA,_ITEXT
 

@@ -14,17 +14,9 @@
 		include dos.inc
 		include dpmi.inc
 
-_TEXT segment word public 'CODE'
-_TEXT ends
-CCONST segment word public 'CODE'
-CCONST ends
-_DATA segment word public 'DATA'
-_DATA ends
-
 		; Kernel macros
 		include ascii.inc
-		include macros.inc
-		include dpmildr.inc
+		include kernel.inc
 		include debug.inc
 
 _DATA segment

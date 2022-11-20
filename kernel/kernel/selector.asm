@@ -8,14 +8,11 @@
 	; MacroLib
 	include dos.inc
 
-DGROUP	group _TEXT,_DATA
-
-_TEXT	segment word public 'CODE'
-
 	; Kernel
-	include macros.inc
-	include dpmildr.inc
+	include kernel.inc
 
+
+_TEXT	segment
 
 ;--- WORD AllocSelectorArray(WORD)
 
