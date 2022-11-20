@@ -117,6 +117,8 @@ CCONST	ends
 _DATA	segment word @use16 public 'DATA'
 _DATA	ends
 
+extern eWinFlags: ENTRY
+
 extern szTerm: near
 extern szErr31: near
 extern szErr311: near
@@ -241,7 +243,6 @@ wStktop  dw 0			;top stack pointer
 
 ;*** global variables
 
-wMDSta	 dw 0			;segment of 1. element of 16bit MD table
 wTDStk	 dw offset starttaskstk ;LIFO stack for tasks
 if ?LOADDBGDLL
 hModDbg  dw 0			;handle for DEBUGOUT.DLL
@@ -398,6 +399,10 @@ TH_LOCKTDB	dw	?		;  /* 14 hLockedTask */
 ; Kernel specific data
 wKernelDS 	dw	?		; Kernel Data segment
 
+KernelFlags DW 0, 0
+PMouseTermProc DD 0
+PKeyboardTermProc DD 0
+PSystemTermProc DD 0
 
 if _COPY2PSP_
 psp_rou:
@@ -497,7 +502,7 @@ endif
 step2:
 	push cs				; Set data segment to code segment
 	pop ds
-	mov wKernelDS,ds		; Store for future usage
+;	mov wKernelDS,ds		; Store for future usage
 	push ds				; Set stack segment to data segment
 	pop ss
 	mov sp,offset stacktop		; Set initial stack value
@@ -549,12 +554,6 @@ if ?LFN
 @@:              
 endif
 
-	@Equipment 			; get equipment flags (MPC)
-	mov [wEquip],ax
-
-	@GetVer
-	mov [wVersion],ax		; Get dos version
-
 ; Switch and configure for protected mode kernels
 ife ?REAL
 	call SwitchToPMode			; initial switch to protected mode
@@ -564,6 +563,7 @@ ife ?REAL
 
 @@:
 
+
 	mov dx,offset szLoader	;find env variable "DPMILDR="
 	call GetLdrEnvironmentVariable
 	jc @F
@@ -571,6 +571,7 @@ ife ?REAL
 	mov wEnvFlgs,ax
 @@:
 	CTRL_C_CK 6
+
 	cmp bx,3205h				;NT, 2k, XP?
 	jnz @F
 	or fMode, FMODE_ISNT
@@ -581,6 +582,22 @@ endif
 endif
 	or bEnvFlgs, ENVFL_DONTUSEDPMI1
 @@:
+endif	; not ?REAL
+
+
+;	call DebugInit
+;	call InitDosVarP
+	call InitProtMode	;init vectors, alloc internal selectors
+	jc main_err6		;--->
+
+	@Equipment 			; get equipment flags (MPC)
+	mov [wEquip],ax
+
+    	test al,2
+	jz @F			
+	or eWinFlags.wOfs, WF_80x87
+no_8087:
+
 	mov ax,1600h
 	int 2Fh
 	and al,al
@@ -593,9 +610,21 @@ if ?32BIT
 	or bEnvFlgs2, ENVFL2_ALLOWGUI
 @@:
 endif
-	call InitProtMode	;init vectors, alloc internal selectors
-	jc main_err6		;--->
-endif	; not ?REAL
+	cmp al, 3
+	je @F
+	or KernelFlags[2], 0020h
+	or eWinFlags.wOfs, WF_PMODE or WF_STANDARD
+	jmp skip_2
+@@:
+	or KernelFlags[1], 0100h
+	or eWinFlags.wOfs, WF_PMODE or WF_ENHANCED
+skip_2:
+
+	; Here we must prepare WOAname string
+
+	@GetVer
+	mov [wVersion],ax		; Get dos version
+
 
 	@strout szHello,1
 main_1:
@@ -835,10 +864,10 @@ calloldexc0b:
 if ?32BIT
 	db 66h
 	db 0eah			   ;jmp ssss:oooooooo
-oldexc0b df 0
+PrevInt3FProc df 0
 else
 	db 0eah			   ;jmp ssss:oooo
-oldexc0b dd 0
+PrevInt3FProc dd 0
 endif
 Exc0BProc endp
 
@@ -904,9 +933,9 @@ displaymodandseg endp
 
 if _TRAPEXC0D_
 if ?32BIT
-oldexc0D df 0
+PrevInt0DProc df 0
 else
-oldexc0D dd 0
+PrevInt0DProc dd 0
 endif
 endif
 
@@ -1081,10 +1110,10 @@ jmpprevint21::
 if ?32BIT
 	db 66h
 	db 0eah			   ;jmp ssss:oooooooo
-oldint21 df 0
+PrevInt21Proc df 0
 else
 	db 0eah			   ;jmp ssss:oooo
-oldint21 dd 0
+PrevInt21Proc dd 0
 endif
 	align 4
 
@@ -1220,7 +1249,7 @@ else
 GetModuleHandle16 proc uses es ds si bx
 endif
 
-	mov bx,cs:[wMDSta]
+	mov bx,cs:[TH_HEADPDB]
 	push bx
 if ?32BIT
 	mov esi, edx
@@ -2423,21 +2452,21 @@ endif
 	call setexc
 endif
 if ?32BIT
-	mov cx,word ptr oldexc0b+4
-	mov edx,dword ptr oldexc0b+0
+	mov cx,word ptr PrevInt3FProc+4
+	mov edx,dword ptr PrevInt3FProc+0
 else
-	mov cx,word ptr oldexc0b+2
-	mov dx,word ptr oldexc0b+0
+	mov cx,word ptr PrevInt3FProc+2
+	mov dx,word ptr PrevInt3FProc+0
 endif
 	mov bl,0Bh
 	call setexc
 if _TRAPEXC0D_
 if ?32BIT
-	mov cx,word ptr oldexc0D+4
-	mov edx,dword ptr oldexc0D+0
+	mov cx,word ptr PrevInt0DProc+4
+	mov edx,dword ptr PrevInt0DProc+0
 else
-	mov cx,word ptr oldexc0D+2
-	mov dx,word ptr oldexc0D+0
+	mov cx,word ptr PrevInt0DProc+2
+	mov dx,word ptr PrevInt0DProc+0
 endif
 	mov bl,0Dh
 	call setexc
@@ -2453,11 +2482,11 @@ if ?PESUPP
 endif
 	@trace_s <"restoring vector int 0x21",lf>
 if ?32BIT
-	mov cx,word ptr ds:[oldint21+4]
-	mov edx,dword ptr ds:[oldint21+0]
+	mov cx,word ptr ds:[PrevInt21Proc+4]
+	mov edx,dword ptr ds:[PrevInt21Proc+0]
 else
-	mov cx,word ptr ds:[oldint21+2]
-	mov dx,word ptr ds:[oldint21+0]
+	mov cx,word ptr ds:[PrevInt21Proc+2]
+	mov dx,word ptr ds:[PrevInt21Proc+0]
 endif
 	mov bl,21h
 	mov ax,0205h			;set pm int
@@ -2509,7 +2538,7 @@ endif
 
 InsertModule16 proc
 	mov ax,es
-	mov cx,[wMDSta]
+	mov cx,[TH_HEADPDB]
 @@:
 	jcxz @F
 	mov es,cx
@@ -2530,7 +2559,7 @@ DeleteModule16 proc
 	@trace_s <"DeleteModule16 ">
 	@trace_w ax
 	@trace_s <lf>
-	mov cx,[wMDSta]
+	mov cx,[TH_HEADPDB]
 nextitem:
 	jcxz modnotfound
 	mov es,cx
@@ -2542,7 +2571,7 @@ nextitem:
 modfound:					;ES = current MD, BX=previous, CX=next
 	and bx,bx
 	jnz @F
-	mov [wMDSta],cx
+	mov [TH_HEADPDB],cx
 	clc
 	ret
 @@:
@@ -2560,7 +2589,7 @@ DeleteModule16 endp
 
 checkifreferenced proc
 	mov bx,ax
-	mov cx,[wMDSta]
+	mov cx,[TH_HEADPDB]
 checkifreferenced1:
 	clc
 	jcxz checkifreferencedex
@@ -2596,7 +2625,7 @@ if ?LOADDBGDLL
 endif
 	@trace_s <"*** enter auto delete mode ***",lf>
 freemodulerest3:				   ;<----
-	mov ax,[wMDSta]
+	mov ax,[TH_HEADPDB]
 	and ax,ax
 	jz freemodulerestex_1
 @@:
@@ -2626,7 +2655,7 @@ else
 endif
 freemodulerest2:
 	mov bx,ax			;current module is referenced
-	mov ax,[wMDSta] 	;so get previous module
+	mov ax,[TH_HEADPDB] 	;so get previous module
 	cmp ax,bx			;if there is none
 	jz freemodulerestex_1;immediate exit
 @@:
@@ -3792,7 +3821,7 @@ AllocMD proc uses bx
 	pop cx
 	jc errorx
 	mov dx,SF_DATA		;AX=selector
-	.if ((bEnvFlgs & ENVFL_DONTLOADHIGH) && (!wMDSta))
+	.if ((bEnvFlgs & ENVFL_DONTLOADHIGH) && (!TH_HEADPDB))
 		or dl, SF_PRELOD
 	.endif
 	call AllocMem		;alloc memory (+ Base,Limit der Descipt)
@@ -4327,7 +4356,7 @@ discardmem proc public
 	@push_a
 	push es
 	@trace_s <"memory is scarce, try to discard segments",lf>
-	mov ax,[wMDSta]
+	mov ax,[TH_HEADPDB]
 discardmem_2:
 	and ax,ax
 	jz discardmem_ex
@@ -4558,12 +4587,12 @@ setexc0b proc uses bx
 	call dpmicall
 	jc @F
 if ?32BIT
-	mov dword ptr oldexc0b+0,edx
-	mov word ptr oldexc0b+4,cx
+	mov dword ptr PrevInt3FProc+0,edx
+	mov word ptr PrevInt3FProc+4,cx
 	mov edx, offset Exc0BProc
 else
-	mov word ptr oldexc0b+0,dx
-	mov word ptr oldexc0b+2,cx
+	mov word ptr PrevInt3FProc+0,dx
+	mov word ptr PrevInt3FProc+2,cx
 	mov dx, offset Exc0BProc
 endif
 	mov cx,cs
@@ -4577,9 +4606,9 @@ setexc0b endp
 
 SetNPBase proc
 if ?32BIT
-	cmp word ptr cs:[oldexc0b+4],0	 ;is Exc 0B Handler installed?
+	cmp word ptr cs:[PrevInt3FProc+4],0	 ;is Exc 0B Handler installed?
 else
-	cmp word ptr cs:[oldexc0b+2],0
+	cmp word ptr cs:[PrevInt3FProc+2],0
 endif
 	jnz @F
 	call setexc0b
@@ -5227,7 +5256,7 @@ done:
 	jmp done2
 @@:
 ife ?MEMFORKERNEL
-	cmp [wMDSta],0
+	cmp [TH_HEADPDB],0
 	jz done2
 endif
 	@trace_s <"freeing memory of MD, Handle=">
@@ -6074,7 +6103,7 @@ CallAllLibEntries endp
 ;---      and address of segment descriptor in ES:BX
 
 Segment2ModuleFirst:
-	mov bx,cs:[wMDSta]	;search from module list start
+	mov bx,cs:[TH_HEADPDB]	;search from module list start
 
 Segment2Module proc public
 
@@ -6126,7 +6155,7 @@ Segment2Module endp
 
 SearchModule16 proc near public
 
-	mov bx,cs:[wMDSta]
+	mov bx,cs:[TH_HEADPDB]
 	mov ax,ds
 	and ax,ax
 	jz Segment2Module	;ok, is SI is a selector
@@ -6981,10 +7010,10 @@ endif	;?EXTLOAD
 doscall proc
 if ?32BIT
 	pushfd
-	call fword ptr cs:[oldint21]
+	call fword ptr cs:[PrevInt21Proc]
 else
 	pushf
-	call dword ptr cs:[oldint21]
+	call dword ptr cs:[PrevInt21Proc]
 endif
 	ret
 doscall endp
@@ -7662,11 +7691,11 @@ InitProtMode proc
 				;get pm int
 	
 if ?32BIT
-	mov dword ptr [oldint21+0],edx
-	mov word ptr [oldint21+4],cx
+	mov dword ptr [PrevInt21Proc+0],edx
+	mov word ptr [PrevInt21Proc+4],cx
 else
-	mov word ptr [oldint21+0],dx
-	mov word ptr [oldint21+2],cx
+	mov word ptr [PrevInt21Proc+0],dx
+	mov word ptr [PrevInt21Proc+2],cx
 endif
 	@DPMI_GetPMIntVec 31h				;get int 31 PM vector
 if ?32BIT
@@ -7735,12 +7764,12 @@ endif
 if _TRAPEXC0D_
 	@DPMI_GetExcVec 0Dh	   ;get Exception 0D
   if ?32BIT		 
-	mov dword ptr oldexc0D+0,edx
-	mov word ptr oldexc0D+4,cx
+	mov dword ptr PrevInt0DProc+0,edx
+	mov word ptr PrevInt0DProc+4,cx
 	mov edx, offset LEXC0D
   else
-	mov word ptr oldexc0D+0,dx
-	mov word ptr oldexc0D+2,cx
+	mov word ptr PrevInt0DProc+0,dx
+	mov word ptr PrevInt0DProc+2,cx
 	mov dx, offset LEXC0D
   endif
 	mov cx,cs

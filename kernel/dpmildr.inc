@@ -110,7 +110,7 @@ _DATA segment
 externdef	wKernelDS:word
 externdef	wTDStk:word
 externdef	starttaskstk:byte
-externdef	wMDSta:word
+externdef	TH_HEADPDB:word
 externdef	wLastRC:word
 externdef	bEnvFlgs:byte
 externdef	bEnvFlgs2:byte

@@ -4,6 +4,8 @@
 
 	include ascii.inc
 
+DGROUP	group _TEXT,_DATA
+
 _TEXT segment word public 'CODE'
 _TEXT ends
 

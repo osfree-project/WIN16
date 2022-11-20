@@ -226,7 +226,7 @@ endif
 if ?32BIT
 	movzx esi,si	;SearchModule16 will use ESI in 32bit
 endif				;but this proc is for NE-Dlls only
-	mov bx,cs:[wMDSta]
+	mov bx,cs:[TH_HEADPDB]
 	push bx			;the first entry should be kernel
 	mov ds,ax
 	and ax,ax
@@ -653,7 +653,7 @@ endif
 	xor cx,cx
 	@DPMI_SetLimit
 	mov es,bx
-	mov [wMDSta],bx
+	mov [TH_HEADPDB],bx
 if ?MEMFORKERNEL
 	xor di,di
 	mov si,offset KernelNE

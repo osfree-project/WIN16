@@ -1,12 +1,17 @@
+	; MacroLib
+	include dos.inc
+
 	include macros.inc
+	include dpmildr.inc
 
-_DATA segment word public 'DATA'
+DGROUP	group _TEXT,_DATA
 
-KernelFlags DB 0, 0
+EW_REBOOTSYSTEM equ 43h
 
+_DATA segment
 _DATA ends
 
-_TEXT segment word public 'CODE'
+_TEXT segment
 
 DisableKernel proc far pascal
 	@SetKernelDS
@@ -80,8 +85,7 @@ ife ?REAL
 
 exit_via_INT_19:
 endif
-	mov ah, 0dh
-	int 21h
+	RESET_DISK
 
 ;INT 2F - NORTON UTILITIES 5.0+ TSRs - FLUSH BUFFERS
 ;
@@ -106,9 +110,7 @@ endif
 	int 19h
 
 exit_via_DOS:
-	mov ax, rc
-	mov ah, 4ch
-	int 21h
+	@Exit rc
 
 ExitKernel endp
 	

@@ -222,13 +222,9 @@ AllocSelectorArray endp
 ;
 ; @todo: implement huge selector
 
-AllocSelector proc far pascal
-	pop cx
-	pop dx
-	pop bx
-	push dx
-	push cx
-	@DPMI_AllocDesc
+AllocSelector proc far pascal uSelector: word
+;local limit: word
+	@DPMI_AllocDesc uSelector
 	jc error
 	and bx,bx
 	jz @F
@@ -237,10 +233,10 @@ AllocSelector proc far pascal
 	call CopyDescriptor	;copy BX -> AX
 	pop ds
 @@:
-	ret
+	ret 2
 error:
 	xor ax,ax
-	ret
+	ret 2
 AllocSelector endp
 
 ;--- WORD FreeSelector(WORD)

@@ -20,6 +20,9 @@
 
 	include ascii.inc
 
+_DATA segment word public 'DATA'
+_DATA ends
+
 _TEXT segment word public 'CODE'
 _TEXT ends
 
@@ -28,6 +31,8 @@ _TEXT ends
 	include pusha.inc
 	include dpmildr.inc
 	include ascii.inc
+
+DGROUP	group _TEXT,CCONST,_DATA
 
 	.8086
 

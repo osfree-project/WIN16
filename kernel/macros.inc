@@ -31,13 +31,16 @@ WF_PMODE	equ 1
 WF_CPU286	equ 2
 WF_CPU386	equ 4
 WF_CPU486	equ 8
-WF_STANDARD equ 10h
+WF_STANDARD	equ 10h
 WF_ENHANCED	equ 20h
+WF_80x87	equ 0400h
 
 @SetKernelDS	macro segm
 		ifnb <segm>
 			mov segm,cs:[wKernelDS]
+			assume segm:DGROUP
 		else
 			mov ds,cs:[wKernelDS]
+			assume ds:DGROUP
 		endif
 		endm
