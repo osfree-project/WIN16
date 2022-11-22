@@ -105,6 +105,8 @@ externdef pascal PrestoChangoSelector: far
 externdef pascal AllocDSToCSAlias: far
 externdef pascal AllocCSToDSAlias: far
 
+externdef pascal LoadModule: far
+
 externdef pascal LongPtrAdd: far
 
 
@@ -128,7 +130,6 @@ if ?32BIT
 endif
 
 _TEXT segment
-
 
 GetDOSEnvironment proc far pascal
 	GET_PSP
@@ -215,7 +216,7 @@ endif
 if ?32BIT
 	movzx esi,si	;SearchModule16 will use ESI in 32bit
 endif				;but this proc is for NE-Dlls only
-	mov bx,cs:[TH_HEADPDB]
+	mov bx,cs:[TH_HEXEHEAD]
 	push bx			;the first entry should be kernel
 	mov ds,ax
 	and ax,ax
@@ -303,21 +304,6 @@ SetErrorMode endp
 
 ;--- 
 
-LoadModule proc far pascal uses ds lpszModuleName:far ptr byte, lpParameterBlock:far ptr
-
-	@SetKernelDS
-	mov [fLoadMod],1	;use a asciiz command line
-	lds dx, lpszModuleName
-	les bx, lpParameterBlock
-if ?32BIT
-	movzx ebx,bx
-	movzx edx,dx
-endif
-	@Exec
-	@SetKernelDS
-	mov [fLoadMod],0
-	ret
-LoadModule endp
 
 LoadLibrary proc far pascal uses ds lpszLibrary:far ptr byte
 	lds dx, lpszLibrary
@@ -642,7 +628,7 @@ endif
 	xor cx,cx
 	@DPMI_SetLimit
 	mov es,bx
-	mov [TH_HEADPDB],bx
+	mov [TH_HEXEHEAD],bx
 if ?MEMFORKERNEL
 	xor di,di
 	mov si,offset KernelNE

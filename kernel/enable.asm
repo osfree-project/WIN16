@@ -1,20 +1,45 @@
 	; MacroLib
 	include dos.inc
-
-	include macros.inc
-	include dpmildr.inc
-
-DGROUP	group _TEXT,_DATA
+	; Kernel
+	include kernel.inc
 
 EW_REBOOTSYSTEM equ 43h
 
-_DATA segment
-_DATA ends
+extern KernelFlags: WORD
+extern PMouseTermProc: DWORD
+extern PKeyboardTermProc: DWORD
+extern PSystemTermProc: DWORD
+extern PrevInt21Proc: DWORD
 
 _TEXT segment
 
 DisableKernel proc far pascal
 	@SetKernelDS
+	or	KernelFlags[2], 02h		; Windows Exit Flag
+	cmp	WORD PTR [PrevInt21Proc+2], 0
+	je	nodos
+	call InternalDisableDOS
+nodos:
+	mov cx,word ptr ds:[PrevInt3FProc+2]
+	mov dx,word ptr ds:[PrevInt3FProc+0]
+	@DPMI_SetExcVec 0bh	
+
+	mov cx,word ptr ds:[PrevInt0CProc+2]
+	mov dx,word ptr ds:[PrevInt0CProc+0]
+	@DPMI_SetExcVec 0ch	
+
+	mov cx,word ptr ds:[PrevInt0DProc+2]
+	mov dx,word ptr ds:[PrevInt0DProc+0]
+	@DPMI_SetExcVec 0dh	
+
+	mov cx,word ptr ds:[PrevInt06Proc+2]
+	mov dx,word ptr ds:[PrevInt06Proc+0]
+	@DPMI_SetExcVec 06h	
+
+	mov cx,word ptr ds:[PrevInt0EProc+2]
+	mov dx,word ptr ds:[PrevInt0EProc+0]
+	@DPMI_SetExcVec 0Eh	
+;@todo not finished yet
 DisableKernel endp
 
 ExitKernel proc far pascal rc: word

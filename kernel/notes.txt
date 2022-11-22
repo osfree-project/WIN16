@@ -1,3 +1,93 @@
+This code heavely uses Pieterk Windows Internals and Shulman Undocumented Windows
+information to recreate Windows Kernel. Main differences of original Windows Kernel
+is following:
+
+1. Write kernel in C as much as possible.
+2. Use DPMI calls instead of direct LDT manipulation.
+
+These will allow to port kernel much easely to WLO (Windows Libraries for OS/2),
+OS/2 VDM (OS/2 1.x Virtual DOS Machine), OS/2 MVDM (OS/2 2.x Multiple Virtual DOS Machine),
+as well as produce another ports if anywone wants (Including Open32 API support for OS/2).
+
+Here some small information about Windows architecture to understand later information.
+
+Windows consist of 3 versions of kernels:
+
+1. KERNEL.EXE Intel 8086 kernel
+2. KRNL286.EXE Intel 80286 kernel
+3. KRNL386.EXE Intel 80386 kernel
+
+Mostly kernels produced from same source code except some parts.
+Most complex kernel is a KERNEL.EXE because it uses software based
+MMU (Memory management unit). KRNL286.EXE and KRNL386.EXE uses
+CPU MMU so most of code is out. They uses DPMI-server so they are
+16-bit DPMI-clients. Mostly KRNL286.EXE and KRNL386.EXE are same,
+but KRNL386.EXE uses 386 specific instructions and mainly manages
+selector via it's own Selector List.
+
+Windows works in 3 modes:
+1. Real Mode - KERNEL.EXE
+2. Standard Mode - KRNL286.EXE or KRNL386.EXE (Depending on CPU) under DOSX.EXE DPMI-Server
+3. Enhanced Mode - KRNL286.EXE or KRNL386.EXE (Depending on CPU) under WIN386.EXE VMM (Virtual
+Machine Monitor) which provides DPMI-Server interface.
+
+As result of above information osFree project mostly focused on KRNL286.EXE and KRNL386.EXE.
+May be KERNEL.EXE will be developed also as side project, but no hope. Anyway, source tree
+contains KERNEL.EXE stub.
+
+We have no plans to produce no one DPMI-Server because our MVM implamentation has plan to
+provide DPMI-Server via VDD. Again, we have DOSX.EXE stub in source tree, which is nonfinished
+downgrade of HX-DMPI to 80286 CPU. May be we will produce DOSX.EXE but no hope ;).
+
+In OS/2 you can find slightly tuned version of Windows Kernels, called OS2K286.EXE. Really
+it uses same source code but contains some tune to inform MVDM about some actions.
+
+In WOW16 (Windows on Windows) you can find another slightly tuned version of Windows Kernels.
+They also uses same source code but mostly DPMI based instead of direct LDT manipulation.
+
+WLO is another one Windows Kernel modification, tuned to work mostly as wrappers around 16-bit OS/2 API.
+
+WIN386.EXE is not goal of osFree project because MVM will produce same functionality. Also VxD world
+is huge and not well documented, comparing to Win16 world. May be some parts of VxD interfaces will require
+emulation but don't think so.
+
+== Source internals ==
+
+We have tried to reconstruct source tree from Pieterk and Shulman informations. It's seems to be following:
+
+ldboot.obj
+enable.obj
+3protect.obj
+2protect.obj
+lddebug.obj
+dosinit.obj
+diag.obj
+2ginterf.asm
+3ginterf.asm
+3gmemini.obj
+3gmem.obj
+3galloc.obj
+3gcompac.obj
+3glru.obj
+3gmoreme.obj
+module.obj
+linterf.obj
+lalloc.obj
+winexec.obj
+ld.obj
+ldheader.obj
+task.obj
+i21task.obj
+ldappl.obj
+context.obj
+schedule.obj
+ldaux.obj
+ldutil.obj
+
+Because we have mix of C and ASM code we selected use C suffix for C-based code and as in original Windows sources for ASM-based
+code. Not all internals described in Pietrek book. Many information also taken from Shulman book.
+Also, lot of code taken from TWin libraries and from WINE sources.
+
 Resources
 
 https://devblogs.microsoft.com/oldnewthing/20040202-00/?p=40783

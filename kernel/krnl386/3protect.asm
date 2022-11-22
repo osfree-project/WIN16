@@ -18,6 +18,10 @@
 		include ascii.inc
 		include kernel.inc
 		include debug.inc
+; Public procedures
+GetSelectorLimit proto far pascal ulSelector: WORD
+; Local procedures
+Get_Physical_Address proto near pascal theSelector: WORD
 
 _DATA segment
 
@@ -28,10 +32,6 @@ externdef	TH_TOPPDB:word
 _DATA ends
 
 
-	assume CS:DGROUP
-	assume DS:DGROUP
-	assume SS:NOTHING
-	assume ES:DGROUP
 
 _TEXT segment
 
@@ -210,9 +210,10 @@ AllocSelectorArray endp
 ;
 ; @todo: implement huge selector
 
-AllocSelector proc far pascal uSelector: word
+AllocSelector proc far pascal ulSelector: word
 ;local limit: word
-	@DPMI_AllocDesc uSelector
+	invoke GetSelectorLimit, ulSelector
+	@DPMI_AllocDesc
 	jc error
 	and bx,bx
 	jz @F
@@ -221,10 +222,10 @@ AllocSelector proc far pascal uSelector: word
 	call CopyDescriptor	;copy BX -> AX
 	pop ds
 @@:
-	ret 2
+	ret
 error:
 	xor ax,ax
-	ret 2
+	ret
 AllocSelector endp
 
 ;--- WORD FreeSelector(WORD)
@@ -250,24 +251,27 @@ FreeSelector proc far pascal
 FreeSelector endp
 
 ;--- DWORD GetSelectorBase(WORD)
+;
+; Function rewrittend to conform Pietrek book
+;
 
-GetSelectorBase proc far pascal
-	pop dx
-	pop cx
-	pop bx
-	push cx
-	push dx
-        @DPMI_GetBase
+GetSelectorBase proc far pascal theSelector: WORD
+	invoke Get_Physical_Address, theSelector
+	ret
+GetSelectorBase endp
+
+Get_Physical_Address proc near pascal theSelector: WORD
+	and theSelector, not 7
+	@DPMI_GetBase theSelector
 	jc @F
 	mov ax,dx
 	mov dx,cx
-	ret
+	ret 2
 @@:
 	xor ax,ax
 	xor dx,dx
 	ret
-
-GetSelectorBase endp
+Get_Physical_Address endp
 
 ;--- WORD SetSelectorBase(WORD)
 ;--- returns 0 if an error occured, else the selector value
@@ -286,25 +290,8 @@ SetSelectorBase proc far pascal
 SetSelectorBase endp
 
 ;--- DWORD GetSelectorLimit(WORD)
-
-GetSelectorLimit proc far pascal
-
-	pop dx
-	pop cx
-	pop bx
-	push cx
-	push dx
-
-if ?32BIT
-	lsl eax,ebx
-	jnz @F
-	xor eax,eax
-@@:
-	push eax
-	pop ax
-	pop dx
-	ret
-else
+GetSelectorLimit proc far pascal ulSelector: WORD
+	mov bx, ulSelector
 	push di
 	sub sp,8
 	mov di,sp
@@ -318,13 +305,11 @@ else
 exit:
 	add sp,8
 	pop di
-	ret
+	ret 2
 error:
 	xor ax,ax
 	xor dx,dx
 	jmp exit
-endif
-
 GetSelectorLimit endp
 
 ;--- SetSelectorLimit(WORD);
@@ -384,7 +369,6 @@ PrestoChangoSelector proc far pascal
 	push cx
 	call CreateAlias	 ;BX -> AX
 	@return
-
 PrestoChangoSelector endp
 
 _TEXT	ends

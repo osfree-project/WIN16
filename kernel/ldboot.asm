@@ -843,14 +843,8 @@ done:
 	@popa
 	@retf
 calloldexc0b:
-if ?32BIT
-	db 66h
-	db 0eah			   ;jmp ssss:oooooooo
-PrevInt3FProc df 0
-else
 	db 0eah			   ;jmp ssss:oooo
 PrevInt3FProc dd 0
-endif
 Exc0BProc endp
 
 ;--- an invalid exception 0Bh occured
@@ -860,11 +854,7 @@ exc0berrorexit proc
 if 0
 	push ds
 	pop ss
-  if ?32BIT
-	mov esp,[dStktop]
-  else
 	mov sp,[wStktop]
-  endif
 endif
 	push cx
 	call stroutax			;display text ^AX
@@ -1231,7 +1221,7 @@ else
 GetModuleHandle16 proc uses es ds si bx
 endif
 
-	mov bx,cs:[TH_HEADPDB]
+	mov bx,cs:[TH_HEXEHEAD]
 	push bx
 if ?32BIT
 	mov esi, edx
@@ -2520,7 +2510,7 @@ endif
 
 InsertModule16 proc
 	mov ax,es
-	mov cx,[TH_HEADPDB]
+	mov cx,[TH_HEXEHEAD]
 @@:
 	jcxz @F
 	mov es,cx
@@ -2541,7 +2531,7 @@ DeleteModule16 proc
 	@trace_s <"DeleteModule16 ">
 	@trace_w ax
 	@trace_s <lf>
-	mov cx,[TH_HEADPDB]
+	mov cx,[TH_HEXEHEAD]
 nextitem:
 	jcxz modnotfound
 	mov es,cx
@@ -2553,7 +2543,7 @@ nextitem:
 modfound:					;ES = current MD, BX=previous, CX=next
 	and bx,bx
 	jnz @F
-	mov [TH_HEADPDB],cx
+	mov [TH_HEXEHEAD],cx
 	clc
 	ret
 @@:
@@ -2571,7 +2561,7 @@ DeleteModule16 endp
 
 checkifreferenced proc
 	mov bx,ax
-	mov cx,[TH_HEADPDB]
+	mov cx,[TH_HEXEHEAD]
 checkifreferenced1:
 	clc
 	jcxz checkifreferencedex
@@ -2607,7 +2597,7 @@ if ?LOADDBGDLL
 endif
 	@trace_s <"*** enter auto delete mode ***",lf>
 freemodulerest3:				   ;<----
-	mov ax,[TH_HEADPDB]
+	mov ax,[TH_HEXEHEAD]
 	and ax,ax
 	jz freemodulerestex_1
 @@:
@@ -2637,7 +2627,7 @@ else
 endif
 freemodulerest2:
 	mov bx,ax			;current module is referenced
-	mov ax,[TH_HEADPDB] 	;so get previous module
+	mov ax,[TH_HEXEHEAD] 	;so get previous module
 	cmp ax,bx			;if there is none
 	jz freemodulerestex_1;immediate exit
 @@:
@@ -3803,7 +3793,7 @@ AllocMD proc uses bx
 	pop cx
 	jc errorx
 	mov dx,SF_DATA		;AX=selector
-	.if ((bEnvFlgs & ENVFL_DONTLOADHIGH) && (!TH_HEADPDB))
+	.if ((bEnvFlgs & ENVFL_DONTLOADHIGH) && (!TH_HEXEHEAD))
 		or dl, SF_PRELOD
 	.endif
 	call AllocMem		;alloc memory (+ Base,Limit der Descipt)
@@ -4338,7 +4328,7 @@ discardmem proc public
 	@push_a
 	push es
 	@trace_s <"memory is scarce, try to discard segments",lf>
-	mov ax,[TH_HEADPDB]
+	mov ax,[TH_HEXEHEAD]
 discardmem_2:
 	and ax,ax
 	jz discardmem_ex
@@ -5238,7 +5228,7 @@ done:
 	jmp done2
 @@:
 ife ?MEMFORKERNEL
-	cmp [TH_HEADPDB],0
+	cmp [TH_HEXEHEAD],0
 	jz done2
 endif
 	@trace_s <"freeing memory of MD, Handle=">
@@ -6085,7 +6075,7 @@ CallAllLibEntries endp
 ;---      and address of segment descriptor in ES:BX
 
 Segment2ModuleFirst:
-	mov bx,cs:[TH_HEADPDB]	;search from module list start
+	mov bx,cs:[TH_HEXEHEAD]	;search from module list start
 
 Segment2Module proc public
 
@@ -6137,7 +6127,7 @@ Segment2Module endp
 
 SearchModule16 proc near public
 
-	mov bx,cs:[TH_HEADPDB]
+	mov bx,cs:[TH_HEXEHEAD]
 	mov ax,ds
 	and ax,ax
 	jz Segment2Module	;ok, is SI is a selector

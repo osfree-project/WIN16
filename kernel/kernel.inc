@@ -1,19 +1,27 @@
+		; MacroLib
+		include dpmi.inc
+
 @use16	textequ <>
 
-_ITEXT	segment word @use16 public 'DATA'	;use 'DATA' (OPTLINK bug)
-_ITEXT	ends
-_BSS	segment word @use16 public 'BSS'
-_BSS	ends
-STACK	segment para @use16 stack  'STACK'
-STACK	ends
 _TEXT	segment dword @use16 public 'CODE'
 _TEXT	ends
 CCONST	segment word @use16 public 'CODE'
 CCONST	ends
 _DATA	segment word @use16 public 'DATA'
 _DATA	ends
+_ITEXT	segment word @use16 public 'DATA'	;use 'DATA' (OPTLINK bug)
+_ITEXT	ends
+_BSS	segment word @use16 public 'BSS'
+_BSS	ends
+STACK	segment para @use16 stack  'STACK'
+STACK	ends
 
 DGROUP	group _TEXT,CCONST,_DATA,_ITEXT,_BSS,STACK
+
+	assume CS:DGROUP
+	assume DS:DGROUP
+	assume SS:NOTHING
+	assume ES:DGROUP
 
 
 ;********** global equates **********
@@ -127,7 +135,7 @@ _DATA segment
 externdef	wKernelDS:word
 externdef	wTDStk:word
 externdef	starttaskstk:byte
-externdef	TH_HEADPDB:word
+externdef	TH_HEXEHEAD:word
 externdef	wLastRC:word
 externdef	bEnvFlgs:byte
 externdef	bEnvFlgs2:byte
@@ -180,6 +188,7 @@ CopyDescriptor  proto near
 stroutBX        proto near
 InitDlls        proto near
 externdef stroutstk_err:near
+externdef pascal LoadModule:far
 _TEXT ends
 
 ;********** constants and structures ***********
@@ -509,8 +518,7 @@ endif
 
 @entercriticalsection macro
 if 1
-	mov ax,0900h
-	int 31h
+	@DPMI_DisableInt
 	push ax
 else
 	push bp
