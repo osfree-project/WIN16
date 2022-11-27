@@ -589,6 +589,7 @@ WF_CPU486	equ 8
 WF_STANDARD	equ 10h
 WF_ENHANCED	equ 20h
 WF_80x87	equ 0400h
+WF_PAGING	equ 0800h
 
 @SetKernelDS	macro segm
 		ifnb <segm>

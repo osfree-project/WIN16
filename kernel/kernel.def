@@ -197,7 +197,7 @@ EXPORTS
     GETSETKERNELDOSPROC            @311
     DEBUGDEFINESEGMENT             @314
     WRITEOUTPROFILES               @315
-    GETFREEMEMINFO                 @316
+    GETFREEMEMINFO                 @316 +
     FATALEXITHOOK                  @318
     FLUSHCACHEDFILEHANDLE          @319
     ISTASK                         @320 +

@@ -75,6 +75,7 @@ externdef pascal GlobalHandle: far
 externdef pascal GlobalCompact: far
 
 externdef pascal GetFreeSpace: far
+externdef pascal GetFreeMemInfo: far
 
 ; Local Heap
 externdef pascal LocalAlloc: far
@@ -819,8 +820,11 @@ eC000 ENTRY <1,0>				;195 _C000H
 	ENTRY <1,DebugBreak>		;203
 	db 2,0						;204-205
 	db 1,1
-	ENTRY <1,AllocSelectorArray>;206
-	db 113,0					;207-319
+	ENTRY <1,AllocSelectorArray>	;206
+	db 109,0					;207-315
+	db 1,1
+	ENTRY <1, GetFreeMemInfo>	;316
+	db 4,0					;216-319
 	db 1,1
 	ENTRY <1, IsTask>		; 320
 	db 2,0					;321-322
@@ -948,6 +952,7 @@ KernelNames label byte
 	NENAME "GLOBALUNFIX"        ,198
 	NENAME "DEBUGBREAK"         ,203
 	NENAME "ALLOCSELECTORARRAY" ,206
+	NENAME "GETFREEMEMINFO" ,316
 	NENAME "ISTASK" ,320
 	NENAME "ISROMMODULE" ,323
 	NENAME "ISROMFILE" ,326

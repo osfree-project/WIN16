@@ -624,6 +624,23 @@ GetFreeSpace proc far pascal
 	retf 2
 GetFreeSpace endp
 
+GetFreeMemInfo proc far pascal uses ds
+local buf[30h]: BYTE
+	@SetKernelDS
+	mov ax, -1
+	mov dx, -1
+	test word ptr eWinFlags, WF_PAGING
+	jz exit
+	lea di, buf
+	push ss
+	pop es
+	@DPMI_GETFREEMEMINFO
+	jc exit
+	mov ax, es:[di][10h]
+	mov bx, es:[di][14h]
+exit:
+	ret
+GetFreeMemInfo endp
 
 _TEXT ends
 
