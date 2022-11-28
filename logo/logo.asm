@@ -15,6 +15,7 @@
 .8086
 			; MacroLib
 			include	bios.inc
+			include	dos.inc
 
 code			segment
 			org	0h
@@ -26,20 +27,9 @@ Done:			@SetMode [CurrentVideoMode]
 			retf
 CurrentVideoMode	db	?
 ;--------------------------------------------------------
+; All bellow code will be deleted after return from Init
+;--------------------------------------------------------
 DeadSpace:		
-Init:			push	ds
-			push	cs
-			pop	ds
-			@GetMode
-		        mov     [CurrentVideoMode],al
-			@SetMode 3
-			lea	dx, Hello
-			mov	ah,09H
-			int	21H
-			lea	ax, DeadSpace
-			pop	ds
-			retf
-
 Hello			db	10,13,10,13
 			db	"                             ,.=:^!^!t3Z3z.,             ",10,13
 			db	"                            :tt:::tt333EE3               ",10,13
@@ -77,6 +67,16 @@ Hello			db	10,13,10,13
 ;$f4             \` $f3:EEEEtttt::::z7        
 ;$f3                 $f3'VEzjt:;;z>*\`        
 
+Init:			push	ds
+			push	cs
+			pop	ds
+			@GetMode
+		        mov     [CurrentVideoMode],al
+			@SetMode 3
+			@DispStr Hello
+			lea	ax, DeadSpace
+			pop	ds
+			retf
 
 code			ends
 			end strt
