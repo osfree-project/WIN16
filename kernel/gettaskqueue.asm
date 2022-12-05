@@ -16,6 +16,20 @@ GetTaskQueue proc far pascal
 	ret 2
 GetTaskQueue endp
 
+GetTaskQueueDS proc far pascal
+	push 0
+	call GetTaskIntoES
+	mov ds, es:TDB_HQUEUE
+	ret 2
+GetTaskQueueDS endp
+
+GetTaskQueueES proc far pascal
+	push 0
+	call GetTaskIntoES
+	mov es, es:TDB_HQUEUE
+	ret 2
+GetTaskQueueES endp
+
 IsWinOldApTask proc far pascal
 	call GetTaskIntoES
 	mov es, es:[TDB_PDB]
