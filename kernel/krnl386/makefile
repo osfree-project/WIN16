@@ -8,10 +8,11 @@
 PROJ = krnl386
 TRGT = $(PROJ).exe
 DESC = Windows/386 Kernel
-srcfiles = $(p)ldboot$(e) $(p)hmemset$(e) $(p)lstrcat$(e) $(p)lstrcpy$(e) $(p)lstrlen$(e) $(p)profstrg$(e) $(p)kernel16$(e) &
-$(p)smallcode$(e) $(p)atom$(e) $(p)lstrcpyn$(e) $(p)memset$(e) $(p)toupper$(e) $(p)strnicmp$(e) $(p)memcpy$(e) &
-$(p)profile$(e) $(p)ansi$(e) $(p)tolower$(e) $(p)lstrcmp$(e) $(p)rom$(e) $(p)file$(e) $(p)main$(e) &
-$(p)strlen$(e) $(p)atoi$(e) $(p)local$(e) $(p)catch$(e) $(p)nls$(e) &
+
+srcfiles = $(p)ldboot$(e) $(p)hmemset$(e) $(p)profstrg$(e) $(p)kernel16$(e) &
+$(p)smallcode$(e) $(p)atom$(e) $(p)memset$(e) $(p)memcpy$(e) &
+$(p)profile$(e) $(p)strings$(e) $(p)rom$(e) $(p)file$(e) $(p)main$(e) &
+$(p)local$(e) $(p)catch$(e) $(p)nls$(e) &
 $(p)mthread$(e) $(p)3protect$(e) $(p)3ginterf$(e) $(p)istask$(e)  $(p)GetExeVersion$(e)  $(p)longptradd$(e) $(p)ld$(e) $(p)task$(e) 
 
 # 32BIT must be 1 here, but some files not added from HXDPMI yet

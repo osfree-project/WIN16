@@ -8,10 +8,11 @@
 PROJ = krnl286
 TRGT = $(PROJ).exe
 DESC = Windows/286 Kernel
-srcfiles = $(p)ldboot$(e) $(p)hmemset$(e) $(p)lstrcat$(e) $(p)lstrcpy$(e) $(p)lstrlen$(e) $(p)profstrg$(e) $(p)kernel16$(e) &
-$(p)smallcode$(e) $(p)atom$(e) $(p)lstrcpyn$(e) $(p)memset$(e) $(p)toupper$(e) $(p)strnicmp$(e) $(p)memcpy$(e) &
-$(p)profile$(e) $(p)ansi$(e) $(p)tolower$(e) $(p)lstrcmp$(e) $(p)rom$(e) $(p)file$(e) $(p)main$(e) &
-$(p)strlen$(e) $(p)atoi$(e) $(p)local$(e) $(p)catch$(e) $(p)nls$(e) &
+
+srcfiles = $(p)ldboot$(e) $(p)hmemset$(e) $(p)profstrg$(e) $(p)kernel16$(e) &
+$(p)smallcode$(e) $(p)atom$(e) $(p)memset$(e) $(p)memcpy$(e) &
+$(p)profile$(e) $(p)strings$(e) $(p)rom$(e) $(p)file$(e) $(p)main$(e) &
+$(p)local$(e) $(p)catch$(e) $(p)nls$(e) &
 $(p)mthread$(e) $(p)2protect$(e) $(p)2ginterf$(e) $(p)istask$(e)  $(p)GetExeVersion$(e)  $(p)longptradd$(e) $(p)task$(e)  $(p)ld$(e)
 
 ADD_ASMOPT = -D?32BIT=0 -D?DEBUG=0 -D?REAL=0 -I=$(MYDIR).. -I=$(MYDIR)..$(SEP)..$(SEP)..$(SEP)macrolib

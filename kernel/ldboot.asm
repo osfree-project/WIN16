@@ -294,6 +294,8 @@ segtable	db ?MAXSEG * 8 dup (?);segment table (temporarily MZ-Header)
 RELSIZE		equ ?MAXSEG * 8		;size relocations buffer
 ParmBlk		dd 6 dup (?)		;parameter block for "exec prog"
 
+public GDTDsc
+GDTDsc dw ?
 ;*** temp variables
 blksize		dd ?			;limit for memory allocs
 blkaddr		dd ?			;address for memory allocs

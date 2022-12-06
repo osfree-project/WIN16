@@ -28,6 +28,7 @@ _DATA segment
 externdef	wKernelDS:word
 externdef	wCurPSP:word
 externdef	TH_TOPPDB:word
+externdef	GDTDsc:word
 
 _DATA ends
 
