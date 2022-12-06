@@ -86,7 +86,6 @@ _DISCARD_		= 1		;1 1=remove discardable segments if out of memory
 ?AUTOCSALIAS	= 1		;1 1=optionally alloc a CS alias for code segments
 endif
 
-ENVIRON equ 2Ch
 PARPSP	equ 16h
 
 ;*** define segments ***
@@ -1823,7 +1822,7 @@ else
 endif
 ife ?32BIT
 	or bx,-1
-	mov es,es:[002Ch]
+	mov es,es:[ENVIRON]
 	xor ax,ax
 @@:
 	inc bx
@@ -2060,7 +2059,7 @@ if ?MAKENEWENV
 CopyPgmInEnv proc
 	@push_a
 	push ds
-	mov ds,ds:[002Ch]
+	mov ds,ds:[ENVIRON]
 	xor si,si
 	xor ax,ax
 	dec si
@@ -2133,7 +2132,7 @@ endif
 	jnz @B
   endif
 	pop ds
-	mov ds:[002Ch],es
+	mov ds:[ENVIRON],es
 	push ds
 done:
 	pop ds
@@ -2194,13 +2193,13 @@ pspdone:
 if ?COPYENV
 	push ds
 	mov ds,dx
-	cmp word ptr ds:[2ch],0		;is env of new PSP 0?
+	cmp word ptr ds:[ENVIRON],0		;is env of new PSP 0?
 	jnz @F
 	@trace_s <"environment of PSP is NULL, copy it from previous PSP",lf>
 	mov ds, cs:[wCurPSP]		;then copy it from current PSP
-	mov cx, ds:[2ch]
+	mov cx, ds:[ENVIRON]
 	mov ds, dx
-	mov ds:[2ch], cx
+	mov ds:[ENVIRON], cx
 @@:
   if ?MAKENEWENV
 	cmp cs:[wTDStk],offset starttaskstk

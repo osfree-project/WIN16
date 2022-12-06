@@ -140,14 +140,6 @@ JumpToPM_3:
 if 1;?USE1PSP
 	mov [wCurPSP],es
 endif
-if ?32BIT
-	movzx eax,ax
-	movzx ebx,bx
-	movzx ecx,cx
-	movzx edx,dx
-	movzx esi,si
-	movzx edi,di
-endif
 	@trace_s <lf,"------------------------------------",lf>
 	@trace_s <"KERNEL now in protected mode, PSP=">
 	@trace_w es
@@ -370,6 +362,11 @@ PrestoChangoSelector proc far pascal
 	call CreateAlias	 ;BX -> AX
 	@return
 PrestoChangoSelector endp
+
+LDT_Init proc far pascal
+	cmp GDTDsc, 0
+	ret
+LDT_Init endp
 
 _TEXT	ends
 	end

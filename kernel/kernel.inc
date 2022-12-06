@@ -136,6 +136,8 @@ externdef	wKernelDS:word
 externdef	wTDStk:word
 externdef	starttaskstk:byte
 externdef	TH_HEXEHEAD:word
+externdef	TH_HEADTDB:word
+externdef	TH_CURTDB:word
 externdef	wLastRC:word
 externdef	bEnvFlgs:byte
 externdef	bEnvFlgs2:byte
@@ -590,6 +592,8 @@ WF_STANDARD	equ 10h
 WF_ENHANCED	equ 20h
 WF_80x87	equ 0400h
 WF_PAGING	equ 0800h
+
+ENVIRON equ 2Ch
 
 @SetKernelDS	macro segm
 		ifnb <segm>

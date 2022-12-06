@@ -88,6 +88,11 @@ Because we have mix of C and ASM code we selected use C suffix for C-based code 
 code. Not all internals described in Pietrek book. Many information also taken from Shulman book.
 Also, lot of code taken from TWin libraries and from WINE sources.
 
+== Handles ==
+
+HTASK is a selector of TDB
+
+
 Resources
 
 https://devblogs.microsoft.com/oldnewthing/20040202-00/?p=40783
