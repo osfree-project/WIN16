@@ -1,3 +1,111 @@
+#include <win16.h>
+
+/***********************************************************************
+ *		Reserved5 (KERNEL.87)
+ */
+int WINAPI lstrcmp( LPCSTR str1, LPCSTR str2 )
+{
+  while (*str1 || *str2)
+    {
+      if (*str1 < *str2)
+        return -1;
+      else if (*str1 > *str2)
+        return 1;
+      str1 ++;
+      str2 ++;
+    }
+
+  return 0;
+}
+
+LPSTR WINAPI lstrcat( LPSTR dst, LPCSTR t )
+{
+    LPSTR s;
+    s = dst;
+    while( *s != '\0' )
+        ++s;
+    while( *s++ = *t++ )
+        ;
+    return( dst );
+}
+
+LPSTR WINAPI lstrcpyn( LPSTR dst, LPCSTR src, int n )
+{
+    LPSTR d = dst;
+    LPCSTR s = src;
+    UINT count = n;
+
+    while ((count > 1) && *s)
+    {
+        count--;
+        *d++ = *s++;
+    }
+    if (count) *d = 0;
+
+    return dst;
+}
+
+int WINAPI lstrlen( LPCSTR s )
+{
+    LPCSTR p;
+
+    p = s;
+    while( *p != '\0' )
+        ++p;
+    return( p - s );
+
+}
+
+LPSTR WINAPI lstrcpy( LPSTR s, LPCSTR t )
+{
+    LPSTR dst;
+    dst = s;
+    while( *dst++ = *t++ )
+        ;
+    return( s );
+}
+
+int strlen (const char *str)
+{
+   int len = 0;
+
+  while (*str++)
+    len++;
+
+  return len;
+}
+
+int toupper (int c)
+{
+  if (c >= 'a' && c <= 'z')
+    return (c + ('A' - 'a'));
+
+  return c;
+}
+
+int tolower (int c)
+{
+  if (c >= 'A' && c <= 'Z')
+    return (c + ('a' - 'A'));
+
+  return c;
+}
+
+int strnicmp(char far *s1, const char far *s2, int n)
+{
+
+    if (n == 0)
+	return 0;
+    do {
+	if (toupper(*s1) != toupper(*s2++))
+	    return toupper(*(unsigned char *) s1) -
+		toupper(*(unsigned char *) --s2);
+	if (*s1++ == 0)
+	    break;
+    } while (--n != 0);
+    return 0;
+}
+
 /*
  * 16-bit kernel initialization code
  *
@@ -100,4 +208,47 @@ LPSTR WINAPI AnsiLower( LPSTR strOrChar )
         return strOrChar;
     }
     else return (LPSTR)tolower((char)strOrChar);
+}
+
+int atoi(char *h)
+{
+  char *s = h;
+  int  i = 0;
+  int  j, k, l;
+  char c;
+  int  base;
+
+  if (s[0] == '0' && s[1] == 'x') {
+    base = 16;
+    s += 2; // Delete "0x"
+  } else {
+    base = 10;
+  }
+
+  l = strlen(s) - 1;
+
+  while (*s) {
+    c = tolower(*s);
+
+    if ('a' <= c && c <= 'f') {
+      if (base == 16) {
+        c = c - 'a' + 10;
+      } else {
+        return 0;
+      }
+    } else if ('0' <= c && c <= '9') {
+      c -= '0';
+    } else {
+      return 0;
+    }
+
+    for (j = 0, k = c; j < l; j++)
+      k *= base;
+
+    i += k;
+    s++;
+    l--;
+  }
+
+  return i;
 }

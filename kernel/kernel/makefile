@@ -8,10 +8,10 @@
 PROJ = kernel
 TRGT = $(PROJ).exe
 DESC = Windows Real Mode Kernel
-srcfiles = $(p)ldboot$(e) $(p)hmemset$(e) $(p)lstrcat$(e) $(p)lstrcpy$(e) $(p)lstrlen$(e) $(p)profstrg$(e) $(p)kernel16$(e) &
-$(p)smallcode$(e) $(p)atom$(e) $(p)lstrcpyn$(e) $(p)memset$(e) $(p)toupper$(e) $(p)strnicmp$(e) $(p)memcpy$(e) &
-$(p)profile$(e) $(p)ansi$(e) $(p)tolower$(e) $(p)lstrcmp$(e) $(p)rom$(e) $(p)file$(e) $(p)main$(e) &
-$(p)strlen$(e) $(p)atoi$(e) $(p)ginterf$(e) $(p)local$(e) $(p)catch$(e) $(p)nls$(e) $(p)selector$(e) &
+srcfiles = $(p)ldboot$(e) $(p)hmemset$(e) $(p)profstrg$(e) $(p)kernel16$(e) &
+$(p)smallcode$(e) $(p)atom$(e) $(p)memset$(e) $(p)memcpy$(e) &
+$(p)profile$(e) $(p)strings$(e) $(p)rom$(e) $(p)file$(e) $(p)main$(e) &
+$(p)ginterf$(e) $(p)local$(e) $(p)catch$(e) $(p)nls$(e) $(p)selector$(e) &
 $(p)mthread$(e) $(p)istask$(e) $(p)GetExeVersion$(e)  $(p)longptradd$(e) $(p)ld$(e) #$(p)enable$(e)
 
 ADD_ASMOPT = -Zi -Zd -Fl -D?32BIT=0 -D?DEBUG=1 -D?REAL=1 -I=$(MYDIR).. -I=$(MYDIR)..$(SEP)..$(SEP)..$(SEP)macrolib
