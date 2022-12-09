@@ -16,7 +16,7 @@ $(p)ginterf$(e) $(p)local$(e) $(p)catch$(e) $(p)nls$(e) $(p)selector$(e) &
 $(p)mthread$(e) $(p)istask$(e) $(p)GetExeVersion$(e)  $(p)longptradd$(e) $(p)ld$(e) $(p)task$(e) #$(p)enable$(e)
 
 ADD_ASMOPT = -Zi -Zd -Fl -D?32BIT=0 -D?DEBUG=1 -D?REAL=1 -I=$(MYDIR).. -I=$(MYDIR)..$(SEP)..$(SEP)..$(SEP)macrolib
-ADD_COPT = -d3 -s -0 -I=$(%WATCOM)$(SEP)h$(SEP)win
+ADD_COPT = -d3 -s -0 -I=$(%WATCOM)$(SEP)h$(SEP)win #-p
 JWASM = 1
 DEBUG = all
 DEST        = os2$(SEP)mdos$(SEP)winos2$(SEP)system

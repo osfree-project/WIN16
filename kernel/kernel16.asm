@@ -25,6 +25,11 @@ endif
 
 public eWinFlags
 
+externdef pascal _lopen:far
+externdef pascal _lcreat:far
+externdef pascal _lclose:far
+
+
 externdef pascal GetCurrentPDB:far
 externdef pascal GetCurrentTask:far
 externdef pascal GetDOSEnvironment:far
@@ -115,6 +120,7 @@ externdef pascal LoadModule: far
 
 externdef pascal LongPtrAdd: far
 
+public Dos3Call
 
 	include ascii.inc
 	include fixups.inc
@@ -345,15 +351,6 @@ GetProcAddress proc far pascal uses ds hInst:word, lpszProcName:far ptr byte
 
 GetProcAddress endp
 
-_lclose proc far pascal
-	@loadbx
-	@loadparm 0,bx
-	@ClosFil
-	jnc @F
-	mov ax,-1
-@@:
-	@return 2
-_lclose endp
 
 _lread proc far pascal
 	@loadbx
@@ -398,33 +395,6 @@ _llseek proc far pascal
 	@return 8
 _llseek endp
 
-_lopen proc far pascal
-	@loadbx
-	push ds
-	@loadparm 0,al
-	@loadparm 2,dx
-	@loadparm 4,ds
-	@OpenFil
-	jnc @F
-	mov ax,-1
-@@:
-	pop ds
-	@return 6
-_lopen endp
-
-_lcreat proc far pascal
-	@loadbx
-	push ds
-	@loadparm 0,al
-	@loadparm 2,dx
-	@loadparm 4,ds
-	@MakFil
-	jnc @F
-	mov ax,-1
-@@:
-	pop ds
-	@return 6
-_lcreat endp
 
 _TEXT ends
 
