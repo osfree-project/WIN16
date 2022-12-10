@@ -47,6 +47,7 @@ externdef pascal SizeofResource:far
 externdef pascal AllocResource:far
 externdef pascal AccessResource:far
 externdef pascal SetResourceHandler:far
+externdef pascal DirectResAlloc:far
 
 ; Task related functions
 externdef pascal GetCurrentPDB:far
@@ -108,6 +109,7 @@ externdef pascal GlobalUnfix: far
 externdef pascal GlobalHandle: far
 externdef pascal GlobalCompact: far
 externdef pascal GlobalFreeAll: far
+externdef pascal GlobalMasterHandle: far
 
 externdef pascal GetFreeSpace: far
 externdef pascal GetFreeMemInfo: far
@@ -130,6 +132,7 @@ externdef pascal Throw: far
 
 externdef pascal IsTask: far
 externdef pascal GetExeVersion: far
+externdef pascal GetExpWinVer: far
 
 ; Selectors
 externdef pascal AllocSelector: far
@@ -540,25 +543,28 @@ KernelEntries label byte
 	ENTRY <1,UnlockSegment>		;24
 	ENTRY <1,GlobalCompact>		;25
 	ENTRY <1,GlobalFreeAll>		;26
-	db 3,0						;27-29
+	db 1,0				;27
 	db 1,1
-	ENTRY <1,WaitEvent>			;30
+	ENTRY <1,GlobalMasterHandle>	;28
+	db 1,0				;29
+	db 1,1
+	ENTRY <1,WaitEvent>		;30
 	db 3,0				; 31-33
 	db 4,1
-	ENTRY <1,SetTaskQueue>	;34
-	ENTRY <1,GetTaskQueue>	;35
+	ENTRY <1,SetTaskQueue>		;34
+	ENTRY <1,GetTaskQueue>		;35
 	ENTRY <1,GetCurrentTask>	;36
 	ENTRY <1,GetCurrentPDB>		;37
-	db 7,0						;38-44
+	db 7,0				;38-44
 	db 1,1
 	ENTRY <1,LoadModule>		;45
-	db 1,0						;46
+	db 1,0				;46
 	db 4,1
 	ENTRY <1,GetModuleHandle>	;47
-	ENTRY <1,GetModuleUsage>
-	ENTRY <1,GetModuleFileName>
+	ENTRY <1,GetModuleUsage>	;48
+	ENTRY <1,GetModuleFileName>	;49
 	ENTRY <1,GetProcAddress>	;50
-	db 4,0						;51-54
+	db 4,0					;51-54
 	db 19,1
 	ENTRY <1, Catch>            ;55
     	ENTRY <1, Throw>            ;56
@@ -642,8 +648,10 @@ eINCR	ENTRY <1,8>				;114 _AHINCR
 	db 20,0						;138-157
 	db 1,1
 	ENTRY <1, IsWinOldApTask>                 ;158
-	db 10,0						;159-168
-	db 1,1
+	db 8,0						;159-166
+	db 3,1
+	ENTRY <1,GetExpWinVer>		;167
+	ENTRY <1,DirectResAlloc>	;168
 	ENTRY <1,GetFreeSpace>		;169
 	db 2,1
 	ENTRY <1,AllocCSToDSAlias>	;170
@@ -744,6 +752,7 @@ KernelNames label byte
 	NENAME "UNLOCKSEGMENT",24
 	NENAME "GLOBALCOMPACT",25
 	NENAME "GLOBALFREEALL",26
+	NENAME "GLOBALMASTERHANDLE",28
 	NENAME "WAITEVENT"    ,30
 	NENAME "SETTASKQUEUE" ,34
 	NENAME "GETTASKQUEUE"     ,35
@@ -811,6 +820,8 @@ KernelNames label byte
 	NENAME "GETSYSTEMDIRECTORY"            ,135
 	NENAME "FATALAPPEXIT"     , 137
 	NENAME "ISWINOLDAPTASK"           ,158
+	NENAME "GETEXPWINVER",167
+	NENAME "DIRECTRESALLOC",168
 	NENAME "GETFREESPACE"     , 169
 	NENAME "ALLOCCSTODSALIAS" , 170
 	NENAME "ALLOCDSTOCSALIAS" , 171
@@ -844,6 +855,8 @@ KernelNames label byte
 	NENAME "ISROMMODULE" ,323
 	NENAME "ISROMFILE" ,326
 	NENAME "LSTRCPYN" ,353
+;    K403                           @403	+ FarSetOwner
+;    K404                           @404	+ FarGetOwner
 	db 0
 
 EndKernelNE equ $

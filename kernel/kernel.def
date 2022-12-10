@@ -26,7 +26,7 @@ EXPORTS
     UNLOCKSEGMENT                  @24	+
     GLOBALCOMPACT                  @25	+
     GLOBALFREEALL                  @26	+
-    GLOBALMASTERHANDLE             @28
+    GLOBALMASTERHANDLE             @28	+
     YIELD                          @29
     WAITEVENT                      @30	+
     POSTEVENT                      @31
@@ -231,5 +231,5 @@ EXPORTS
     GETAPPCOMPATFLAGS              @354
     GETWINDEBUGINFO                @355
     SETWINDEBUGINFO                @356
-    K403                           @403
-    K404                           @404
+    K403                           @403	+ FarSetOwner
+    K404                           @404	+ FarGetOwner

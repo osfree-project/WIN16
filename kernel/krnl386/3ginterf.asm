@@ -19,6 +19,8 @@ endif
 externdef pascal _hmemset:far
 externdef discardmem:near
 externdef eWinFlags:near
+externdef TH_HGLOBALHEAP:word
+externdef TH_PGLOBALHEAP:word
 
 
 if ?32BIT
@@ -594,7 +596,6 @@ GlobalHandle proc far pascal
 	@return
 GlobalHandle endp
 
-ife ?32BIT
 
 ;--- DWORD GlobalCompact(DWORD);
 ;--- returns the largest free memory object if dwMinFree != 0
@@ -652,7 +653,12 @@ exit:
 	ret
 GetFreeMemInfo endp
 
-endif
+GlobalMasterHandle proc far pascal uses ds
+	@SetKernelDS
+	mov	ax,TH_HGLOBALHEAP
+	mov	dx,TH_PGLOBALHEAP
+	ret
+GlobalMasterHandle endp
 
 _TEXT ends
 

@@ -32,6 +32,8 @@
 externdef pascal _hmemset:far
 externdef discardmem:near
 externdef eWinFlags:near
+externdef TH_HGLOBALHEAP:word
+externdef TH_PGLOBALHEAP:word
 
 ?LARGEALLOC	equ 1	;1=allow more than 1 MB with GlobalAlloc/Realloc/Free
 
@@ -641,6 +643,13 @@ local buf[30h]: BYTE
 exit:
 	ret
 GetFreeMemInfo endp
+
+GlobalMasterHandle proc far pascal uses ds
+	@SetKernelDS
+	mov	ax,TH_HGLOBALHEAP
+	mov	dx,TH_PGLOBALHEAP
+	ret
+GlobalMasterHandle endp
 
 _TEXT ends
 
