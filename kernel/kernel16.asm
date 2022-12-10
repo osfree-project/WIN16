@@ -30,6 +30,9 @@ externdef pascal GetCurrentTask:far
 externdef pascal GetDOSEnvironment:far
 externdef pascal InitTask:far
 externdef pascal IsWinOldApTask: far
+externdef pascal GetTaskQueueES: far
+externdef pascal GetTaskQueueDS: far
+externdef pascal GetTaskQueue: far
 
 externdef pascal _hmemset:far
 externdef discardmem:near
@@ -345,86 +348,7 @@ GetProcAddress proc far pascal uses ds hInst:word, lpszProcName:far ptr byte
 
 GetProcAddress endp
 
-_lclose proc far pascal
-	@loadbx
-	@loadparm 0,bx
-	@ClosFil
-	jnc @F
-	mov ax,-1
-@@:
-	@return 2
-_lclose endp
-
-_lread proc far pascal
-	@loadbx
-	push ds
-	@loadparm 0,cx
-	@loadparm 2,dx
-	@loadparm 4,ds
-	@loadparm 6,bx
-	@Read
-	jnc @F
-	mov ax,-1
-@@:
-	pop ds
-	@return 8
-_lread endp
-
-_lwrite proc far pascal
-	@loadbx
-	push ds
-	@loadparm 0,cx
-	@loadparm 2,dx
-	@loadparm 4,ds
-	@loadparm 6,bx
-	@Write
-	jnc @F
-	mov ax,-1
-@@:
-	pop ds
-	@return 8
-_lwrite endp
-
-_llseek proc far pascal
-	@loadbx
-	@loadparm 0,al
-	@loadparm 2,dx
-	@loadparm 4,cx
-	@loadparm 6,bx
-	@MovePtr
-	jnc @F
-	mov ax,-1
-@@:
-	@return 8
-_llseek endp
-
-_lopen proc far pascal
-	@loadbx
-	push ds
-	@loadparm 0,al
-	@loadparm 2,dx
-	@loadparm 4,ds
-	@OpenFil
-	jnc @F
-	mov ax,-1
-@@:
-	pop ds
-	@return 6
-_lopen endp
-
-_lcreat proc far pascal
-	@loadbx
-	push ds
-	@loadparm 0,al
-	@loadparm 2,dx
-	@loadparm 4,ds
-	@MakFil
-	jnc @F
-	mov ax,-1
-@@:
-	pop ds
-	@return 6
-_lcreat endp
+include file.inc
 
 _TEXT ends
 
@@ -578,22 +502,23 @@ KernelEntries label byte
 	ENTRY <1,LocalCompact>		;13
 	ENTRY <1,LocalNotify>		;14
 	ENTRY <1,GlobalAlloc>		;15
-	ENTRY <1,GlobalReAlloc>
-	ENTRY <1,GlobalFree>
-	ENTRY <1,GlobalLock>
-	ENTRY <1,GlobalUnlock>
-	ENTRY <1,GlobalSize>
+	ENTRY <1,GlobalReAlloc>		;16
+	ENTRY <1,GlobalFree>		;17
+	ENTRY <1,GlobalLock>		;18
+	ENTRY <1,GlobalUnlock>		;19
+	ENTRY <1,GlobalSize>		;20
 	ENTRY <1,GlobalHandle>		;21
 	db 1,0
 	db 3,1
 	ENTRY <1,LockSegment>		;23
-	ENTRY <1,UnlockSegment>
+	ENTRY <1,UnlockSegment>		;24
 	ENTRY <1,GlobalCompact>		;25
 	db 4,0						;26-29
 	db 1,1
 	ENTRY <1,WaitEvent>			;30
-	db 5,0
-	db 2,1
+	db 4,0
+	db 3,1
+	ENTRY <1,GetTaskQueue>	;35
 	ENTRY <1,GetCurrentTask>	;36
 	ENTRY <1,GetCurrentPDB>		;37
 	db 7,0						;38-44
@@ -627,10 +552,10 @@ KernelEntries label byte
 	ENTRY <1,AnsiUpper>		; 79
 	ENTRY <1,AnsiLower>		; 80
 	ENTRY <1,_lclose>			;81
-	ENTRY <1,_lread>
-	ENTRY <1,_lcreat>
-	ENTRY <1,_llseek>
-	ENTRY <1,_lopen>
+	ENTRY <1,_lread>			;82
+	ENTRY <1,_lcreat>			;83
+	ENTRY <1,_llseek>			;84
+	ENTRY <1,_lopen>			;84
 	ENTRY <1,_lwrite>			;86
 	ENTRY <1,lstrcmp>			;87
 	ENTRY <1,lstrcpy>			;88
@@ -639,7 +564,7 @@ KernelEntries label byte
 	ENTRY <1,InitTask>			;91
 	db 3,0						;92-94
 	db 2,1
-	ENTRY <1,LoadLibrary>
+	ENTRY <1,LoadLibrary>		;95
 	ENTRY <1,FreeLibrary>		;96
 	db 5,0						;97-101
 	db 2,1
@@ -657,8 +582,10 @@ eSHIFT	ENTRY <1,3>				;113 _AHSHIFT
 eINCR	ENTRY <1,8>				;114 _AHINCR
 	db 1,1
 	ENTRY <1,OutputDebugString>	;115
-	db 4,0						;116-119
-	db 1,1
+	db 2,0						;116-117
+	db 3,1
+	ENTRY <1,GetTaskQueueDS>	;118
+	ENTRY <1,GetTaskQueueES>	;119
 	ENTRY <1,UndefDynlink>		;120
 	db 1,0						;121
 	db 1,1
@@ -685,15 +612,15 @@ eINCR	ENTRY <1,8>				;114 _AHINCR
 	db 1,1
 	ENTRY <1,GetFreeSpace>		;169
 	db 2,1
-	ENTRY <1,AllocCSToDSAlias>
-	ENTRY <1,AllocDSToCSAlias>
+	ENTRY <1,AllocCSToDSAlias>	;170
+	ENTRY <1,AllocDSToCSAlias>	;171
 	db 1,0						;172
 	db 2,-2
 eROMBIOS ENTRY <1,0>				;173 _ROMBIOS
 eA000 ENTRY <1,00h>				;174 _A000H
 	db 3,1
 	ENTRY <1,AllocSelector>		;175
-	ENTRY <1,FreeSelector>
+	ENTRY <1,FreeSelector>		;176
 	ENTRY <1,PrestoChangoSelector>	;177
 	db 1,-2
 eWinFlags ENTRY <1,0>			;178 __WINFLAGS
@@ -780,6 +707,7 @@ KernelNames label byte
 	NENAME "UNLOCKSEGMENT",24
 	NENAME "GLOBALCOMPACT",25
 	NENAME "WAITEVENT"        ,30
+	NENAME "GETTASKQUEUE"                   ,35
 	NENAME "GETCURRENTTASK"   ,36
 	NENAME "GETCURRENTPDB"    ,37
 	NENAME "LOADMODULE"       ,45
@@ -822,6 +750,8 @@ KernelNames label byte
 	NENAME "__AHSHIFT"   ,113
 	NENAME "__AHINCR"    ,114
 	NENAME "OUTPUTDEBUGSTRING", 115
+	NENAME "GETTASKQUEUEDS", 118
+	NENAME "GETTASKQUEUEES", 119
 	NENAME "UNDEFDYNLINK",      120
 	NENAME "ISTASKLOCKED",      122
 	NENAME "GETPRIVATEPROFILEINT"  ,127

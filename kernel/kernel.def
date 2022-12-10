@@ -33,7 +33,7 @@ EXPORTS
     SETPRIORITY                    @32
     LOCKCURRENTTASK                @33
     SETTASKQUEUE                   @34
-    GETTASKQUEUE                   @35
+    GETTASKQUEUE                   @35	+
     GETCURRENTTASK                 @36	+
     GETCURRENTPDB                  @37	+
     SETTASKSIGNALPROC              @38
@@ -112,8 +112,8 @@ EXPORTS
     OUTPUTDEBUGSTRING              @115	+
     INITLIB                        @116
     OLDYIELD                       @117
-    GETTASKQUEUEDS                 @118
-    GETTASKQUEUEES                 @119
+    GETTASKQUEUEDS                 @118	+
+    GETTASKQUEUEES                 @119	+
     UNDEFDYNLINK                   @120	+
     LOCALSHRINK                    @121
     ISTASKLOCKED                   @122	+
