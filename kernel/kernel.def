@@ -10,8 +10,8 @@ EXPORTS
     LOCALLOCK                      @8	+
     LOCALUNLOCK                    @9	+
     LOCALSIZE                      @10	+
-    LOCALHANDLE                    @11
-    LOCALFLAGS                     @12
+    LOCALHANDLE                    @11	+
+    LOCALFLAGS                     @12	+
     LOCALCOMPACT                   @13	+
     LOCALNOTIFY                    @14  +
     GLOBALALLOC                    @15	+
@@ -25,7 +25,7 @@ EXPORTS
     LOCKSEGMENT                    @23	+
     UNLOCKSEGMENT                  @24	+
     GLOBALCOMPACT                  @25	+
-    GLOBALFREEALL                  @26
+    GLOBALFREEALL                  @26	+
     GLOBALMASTERHANDLE             @28
     YIELD                          @29
     WAITEVENT                      @30	+

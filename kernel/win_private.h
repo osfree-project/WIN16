@@ -238,3 +238,16 @@ typedef struct _NE_MODULE
     (((offset)+(size) <= pModule->mapping_size) ? \
      (memcpy( buffer, (const char *)pModule->mapping + (offset), (size) ), TRUE) : FALSE)
 */
+
+/* Layout of a handle entry table
+ *
+ * WORD                     count of entries
+ * LOCALHANDLEENTRY[count]  entries
+ * WORD                     near ptr to next table
+ */
+typedef struct
+{
+    WORD addr;                /* Address of the MOVEABLE block */
+    BYTE flags;               /* Flags for this block */
+    BYTE lock;                /* Lock count */
+} LOCALHANDLEENTRY;

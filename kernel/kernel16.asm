@@ -27,6 +27,9 @@ public eWinFlags
 public GetExePtr
 public GetProcAddress
 public GetModuleHandle
+public Dos3Call
+;public __AHINCR
+;public __AHSHIFT
 
 externdef pascal _lopen:far
 externdef pascal _lcreat:far
@@ -104,6 +107,7 @@ externdef pascal GlobalFix: far
 externdef pascal GlobalUnfix: far
 externdef pascal GlobalHandle: far
 externdef pascal GlobalCompact: far
+externdef pascal GlobalFreeAll: far
 
 externdef pascal GetFreeSpace: far
 externdef pascal GetFreeMemInfo: far
@@ -118,6 +122,8 @@ externdef pascal LocalUnlock: far
 externdef pascal LocalSize: far
 externdef pascal LocalCompact: far
 externdef pascal LocalNotify: far
+externdef pascal LocalFlags: far
+externdef pascal LocalHandle: far
 
 externdef pascal Catch: far
 externdef pascal Throw: far
@@ -140,8 +146,6 @@ externdef pascal AllocCSToDSAlias: far
 externdef pascal LoadModule: far
 
 externdef pascal LongPtrAdd: far
-
-public Dos3Call
 
 	include ascii.inc
 	include fixups.inc
@@ -511,17 +515,17 @@ KernelEntries label byte
 	db 1,1
 	ENTRY <1,FatalExit>
 	db 1,0
-	db 8,1
+	db 24,1
 	ENTRY <1,GetVersion>		;3
-	ENTRY <1,LocalInit>			;4
+	ENTRY <1,LocalInit>		;4
 	ENTRY <1,LocalAlloc>		;5
 	ENTRY <1,LocalReAlloc>		;6
 	ENTRY <1,LocalFree>		;7
 	ENTRY <1,LocalLock>		;8
 	ENTRY <1,LocalUnlock>		;9
 	ENTRY <1,LocalSize>		;10
-	db 2,0
-	db 13,1
+	ENTRY <1,LocalHandle>		;11
+	ENTRY <1,LocalFlags>		;12
 	ENTRY <1,LocalCompact>		;13
 	ENTRY <1,LocalNotify>		;14
 	ENTRY <1,GlobalAlloc>		;15
@@ -535,7 +539,8 @@ KernelEntries label byte
 	ENTRY <1,LockSegment>		;23
 	ENTRY <1,UnlockSegment>		;24
 	ENTRY <1,GlobalCompact>		;25
-	db 4,0						;26-29
+	ENTRY <1,GlobalFreeAll>		;26
+	db 3,0						;27-29
 	db 1,1
 	ENTRY <1,WaitEvent>			;30
 	db 3,0				; 31-33
@@ -723,6 +728,8 @@ KernelNames label byte
 	NENAME "LOCALLOCK"   ,8
 	NENAME "LOCALUNLOCK" ,9
 	NENAME "LOCALSIZE"   ,10
+	NENAME "LOCALHANDLE" ,11
+	NENAME "LOCALFLAGS"  ,12
 	NENAME "LOCALCOMPACT",13
 	NENAME "LOCALNOTIFY", 14
 	NENAME "GLOBALALLOC"  ,15
@@ -736,6 +743,7 @@ KernelNames label byte
 	NENAME "LOCKSEGMENT"  ,23
 	NENAME "UNLOCKSEGMENT",24
 	NENAME "GLOBALCOMPACT",25
+	NENAME "GLOBALFREEALL",26
 	NENAME "WAITEVENT"    ,30
 	NENAME "SETTASKQUEUE" ,34
 	NENAME "GETTASKQUEUE"     ,35
