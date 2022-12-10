@@ -27,7 +27,7 @@ EXPORTS
     GLOBALCOMPACT                  @25	+
     GLOBALFREEALL                  @26	+
     GLOBALMASTERHANDLE             @28	+
-    YIELD                          @29
+    YIELD                          @29	+
     WAITEVENT                      @30	+
     POSTEVENT                      @31
     SETPRIORITY                    @32

@@ -150,6 +150,8 @@ externdef pascal LoadModule: far
 
 externdef pascal LongPtrAdd: far
 
+externdef pascal Yield: far
+
 	include ascii.inc
 	include fixups.inc
 	include debug.inc
@@ -544,10 +546,9 @@ KernelEntries label byte
 	ENTRY <1,GlobalCompact>		;25
 	ENTRY <1,GlobalFreeAll>		;26
 	db 1,0				;27
-	db 1,1
+	db 3,1
 	ENTRY <1,GlobalMasterHandle>	;28
-	db 1,0				;29
-	db 1,1
+	ENTRY <1,Yield>			;29
 	ENTRY <1,WaitEvent>		;30
 	db 3,0				; 31-33
 	db 4,1
@@ -753,6 +754,7 @@ KernelNames label byte
 	NENAME "GLOBALCOMPACT",25
 	NENAME "GLOBALFREEALL",26
 	NENAME "GLOBALMASTERHANDLE",28
+	NENAME "YIELD",29
 	NENAME "WAITEVENT"    ,30
 	NENAME "SETTASKQUEUE" ,34
 	NENAME "GETTASKQUEUE"     ,35
