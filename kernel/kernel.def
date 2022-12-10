@@ -29,7 +29,7 @@ EXPORTS
     GLOBALMASTERHANDLE             @28	+
     YIELD                          @29	+
     WAITEVENT                      @30	+
-    POSTEVENT                      @31
+    POSTEVENT                      @31	+
     SETPRIORITY                    @32	+
     LOCKCURRENTTASK                @33	+
     SETTASKQUEUE                   @34	+

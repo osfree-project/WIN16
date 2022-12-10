@@ -64,26 +64,27 @@ static void TASK_UnlinkTask( HTASK hTask )
 /***********************************************************************
  *           Yield  (KERNEL.29)
  */
-// @todo check it with Matt Pietrek info. Direct port from Wine seems to be not correct...
+
 void WINAPI Yield(void)
 {
     TDB far *pCurTask = MAKELP(GetCurrentTask(), 0);
 
-    if (pCurTask && pCurTask->hQueue)
+    pCurTask->hYieldTo=0;
+
+    if (pCurTask->hQueue)
     {
         HMODULE mod = GetModuleHandle( "user.dll" );
         if (mod)
         {
-            BOOL (WINAPI *pPeekMessage)( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags );
-            pPeekMessage = (void far *)GetProcAddress( mod, "PeekMessage" );
-            if (pPeekMessage)
+            void (WINAPI *pUserYield)(void);
+            pUserYield = (void far *)GetProcAddress( mod, "#332" ); // UserYield()
+            if (pUserYield)
             {
-                MSG msg;
-                pPeekMessage( &msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE );
+                pUserYield();
                 return;
             }
         }
-    }
+    } 
 // @todo Implement OldYield
 //    OldYield();
 }
@@ -159,4 +160,16 @@ HTASK WINAPI LockCurrentTask( BOOL bLock )
     if (bLock) TH_LOCKTDB = GetCurrentTask();
     else TH_LOCKTDB = 0;
     return TH_LOCKTDB;
+}
+
+/***********************************************************************
+ *           PostEvent  (KERNEL.31)
+ */
+void WINAPI PostEvent( HTASK hTask )
+{
+    TDB far *pTask;
+    if (!hTask) hTask = GetCurrentTask();
+    if (!(pTask = MAKELP( hTask, 0 ))) return;
+
+    pTask->nEvents++;
 }

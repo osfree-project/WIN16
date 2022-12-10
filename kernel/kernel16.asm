@@ -138,6 +138,7 @@ externdef pascal GetExeVersion: far
 externdef pascal GetExpWinVer: far
 externdef pascal SetPriority: far
 externdef pascal LockCurrentTask: far
+externdef pascal PostEvent: far
 
 ; Selectors
 externdef pascal AllocSelector: far
@@ -551,12 +552,11 @@ KernelEntries label byte
 	ENTRY <1,GlobalCompact>		;25
 	ENTRY <1,GlobalFreeAll>		;26
 	db 1,0				;27
-	db 3,1
+	db 10,1
 	ENTRY <1,GlobalMasterHandle>	;28
 	ENTRY <1,Yield>			;29
 	ENTRY <1,WaitEvent>		;30
-	db 1,0				;31
-	db 6,1
+	ENTRY <1,PostEvent>		;31
 	ENTRY <1,SetPriority>		;32
 	ENTRY <1,LockCurrentTask>	;33
 	ENTRY <1,SetTaskQueue>		;34
@@ -767,6 +767,7 @@ KernelNames label byte
 	NENAME "GLOBALMASTERHANDLE",28
 	NENAME "YIELD",29
 	NENAME "WAITEVENT"    ,30
+	NENAME "POSTEVENT", 31
 	NENAME "SETPRIORITY", 32
 	NENAME "LOCKCURRENTTASK",33
 	NENAME "SETTASKQUEUE" ,34
