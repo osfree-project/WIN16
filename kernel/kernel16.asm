@@ -24,12 +24,28 @@ else
 endif
 
 public eWinFlags
+public GetExePtr
+public GetProcAddress
+public GetModuleHandle
 
 externdef pascal _lopen:far
 externdef pascal _lcreat:far
 externdef pascal _lclose:far
+externdef pascal _lread:far
+externdef pascal _lwrite:far
+externdef pascal _llseek:far
 
+; Resource manager
+externdef pascal FindResource:far
+externdef pascal LoadResource:far
+externdef pascal LockResource:far
+externdef pascal FreeResource:far
+externdef pascal SizeofResource:far
+externdef pascal AllocResource:far
+externdef pascal AccessResource:far
+externdef pascal SetResourceHandler:far
 
+; Task related functions
 externdef pascal GetCurrentPDB:far
 externdef pascal GetCurrentTask:far
 externdef pascal GetDOSEnvironment:far
@@ -38,6 +54,7 @@ externdef pascal IsWinOldApTask: far
 externdef pascal GetTaskQueueES: far
 externdef pascal GetTaskQueueDS: far
 externdef pascal GetTaskQueue: far
+externdef pascal SetTaskQueue: far
 
 externdef pascal _hmemset:far
 externdef discardmem:near
@@ -80,6 +97,7 @@ externdef pascal GlobalDOSFree: far
 externdef pascal GlobalReAlloc: far
 externdef pascal GlobalAlloc: far
 externdef pascal GlobalFree: far
+externdef pascal GlobalFlags: far
 externdef pascal GlobalLock: far
 externdef pascal GlobalUnlock: far
 externdef pascal GlobalFix: far
@@ -503,7 +521,7 @@ KernelEntries label byte
 	ENTRY <1,LocalUnlock>		;9
 	ENTRY <1,LocalSize>		;10
 	db 2,0
-	db 9,1
+	db 13,1
 	ENTRY <1,LocalCompact>		;13
 	ENTRY <1,LocalNotify>		;14
 	ENTRY <1,GlobalAlloc>		;15
@@ -513,16 +531,16 @@ KernelEntries label byte
 	ENTRY <1,GlobalUnlock>		;19
 	ENTRY <1,GlobalSize>		;20
 	ENTRY <1,GlobalHandle>		;21
-	db 1,0
-	db 3,1
+	ENTRY <1,GlobalFlags>		;22
 	ENTRY <1,LockSegment>		;23
 	ENTRY <1,UnlockSegment>		;24
 	ENTRY <1,GlobalCompact>		;25
 	db 4,0						;26-29
 	db 1,1
 	ENTRY <1,WaitEvent>			;30
-	db 4,0
-	db 3,1
+	db 3,0				; 31-33
+	db 4,1
+	ENTRY <1,SetTaskQueue>	;34
 	ENTRY <1,GetTaskQueue>	;35
 	ENTRY <1,GetCurrentTask>	;36
 	ENTRY <1,GetCurrentPDB>		;37
@@ -536,14 +554,20 @@ KernelEntries label byte
 	ENTRY <1,GetModuleFileName>
 	ENTRY <1,GetProcAddress>	;50
 	db 4,0						;51-54
-	db 5,1
+	db 19,1
 	ENTRY <1, Catch>            ;55
     	ENTRY <1, Throw>            ;56
 	ENTRY <1, GetProfileInt>			;57
 	ENTRY <1, GetProfileString>			;58
 	ENTRY <1, WriteProfileString>			;59
-	db 8,0						;60-67
-	db 6,1
+	ENTRY <1, FindResource>				;60
+	ENTRY <1, LoadResource>				;61
+	ENTRY <1, LockResource>				;62
+	ENTRY <1, FreeResource>				;63
+	ENTRY <1, AccessResource>			;64
+	ENTRY <1, SizeofResource>			;65
+	ENTRY <1, AllocResource>			;66
+	ENTRY <1, SetResourceHandler>			;67
 	ENTRY <1, InitAtomTable>			;68
 	ENTRY <1, FindAtom>				;69
 	ENTRY <1, AddAtom>				;70
@@ -708,11 +732,13 @@ KernelNames label byte
 	NENAME "GLOBALUNLOCK" ,19
 	NENAME "GLOBALSIZE"   ,20
 	NENAME "GLOBALHANDLE" ,21
+	NENAME "GLOBALFLAGS", 22
 	NENAME "LOCKSEGMENT"  ,23
 	NENAME "UNLOCKSEGMENT",24
 	NENAME "GLOBALCOMPACT",25
-	NENAME "WAITEVENT"        ,30
-	NENAME "GETTASKQUEUE"                   ,35
+	NENAME "WAITEVENT"    ,30
+	NENAME "SETTASKQUEUE" ,34
+	NENAME "GETTASKQUEUE"     ,35
 	NENAME "GETCURRENTTASK"   ,36
 	NENAME "GETCURRENTPDB"    ,37
 	NENAME "LOADMODULE"       ,45
@@ -725,6 +751,14 @@ KernelNames label byte
 	NENAME "GETPROFILEINT", 57
 	NENAME "GETPROFILESTRING", 58
 	NENAME "WRITEPROFILESTRING", 59
+	NENAME "FINDRESOURCE", 60
+	NENAME "LOADRESOURCE", 61
+	NENAME "LOCKRESOURCE", 62
+	NENAME "FREERESOURCE", 63
+	NENAME "ACCESSRESOURCE", 64
+	NENAME "SIZEOFRESOURCE", 65
+	NENAME "ALLOCRESOURCE", 66
+	NENAME "SETRESOURCEHANDLER", 67
 	NENAME "INITATOMTABLE", 68
 	NENAME "FINDATOM", 69
 	NENAME "ADDATOM", 70

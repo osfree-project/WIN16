@@ -106,6 +106,18 @@ int strnicmp(char far *s1, const char far *s2, int n)
     return 0;
 }
 
+int stricmp(const char* s1, const char* s2) 
+{
+  while (tolower((unsigned char) *s1) == tolower((unsigned char) *s2)) {
+    if (*s1 == '\0')
+      return 0;
+    s1++; s2++;
+  }
+
+  return (int) tolower((unsigned char) *s1) -
+    (int) tolower((unsigned char) *s2);
+}
+
 /*
  * 16-bit kernel initialization code
  *

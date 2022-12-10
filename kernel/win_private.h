@@ -187,3 +187,54 @@ typedef struct
     WORD stackmin;    /* Lowest stack address used so far */
     WORD stackbottom; /* Bottom of the stack */
 } INSTANCEDATA;
+
+/* In-memory module structure. See 'Windows Internals' p. 219 */
+typedef struct _NE_MODULE
+{
+    WORD      ne_magic;         /* 00 'NE' signature */
+    WORD      count;            /* 02 Usage count (ne_ver/ne_rev on disk) */
+    WORD      ne_enttab;        /* 04 Near ptr to entry table */
+    HMODULE next;             /* 06 Selector to next module (ne_cbenttab on disk) */
+    WORD      dgroup_entry;     /* 08 Near ptr to segment entry for DGROUP (ne_crc on disk) */
+    WORD      fileinfo;         /* 0a Near ptr to file info (OFSTRUCT) (ne_crc on disk) */
+    WORD      ne_flags;         /* 0c Module flags */
+    WORD      ne_autodata;      /* 0e Logical segment for DGROUP */
+    WORD      ne_heap;          /* 10 Initial heap size */
+    WORD      ne_stack;         /* 12 Initial stack size */
+    DWORD     ne_csip;          /* 14 Initial cs:ip */
+    DWORD     ne_sssp;          /* 18 Initial ss:sp */
+    WORD      ne_cseg;          /* 1c Number of segments in segment table */
+    WORD      ne_cmod;          /* 1e Number of module references */
+    WORD      ne_cbnrestab;     /* 20 Size of non-resident names table */
+    WORD      ne_segtab;        /* 22 Near ptr to segment table */
+    WORD      ne_rsrctab;       /* 24 Near ptr to resource table */
+    WORD      ne_restab;        /* 26 Near ptr to resident names table */
+    WORD      ne_modtab;        /* 28 Near ptr to module reference table */
+    WORD      ne_imptab;        /* 2a Near ptr to imported names table */
+    DWORD     ne_nrestab;       /* 2c File offset of non-resident names table */
+    WORD      ne_cmovent;       /* 30 Number of moveable entries in entry table*/
+    WORD      ne_align;         /* 32 Alignment shift count */
+    WORD      ne_cres;          /* 34 # of resource segments */
+    BYTE      ne_exetyp;        /* 36 Operating system flags */
+    BYTE      ne_flagsothers;   /* 37 Misc. flags */
+    HANDLE  dlls_to_init;     /* 38 List of DLLs to initialize (ne_pretthunks on disk) */
+    HANDLE  nrname_handle;    /* 3a Handle to non-resident name table (ne_psegrefbytes on disk) */
+    WORD      ne_swaparea;      /* 3c Min. swap area size */
+    WORD      ne_expver;        /* 3e Expected Windows version */
+    /* From here, these are extra fields not present in normal Windows */
+//    HMODULE   module32;         /* PE module handle for Win32 modules */
+//    HMODULE   owner32;          /* PE module containing this one for 16-bit builtins */
+//    HMODULE16 self;             /* Handle for this module */
+//    WORD      self_loading_sel; /* Selector used for self-loading apps. */
+//    LPVOID    rsrc32_map;       /* HRSRC 16->32 map (for 32-bit modules) */
+//    LPCVOID   mapping;          /* mapping of the binary file */
+//    SIZE_T    mapping_size;     /* size of the file mapping */
+} NE_MODULE;
+
+#define NE_MODULE_NAME(pModule) \
+    (((OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo))->szPathName)
+
+/*#define NE_READ_DATA(pModule,buffer,offset,size) \
+    (((offset)+(size) <= pModule->mapping_size) ? \
+     (memcpy( buffer, (const char *)pModule->mapping + (offset), (size) ), TRUE) : FALSE)
+*/

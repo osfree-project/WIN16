@@ -154,6 +154,30 @@ not_zero:
 	ret
 GetTaskIntoES endp
 
+GetTaskIntoES2 proc near pascal uses ax
+        mov bx,sp
+        mov ax,ss:[bx+8]
+        mov bx,ss:[bx+6]
+	or ax, ax
+	jnz not_zero
+	mov es, word ptr cs:[wKernelDS]
+	mov ax, es:[TH_CURTDB]
+not_zero:
+	mov es, ax
+	ret
+GetTaskIntoES2 endp
+
+;
+; SetTaskQueue
+;
+
+SetTaskQueue proc far pascal
+        call GetTaskIntoES2
+        mov ax,bx
+        xchg ax,es:[TDB.TDB_HQUEUE]
+        ret 4
+SetTaskQueue endp
+
 ;
 ; GetTaskQueue
 ;

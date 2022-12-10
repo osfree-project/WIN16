@@ -21,7 +21,7 @@ EXPORTS
     GLOBALUNLOCK                   @19	+
     GLOBALSIZE                     @20	+
     GLOBALHANDLE                   @21	+
-    GLOBALFLAGS                    @22
+    GLOBALFLAGS                    @22	+
     LOCKSEGMENT                    @23	+
     UNLOCKSEGMENT                  @24	+
     GLOBALCOMPACT                  @25	+
@@ -32,7 +32,7 @@ EXPORTS
     POSTEVENT                      @31
     SETPRIORITY                    @32
     LOCKCURRENTTASK                @33
-    SETTASKQUEUE                   @34
+    SETTASKQUEUE                   @34	+
     GETTASKQUEUE                   @35	+
     GETCURRENTTASK                 @36	+
     GETCURRENTPDB                  @37	+
@@ -54,14 +54,14 @@ EXPORTS
     GETPROFILEINT                  @57	+
     GETPROFILESTRING               @58	+
     WRITEPROFILESTRING             @59	+
-    FINDRESOURCE                   @60
-    LOADRESOURCE                   @61
-    LOCKRESOURCE                   @62
-    FREERESOURCE                   @63
-    ACCESSRESOURCE                 @64
-    SIZEOFRESOURCE                 @65
-    ALLOCRESOURCE                  @66
-    SETRESOURCEHANDLER             @67
+    FINDRESOURCE                   @60	+
+    LOADRESOURCE                   @61	+
+    LOCKRESOURCE                   @62	+
+    FREERESOURCE                   @63	+
+    ACCESSRESOURCE                 @64	+
+    SIZEOFRESOURCE                 @65	+
+    ALLOCRESOURCE                  @66	+
+    SETRESOURCEHANDLER             @67	+
     INITATOMTABLE                  @68	+
     FINDATOM                       @69	+
     ADDATOM                        @70	+
