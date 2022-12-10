@@ -220,7 +220,6 @@ __searchseg4:
 __searchseg endp
 
 LocalAlloc proc far pascal uses si di uFlags:word, uBytes:word
-
 	mov cx,uBytes
 	cmp CX,0FFE8h
 	ja LocalAlloc1
@@ -344,11 +343,16 @@ LocalCompact endp
 
 LocalNotify proc far pascal
 	mov bx, sp
-	mov ax, ss:[bx+4]	;lpNotifyFunc
-	mov dx, ss:[bx+6]	;lpNotifyFunc+2
-	mov bx, ds:[6]		; plocalheap Shulman error here. Was dx.
-	xchg ax, [bx+18h]	; 1eh for krnl386 @todo
-	xchg dx, [bx+18h+2]	; 1eh for krnl386 @todo
+	mov ax, ss:[bx+4]	; lpNotifyFunc
+	mov dx, ss:[bx+6]	; lpNotifyFunc+2
+	mov bx, ds:[6]		; plocalheap Schulman error here. Was dx.
+if ?32BIT
+	xchg ax, [bx+1eh]	; 1eh for krnl386
+	xchg dx, [bx+1eh+2]	; 1eh for krnl386
+else
+	xchg ax, [bx+18h]	; 18h for krnl286
+	xchg dx, [bx+18h+2]	; 18h for krnl286
+endif
 	retf 4
 LocalNotify endp
 
