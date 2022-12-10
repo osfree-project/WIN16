@@ -30,8 +30,8 @@ EXPORTS
     YIELD                          @29	+
     WAITEVENT                      @30	+
     POSTEVENT                      @31
-    SETPRIORITY                    @32
-    LOCKCURRENTTASK                @33
+    SETPRIORITY                    @32	+
+    LOCKCURRENTTASK                @33	+
     SETTASKQUEUE                   @34	+
     GETTASKQUEUE                   @35	+
     GETCURRENTTASK                 @36	+
@@ -48,9 +48,9 @@ EXPORTS
     MAKEPROCINSTANCE               @51
     FREEPROCINSTANCE               @52
     CALLPROCINSTANCE               @53
-    GETINSTANCEDATA                @54
-    CATCH                          @55
-    THROW                          @56
+    GETINSTANCEDATA                @54	+
+    CATCH                          @55	+
+    THROW                          @56	+
     GETPROFILEINT                  @57	+
     GETPROFILESTRING               @58	+
     WRITEPROFILESTRING             @59	+
@@ -138,7 +138,7 @@ EXPORTS
     INITTASK1                      @141
     DIRECTEDYIELD                  @150
     WINOLDAPCALL                   @151
-    GETNUMTASKS                    @152
+    GETNUMTASKS                    @152	+
     GLOBALNOTIFY                   @154
     GETTASKDS                      @155
     LIMITEMSPAGES                  @156
@@ -152,8 +152,8 @@ EXPORTS
     GLOBALLRUNEWEST                @164
     A20PROC                        @165
     WINEXEC                        @166
-    GETEXPWINVER                   @167
-    DIRECTRESALLOC                 @168
+    GETEXPWINVER                   @167	+
+    DIRECTRESALLOC                 @168	+
     GETFREESPACE                   @169	+
     ALLOCCSTODSALIAS               @170	+
     ALLOCDSTOCSALIAS               @171	+

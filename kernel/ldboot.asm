@@ -369,6 +369,7 @@ ID_STACKBOTTOM	dw	?		; 0E /* Bottom of the stack */
 ; THHOOK structure. Offset is same as in Windows 3.0
 public TH_HGLOBALHEAP
 public TH_PGLOBALHEAP
+public TH_LOCKTDB
 TH_HGLOBALHEAP	dw	?		;  /* 00 (handle BURGERMASTER) */
 TH_PGLOBALHEAP	dw	?		;  /* 02 (selector BURGERMASTER) */
 TH_HEXEHEAD	dw	?		;  /* 04 hFirstModule */

@@ -59,6 +59,7 @@ externdef pascal GetTaskQueueES: far
 externdef pascal GetTaskQueueDS: far
 externdef pascal GetTaskQueue: far
 externdef pascal SetTaskQueue: far
+externdef pascal GetNumTasks: far
 
 externdef pascal _hmemset:far
 externdef discardmem:near
@@ -127,12 +128,16 @@ externdef pascal LocalNotify: far
 externdef pascal LocalFlags: far
 externdef pascal LocalHandle: far
 
+externdef pascal GetInstanceData: far
+
 externdef pascal Catch: far
 externdef pascal Throw: far
 
 externdef pascal IsTask: far
 externdef pascal GetExeVersion: far
 externdef pascal GetExpWinVer: far
+externdef pascal SetPriority: far
+externdef pascal LockCurrentTask: far
 
 ; Selectors
 externdef pascal AllocSelector: far
@@ -550,8 +555,10 @@ KernelEntries label byte
 	ENTRY <1,GlobalMasterHandle>	;28
 	ENTRY <1,Yield>			;29
 	ENTRY <1,WaitEvent>		;30
-	db 3,0				; 31-33
-	db 4,1
+	db 1,0				;31
+	db 6,1
+	ENTRY <1,SetPriority>		;32
+	ENTRY <1,LockCurrentTask>	;33
 	ENTRY <1,SetTaskQueue>		;34
 	ENTRY <1,GetTaskQueue>		;35
 	ENTRY <1,GetCurrentTask>	;36
@@ -565,10 +572,11 @@ KernelEntries label byte
 	ENTRY <1,GetModuleUsage>	;48
 	ENTRY <1,GetModuleFileName>	;49
 	ENTRY <1,GetProcAddress>	;50
-	db 4,0					;51-54
-	db 19,1
-	ENTRY <1, Catch>            ;55
-    	ENTRY <1, Throw>            ;56
+	db 3,0					;51-53
+	db 20,1
+	ENTRY <1, GetInstanceData>	;54
+	ENTRY <1, Catch>		;55
+    	ENTRY <1, Throw>		;56
 	ENTRY <1, GetProfileInt>			;57
 	ENTRY <1, GetProfileString>			;58
 	ENTRY <1, WriteProfileString>			;59
@@ -646,10 +654,13 @@ eINCR	ENTRY <1,8>				;114 _AHINCR
 	db 1,0						;136
 	db 1,1
 	ENTRY <1,FatalAppExit>		;137
-	db 20,0						;138-157
+	db 14,0				;138-151
 	db 1,1
-	ENTRY <1, IsWinOldApTask>                 ;158
-	db 8,0						;159-166
+	ENTRY <1, GetNumTasks>		;152
+	db 5,0				;153-157
+	db 1,1
+	ENTRY <1, IsWinOldApTask>	;158
+	db 8,0				;159-166
 	db 3,1
 	ENTRY <1,GetExpWinVer>		;167
 	ENTRY <1,DirectResAlloc>	;168
@@ -756,6 +767,8 @@ KernelNames label byte
 	NENAME "GLOBALMASTERHANDLE",28
 	NENAME "YIELD",29
 	NENAME "WAITEVENT"    ,30
+	NENAME "SETPRIORITY", 32
+	NENAME "LOCKCURRENTTASK",33
 	NENAME "SETTASKQUEUE" ,34
 	NENAME "GETTASKQUEUE"     ,35
 	NENAME "GETCURRENTTASK"   ,36
@@ -765,6 +778,7 @@ KernelNames label byte
 	NENAME "GETMODULEUSAGE"   ,48
 	NENAME "GETMODULEFILENAME",49
 	NENAME "GETPROCADDRESS"   ,50
+	NENAME "GETINSTANCEDATA" ,54
 	NENAME "CATCH"            ,55
     	NENAME "THROW"            ,56
 	NENAME "GETPROFILEINT", 57
@@ -821,6 +835,7 @@ KernelNames label byte
 	NENAME "GETWINDOWSDIRECTORY"            ,134
 	NENAME "GETSYSTEMDIRECTORY"            ,135
 	NENAME "FATALAPPEXIT"     , 137
+	NENAME "GETNUMTASKS", 152
 	NENAME "ISWINOLDAPTASK"           ,158
 	NENAME "GETEXPWINVER",167
 	NENAME "DIRECTRESALLOC",168
