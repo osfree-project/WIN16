@@ -1,3 +1,5 @@
+; obsolete. replaced by Wine implementation.
+
 	include kernel.inc
 
 if ?REAL
@@ -7,13 +9,13 @@ else
 endif
 
 ;public LocalInit
-public LocalAlloc
-public LocalReAlloc
-public LocalCompact
-public LocalSize
-public LocalLock
-public LocalUnlock
-public LocalNotify
+;public LocalAlloc
+;public LocalReAlloc
+;public LocalCompact
+;public LocalSize
+;public LocalLock
+;public LocalUnlock
+;public LocalNotify
 
 externdef pascal GlobalReAlloc: far
 
@@ -222,6 +224,8 @@ __searchseg4:
 	ret
 __searchseg endp
 
+if 0
+
 LocalAlloc proc far pascal uses si di uFlags:word, uBytes:word
 	mov cx,uBytes
 	cmp CX,0FFE8h
@@ -262,6 +266,8 @@ LocalAlloc2:
 	ret
 LocalAlloc endp
 
+endif
+
 LocalFree proc far pascal handle:WORD
 
 	mov ax,handle
@@ -289,10 +295,15 @@ LocalFree_ex:
 	ret
 LocalFree endp
 
+if 0
 LocalReAlloc proc far pascal
 	xor ax,ax
 	@return 6
 LocalReAlloc endp
+
+endif
+
+if 0
 
 LocalUnlock proc far pascal
 LocalUnlock endp
@@ -305,7 +316,9 @@ LocalLock proc far pascal
 	push cx
 	retf
 LocalLock endp
+endif
 
+if 0
 LocalSize proc far pascal
 	@loadbx
 	@loadparm 0,ax
@@ -317,7 +330,9 @@ LocalSize proc far pascal
 localsize_ex:
 	@return 2
 LocalSize endp
+endif
 
+if 0
 LocalCompact proc far pascal
 	mov ax,ds:[0006]
 	and ax,ax
@@ -343,7 +358,9 @@ localcompact_2:
 localcompact_ex:
 	@return 2
 LocalCompact endp
+endif
 
+if 0
 LocalNotify proc far pascal
 	mov bx, sp
 	mov ax, ss:[bx+4]	; lpNotifyFunc
@@ -358,6 +375,7 @@ else
 endif
 	retf 4
 LocalNotify endp
+endif
 
 _TEXT ends
 
