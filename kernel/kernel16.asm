@@ -136,6 +136,8 @@ externdef pascal LocalFlags: far
 externdef pascal LocalHandle: far
 externdef pascal LocalHandleDelta: far
 externdef pascal GetInstanceData: far
+externdef pascal LocalHeapSize: far
+externdef pascal LocalCountFree: far
 
 externdef pascal Catch: far
 externdef pascal Throw: far
@@ -707,7 +709,11 @@ eINCR	ENTRY <1,8>				;114 _AHINCR
 	ENTRY <1, LimitEMSPages>	;156
 	ENTRY <1, GetCurPID>		;157
 	ENTRY <1, IsWinOldApTask>	;158
-	db 8,0				;159-166
+	db 2,0				;159-160
+	db 2,1
+	ENTRY <1,LocalCountFree>	;161
+	ENTRY <1,LocalHeapSize>		;162
+	db 4,0				;163-166
 	db 3,1
 	ENTRY <1,GetExpWinVer>		;167
 	ENTRY <1,DirectResAlloc>	;168
@@ -903,6 +909,8 @@ KernelNames label byte
 	NENAME "LIMITEMSPAGES",156
 	NENAME "GETCURPID",157
 	NENAME "ISWINOLDAPTASK"           ,158
+	NENAME "LOCALCOUNTFREE",161
+	NENAME "LOCALHEAPSIZE", 162
 	NENAME "GETEXPWINVER",167
 	NENAME "DIRECTRESALLOC",168
 	NENAME "GETFREESPACE"     , 169

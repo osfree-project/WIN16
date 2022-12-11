@@ -1,29 +1,43 @@
 #include <win16.h>
 #include <win_private.h>
 
+/* LocalHeap main structure. Differs for KRNL286 and KRNL386 */
 typedef struct
 {
     WORD check;                 /* 00 Heap checking flag */
     WORD freeze;                /* 02 Heap frozen flag */
     WORD items;                 /* 04 Count of items on the heap */
     WORD first;                 /* 06 First item of the heap */
-    WORD pad1;                  /* 08 Always 0 */
+    WORD pad1;                  /* 08 Always 0 */	// missed in KRNL286
     WORD last;                  /* 0a Last item of the heap */
-    WORD pad2;                  /* 0c Always 0 */
+    WORD pad2;                  /* 0c Always 0 */	// missed in KRNL286
     BYTE ncompact;              /* 0e Compactions counter */
     BYTE dislevel;              /* 0f Discard level */
-    DWORD distotal;             /* 10 Total bytes discarded */
+    DWORD distotal;             /* 10 Total bytes discarded */	// WORD in KRNL286
     WORD htable;                /* 14 Pointer to handle table */
     WORD hfree;                 /* 16 Pointer to free handle table */
     WORD hdelta;                /* 18 Delta to expand the handle table */
     WORD expand;                /* 1a Pointer to expand function (unused) */
     WORD pstat;                 /* 1c Pointer to status structure (unused) */
-    FARPROC notify;           /* 1e Pointer to LocalNotify() function */
+    FARPROC notify;             /* 1e Pointer to LocalNotify() function */
     WORD lock;                  /* 22 Lock count for the heap */
     WORD extra;                 /* 24 Extra bytes to allocate when expanding */
     WORD minsize;               /* 26 Minimum size of the heap */
     WORD magic;                 /* 28 Magic number */
 } LOCALHEAPINFO;
+
+typedef struct
+{
+/* Arena header */
+    WORD prev;          /* Previous arena | arena type */
+    WORD next;          /* Next arena */
+/* Start of the memory block or free-list info */
+    WORD size;          /* Size of the free block */
+    WORD free_prev;     /* Previous free block */
+    WORD free_next;     /* Next free block */
+} LOCALARENA;
+
+#define ARENA_PTR(ptr,arena)       ((LOCALARENA *)((char *)(ptr)+(arena)))
 
 #define HANDLE_MOVEABLE(handle) (((handle) & 3) == 2)
 
@@ -91,7 +105,7 @@ HLOCAL WINAPI LocalHandle( UINT addr )
 WORD WINAPI LocalHandleDelta( WORD delta )
 {
     INSTANCEDATA far * ptr = MAKELP(GetDS(), 0 );
-    LOCALHEAPINFO *pInfo;
+    LOCALHEAPINFO far *pInfo;
 
     if (!(pInfo = (LOCALHEAPINFO *)((char *)ptr + ptr->heap)))
     {
@@ -104,3 +118,43 @@ WORD WINAPI LocalHandleDelta( WORD delta )
     return pInfo->hdelta;
 }
 
+/***********************************************************************
+ *           LocalHeapSize   (KERNEL.162)
+ */
+WORD WINAPI LocalHeapSize(void)
+{
+    INSTANCEDATA far * ptr = MAKELP(GetDS(), 0 );
+    LOCALHEAPINFO far * pInfo = (LOCALHEAPINFO *)((char *)ptr + ptr->heap);
+    return pInfo ? pInfo->last - pInfo->first : 0;
+}
+
+/***********************************************************************
+ *           LocalCountFree   (KERNEL.161)
+ */
+WORD WINAPI LocalCountFree(void)
+{
+    WORD arena, total;
+    LOCALARENA *pArena;
+    LOCALHEAPINFO far *pInfo;
+    INSTANCEDATA far * ptr = MAKELP(GetDS(), 0 );
+
+    if (!(pInfo = (LOCALHEAPINFO *)((char *)ptr + ptr->heap)))
+    {
+//        ERR("(%04x): Local heap not found\n", ds );
+//	LOCAL_PrintHeap( ds );
+	return 0;
+    }
+
+    total = 0;
+    arena = pInfo->first;
+    pArena = ARENA_PTR( ptr, arena );
+    for (;;)
+    {
+        arena = pArena->free_next;
+        pArena = ARENA_PTR( ptr, arena );
+	if (arena == pArena->free_next) break;
+        total += pArena->size;
+    }
+//    TRACE("(%04x): returning %d\n", ds, total);
+    return total;
+}
