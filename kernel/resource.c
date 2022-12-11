@@ -33,7 +33,32 @@ typedef struct
 #define VALID_HANDLE(handle) (((handle)>>__AHSHIFT)<globalArenaSize)
 #define GET_ARENA_PTR(handle)  (pGlobalArena + ((handle) >> __AHSHIFT))
 
+#define NE_SEG_TABLE(pModule) \
+    ((SEGTABLEENTRY *)((char *)(pModule) + (pModule)->ne_segtab))
+
+  /* In-memory segment table */
+typedef struct
+{
+    WORD      filepos;   /* Position in file, in sectors */
+    WORD      size;      /* Segment size on disk */
+    WORD      flags;     /* Segment flags */
+    WORD      minsize;   /* Min. size of segment in memory */
+    HANDLE    hSeg;      /* Selector or handle (selector - 1) of segment in memory */
+} SEGTABLEENTRY;
+
 HMODULE WINAPI GetExePtr( HANDLE handle );
+
+/* This function returns current DS value */
+extern  unsigned short          GetDS( void );
+#pragma aux GetDS               = \
+        "mov    ax,ds"          \
+        value                   [ax];
+
+/* This function returns current DS value */
+extern  void          SetDS( unsigned short );
+#pragma aux SetDS               = \
+        "mov    ds,ax"          \
+        parm                   [ax];
 
 // @todo Implement this as fast as pGlobalArena implemented
 /***********************************************************************
@@ -593,4 +618,24 @@ HGLOBAL WINAPI DirectResAlloc( HINSTANCE hInstance, WORD wType,
     ret = GlobalAlloc( GMEM_MOVEABLE, wSize );
     if (ret) FarSetOwner( ret, hInstance );
     return ret;
+}
+
+WORD WINAPI LocalCountFree(void);
+WORD WINAPI LocalHeapSize(void);
+WORD WINAPI GlobalHandleToSel(HGLOBAL handle);
+
+/***********************************************************************
+ *           GetHeapSpaces   (KERNEL.138)
+ */
+DWORD WINAPI GetHeapSpaces(HMODULE module)
+{
+    NE_MODULE *pModule;
+    WORD oldDS = GetDS();
+    DWORD spaces;
+
+    if (!(pModule = NE_GetPtr( module ))) return 0;
+    SetDS(GlobalHandleToSel((NE_SEG_TABLE( pModule ) + pModule->ne_autodata - 1)->hSeg));
+    spaces = MAKELONG(LocalCountFree(), LocalHeapSize());
+    SetDS(oldDS);
+    return spaces;
 }

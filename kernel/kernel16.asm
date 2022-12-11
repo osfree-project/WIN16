@@ -64,6 +64,8 @@ externdef pascal SetTaskSignalProc: far
 externdef pascal GetTaskDS: far
 externdef pascal GetCurPID: far
 
+externdef pascal GetHeapSpaces: far
+
 externdef pascal _hmemset:far
 externdef discardmem:near
 
@@ -696,7 +698,8 @@ eINCR	ENTRY <1,8>				;114 _AHINCR
 	db 1,0						;136
 	db 1,1
 	ENTRY <1,FatalAppExit>		;137
-	db 12,0				;138-149
+	ENTRY <1,GetHeapSpaces>		;138
+	db 11,0				;139-149
 	db 1,1
 	ENTRY <1, DirectedYield>	;150
 	db 1,0				;151
@@ -902,6 +905,7 @@ KernelNames label byte
 	NENAME "GETWINDOWSDIRECTORY"            ,134
 	NENAME "GETSYSTEMDIRECTORY"            ,135
 	NENAME "FATALAPPEXIT"     , 137
+	NENAME "GETHEAPSPACES",138
 	NENAME "DIRECTEDYIELD", 150
 	NENAME "GETNUMTASKS", 152
 	NENAME "GLOBALNOTIFY", 154

@@ -6,7 +6,7 @@ else
 		.286
 endif
 
-public LocalInit
+;public LocalInit
 public LocalAlloc
 public LocalReAlloc
 public LocalCompact
@@ -114,6 +114,7 @@ exit:
 	ret
 __growseg endp
 
+if 0
 ;--- sets Win16 Local Heap start at DS:[0006]
 
 LocalInit proc far pascal uSegment:word, uStart:word, uEnd:word
@@ -167,6 +168,8 @@ LocalInit_err:
 LocalInit_ex:
 	ret
 LocalInit endp
+
+endif
 
 ;--- called by LocalAlloc
 ;*** get a free memory block in local heap

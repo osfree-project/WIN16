@@ -87,3 +87,26 @@ DWORD WINAPI LimitEMSPages( DWORD unused )
 {
     return 0;
 }
+
+
+#define VALID_HANDLE(handle) (((handle)>>__AHSHIFT)<globalArenaSize)
+
+//@todo implement globalArena
+/***********************************************************************
+ *           GlobalHandleToSel
+ *
+ */
+WORD WINAPI GlobalHandleToSel(HGLOBAL handle)
+{
+    if (!handle) return 0;
+//    if (!VALID_HANDLE(handle)) {
+//	WARN("Invalid handle 0x%04x passed to GlobalHandleToSel!\n",handle);
+//	return 0;
+//    }
+    if (!(handle & 7))
+    {
+//        WARN("Program attempted invalid selector conversion\n" );
+        return handle - 1;
+    }
+    return handle | 7;
+}
