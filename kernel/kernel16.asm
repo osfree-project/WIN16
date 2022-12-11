@@ -61,6 +61,8 @@ externdef pascal GetTaskQueue: far
 externdef pascal SetTaskQueue: far
 externdef pascal GetNumTasks: far
 externdef pascal SetTaskSignalProc: far
+externdef pascal GetTaskDS: far
+externdef pascal GetCurPID: far
 
 externdef pascal _hmemset:far
 externdef discardmem:near
@@ -114,6 +116,8 @@ externdef pascal GlobalFreeAll: far
 externdef pascal GlobalMasterHandle: far
 externdef pascal GlobalWire: far
 externdef pascal GlobalUnWire: far
+externdef pascal GlobalNotify: far
+externdef pascal LimitEMSPages: far
 
 externdef pascal GetFreeSpace: far
 externdef pascal GetFreeMemInfo: far
@@ -144,6 +148,7 @@ externdef pascal LockCurrentTask: far
 externdef pascal PostEvent: far
 externdef pascal Yield: far
 externdef pascal OldYield: far
+externdef pascal DirectedYield: far
 
 ; Selectors
 externdef pascal AllocSelector: far
@@ -681,11 +686,18 @@ eINCR	ENTRY <1,8>				;114 _AHINCR
 	db 1,0						;136
 	db 1,1
 	ENTRY <1,FatalAppExit>		;137
-	db 14,0				;138-151
+	db 12,0				;138-149
+	db 1,1
+	ENTRY <1, DirectedYield>	;150
+	db 1,0				;151
 	db 1,1
 	ENTRY <1, GetNumTasks>		;152
-	db 5,0				;153-157
-	db 1,1
+	db 1,0				;153
+	db 5,1
+	ENTRY <1, GlobalNotify>		;154
+	ENTRY <1, GetTaskDS>		;155
+	ENTRY <1, LimitEMSPages>	;156
+	ENTRY <1, GetCurPID>		;157
 	ENTRY <1, IsWinOldApTask>	;158
 	db 8,0				;159-166
 	db 3,1
@@ -872,7 +884,12 @@ KernelNames label byte
 	NENAME "GETWINDOWSDIRECTORY"            ,134
 	NENAME "GETSYSTEMDIRECTORY"            ,135
 	NENAME "FATALAPPEXIT"     , 137
+	NENAME "DIRECTEDYIELD", 150
 	NENAME "GETNUMTASKS", 152
+	NENAME "GLOBALNOTIFY", 154
+	NENAME "GETTASKDS", 155
+	NENAME "LIMITEMSPAGES",156
+	NENAME "GETCURPID",157
 	NENAME "ISWINOLDAPTASK"           ,158
 	NENAME "GETEXPWINVER",167
 	NENAME "DIRECTRESALLOC",168

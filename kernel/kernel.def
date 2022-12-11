@@ -136,13 +136,13 @@ EXPORTS
     DOSIGNAL                       @139
     SETSIGHANDLER                  @140
     INITTASK1                      @141
-    DIRECTEDYIELD                  @150
+    DIRECTEDYIELD                  @150	+
     WINOLDAPCALL                   @151
     GETNUMTASKS                    @152	+
-    GLOBALNOTIFY                   @154
-    GETTASKDS                      @155
-    LIMITEMSPAGES                  @156
-    GETCURPID                      @157
+    GLOBALNOTIFY                   @154	+
+    GETTASKDS                      @155	+
+    LIMITEMSPAGES                  @156	+
+    GETCURPID                      @157	+
     ISWINOLDAPTASK                 @158	+
     GLOBALHANDLENORIP              @159
     EMSCOPY                        @160

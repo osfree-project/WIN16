@@ -238,7 +238,18 @@ OldYield proc far pascal
 ;        call    MTYield			; call MThread lib functions
         dec     ds:[TDB.TDB_nEvents]
 exit:
+	ret
 OldYield endp
+
+DirectedYield proc far pascal hTask: word
+	@SetKernelDS
+        mov	ds, TH_CURTDB
+	mov	ax, hTask
+        mov	ds:[TDB.TDB_hYieldTo], ax
+	invoke	OldYield
+	ret
+DirectedYield endp
+
 
 _TEXT	ends
 	end

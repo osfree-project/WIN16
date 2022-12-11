@@ -64,6 +64,7 @@ static void TASK_UnlinkTask( HTASK hTask )
 /***********************************************************************
  *           Yield  (KERNEL.29)
  */
+void WINAPI OldYield(void);
 
 void WINAPI Yield(void)
 {
@@ -85,8 +86,7 @@ void WINAPI Yield(void)
             }
         }
     } 
-// @todo Implement OldYield
-//    OldYield();
+    OldYield();
 }
 
 #define TD_SIGN 0x4454   /* "TD" = Task Database */
@@ -187,4 +187,26 @@ FARPROC WINAPI SetTaskSignalProc( HTASK hTask, FARPROC proc )
     oldProc = pTask->userhandler;
     pTask->userhandler = proc;
     return oldProc;
+}
+
+/***********************************************************************
+ *           GetTaskDS   (KERNEL.155)
+ *
+ * Note: this function apparently returns a DWORD with LOWORD == HIWORD.
+ * I don't think we need to bother with this.
+ */
+HINSTANCE WINAPI GetTaskDS(void)
+{
+    TDB far *pTask;
+
+    if (!(pTask = MAKELP(GetCurrentTask(),0))) return 0;
+    return pTask->hInstance;
+}
+
+/***********************************************************************
+ *           GetCurPID   (KERNEL.157)
+ */
+DWORD WINAPI GetCurPID( DWORD unused )
+{
+    return 0;
 }

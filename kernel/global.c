@@ -1,5 +1,7 @@
 #include <win16.h>
 
+#include <win_private.h>
+
 //@todo implement pGlobalArena
 /***********************************************************************
  *           GlobalFreeAll   (KERNEL.26)
@@ -62,4 +64,26 @@ char FAR * WINAPI GlobalWire( HGLOBAL handle )
 BOOL WINAPI GlobalUnWire( HGLOBAL handle )
 {
     return !GlobalUnlock( handle );
+}
+
+/***********************************************************************
+ *           GlobalNotify   (KERNEL.154)
+ *
+ * Note that GlobalNotify does _not_ return the old NotifyProc
+ * -- contrary to LocalNotify !!
+ */
+VOID WINAPI GlobalNotify( FARPROC proc )
+{
+    TDB far *pTask;
+
+    if (!(pTask = MAKELP(GetCurrentTask(), 0))) return;
+    pTask->discardhandler = proc;
+}
+
+/***********************************************************************
+ *           LimitEMSPages   (KERNEL.156)
+ */
+DWORD WINAPI LimitEMSPages( DWORD unused )
+{
+    return 0;
 }
