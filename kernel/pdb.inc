@@ -17,7 +17,12 @@ PDB_SAVESTACK		DD	?	;        /* 2e SS:SP on last int21 call */
 PDB_NBFILES		DW	?	;          /* 32 Number of file handles */
 PDB_FILEHANDLESPTR	DD	?	;   /* 34 Pointer to file handle table */
 PDB_HFILEHANDLES	DW	?	;     /* 38 Handle to fileHandlesPtr */
-PDB_RESERVED3		DW	17 DUP (?);
+PDB_RESERVED3		DW	?	;
+PDB_NEXTPDBSEL		DW	?	; /* 42h    WORD    (MSWindows3) selector of next PSP (PDB) in linked list
+				        ;       Windows keeps a linked list of Windows programs only */
+PDB_RESERVED4		DW	?	;
+PDB_NEXTPDB		DW	?	;     /* 46h    WORD    (MSWindows3) "PDB_NextPDB" */
+PDB_RESERVED5		DW	13 DUP (?);
 PDB_FCB1		DB	16 DUP (?);         /* 5c First FCB */
 PDB_FCB2		DB	20 DUP (?);         /* 6c Second FCB */
 PDB_CMDLINE		DB	128 DUP (?);     /* 80 Command-line (first byte is len)*/

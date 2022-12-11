@@ -47,3 +47,19 @@ UINT WINAPI GlobalFlags(
 //           ((pArena->base == 0) ? GMEM_DISCARDED : 0);
 }
 
+/***********************************************************************
+ *           GlobalWire     (KERNEL.111)
+ */
+char FAR * WINAPI GlobalWire( HGLOBAL handle )
+{
+    return GlobalLock( handle );
+}
+
+
+/***********************************************************************
+ *           GlobalUnWire     (KERNEL.112)
+ */
+BOOL WINAPI GlobalUnWire( HGLOBAL handle )
+{
+    return !GlobalUnlock( handle );
+}

@@ -6983,6 +6983,7 @@ copy_to_psp_and_exit endp
 endif	;_COPY2PSP
 endif	;?EXTLOAD
 
+public doscall
 doscall proc
 if ?32BIT
 	pushfd

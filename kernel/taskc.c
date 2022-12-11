@@ -173,3 +173,18 @@ void WINAPI PostEvent( HTASK hTask )
 
     pTask->nEvents++;
 }
+
+/***********************************************************************
+ *           SetTaskSignalProc   (KERNEL.38)
+ */
+FARPROC WINAPI SetTaskSignalProc( HTASK hTask, FARPROC proc )
+{
+    TDB far *pTask;
+    FARPROC oldProc;
+
+    if (!hTask) hTask = GetCurrentTask();
+    if (!(pTask = MAKELP( hTask, 0 ))) return NULL;
+    oldProc = pTask->userhandler;
+    pTask->userhandler = proc;
+    return oldProc;
+}

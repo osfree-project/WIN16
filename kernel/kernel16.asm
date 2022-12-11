@@ -60,6 +60,7 @@ externdef pascal GetTaskQueueDS: far
 externdef pascal GetTaskQueue: far
 externdef pascal SetTaskQueue: far
 externdef pascal GetNumTasks: far
+externdef pascal SetTaskSignalProc: far
 
 externdef pascal _hmemset:far
 externdef discardmem:near
@@ -111,6 +112,8 @@ externdef pascal GlobalHandle: far
 externdef pascal GlobalCompact: far
 externdef pascal GlobalFreeAll: far
 externdef pascal GlobalMasterHandle: far
+externdef pascal GlobalWire: far
+externdef pascal GlobalUnWire: far
 
 externdef pascal GetFreeSpace: far
 externdef pascal GetFreeMemInfo: far
@@ -139,6 +142,8 @@ externdef pascal GetExpWinVer: far
 externdef pascal SetPriority: far
 externdef pascal LockCurrentTask: far
 externdef pascal PostEvent: far
+externdef pascal Yield: far
+externdef pascal OldYield: far
 
 ; Selectors
 externdef pascal AllocSelector: far
@@ -156,7 +161,12 @@ externdef pascal LoadModule: far
 
 externdef pascal LongPtrAdd: far
 
-externdef pascal Yield: far
+externdef pascal EnableDOS: far
+externdef pascal DisableDOS: far
+
+externdef pascal EnableKernel: far
+
+externdef pascal KbdRst: far
 
 	include ascii.inc
 	include fixups.inc
@@ -321,6 +331,11 @@ OutputDebugString proc far pascal uses ds si pszString:far ptr BYTE
 	int 41h
 	ret
 OutputDebugString endp
+
+externdef doscall: near
+NoHookDOSCall proc far pascal
+	call doscall
+NoHookDOSCall endp
 
 Dos3Call proc far pascal
 	int 21h
@@ -524,7 +539,7 @@ KernelSeg SEGITEM <0,_end, 0, _end>
 
 KernelEntries label byte
 	db 1,1
-	ENTRY <1,FatalExit>
+	ENTRY <1,FatalExit>		;1
 	db 1,0
 	db 24,1
 	ENTRY <1,GetVersion>		;3
@@ -552,7 +567,7 @@ KernelEntries label byte
 	ENTRY <1,GlobalCompact>		;25
 	ENTRY <1,GlobalFreeAll>		;26
 	db 1,0				;27
-	db 10,1
+	db 11,1
 	ENTRY <1,GlobalMasterHandle>	;28
 	ENTRY <1,Yield>			;29
 	ENTRY <1,WaitEvent>		;30
@@ -563,7 +578,12 @@ KernelEntries label byte
 	ENTRY <1,GetTaskQueue>		;35
 	ENTRY <1,GetCurrentTask>	;36
 	ENTRY <1,GetCurrentPDB>		;37
-	db 7,0				;38-44
+	ENTRY <1,SetTaskSignalProc>	;38
+	db 2,0				;39-40
+	db 2,1
+	ENTRY <1,EnableDOS>		;41
+	ENTRY <1,DisableDOS>		;42
+	db 2,0				;43-44
 	db 1,1
 	ENTRY <1,LoadModule>		;45
 	db 1,0				;46
@@ -615,8 +635,9 @@ KernelEntries label byte
 	db 2,1
 	ENTRY <1,LoadLibrary>		;95
 	ENTRY <1,FreeLibrary>		;96
-	db 5,0						;97-101
-	db 2,1
+	db 4,0						;97-100
+	db 3,1
+	ENTRY <1,NoHookDOSCall>			;101
 	ENTRY <1,Dos3Call>			;102
 	ENTRY <1,NetBiosCall>			;103
 	db 1,0						;104
@@ -625,21 +646,27 @@ KernelEntries label byte
 	db 1,0						;106
 	db 1,1
 	ENTRY <1,SetErrorMode>		;107
-	db 5,0						;108-112
+	db 3,0						;108-110
+	db 2,1
+	ENTRY <1,GlobalWire>		;111
+	ENTRY <1,GlobalUnWire>		;112
 	db 2,-2
 eSHIFT	ENTRY <1,3>				;113 _AHSHIFT
 eINCR	ENTRY <1,8>				;114 _AHINCR
 	db 1,1
 	ENTRY <1,OutputDebugString>	;115
-	db 2,0						;116-117
-	db 3,1
+	db 1,0						;116
+	db 4,1
+	ENTRY <1,OldYield>		;117
 	ENTRY <1,GetTaskQueueDS>	;118
 	ENTRY <1,GetTaskQueueES>	;119
 	ENTRY <1,UndefDynlink>		;120
 	db 1,0						;121
-	db 1,1
+	db 3,1
 	ENTRY <1,IsTaskLocked>		;122
-	db 4,0						;123-126
+	ENTRY <1,KbdRst>		;123
+	ENTRY <1,EnableKernel>		;124
+	db 3,0						;124-126
 	db 3,1
 	ENTRY <1,GetPrivateProfileInt>	;127
 	ENTRY <1,GetPrivateProfileString>	;128
@@ -774,6 +801,9 @@ KernelNames label byte
 	NENAME "GETTASKQUEUE"     ,35
 	NENAME "GETCURRENTTASK"   ,36
 	NENAME "GETCURRENTPDB"    ,37
+	NENAME "SETTASKSIGNALPROC"   ,38
+	NENAME "ENABLEDOS", 41
+	NENAME "DISABLEDOS", 42
 	NENAME "LOADMODULE"       ,45
 	NENAME "GETMODULEHANDLE"  ,47
 	NENAME "GETMODULEUSAGE"   ,48
@@ -816,17 +846,23 @@ KernelNames label byte
 	NENAME "INITTASK"    ,91
 	NENAME "LOADLIBRARY" ,95
 	NENAME "FREELIBRARY" ,96
+	NENAME "NOHOOKDOSCALL" ,101
 	NENAME "DOS3CALL"    ,102
 	NENAME "NETBIOSCALL" ,103
 	NENAME "GETEXEVERSION",105
 	NENAME "SETERRORMODE",107
+ 	NENAME "GLOBALWIRE",111
+	NENAME "GLOBALUNWIRE",112
 	NENAME "__AHSHIFT"   ,113
 	NENAME "__AHINCR"    ,114
 	NENAME "OUTPUTDEBUGSTRING", 115
+	NENAME "OLDYIELD" ,117
 	NENAME "GETTASKQUEUEDS", 118
 	NENAME "GETTASKQUEUEES", 119
 	NENAME "UNDEFDYNLINK",      120
 	NENAME "ISTASKLOCKED",      122
+	NENAME "KBDRST",               123
+	NENAME "ENABLEKERNEL",124
 	NENAME "GETPRIVATEPROFILEINT"  ,127
 	NENAME "GETPRIVATEPROFILESTRING"  ,128
 	NENAME "WRITEPRIVATEPROFILESTRING",129

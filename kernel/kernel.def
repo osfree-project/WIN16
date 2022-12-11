@@ -36,9 +36,9 @@ EXPORTS
     GETTASKQUEUE                   @35	+
     GETCURRENTTASK                 @36	+
     GETCURRENTPDB                  @37	+
-    SETTASKSIGNALPROC              @38
-    ENABLEDOS                      @41
-    DISABLEDOS                     @42
+    SETTASKSIGNALPROC              @38	+
+    ENABLEDOS                      @41	+
+    DISABLEDOS                     @42	+
     LOADMODULE                     @45	+
     FREEMODULE                     @46
     GETMODULEHANDLE                @47	+
@@ -95,7 +95,7 @@ EXPORTS
     GETLASTDISKCHANGE              @98
     GETLPERRMODE                   @99
     VALIDATECODESEGMENTS           @100
-    NOHOOKDOSCALL                  @101
+    NOHOOKDOSCALL                  @101	+
     DOS3CALL                       @102	+
     NETBIOSCALL                    @103	+
     GETCODEINFO                    @104
@@ -105,20 +105,20 @@ EXPORTS
     SWITCHSTACKTO                  @108
     SWITCHSTACKBACK                @109
     PATCHCODEHANDLE                @110
-    GLOBALWIRE                     @111
-    GLOBALUNWIRE                   @112
+    GLOBALWIRE                     @111	+
+    GLOBALUNWIRE                   @112	+
     __AHSHIFT                      @113	+
     __AHINCR                       @114	+
     OUTPUTDEBUGSTRING              @115	+
     INITLIB                        @116
-    OLDYIELD                       @117
+    OLDYIELD                       @117	+
     GETTASKQUEUEDS                 @118	+
     GETTASKQUEUEES                 @119	+
     UNDEFDYNLINK                   @120	+
     LOCALSHRINK                    @121
     ISTASKLOCKED                   @122	+
-    KBDRST                         @123
-    ENABLEKERNEL                   @124
+    KBDRST                         @123	+
+    ENABLEKERNEL                   @124	+
     DISABLEKERNEL                  @125
     MEMORYFREED                    @126
     GETPRIVATEPROFILEINT           @127	+

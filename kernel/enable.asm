@@ -18,28 +18,61 @@ DisableKernel proc far pascal
 	or	KernelFlags[2], 02h		; Windows Exit Flag
 	cmp	WORD PTR [PrevInt21Proc+2], 0
 	je	nodos
-	call InternalDisableDOS
+	call	InternalDisableDOS
 nodos:
-	mov cx,word ptr ds:[PrevInt3FProc+2]
-	mov dx,word ptr ds:[PrevInt3FProc+0]
+	mov	cx,word ptr ds:[PrevInt3FProc+2]
+	mov	dx,word ptr ds:[PrevInt3FProc+0]
 	@DPMI_SetExcVec 0bh	
 
-	mov cx,word ptr ds:[PrevInt0CProc+2]
-	mov dx,word ptr ds:[PrevInt0CProc+0]
+	mov	cx,word ptr ds:[PrevInt0CProc+2]
+	mov	dx,word ptr ds:[PrevInt0CProc+0]
 	@DPMI_SetExcVec 0ch	
 
-	mov cx,word ptr ds:[PrevInt0DProc+2]
-	mov dx,word ptr ds:[PrevInt0DProc+0]
+	mov	cx,word ptr ds:[PrevInt0DProc+2]
+	mov	dx,word ptr ds:[PrevInt0DProc+0]
 	@DPMI_SetExcVec 0dh	
 
-	mov cx,word ptr ds:[PrevInt06Proc+2]
-	mov dx,word ptr ds:[PrevInt06Proc+0]
+	mov	cx,word ptr ds:[PrevInt06Proc+2]
+	mov	dx,word ptr ds:[PrevInt06Proc+0]
 	@DPMI_SetExcVec 06h	
 
-	mov cx,word ptr ds:[PrevInt0EProc+2]
-	mov dx,word ptr ds:[PrevInt0EProc+0]
+	mov	cx,word ptr ds:[PrevInt0EProc+2]
+	mov	dx,word ptr ds:[PrevInt0EProc+0]
 	@DPMI_SetExcVec 0Eh	
+
+	mov	ax, ds:[TH_HEADPDB]
+term_pdb:
+	mov	ds,ax
+	cmp	ax, ds:[TH_TOPPDB]
+	je	skip_toppdb
+
+	call	TerminatePDB			; Need more info
+
+skip_toppdb:
+	mov	ax,ds:[PDB_NEXTPDBSEL]
+	or	ax,ax
+	jnz	term_pdb
+
+	mov	bx,[TH_TOPPDB]
+	mov	ah,50h
+	int	21h
+	and	KernelFlags[2],NOT 02h	; Disable kernel exit flag
+
+	mov	ds,[TH_TOPPDB]
+	mov	cx,ds:[PDB_NBFILES]
+nextfile:
+	mov	bx,cx
+	dec	bx
+	cmp	bx,5
+	jb	skipstd
+	@CloseFil
+skipistd:
+	loop	nextfile
+
+; restore SFT here
 ;@todo not finished yet
+exit:
+	ret
 DisableKernel endp
 
 ExitKernel proc far pascal rc: word
@@ -81,30 +114,30 @@ exit3:
 	jne exit_via_DOS
 
 ife ?REAL	
-	mov ax, 1600h
-	int 2fh
+	mov	ax, 1600h
+	int	2fh
 
-	test al, 7fh
-	jz exit_via_INT_19
+	test	al, 7fh
+	jz	exit_via_INT_19
 
-	cmp al, 1
-	je exit_via_DOS
+	cmp	al, 1
+	je	exit_via_DOS
 
 	cmp al, 0ffh
-	je exit_via_DOS
+	je	exit_via_DOS
 
-	mov ax, 1684h
-	mov bx, 9
-	mov di, 0
-	mov es, di
-	int 2fh
+	mov	ax, 1684h
+	mov	bx, 9
+	mov	di, 0
+	mov	es, di
+	int	2fh
 
-	mov ax, es
-	or ax,di
-	jz exit_via_DOS
+	mov	ax, es
+	or	ax,di
+	jz	exit_via_DOS
 
-	mov ax, 100h
-	call [es:di]
+	mov	ax, 100h
+	call	[es:di]
 
 	jmp exit_via_DOS
 
@@ -124,15 +157,15 @@ endif
 ;	useful for flushing NCACHE before rebooting
 ;SeeAlso: AX=FE00h,AX=FE10h
 
-	mov ax, 0fe03h
-	mov di, 4e55h		; "NU"
-	mov si, 4346h		; "CF"
+	mov	ax, 0fe03h
+	mov	di, 4e55h		; "NU"
+	mov	si, 4346h		; "CF"
 	stc
-	int 2fh
+	int	2fh
 
 ; reboot
 
-	int 19h
+	int	19h
 
 exit_via_DOS:
 	@Exit rc

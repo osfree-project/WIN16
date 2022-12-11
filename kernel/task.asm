@@ -224,6 +224,21 @@ IsWinOldApTask proc far pascal uses es
 	ret 2
 IsWinOldApTask endp
 
+; @todo For now no task switching...
+externdef MTYeld: far
+OldYield proc far pascal
+
+	@SetKernelDS
+;        cmp     InScheduler, 0
+;        jnz     exit
+        cmp     TH_CURTDB,0
+        jz      exit
+        mov     ds,TH_CURTDB
+        inc     ds:[TDB.TDB_nEvents]
+;        call    MTYield			; call MThread lib functions
+        dec     ds:[TDB.TDB_nEvents]
+exit:
+OldYield endp
 
 _TEXT	ends
 	end
