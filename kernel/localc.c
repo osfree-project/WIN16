@@ -881,7 +881,7 @@ HLOCAL WINAPI LocalHandle( UINT addr )
     LOCALHEAPINFO far * pInfo;
     WORD table;
 
-    if (!(pInfo = (LOCALHEAPINFO *)((char *)ptr + ptr->heap)))
+    if (!(pInfo = LOCAL_GetHeap(GetDS())))
     {
 //        ERR("(%04x): Local heap not found\n", ds );
 //	LOCAL_PrintHeap( ds );
@@ -911,7 +911,7 @@ WORD WINAPI LocalHandleDelta( WORD delta )
     INSTANCEDATA far * ptr = MAKELP(GetDS(), 0 );
     LOCALHEAPINFO far *pInfo;
 
-    if (!(pInfo = (LOCALHEAPINFO *)((char *)ptr + ptr->heap)))
+    if (!(pInfo = LOCAL_GetHeap(GetDS())))
     {
 //        ERR("Local heap not found\n");
 //	LOCAL_PrintHeap( CURRENT_DS );
@@ -928,7 +928,7 @@ WORD WINAPI LocalHandleDelta( WORD delta )
 WORD WINAPI LocalHeapSize(void)
 {
     INSTANCEDATA far * ptr = MAKELP(GetDS(), 0 );
-    LOCALHEAPINFO far * pInfo = (LOCALHEAPINFO *)((char *)ptr + ptr->heap);
+    LOCALHEAPINFO far * pInfo = LOCAL_GetHeap(GetDS());
     return pInfo ? pInfo->last - pInfo->first : 0;
 }
 
@@ -940,7 +940,7 @@ WORD WINAPI LocalCountFree(void)
     WORD arena, total;
     LOCALARENA *pArena;
     INSTANCEDATA far * ptr = MAKELP(GetDS(), 0);
-    LOCALHEAPINFO far *pInfo = (LOCALHEAPINFO *)((char *)ptr + ptr->heap);
+    LOCALHEAPINFO far *pInfo = LOCAL_GetHeap(GetDS());
 
     if (!(pInfo))
     {
