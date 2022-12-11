@@ -7658,6 +7658,7 @@ endif
 GetPgmParms endp
 
 
+
 ;*** global constructor ***
 
 InitProtMode proc
@@ -7667,32 +7668,18 @@ InitProtMode proc
 	@DPMI_GetPMIntVec 21h				;get int 21 PM vector
 				;get pm int
 	
-if ?32BIT
-	mov dword ptr [PrevInt21Proc+0],edx
-	mov word ptr [PrevInt21Proc+4],cx
-else
 	mov word ptr [PrevInt21Proc+0],dx
 	mov word ptr [PrevInt21Proc+2],cx
-endif
 	@DPMI_GetPMIntVec 31h				;get int 31 PM vector
-if ?32BIT
-	mov dword ptr [oldint31+0],edx
-	mov word ptr [oldint31+4],cx
-else
+
 	mov word ptr [oldint31+0],dx
 	mov word ptr [oldint31+2],cx
-endif
 if ?DEBUG
 	@DPMI_GetPMIntVec 41h
-  if ?32BIT
-	mov dword ptr [oldint41+0],edx
-	mov word ptr [oldint41+4],cx
-	mov edx,offset myint41
-  else
 	mov word ptr [oldint41+0],dx
 	mov word ptr [oldint41+2],cx
 	mov dx,offset myint41
-  endif
+
 	mov al,5
 	mov cx,cs
 	int 31h

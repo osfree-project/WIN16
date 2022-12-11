@@ -5,11 +5,6 @@
 
 EW_REBOOTSYSTEM equ 43h
 
-extern KernelFlags: WORD
-extern PMouseTermProc: DWORD
-extern PKeyboardTermProc: DWORD
-extern PSystemTermProc: DWORD
-extern PrevInt21Proc: DWORD
 
 _TEXT segment
 

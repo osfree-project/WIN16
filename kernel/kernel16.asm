@@ -134,7 +134,7 @@ externdef pascal LocalCompact: far
 externdef pascal LocalNotify: far
 externdef pascal LocalFlags: far
 externdef pascal LocalHandle: far
-
+externdef pascal LocalHandleDelta: far
 externdef pascal GetInstanceData: far
 
 externdef pascal Catch: far
@@ -336,6 +336,14 @@ OutputDebugString proc far pascal uses ds si pszString:far ptr BYTE
 	int 41h
 	ret
 OutputDebugString endp
+
+GetSetKernelDOSProc proc far pascal newproc:dword
+	@SetKernelDS
+	mov ax, word ptr [newproc+0]
+	xchg ax, word ptr [PrevInt21Proc+0]
+	mov dx, word ptr [newproc+2]
+	xchg dx, word ptr [PrevInt21Proc+2]
+GetSetKernelDOSProc endp
 
 externdef doscall: near
 NoHookDOSCall proc far pascal
@@ -750,7 +758,11 @@ eC000 ENTRY <1,0>				;195 _C000H
 	db 2,0						;204-205
 	db 1,1
 	ENTRY <1,AllocSelectorArray>	;206
-	db 109,0					;207-315
+	db 103,0					;207-309
+	db 2,1
+	ENTRY <1,LocalHandleDelta>	;310
+	ENTRY <1,GetSetKernelDOSProc>	;311
+	db 4,0					;312-315
 	db 1,1
 	ENTRY <1, GetFreeMemInfo>	;316
 	db 4,0					;216-319
@@ -921,6 +933,8 @@ KernelNames label byte
 	NENAME "GLOBALUNFIX"        ,198
 	NENAME "DEBUGBREAK"         ,203
 	NENAME "ALLOCSELECTORARRAY" ,206
+	NENAME "LOCALHANDLEDELTA", 310
+	NENAME "GETSETKERNELDOSPROC", 311
 	NENAME "GETFREEMEMINFO" ,316
 	NENAME "ISTASK" ,320
 	NENAME "ISROMMODULE" ,323

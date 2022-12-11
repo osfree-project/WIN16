@@ -193,8 +193,8 @@ EXPORTS
     CVWBREAK                       @205
     ALLOCSELECTORARRAY             @206	+
     ISDBCSLEADBYTE                 @207
-    LOCALHANDLEDELTA               @310
-    GETSETKERNELDOSPROC            @311
+    LOCALHANDLEDELTA               @310	+
+    GETSETKERNELDOSPROC            @311	+
     DEBUGDEFINESEGMENT             @314
     WRITEOUTPROFILES               @315
     GETFREEMEMINFO                 @316 +

@@ -84,3 +84,23 @@ HLOCAL WINAPI LocalHandle( UINT addr )
 
     return (HLOCAL)addr;  /* Fixed block handle is addr */
 }
+
+/***********************************************************************
+ *           LocalHandleDelta   (KERNEL.310)
+ */
+WORD WINAPI LocalHandleDelta( WORD delta )
+{
+    INSTANCEDATA far * ptr = MAKELP(GetDS(), 0 );
+    LOCALHEAPINFO *pInfo;
+
+    if (!(pInfo = (LOCALHEAPINFO *)((char *)ptr + ptr->heap)))
+    {
+//        ERR("Local heap not found\n");
+//	LOCAL_PrintHeap( CURRENT_DS );
+	return 0;
+    }
+    if (delta) pInfo->hdelta = delta;
+//    TRACE("returning %04x\n", pInfo->hdelta);
+    return pInfo->hdelta;
+}
+

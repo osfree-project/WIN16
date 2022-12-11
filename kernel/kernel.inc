@@ -156,6 +156,11 @@ externdef	dStktop:dword
 else
 externdef	wStktop:word
 endif
+externdef KernelFlags: WORD
+externdef PMouseTermProc: DWORD
+externdef PKeyboardTermProc: DWORD
+externdef PSystemTermProc: DWORD
+externdef PrevInt21Proc: DWORD
 _DATA ends
 
 _TEXT segment
