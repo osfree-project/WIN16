@@ -2,6 +2,8 @@
 
 #include <win_private.h>
 
+#include "dpmi.h"
+
 //@todo implement pGlobalArena
 /***********************************************************************
  *           GlobalFreeAll   (KERNEL.26)

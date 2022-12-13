@@ -259,7 +259,7 @@ Get_Physical_Address proc near pascal theSelector: WORD
 	jc @F
 	mov ax,dx
 	mov dx,cx
-	ret 2
+	ret
 @@:
 	xor ax,ax
 	xor dx,dx

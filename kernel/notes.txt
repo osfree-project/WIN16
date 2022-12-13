@@ -92,6 +92,10 @@ Also, lot of code taken from TWin libraries and from WINE sources.
 
 HTASK is a selector of TDB
 
+== Memory hierarhy ==
+
+Selectors - mostly same as DPMI descriptors functions
+
 
 Resources
 
