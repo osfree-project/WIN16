@@ -15,15 +15,11 @@
 _TEXT	segment
 
 ;--- WORD AllocSelectorArray(WORD)
+; Always return error
 
 AllocSelectorArray proc far pascal
-	pop dx			; Get far return address
-	pop ax
-	pop cx			; Get Number of selectors
-	push ax			; Restore far return address
-	push dx
-;	@DPMI_AllocDesc cx	; Allocate descriptors
-	ret
+	xor ax,ax
+	ret 2
 AllocSelectorArray endp
 
 ;--- WORD AllocSelector(WORD)
@@ -31,182 +27,107 @@ AllocSelectorArray endp
 ;
 ; UINT WINAPI AllocSelector(UINT uSelector);
 ;
-; Create descriptor copy in LDT using uSelector as template.
-; If uSelector is 0 then create new empty descriptor.
+; Just copy segment
 ;
-; Note: Original Andreas Grech implementation doesn't take into account 
-; huge selector. Matt Pietrek describe how it must work.
-;
-; @todo: implement huge selector
 
 AllocSelector proc far pascal
 	pop cx
 	pop dx
-	pop bx
+	pop ax
 	push dx
 	push cx
-;	@DPMI_AllocDesc
-	jc error
-	and bx,bx
-	jz @F
-	push ds
-	@SetKernelDS
-;	call CopyDescriptor	;copy BX -> AX
-	pop ds
-@@:
-	ret
-error:
-	xor ax,ax
 	ret
 AllocSelector endp
 
 ;--- WORD FreeSelector(WORD)
 ;--- returns 0 if successful, else the selector!
 ;
-; Note: Original Andreas Grech implementation doesn't take in account 
-; huge selector. Matt Pietrek describe how it must work.
+; Always return error because it is not possible 'free' segment
 ;
-; @todo: implement huge selector
 
 FreeSelector proc far pascal
-	pop cx
-	pop dx
-	pop bx
-	push dx
-	push cx
-;        @DPMI_FreeDesc bx
-	mov ax,0000
-	jnc @F
-	mov ax,bx
-@@:
-	ret
+	xor ax,ax
+	ret 2
 FreeSelector endp
 
 ;--- DWORD GetSelectorBase(WORD)
-
+;
+; Just multiple on 16 (paragraph size)
+;
 GetSelectorBase proc far pascal
 	pop dx
 	pop cx
-	pop bx
+	pop ax
 	push cx
 	push dx
-;        @DPMI_GetBase
-	jc @F
-	mov ax,dx
-	mov dx,cx
-	ret
-@@:
-	xor ax,ax
 	xor dx,dx
+	mov cx, 4
+mult:
+	shl ax, 1
+	rcl dx, 1
+	loop mult
 	ret
-
 GetSelectorBase endp
 
 ;--- WORD SetSelectorBase(WORD)
-;--- returns 0 if an error occured, else the selector value
+;--- returns 0 if an error occured, else the segment value
+;
+; Just delete base on 16 (para size)
+;
 
 SetSelectorBase proc far pascal
 	@loadbx
-	@loadparm 0,dx
-	@loadparm 2,cx
-	@loadparm 4,bx
-;        @DPMI_SetBase
-	mov ax,0000
-	jc @F
-	mov ax,bx
+	@loadparm 0,ax	; base
+	@loadparm 2,dx
+	@loadparm 4,bx	; selector
+	mov cx, 4
+divi:
+	shr dx, 1
+	rcr ax, 1
+	loop divi
+	or dx,dx
+	jz @F
+	xor ax,ax
 @@:
 	@return 6
 SetSelectorBase endp
 
 ;--- DWORD GetSelectorLimit(WORD)
+; Segment limit always 64k
 
 GetSelectorLimit proc far pascal
-
-	pop dx
-	pop cx
-	pop bx
-	push cx
-	push dx
-
-if ?32BIT
-	lsl eax,ebx
-	jnz @F
-	xor eax,eax
-@@:
-	push eax
-	pop ax
-	pop dx
-	ret
-else
-	push di
-	sub sp,8
-	mov di,sp
-	push ss
-	pop es
-;	@DPMI_GetDescriptor
-	jc error
-	mov ax,es:[di+0]
-	mov dl,es:[di+6]
-	and dx,000Fh
-exit:
-	add sp,8
-	pop di
-	ret
-error:
-	xor ax,ax
+	mov ax, 0ffffh
 	xor dx,dx
-	jmp exit
-endif
-
+	ret 2
 GetSelectorLimit endp
 
 ;--- SetSelectorLimit(WORD);
 ;--- returns always 0
 
 SetSelectorLimit proc far pascal
-	@loadbx
-	@loadparm 0,dx
-	@loadparm 2,cx
-	@loadparm 4,bx
-;	@DPMI_SetLimit
-	mov ax,0000
-if 0
-	jc @F
-	mov ax,bx
-@@:
-endif
+	xor ax,ax
 	@return 6
 SetSelectorLimit endp
 
 AllocCSToDSAlias proc far pascal
 	pop cx
 	pop dx
-	pop bx
+	pop ax
 	push dx
 	push cx
-;	@DPMI_CreateCSAlias
-	jnc @F
-	xor ax,ax
-@@:
 	@return
 AllocCSToDSAlias endp
 
 AllocDSToCSAlias proc far pascal
-	pop dx
 	pop cx
-	pop bx
-	push cx
+	pop dx
+	pop ax
 	push dx
-;	@DPMI_AllocDesc
-	jc @F
-	call CreateAlias
-	jnc exit
-@@:
-	xor ax,ax
-exit:
+	push cx
 	@return
-
 AllocDSToCSAlias endp
+
+;@todo finish it
 
 PrestoChangoSelector proc far pascal
 	pop cx
@@ -217,7 +138,6 @@ PrestoChangoSelector proc far pascal
 	push cx
 	call CreateAlias	 ;BX -> AX
 	@return
-
 PrestoChangoSelector endp
 
 _TEXT ends
