@@ -54,7 +54,7 @@ extern  unsigned short          GetDS( void );
         "mov    ax,ds"          \
         value                   [ax];
 
-/* This function returns current DS value */
+/* This function sets current DS value */
 extern  void          SetDS( unsigned short );
 #pragma aux SetDS               = \
         "mov    ds,ax"          \
@@ -638,4 +638,14 @@ DWORD WINAPI GetHeapSpaces(HMODULE module)
     spaces = MAKELONG(LocalCountFree(), LocalHeapSize());
     SetDS(oldDS);
     return spaces;
+}
+
+#include <win16.h>
+
+/***********************************************************************
+ *           GetExeVersion   (KERNEL.105)
+ */
+WORD WINAPI GetExeVersion(void)
+{
+    return *((WORD far *)MAKELP(GetCurrentTask(), 0x1a));
 }

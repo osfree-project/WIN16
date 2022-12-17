@@ -92,10 +92,11 @@ Also, lot of code taken from TWin libraries and from WINE sources.
 
 HTASK is a selector of TDB
 
-== Memory hierarhy ==
+== Memory hierarhy and dependencies ==
 
-Selectors - mostly same as DPMI descriptors functions
-
+Selectors - Mostly same as DPMI descriptors functions.
+Global Heap - Main Global Heap manager. Requires Selectors.
+Local Heap - Local Heap manager. Requires Global Heap to change size of local heap and reallocations.
 
 Resources
 

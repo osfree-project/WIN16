@@ -91,6 +91,12 @@ extern  unsigned short          GetDS( void );
         "mov    ax,ds"          \
         value                   [ax];
 
+/* This function sets current CX value */
+extern  void          SetCX( unsigned short );
+#pragma aux SetCX               = \
+        "mov    cx,ax"          \
+        parm                   [ax];
+
 static inline BOOL call_notify_func( FARPROC proc, WORD msg, HLOCAL handle, WORD arg )
 {
     DWORD ret;
@@ -111,13 +117,13 @@ static inline BOOL call_notify_func( FARPROC proc, WORD msg, HLOCAL handle, WORD
  */
 static LOCALHEAPINFO *LOCAL_GetHeap( HANDLE ds )
 {
-    LOCALHEAPINFO *pInfo;
     INSTANCEDATA far *ptr = MAKELP( ds, 0 );
+    LOCALHEAPINFO *pInfo;
 //    TRACE("Heap at %p, %04x\n", ptr, (ptr != NULL ? ptr->heap : 0xFFFF));
-    if (!ptr || !ptr->heap) return NULL;
+    if (!ptr || !ptr->null || !ptr->heap) return NULL;
 
 //@todo Need to implement IsBadReadPtr
-//    if (IsBadReadPtr16( (SEGPTR)MAKELONG(ptr->heap,ds), sizeof(LOCALHEAPINFO)))
+//    if (IsBadReadPtr( (SEGPTR)MAKELONG(ptr->heap,ds), sizeof(LOCALHEAPINFO)))
 //    {
 //	WARN("Bad pointer\n");
 //        return NULL;
@@ -138,11 +144,11 @@ static LOCALHEAPINFO *LOCAL_GetHeap( HANDLE ds )
 static HLOCAL LOCAL_FindFreeBlock( HANDLE ds, WORD size )
 {
     char far *ptr = MAKELP( ds, 0 );
-    LOCALHEAPINFO *pInfo;
+    LOCALHEAPINFO *pInfo = LOCAL_GetHeap( ds );
     LOCALARENA *pArena;
     WORD arena;
 
-    if (!(pInfo = LOCAL_GetHeap( ds )))
+    if (!(pInfo))
     {
 //        ERR("Local heap not found\n" );
 //	LOCAL_PrintHeap(ds);
@@ -249,12 +255,12 @@ static void LOCAL_AddBlock( char far *baseptr, WORD prev, WORD new )
 static WORD LOCAL_GetFreeSpace(WORD ds, WORD countdiscard)
 {
     char far *ptr = MAKELP( ds, 0 );
-    LOCALHEAPINFO *pInfo;
+    LOCALHEAPINFO *pInfo = LOCAL_GetHeap( ds );
     LOCALARENA *pArena;
     WORD arena;
     WORD freespace = 0;
 
-    if (!(pInfo = LOCAL_GetHeap( ds )))
+    if (!(pInfo))
     {
 //        ERR("Local heap not found\n" );
 //        LOCAL_PrintHeap(ds);
@@ -274,10 +280,6 @@ static WORD LOCAL_GetFreeSpace(WORD ds, WORD countdiscard)
     else freespace -= ARENA_HEADER_SIZE;
     return freespace;
 }
-
-
-
-
 
 /***********************************************************************
  *           LOCAL_RemoveBlock
@@ -317,11 +319,11 @@ static void LOCAL_RemoveBlock( char far *baseptr, WORD block )
 static HLOCAL LOCAL_FreeArena( WORD ds, WORD arena )
 {
     char far *ptr = MAKELP( ds, 0 );
-    LOCALHEAPINFO *pInfo;
+    LOCALHEAPINFO *pInfo = LOCAL_GetHeap( ds );
     LOCALARENA *pArena, *pPrev;
 
 //    TRACE("%04x ds=%04x\n", arena, ds );
-    if (!(pInfo = LOCAL_GetHeap( ds ))) return arena;
+    if (!(pInfo)) return arena;
 
     pArena = ARENA_PTR( ptr, arena );
     if ((pArena->prev & 3) == LOCAL_ARENA_FREE)
@@ -388,14 +390,14 @@ static void LOCAL_ShrinkArena( WORD ds, WORD arena, WORD size )
 static void LOCAL_GrowArenaDownward( WORD ds, WORD arena, WORD newsize )
 {
     char far *ptr = MAKELP( ds, 0 );
-    LOCALHEAPINFO *pInfo;
+    LOCALHEAPINFO *pInfo = LOCAL_GetHeap( ds );
     LOCALARENA *pArena = ARENA_PTR( ptr, arena );
     WORD prevArena = pArena->prev & ~3;
     LOCALARENA *pPrevArena = ARENA_PTR( ptr, prevArena );
     WORD offset, size;
     char *p;
 
-    if (!(pInfo = LOCAL_GetHeap( ds ))) return;
+    if (!(pInfo)) return;
     offset = pPrevArena->size;
     size = pArena->next - arena - ARENA_HEADER_SIZE;
     LOCAL_RemoveFreeBlock( ptr, prevArena );
@@ -418,14 +420,14 @@ static void LOCAL_GrowArenaDownward( WORD ds, WORD arena, WORD newsize )
 static int LOCAL_Compact( HANDLE ds, UINT minfree, UINT flags )
 {
     char far *ptr = MAKELP( ds, 0 );
-    LOCALHEAPINFO *pInfo;
+    LOCALHEAPINFO *pInfo = LOCAL_GetHeap( ds );
     LOCALARENA *pArena, *pMoveArena, *pFinalArena;
     WORD arena, movearena, finalarena, table;
     WORD count, movesize, size;
     WORD freespace;
     LOCALHANDLEENTRY *pEntry;
 
-    if (!(pInfo = LOCAL_GetHeap( ds )))
+    if (!(pInfo))
     {
 //        ERR("Local heap not found\n" );
 //        LOCAL_PrintHeap(ds);
@@ -534,9 +536,6 @@ static int LOCAL_Compact( HANDLE ds, UINT minfree, UINT flags )
     }
     return LOCAL_Compact(ds, 0xffff, LMEM_NODISCARD);
 }
-
-
-
 
 /***********************************************************************
  *           LOCAL_GrowHeap
@@ -908,10 +907,9 @@ HLOCAL WINAPI LocalHandle( UINT addr )
  */
 WORD WINAPI LocalHandleDelta( WORD delta )
 {
-    INSTANCEDATA far * ptr = MAKELP(GetDS(), 0 );
-    LOCALHEAPINFO far *pInfo;
+    LOCALHEAPINFO far *pInfo = LOCAL_GetHeap(GetDS());
 
-    if (!(pInfo = LOCAL_GetHeap(GetDS())))
+    if (!pInfo)
     {
 //        ERR("Local heap not found\n");
 //	LOCAL_PrintHeap( CURRENT_DS );
@@ -968,7 +966,7 @@ WORD WINAPI LocalCountFree(void)
  */
 BOOL WINAPI LocalInit(HANDLE selector, UINT start, UINT end)
 {
-    char far *ptr;
+    LPSTR ptr;
     WORD heapInfoArena, freeArena, lastArena;
     LOCALHEAPINFO *pHeapInfo;
     LOCALARENA *pArena, *pFirstArena, *pLastArena;
@@ -982,17 +980,6 @@ BOOL WINAPI LocalInit(HANDLE selector, UINT start, UINT end)
 
 //    TRACE("%04x %04x-%04x\n", selector, start, end);
     if (!selector) selector = GetDS();
-
-//    if (TRACE_ON(local))
-//    {
-        /* If TRACE_ON(local) is set, the global heap blocks are */
-        /* cleared before use, so we can test for double initialization. */
-//        if (LOCAL_GetHeap(selector))
-//        {
-//            ERR("Heap %04x initialized twice.\n", selector);
-//            LOCAL_PrintHeap(selector);
-//        }
-//    }
 
     if (start == 0)
     {
@@ -1069,7 +1056,7 @@ BOOL WINAPI LocalInit(HANDLE selector, UINT start, UINT end)
     ret = TRUE;
 
  done:
-//    CURRENT_STACK16->ecx = ret;  /* must be returned in cx too */
+    SetCX(ret);  /* must be returned in cx too */
     return ret;
 }
 
@@ -1125,7 +1112,7 @@ HLOCAL WINAPI LocalAlloc(UINT flags, UINT size)
     }
 
 exit:
-//    CURRENT_STACK16->ecx = handle;  /* must be returned in cx too */
+    SetCX(handle);  /* must be returned in cx too */
     return handle;
 }
 
@@ -1360,8 +1347,7 @@ UINT WINAPI LocalCompact( UINT minfree )
  */
 UINT WINAPI LocalSize( HLOCAL handle )
 {
-    HANDLE ds = GetDS();
-    char far *ptr = MAKELP( ds, 0 );
+    LPSTR ptr = MAKELP( GetDS(), 0 );
     LOCALARENA *pArena;
 
 //    TRACE("%04x ds=%04x\n", handle, ds );
@@ -1386,8 +1372,7 @@ UINT WINAPI LocalSize( HLOCAL handle )
  */
 char NEAR * WINAPI LocalLock( HLOCAL handle )
 {
-    WORD ds = GetDS();
-    char far *ptr = MAKELP( ds, 0 );
+    LPSTR ptr = MAKELP( GetDS(), 0 );
 //    return MAKELP( ds, LOCAL_InternalLock( ptr, handle ) );
     return (char NEAR *)LOCAL_InternalLock( ptr, handle );
 }
@@ -1455,7 +1440,7 @@ FARPROC WINAPI LocalNotify( FARPROC func )
 HLOCAL WINAPI LocalFree( HLOCAL handle )
 {
     HANDLE ds = GetDS();
-    char far *ptr = MAKELP( ds, 0 );
+    LPSTR ptr = MAKELP( ds, 0 );
 
 //    TRACE("%04x ds=%04x\n", handle, ds );
 

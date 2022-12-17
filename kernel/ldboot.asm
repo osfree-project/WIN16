@@ -453,11 +453,12 @@ if	?DEBUG
 	push es
 endif
 
-; Original Windows kernel loaded via DOS MZ STUB, but we just construct NE structures in memory,
+; Original Windows kernel loaded via DOS MZ STUB,
+; but we just construct NE structures in memory,
 ; so no need DOS STUB communication protocol
 
 if 0
-	cmp ax, 04b4fh			; "OK"
+	cmp ax, "KO"			; "OK"
 	jz  @F
 	xor ax, ax
 	retf
@@ -1169,7 +1170,7 @@ endif
 int21proc endp
 
 ;--- if CL=1, DX is number of export
-;--- if CL=0, DS:E/DX -> name of export
+;--- if CL=0, DS:DX -> name of export
 ;--- module handle in BX
 ;--- return address in dx:ax
 

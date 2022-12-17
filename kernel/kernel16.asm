@@ -165,6 +165,7 @@ externdef pascal SetSelectorLimit: far
 externdef pascal PrestoChangoSelector: far
 externdef pascal AllocDSToCSAlias: far
 externdef pascal AllocCSToDSAlias: far
+externdef pascal SelectorAccessRights: far
 
 externdef pascal LoadModule: far
 
@@ -724,10 +725,10 @@ eINCR	ENTRY <1,8>				;114 _AHINCR
 	db 2,1
 	ENTRY <1,AllocCSToDSAlias>	;170
 	ENTRY <1,AllocDSToCSAlias>	;171
-	db 1,0						;172
+	db 1,0				;172
 	db 2,-2
-eROMBIOS ENTRY <1,0>				;173 _ROMBIOS
-eA000 ENTRY <1,00h>				;174 _A000H
+eROMBIOS ENTRY <1,0>			;173 _ROMBIOS
+eA000 ENTRY <1,00h>			;174 _A000H
 	db 3,1
 	ENTRY <1,AllocSelector>		;175
 	ENTRY <1,FreeSelector>		;176
@@ -757,8 +758,8 @@ eE000 ENTRY <1,0>				;190 _E000H
 e0040 ENTRY <1,0040h>			;193
 eF000 ENTRY <1,0>				;194 _F000H
 eC000 ENTRY <1,0>				;195 _C000H
-	db 1,0						;196
-	db 2,1
+	db 3,1
+	ENTRY <1,SelectorAccessRights>		;196
 	ENTRY <1,GlobalFix>			;197
 	ENTRY <1,GlobalUnfix>		;198
 	db 4,0						;199-202
@@ -941,6 +942,7 @@ KernelNames label byte
 	NENAME "__0040H"          ,193
 	NENAME "__F000H", 194
 	NENAME "__C000H", 195
+	NENAME "SELECTORACCESSRIGHTS", 196
 	NENAME "GLOBALFIX"          ,197
 	NENAME "GLOBALUNFIX"        ,198
 	NENAME "DEBUGBREAK"         ,203

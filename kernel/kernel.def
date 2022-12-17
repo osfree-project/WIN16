@@ -181,7 +181,7 @@ EXPORTS
     __0040H                        @193	+
     __F000H                        @194	+
     __C000H                        @195	+
-    SELECTORACCESSRIGHTS           @196
+    SELECTORACCESSRIGHTS           @196	+
     GLOBALFIX                      @197	+
     GLOBALUNFIX                    @198	+
     SETHANDLECOUNT                 @199
