@@ -33,18 +33,7 @@ typedef struct
 #define VALID_HANDLE(handle) (((handle)>>__AHSHIFT)<globalArenaSize)
 #define GET_ARENA_PTR(handle)  (pGlobalArena + ((handle) >> __AHSHIFT))
 
-#define NE_SEG_TABLE(pModule) \
-    ((SEGTABLEENTRY *)((char *)(pModule) + (pModule)->ne_segtab))
 
-  /* In-memory segment table */
-typedef struct
-{
-    WORD      filepos;   /* Position in file, in sectors */
-    WORD      size;      /* Segment size on disk */
-    WORD      flags;     /* Segment flags */
-    WORD      minsize;   /* Min. size of segment in memory */
-    HANDLE    hSeg;      /* Selector or handle (selector - 1) of segment in memory */
-} SEGTABLEENTRY;
 
 HMODULE WINAPI GetExePtr( HANDLE handle );
 
@@ -648,4 +637,15 @@ DWORD WINAPI GetHeapSpaces(HMODULE module)
 WORD WINAPI GetExeVersion(void)
 {
     return *((WORD far *)MAKELP(GetCurrentTask(), 0x1a));
+}
+
+/**********************************************************************
+ *	    IsSharedSelector    (KERNEL.345)
+ */
+BOOL WINAPI IsSharedSelector( HANDLE selector )
+{
+    /* Check whether the selector belongs to a DLL */
+    NE_MODULE *pModule = NE_GetPtr( selector );
+    if (!pModule) return FALSE;
+    return (pModule->ne_flags & NE_FFLAGS_LIBMODULE) != 0;
 }

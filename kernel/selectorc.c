@@ -117,6 +117,7 @@ BOOL WINAPI IsBadWritePtr( void far * ptr, UINT size )
 /***********************************************************************
  *           IsBadFlatReadWritePtr   (KERNEL.627)
  */
+// @todo Not exported in this version
 BOOL WINAPI IsBadFlatReadWritePtr( void far * ptr, DWORD size, BOOL bWrite )
 {
     return bWrite? IsBadHugeWritePtr( ptr, size )

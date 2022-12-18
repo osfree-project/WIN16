@@ -166,6 +166,16 @@ externdef pascal PrestoChangoSelector: far
 externdef pascal AllocDSToCSAlias: far
 externdef pascal AllocCSToDSAlias: far
 externdef pascal SelectorAccessRights: far
+externdef pascal IsBadReadPtr: far
+externdef pascal IsBadWritePtr: far
+externdef pascal IsBadCodePtr: far
+externdef pascal IsBadStringPtr: far
+externdef pascal IsBadHugeReadPtr: far
+externdef pascal IsBadHugeWritePtr: far
+externdef pascal IsSharedSelector: far
+
+externdef pascal GetCodeHandle: far
+externdef pascal GetCodeInfo: far
 
 externdef pascal LoadModule: far
 
@@ -634,10 +644,10 @@ KernelEntries label byte
 	ENTRY <1, GetAtomHandle>			;73
 	db 3,0						;74-76
 	db 15,1
-	ENTRY <1,AnsiNext>		; 77
-	ENTRY <1,AnsiPrev>		; 78
-	ENTRY <1,AnsiUpper>		; 79
-	ENTRY <1,AnsiLower>		; 80
+	ENTRY <1,AnsiNext>			; 77
+	ENTRY <1,AnsiPrev>			; 78
+	ENTRY <1,AnsiUpper>			; 79
+	ENTRY <1,AnsiLower>			; 80
 	ENTRY <1,_lclose>			;81
 	ENTRY <1,_lread>			;82
 	ENTRY <1,_lcreat>			;83
@@ -649,19 +659,21 @@ KernelEntries label byte
 	ENTRY <1,lstrcat>			;88
 	ENTRY <1,lstrlen>			;90
 	ENTRY <1,InitTask>			;91
-	db 3,0						;92-94
+	db 1,0					;92
+	db 1,1
+	ENTRY <1,GetCodeHandle>			;93
+	db 1,0					;94
 	db 2,1
-	ENTRY <1,LoadLibrary>		;95
-	ENTRY <1,FreeLibrary>		;96
-	db 4,0						;97-100
-	db 3,1
+	ENTRY <1,LoadLibrary>			;95
+	ENTRY <1,FreeLibrary>			;96
+	db 4,0					;97-100
+	db 5,1
 	ENTRY <1,NoHookDOSCall>			;101
 	ENTRY <1,Dos3Call>			;102
 	ENTRY <1,NetBiosCall>			;103
-	db 1,0						;104
-	db 1,1
-	ENTRY <1,GetExeVersion>				;105
-	db 1,0						;106
+	ENTRY <1,GetCodeInfo>			;104
+	ENTRY <1,GetExeVersion>			;105
+	db 1,0					;106
 	db 1,1
 	ENTRY <1,SetErrorMode>		;107
 	db 3,0						;108-110
@@ -784,7 +796,18 @@ eC000 ENTRY <1,0>				;195 _C000H
 	db 2,0						;324-325
 	db 1,1
 	ENTRY <1,IsRomFile>		; 326
-	db 26,0						;327-352
+	db 7,0				;327-333
+	db 4,1
+	ENTRY <1,IsBadReadPtr>		;334
+	ENTRY <1,IsBadWritePtr>		;335
+	ENTRY <1,IsBadCodePtr>		;336
+	ENTRY <1,IsBadStringPtr>	;337
+	db 7,0				;338-344
+	db 3,1
+	ENTRY <1,IsSharedSelector>	;345
+	ENTRY <1,IsBadHugeReadPtr>	;346
+	ENTRY <1,IsBadHugeWritePtr>	;347
+	db 5,0				;348-352
 	db 1,1
 	ENTRY <1,lstrcpyn>		; 353
 	db 0
@@ -878,11 +901,13 @@ KernelNames label byte
 	NENAME "LSTRCAT",89
 	NENAME "LSTRLEN",90
 	NENAME "INITTASK"    ,91
+	NENAME "GETCODEHANDLE",93
 	NENAME "LOADLIBRARY" ,95
 	NENAME "FREELIBRARY" ,96
 	NENAME "NOHOOKDOSCALL" ,101
 	NENAME "DOS3CALL"    ,102
 	NENAME "NETBIOSCALL" ,103
+	NENAME "GETCODEINFO" ,104
 	NENAME "GETEXEVERSION",105
 	NENAME "SETERRORMODE",107
  	NENAME "GLOBALWIRE",111
@@ -953,6 +978,13 @@ KernelNames label byte
 	NENAME "ISTASK" ,320
 	NENAME "ISROMMODULE" ,323
 	NENAME "ISROMFILE" ,326
+	NENAME "ISBADREADPTR",334
+	NENAME "ISBADWRITEPTR",335
+	NENAME "ISBADCODEPTR",336
+	NENAME "ISBADSTRINGPTR",337
+	NENAME "ISSHAREDSELECTOR",345
+	NENAME "ISBADHUGEREADPTR",346
+	NENAME "ISBADHUGEWRITEPTR",347
 	NENAME "LSTRCPYN" ,353
 ;    K403                           @403	+ FarSetOwner
 ;    K404                           @404	+ FarGetOwner

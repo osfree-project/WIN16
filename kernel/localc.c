@@ -122,12 +122,11 @@ static LOCALHEAPINFO *LOCAL_GetHeap( HANDLE ds )
 //    TRACE("Heap at %p, %04x\n", ptr, (ptr != NULL ? ptr->heap : 0xFFFF));
     if (!ptr || !ptr->null || !ptr->heap) return NULL;
 
-//@todo Need to implement IsBadReadPtr
-//    if (IsBadReadPtr( (SEGPTR)MAKELONG(ptr->heap,ds), sizeof(LOCALHEAPINFO)))
-//    {
+    if (IsBadReadPtr( MAKELP(ds, ptr->heap), sizeof(LOCALHEAPINFO)))
+    {
 //	WARN("Bad pointer\n");
-//        return NULL;
-//    }
+        return NULL;
+    }
 
     pInfo = (LOCALHEAPINFO*)((char*)ptr + ptr->heap);
     if (pInfo->magic != LOCAL_HEAP_MAGIC)

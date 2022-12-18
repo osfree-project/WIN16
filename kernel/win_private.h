@@ -234,6 +234,37 @@ typedef struct _NE_MODULE
 #define NE_MODULE_NAME(pModule) \
     (((OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo))->szPathName)
 
+  /* In-memory segment table */
+typedef struct
+{
+    WORD      filepos;   /* Position in file, in sectors */
+    WORD      size;      /* Segment size on disk */
+    WORD      flags;     /* Segment flags */
+    WORD      minsize;   /* Min. size of segment in memory */
+    HANDLE    hSeg;      /* Selector or handle (selector - 1) of segment in memory */
+} SEGTABLEENTRY;
+
+#define IMAGE_OS2_SIGNATURE    0x454E     /* NE   */
+
+#define NE_SEG_TABLE(pModule) \
+    ((SEGTABLEENTRY *)((char *)(pModule) + (pModule)->ne_segtab))
+
+/*
+ * NE Header FORMAT FLAGS
+ */
+#define NE_FFLAGS_SINGLEDATA    0x0001
+#define NE_FFLAGS_MULTIPLEDATA  0x0002
+#define NE_FFLAGS_WIN32         0x0010
+#define NE_FFLAGS_BUILTIN       0x0020  /* Wine built-in module */
+#define NE_FFLAGS_FRAMEBUF      0x0100  /* OS/2 fullscreen app */
+#define NE_FFLAGS_CONSOLE       0x0200  /* OS/2 console app */
+#define NE_FFLAGS_GUI           0x0300  /* right, (NE_FFLAGS_FRAMEBUF | NE_FFLAGS_CONSOLE) */
+#define NE_FFLAGS_SELFLOAD      0x0800
+#define NE_FFLAGS_LINKERROR     0x2000
+#define NE_FFLAGS_CALLWEP       0x4000
+#define NE_FFLAGS_LIBMODULE     0x8000
+
+
 /*#define NE_READ_DATA(pModule,buffer,offset,size) \
     (((offset)+(size) <= pModule->mapping_size) ? \
      (memcpy( buffer, (const char *)pModule->mapping + (offset), (size) ), TRUE) : FALSE)

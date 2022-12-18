@@ -17,6 +17,12 @@ extern  unsigned short          GetDS( void );
         "mov    ax,ds"          \
         value                   [ax];
 
+/* This function sets current ES value */
+extern  void          SetES( unsigned short );
+#pragma aux SetES               = \
+        "mov    es,ax"          \
+        parm                   [ax];
+
 /***********************************************************************
  *           TASK_LinkTask
  */
@@ -209,4 +215,121 @@ HINSTANCE WINAPI GetTaskDS(void)
 DWORD WINAPI GetCurPID( DWORD unused )
 {
     return 0;
+}
+
+WORD WINAPI GlobalHandleToSel(HGLOBAL handle);
+NE_MODULE *NE_GetPtr( HMODULE hModule );
+
+/**********************************************************************
+ *	    TASK_GetCodeSegment
+ *
+ * Helper function for GetCodeHandle/GetCodeInfo: Retrieve the module
+ * and logical segment number of a given code segment.
+ *
+ * 'proc' either *is* already a pair of module handle and segment number,
+ * in which case there's nothing to do.  Otherwise, it is a pointer to
+ * a function, and we need to retrieve the code segment.  If the pointer
+ * happens to point to a thunk, we'll retrieve info about the code segment
+ * where the function pointed to by the thunk resides, not the thunk itself.
+ *
+ * FIXME: if 'proc' is a SNOOP16 return stub, we should retrieve info about
+ *        the function the snoop code will return to ...
+ *
+ */
+static BOOL TASK_GetCodeSegment( FARPROC proc, NE_MODULE far **ppModule,
+                                 SEGTABLEENTRY **ppSeg, int *pSegNr )
+{
+    NE_MODULE far *pModule = NULL;
+    SEGTABLEENTRY *pSeg = NULL;
+    int segNr=0;
+
+    /* Try pair of module handle / segment number */
+    pModule = (NE_MODULE far *)GlobalLock( HIWORD( proc ) );
+    if ( pModule && pModule->ne_magic == IMAGE_OS2_SIGNATURE )
+    {
+        segNr = LOWORD( proc );
+        if ( segNr && segNr <= pModule->ne_cseg )
+            pSeg = NE_SEG_TABLE( pModule ) + segNr-1;
+    }
+
+    /* Try thunk or function */
+    else
+    {
+        BYTE far *thunk = (BYTE far *)proc;
+        WORD selector;
+
+        if ((thunk[0] == 0xb8) && (thunk[3] == 0xea))
+            selector = thunk[6] + (thunk[7] << 8);
+        else
+            selector = HIWORD( proc );
+
+        pModule = NE_GetPtr( GlobalHandle( selector ) );
+        pSeg = pModule? NE_SEG_TABLE( pModule ) : NULL;
+
+        if ( pModule )
+            for ( segNr = 1; segNr <= pModule->ne_cseg; segNr++, pSeg++ )
+                if ( GlobalHandleToSel(pSeg->hSeg) == selector )
+                    break;
+
+        if ( pModule && segNr > pModule->ne_cseg )
+            pSeg = NULL;
+    }
+
+    /* Abort if segment not found */
+
+    if ( !pModule || !pSeg )
+        return FALSE;
+
+    /* Return segment data */
+
+    if ( ppModule ) *ppModule = pModule;
+    if ( ppSeg    ) *ppSeg    = pSeg;
+    if ( pSegNr   ) *pSegNr   = segNr;
+
+    return TRUE;
+}
+
+/**********************************************************************
+ *	    GetCodeHandle    (KERNEL.93)
+ */
+HGLOBAL WINAPI GetCodeHandle( FARPROC proc )
+{
+    SEGTABLEENTRY *pSeg;
+
+    if ( !TASK_GetCodeSegment( proc, NULL, &pSeg, NULL ) )
+        return 0;
+
+    return MAKELONG( pSeg->hSeg, GlobalHandleToSel(pSeg->hSeg) );
+}
+
+/**********************************************************************
+ *	    GetCodeInfo    (KERNEL.104)
+ */
+//@todo check Wine returns BOOL but in Watcem headers is void
+void WINAPI GetCodeInfo( FARPROC proc, SEGINFO far *segInfo )
+{
+    NE_MODULE far *pModule;
+    SEGTABLEENTRY *pSeg;
+    int segNr;
+
+    if ( !TASK_GetCodeSegment( proc, &pModule, &pSeg, &segNr ) )
+        return /*FALSE*/;
+
+    /* Fill in segment information */
+
+    segInfo->offSegment = pSeg->filepos;
+    segInfo->cbSegment  = pSeg->size;
+    segInfo->flags      = pSeg->flags;
+    segInfo->cbAlloc    = pSeg->minsize;
+    segInfo->h          = pSeg->hSeg;
+    segInfo->alignShift = pModule->ne_align;
+
+    if ( segNr == pModule->ne_autodata )
+        segInfo->cbAlloc += pModule->ne_heap + pModule->ne_stack;
+
+    /* Return module handle in %es */
+//@todo detect handle of module
+//    SetES(GlobalHandleToSel( pModule->self ));
+
+//    return TRUE;
 }
