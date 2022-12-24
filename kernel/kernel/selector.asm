@@ -16,16 +16,6 @@ _TEXT	segment
 
 
 
-
-AllocDSToCSAlias proc far pascal
-	pop cx
-	pop dx
-	pop ax
-	push dx
-	push cx
-	@return
-AllocDSToCSAlias endp
-
 ;@todo finish it
 
 PrestoChangoSelector proc far pascal

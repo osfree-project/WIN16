@@ -146,6 +146,23 @@ WORD WINAPI AllocCStoDSAlias( WORD sel )
     return DPMI_CreateCSAlias( sel);
 }
 
+/***********************************************************************
+ *           AllocDStoCSAlias   (KERNEL.171)
+ */
+UINT WINAPI AllocDStoCSAlias( UINT sel )
+{
+    WORD newsel;
+    LDT_ENTRY entry;
+
+//    if (!ldt_is_valid( sel )) return 0;
+    newsel = AllocSelector( 0 );
+//    TRACE("(%04x): returning %04x\n", sel, newsel );
+    if (!newsel) return 0;
+    entry=ldt_make_entry((void *) GetSelectorBase(sel), GetSelectorLimit(sel), LDT_FLAGS_CODE );
+    DPMI_SetDescriptor(newsel, &entry);
+    return newsel;
+}
+
 
 /***********************************************************************
  *           IsBadCodePtr   (KERNEL.336)

@@ -189,22 +189,6 @@ ERROR0:
 	ret
 SwitchToPMode endp
 
-AllocDSToCSAlias proc far pascal
-	pop dx
-	pop cx
-	pop bx
-	push cx
-	push dx
-	@DPMI_AllocDesc
-	jc @F
-	call CreateAlias
-	jnc exit
-@@:
-	xor ax,ax
-exit:
-	@return
-
-AllocDSToCSAlias endp
 
 PrestoChangoSelector proc far pascal
 	pop cx
