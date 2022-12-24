@@ -189,25 +189,6 @@ ERROR0:
 	ret
 SwitchToPMode endp
 
-;--- DWORD GetSelectorBase(WORD)
-
-GetSelectorBase proc far pascal
-	pop dx
-	pop cx
-	pop bx
-	push cx
-	push dx
-        @DPMI_GetBase
-	jc @F
-	mov ax,dx
-	mov dx,cx
-	ret
-@@:
-	xor ax,ax
-	xor dx,dx
-	ret
-
-GetSelectorBase endp
 
 ;--- WORD SetSelectorBase(WORD)
 ;--- returns 0 if an error occured, else the selector value

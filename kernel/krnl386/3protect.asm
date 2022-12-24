@@ -183,10 +183,6 @@ SwitchToPMode endp
 ; Function rewrittend to conform Pietrek book
 ;
 
-GetSelectorBase proc far pascal theSelector: WORD
-	invoke Get_Physical_Address, theSelector
-	ret
-GetSelectorBase endp
 
 Get_Physical_Address proc near pascal theSelector: WORD
 	and theSelector, not 7

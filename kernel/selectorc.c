@@ -77,6 +77,14 @@ UINT WINAPI FreeSelector( UINT sel )
 }
 
 /***********************************************************************
+ *             GetSelectorBase   (KERNEL.186)
+ */
+DWORD WINAPI GetSelectorBase( UINT sel )
+{
+    return DPMI_GetBase( sel );
+}
+
+/***********************************************************************
  *           SelectorAccessRights   (KERNEL.196)
  */
 WORD WINAPI SelectorAccessRights( WORD sel, WORD op, WORD val )

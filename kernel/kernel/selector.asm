@@ -15,25 +15,6 @@
 _TEXT	segment
 
 
-;--- DWORD GetSelectorBase(WORD)
-;
-; Just multiple on 16 (paragraph size)
-;
-GetSelectorBase proc far pascal
-	pop dx
-	pop cx
-	pop ax
-	push cx
-	push dx
-	xor dx,dx
-	mov cx, 4
-mult:
-	shl ax, 1
-	rcl dx, 1
-	loop mult
-	ret
-GetSelectorBase endp
-
 ;--- WORD SetSelectorBase(WORD)
 ;--- returns 0 if an error occured, else the segment value
 ;
