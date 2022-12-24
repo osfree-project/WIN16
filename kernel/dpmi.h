@@ -67,6 +67,14 @@ extern int DPMI_SetBase(unsigned int, unsigned long);
 	parm [bx] [cx bx] \
         value [ax];
 
+extern int DPMI_SetLimit(unsigned int, unsigned long);
+#pragma aux DPMI_SetLimit        = \
+        "mov    ax,0008h"          \
+	"int    31h"\
+	"sbb	ax,ax"\
+	parm [bx] [cx bx] \
+        value [ax];
+
 extern int DPMI_GetDescriptor(unsigned int, LDT_ENTRY far *);
 #pragma aux DPMI_GetDescriptor        = \
         "mov    ax,000Bh"          \

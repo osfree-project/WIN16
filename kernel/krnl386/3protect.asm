@@ -198,46 +198,6 @@ Get_Physical_Address proc near pascal theSelector: WORD
 Get_Physical_Address endp
 
 
-;--- DWORD GetSelectorLimit(WORD)
-GetSelectorLimit proc far pascal ulSelector: WORD
-	mov bx, ulSelector
-	push di
-	sub sp,8
-	mov di,sp
-	push ss
-	pop es
-	@DPMI_GetDescriptor
-	jc error
-	mov ax,es:[di+0]
-	mov dl,es:[di+6]
-	and dx,000Fh
-exit:
-	add sp,8
-	pop di
-	ret 2
-error:
-	xor ax,ax
-	xor dx,dx
-	jmp exit
-GetSelectorLimit endp
-
-;--- SetSelectorLimit(WORD);
-;--- returns always 0
-
-SetSelectorLimit proc far pascal
-	@loadbx
-	@loadparm 0,dx
-	@loadparm 2,cx
-	@loadparm 4,bx
-	@DPMI_SetLimit
-	mov ax,0000
-if 0
-	jc @F
-	mov ax,bx
-@@:
-endif
-	@return 6
-SetSelectorLimit endp
 
 AllocCSToDSAlias proc far pascal
 	pop cx

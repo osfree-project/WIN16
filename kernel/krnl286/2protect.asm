@@ -190,65 +190,7 @@ ERROR0:
 SwitchToPMode endp
 
 
-;--- DWORD GetSelectorLimit(WORD)
 
-GetSelectorLimit proc far pascal
-
-	pop dx
-	pop cx
-	pop bx
-	push cx
-	push dx
-
-if ?32BIT
-	lsl eax,ebx
-	jnz @F
-	xor eax,eax
-@@:
-	push eax
-	pop ax
-	pop dx
-	ret
-else
-	push di
-	sub sp,8
-	mov di,sp
-	push ss
-	pop es
-	@DPMI_GetDescriptor
-	jc error
-	mov ax,es:[di+0]
-	mov dl,es:[di+6]
-	and dx,000Fh
-exit:
-	add sp,8
-	pop di
-	ret
-error:
-	xor ax,ax
-	xor dx,dx
-	jmp exit
-endif
-
-GetSelectorLimit endp
-
-;--- SetSelectorLimit(WORD);
-;--- returns always 0
-
-SetSelectorLimit proc far pascal
-	@loadbx
-	@loadparm 0,dx
-	@loadparm 2,cx
-	@loadparm 4,bx
-	@DPMI_SetLimit
-	mov ax,0000
-if 0
-	jc @F
-	mov ax,bx
-@@:
-endif
-	@return 6
-SetSelectorLimit endp
 
 AllocCSToDSAlias proc far pascal
 	pop cx

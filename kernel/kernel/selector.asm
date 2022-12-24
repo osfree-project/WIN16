@@ -16,22 +16,6 @@ _TEXT	segment
 
 
 
-;--- DWORD GetSelectorLimit(WORD)
-; Segment limit always 64k
-
-GetSelectorLimit proc far pascal
-	mov ax, 0ffffh
-	xor dx,dx
-	ret 2
-GetSelectorLimit endp
-
-;--- SetSelectorLimit(WORD);
-;--- returns always 0
-
-SetSelectorLimit proc far pascal
-	xor ax,ax
-	@return 6
-SetSelectorLimit endp
 
 AllocCSToDSAlias proc far pascal
 	pop cx

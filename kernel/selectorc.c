@@ -94,6 +94,28 @@ UINT WINAPI SetSelectorBase( UINT sel, DWORD base )
 }
 
 /***********************************************************************
+ *           GetSelectorLimit   (KERNEL.188)
+ */
+DWORD WINAPI GetSelectorLimit( UINT sel )
+{
+    LDT_ENTRY entry;
+
+    if (!DPMI_GetDescriptor(sel, &entry)) return 0;
+
+    return (entry.HighWord.Bits.LimitHi<<16+entry.LimitLow);
+}
+
+
+/***********************************************************************
+ *           SetSelectorLimit   (KERNEL.189)
+ */
+UINT WINAPI SetSelectorLimit( UINT sel, DWORD limit )
+{
+    DPMI_SetLimit(sel, limit);
+    return sel;
+}
+
+/***********************************************************************
  *           SelectorAccessRights   (KERNEL.196)
  */
 WORD WINAPI SelectorAccessRights( WORD sel, WORD op, WORD val )
