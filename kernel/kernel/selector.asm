@@ -14,41 +14,6 @@
 
 _TEXT	segment
 
-;--- WORD AllocSelectorArray(WORD)
-; Always return error
-
-AllocSelectorArray proc far pascal
-	xor ax,ax
-	ret 2
-AllocSelectorArray endp
-
-;--- WORD AllocSelector(WORD)
-;--- returns 0 if an error occured
-;
-; UINT WINAPI AllocSelector(UINT uSelector);
-;
-; Just copy segment
-;
-
-AllocSelector proc far pascal
-	pop cx
-	pop dx
-	pop ax
-	push dx
-	push cx
-	ret
-AllocSelector endp
-
-;--- WORD FreeSelector(WORD)
-;--- returns 0 if successful, else the selector!
-;
-; Always return error because it is not possible 'free' segment
-;
-
-FreeSelector proc far pascal
-	xor ax,ax
-	ret 2
-FreeSelector endp
 
 ;--- DWORD GetSelectorBase(WORD)
 ;

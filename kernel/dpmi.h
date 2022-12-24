@@ -25,6 +25,28 @@ typedef struct _LDT_ENTRY {
     } HighWord;
 } LDT_ENTRY;
 
+extern int DPMI_AllocDesc(unsigned int);
+#pragma aux DPMI_AllocDesc        = \
+        "mov    ax,0000h"          \
+	"int    31h"\
+	"jnc	exit"\
+	"xor	ax,ax"\
+	"exit:"\
+	modify [] \
+	parm [cx] \
+        value [ax];
+
+extern int DPMI_FreeDesc(unsigned int);
+#pragma aux DPMI_FreeDesc        = \
+        "mov    ax,0001h"          \
+	"int    31h"\
+	"jnc	exit"\
+	"xor	ax,ax"\
+	"exit:"\
+	modify [] \
+	parm [bx] \
+        value [ax];
+
 extern unsigned long DPMI_GetBase(unsigned int);
 #pragma aux DPMI_GetBase        = \
         "mov    ax,0006h"          \

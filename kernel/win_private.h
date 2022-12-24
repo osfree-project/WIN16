@@ -9,7 +9,7 @@ typedef struct
     WORD      nextParagraph;    /* 02 Segment of next paragraph */
     BYTE      reserved1;
     BYTE      dispatcher[5];    /* 05 Long call to DOS */
-    FARPROC savedint22;       /* 0a Saved int 22h handler */
+    FARPROC	savedint22;       /* 0a Saved int 22h handler */
     FARPROC savedint23;       /* 0e Saved int 23h handler */
     FARPROC savedint24;       /* 12 Saved int 24h handler */
     WORD      parentPSP;        /* 16 Selector of parent PSP */
@@ -18,7 +18,7 @@ typedef struct
     DWORD     saveStack;        /* 2e SS:SP on last int21 call */
     WORD      nbFiles;          /* 32 Number of file handles */
     DWORD    fileHandlesPtr;   /* 34 Pointer to file handle table */
-    HANDLE  hFileHandles;     /* 38 Handle to fileHandlesPtr */
+    HANDLE	hFileHandles;     /* 38 Handle to fileHandlesPtr */
     WORD      reserved3[17];
     BYTE      fcb1[16];         /* 5c First FCB */
     BYTE      fcb2[20];         /* 6c Second FCB */
@@ -74,7 +74,8 @@ typedef struct _TDB
     WORD      thunks[8*4];        /* b2 Make proc instance thunks */
     char      module_name[8];     /* f2 Module name for task */
     WORD      magic;              /* fa TDB signature */
-    HANDLE    hEvent;             /* fc scheduler event handle */
+    HANDLE    hEvent;             /* fc scheduler event handle */ //?? @todo seems not in original TDB
+	WORD padding;
     PDB       pdb;                /* 100 PDB for this task */
 } TDB;
 

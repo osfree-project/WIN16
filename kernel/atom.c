@@ -25,25 +25,8 @@
  * have to be changed.
  */
 
-#include <stdlib.h>
-#include <stdarg.h>
-#include <stdio.h>
-//#include <string.h>
-#include <ctype.h>
-
-#include <i86.h>
 #include <win16.h>
 #include <win_private.h>
-
-//#include "windef.h"
-//#include "winbase.h"
-//#include "winerror.h"
-//#include "winternl.h"
-
-//#include "wine/winbase16.h"
-//#include "kernel16_private.h"
-
-//#include "wine/debug.h"
 
 int strnicmp(char far *s1, const char far *s2, int n);
 void memcpy(void far * s1, void far * s2, unsigned length);

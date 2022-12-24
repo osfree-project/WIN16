@@ -4,6 +4,77 @@
 
 #define LDT_FLAGS_DATA      0x13  /* Data segment */
 #define LDT_FLAGS_CODE      0x1b  /* Code segment */
+#define LDT_FLAGS_32BIT     0x40  /* Segment is 32-bit (code or stack) */
+
+static LDT_ENTRY ldt_make_entry( const void *base, unsigned long limit, unsigned char flags )
+{
+    LDT_ENTRY entry;
+
+    entry.BaseLow                   = (WORD)(DWORD)base;
+    entry.HighWord.Bits.BaseMid     = (BYTE)((DWORD)base >> 16);
+    entry.HighWord.Bits.BaseHi      = (BYTE)((DWORD)base >> 24);
+    if ((entry.HighWord.Bits.Granularity = (limit >= 0x100000))) limit >>= 12;
+    entry.LimitLow                  = (WORD)limit;
+    entry.HighWord.Bits.LimitHi     = limit >> 16;
+    entry.HighWord.Bits.Dpl         = 3;
+    entry.HighWord.Bits.Pres        = 1;
+    entry.HighWord.Bits.Type        = flags;
+    entry.HighWord.Bits.Sys         = 0;
+    entry.HighWord.Bits.Reserved_0  = 0;
+    entry.HighWord.Bits.Default_Big = (flags & LDT_FLAGS_32BIT) != 0;
+    return entry;
+}
+
+/* get the number of selectors needed to cover up to the selector limit */
+static inline WORD get_sel_count( WORD sel )
+{
+    return (GetSelectorLimit( sel ) >> 16) + 1;
+}
+
+/***********************************************************************
+ *           AllocSelectorArray   (KERNEL.206)
+ */
+WORD WINAPI AllocSelectorArray( WORD count )
+{
+    WORD i, sel = DPMI_AllocDesc( count );
+
+    if (sel)
+    {
+        LDT_ENTRY entry = ldt_make_entry( 0, 1, LDT_FLAGS_DATA ); /* avoid 0 base and limit */
+        for (i = 0; i < count; i++) DPMI_SetDescriptor( sel + (i << 3), &entry );
+    }
+    return sel;
+}
+
+/***********************************************************************
+ *           AllocSelector   (KERNEL.175)
+ */
+UINT WINAPI AllocSelector( UINT sel )
+{
+    WORD newsel, count, i;
+
+    count = sel ? get_sel_count(sel) : 1;
+    newsel = DPMI_AllocDesc( count );
+//    TRACE("(%04x): returning %04x\n", sel, newsel );
+    if (!newsel) return 0;
+    if (!sel) return newsel;  /* nothing to copy */
+    for (i = 0; i < count; i++)
+    {
+        LDT_ENTRY entry;
+        if (!DPMI_GetDescriptor( sel + (i << 3), &entry )) break;
+        DPMI_SetDescriptor( newsel + (i << 3), &entry );
+    }
+    return newsel;
+}
+
+/***********************************************************************
+ *           FreeSelector   (KERNEL.176)
+ */
+UINT WINAPI FreeSelector( UINT sel )
+{
+    DPMI_FreeDesc(sel);
+    return 0;
+}
 
 /***********************************************************************
  *           SelectorAccessRights   (KERNEL.196)
@@ -123,3 +194,10 @@ BOOL WINAPI IsBadFlatReadWritePtr( void far * ptr, DWORD size, BOOL bWrite )
     return bWrite? IsBadHugeWritePtr( ptr, size )
                  : IsBadHugeReadPtr( ptr, size );
 }
+
+void WINAPI LongPtrAdd(DWORD dwLongPtr, DWORD dwAdd)
+{
+  WORD wSel = SELECTOROF(dwLongPtr);
+  SetSelectorBase(wSel, GetSelectorBase(wSel)+dwAdd);
+}
+

@@ -21,6 +21,8 @@ void WINAPI GlobalFreeAll(HGLOBAL owner)
 //    }
 }
 
+//#define VALID_HANDLE(handle) (((handle)>>__AHSHIFT)<globalArenaSize)
+
 // @todo implementa pGlobalArena
 /***********************************************************************
  *           GlobalFlags     (KERNEL.22)
@@ -91,7 +93,6 @@ DWORD WINAPI LimitEMSPages( DWORD unused )
 }
 
 
-#define VALID_HANDLE(handle) (((handle)>>__AHSHIFT)<globalArenaSize)
 
 //@todo implement globalArena
 /***********************************************************************
