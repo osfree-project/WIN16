@@ -115,6 +115,7 @@ UINT WINAPI SetSelectorLimit( UINT sel, DWORD limit )
     return sel;
 }
 
+
 /***********************************************************************
  *           SelectorAccessRights   (KERNEL.196)
  */
@@ -134,6 +135,15 @@ WORD WINAPI SelectorAccessRights( WORD sel, WORD op, WORD val )
         DPMI_SetDescriptor(sel, &entry);
         return 0;
     }
+}
+
+/***********************************************************************
+ *           AllocCStoDSAlias   (KERNEL.170)
+ *           AllocAlias         (KERNEL.172)
+ */
+WORD WINAPI AllocCStoDSAlias( WORD sel )
+{
+    return DPMI_CreateCSAlias( sel);
 }
 
 

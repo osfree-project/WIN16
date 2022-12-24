@@ -75,6 +75,18 @@ extern int DPMI_SetLimit(unsigned int, unsigned long);
 	parm [bx] [cx bx] \
         value [ax];
 
+
+
+extern int DPMI_CreateCSAlias(unsigned int);
+#pragma aux DPMI_CreateCSAlias        = \
+        "mov    ax,0008h"          \
+	"int    31h"\
+	"jnc	exit"\
+	"xor	ax,ax"\
+	"exit:"\
+	parm [bx] \
+        value [ax];
+
 extern int DPMI_GetDescriptor(unsigned int, LDT_ENTRY far *);
 #pragma aux DPMI_GetDescriptor        = \
         "mov    ax,000Bh"          \

@@ -157,7 +157,7 @@ EXPORTS
     GETFREESPACE                   @169	+
     ALLOCCSTODSALIAS               @170	+
     ALLOCDSTOCSALIAS               @171	+
-    ALLOCALIAS                     @172
+    ALLOCALIAS                     @172	+
     __ROMBIOS                      @173	+
     __A000H                        @174	+
     ALLOCSELECTOR                  @175	+

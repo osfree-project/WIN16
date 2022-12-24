@@ -17,15 +17,6 @@ _TEXT	segment
 
 
 
-AllocCSToDSAlias proc far pascal
-	pop cx
-	pop dx
-	pop ax
-	push dx
-	push cx
-	@return
-AllocCSToDSAlias endp
-
 AllocDSToCSAlias proc far pascal
 	pop cx
 	pop dx

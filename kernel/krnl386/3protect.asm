@@ -197,21 +197,6 @@ Get_Physical_Address proc near pascal theSelector: WORD
 	ret
 Get_Physical_Address endp
 
-
-
-AllocCSToDSAlias proc far pascal
-	pop cx
-	pop dx
-	pop bx
-	push dx
-	push cx
-	@DPMI_CreateCSAlias
-	jnc @F
-	xor ax,ax
-@@:
-	@return
-AllocCSToDSAlias endp
-
 AllocDSToCSAlias proc far pascal
 	pop dx
 	pop cx
