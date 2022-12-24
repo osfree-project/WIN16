@@ -85,6 +85,15 @@ DWORD WINAPI GetSelectorBase( UINT sel )
 }
 
 /***********************************************************************
+ *             SetSelectorBase   (KERNEL.187)
+ */
+UINT WINAPI SetSelectorBase( UINT sel, DWORD base )
+{
+    DPMI_SetBase(sel, base);
+    return sel;
+}
+
+/***********************************************************************
  *           SelectorAccessRights   (KERNEL.196)
  */
 WORD WINAPI SelectorAccessRights( WORD sel, WORD op, WORD val )

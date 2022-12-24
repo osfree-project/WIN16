@@ -190,22 +190,6 @@ ERROR0:
 SwitchToPMode endp
 
 
-;--- WORD SetSelectorBase(WORD)
-;--- returns 0 if an error occured, else the selector value
-
-SetSelectorBase proc far pascal
-	@loadbx
-	@loadparm 0,dx
-	@loadparm 2,cx
-	@loadparm 4,bx
-        @DPMI_SetBase
-	mov ax,0000
-	jc @F
-	mov ax,bx
-@@:
-	@return 6
-SetSelectorBase endp
-
 ;--- DWORD GetSelectorLimit(WORD)
 
 GetSelectorLimit proc far pascal

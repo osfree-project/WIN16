@@ -15,28 +15,6 @@
 _TEXT	segment
 
 
-;--- WORD SetSelectorBase(WORD)
-;--- returns 0 if an error occured, else the segment value
-;
-; Just delete base on 16 (para size)
-;
-
-SetSelectorBase proc far pascal
-	@loadbx
-	@loadparm 0,ax	; base
-	@loadparm 2,dx
-	@loadparm 4,bx	; selector
-	mov cx, 4
-divi:
-	shr dx, 1
-	rcr ax, 1
-	loop divi
-	or dx,dx
-	jz @F
-	xor ax,ax
-@@:
-	@return 6
-SetSelectorBase endp
 
 ;--- DWORD GetSelectorLimit(WORD)
 ; Segment limit always 64k
