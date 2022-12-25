@@ -163,6 +163,23 @@ UINT WINAPI AllocDStoCSAlias( UINT sel )
     return newsel;
 }
 
+/***********************************************************************
+ *           PrestoChangoSelector   (KERNEL.177)
+ */
+UINT WINAPI PrestoChangoSelector( UINT selSrc, UINT selDst )
+{
+    LDT_ENTRY entry;
+
+//    if (!ldt_is_valid( selSrc )) return selDst;
+
+    DPMI_GetDescriptor( selSrc, &entry);
+    /* toggle the executable bit */
+    entry.HighWord.Bytes.Flags1=entry.HighWord.Bytes.Flags1 ^ (LDT_FLAGS_CODE ^ LDT_FLAGS_DATA);
+
+    DPMI_SetDescriptor( selDst, &entry);
+    return selDst;
+}
+
 
 /***********************************************************************
  *           IsBadCodePtr   (KERNEL.336)

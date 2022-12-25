@@ -198,17 +198,6 @@ Get_Physical_Address proc near pascal theSelector: WORD
 Get_Physical_Address endp
 
 
-PrestoChangoSelector proc far pascal
-	pop cx
-	pop dx
-	pop ax
-	pop bx
-	push dx
-	push cx
-	call CreateAlias	 ;BX -> AX
-	@return
-PrestoChangoSelector endp
-
 LDT_Init proc far pascal
 	cmp GDTDsc, 0
 	ret

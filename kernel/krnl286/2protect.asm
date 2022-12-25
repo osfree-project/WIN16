@@ -190,17 +190,6 @@ ERROR0:
 SwitchToPMode endp
 
 
-PrestoChangoSelector proc far pascal
-	pop cx
-	pop dx
-	pop ax
-	pop bx
-	push dx
-	push cx
-	call CreateAlias	 ;BX -> AX
-	@return
-
-PrestoChangoSelector endp
 
 _TEXT	ends
 	end
