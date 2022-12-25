@@ -369,8 +369,186 @@ DWORD WINAPI GetCurrentPDB16(void)
 {
     TDB *pTask;
 
-    if (!(pTask = GetCurrentTask())) return 0;
+    if (!(pTask = MAKELP(GetCurrentTask(), 0))) return 0;
     return MAKELP(0/*TH_TOPPDB*/, pTask->hPDB); pTask->hPDB
 }
 
 #endif
+
+struct thunk
+{
+    BYTE      movw;
+    HANDLE  instance;
+    BYTE      ljmp;
+    FARPROC func;
+};
+
+/* Segment containing MakeProcInstance() thunks */
+typedef struct
+{
+    WORD  next;       /* Selector of next segment */
+    WORD  magic;      /* Thunks signature */
+    WORD  unused;
+    WORD  free;       /* Head of the free list */
+    struct thunk thunks[1];
+} THUNKS;
+
+#define THUNK_MAGIC  ('P' | ('T' << 8))
+
+  /* Min. number of thunks allocated when creating a new segment */
+#define MIN_THUNKS  32
+
+/***********************************************************************
+ *           TASK_CreateThunks
+ *
+ * Create a thunk free-list in segment 'handle', starting from offset 'offset'
+ * and containing 'count' entries.
+ */
+static void TASK_CreateThunks( HGLOBAL handle, WORD offset, WORD count )
+{
+    int i;
+    THUNKS *pThunk;
+
+    pThunk = (THUNKS *)((BYTE *)GlobalLock( handle ) + offset);
+    pThunk->next = 0;
+    pThunk->magic = THUNK_MAGIC;
+    pThunk->free = FIELDOFFSET( THUNKS, thunks );
+    for (i = 0; i < count-1; i++)
+        *(WORD *)&pThunk->thunks[i] = FIELDOFFSET( THUNKS, thunks[i+1] );
+    *(WORD *)&pThunk->thunks[i] = 0;  /* Last thunk */
+}
+
+
+/***********************************************************************
+ *           TASK_AllocThunk
+ *
+ * Allocate a thunk for MakeProcInstance().
+ */
+static void far * TASK_AllocThunk(void)
+{
+    TDB far *pTask;
+    THUNKS far *pThunk;
+    WORD sel, base;
+
+    if (!(pTask = MAKELP(GetCurrentTask(), 0))) return 0;
+    sel = pTask->hCSAlias;
+    pThunk = (THUNKS *)pTask->thunks;
+    base = (char *)pThunk - (char *)pTask;
+    while (!pThunk->free)
+    {
+        sel = pThunk->next;
+        if (!sel)  /* Allocate a new segment */
+        {
+            sel = GlobalAlloc( GMEM_FIXED, FIELDOFFSET( THUNKS, thunks[MIN_THUNKS] )
+                              /*  pTask->hPDB, LDT_FLAGS_CODE */ ); // @todo fix owner and code flag!!!
+            if (!sel) return 0;
+            TASK_CreateThunks( sel, 0, MIN_THUNKS );
+            pThunk->next = sel;
+        }
+        pThunk = (THUNKS far *)GlobalLock( sel );
+        base = 0;
+    }
+    base += pThunk->free;
+    pThunk->free = *(WORD *)((BYTE *)pThunk + pThunk->free);
+    return MAKELP( sel, base );
+}
+
+
+/***********************************************************************
+ *           TASK_FreeThunk
+ *
+ * Free a MakeProcInstance() thunk.
+ */
+static BOOL TASK_FreeThunk( void far * thunk )
+{
+    TDB far *pTask;
+    THUNKS far *pThunk;
+    WORD sel, base;
+
+    if (!(pTask = MAKELP(GetCurrentTask(), 0))) return FALSE;
+    sel = pTask->hCSAlias;
+    pThunk = (THUNKS *)pTask->thunks;
+    base = (char *)pThunk - (char *)pTask;
+    while (sel && (sel != HIWORD(thunk)))
+    {
+        sel = pThunk->next;
+        pThunk = (THUNKS far *)GlobalLock( sel );
+        base = 0;
+    }
+    if (!sel) return FALSE;
+    *(WORD *)((BYTE *)pThunk + LOWORD(thunk) - base) = pThunk->free;
+    pThunk->free = LOWORD(thunk) - base;
+    return TRUE;
+}
+
+HANDLE WINAPI FarGetOwner( HGLOBAL handle );
+
+/***********************************************************************
+ *           MakeProcInstance  (KERNEL.51)
+ */
+FARPROC WINAPI MakeProcInstance( FARPROC func, HANDLE hInstance )
+{
+    struct thunk far *thunk;
+    BYTE far *lfunc;
+    void far * thunkaddr;
+    WORD hInstanceSelector;
+
+    hInstanceSelector = GlobalHandleToSel(hInstance);
+
+//    TRACE("(%p, %04x);\n", func, hInstance);
+
+    if (!HIWORD(func)) {
+      /* Win95 actually protects via SEH, but this is better for debugging */
+//      WARN("Ouch ! Called with invalid func %p !\n", func);
+      return NULL;
+    }
+
+    if ( (GlobalHandleToSel(GetDS()) != hInstanceSelector)
+      && (hInstance != 0)
+      && (hInstance != 0xffff) )
+    {
+	/* calling MPI with a foreign DSEG is invalid ! */
+//        WARN("Problem with hInstance? Got %04x, using %04x instead\n",
+//                   hInstance,CURRENT_DS);
+    }
+
+    /* Always use the DSEG that MPI was entered with.
+     * We used to set hInstance to GetTaskDS16(), but this should be wrong
+     * as CURRENT_DS provides the DSEG value we need.
+     * ("calling" DS, *not* "task" DS !) */
+    hInstanceSelector = GetDS();
+    hInstance = GlobalHandle(hInstanceSelector);
+
+    /* no thunking for DLLs */
+    if (NE_GetPtr(FarGetOwner(hInstance))->ne_flags & NE_FFLAGS_LIBMODULE)
+	return func;
+
+    thunkaddr = TASK_AllocThunk();
+    if (!thunkaddr) return NULL;
+    thunk =  thunkaddr ;
+    lfunc =  (BYTE far *)func ;
+
+//    TRACE("(%p,%04x): got thunk %08lx\n", func, hInstance, thunkaddr );
+    if (((lfunc[0]==0x8c) && (lfunc[1]==0xd8)) || /* movw %ds, %ax */
+    	((lfunc[0]==0x1e) && (lfunc[1]==0x58))    /* pushw %ds, popw %ax */
+    ) {
+//    	WARN("This was the (in)famous \"thunk useless\" warning. We thought we have to overwrite with nop;nop;, but this isn't true.\n");
+    }
+
+    thunk->movw     = 0xb8;    /* movw instance, %ax */
+    thunk->instance = hInstanceSelector;
+    thunk->ljmp     = 0xea;    /* ljmp func */
+    thunk->func     = func;
+    return (FARPROC)thunkaddr;
+    /* CX reg indicates if thunkaddr != NULL, implement if needed */
+}
+
+
+/***********************************************************************
+ *           FreeProcInstance  (KERNEL.52)
+ */
+void WINAPI FreeProcInstance( FARPROC func )
+{
+//    TRACE("(%p)\n", func );
+    TASK_FreeThunk( (void far *)func );
+}

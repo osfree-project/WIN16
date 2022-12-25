@@ -189,6 +189,9 @@ externdef pascal DisableDOS: far
 
 externdef pascal EnableKernel: far
 
+externdef pascal MakeProcInstance: far
+externdef pascal FreeProcInstance: far
+
 externdef pascal KbdRst: far
 
 	include ascii.inc
@@ -618,12 +621,14 @@ KernelEntries label byte
 	db 1,1
 	ENTRY <1,LoadModule>		;45
 	db 1,0				;46
-	db 4,1
+	db 6,1
 	ENTRY <1,GetModuleHandle>	;47
 	ENTRY <1,GetModuleUsage>	;48
 	ENTRY <1,GetModuleFileName>	;49
 	ENTRY <1,GetProcAddress>	;50
-	db 3,0					;51-53
+	ENTRY <1,MakeProcInstance>	;51
+	ENTRY <1,FreeProcInstance>	;52
+	db 1,0				;53
 	db 20,1
 	ENTRY <1, GetInstanceData>	;54
 	ENTRY <1, Catch>		;55
@@ -873,6 +878,8 @@ KernelNames label byte
 	NENAME "GETMODULEUSAGE"   ,48
 	NENAME "GETMODULEFILENAME",49
 	NENAME "GETPROCADDRESS"   ,50
+	NENAME "MAKEPROCINSTANCE", 51
+	NENAME "FREEPROCINSTANCE", 52
 	NENAME "GETINSTANCEDATA" ,54
 	NENAME "CATCH"            ,55
     	NENAME "THROW"            ,56

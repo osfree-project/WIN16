@@ -45,8 +45,8 @@ EXPORTS
     GETMODULEUSAGE                 @48	+
     GETMODULEFILENAME              @49	+
     GETPROCADDRESS                 @50	+
-    MAKEPROCINSTANCE               @51
-    FREEPROCINSTANCE               @52
+    MAKEPROCINSTANCE               @51	+
+    FREEPROCINSTANCE               @52	+
     CALLPROCINSTANCE               @53
     GETINSTANCEDATA                @54	+
     CATCH                          @55	+
