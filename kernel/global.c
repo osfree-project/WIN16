@@ -92,6 +92,13 @@ DWORD WINAPI LimitEMSPages( DWORD unused )
     return 0;
 }
 
+/***********************************************************************
+ *           A20Proc   (KERNEL.165)
+ */
+void WINAPI A20Proc( WORD unused )
+{
+    /* this is also a NOP in Windows */
+}
 
 
 //@todo implement globalArena

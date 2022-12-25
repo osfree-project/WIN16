@@ -95,6 +95,8 @@ externdef pascal AnsiPrev:far
 externdef pascal AnsiUpper:far
 externdef pascal AnsiLower:far
 
+externdef pascal IsDBCSLeadByte: far
+
 externdef pascal IsRomModule: far
 externdef pascal IsRomFile: far
 externdef pascal GetWindowsDirectory: far
@@ -120,6 +122,7 @@ externdef pascal GlobalWire: far
 externdef pascal GlobalUnWire: far
 externdef pascal GlobalNotify: far
 externdef pascal LimitEMSPages: far
+externdef pascal A20Proc: far
 
 externdef pascal GetFreeSpace: far
 externdef pascal GetFreeMemInfo: far
@@ -720,16 +723,19 @@ eINCR	ENTRY <1,8>				;114 _AHINCR
 	ENTRY <1, GetNumTasks>		;152
 	db 1,0				;153
 	db 5,1
-	ENTRY <1, GlobalNotify>		;154
-	ENTRY <1, GetTaskDS>		;155
-	ENTRY <1, LimitEMSPages>	;156
-	ENTRY <1, GetCurPID>		;157
-	ENTRY <1, IsWinOldApTask>	;158
+	ENTRY <1,GlobalNotify>		;154
+	ENTRY <1,GetTaskDS>		;155
+	ENTRY <1,LimitEMSPages>		;156
+	ENTRY <1,GetCurPID>		;157
+	ENTRY <1,IsWinOldApTask>	;158
 	db 2,0				;159-160
 	db 2,1
 	ENTRY <1,LocalCountFree>	;161
 	ENTRY <1,LocalHeapSize>		;162
-	db 4,0				;163-166
+	db 2,0				;163-164
+	db 1,1
+	ENTRY <1,A20Proc>		;165
+	db 1,0				;166
 	db 3,1
 	ENTRY <1,GetExpWinVer>		;167
 	ENTRY <1,DirectResAlloc>	;168
@@ -778,9 +784,10 @@ eC000 ENTRY <1,0>				;195 _C000H
 	db 1,1
 	ENTRY <1,DebugBreak>		;203
 	db 2,0						;204-205
-	db 1,1
+	db 2,1
 	ENTRY <1,AllocSelectorArray>	;206
-	db 103,0					;207-309
+	ENTRY <1,IsDBCSLeadByte>	;207
+	db 102,0					;208-309
 	db 2,1
 	ENTRY <1,LocalHandleDelta>	;310
 	ENTRY <1,GetSetKernelDOSProc>	;311
@@ -941,6 +948,7 @@ KernelNames label byte
 	NENAME "ISWINOLDAPTASK"           ,158
 	NENAME "LOCALCOUNTFREE",161
 	NENAME "LOCALHEAPSIZE", 162
+	NENAME "A20PROC", 165
 	NENAME "GETEXPWINVER",167
 	NENAME "DIRECTRESALLOC",168
 	NENAME "GETFREESPACE"     , 169
@@ -973,6 +981,7 @@ KernelNames label byte
 	NENAME "GLOBALUNFIX"        ,198
 	NENAME "DEBUGBREAK"         ,203
 	NENAME "ALLOCSELECTORARRAY" ,206
+	NENAME "ISDBCSLEADBYTE",207
 	NENAME "LOCALHANDLEDELTA", 310
 	NENAME "GETSETKERNELDOSPROC", 311
 	NENAME "GETFREEMEMINFO" ,316

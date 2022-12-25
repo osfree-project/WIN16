@@ -78,7 +78,6 @@ static ATOMTABLE *ATOM_GetTable( BOOL create  /* [in] Create */ )
 
     ptr=MAKELP(GetDS(), 0);
 
-//    INSTANCEDATA *ptr = MapSL( MAKESEGPTR( CURRENT_DS, 0 ) );
     if (ptr->atomtable)
     {
         ATOMTABLE *table = (ATOMTABLE *)((char *)ptr + ptr->atomtable);
@@ -87,7 +86,7 @@ static ATOMTABLE *ATOM_GetTable( BOOL create  /* [in] Create */ )
     if (!create) return NULL;
     if (!InitAtomTable( 0 )) return NULL;
 //    /* Reload ptr in case it moved in linear memory */
-//    ptr = MapSL( MAKESEGPTR( CURRENT_DS, 0 ) );
+    ptr=MAKELP(GetDS(), 0);
     return (ATOMTABLE *)((char *)ptr + ptr->atomtable);
 }
 

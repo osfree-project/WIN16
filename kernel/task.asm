@@ -68,7 +68,7 @@ InitTask proc far pascal uses ds
 	mov dx,ax
 	sub dx,bx
 	add dx,60h
-	cmp word ptr ds:[0004],5 ; What is this? Why skip if SS equal to 5?
+	cmp word ptr ds:[0004],5 ; What is this? Why skip if SS equal to 5? Flag it is kernel task??
 	jnz @F
 ;INSTANCEDATA
 	mov ds:[000Ah],dx	;stack bottom
@@ -187,30 +187,6 @@ GetTaskQueue proc far pascal
 	mov ax, es:[TDB.TDB_HQUEUE]
 	ret 2
 GetTaskQueue endp
-
-;
-; GetTaskQueue
-;
-
-GetTaskQueueDS proc far pascal uses es
-	xor ax, ax
-	push ax
-	call GetTaskIntoES
-	mov ds, es:[TDB.TDB_HQUEUE]
-	ret 2
-GetTaskQueueDS endp
-
-;
-; GetTaskQueue
-;
-
-GetTaskQueueES proc far pascal
-	xor ax, ax
-	push ax
-	call GetTaskIntoES
-	mov es, es:[TDB.TDB_HQUEUE]
-	ret 2
-GetTaskQueueES endp
 
 ;
 ; IsWinOldApTask

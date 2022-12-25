@@ -23,6 +23,12 @@ extern  void          SetES( unsigned short );
         "mov    es,ax"          \
         parm                   [ax];
 
+/* This function sets current ES value */
+extern  void          SetDS( unsigned short );
+#pragma aux SetDS               = \
+        "mov    ds,ax"          \
+        parm                   [ax];
+
 /***********************************************************************
  *           TASK_LinkTask
  */
@@ -333,3 +339,38 @@ void WINAPI GetCodeInfo( FARPROC proc, SEGINFO far *segInfo )
 
 //    return TRUE;
 }
+
+HQUEUE WINAPI GetTaskQueue( HTASK hTask );
+
+/***********************************************************************
+ *           GetTaskQueueDS  (KERNEL.118)
+ */
+void WINAPI GetTaskQueueDS(void)
+{
+    SetDS(GlobalHandleToSel( GetTaskQueue(0) ));
+}
+
+
+/***********************************************************************
+ *           GetTaskQueueES  (KERNEL.119)
+ */
+void WINAPI GetTaskQueueES(void)
+{
+    SetES(GlobalHandleToSel( GetTaskQueue(0) ));
+}
+
+#if 0
+/***********************************************************************
+ *           GetCurrentPDB   (KERNEL.37)
+ *
+ * UNDOC: returns PSP of KERNEL in high word
+ */
+DWORD WINAPI GetCurrentPDB16(void)
+{
+    TDB *pTask;
+
+    if (!(pTask = GetCurrentTask())) return 0;
+    return MAKELP(0/*TH_TOPPDB*/, pTask->hPDB); pTask->hPDB
+}
+
+#endif

@@ -150,7 +150,7 @@ EXPORTS
     LOCALHEAPSIZE                  @162	+
     GLOBALLRUOLDEST                @163
     GLOBALLRUNEWEST                @164
-    A20PROC                        @165
+    A20PROC                        @165	+
     WINEXEC                        @166
     GETEXPWINVER                   @167	+
     DIRECTRESALLOC                 @168	+
@@ -192,7 +192,7 @@ EXPORTS
     SWAPRECORDING                  @204
     CVWBREAK                       @205
     ALLOCSELECTORARRAY             @206	+
-    ISDBCSLEADBYTE                 @207
+    ISDBCSLEADBYTE                 @207	+
     LOCALHANDLEDELTA               @310	+
     GETSETKERNELDOSPROC            @311	+
     DEBUGDEFINESEGMENT             @314

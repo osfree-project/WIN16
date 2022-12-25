@@ -222,6 +222,61 @@ LPSTR WINAPI AnsiLower( LPSTR strOrChar )
     else return (LPSTR)tolower((char)strOrChar);
 }
 
+static UINT uCodePage = 0;
+
+/* 1252 is the default US Windows ANSI code page */
+static UINT SetCodePage(void)
+{
+    if ( !uCodePage )
+	uCodePage = GetPrivateProfileInt("boot.description", "CodePage",
+					1252, "system.ini");
+    return uCodePage != 1252;
+}
+
+BOOL WINAPI
+IsDBCSLeadByte(BYTE bTestChar)
+{
+
+//    APISTR((LF_API,"IsDBCSLeadByte(char %c)\n",bTestChar));
+
+	SetCodePage();
+
+	switch (uCodePage) {
+
+	    case 936:		/* Chinese (Simplified / Mainland) */
+		if (bTestChar >= 0xA1 && bTestChar <= 0xFE)
+		    return TRUE;
+		break;
+
+	    case 950:		/* Chinese (Traditional / Taiwan) */
+		if (bTestChar >= 0x81 && bTestChar <= 0xFE)
+		    return TRUE;
+		break;
+
+	    case 932:		/* Japanese (Shift-JIS) */
+		if ((bTestChar >= 0x81 && bTestChar <= 0x9F) ||
+		    (bTestChar >= 0xE0 && bTestChar <= 0xFC) )
+		    return TRUE;
+		break;
+
+	    case 949:		/* Korean (Wansung) */
+		if (bTestChar >= 0x81 && bTestChar <= 0xFE)
+		    return TRUE;
+		break;
+
+	    case 1361:		/* Korean (Johab) */
+		if ((bTestChar >= 0x84 && bTestChar <= 0xD3) ||
+		    (bTestChar >= 0xD8 && bTestChar <= 0xDE) ||
+		    (bTestChar >= 0xE0 && bTestChar <= 0xF9) )
+		    return TRUE;
+		break;
+
+	}
+
+	return FALSE;
+
+}
+
 int atoi(char *h)
 {
   char *s = h;
