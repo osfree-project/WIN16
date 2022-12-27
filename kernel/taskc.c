@@ -454,32 +454,6 @@ static void far * TASK_AllocThunk(void)
 }
 
 
-/***********************************************************************
- *           TASK_FreeThunk
- *
- * Free a MakeProcInstance() thunk.
- */
-static BOOL TASK_FreeThunk( void far * thunk )
-{
-    TDB far *pTask;
-    THUNKS far *pThunk;
-    WORD sel, base;
-
-    if (!(pTask = MAKELP(GetCurrentTask(), 0))) return FALSE;
-    sel = pTask->hCSAlias;
-    pThunk = (THUNKS *)pTask->thunks;
-    base = (char *)pThunk - (char *)pTask;
-    while (sel && (sel != HIWORD(thunk)))
-    {
-        sel = pThunk->next;
-        pThunk = (THUNKS far *)GlobalLock( sel );
-        base = 0;
-    }
-    if (!sel) return FALSE;
-    *(WORD *)((BYTE *)pThunk + LOWORD(thunk) - base) = pThunk->free;
-    pThunk->free = LOWORD(thunk) - base;
-    return TRUE;
-}
 
 HANDLE WINAPI FarGetOwner( HGLOBAL handle );
 
@@ -549,6 +523,23 @@ FARPROC WINAPI MakeProcInstance( FARPROC func, HANDLE hInstance )
  */
 void WINAPI FreeProcInstance( FARPROC func )
 {
+    TDB far *pTask;
+    THUNKS far *pThunk;
+    WORD sel, base;
+
 //    TRACE("(%p)\n", func );
-    TASK_FreeThunk( (void far *)func );
+
+    if (!(pTask = MAKELP(GetCurrentTask(), 0))) return;
+    sel = pTask->hCSAlias;
+    pThunk = (THUNKS *)pTask->thunks;
+    base = (char *)pThunk - (char *)pTask;
+    while (sel && (sel != HIWORD(func)))
+    {
+        sel = pThunk->next;
+        pThunk = (THUNKS far *)GlobalLock( sel );
+        base = 0;
+    }
+    if (!sel) return;
+    *(WORD *)((BYTE *)pThunk + LOWORD(func) - base) = pThunk->free;
+    pThunk->free = LOWORD(func) - base;
 }

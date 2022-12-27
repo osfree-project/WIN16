@@ -19,6 +19,7 @@
 		include kernel.inc
 		include debug.inc
 
+.286
 _DATA segment
 
 externdef	wKernelDS:word
@@ -82,22 +83,35 @@ restorememstrat endp
 
 SwitchToPMode proc
 	call changememstrat
-JumpToPM_1:
+
 	push cx
+
+;	AX = 1687h
+;Return: AX = 0000h if installed
+;	    BX = flags
+;		bit 0: 32-bit programs supported
+;	    CL = processor type (02h=80286, 03h=80386, 04h=80486)
+;	    DH = DPMI major version
+;	    DL = two-digit DPMI minor version (binary)
+;	    SI = number of paragraphs of DOS extender private data
+;	    ES:DI -> DPMI mode-switch entry point (see #02718)
+;	AX nonzero if not installed
+
 	@DPMI_SwitchEntry		;get address of PM entry in ES:DI
 	mov bp,offset szNoDPMI  ;message "no dpmi server"
+	int 3h
 
-IF  @Cpu AND 00001000B			; 80386+
+	IF  @CPU AND 00001000B		; 80386+
 	cmp cl, 3			; 80386
 	jb  JumpToPM_2			; Error if CPU not supported
-ELSE
+	ELSE
 	IF  @Cpu AND 00000100B		; 80286+
 	cmp cl, 2			; 80286
 	jb  JumpToPM_2			; Error if CPU not supported
 	ELSE
 					; 8086 supported by any CPU, no check here
 	ENDIF
-ENDIF
+	ENDIF
 
 	mov bx, ax
 	cmp cl, 3
@@ -143,14 +157,6 @@ JumpToPM_3:
 	mov [TH_TOPPDB],es			;psp
 if 1;?USE1PSP
 	mov [wCurPSP],es
-endif
-if ?32BIT
-	movzx eax,ax
-	movzx ebx,bx
-	movzx ecx,cx
-	movzx edx,dx
-	movzx esi,si
-	movzx edi,di
 endif
 	@trace_s <lf,"------------------------------------",lf>
 	@trace_s <"KERNEL now in protected mode, PSP=">

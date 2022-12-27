@@ -20,7 +20,6 @@ ADD_COPT = -d3 -s -0 -I=$(%WATCOM)$(SEP)h$(SEP)win #-p
 JWASM = 1
 DEBUG = all
 DEST        = os2$(SEP)mdos$(SEP)winos2$(SEP)system
-DEBUG = all
 
 !include $(%ROOT)/mk/appsdos.mk
 

@@ -317,7 +317,7 @@ szHello    db lf
 		   db 'osFree Windows Kernel version ', versionstring, lf
 		   db 'Copyright (C) 2022 osFree', lf
 		   db 'Based on HX DPMI loader, WINE and TWIN', lf
-		   db 'Copyright (C) 1993-2010 Japheth',lf
+		   db 'Copyright (C) 1993-2022 Japheth',lf
 		   db 'Copyright (C) 1993-2022 the Wine project authors',lf
 		   db 'Copyright (C) 1997 Willows Software, Inc. ',lf,lf,00
 
@@ -591,12 +591,6 @@ no_8087:
 	jz @F
 	or fMode, FMODE_ISWIN9X
 @@:
-if ?32BIT
-	test fMode, FMODE_ISNT or FMODE_ISWIN9X
-	jnz @F
-	or bEnvFlgs2, ENVFL2_ALLOWGUI
-@@:
-endif
 	cmp al, 3
 	je @F
 	or KernelFlags[2], 0020h
@@ -7122,23 +7116,16 @@ stroutstk_err:
 	call dpmildrout
 							;fall throu		
 stroutstk proc public
-if ?32BIT
-	push bx
-	mov bx,[esp+4]
-else
 	push bp
 	mov bp,sp
 	push bx
 	mov bx,[bp+4]
-endif
 	push ds
 	@SetKernelDS
 	call stroutBX
 	pop ds
 	pop bx
-ife ?32BIT
 	pop bp
-endif
 	ret 2
 stroutstk endp
 

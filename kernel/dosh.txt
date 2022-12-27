@@ -1,0 +1,25 @@
+DPM
+DPM0007E: EXPLANATION: The operating system has detected corruption in the real-mode memory arena.
+DPM0008E: EXPLANATION: There is not enough real-mode memory to satisfy the request.
+DPM0009E: EXPLANATION: The segment value specified was not one provided by the operating system
+DPM8001E: EXPLANATION: Returned in response to any function call which is not implemented by this host, because the requested function is either undefined or optional.
+DPM8002E: EXPLANATION: Some object is in the wrong state for the requested operation.
+DPM8003E: EXPLANATION: The requested operation would endanger system integrity, e.g., a request to map linear addresses onto system code or data.
+DPM8004E: EXPLANATION: Host detected a deadlock situation.
+DPM8005E: EXPLANATION: A pending serialization request was cancelled.
+DPM8010E: EXPLANATION: The DPMI host cannot allocate internal resources to complete an operation.
+DPM8011E: EXPLANATION: Host is unable to allocate a descriptor.
+DPM8012E: EXPLANATION: Host is unable to allocate the required linear memory.
+DPM8013E: EXPLANATION: Host is unable to allocate the required physical memory.
+DPM8014E: EXPLANATION: Host is unable to allocate the required backing store.
+DPM8015E: EXPLANATION: Host is unable to allocate the required callback address.
+DPM8016E: EXPLANATION: Host is unable to allocate the required handle.
+DPM8017E: EXPLANATION: A locking operation exceeds the maximum count maintained by the host.
+DPM8018E: EXPLANATION: A request for serialization of a shared memory block could not be satisfied because it is already serialized exclusively by another client.
+DPM8019E: EXPLANATION: A request for exclusive serialization of a shared memory block could not be satisfied because it is already serialized shared by another client.
+DPM8021E: EXPLANATION: A numeric or flag parameter has an invalid value.
+DPM8022E: EXPLANATION: A selector does not correspond to a valid descriptor.
+DPM8023E: EXPLANATION: A handle parameter is invalid.
+DPM8024E: EXPLANATION: A callback parameter is invalid.
+DPM8025E: EXPLANATION: A linear address range (either supplied as a parameter or implied by the call) is invalid.
+DPM8026E: EXPLANATION: The request is not supported by the underlying hardware.
