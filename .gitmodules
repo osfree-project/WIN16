@@ -4,3 +4,6 @@
 [submodule "mouse"]
 	path = mouse
 	url = https://github.com/stsp/win31-mouse-driver
+[submodule "dosx/hdpmi/contrib"]
+	path = dosx/hdpmi/contrib
+	url = https://github.com/Baron-von-Riedesel/HX
