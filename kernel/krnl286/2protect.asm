@@ -19,6 +19,7 @@
 		include kernel.inc
 		include debug.inc
 
+
 .286
 _DATA segment
 
@@ -46,6 +47,8 @@ externdef	szDOSstr:near
 externdef	errstr2:near
 externdef	errstr3:near
 externdef	blksize: near
+
+externdef pascal DumpDPMIInfo: far
 
 changememstrat proc
 	mov ax,5802h			 ;save umb link state
@@ -99,7 +102,11 @@ SwitchToPMode proc
 
 	@DPMI_SwitchEntry		;get address of PM entry in ES:DI
 	mov bp,offset szNoDPMI  ;message "no dpmi server"
-	int 3h
+
+	or ax,ax
+	jnz  JumpToPM_2
+	
+	call DumpDPMIInfo
 
 	IF  @CPU AND 00001000B		; 80386+
 	cmp cl, 3			; 80386
@@ -114,6 +121,9 @@ SwitchToPMode proc
 	ENDIF
 
 	mov bx, ax
+	cmp cl, 2
+	mov ax, WF_CPU286
+	je @f
 	cmp cl, 3
 	mov ax, WF_CPU386
 	je @f
@@ -121,8 +131,7 @@ SwitchToPMode proc
 @@:
 ;	mov [eWinFlags.wOfs],ax
 
-	and bx,bx
-	jz JumpToPM_3			;ok, DPMI host found
+	jmp JumpToPM_3			;ok, DPMI host found
 
 JumpToPM_2:
 	pop cx
@@ -159,7 +168,7 @@ if 1;?USE1PSP
 	mov [wCurPSP],es
 endif
 	@trace_s <lf,"------------------------------------",lf>
-	@trace_s <"KERNEL now in protected mode, PSP=">
+	@trace_s <"KERNEL now in protected mode, PDB=">
 	@trace_w es
 	@trace_s <",CS=">
 	@trace_w cs

@@ -95,7 +95,7 @@ CCONST  ends
   endif
 _trace_s proto near		;used if trace on
         call _trace_s
-        dw   offset xxxx
+        dw   offset cs:xxxx
 endif
         endm
 

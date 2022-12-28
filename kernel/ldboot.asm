@@ -313,13 +313,6 @@ szDbgout   db '.\DEBUGOUT.DLL',0
 endif
 
 versionstring textequ @CatStr(!",%?VERMAJOR,.,%?VERMINOR,.,%?VERMINOR2,!")
-szHello    db lf
-		   db 'osFree Windows Kernel version ', versionstring, lf
-		   db 'Copyright (C) 2022 osFree', lf
-		   db 'Based on HX DPMI loader, WINE and TWIN', lf
-		   db 'Copyright (C) 1993-2022 Japheth',lf
-		   db 'Copyright (C) 1993-2022 the Wine project authors',lf
-		   db 'Copyright (C) 1997 Willows Software, Inc. ',lf,lf,00
 
 szInitErr  db 'Error in initialization, loading aborted',lf,00
 szShrkErr  db 'memory shrink Error',lf,00
@@ -465,9 +458,15 @@ if 0
 @@:
 endif
 
-	mov wKernelDS,cs		; Store for future usage
+	push cs
+	pop ds
+	mov cs:wKernelDS,cs		; Store for future usage
 
-	mov es,ds:[ENVIRON]		; get environment
+	;@strout szHello,1
+	externdef pascal Copyright: far
+	call Copyright
+
+	mov es,[ds:ENVIRON]		; get environment
 	xor di,di
 	or  cx,-1
 	xor ax,ax
@@ -487,8 +486,8 @@ endif
 	jnz @B
 	pop es				; Restore PSP segment
 step2:
-	push cs				; Set data segment to code segment
-	pop ds
+;	push cs				; Set data segment to code segment
+;	pop ds
 ;	mov wKernelDS,ds		; Store for future usage
 	push ds				; Set stack segment to data segment
 	pop ss
@@ -606,8 +605,6 @@ skip_2:
 	@GetVer
 	mov [wVersion],ax		; Get dos version
 
-
-	@strout szHello,1
 main_1:
 	mov szPath,0
 ;moved to kernelmain
@@ -615,6 +612,9 @@ main_1:
 	call kernelmain		; C-part initialization
 
 	call GetPgmParms	   ;program name -> szPgmName, exec parm init
+	pushf
+	@strout szPgmName, 1
+	popf
 	jc main_err3	   ;---> error: no program name given
 	@trace_s <"Set INT 21H handler",lf>
 	call setvec21	   ;now set int 21h vector
@@ -647,7 +647,7 @@ if ?CHECKTOP
 @@:
 endif
 	call resetvecs
-	@trace_s <"*** bye from DPMILDXX ***",lf>
+	@trace_s <"*** bye from KERNEL ***",lf>
 	pop ax
 if _COPY2PSP_		;free all memory (problem: we are running in
 					;it!)
@@ -2401,12 +2401,12 @@ if ?USE1PSP
 	test bEnvFlgs, ENVFL_LOAD1APPONLY
 	jnz @F
 endif
-	@trace_s <"restoring loader PSP=">
+	@trace_s <"restoring KERNEL PDB=">
 	mov bx,[TH_TOPPDB]
 	@trace_w bx
 	@trace_s <", segm=">
-	@trace_w [wRMPSP]
-	@trace_s lf
+	@trace_w [cs:wRMPSP]
+	@trace_s <" ", lf>
 	mov ah,50h
 	call doscall
 @@:
@@ -2432,33 +2432,23 @@ endif
 	mov bl,0Bh
 	call setexc
 if _TRAPEXC0D_
-if ?32BIT
-	mov cx,word ptr PrevInt0DProc+4
-	mov edx,dword ptr PrevInt0DProc+0
-else
 	mov cx,word ptr PrevInt0DProc+2
 	mov dx,word ptr PrevInt0DProc+0
-endif
 	mov bl,0Dh
 	call setexc
 endif
 	mov bx,[aliassel]
 	@trace_s <"freeing alias selector ">
 	@trace_w bx
-	@trace_s lf
+	@trace_s <" ", lf>
 	mov ax,0001				;free selector
 	call dpmicall
 if ?PESUPP
 	call DeinitPELoader
 endif
 	@trace_s <"restoring vector int 0x21",lf>
-if ?32BIT
-	mov cx,word ptr ds:[PrevInt21Proc+4]
-	mov edx,dword ptr ds:[PrevInt21Proc+0]
-else
 	mov cx,word ptr ds:[PrevInt21Proc+2]
 	mov dx,word ptr ds:[PrevInt21Proc+0]
-endif
 	mov bl,21h
 	mov ax,0205h			;set pm int
 	call dpmicall
@@ -2614,7 +2604,7 @@ freemodulerest21:
 	mov ax,es
 	@trace_s <"checking references of module ">
 	@trace_w ax
-	@trace_s lf
+	@trace_s <" ", lf>
 	call checkifreferenced  ;only free modules which arent referenced
 	jc freemodulerest2
 	call FreeLib16
@@ -4045,7 +4035,7 @@ LoadNETables endp
 ;*** error happened (^error text in AX, if ax==0000 -> DOS error)
 ;*** if AX=-1, dont display anything
 ;--- modifies bx, di, cx, ax
-
+public stroutax
 stroutax proc
 	and ax,ax
 	jz @F
@@ -6453,7 +6443,7 @@ dowep proc
 
 	@trace_s <"delete module ">
 	@tracemodule
-	@trace_s lf
+	@trace_s <" ", lf>
 
 	test byte ptr es:[NEHDR.APPFLGS],AF_DLL	;dll?
 	jz dowep_3
@@ -6566,12 +6556,12 @@ endif
 	@SetKernelDS
 	@trace_s <"FreeLib16 ">
 	@trace_w ax
-	@trace_s <lf>
+	@trace_s <" ", lf>
 	call checkne
 	jc error23
 	@trace_s <"cnt=">
 	@trace_w es:[NEHDR.ne_count]
-	@trace_s <lf>
+	@trace_s <" ", lf>
 	cmp es:[NEHDR.ne_count],1
 	jnz @F
 	call dowep
