@@ -100,13 +100,21 @@ SwitchToPMode proc
 ;	    ES:DI -> DPMI mode-switch entry point (see #02718)
 ;	AX nonzero if not installed
 
-	@DPMI_SwitchEntry		;get address of PM entry in ES:DI
-	mov bp,offset szNoDPMI  ;message "no dpmi server"
+;	@DPMI_SwitchEntry		;get address of PM entry in ES:DI
 
-	or ax,ax
-	jnz  JumpToPM_2
+;	or ax,ax
+;	jnz  JumpToPM_2
 	
+	push cs				; Set data segment to code segment
+	pop ds
 	call DumpDPMIInfo
+
+;	push cs				; Set data segment to code segment
+;	pop ds
+;	mov wKernelDS,ds		; Store for future usage
+
+	mov bp,offset cs:szNoDPMI  ;message "no dpmi server"
+	jmp	JumpToPM_2
 
 	IF  @CPU AND 00001000B		; 80386+
 	cmp cl, 3			; 80386
@@ -142,6 +150,8 @@ JumpToPM_3:
 	pop cx
 	push es
 	push di
+;	@trace_w es
+;	@trace_w di
 	test si,si
 	jz @F
 ; Allocate real mode buffer for DPMI host

@@ -101,6 +101,48 @@ extern int DPMI_SetDescriptor(unsigned int, LDT_ENTRY far *);
         "mov  ax,000Bh"   \
         "int 31h"       \
         "sbb  ax,ax"    \
-    parm [bx] [es di] \
+    parm [bx] [di es] \
     value [ax] \
     modify []
+
+#pragma pack(push,1)
+typedef struct {
+char major_version;
+char minor_version;
+int flags;
+char processor_type;
+int host_mem;
+void(far * switchentry)(void);
+} init_info;
+#pragma pack(pop)
+
+extern void far * DPMI_Init( init_info far * );
+#pragma aux DPMI_Init = \
+		"push ds" \
+		"push es" \
+		"pop ds" \
+		"push di" \
+		"mov ax,1687h" \
+		"int 2fh" \
+		"or ax, ax" \
+		"pop ax" \
+		"jnz err" \
+		"push ax" \
+		"mov ax, si" \
+		"pop si" \
+		"mov byte ptr ds:[si],dh" \
+		"mov byte ptr ds:[si+1],dl" \
+		"mov word ptr ds:[si+2],bx" \
+		"mov byte ptr ds:[si+4],cl" \
+		"mov word ptr ds:[si+5],ax" \
+		"mov word ptr ds:[si+7],di" \
+		"mov word ptr ds:[si+9],es" \
+		"mov cx, es"\
+		"jmp exit" \
+		"err:" \
+		"xor ax, ax" \
+		"mov cx, ax" \
+		"mov di, ax" \
+		"exit: " \
+		"pop ds" \
+		parm[es di] modify[ax bx cl dx si] value [cx di] ;

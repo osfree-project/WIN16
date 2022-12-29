@@ -12,13 +12,13 @@ extern  void putchar(char);
 
 char * convert_to_ascii (char *buf, int c,...)
 {
-  unsigned long num = *((&c) + 1), mult = 10;
+  unsigned int num = *((&c) + 1), mult = 10;
   char *ptr = buf;
 
   if (c == 'x' || c == 'X')
     mult = 16;
 
-  if ((num & 0x80000000uL) && c == 'd')
+  if ((num & 0x8000) && c == 'd')
     {
       num = (~num) + 1;
       *(ptr++) = '-';
@@ -75,7 +75,7 @@ void printf (const char *format,...)
           case 'x':
           case 'X':
           case 'u':
-            *convert_to_ascii (str, c, *((unsigned long *) dataptr++)) = 0;
+            *convert_to_ascii (str, c, *((unsigned int *) dataptr++)) = 0;
             putstr (str);
             break;
 
