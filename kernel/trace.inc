@@ -76,7 +76,7 @@ else
 		mov 	bp,sp
 		push	es
 		pushf
-		int 3h
+		;int 3h
 		mov 	si,[bp+16]
 		add 	word ptr [bp+16],2
 endif

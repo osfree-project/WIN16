@@ -43,8 +43,8 @@ SIZPATH equ $ - szPath
 
 svrname db "HDPMI16.EXE",0
 SIZSVRNAME equ $ - svrname
-prg     db "SYSTEM\KRNL386.EXE",0
-szErr1	db "cannot launch SYSTEM\KRNL386.EXE",13,10,'$'
+prg     db "SYSTEM\KRNL286.EXE",0
+szErr1	db "cannot launch SYSTEM\KRNL286.EXE",13,10,'$'
 szErr2	db "HDPMI16.EXE not found",13,10,'$'
 
 		.data?

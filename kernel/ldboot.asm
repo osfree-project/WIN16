@@ -462,7 +462,6 @@ endif
 	pop ds
 	mov cs:wKernelDS,cs		; Store for future usage
 
-	;@strout szHello,1
 	externdef pascal Copyright: far
 	call Copyright
 
@@ -489,7 +488,7 @@ step2:
 ;	push cs				; Set data segment to code segment
 ;	pop ds
 ;	mov wKernelDS,ds		; Store for future usage
-	push ds				; Set stack segment to data segment
+	push cs				; Set stack segment to data segment
 	pop ss
 	mov sp,offset stacktop		; Set initial stack value
 	mov [wRMPSP],es
@@ -545,6 +544,7 @@ ife ?REAL
 	call SwitchToPMode			; initial switch to protected mode
 	jnc @F
 
+	@trace_s <lf,"------------------------------------",lf>
 	jmp main_err1
 
 @@:
@@ -673,7 +673,9 @@ endif
 endif
 
 main_err1:
+	@trace_s <lf,"------------------------------------",lf>
 	call strout_err
+	@trace_s <lf,"------------------------------------",lf>
 	@Exit RC_INITRM
 
 ;-------------------------------------------------------

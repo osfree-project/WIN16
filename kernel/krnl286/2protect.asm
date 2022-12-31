@@ -48,7 +48,7 @@ externdef	errstr2:near
 externdef	errstr3:near
 externdef	blksize: near
 
-externdef pascal DumpDPMIInfo: far
+externdef DumpDPMIInfo_: near
 
 changememstrat proc
 	mov ax,5802h			 ;save umb link state
@@ -87,92 +87,26 @@ restorememstrat endp
 SwitchToPMode proc
 	call changememstrat
 
-	push cx
+	@trace_s <lf,"------------------------------------",lf>
+	@trace_s <"KERNEL now in real mode, PDB=">
+	@trace_w es
+	@trace_s <",CS=">
+	@trace_w cs
+	@trace_s <",SS=">
+	@trace_w ss
+	@trace_s <",DS=">
+	@trace_w ds
+	@trace_s <lf>
 
-;	AX = 1687h
-;Return: AX = 0000h if installed
-;	    BX = flags
-;		bit 0: 32-bit programs supported
-;	    CL = processor type (02h=80286, 03h=80386, 04h=80486)
-;	    DH = DPMI major version
-;	    DL = two-digit DPMI minor version (binary)
-;	    SI = number of paragraphs of DOS extender private data
-;	    ES:DI -> DPMI mode-switch entry point (see #02718)
-;	AX nonzero if not installed
-
-;	@DPMI_SwitchEntry		;get address of PM entry in ES:DI
-
-;	or ax,ax
-;	jnz  JumpToPM_2
-	
 	push cs				; Set data segment to code segment
 	pop ds
-	call DumpDPMIInfo
-
-;	push cs				; Set data segment to code segment
-;	pop ds
-;	mov wKernelDS,ds		; Store for future usage
+	call DumpDPMIInfo_
+	mov cs:[wKernelDS],ds
 
 	mov bp,offset cs:szNoDPMI  ;message "no dpmi server"
-	jmp	JumpToPM_2
 
-	IF  @CPU AND 00001000B		; 80386+
-	cmp cl, 3			; 80386
-	jb  JumpToPM_2			; Error if CPU not supported
-	ELSE
-	IF  @Cpu AND 00000100B		; 80286+
-	cmp cl, 2			; 80286
-	jb  JumpToPM_2			; Error if CPU not supported
-	ELSE
-					; 8086 supported by any CPU, no check here
-	ENDIF
-	ENDIF
-
-	mov bx, ax
-	cmp cl, 2
-	mov ax, WF_CPU286
-	je @f
-	cmp cl, 3
-	mov ax, WF_CPU386
-	je @f
-	mov ax, WF_CPU486
-@@:
-;	mov [eWinFlags.wOfs],ax
-
-	jmp JumpToPM_3			;ok, DPMI host found
-
-JumpToPM_2:
-	pop cx
-	mov ax,bp
-	jmp ERROR0
-
-JumpToPM_3:
-	pop cx
-	push es
-	push di
-;	@trace_w es
-;	@trace_w di
-	test si,si
-	jz @F
-; Allocate real mode buffer for DPMI host
-	mov bx,si
-	@GetBlok				  ;alloc real-mode mem block
-	jc ERROR1
-	mov es,ax
-@@:
 	call restorememstrat
 
-	xor ax,ax				; We are 16-bit DPMI client
-
-	mov bp,sp
-	call dword ptr [bp]
-	mov ax,offset errstr3		;cannot switch to prot-mode
-	jc ERROR3
-
-	@int3 _INT03JMPPM_
-	mov [wKernelDS],ds
-;	mov [wDPMIFlg],cx			;DPMI Flags
-;	mov [wDPMIVer],dx			;dito
 	mov [TH_TOPPDB],es			;psp
 if 1;?USE1PSP
 	mov [wCurPSP],es
@@ -188,29 +122,6 @@ endif
 	@trace_w ds
 	@trace_s <lf>
 
-; @todo May be add as extension loadable DOS Translation layer if DPMI-host doesn't support it?
-;
-; Check is MS-DOS extensions is present
-
-	@DPMI_VendorEntry szDOSstr
-	cmp al,0
-	jz @F
-	@trace_s <"fatal: no DOS API translation",lf>
-	@Exit RC_INITPM	;just exit, dont display anything
-@@:
-	@trace_s <"DOS API translation initiated",lf>
-
-	add sp,4
-	ret
-ERROR1:
-	mov ax,offset errstr2	;insufficient DOS memory
-ERROR3:
-	add sp,4
-ERROR0:
-	push ax
-	call restorememstrat
-	pop bx
-	stc
 	ret
 SwitchToPMode endp
 

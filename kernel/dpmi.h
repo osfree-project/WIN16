@@ -119,7 +119,7 @@ void(far * switchentry)(void);
 extern void far * DPMI_Init( init_info far * );
 #pragma aux DPMI_Init = \
 		"push ds" \
-		"push es" \
+		"push cx" \
 		"pop ds" \
 		"push di" \
 		"mov ax,1687h" \
@@ -145,4 +145,40 @@ extern void far * DPMI_Init( init_info far * );
 		"mov di, ax" \
 		"exit: " \
 		"pop ds" \
-		parm[es di] modify[ax bx cl dx si] value [cx di] ;
+		parm[cx di] modify[ax bx cl dx si] value [cx di] ;
+
+extern void far * DPMI_VendorEntry(char far * szVendorStr);
+#if 0
+#pragma aux DPMI_VendorEntry = \
+        "push ds"       \
+        "push es"       \
+        "mov  ds,cx"   \
+        "mov  cx,es"   \
+	"mov	ax, 0a00h" \
+	"int	31h" \
+	"jnc L1"\
+        "xor  cx,cx"  \
+        "xor  di,di"  \
+    "L1: pop  es"       \
+        "pop  ds"       \
+    parm [cx si] \
+    value [cx di] \
+    modify [ax cx]
+#else
+#pragma aux DPMI_VendorEntry = \
+        "push ds"       \
+        "push es"       \
+        "mov  ds,cx"   \
+        "mov  cx,es"   \
+	"mov	ax, 168ah" \
+	"int	2fh" \ 
+        "cmp al,8ah" \
+	"jne short L1"  \
+        "xor  cx,cx"  \
+        "xor  di,di"  \
+    "L1: pop  es"       \
+        "pop  ds"       \
+    parm [cx si] \
+    value [cx di] \
+    modify [ax cx]
+#endif
