@@ -2,46 +2,46 @@
 ;--- page handling
 ;--- handles physical memory, address space and un/committed memory
 
-		.486P
+;--- todo: get rid of dwMaxOfsPT - user address space is to be
+;---       managed by i31mem.
 
-		option proc:private
-		option casemap:none
+	.486P
 
-		include hdpmi.inc
-		include external.inc
+	option proc:private
 
-?XMSALLOCRM    = 1	;std 1, alloc 1. EMB in real mode (XMS-Mode only)
-?CLEARACCBIT   = 0	;std 0, on entry clear ACC-Bit for all PTEs in 1. MB
-?FREEPDIRPM    = 0	;std 0, on exit reset CR3 in protected mode (?)
-?VCPIALLOC	   = 1	;std 1, alloc VCPI mem if no XMS host found
-?RESPAGES	   = 4	;std 4, small reserve, do not alloc these pages
-?ZEROFILL	   = 0	;std 0, 1=do zero fill all committed pages
-?USEE820	   = 0	;std 0, use int 15h, ax=e820 to get extmem in raw mode
-?USEE801	   = 1	;std 1, use int 15h, ax=e801 to get extmem in raw mode
-?FREEVCPIPAGES = 1	;std 1, free all VCPI pages in pm_exitserver_rm
-?FREEXMSINRM   = 1	;std 1, free XMS blocks in pm_exitserver_rm
-?NOVCPIANDXMS  = 1	;std 1, 1=avoid using VCPI if XMS host exists
-?FREEXMSDYN    = 1	;std 1, 1=free XMS blocks dynamically
-?SETCOPYPTE    = 0	;std 0, 1=support set+copy PTEs
-?XMSBLOCKCNT   = 1	;std 1, 1=count XMS blocks to improve alloc strategy
+	include hdpmi.inc
+	include external.inc
 
-@seg _TEXT32
-@seg _TEXT16
-@seg _DATA16
-@seg VDATA16
-@seg CDATA16
+?XMSALLOCRM 	equ 1	;std 1, alloc 1. EMB in real mode (XMS-Mode only)
+?CLEARACCBIT	equ 0	;std 0, on entry clear ACC-Bit for all PTEs in 1. MB
+?FREEPDIRPM 	equ 0	;std 0, on exit reset CR3 in protected mode (?)
+?VCPIALLOC		equ 1	;std 1, alloc VCPI mem if no XMS host found
+?RESPAGES		equ 4	;std 4, small reserve, do not alloc these pages
+?ZEROFILL		equ 0	;std 0, 1=do zero fill all committed pages
+?USEE820		equ 0	;std 0, use int 15h, ax=e820 to get extmem in raw mode
+?USEE801		equ 1	;std 1, use int 15h, ax=e801 to get extmem in raw mode
+?FREEVCPIPAGES	equ 1	;std 1, free all VCPI pages in pm_exit_rm
+?FREEXMSINRM	equ 1	;std 1, free XMS blocks in pm_exit_rm
+?NOVCPIANDXMS	equ 1	;std 1, 1=avoid using VCPI if XMS host exists
+?FREEXMSDYN 	equ 1	;std 1, 1=free XMS blocks dynamically
+?XMSBLOCKCNT	equ 1	;std 1, 1=count XMS blocks to improve alloc strategy
+?DOSPGLOBAL		equ 0	;std 0, 1=set global flag for pages in region 0-10FFFFh
+?SETPTE			equ 0	;std 0, 1=enable pm_SetPage
+?NOCR3CACHE		equ 0	;std 0, 1=set PWT & PCD bits in cr3
+
+PTF_NORMAL	equ PTF_WRITEABLE + PTF_USER
+
 @seg _ITEXT16
-@seg SEG16
 
 ifndef ?USEINVLPG
-?USEINVLPG = 0 		;use invlpg opcode (80486+)
+?USEINVLPG = 1 		;use invlpg opcode (80486+)
 endif
 
 ;--- PHYSBLK: describes a block of physical memory
 ;--- there is always just 1 item with free pages
-;--- and it is stored in PhysBlk  variable
+;--- and it is stored in PhysBlk variable
 
-PHYSBLK	struct
+PHYSBLK struct
 pNext	dd ?	;ptr next block
 dwBase	dd ?	;base address of block
 dwSize	dd ?	;size in pages
@@ -54,7 +54,7 @@ bFlags  db ?
 		db ?
 ends
 ends
-PHYSBLK	ends
+PHYSBLK ends
 
 ;--- bFlags
 
@@ -81,66 +81,66 @@ PBF_INUSE   equ PBF_XMS or PBF_I15 or PBF_DOS
 ; 400=available : is _XMSFLAG_
 ; 800=available	: is _VCPIFLAG_
 
-if ?SAFEPAGETABS
-?PAGETABLEATTR	= PTF_PRESENT or PTF_WRITEABLE
-else
 ?PAGETABLEATTR	= PTF_PRESENT or PTF_WRITEABLE or PTF_USER
-endif
 
 _XMSFLAG_		= 4h	;page src xms (+i15 +dos)
 _VCPIFLAG_		= 8h	;page src vcpi
 
-?SYSTEMSPACE	= 0FF8h ;offset in page dir for system area (std FF8=0xFF800000)	
+?SYSTEMSPACE	= 0FF8h ;offset in page dir for system area (std FF8=0xFF800000)   
 ?SYSPGDIRAREA	= 2*4	;2 system page tables (sys pagetab 0+1)
 
+?SYSAREA0	= (?SYSTEMSPACE+0) shl 20		; = FF800000
+?SYSAREA1	= (?SYSTEMSPACE+4) shl 20		; = FFC00000
+?PTSYSAREA0	= ?SYSAREA1+0					; = FFC00000
+
+?OFSMAPPAGE equ 1000h
+
 ; memory structure as implemented by page manager:
-; - page directory is mapped at end of system area (FFBFF000)
+; - page directory is mapped at end of sysarea 0 (FFBFF000)
 ; - page tables are mapped in linear region FFC00000-FFFFFFFF
-; - page table sys area 1 (FFC00000-FFFFFFFF) is at FFC00xxx (page map table)
-; - page table sys area 0 (FF800000-FFBFFFFF) is at FFC01xxx
+; - page table sysarea 0 (FF800000-FFBFFFFF) is at FFC00xxx
+; - page table sysarea 1 (FFC00000-FFFFFFFF) is at FFC01xxx (page map table)
 ; - page tables user space (00000000-FF7FFFFF) begin at FFC02xxx
 ; - variables:
-; - pPageDir	= FFBFF000
-; - pPageTables = FFC00000
-; - pPageTab0	= FFC02000
-; - pPagesStart = FFC00000
+; - pPageDir    = FFBFF000
+; - pPageTables = FFC00000 (=sysarea 1)
+; - pPageTab0   = FFC02000
 
 _DATA16 segment
 
-pPageDir	 dd 0		;linear address page dir
-pPageTables  dd 0		;linear address start page tables (FFC00000)
-pPageTab0	 dd 0		;linear address page table 0
-pPagesStart  dd 0		;linear address of 4 MB region where page tables
-						;  are mapped (0 on startup, later FFC00000)
-dwOfsPgTab0  dd 0		;is used to calc total address space (const!)
+pPageDir	 dd ?SYSAREA1-1000h	;const, linear address page dir (FFBFF000)
+pPageTables  dd ?SYSAREA1	;const, linear address start page tables (FFC00000)
+pPageTab0	 dd 0			;const after init, linear address page table 0 (FFC02000)
+dwOfsPgTab0  dd 0			;const after init, start user space in PT 0, used to calc user address space
 
 ;--- system address space (FF800000-FFBFFFFF)
-;--- the space is allocated by using 2 pointers, SysAddrSpace
-;--- and SysAddrSpace2 (one upwards, the other downwards)
+;--- the space is allocated by using 2 pointers, SysAddrUp
+;--- and SysAddrDown (one upwards, the other downwards)
 
 ;--- the first is used to alloc space for code, GDT, LDT, IDT, ...
 ;--- the second is used to alloc space for mapped page dir
 ;--- + client save states
 
-SysAddrSpace dd 0		;init: bottom of sys addr space (FF801000)
-SysAddrSpace2 dd 0		;init: top of sys address space (FFC00000)
-SysAddrSize  dd 0		;free pages in system region
+SysAddrUp	dd 0		;init: bottom of sys addr space (FF801000)
+SysAddrDown	dd 0		;init: top of sys address space (FFC00000)
+
+;--- the VM-specific data is cleared for a new VM
 
 startvdata label byte
 
-;--- physical memory
-;--- the page pool are uncommitted PTEs which are
-;--- stored in the page tables. the pool is scanned from top to bottom
+;--- dwMaxOfsPT tells what client address space has been "created".
+;--- it's an offset within SYSAREA1 (FFC00000).
+;--- on startup, the variable is initialized with 2444h in XMS/I15
+;--- (corresponds to linear address 111000h).
+;--- after 8 MB address space allocation, value would be 4444h.
 
-; client address space:
-; - pMaxPageTab = FFC02440 on startup (corresponds to linear address 110000h)
-; after 8 MB address space allocation vars are:
-; - pMaxPageTab = FFC04440 (= linear address 910000h)
+dwMaxOfsPT	dd 0		;offset free space in page table region
 
+;--- the page pool are uncommitted PTEs (XMS) that are
+;--- stored in the page tables. the pool is scanned from top to bottom.
 
+dwMaxPool	dd 0		;top of page pool
 dwPagePool	dd 0		;uncommitted PTEs (XMS+I15) in page pool
-pPoolMax	dd 0		;top of page pool
-pMaxPageTab  dd 0		;linear address free space in page table region
 
 PhysBlk		PHYSBLK <0>	;linked list of physical memory blocks allocated
 
@@ -149,68 +149,65 @@ dwVCPIPages dd 0		;count allocated VCPI pages (just as info)
 endif
 
 if ?FREEXMSINRM
-pXMSHdls	dw 0		;XMS handle pointer in host stack (exit server)
+pXMSHdls	dw 0		;pointer to XMS handles when exiting (exit server)
 endif
 if ?FREEVCPIPAGES
-pVCPIPages	dw 0		;VCPI pages in host stack (exit server)
+pVCPIPages	dw 0		;VCPI pages saved when exiting (exit server)
 endif
 if ?FREEPDIRPM
 orgcr3		dd 0		;original cr3
-cr3flgs	 	dw 0		;save bits 0-11 of CR3 phys entry here
+;cr3flgs	 	dw 0		;save bits 0-11 of CR3 phys entry here
 endif
 if ?XMSBLOCKCNT
 bXMSBlocks	db 0
 endif
 		align 4
-endvdata	label byte
+endvdata label byte
 
 _DATA16 ends
 
-CDATA16	segment
-dwResI15Pgs  dd 0		;free pages for int 15h
-CDATA16	ends
+;--- deactivated in v3.18
+;_DATA16C segment
+;dwResI15Pgs  dd 0		;free pages for int 15h
+;_DATA16C ends
 
 _TEXT32  segment
 
-		assume DS:GROUP16
+	assume DS:GROUP16
 
 ;*** get ptr to PTE of a linear address
 ;*** in: linear address in EAX
 ;*** out: EDI=linear address of PTE for address in EAX
-;*** C if address space isn't allocated (no page table exists)
 ;--- other registers preserved
 
-		@ResetTrace
+	@ResetTrace
 
-_Linear2PT proc public uses ecx
+Linear2PT proc
 
-		@DebugBreak 0
-		push eax
-		mov edi,ss:[pPageTables]
-		mov ecx,(?SYSTEMSPACE+4) * 100000h 	 ;sys area 1?
-		cmp eax,ecx
-		jnc @F
-		add edi,1000h
-		mov ecx,(?SYSTEMSPACE+0) * 100000h 	 ;sys area 0?
-		cmp eax,ecx
-		jnc @F
-		add edi,1000h
-		xor ecx,ecx
-@@:
-		sub eax,ecx
-		shr eax,10				;ergibt offset in page tab
-		and al,0FCh
-		add edi,eax
-;------------------------------- pMaxPageTab may be NULL (all allocated)
-		mov ecx,ss:[pMaxPageTab]
-		jecxz @F
-		cmp ss:[pMaxPageTab],edi
-@@:
-		pop eax
-		@strout <"#pm: lin addr %lX - addr PTE %lX, max addr PTE %lX",lf>,eax,edi,ss:[pMaxPageTab]
-		ret
-		align 4
-_Linear2PT endp
+	lea edi,[eax+?SYSPGDIRAREA shl 20]
+	shr edi,10				;div 1024 -> offset in page table
+	and edi,not 3
+	add edi,ss:pPageTables
+	@dprintf "Linear2PT: linear %lX -> PTE %lX", eax, edi
+	ret
+	align 4
+Linear2PT endp
+
+;--- same as Linear2PT, but carry flag is set if
+;--- space isn't allocated yet (no PDE exists).
+
+pm_Linear2PT proc public
+
+	call Linear2PT
+	push eax
+	mov eax, ss:dwMaxOfsPT
+	add eax, ss:pPageTables
+	cmp eax, edi
+	pop eax
+	ret
+	align 4
+
+pm_Linear2PT endp
 
 ;--- get linear address from a PTE address
 ;--- in: eax = linear address where PTE is stored
@@ -218,167 +215,251 @@ _Linear2PT endp
 ;--- modifies ecx
 
 PT2Linear proc
-		sub eax, ss:[pPageTables]
-		jc exit
-		mov ecx, 1000h
-		cmp eax, ecx
-		jc sysarea1
-		sub eax, ecx
-		cmp eax, ecx
-		jc sysarea2
-		sub eax, ecx
-		shl eax, 10
-		ret
-sysarea1:
-		shl eax, 10
-		add eax, (?SYSTEMSPACE+4) * 100000h
-		ret
-sysarea2:
-		shl eax, 10
-		add eax, (?SYSTEMSPACE+0) * 100000h
+	sub eax, ss:pPageTables	;0-3FFFFFh
+	jc exit
+	sub eax, ?SYSPGDIRAREA shl 10
+	and eax, 3FFFFFh
+	shl eax, 10
 exit:
-		ret
-		align 4
+	ret
+	align 4
 PT2Linear endp
 
-;*** search physical address region in page tables
-;*** called by _searchphysregion
+if 1;?MAPDOSHIGH
+
+;--- copy PTEs 
+;--- EAX: source linear address
+;--- EBX: dest linear address
+;--- ECX: #pages
+;--- EDX: (additional) page flags
+
+pm_CopyPTEs proc public
+	@dprintf "pm_CopyPTEs: src=%lX, dst=%lX, pages=%lX",eax,ebx,ecx
+	push ds
+	push es
+	pushad
+	call Linear2PT	;get source PTEs
+	mov esi, edi
+	mov eax, ebx
+	call Linear2PT	;get dest PTEs
+	@dprintf "pm_CopyPTEs: src PTR=%lX, dst PTE=%lX, pages=%lX",esi,edi,ecx
+	push byte ptr _FLATSEL_
+	pop ds
+	push ds
+	pop es
+	cld
+if 0
+	rep movsd
+else
+@@:
+	lodsd
+;	and al,0E0h
+	and ax,0F000h	;reset PG and all user-reserved flags
+	or al, PTF_PRESENT
+	or ax, dx
+	stosd
+	loop @B
+endif
+if 0
+	mov ebx,[esp].PUSHADS.rEBX
+	mov ecx,[esp].PUSHADS.rECX
+	call updatetlb
+endif
+	popad
+	pop es
+	pop ds
+	ret
+pm_CopyPTEs endp
+
+endif
+
+;*** scan page tables for a physical address region
+;*** called by pm_searchphysregion
 ;*** ESI = ^ page table
-;*** EDX = physical address to search
-;*** EDI = length of region in pages
-;*** ECX = entries in page table(s)
+;*** ECX = items in page table(s)
+;*** EDX = start physical region to search
+;*** EDI = size physical region in pages
 ;*** DS = FLAT
 ;*** Out: NC + EAX=linaddr
 
-		@ResetTrace
+	@ResetTrace
 
-checkpt proc
+scanpagetab proc
 
-		cld
-		@strout <"#pm: checking table at lin %lX",lf>,esi
+	cld
+	@dprintf "scanpagetab: scan page table at lin %lX for addr=%lX, size=%lX", esi, edx, edi
 nextentry:
-		cmp ecx,edi
-		jb error
-		lodsd
-		and ax,0F000h or PTF_PRESENT or PTF_USER
-		cmp eax,edx
-		jz checkpt_2
-checkpt_11:
-		loopd nextentry
+	cmp ecx,edi
+	jb error
+	lodsd
+	and ax,0F000h or PTF_PRESENT or PTF_USER
+	cmp eax,edx
+	jz scanpagetab_2
+scanpagetab_11:
+	loopd nextentry
 error:
-		stc
-		ret
+	stc
+	ret
 
-;--- first page tab entry is ok, check the rest
+;--- first PTE is ok, compare the rest
         
-checkpt_2:
-		pushad
+scanpagetab_2:
+	pushad
 nextitem:
-		dec edi
-		jz found
-		lodsd
-		and ax,0F000h or PTF_PRESENT or PTF_USER
-		add edx,1000h
-		cmp eax,edx
-		loopzd nextitem
-		popad
-		jmp checkpt_11	;continue search
+	dec edi
+	jz found
+	lodsd
+	and ax,0F000h or PTF_PRESENT or PTF_USER
+	add edx,1000h
+	cmp eax,edx
+	loopzd nextitem
+	popad
+	jmp scanpagetab_11	;continue search
 found:
-		popad
-		lea eax, [esi-4];adjust esi so it points to 1. entry again
-		call PT2Linear
-		@strout <"#pm: mapping found for real addr %lX=%lX",lf>,edx,eax
-		clc
-		ret
-		align 4
-checkpt endp
+	popad
+	lea eax, [esi-4];adjust esi so it points to 1. entry again
+	call PT2Linear
+	@dprintf "scanpagetab: mapping found for physical addr %lX: %lX", edx, eax
+	clc
+	ret
+	align 4
+scanpagetab endp
 
 ;--- search a region of physical pages in linear address space
+;--- called by int 31h, ax=800h
 ;--- edx=physical address start
 ;--- eax=size in pages
 ;--- out: NC: found, eax=linear address
 ;--- else C, all preserved
 
-_searchphysregion proc public uses ds
-		pushad
-		@strout <"#pm: phys2lin: addr=%lX,pages=%lX",lf>,edx,eax
+pm_searchphysregion proc public uses ds
+	pushad
+	@dprintf "pm_searchphysregion: addr=%lX,pages=%lX",edx,eax
 
-		mov edi,eax 			;search in spaces already mapped
-		push byte ptr _FLATSEL_
-		pop ds
-		and dh,0F0h
-		mov dl,PTF_PRESENT or PTF_USER
+	mov edi,eax 			;search in spaces already mapped
+	push byte ptr _FLATSEL_
+	pop ds
+	and dh,0F0h
+	mov dl,PTF_PRESENT or PTF_USER
 
-;------- get number of pages allocated so far in ECX
+;--- get number of PTEs in ECX
 
-		mov esi,ss:[pPageTables]
-		mov ecx,ss:[pMaxPageTab]
-		sub ecx, esi
-		shr ecx, 2
-		call checkpt
-		jc error
-		mov [esp.PUSHADS.rEAX],eax
+	mov esi, ss:pPageTables
+	mov ecx, ss:dwMaxOfsPT
+	shr ecx, 2
+	call scanpagetab
+	jc error
+	mov [esp].PUSHADS.rEAX,eax
 error:
-		popad
-		ret
-		align 4
-_searchphysregion endp
+	popad
+	ret
+	align 4
+pm_searchphysregion endp
 
-;*** helper for DPMI function 0800h
+;*** helper for DPMI functions 0800h, 0508h
 ;*** map a physical address region into linear address space
 ;*** INP: EDX=physical address region start
-;***	  ECX=length of region in pages
-;***	  EAX=linear address space to map the region to
+;***      ECX=length of region in pages (may be 0!)
+;***      EAX=linear address space to map the region to
 ;***      BL=1 -> set PTF_PWT bit in PTEs
 
-		@ResetTrace
+	@ResetTrace
 
-_mapphysregion proc public uses es
+pm_mapphysregion proc public uses es
 
-		pushad
+	pushad
 
-		@strout <"#pm, mapphysregion: addr=%lX,size=%lX",lf>,edx,ecx
+	@dprintf "pm_mapphysregion: phys. addr=%lX, size=%lX", edx, ecx
+	jecxz done
 
-		push byte ptr _FLATSEL_
-		pop es
-		call _Linear2PT			;set EDI (ptr to PTE)
-		@strout <"#pm: adspace allocated, ^pagetab=%lX, addr=%lX",lf>,edi,eax
-		mov eax,edx
-		or al, PTF_PRESENT or PTF_WRITEABLE or PTF_USER
-		test bl,1
-		jz @F
-		or al, PTF_PWT or PTF_PCD	;set 'write through' + 'cache disable'
+	push byte ptr _FLATSEL_
+	pop es
+	call Linear2PT			;convert linear address in EAX to PTE ptr in EDI
+	@dprintf "pm_mapphysregion: pPagetab=%lX, addr=%lX", edi, eax
+	mov eax,edx
+	or al, PTF_PRESENT or PTF_WRITEABLE or PTF_USER
+	test bl,1
+	jz @F
+	or al, PTF_PWT or PTF_PCD	;set 'write through' + 'cache disable'
 @@:
-		stosd
-		add eax,1000h
-		loopd @B
-		popad
-		ret
-		align 4
+if _LTRACE_
+	xor ebx,ebx
+endif
+nextpte:
+	mov edx,es:[edi]
+	stosd
+	test dh,_XMSFLAG_
+	jz @F
+	call savePTEinpagepool
+if _LTRACE_
+	inc ebx
+endif
+@@:
+	add eax,1000h
+	loopd nextpte
+if _LTRACE_
+	cmp ebx,0
+	jz @F
+	@dprintf "pm_mapphysregion: %lX PTEs of page pool moved", ebx
+@@:
+endif
+done:
+	popad
+	ret
+	align 4
 
-_mapphysregion endp
+pm_mapphysregion endp
+
+;--- move PTE to a "safe" location in the page pool.
+;--- currently, just the region "below" EDI is scanned.
+;--- in:
+;--- EDX=PTR
+;--- EDI=ptr PTE
+;--- ECX=pages still to map
+
+savePTEinpagepool proc
+	pushad
+	mov esi, ss:pPageTables
+nextitem:
+	sub edi,4
+	cmp edi,esi
+	jc error
+	mov eax,es:[edi]
+	test al,PTF_PRESENT
+	jnz nextitem
+	test ah,_XMSFLAG_	;is another PTE in pool
+	jnz nextitem
+	mov es:[edi],edx
+	jmp done
+error:
+	dec ss:dwPagePool
+	@dprintf "pm_mapphysregion, ERROR: PTE %lX lost for page pool, dwPagePool=%lX", edx, ss:dwPagePool
+done:
+	popad
+	ret
+savePTEinpagepool endp
 
 ;--- physical memory
 
 ;*** get free dos pages
 
-		@ResetTrace
+	@ResetTrace
 
 getavaildospages proc
 
-		push ebx
-		or  ebx,-1
-		mov ah,48h
-		call rmdosintern	;get free paragraphs in BX
-		movzx eax,bx
-		shr eax,8		;paras to pages (10h -> 1000h)
-		sub eax,1		;one less???
-		jnc @F
-		xor eax,eax
+	push ebx
+	or  ebx,-1
+	mov ah,48h
+	call rmdosintern	;get free paragraphs in BX
+	movzx eax,bx
+	shr eax,8		;paras to pages (10h -> 1000h)
+	sub eax,1		;one less???
+	jnc @F
+	xor eax,eax
 @@:
-		pop ebx
-		ret
-		align 4
+	pop ebx
+	ret
+	align 4
 
 getavaildospages endp
 
@@ -387,18 +468,18 @@ getavaildospages endp
 if ?VCPIALLOC
 getavailvcpipages proc
 
-		xor edx,edx
-		test [fHost],FH_VCPI
-		jz exit
+	xor edx,edx
+	test [fHost],FH_VCPI
+	jz exit
 if ?NOVCPIANDXMS
-		test fHost, FH_XMS
-		jnz exit
+	test fHost, FH_XMS
+	jnz exit
 endif
-		mov ax,0DE03h			 ;get number of free pages (EDX)
-		call [vcpicall]
+	mov ax,0DE03h			 ;get number of free pages (EDX)
+	call [vcpicall]
 exit:
-		ret
-		align 4
+	ret
+	align 4
 getavailvcpipages endp
 endif
 
@@ -407,79 +488,85 @@ endif
 
 getavailxmspages proc uses ebx
 
-		test fHost, FH_XMS
-		jz error
-		push ecx
-		mov ah, fXMSQuery
-		mov bl,0
-		@pushproc callxms
-		call dormprocintern
-		pop ecx
+	test fHost, FH_XMS
+	jz error
+	@dprintf "getavailxmspages: calling XMS (cs:ip=%X:%X, RMS=%X:%X)",\
+		word ptr ss:xmsaddr+2, word ptr ss:xmsaddr+0, v86iret.rSS, v86iret.rSP
+;	@waitesckey
+	push ecx
+	mov ah, fXMSQuery
+	mov bl,0
+	pushd offset callxms
+	call callrmprocintern
+	pop ecx
 
-;--- get largest free block in E/AX
-;--- get total free in E/DX
+;--- largest free block in E/AX
+;--- total free in E/DX
 ;--- it is returned even if the call ah=88h "fails" (BL=A0)
 
-		cmp bl,0
-		jz @F
-		cmp bl,0A0h				;status "all memory allocated"?
-		jnz error
+	@dprintf "getavailxmspages: XMS returned (e)ax=%lX, (e)dx=%lX, bx=%X", eax, edx, bx
+	cmp bl,0
+	jz @F
+	cmp bl,0A0h				;status "all memory allocated"?
+	jnz error
 @@:
-		mov eax,edx
-		test [fHost],FH_XMS30	;xms driver 3.0+?
-		jnz @F
-		movzx eax,ax
+	xchg eax,edx			;free XMS memory (kB) into EAX, largest free block in EDX
+	test [fHost],FH_XMS30	;xms driver 3.0+?
+	jnz @F
+	movzx eax,ax
+	movzx edx,dx
 @@:
-		shr eax,2				;kbytes -> pages
-		ret
+	shr eax,2				;kbytes -> pages
+	shr edx,2				;kbytes -> pages
+	ret
 error:
-		xor eax,eax
-		ret
-		align 4
+	xor eax,eax
+	ret
+	align 4
 getavailxmspages endp
+
+	@ResetTrace
 
 ;*** get number of physical pages
 ;*** out: eax=free pages, edx=total pages, ecx=reserved for address space
 
-		@ResetTrace
+pm_GetNumPhysPages proc public
 
-_GetNumPhysPages proc public
+	assume ds:GROUP16
 
-		assume ds:GROUP16
-
-		@strout <"#pm, GetNumPhysPages: free pages in cur block=%lX",lf>, PhysBlk.dwFree
-		call getavailxmspages	;get free XMS pages in EAX
-		@strout <"#pm, GetNumPhysPages: XMS pages=%lX",lf>,eax
-		add eax,PhysBlk.dwFree	;add free pages cur block (XMS or I15)
+	@dprintf "GetNumPhysPages: free pages in cur block=%lX", PhysBlk.dwFree
+	call getavailxmspages	;get free XMS pages in EAX
+	@dprintf "GetNumPhysPages: XMS pages=%lX", eax
+	add eax,PhysBlk.dwFree	;add free pages cur block (XMS or I15)
 if ?VCPIALLOC
-		and eax, eax			;is XMS memory available?
-		jnz @F
-		call getavailvcpipages	;get VCPI pages
-		@strout <"#pm, GetNumPhysPages: VCPI pages=%lX",lf>, edx
-        mov eax, edx
+	and eax, eax			;is XMS memory available?
+	jnz @F
+	call getavailvcpipages	;get VCPI pages
+	@dprintf "GetNumPhysPages: VCPI pages=%lX", edx
+	mov eax, edx
 @@:
 endif
-		test [bEnvFlags],ENVF_INCLDOSMEM
-		jz @F
-		push eax
-		@strout <"#pm, GetNumPhysPages: calling getavaildospages",lf>
-		call getavaildospages
-		@strout <"#pm, GetNumPhysPages: DOS pages=%X",lf>,ax
-		pop ecx
-		add eax,ecx
+	test [bEnvFlags],ENVF_INCLDOSMEM
+	jz @F
+	push eax
+	@dprintf "GetNumPhysPages: calling getavaildospages"
+	call getavaildospages
+	@dprintf "GetNumPhysPages: DOS pages=%X",ax
+	pop ecx
+	add eax,ecx
 @@:
-		mov ecx,eax 			;some pages will be needed for paging
-		shr ecx,10				;(1 page for 4MB address space)
+	mov ecx,eax 			;some pages will be needed for paging
+	shr ecx,10				;(1 page for 4MB address space)
 if ?RESPAGES        
-		add ecx, ?RESPAGES
+	add ecx, ?RESPAGES
 endif
-		@strout <"#pm, GetNumPhysPages: subtract %lX pages for pagetables",lf>,ecx
-		cmp ecx,eax
-		jc @F
-		mov ecx,eax
+	@dprintf "GetNumPhysPages: subtract %lX pages for pagetables",ecx
+	cmp ecx,eax
+	jc @F
+	mov ecx,eax
 @@:
-		mov edx, eax
-		add eax, dwPagePool		;the pagepool are "allocated" pages		
+	mov edx, eax
+	add eax, dwPagePool		;the pagepool are "allocated" pages
 
 ;--- total physical pages are
 ;---   "true" free pages
@@ -487,155 +574,155 @@ endif
 ;--- + dwVCPIPages
 
   if ?VCPIALLOC
-		add edx, dwVCPIPages
+	add edx, dwVCPIPages
   endif
-		push ecx
-		mov ecx, offset PhysBlk
+	push ecx
+	mov ecx, offset PhysBlk
 nextitem:
-		test [ecx].PHYSBLK.bFlags, PBF_INUSE
-		jz @F
-		add edx, [ecx].PHYSBLK.dwSize
-		sub edx, [ecx].PHYSBLK.dwFree	;free pages are in EAX already
+	test [ecx].PHYSBLK.bFlags, PBF_INUSE
+	jz @F
+	add edx, [ecx].PHYSBLK.dwSize
+	sub edx, [ecx].PHYSBLK.dwFree	;free pages are in EAX already
 @@:
-		@strout <"#pm, GetNumPhysPages: block total=%lX, free=%lX",lf>,[ecx].PHYSBLK.dwSize, [ecx].PHYSBLK.dwFree
-		mov ecx, [ecx].PHYSBLK.pNext
-		and ecx, ecx
-		jnz nextitem
-		pop ecx
+	@dprintf "GetNumPhysPages: block total=%lX, free=%lX",[ecx].PHYSBLK.dwSize, [ecx].PHYSBLK.dwFree
+	mov ecx, [ecx].PHYSBLK.pNext
+	and ecx, ecx
+	jnz nextitem
+	pop ecx
 if 0
-		test [bEnvFlags],ENVF_NOXMS30	;restrict free mem to 63 MB?
-		jz norestrict
-		cmp eax, 4000h-1h
-		jb @F
-		mov eax, 4000h-1h
+	test [bEnvFlags],ENVF_NOXMS30	;restrict free mem to 63 MB?
+	jz norestrict
+	cmp eax, 4000h-1h
+	jb @F
+	mov eax, 4000h-1h
 @@:
-		cmp edx, 4000h-1h
-		jb @F
-		mov edx, 4000h-1h
+	cmp edx, 4000h-1h
+	jb @F
+	mov edx, 4000h-1h
 @@:
 norestrict:
 endif
-		@strout <"#pm, GetNumPhysPages: total=%lX, free=%lX, res=%lX",lf>,edx,eax,ecx
-		ret
-		align 4
-_GetNumPhysPages endp
+	@dprintf "GetNumPhysPages: total=%lX, free=%lX, res=%lX",edx,eax,ecx
+	ret
+	align 4
+pm_GetNumPhysPages endp
 
 ;*** get physical address of a linear address in 1. MB
-;*** inp: eax=linear address
+;*** inp: eax=linear address (bits 0-11 are cleared)
 ;--- no check done
 
-linear2phys proc uses es
-		shr eax,10
-		add eax,[pPageTab0]
-		push byte ptr _FLATSEL_
-		pop es
-		mov eax,es:[eax]
-		ret
-		align 4
-linear2phys endp
+conv2phys proc uses es
+	shr eax,10
+	add eax, pPageTab0
+	push byte ptr _FLATSEL_
+	pop es
+	mov eax,es:[eax]
+	ret
+	align 4
+conv2phys endp
 
 ;--- get a page from the current memory block
 ;--- this block may come from XMS, I15 or DOS
 
-		@ResetTrace
+	@ResetTrace
 
 getblockpage proc
-		cmp PhysBlk.dwFree, 0
-		jz error
-		dec PhysBlk.dwFree
-		mov eax, PhysBlk.dwBase
-		push ecx
-		test PhysBlk.bFlags, PBF_TOPDOWN
-		jnz topdown
-		mov ecx, PhysBlk.dwSize
-		sub ecx, PhysBlk.dwFree	;ecx = pages allocated
-		dec ecx
-		shl ecx, 12
-		add eax, ecx
-		pop ecx
-		test PhysBlk.bFlags, PBF_LINEAR
-		jz @F
-		call linear2phys
+	cmp PhysBlk.dwFree, 0
+	jz error
+	dec PhysBlk.dwFree
+	mov eax, PhysBlk.dwBase
+	push ecx
+	test PhysBlk.bFlags, PBF_TOPDOWN
+	jnz topdown
+	mov ecx, PhysBlk.dwSize
+	sub ecx, PhysBlk.dwFree	;ecx = pages allocated
+	dec ecx
+	shl ecx, 12
+	add eax, ecx
+	pop ecx
+	test PhysBlk.bFlags, PBF_LINEAR
+	jz @F
+	call conv2phys
 @@:
 if _LTRACE_
-		push ecx
-		mov ecx, PhysBlk.dwSize
-		shl ecx, 12
-		add ecx, PhysBlk.dwBase
-		dec ecx
-		@strout <"#pm: page %lX from cur block %lX-%lX, free=%lX",lf>, eax, PhysBlk.dwBase, ecx, PhysBlk.dwFree
-		pop ecx
+	push ecx
+	mov ecx, PhysBlk.dwSize
+	shl ecx, 12
+	add ecx, PhysBlk.dwBase
+	dec ecx
+	@dprintfx ?LOG_PMGREXT,"getblockpage: page %lX from cur block %lX-%lX, free=%lX", eax, PhysBlk.dwBase, ecx, PhysBlk.dwFree
+	pop ecx
 endif
-;		 @waitesckey
-		or ax,PTF_NORMAL+(_XMSFLAG_*100h)	  ;set user,read-write
-		ret
+;	@waitesckey
+	or ax,PTF_NORMAL+(_XMSFLAG_*100h)	  ;set user,read-write
+	ret
 topdown:
-		mov ecx, PhysBlk.dwFree
-		shl ecx, 12
-		add eax, ecx
-		pop ecx
-		jmp @B
+	mov ecx, PhysBlk.dwFree
+	shl ecx, 12
+	add eax, ecx
+	pop ecx
+	jmp @B
 error:
-		stc
-		ret
-		align 4
+	stc
+	ret
+	align 4
 getblockpage endp
 
-		@ResetTrace
+	@ResetTrace
 
 allocphyshandle proc uses edx
-		mov eax, offset PhysBlk
-		jmp skipitem
+	mov eax, offset PhysBlk
+	jmp skipitem
 nextitem:
-		and eax, eax
-		jz notfound
-		test [eax].PHYSBLK.bFlags, PBF_INUSE
-		jz found
+	and eax, eax
+	jz notfound
+	test [eax].PHYSBLK.bFlags, PBF_INUSE
+	jz found
 skipitem:
-		mov edx, eax
-		mov eax, [edx].PHYSBLK.pNext
-		jmp nextitem
+	mov edx, eax
+	mov eax, [edx].PHYSBLK.pNext
+	jmp nextitem
 found:
-		push [eax].PHYSBLK.pNext
-		pop [edx].PHYSBLK.pNext
-		xor edx, edx
-		mov [eax].PHYSBLK.pNext, edx
-		ret
+	push [eax].PHYSBLK.pNext
+	pop [edx].PHYSBLK.pNext
+	xor edx, edx
+	mov [eax].PHYSBLK.pNext, edx
+	ret
 notfound:
-		mov eax,sizeof PHYSBLK
-		call _heapalloc					;this call cannot fail now
-		ret
-		align 4
+	push sizeof PHYSBLK
+	call _heapalloc					;this call cannot fail now
+	ret
+	align 4
 allocphyshandle endp
 
 setactivephyshandle proc
-		mov edx, offset PhysBlk
+	mov edx, offset PhysBlk
 @@:
-		test [edx].PHYSBLK.bFlags, PBF_INUSE
-		jnz found
-		mov edx, [edx].PHYSBLK.pNext
-		and edx, edx
-		jnz @b
-		stc
-		ret
+	test [edx].PHYSBLK.bFlags, PBF_INUSE
+	jnz found
+	mov edx, [edx].PHYSBLK.pNext
+	and edx, edx
+	jnz @b
+	stc
+	ret
 found:
-		cmp edx, offset PhysBlk
-		jz done
-		mov eax, [edx].PHYSBLK.dwBase
-		mov ecx, [edx].PHYSBLK.dwSize
-		xchg eax, PhysBlk.dwBase
-		xchg ecx, PhysBlk.dwSize
-		mov [edx].PHYSBLK.dwBase, eax
-		mov [edx].PHYSBLK.dwSize, ecx
-		mov eax, [edx].PHYSBLK.dwFree
-		mov ecx, [edx].PHYSBLK.dwHandle
-		xchg eax, PhysBlk.dwFree
-		xchg ecx, PhysBlk.dwHandle
-		mov [edx].PHYSBLK.dwFree, eax
-		mov [edx].PHYSBLK.dwHandle, ecx
+	cmp edx, offset PhysBlk
+	jz done
+	mov eax, [edx].PHYSBLK.dwBase
+	mov ecx, [edx].PHYSBLK.dwSize
+	xchg eax, PhysBlk.dwBase
+	xchg ecx, PhysBlk.dwSize
+	mov [edx].PHYSBLK.dwBase, eax
+	mov [edx].PHYSBLK.dwSize, ecx
+	mov eax, [edx].PHYSBLK.dwFree
+	mov ecx, [edx].PHYSBLK.dwHandle
+	xchg eax, PhysBlk.dwFree
+	xchg ecx, PhysBlk.dwHandle
+	mov [edx].PHYSBLK.dwFree, eax
+	mov [edx].PHYSBLK.dwHandle, ecx
 done:
-		ret
-		align 4
+	ret
+	align 4
 setactivephyshandle endp
 
 if ?FREEXMSDYN
@@ -643,64 +730,64 @@ if ?FREEXMSDYN
 ;--- free phys handle in EAX
 ;--- DS=GROUP16, ES=FLAT?
 
-		@ResetTrace
+	@ResetTrace
 
 freephyshandle proc
-		pushad
-		mov ecx, offset PhysBlk
+	pushad
+	mov ecx, offset PhysBlk
 nextitem:
-		cmp eax, ecx
-		jz found
-		mov ecx, [ecx].PHYSBLK.pNext
-		and ecx, ecx
-		jnz nextitem
-		stc
-		popad
-		ret
+	cmp eax, ecx
+	jz found
+	mov ecx, [ecx].PHYSBLK.pNext
+	and ecx, ecx
+	jnz nextitem
+	stc
+	popad
+	ret
 found:
-		@strout <"#pm: phys handle %lX found, pNext=%lX, hdl=%lX, start=%X",lf>, eax, [eax].PHYSBLK.pNext, [eax].PHYSBLK.dwHandle, offset PhysBlk
+	@dprintf "freephyshandle: phys handle %lX found, pNext=%lX, hdl=%lX, start=%X", eax, [eax].PHYSBLK.pNext, [eax].PHYSBLK.dwHandle, offset PhysBlk
 @@:
-		mov dl, [eax].PHYSBLK.bFlags
-		mov [eax].PHYSBLK.bFlags, 0
-		test dl, PBF_XMS
-		jz @F
-		mov dx,[eax].PHYSBLK.wHandle
-		@strout <"#pm: calling XMS host to free handle=%X",lf>, dx
-		@pushproc freexms
-		call dormprocintern
+	mov dl, [eax].PHYSBLK.bFlags
+	mov [eax].PHYSBLK.bFlags, 0
+	test dl, PBF_XMS
+	jz @F
+	mov dx,[eax].PHYSBLK.wHandle
+	@dprintf "freephyshandle: calling XMS host to free handle=%X", dx
+	pushd offset freexms
+	call callrmprocintern
 if ?XMSBLOCKCNT
-		dec [bXMSBlocks]
+	dec [bXMSBlocks]
 endif
-		jmp done
+	jmp done
 @@:
-		test dl, PBF_DOS
-		jz @F
+	test dl, PBF_DOS
+	jz @F
 if 0
-		mov cx, [eax].PHYSBLK.wHandle
-		mov v86iret.rES,cx
-		mov ah,49h
-		call rmdosintern
+	mov cx, [eax].PHYSBLK.wHandle
+	mov v86iret.rES,cx
+	mov ah,49h
+	call rmdosintern
 else
-		push eax
-		mov ah,51h
-		call rmdosintern	;get PSP in BX
-		pop eax
-		movzx ecx, [eax].PHYSBLK.wHandle
-		dec ecx
-		shl ecx, 4
-		mov word ptr es:[ecx+1], bx
+	push eax
+	mov ah,51h
+	call rmdosintern	;get PSP in BX
+	pop eax
+	movzx ecx, [eax].PHYSBLK.wHandle
+	dec ecx
+	shl ecx, 4
+	mov word ptr es:[ecx+1], bx
 endif
 @@:
 done:
-		clc
-		popad
-		ret
-		align 4
+	clc
+	popad
+	ret
+	align 4
 freephyshandle endp
 
 endif
 
-		@ResetTrace
+	@ResetTrace
 
 ;--- alloc new phys block and set values
 ;--- edx == base
@@ -708,29 +795,29 @@ endif
 
 setphyshandle proc        
 
-;		@strout <"#pm: XMS/DOS memory allocated, addr=%lX, size=%lX",lf>,edx,eax
+;	@dprintf "setphyshandle: XMS/DOS memory allocated, addr=%lX, size=%lX",edx,eax
 
-									;set values so _heapalloc cannot fail
-		xchg edx,PhysBlk.dwBase	;save current physical address
-		push edx
-		push PhysBlk.dwSize
-		mov PhysBlk.dwSize,eax	;save current size in pages
-		xchg eax, PhysBlk.dwFree
-		push eax
-		push PhysBlk.dwHandle
+							;set values so _heapalloc cannot fail
+	xchg edx,PhysBlk.dwBase	;save current physical address
+	push edx
+	push PhysBlk.dwSize
+	mov PhysBlk.dwSize,eax	;save current size in pages
+	xchg eax, PhysBlk.dwFree
+	push eax
+	push PhysBlk.dwHandle
 
-		call allocphyshandle
-		mov edx, PhysBlk.pNext
-		mov [eax].PHYSBLK.pNext, edx
-		mov PhysBlk.pNext, eax
-		pop [eax].PHYSBLK.dwHandle
-		pop [eax].PHYSBLK.dwFree
-		pop [eax].PHYSBLK.dwSize
-		pop [eax].PHYSBLK.dwBase
-		@strout <"#pm: new phys mem obj %lX, base=%lX, size=%lX, free=%lX",lf>,eax,[eax].PHYSBLK.dwBase, [eax].PHYSBLK.dwSize, [eax].PHYSBLK.dwFree
-		@strout <"#pm: current: base=%lX, size=%lX, free=%lX",lf>, PhysBlk.dwBase, PhysBlk.dwSize, PhysBlk.dwFree
-		ret
-		align 4
+	call allocphyshandle
+	mov edx, PhysBlk.pNext
+	mov [eax].PHYSBLK.pNext, edx
+	mov PhysBlk.pNext, eax
+	pop [eax].PHYSBLK.dwHandle
+	pop [eax].PHYSBLK.dwFree
+	pop [eax].PHYSBLK.dwSize
+	pop [eax].PHYSBLK.dwBase
+	@dprintf "setphyshandle: new phys mem obj %lX, base=%lX, size=%lX, free=%lX",eax,[eax].PHYSBLK.dwBase, [eax].PHYSBLK.dwSize, [eax].PHYSBLK.dwFree
+	@dprintf "setphyshandle: current: base=%lX, size=%lX, free=%lX", PhysBlk.dwBase, PhysBlk.dwSize, PhysBlk.dwFree
+	ret
+	align 4
 setphyshandle endp
 
 ;*** get pages from XMS
@@ -738,125 +825,147 @@ setphyshandle endp
 ;*** DS=GROUP16
 ;--- modifies ebx, eax, edx? 
 
-		@ResetTrace
+	@ResetTrace
 
-		assume ds:GROUP16
+	assume ds:GROUP16
 
 getxmspage proc near
 
-		test fHost,FH_XMS		;XMS host present?
-		jz getxmspage_err
+	test fHost,FH_XMS		;XMS host present?
+	jz getxmspage_err1
 
-		@strout <"#pm: try to alloc XMS mem (real mode), ecx=%lX",lf>,ecx
-		call getavailxmspages
-		cmp eax, 1
-		jc getxmspage_err		;XMS is out of memory
-		call getbestxmssize		;return best size
-		push ecx
-		mov ecx,eax
-		@pushproc allocxms
-		call dormprocintern
-		pop ecx
-		jc getxmspage_err		;XMS is out of memory
-		call setphyshandle
-		mov PhysBlk.wHandle, bx
-		mov PhysBlk.bFlags, PBF_XMS
+	@dprintf "getxmspage: try to alloc XMS mem (real mode), ecx=%lX",ecx
+	call getavailxmspages
+	cmp eax, 1
+	jc getxmspage_err2		;XMS is out of memory
+	call getbestxmssize		;return best size in EAX
+	mov edx,eax
+	push eax
+	mov ah,fXMSAlloc
+	shl edx,2
+	pushd offset allocxms_rm
+	call callrmprocintern
+	pop eax
+	jc getxmspage_err3		;XMS is out of memory
+	test dx,0FFFh			;block's base on page boundary?
+	jz @F
+	add edx,1000h-1
+	and dx,0F000h			;if no, do a page align
+	dec eax
+@@:
+	@dprintf "getxmspage: allocated %lX pages", eax
+	call setphyshandle
+	mov PhysBlk.wHandle, bx
+	mov PhysBlk.bFlags, PBF_XMS
 if ?XMSBLOCKCNT
-		inc [bXMSBlocks]
+	inc [bXMSBlocks]
 endif
-		jmp getblockpage
-getxmspage_err:
-		@strout <"#pm: getxmspage memory alloc failed, ax=%X",lf>,ax
-		stc
-		ret
-		align 4
+	jmp getblockpage
+getxmspage_err1:
+ifdef _DEBUG
+	@dprintf "getxmspage: error, no XMM"
+	stc
+	ret
+endif
+getxmspage_err2:
+ifdef _DEBUG
+	@dprintf "getxmspage: error, getavailxmspages returned 0"
+	stc
+	ret
+endif
+getxmspage_err3:
+	@dprintf "getxmspage: error, XMM alloc call failed, bx=%X",bx
+	stc
+	ret
+	align 4
 getxmspage endp
 
 ;*** allocate DOS memory to satisfy requests, ecx=pages
+;--- out: C if error
 ;--- modifies ebx, edx, eax
 
-		@ResetTrace
+	@ResetTrace
 
 getdospage proc
 
-		assume ds:GROUP16
+	assume ds:GROUP16
 
-		test [bEnvFlags],ENVF_INCLDOSMEM
-		jz error
+	test [bEnvFlags],ENVF_INCLDOSMEM
+	jz error
 
-		cmp ecx,100h-1		  ;255 or more pages request (1 MB - 4 kB)?
-		jnc error			  ;is an error in any case
-		test PhysBlk.bFlags, PBF_DOS
-		jz newdosblock
+	cmp ecx,100h-1		  ;255 or more pages request (1 MB - 4 kB)?
+	jnc error			  ;is an error in any case
+	test PhysBlk.bFlags, PBF_DOS
+	jz newdosblock
 
-		mov ax, PhysBlk.wHandle
-		mov ebx,PhysBlk.dwSize
-		mov [v86iret.rES],ax
-		neg al
-		movzx eax, al
-		shl ebx,8				;pages -> paragraphs
-		add ebx, eax
+	mov ax, PhysBlk.wHandle
+	mov ebx,PhysBlk.dwSize
+	mov v86iret.rES,ax
+	neg al
+	movzx eax, al
+	shl ebx,8				;pages -> paragraphs
+	add ebx, eax
 
-		mov dh,cl				;angeforderte pages (1 Page -> 100h Paras)
-		mov dl,00
-		movzx edx,dx
-		lea edx,[edx+ebx]
-		test edx,0FFFF0000h
-		jnz newdosblock
-		push ebx
-		mov ebx,edx
-		@strout <"#pm: try to enlarge DOS block %X to %X paras",lf>,v86iret.rES,bx
-		mov ah,4Ah
-		call rmdosintern
-		pop ebx
-		jc @F
-		@strout <"#pm: DOS block enlarged",lf>
-		add PhysBlk.dwSize,ecx
-		mov PhysBlk.dwFree,ecx
-		call setowner
-		jmp getblockpage
+	mov dh,cl				;angeforderte pages (1 Page -> 100h Paras)
+	mov dl,00
+	movzx edx,dx
+	lea edx,[edx+ebx]
+	test edx,0FFFF0000h
+	jnz newdosblock
+	push ebx
+	mov ebx,edx
+	@dprintf "getdospage: try to enlarge DOS block %X to %X paras",v86iret.rES,bx
+	mov ah,4Ah
+	call rmdosintern
+	pop ebx
+	jc @F
+	@dprintf "getdospage: DOS block enlarged"
+	add PhysBlk.dwSize,ecx
+	mov PhysBlk.dwFree,ecx
+	call setowner
+	jmp getblockpage
 @@:
-		@strout <"#pm: DOS block enlarge failed",lf>
-		mov ah,4Ah				;due to a bug in most DOSes the block
-		call rmdosintern		;has to be resized to its previous size
-		call setowner
+	@dprintf "getdospage: DOS block enlarge failed"
+	mov ah,4Ah				;due to a bug in most DOSes the block
+	call rmdosintern		;has to be resized to its previous size
+	call setowner
 newdosblock:
-		mov bh,cl				;nur angeforderte pages
-		inc bh					;1 mehr, da beginn nicht an pagegrenze
-		mov bl,00
-		@strout <"#pm: try to alloc a new DOS block, size=%X",lf>,bx
-		mov ah,48h
-		call rmdosintern
-		jc error2
-		@strout <"#pm: new DOS block allocated, addr=%X, size=%X",lf>,ax,bx
-		mov bx,ax		;handle
-		movzx edx,ax
-		shl edx,4
-		add edx,1000h-1
-		and dx, 0F000h
-		movzx eax,cl
-		call setphyshandle
-		mov PhysBlk.wHandle, bx
-		mov PhysBlk.bFlags, PBF_DOS or PBF_LINEAR
-		call setowner
-		jmp getblockpage
+	mov bh,cl				;nur angeforderte pages
+	inc bh					;1 mehr, da beginn nicht an pagegrenze
+	mov bl,00
+	@dprintf "getdospage: try to alloc a new DOS block, size=%X",bx
+	mov ah,48h
+	call rmdosintern
+	jc error2
+	@dprintf "getdospage: new DOS block allocated, addr=%X, size=%X",ax,bx
+	mov bx,ax		;handle
+	movzx edx,ax
+	shl edx,4
+	add edx,1000h-1
+	and dx, 0F000h
+	movzx eax,cl
+	call setphyshandle
+	mov PhysBlk.wHandle, bx
+	mov PhysBlk.bFlags, PBF_DOS or PBF_LINEAR
+	call setowner
+	jmp getblockpage
 error2:
-		@strout <"#pm: alloc new dos block failed",lf>
+	@dprintf "getdospage: alloc new dos block failed"
 error:
-		stc
-		ret
+	stc
+	ret
 setowner:
-		push es
-		push byte ptr _FLATSEL_
-		pop es
-		movzx edx,PhysBlk.wHandle
-		dec edx
-		shl edx,4
-		mov ax,wHostPSP
-		mov es:[edx+1],ax
-		pop es
-		retn
-		align 4
+	push es
+	push byte ptr _FLATSEL_
+	pop es
+	movzx edx,PhysBlk.wHandle
+	dec edx
+	shl edx,4
+	mov ax,wHostPSP
+	mov es:[edx+1],ax
+	pop es
+	retn
+	align 4
 getdospage endp
 
 ;*** scan page pool for a free page
@@ -864,51 +973,55 @@ getdospage endp
 ;*** the page pool are released pages in the page tables
 ;*** (when a page is released just the present bit is cleared)
 
-		@ResetTrace
+	@ResetTrace
 
 scanpagepool proc uses es esi ecx
 
-		push byte ptr _FLATSEL_
-		pop es
+	push byte ptr _FLATSEL_
+	pop es
 
-		mov esi,pPoolMax
-		mov ecx,pPageTables
+	mov esi, dwMaxPool
+	mov ecx, pPageTables
+	add esi, ecx
 
-		@strout <"#pm, scanpagepool: %lX-%lX, pages=%lX",lf>, ecx, esi, dwPagePool
+;	@dprintf "scanpagepool: dwMaxPool=%lX, dwPagePool=%lX", dwMaxPool, dwPagePool
 
-;		@SetTrace
 if _LTRACE_
-		and esi, esi
-		jnz @F
-		@strout <"#pm, scanpagepool: pPoolMax is NULL!, dwPagePool=%lX",lf>, dwPagePool
-		@waitesckey
+	cmp esi, ecx
+	ja @F
+;--- pages in page pool, but dwMaxPool <= zero. This shouldn't happen!
+	@dprintf "scanpagepool: ERROR, dwMaxPool=%lX!, dwPagePool=%lX", dwMaxPool, dwPagePool
 @@:
 endif
 
 nextitem:
-		sub esi,4
-		cmp esi, ecx
-		jb notfound
-		mov eax,es:[esi]
-		test al, PTF_PRESENT
-		jnz nextitem
-		test ah, _XMSFLAG_
-		jz nextitem
-		mov dword ptr es:[esi],PTF_NORMAL  ;clear PTE here
-		mov pPoolMax, esi
+	sub esi,4
+	cmp esi, ecx
+	jb notfound
+	mov eax,es:[esi]
+	test al, PTF_PRESENT
+	jnz nextitem
+	test ah, _XMSFLAG_
+	jz nextitem
+	mov dword ptr es:[esi],PTF_NORMAL  ;clear PTE here
+	sub esi, ecx
 exit:
-		ret
+	mov dwMaxPool, esi
+	ret
 notfound:
-		@strout <"#pm, scanpagepool error: no page in page pool found",lf>
-		stc
-		jmp exit
-		align 4
+;--- no page in page pool. This shouldn't happen!
+	@dprintf "scanpagepool: ERROR, no page in page pool found"
+	add esi,4
+	sub esi, ecx
+	stc
+	jmp exit
+	align 4
 scanpagepool endp
 
-;*** get a phys. page
+;*** get one phys. page
 ;*** inp: 
 ;*** EAX = page entry value
-;*** ECX = number of pages which will be requested (hint for XMS)
+;*** ECX = number of pages which will be requested (just a hint for XMS)
 ;*** DS=GROUP16
 ;*** out: new value in EAX, inclusive flags (XMS/VCPI)
 ;*** physical page can come from following sources:
@@ -920,79 +1033,88 @@ scanpagepool endp
 ;*** - VCPI page
 ;*** modifies: ebx, eax, edx
 
-		@ResetTrace
+	@ResetTrace
 
 getphyspagex proc
 
-		assume ds:GROUP16
+	assume ds:GROUP16
 
-		test al,PTF_PRESENT	;is page committed?
-		jnz exit			;then we're done
-		test ah,_XMSFLAG_	;is this a page from page pool?
-		jz getphyspage		;if no, alloc a new page
-		dec [dwPagePool]
-		@strout <"#pm: page pool decr [%lX], Entry=%lX, edi=%lX, caller=%lX",lf>, dwPagePool, eax, edi, <dword ptr [esp]>
+	test al,PTF_PRESENT	;is page committed?
+	jnz exit			;then we're done
+	test ah,_XMSFLAG_	;is this a page from page pool?
+	jz getphyspage		;if no, alloc a new page
+	dec dwPagePool
+if _LTRACE_
+	jns @F
+	@dprintf <"#getphyspagex: ERROR, dwPagePool < 0!, PTE=%lX, caller=%lX",lf>, eax, dword ptr [esp]
+	@dprintf <"   pPageDir=%lX pPageTables=%lX",lf>, pPageDir, pPageTables
+	@dprintf <"  pPageTab0=%lX  dwMaxOfsPT=%lX",lf>, pPageTab0, dwMaxOfsPT
+	@dprintf <" dwPagePool=%lX   dwMaxPool=%lX",lf>, dwPagePool, dwMaxPool
+	@dprintf <"edi=%lX",lf>, edi
+@@:
+endif
 exit:
-		ret
-		align 4
+	ret
+	align 4
 getphyspagex endp
 
-		@ResetTrace
+	@ResetTrace
+
+;--- get one free physical page
+;--- out: C if error
+;--- ecx = hint for xms how much pages will be requested
 
 getphyspage proc
 
-		cmp [dwPagePool],0		;free pages in page tables to be found?
-		jz @F
-		call scanpagepool
-		jc @F
-		dec [dwPagePool]
-		@strout <"#pm: page pool decremented [%lX], Entry=%lX",lf>,\
-			[dwPagePool], eax
-		ret
+	cmp dwPagePool,0		;free pages in page tables to be found?
+	jz @F
+	call scanpagepool
+	jc @F
+	dec dwPagePool
+	@dprintfx ?LOG_PMGREXT,"getphyspage: PTE=%lX, dwPagePool=%lX, dwMaxPool=%lX", eax, dwPagePool, dwMaxPool
+	ret
 @@:
 
-		@ResetTrace
+	@ResetTrace
 
-		call getblockpage		;get page from current phys mem block
-		jnc exit
-		@strout <"#pm: get page thru XMS",lf>
-		call getxmspage
-		jnc exit
+	call getblockpage		;get page from current phys mem block
+	jnc exit
+	@dprintf "getphyspage: get page thru XMS"
+	call getxmspage
+	jnc exit
 if ?VCPIALLOC
-		test [fHost],FH_VCPI
-		jz novcpimem
-if ?NOVCPIANDXMS
-		test [fHost],FH_XMS	;using VCPI when XMS exists but fails
-		jnz novcpimem		;seems to be unstable for many VCPI hosts
-endif
-		@strout <"#pm: try VCPI alloc",lf>
+	test [fHost],FH_VCPI
+	jz novcpimem
+ if ?NOVCPIANDXMS
+	test [fHost],FH_XMS	;using VCPI when XMS exists but fails
+	jnz novcpimem		;seems to be unstable for many VCPI hosts
+ endif
+	@dprintf "getphyspage: try VCPI alloc"
 
-		@ResetTrace
+	@ResetTrace
 
-		mov ax,0DE04h			   ;1 page alloc VCPI
-		call [vcpicall]
-		and ah,ah				   ;ok?
-		jnz @F
-		inc [dwVCPIPages]
-		@strout <"#pm: page %lX allocated thru VCPI, total=%lX",lf>, edx, dwVCPIPages
-;		 @waitesckey
-		mov eax,edx
-		and ax,0F000h
-		or ax,PTF_NORMAL + (_VCPIFLAG_*100h)
-		ret
+	mov ax,0DE04h			   ;1 page alloc VCPI
+	call [vcpicall]
+	and ah,ah				   ;ok?
+	jnz @F
+	inc [dwVCPIPages]
+	@dprintf "getphyspage: page %lX allocated thru VCPI, total=%lX", edx, dwVCPIPages
+	mov eax,edx
+	and ax,0F000h
+	or ax,PTF_NORMAL + (_VCPIFLAG_*100h)
+	ret
 @@:
-		@strout <"#pm: VCPI alloc failed, ax=%X",lf>, ax
+	@dprintf "getphyspage: VCPI alloc failed, ax=%X", ax
 
-		@ResetTrace
+	@ResetTrace
 
 novcpimem:
 endif
-		call getdospage
+	call getdospage
 exit:
-		@strout <"#pm, exit getphyspage, eax=%lX",lf>, eax
-;		 @waitesckey
-		ret
-		align 4
+	@dprintfx ?LOG_PMGREXT,"getphyspage: exit, eax=%lX", eax
+	ret
+	align 4
 getphyspage endp
 
 ;*** free PTE in eax
@@ -1000,43 +1122,47 @@ getphyspage endp
 ;*** returns modified PTE in EAX
 ;--- other registers preserved
 
-		@ResetTrace
+	@ResetTrace
 
 freephyspage proc
 
-		test al,PTF_PRESENT		;committed?
-		jz exit				;if not, do nothing	   
-		test ah,_XMSFLAG_		;is it from XMS/I15/DOS?
-		jz noxmspage	        ;no (VCPI or mapped)
-		inc [dwPagePool]		;XMS/I15/DOS will be put in page pool
-		and al, not PTF_PRESENT
-		@strout <"#pm: Page Pool incremented [%lX], Entry=%lX, caller=%lX",lf>,[dwPagePool],eax,<dword ptr [esp]>
+	test al,PTF_PRESENT		;committed?
+	jz exit					;if not, do nothing
+	test ah,_XMSFLAG_		;is it from XMS/I15/DOS?
+	jz noxmspage	        ;no (VCPI or mapped)
+	inc dwPagePool			;XMS/I15/DOS will be put in page pool
+	and al, not PTF_PRESENT
+	@dprintfx ?LOG_PMGREXT,"freephyspage: PTE=%lX, dwPagePool=%lX, caller=%lX", eax, dwPagePool, dword ptr [esp]
 exit:
-		ret
-		align 4
+	ret
+	align 4
 noxmspage:
 if ?VCPIALLOC
-		test ah,_VCPIFLAG_		   ;is it a vcpi page? 
-		jz novcpipage
+	test ah,_VCPIFLAG_		   ;is it a vcpi page? 
+	jz novcpipage
 
-		@ResetTrace
+	@ResetTrace
 
-		pushad
-		mov edx,eax
-		and dx,0F000h			   ;nur VCPI pages sofort  zurueckgeben
-		mov ax,0DE05h			   ;1 page free VCPI
-		call [vcpicall]
-		and ah,ah				   ;ok?
-		jnz @F
-		dec [dwVCPIPages]
+	pushad
+	mov edx,eax
+	and dx,0F000h			   ;nur VCPI pages sofort  zurueckgeben
+	mov ax,0DE05h			   ;1 page free VCPI
+	call [vcpicall]
+	and ah,ah				   ;ok?
+	jnz @F
+	dec [dwVCPIPages]
 @@:
-		@strout <"#pm: free VCPI page %lX returned ax=%X, remaining %lX",lf>, edx, ax, dwVCPIPages
-		popad
+	@dprintf "freephyspage: free VCPI page %lX returned ax=%X, remaining %lX", edx, ax, dwVCPIPages
+	popad
 novcpipage:
 endif
-		xor eax, eax			   ;return 0 (value of new page entry 
-		ret
-		align 4
+if 0
+	xor eax, eax			   ;return 0 (value of new page entry 
+else
+	mov eax, PTF_NORMAL
+endif
+	ret
+	align 4
 freephyspage endp
 
 ;*** adress space handling
@@ -1045,121 +1171,175 @@ freephyspage endp
 ;*** all page tables are mapped into linear address space FFC00000-FFFFFFFF
 ;*** after being mapped, the page table is cleared to zero
 ;*** IN: EAX=PTE for page table (will be stored in page map table)
-;*** IN: ESI=offset in page map table [FFC00000] to store PTE)
-;*** IN: ES=flat
-;*** variables needed: pPageTables, pPagesStart
+;***     ESI=offset in sys area 1 [FFC00000] to store PTE)
+;*** DS=GROUP16, ES=flat
+;*** variables needed: pPageTables
 ;*** out: NC if successful, EDI = linear address of page (FFC00000-FFFFF000)
 ;*** modifies EDI, EDX
 ;--- error cannot happen, this case is checked before the call
 
-		@ResetTrace
+	@ResetTrace
 
 mapPageTable proc near
 
-		push ecx
-		mov edi,esi 			;now edi is offset to free area
-		mov edx,[pPageTables]	;linear address of page table area
-		mov es:[edi+edx],eax	;set new page table in mapping page
+	push ecx
+	mov edi, esi 			;now edi is offset to free area
+	mov edx, pPageTables	;linear address of page table area
+;	mov es:[edi+edx], eax	;set new page table in mapping page
+	mov es:[edi+edx+?OFSMAPPAGE], eax	;set new page table in mapping page
 
 if _LTRACE_
-		lea edx, [edi+edx]
-		@strout <"#pm, mapPageTable: written %lX to %lX",lf>, eax, edx
+	lea edx, [edi+edx+?OFSMAPPAGE]
+	@dprintfx ?LOG_PMGREXT,"mapPageTable: written %lX to %lX", eax, edx
 endif
 
 ;--- now clear new page table
 
-		shl edi,10			;* 1024
-		add edi,[pPagesStart]
+	shl edi, 10			;* 1024
+	add edi, pPageTables
 
-		@strout <"#pm, mapPageTable: phys entry %lX mapped at %lX",lf>, eax, edi
+	@dprintfx ?LOG_PMGREXT, "mapPageTable: phys entry %lX mapped at %lX", eax, edi
 
 
-		push edi
-		push eax
-		mov ecx,1000h/4			 ;clear the new page table
-		xor eax,eax
-		rep stosd
+	push edi
+	push eax
+	mov ecx,1000h/4			 ;clear the new page table
+if 0
+	xor eax,eax
+else
+	mov eax,PTF_NORMAL
+endif
+	rep stosd
 
-		pop eax
-		pop edi
-		pop ecx
-		clc
-		ret
-		align 4
+	pop eax
+	pop edi
+	pop ecx
+	clc
+	ret
+	align 4
 
 mapPageTable endp
 
 
+if 0
 ;--- return free address space in eax (pages)
 ;--- total address space in edx (pages)
 ;--- called by int 31h, ax=0500h
 ;--- ds=GROUP16
 
-_getaddrspace proc public
-		xor edx,edx 			   ;  00000000h
-		sub edx,[pPageTab0]
-		sub edx,[dwOfsPgTab0]
-		shr edx,2
+pm_getaddrspace proc public
+	xor edx,edx			; 00000000h
+	sub edx, pPageTab0
+	sub edx, dwOfsPgTab0
+	shr edx,2
 
-		xor eax,eax
-		sub eax,[pMaxPageTab]
-		shr eax,2
-		ret
-		align 4
-_getaddrspace endp
+	mov eax,400000h
+	sub eax,dwMaxOfsPT
+	shr eax,2
+	ret
+	align 4
+pm_getaddrspace endp
+endif
 
-;--- if a page table is totally clear (4 MB)
-;--- free physical memory (PTE in mapping page table) + reset to zero
-;--- + clear PDE in page dir
+pm_getfreeuserspace proc public
+
+;--- eax=start user space, ecx=length user space (pages)
+	mov eax, dwOfsPgTab0
+	shl eax, 10
+	mov ecx, ?SYSAREA0
+	sub ecx, eax
+	shr ecx, 12
+	ret
+	align 4
+pm_getfreeuserspace endp
+
+;--- clear PDE in page dir
+;--- if the page table is totally clear (4 MB)
+;--- and doesn't contain pages for page pool,
+;--- free physical memory (PTE in mapping page table)
 ;--- EDX=linear address of page tab
-;--- BL=1 -> free entry in page map table
+;--- BL=1 -> release PTE in page map table
 
-		@ResetTrace
+	@ResetTrace
 
 freepagetab proc
 
-		pushad
+	pushad
 
-		mov esi,[pPageTables]	;linear address page tables
-		mov edi, pPageDir
+;	@dprintf "freepagetab: PT=%lX, bx=%X, dwMaxPool=%lX", edx, bx, dwMaxPool
+	mov esi, pPageTables	;linear address page tables
+	mov edi, pPageDir
 
-		cmp edx, pPoolMax		;is page used by pool?
-		setnc al
-		and bl,al
+;--- check if page table is below dwMaxPool offset
+;--- if yes, it cannot be released in page map region
+	mov eax, dwMaxPool
+	add eax, esi
+	sbb eax, 0				;convert 00000000 to ffffffff
+	cmp edx, eax			;is page used by pool?
+	setnc al
+	and bl,al
 
-		sub edx,[pPageTab0]
-		shr edx, 10 			;convert it to offset in page table
+	sub edx, pPageTab0
+	shr edx, 10 			;convert it to offset in page table
 
-		xor eax, eax			;simply clear PDE in page dir
-								;no need to free it, it is a double
-		mov es:[edi+edx],eax
+	xor eax, eax			;simply clear PDE in page dir
+							;no need to free it, it is a double
+	mov es:[edi+edx],eax
 
 
-		cmp bl,1				;can page table freed in mapping area?
-		jnz @F
+	cmp bl,1				;may page table be released in mapping area?
+	jnz @F
 
-		lea edi, [esi+edx+?SYSPGDIRAREA]
+	lea edi, [esi+edx+?SYSPGDIRAREA+?OFSMAPPAGE]
 
-		mov eax,es:[edi]		;and free PTE in mapping pagetab
+	mov eax,es:[edi]		;and free PTE in mapping pagetab
 if _LTRACE_
-		mov ecx, edx
-		add ecx, ?SYSPGDIRAREA
-		shl ecx, 10
-		add ecx, pPageTables
-		shl edx, 20
-		@strout <"#pm, freepagetab: rel. PTE %lX at %lX [reg %lX, mapped %lX",lf>, eax, edi, edx, ecx
+	shl edx, 20
+	@dprintfx ?LOG_PMGREXT,"freepagetab: release PTE=%lX at edi=%lX [region %lX]", eax, edi, edx
 endif
-		call freephyspage
-		stosd
-		cmp edi, pPoolMax
-		jc @F
-		mov pPoolMax, edi
+	call freephyspage
+	stosd
+	sub edi, esi
+	cmp edi, dwMaxPool
+	jc @F
+	mov dwMaxPool, edi
 @@:
-		popad
-		ret
-		align 4
+	popad
+	ret
+	align 4
 
 freepagetab endp
+
+if 0;def _DEBUG
+
+;--- print page directory and mapping page
+
+printpdpmp proc
+	mov esi,pPageDir
+	mov ecx,400h
+	@dprintf "region   PDE      map page"
+	@dprintf "--------------------------"
+nextitem:
+	lodsd es:[esi]
+	lea edx, [esi-4]
+	and edx, 0FFFh
+	mov ebx, edx
+	add ebx, ?SYSPGDIRAREA
+	and ebx, 0FFFh
+	add ebx, pPageTables
+	mov ebx, es:[ebx+?OFSMAPPAGE]
+	shl edx, 20
+	mov edi, eax
+	or edi, ebx
+	test edi, PTF_PRESENT
+	jz @F
+	@dprintf "%lX %lX %lX", edx, eax, ebx
+@@:
+	loop nextitem
+	ret
+printpdpmp endp
+
+endif
 
 ;--- free user address space
 ;--- IN: eax = linear address
@@ -1167,493 +1347,809 @@ freepagetab endp
 ;--- ES=FLAT
 ;--- free entries in page directory and entries in page tables
 
-		@ResetTrace
+	@ResetTrace
 
 FreeUserAddrSpace proc
 
-		pushad
-		@strout <"#pm, FreeUserAddrSpace: free space at %lX, %lX pages",lf>, eax, ecx
-		@strout <"#pm, FreeUserAddrSpace: pMaxPageTab=%lX pPoolMax=%lX",lf>, pMaxPageTab, pPoolMax
-		mov edi, eax
-		shr edi, 10 			;400000h -> 1000h, 800000 -> 2000
-		add edi, [pPageTab0]
+	pushad
+	@dprintf "FreeUserAddrSpace: addr=%lX, size=%lX, dwMaxOfsPT=%lX, dwMaxPool=%lX", eax, ecx, dwMaxOfsPT, dwMaxPool
 
-		xor ebp, ebp
-		lea edx, [edi+ecx*4]
-		cmp edx, pMaxPageTab	;is it the "last" space?
-		jnz @F
-		mov pMaxPageTab, edi
-		inc ebp
+	call Linear2PT
+
+	xor ebp, ebp
+	mov edx, edi
+	sub edx, pPageTables
+	lea edx, [edx+ecx*4]
+	cmp edx, dwMaxOfsPT	;is it the "last" space?
+	jc @F
+	sub edx, dwMaxOfsPT	;reduce size in ECX so it matches dwMaxOfsPT
+	shr edx, 2
+	sub ecx, edx
+	mov eax, edi
+	sub eax, pPageTables
+	mov dwMaxOfsPT, eax	;set new, decreased dwMaxOfsPT
+	inc ebp
 @@:
-
-		xor eax, eax
-		xor edx, edx			;count entries in page table
-		xor ebx, ebx
+	xor eax, eax
+	xor edx, edx		;count entries in page table
+	xor ebx, ebx
 if _LTRACE_
-		xor esi, esi
+	xor esi, esi
 endif
-;----------------------------------- clear entries in page table
-		jecxz exit
+	cmp ecx, eax
+	jz exit
+
+;--- clear entries in page table
+
 nextpage:
-		test di, 0FFFh
-		jnz @F
-		cmp dx, 400h			;all pages in pagetab
-		jnz noclear
+	mov eax,es:[edi]		;this is always uncommitted memory
+	test ah,_XMSFLAG_		;page pool item?
+	jnz @F
+	mov dword ptr es:[edi],0
+	inc ebx
+@@:
+	add edi, 4
+	inc edx
+	test di, 0FFFh
+	jnz @F
+	cmp dh, 4				;all 400h pages in pagetab?
+	jnz noclear
 if _LTRACE_
-		inc esi
+	inc esi
 endif
-		cmp edx, ebx			;were all pages released?
-		setz bl
-		lea edx, [edi-1000h]
-		call freepagetab
+	cmp edx, ebx			;were all pages released?
+	setz bl					;BL=1 if no PTE was in page pool 
+	lea edx, [edi-1000h]
+	call freepagetab
 noclear:
-		xor edx,edx
-		xor ebx,ebx
+	xor edx,edx
+	xor ebx,ebx
 @@:
-								;this is always uncommitted memory
-		mov eax,es:[edi]
-		test ah,_XMSFLAG_		;but is a page pool page assigned?
-		jnz @F
-		mov dword ptr es:[edi],0
-		inc ebx
-@@:
-		add edi, 4
-		inc edx
-		dec ecx
-		jnz nextpage
+	loop nextpage
 
-		and ebp, ebp			;was it at the end?
-		jz @F
-		mov eax, edi
-		and ax, 0F000h
-		sub edi, eax
-		shr edi, 2				;PTEs in last page table
-		@strout <"#pm, FreeUserAddrSpace: last page table entries: %lX %X %X",lf>, edi, dx, bx
-		cmp edi, edx
-		jnz @F
-		cmp edx, ebx
-		setz bl
-		mov edx, eax
-		call freepagetab
+	and ebp, ebp			;was it at the end?
+	jz @F
+	@dprintf "FreeUserAddrSpace: last page table entries: edi=%lX dx=%X bx=%X", edi, dx, bx
+	mov eax, edi
+	and ax, 0F000h
+	sub edi, eax
+	jz @F
+	shr edi, 2				;PTEs in last page table
+	cmp edi, edx
+	jnz @F
+	cmp edx, ebx
+	setz bl
+	mov edx, eax
+	call freepagetab
 @@:
-		@strout <"#pm, FreeUserAddrSpace: %X pages for page tables freed",lf>, si
+	@dprintf "FreeUserAddrSpace: %X pages for page tables freed, dwMaxOfsPT=%lX, dwMaxPool=%lX", si, dwMaxOfsPT, dwMaxPool
+if 0;def _DEBUG
+	call printpdpmp
+endif
+if 1
+	mov eax,cr3
+	mov cr3,eax
+endif
 exit:
-		popad
-		ret
-		align 4
+	popad
+	ret
+	align 4
 FreeUserAddrSpace endp
 
-;*** allocate user address space
-;*** in: ECX=pages, DS=GROUP16, ES=FLAT
-;*** out: NC if successful, EAX=linear address
+;*** create user address space
+;*** in: ECX=pages, EBX=linear address
+;---     DS=GROUP16, ES=FLAT
+;*** out: NC if successful, EAX=linear address, ECX preserved.
 ;*** C on error
-;*** modifies EDI, ESI, EBX, EDX
-;*** updates: pMaxPageTab
+;*** modifies EDI, ESI, EDX
+;*** updates: dwMaxOfsPT
 ;--- 4 GB are 1.0000.0000/1000 == 100000 pages
-;--- example (pMaxPageTab = FFC20440h):
-;--- NEG(pMaxPageTab) = 3DFBC0h, SHR 2 = F7EF0h pages == F7EF0000h bytes
+;--- example (dwMaxOfsPT = 2440):
+;--- 400000h - 2440 = 3FDBC0, SHR 2 = FF6F0 pages, FF6F0000h bytes
 
-		@ResetTrace
+	@ResetTrace
 
-AllocUserAddrSpace proc near
+CreateUserAddrSpace proc near
 
-		assume ds:GROUP16
+	assume ds:GROUP16
 
-		@strout <"#pm, AllocUserAddrSpace: alloc %lX pages",lf>,ecx
-		mov edi,[pMaxPageTab]	;top used address space (may be 0!)
-;		and edi, edi
-;		jz error
-;		cmp ecx,100000h
-;		jnc error
-;		lea eax, [ecx*4+edi]
-;		cmp eax, edi			;overflow?
-;		jc error				;then insufficient free address space
-		mov eax, edi
-		neg eax
-		shr eax, 2				;remaining free pages
-		cmp ecx, eax
-		ja error
+	@dprintf "CreateUserAddrSpace: request %lX pages at %lX", ecx, ebx
 
-		push ecx
-		push edi
-		cld
-nextpage:
-		test di,0FFFh			;start of a new page table?
-		jz newpagetab
-donenewpagetab:
-		mov eax,es:[edi]
-		mov al,PTF_NORMAL
-;		 @strout <"#pm, AllocUserAddrSpace: mem page at %lX",lf>,edi
-		stosd							;save PTE in page table
-		dec ecx
-		jnz nextpage
-		mov [pMaxPageTab],edi
-		pop edx
-		pop ecx
-										;page tables are stored so that
-										;it is very simple to get linear
-										;address from pointer to PTE
-		@strout <"#pm, AllocUserAddrSpace: : edx=%lX, pPageTab0=%lX",lf>,edx,pPageTab0
-		sub edx,[pPageTab0]
-		shl edx,10					;* 1024 -> jetzt in edx die lin addr
-		mov eax, edx
-		@strout <"#pm, AllocUserAddrSpace: new addrspace generated: addr=%lX,size=%lX",lf>,eax,ecx
-		clc
-		ret
-newpagetab:
-		mov esi,edi
-		sub esi,pPageTables
-		shr esi,10					;1000h -> 004, 2000h -> 8
-		mov edx,[pPageTables]
-		mov eax,es:[esi+edx]		;get current PTE
-		test al,PTF_PRESENT
-		jnz @F
+if 0
+	mov edi,dwMaxOfsPT		;max offset so far used in SYSAREA1
+;--- if ebx==0, use dwMaxOfsPT
+;--- currently not used!
+	and ebx, ebx
+	jz @F
+endif
 
-;--- set ECX (is a parameter for XMS mem alloc)
-
-		push ecx
-		mov ecx,[esp+8]				; address space pages
-		shr ecx,10					; 1024 pages -> 1 page table
-		inc ecx
-		call getphyspagex			;get a page for new page table
-		pop ecx
-
-		jc error2
-		or al,?PAGETABLEATTR
-		call mapPageTable			;and map page table in sys region 1
+	mov eax, ebx
+	shr eax, 10
+	and al, 0FCh
+	add eax, ?SYSPGDIRAREA * 400h
+	mov edi, eax
+	sub eax, dwMaxOfsPT		;is the address below dwMaxOfsPT?
+	jbe @F
+	shr eax, 2				;if no, create more space to avoid "holes"    
+	add ecx, eax
+	mov edi, dwMaxOfsPT
 @@:
-		mov ebx, pPageDir			;get pointer to current PDE
-		mov es:[ebx+esi-?SYSPGDIRAREA],eax	;set PDE in page dir
-		jmp donenewpagetab
+	@dprintf "CreateUserAddrSpace: dwMaxOfsPT=%lX, ecx=%lX edi=%lX", dwMaxOfsPT, ecx, edi
+
+	mov eax, 400000h
+	sub eax, edi
+	shr eax, 2				;remaining free pages
+	cmp ecx, eax
+	ja error
+	add edi, pPageTables
+
+	push ebx
+	push ecx
+	push edi
+	cld
+nextpage:
+	test di,0FFFh			;start of a new page table?
+	jz newpagetab
+donenewpagetab:
+if 0	;v3.19: don't read the page tables, just update EDI
+	mov eax,es:[edi]
+	test al,PTF_PRESENT
+	jnz @F
+	mov al,PTF_NORMAL
+;	@dprintf "CreateUserAddrSpace: mem page at %lX",edi
+@@:
+	stosd					;save PTE in page table
+else
+	add edi,sizeof dword
+endif
+	dec ecx
+	jnz nextpage
+	sub edi, pPageTables
+	cmp edi, dwMaxOfsPT
+	jb @F
+	mov dwMaxOfsPT,edi
+@@:
+	pop edx
+	pop ecx
+	pop eax
+	@dprintf "CreateUserAddrSpace: new addrspace generated: addr=%lX, size=%lX, edi=%lX", eax, ecx, edi
+	clc
+	ret
+
+newpagetab:
+
+;--- convert PTE pointer EDI to offset in PT of SYSAREA1 (mapped page tables)
+;--- example:
+;--- addr 400000 -> EDI=FFC03000
+;--- subtract FFC00000 = 3000
+;--- shr 10 = 0C
+;--- load PTE of FFC00000+0C
+
+	mov esi,edi
+	mov edx, pPageTables
+	sub esi,edx
+	shr esi,10					;1000h -> 004, 2000h -> 8
+;	mov eax,es:[esi+edx]		;get current PDE
+	mov eax,es:[esi+edx+?OFSMAPPAGE]	;get current PDE
+	test al,PTF_PRESENT			;is page table mapped ( SYSAREA 1, page 1)?
+	jnz @F
+
+;--- set ECX (is just a "hint" parameter for XMS mem alloc)
+
+	push ecx
+	mov ecx,[esp+8]				; address space pages
+	shr ecx,10					; 1024 pages -> 1 page table
+	inc ecx
+	call getphyspagex			;get a page for new page table
+	pop ecx
+
+	jc error2
+	and al,0F8h
+	or al, ?PAGETABLEATTR
+	call mapPageTable			;and map page table in SYSAREA 1
+@@:
+	mov edx, pPageDir			;get pointer to current PDE
+	mov es:[edx+esi-?SYSPGDIRAREA],eax	;set PDE in page dir
+	jmp donenewpagetab
+
 error2:
-		pop edi 					;get pMaxPageTab
-		mov eax, ecx
-		mov ecx,[esp]				;total size in pages
-		@strout <"#pm, AllocUserAddrSpace: alloc %lX pages failed at %lX",lf>, ecx, eax
-		sub ecx, eax				;subtract pages not allocated so far
-		mov eax, edi
-		sub eax,[pPageTab0]
-		shl eax,10
-		invoke FreeUserAddrSpace
-		pop ecx
+	pop edi 					;get Max PageTab ptr
+	mov eax, ecx
+	mov ecx,[esp]				;total size in pages
+	@dprintf "CreateUserAddrSpace: alloc %lX pages failed at %lX", ecx, eax
+	sub ecx, eax				;subtract pages not allocated so far
+	mov eax, edi
+	sub eax, pPageTab0
+	shl eax,10
+	call FreeUserAddrSpace
+	pop ecx
+	pop ebx
 error:
-		stc
-		ret
-		align 4
+	stc
+	ret
+	align 4
 
-AllocUserAddrSpace endp
+CreateUserAddrSpace endp
 
 
+if ?DPMI10
+
+	@ResetTrace
+
+;--- get page entry attributes to es:edx
+;--- ebx = linear address
+;--- ecx = size in pages
+;--- attributes (WORD):
+;--- bit 0+1: 00=uncommitted, 01=committed, 02=mapped
+;--- bit 3: writable
+;--- bit 4: bit 5+6 valid (accessed+dirty)
+;--- it's ensured by the caller that the region is valid.
+
+pm_getpageattributes proc public
+	@dprintf "getpageattributes: lin addr %lX - copy %lX attr to %lX:%lX",ebx, ecx, es, edx
+	mov eax, ebx
+	call Linear2PT
+	push byte ptr _FLATSEL_
+	pop ds
+	mov esi, edi
+	mov edi, edx
+	jecxz done
+nextitem:
+	lodsd
+	mov edx, eax
+	mov al, 10h 			;accessed + dirty supplied
+	test dl, PTF_WRITEABLE
+	setnz ah
+	shl ah,3
+	or al, ah
+	and dl, PTF_DIRTY or PTF_ACCESSED or PTF_PRESENT
+	or al, dl
+	test al,PTF_PRESENT
+	jz @F
+	test dh,_XMSFLAG_ or _VCPIFLAG_
+	setz ah
+	add al,ah	;for mapped pages, convert committed (01) to mapped (02)
+	mov ah,0
+@@:
+	stosw
+	loopd nextitem
+done:
+	clc
+exit:
+	ret
+	align 4
+pm_getpageattributes endp
+
+if 0
+
+	@ResetTrace
+
+;--- test BX:CX region, size SI:DI
+;--- AX=bits whose value will be set (mask), dx=new value of bits
+
+;--- this is for DPMI functions 06xx and 07xx
+
+pm_setregionattributes proc public
+	pushad
+	push bx
+	push cx
+	pop eax		;start in eax
+	push si
+	push di
+	pop ecx		;size in ECX
+	@dprintf "setregionattributes: addr %lX, size %lX", eax, ecx
+	add ecx, eax
+	jc exit		;overflow
+	test dh,80h	;80h=1 -> include partial pages
+	jnz @F
+	add eax,1000h-1	;align to next page boundary
+	jmp noal1
+@@:
+	add ecx,1000h-1	;align to next page boundary
+noal1:
+	and ax,0F000h
+	and cx,0F000h
+	sub ecx, eax
+	jbe exit
+	shr ecx, 12		;get no of pages in ecx
+
+	@dprintf "setregionattributes, adjusted: addr %lX, size(pg) %lX", eax, ecx
+
+	call Linear2PT	;get PTE address in EDI
+	push byte ptr _FLATSEL_
+	pop ds
+	mov esi, edi
+	push ecx
+@@:
+	lodsd
+	test al,PTF_PRESENT
+	loopnzd @B
+	pop ecx
+	stc
+	jz exit	;at least one page is not committed
+	mov esi, edi
+	mov bx, [esp+1Ch]
+	xor bx, -1
+	or bh, 0F0h
+	and dh, 0F0h
+@@:
+	lodsd
+	and ax, bx
+	or ax, dx
+	mov [esi-4],eax
+	loopd @B
+exit:
+	popad
+	ret
+	align 4
+pm_setregionattributes endp
+
+endif
+
+;--- make region readonly
+;--- eax=linear address
+;--- ecx=pages
+
+pm_makeregionreadonly proc public
+	pushad
+	call Linear2PT
+@@:
+	and byte ptr es:[edi],not PTF_WRITEABLE
+	add edi,4
+	loop @B
+	mov ebx,[esp].PUSHADS.rEAX
+	mov ecx,[esp].PUSHADS.rECX
+	call updatetlb
+	popad
+	ret
+pm_makeregionreadonly endp
+
+;--- clear tlb for linear address EBX, size ECX pages
+
+updatetlb proc
+if ?USEINVLPG
+	cmp ecx,10	;it's faster to avoid INVLPG for 10+ pages
+	jnc noinvlpg
+	test ss:[fMode2],FM2_NOINVLPG	;option -g or cpu=80386?
+	jnz noinvlpg
+	push ds
+	push byte ptr _FLATSEL_
+	pop ds
+@@:
+	invlpg ds:[ebx]
+	add ebx, 1000h
+	loopd @B
+	pop ds
+	ret
+noinvlpg:
+endif
+	mov eax, cr3
+	mov cr3, eax
+	ret
+	align 4
+updatetlb endp
+
+;--- int 31h, ax=0507: set page entry attributes
+;--- ebx = linear address
+;--- ecx = size in pages
+;--- es:edx -> table of WORDS with attributes for each page
+;--- all std registers + DS, but not ES may be modified here
+;--- out: NC = ok
+;--- C = failure
+
+	@ResetTrace
+
+pm_setpageattributes proc public
+	@dprintf "setpageattr: lin addr %lX - copy %lX attr from %lX:%lX",ebx, ecx, es, edx
+	mov eax, ebx
+	call Linear2PT
+	push byte ptr _FLATSEL_
+	pop ds
+	mov esi, edx
+	mov ebp, ecx
+nextitem:
+	and ecx, ecx
+	jz done
+	mov ax, es:[esi]
+	inc esi
+	inc esi
+	mov edx,[edi]		;get PTE
+	push ss
+	pop ds
+	mov ah,al
+	and ah,7		   ;001 = committed, 000=uncommitted
+	cmp ah,1			;should page be committed?
+	jnz @F
+	test dl,PTF_PRESENT
+	jnz step1			;jmp if page is already committed
+	push ecx
+	push eax
+	mov eax, edx
+	call getphyspagex	;expects in ECX a hint for XMS block size
+	mov edx, eax
+	pop eax
+	pop ecx
+	jc error		;error, out of physical pages!
+	@dprintf "setpageattr: page %lX [old=%lX] committed [pt=%lX]",eax, edx, edi
+	or dl, PTF_PRESENT or PTF_USER
+	jmp step1
+@@:
+	cmp ah,0			;should page be uncommitted?
+	jnz nouncommit
+	test dl,PTF_PRESENT
+	jz nouncommit		;jump if it is already uncommitted
+	push eax
+if _LTRACE_
+	mov eax, edi
+	push ecx
+	call PT2Linear
+	pop ecx
+	@dprintf "setpageattr: page %lX, lin addr=%lX uncommitted [pt=%lX]",edx, eax, edi
+endif
+	mov  eax, edx
+	call freephyspage
+	lea edx, [edi+4]
+	sub edx, ss:pPageTables
+	cmp edx, ss:dwMaxPool
+	jc @F
+	mov ss:dwMaxPool, edx
+@@:
+	mov edx, eax
+	pop eax
+nouncommit:
+step1:
+	and dl, not PTF_WRITEABLE
+	test al,08h
+	jz @F
+	or dl, PTF_WRITEABLE
+@@:
+	test al,10h 			;accessed + dirty bits supplied
+	jz @F
+	and dl, not (PTF_ACCESSED or PTF_DIRTY)
+	and al,PTF_ACCESSED or PTF_DIRTY
+	or dl, al
+@@:
+	push byte ptr _FLATSEL_
+	pop ds
+	mov [edi], edx
+	add edi, 4
+	dec ecx
+	jmp nextitem
+done:
+	mov ecx, ebp
+	call updatetlb
+	clc
+exit:
+	ret
+error:
+	sub ebp,ecx
+	mov ecx,ebp		;return pages changed in ECX
+	stc
+	ret
+	align 4
+
+pm_setpageattributes endp
+
+endif
 
 ;-------------------------------------------------------
 
 ;*** get user address space
 ;*** RC: C on errors
-;*** Inp: EAX num pages
-;*** out: EAX=linear address, EDX = pages
+;*** Inp: ECX = #pages
+;---      ebx = linear address
+;*** out: EAX=linear address
 ;--- DS=GROUP16
 
-_AllocUserSpace proc public
+pm_AllocUserSpace proc public
 
-		push es
-		pushad
-		push byte ptr _FLATSEL_
-		pop es
-		mov ecx, eax
-		call AllocUserAddrSpace
-		jc @F
-		mov [esp].PUSHADS.rEAX, eax
-		mov [esp].PUSHADS.rEDX, ecx
+	push es
+	pushad
+	push byte ptr _FLATSEL_
+	pop es
+	call CreateUserAddrSpace
+	jc @F
+	mov [esp].PUSHADS.rEAX, eax
 @@:
-		popad
-		pop es
-		ret
-		align 4
-_AllocUserSpace endp
+	popad
+	pop es
+	ret
+	align 4
+pm_AllocUserSpace endp
 
-;*** Inp: ECX num pages
-;*** Inp: EAX linear address
+;--- this functions is called by _freeclientmemory()
+;--- if the full client space is free.
+;*** In: EAX linear address
+;*** In: ECX num pages
 
-_FreeUserSpace proc public
+pm_FreeUserSpace proc public
 
-		push es
-		pushad
-		push byte ptr _FLATSEL_
-		pop es
-		call FreeUserAddrSpace
-		popad
-		pop es
-		ret
-		align 4
-_FreeUserSpace endp
+	push es
+	pushad
+	push byte ptr _FLATSEL_
+	pop es
+	call FreeUserAddrSpace
+	popad
+	pop es
+	ret
+	align 4
+pm_FreeUserSpace endp
 
-		@ResetTrace
+	@ResetTrace
 
-_CommitRegion proc near public
-		mov dl,PTF_PRESENT or PTF_WRITEABLE or PTF_USER
-_CommitRegion endp	;fall throu
+;--- commit region u/ser, r/w and p/resent
+
+pm_CommitRegion proc near public
+	mov dl,PTF_PRESENT or PTF_WRITEABLE or PTF_USER
+pm_CommitRegion endp	;fall throu
 
 ;*** commit a region
-;--- INP: EAX=linear addr, ECX=size in pages, DL=page flags
+;--- IN: EAX=linear addr
+;---     ECX=size in pages
+;---      DL=page flags
 ;--- modifies ES (=FLAT)
 
 commitblockx proc near
-		pushad
-		push byte ptr _FLATSEL_
-		pop es
-		call _Linear2PT
-		jc error
-		@strout <"#pm, CommitBlock: alloc %lX pages at %lX, ptr PTE=%lX",lf>,ecx,eax,edi
+	pushad
+	push byte ptr _FLATSEL_
+	pop es
+	call Linear2PT
+	@dprintf "commitblockx: alloc %lX pages at %lX, ptr PTE=%lX",ecx,eax,edi
 nextpage:						;<---- commit next page
-		mov eax,es:[edi]
-		push edx
-		call getphyspagex	;expects in ECX a hint for XMS block size
-		pop edx
-		jc error
+	mov eax,es:[edi]
+	push edx
+	call getphyspagex	;expects in ECX a hint for XMS block size
+	pop edx
+	jc error
 if _LTRACE_
-		test cx,0FFFh
-		jnz @F
-		@strout <"#pm, CommitBlock: commit page %lX at %X:%lX, remaining %lX",lf>,eax,es,edi, ecx
+	test cx,0FFFh
+	jnz @F
+	@dprintf "commitblockx: commit page %lX at %lX, remaining %lX", eax, edi, ecx
 @@:
 endif
-;		and al,098h 		;reset DIRTY, ACCESSED, SYS, WRIT, PRES
-		and al,not (PTF_DIRTY or PTF_ACCESSED or PTF_USER or PTF_WRITEABLE or PTF_PRESENT)
-		or al,dl
-		stosd
-		dec ecx
-		jnz nextpage
-		clc
+;	and al,098h 		;reset DIRTY, ACCESSED, SYS, WRIT, PRES
+	and al,not (PTF_DIRTY or PTF_ACCESSED or PTF_USER or PTF_WRITEABLE or PTF_PRESENT)
+	or al,dl
+	stosd
+	dec ecx
+	jnz nextpage
+	clc
 exit:
-		popad
-		ret
+	popad
+	ret
 error:
-		@strout <"#pm, CommitBlock: alloc failed, remaining %lX pages, pPoolMax=%lX",lf>,ecx, ss:pPoolMax
-		mov eax, ecx
-		mov ecx, [esp].PUSHADS.rECX
-		sub ecx, eax
-		jecxz error_done
-		cmp edi, ss:pPoolMax
-		jc @F
-		mov ss:pPoolMax,edi
+	@dprintf "commitblockx: alloc failed, remaining %lX pages, dwMaxPool=%lX",ecx, ss:dwMaxPool
+	mov eax, ecx
+	mov ecx, [esp].PUSHADS.rECX
+	sub ecx, eax
+	jecxz error_done
+	mov eax, edi
+	sub eax, ss:pPageTables
+	cmp eax, ss:dwMaxPool
+	jc @F
+	mov ss:dwMaxPool,eax
 @@:
-		sub edi,4
-		mov eax,es:[edi]
-		call freephyspage
-		mov es:[edi], eax
-		loopd @B
+	sub edi,4
+	mov eax,es:[edi]
+	call freephyspage
+	mov es:[edi], eax
+	loopd @B
 error_done:
-		@strout <"#pm, CommitBlock: alloc failed, pPoolMax=%lX",lf>,ss:pPoolMax
-		stc
-		jmp exit
-		align 4
+	@dprintf "commitblockx: alloc failed, dwMaxPool=%lX",ss:dwMaxPool
+	stc
+	jmp exit
+	align 4
 commitblockx endp
 
 ;*** uncommit memory region
 ;*** EAX=linear address, ECX=size in pages
 ;--- eax, ecx, edx modified
 
-_UncommitRegion proc public
-		jecxz exit
-		mov edx, eax			;save linear address begin
-		push es
-		push byte ptr _FLATSEL_
-		pop es
-		@strout <"#pm, UncommitRegion: free %lX pages at %lX, pPoolMax=%lX",lf>,ecx,eax,ss:pPoolMax
-		call _Linear2PT
-		push ebx
-		push ecx
-		mov ebx,ss:pPoolMax
+pm_UncommitRegion proc public
+	jecxz exit
+	mov edx, eax			;save linear address begin
+	push es
+	push byte ptr _FLATSEL_
+	pop es
+	@dprintf "UncommitRegion enter: freeing %lX pages at %lX, dwMaxPool=%lX, dwPagePool=%lX",ecx,eax,ss:dwMaxPool,ss:dwPagePool
+	call Linear2PT
+	push ebx
+	push ecx
+	mov ebx,ss:dwMaxPool
+	add ebx,ss:pPageTables
 nextpage:
-		mov eax,es:[edi]
-		call freephyspage
-		test ah,_XMSFLAG_
-		stosd
-		jz @F
-		mov ebx, edi
+	mov eax,es:[edi]
+	call freephyspage
+	test ah,_XMSFLAG_
+	stosd
+	jz @F
+	mov ebx, edi
 @@:
-		loopd nextpage
-		cmp ebx, ss:pPoolMax
-		jc @F
-		mov ss:pPoolMax,ebx
+	loopd nextpage
+	sub ebx, ss:pPageTables
+	cmp ebx, ss:dwMaxPool
+	jc @F
+	mov ss:dwMaxPool,ebx
 @@:
-		@strout <"#pm, UncommitRegion: pPoolMax=%lX",lf>,ss:pPoolMax
-		pop ecx
-		mov ebx, edx
-;		call updatetlb
-		pop ebx
-		pop es
+	@dprintf "UncommitRegion exit: dwMaxPool=%lX, dwPagePool=%lX",ss:dwMaxPool,ss:dwPagePool
+	pop ecx
+	mov ebx, edx
+	call updatetlb
+	pop ebx
+	pop es
 exit:
-		ret
-		align 4
+	ret
+	align 4
 
-_UncommitRegion endp
+pm_UncommitRegion endp
 
 ;--- move PTEs from one block to another
 ;--- eax = lin addr of old block
 ;--- edx = lin addr of new block
 ;--- ecx = size in pages (may be 0)
 
-_MovePTEs proc public uses es esi edi ebx
-		push byte ptr _FLATSEL_
-		pop es
-		@strout <"#pm, MovePTEs: mov %lX pages from %lX to %lX",lf>,ecx,eax,edx
-		push eax
-		push ecx
+pm_MovePTEs proc public uses es esi edi ebx
+	push byte ptr _FLATSEL_
+	pop es
+	@dprintf "MovePTEs: mov %lX pages from %lX to %lX",ecx,eax,edx
+	push eax
+	push ecx
 
-		call _Linear2PT
-		mov esi, edi
-		mov eax, edx
-		call _Linear2PT
-		push ds
-		push es
-		pop ds
-		push esi
-		push ecx
-		rep movsd
-		pop ecx
-		pop edi
-		pop ds
-		mov eax, PTF_NORMAL
-		rep stosd
+	call Linear2PT
+	mov esi, edi
+	mov eax, edx
+	call Linear2PT
+	push ds
 
-		pop ecx
-		pop ebx
-;		call updatetlb
-;		@strout <"#pm, MovePTEs: exit",lf>
-		ret
-		align 4
-_MovePTEs endp
+	push es
+	pop ds
+	push esi
+	push ecx
+	rep movsd
+	pop ecx
+	pop edi
 
-		@ResetTrace
+;--- clear PTEs in src block
+	pop ds
+	mov eax, PTF_NORMAL
+	rep stosd
+
+	pop ecx
+	pop ebx
+	call updatetlb
+;	@dprintf "MovePTEs: exit"
+	ret
+	align 4
+pm_MovePTEs endp
+
+	@ResetTrace
 
 ;*** dl=flags,eax=lin addr, ecx=pages ***
 
-_CommitRegionZeroFill proc public
+pm_CommitRegionZeroFill proc public
 
-		@strout <"#pm, commit region %lX, size %lX",lf>,eax,ecx
-		call commitblockx	;will set es to FLAT
-		jc @F
-		cld
-		pushad
-		mov edi,eax
-		xor eax,eax
-		@strout <"#pm, zerofill region %lX:%lX, size %lX",lf>,es,edi,ecx
-		shl ecx,10
-		rep stosd
-		popad
+	push es
+	@dprintf "CommitRegionZeroFill: addr=%lX, size=%lX", eax, ecx
+	call commitblockx	;will set es to FLAT, other regs unchanged
+	jc @F
+	cld
+	pushad
+	mov edi,eax
+	xor eax,eax
+	@dprintf "CommitRegionZeroFill: addr=%lX, size=%lX", edi, ecx
+	shl ecx,10
+	rep stosd
+	popad
 @@:
-		ret
-		align 4
-_CommitRegionZeroFill endp
+	pop es
+	ret
+	align 4
+pm_CommitRegionZeroFill endp
 
-;--- allocate address space in system region
+;--- allocate address space in system region 0
 ;--- cannot be freed anymore
 ;--- IN: ECX pages
 ;--- OUT: EAX=linear address
 
-		@ResetTrace
+	@ResetTrace
 
-_AllocSysAddrSpace proc public
-		mov eax,[SysAddrSpace]
-		cmp [SysAddrSize],ecx
-		jc error
-		sub [SysAddrSize],ecx
-		shl ecx,12
-		add [SysAddrSpace],ecx
-		@strout <"#pm, allocsysaddrspace: block %lX, remaining pages: %lX",lf>,eax, SysAddrSize
+pm_AllocSysAddrSpace proc public
+	mov eax, SysAddrUp
+	shl ecx,12
+	add ecx, eax
+	cmp SysAddrDown, ecx
+	jc error
+	mov SysAddrUp, ecx
+	@dprintf "AllocSysAddrSpace: block %lX, SysAddrUp/Dn=%lX/%lX", eax, SysAddrUp, SysAddrDown
 error:
-		ret
-		align 4
-_AllocSysAddrSpace endp
+	ret
+	align 4
+pm_AllocSysAddrSpace endp
 
+if 0
+;--- not really useful, since if WP bit is set,
+;--- we cant do anything with such pages.
+;--- so alloc pages with pm_AllocSysPages, fill them
+;--- and then make them r/o!
+
+;--- alloc pages with attr p/resent, r/o, u/ser
 ;*** IN: ECX pages, DS=GROUP16
 ;--- OUT: EAX=Addr
 
-_AllocSysPagesRo proc public
-		mov dl,PTF_PRESENT or PTF_USER
-		jmp AllocSysPages_Common
-		align 4
-_AllocSysPagesRo endp
-
-_AllocSysPagesX proc public
-		mov dl,PTF_PRESENT or PTF_WRITEABLE    ;system page
-		jmp AllocSysPages_Common
-		align 4
-_AllocSysPagesX endp
-
-;--- leaves ES unmodified
-
-_AllocSysPages proc public
-		mov dl,PTF_PRESENT or PTF_WRITEABLE or PTF_USER  ;user page
-AllocSysPages_Common::
-		mov eax,[SysAddrSpace]
-		cmp [SysAddrSize],ecx
-		jc error
-		push es
-		pushad
-		call _CommitRegionZeroFill	;first do a commit
-		popad
-		pop es
-		jc error					;no more memory
-		push ecx
-		call _AllocSysAddrSpace		;now allocate address space
-		pop ecx
-error:
-		ret
-		align 4
-_AllocSysPages endp
-
-if ?USESYSSPACE2
-_AllocSysPages2 proc public
-		cmp [SysAddrSize],ecx
-		jc error
-		mov edx,ecx
-		shl edx,12
-		mov eax,[SysAddrSpace2]
-		sub eax,edx
-		call _CommitRegion
-		jc error
-		mov [SysAddrSpace2],eax
-		sub [SysAddrSize],ecx
-error:
-		ret
-		align 4
-_AllocSysPages2 endp
-
-_FreeSysPages2 proc public
-		push ecx
-		push eax
-		call _UncommitRegion
-		pop eax
-		pop ecx
-		cmp eax,[SysAddrSpace2]
-		jnz @F
-		add [SysAddrSize],ecx
-		mov edx,ecx
-		shl edx,12
-		add [SysAddrSpace2],edx
-@@:
-		ret
-		align 4
-_FreeSysPages2 endp
+pm_AllocSysPagesRo proc public
+	mov dl,PTF_PRESENT or PTF_USER
+	jmp AllocSysPages_Common
+	align 4
+pm_AllocSysPagesRo endp
 endif
 
-;--- alloc committed memory in user address space
-;--- in:ECX=pages
-;--- out: eax=linear address
+;--- alloc ecx pages with attr p/resent, r/w, s/ystem
 
-_AllocUserPages proc public
-		pushad
-		call AllocUserAddrSpace
-		jc exit
-		call _CommitRegion
-		jc exit		;the address space cannot be freed currently
-		mov [esp].PUSHADS.rEAX, eax
-exit:
-		popad
-		ret
-		align 4
-_AllocUserPages endp
+pm_AllocSysPagesS proc public
+	mov dl,PTF_PRESENT or PTF_WRITEABLE
+	jmp AllocSysPages_Common
+	align 4
+pm_AllocSysPagesS endp
+
+;--- alloc ecx pages with attr p/resent, r/w, u/ser
+;--- return linear address in EAX
+
+pm_AllocSysPagesU proc public
+	mov dl,PTF_PRESENT or PTF_WRITEABLE or PTF_USER
+AllocSysPages_Common::
+	push SysAddrUp
+	push ecx
+	call pm_AllocSysAddrSpace	;allocate address space
+	pop ecx
+	jc error
+	call pm_CommitRegionZeroFill;first do a commit
+	jc error					;no more memory
+	add esp,4
+	ret
+error:
+	pop SysAddrUp
+	ret
+	align 4
+pm_AllocSysPagesU endp
+
+if ?USESYSSPACE2
+pm_AllocSysPagesDn proc public
+	mov edx, ecx
+	shl edx, 12
+	mov eax, SysAddrDown
+	sub eax, edx
+	cmp eax, SysAddrUp
+	jb error
+	mov dl,PTF_PRESENT or PTF_WRITEABLE
+;	call pm_CommitRegion;alloc pages u/ser, r/w
+	call commitblockx	;alloc pages s/ystem, r/w
+	jc error
+	mov SysAddrDown, eax
+error:
+	ret
+	align 4
+pm_AllocSysPagesDn endp
+
+;--- free system region, eax=linear addr, ecx=pages
+;--- out: nothing?
+
+pm_FreeSysPagesDn proc public
+	push ecx
+	push eax
+	call pm_UncommitRegion
+	pop eax
+	pop ecx
+	cmp eax, SysAddrDown
+	jnz @F
+	mov edx,ecx
+	shl edx,12
+	@dprintf "pm_FreeSysPagesDn: update SysAddrDown, %lX + %lX", SysAddrDown, edx
+	add SysAddrDown,edx
+@@:
+	ret
+	align 4
+pm_FreeSysPagesDn endp
+endif
 
 ;*** destructor routines Page Manager PM
 
@@ -1665,227 +2161,251 @@ if ?FREEVCPIPAGES
 ;---      EDI -> host stack
 ;---      ECX = cnt pages
 
-		@ResetTrace
+	@ResetTrace
 
 freememblock proc
 
-		jecxz exit
+	jecxz exit
 nextitem:
-		mov eax, es:[esi]
-		test al,1
-		jz skipitem
-		test ah,_VCPIFLAG_
-		jz skipitem
-		@strout <"#pm: free page %lX at %lX",lf>, eax, esi
-		test bl,1
-		jz @F
-		call freephyspage
-		mov es:[esi],eax
-		jmp skipitem
+	mov eax, es:[esi]
+	test al,1
+	jz skipitem
+	test ah,_VCPIFLAG_
+	jz skipitem
+	@dprintf "freememblock: free page %lX at %lX", eax, esi
+	test bl,1
+	jz @F
+	call freephyspage
+	mov es:[esi],eax
+	jmp skipitem
 @@:
-		mov [edi], eax
-		add edi, 4
+if ?HSINEXTMEM
+	mov es:[edi+ebp], eax
+else
+	mov [edi], eax
+endif
+	add edi, 4
 skipitem:
-		add esi, 4
-		loopd nextitem
+	add esi, 4
+	loopd nextitem
 exit:
-		ret
-		align 4
+	ret
+	align 4
 freememblock endp
 
 ;--- DS=GROUP16
 
-		@ResetTrace
+	@ResetTrace
 
 FreeVCPIPages proc uses esi
 
-		test fHost,FH_VCPI
-		jz exit
-		cld
-		push byte ptr _FLATSEL_
-		pop es
+	test fHost,FH_VCPI
+	jz exit
+	cld
+	push byte ptr _FLATSEL_
+	pop es
 
-		@strout <"#pm: FreeVCPIPages entry, di=%X",lf>, di
+	@dprintf "FreeVCPIPages: entry, di=%X", di
 
 ;--- copy system region FF800000 pages to host stack
 
-		mov bl,0
+	mov bl,0
 
-		mov esi, [pPageTables]
-		add esi, 1000h
-		mov ecx, 400h
-		@strout <"#pm: free sys space=%lX, entries=%lX",lf>, esi, ecx
-		call freememblock
-		
+	mov esi, pPageTables
+;	add esi, 1000h	;v3.19: page tables for SYSAREA0 are now mapped at pPageTables+0
+
+	mov ecx, 400h
+	@dprintf "FreeVCPIPages: free sys space=%lX, entries=%lX", esi, ecx
+	call freememblock
+
 ;--- free mapped page tables FFC00000 pages 
 
-		mov bl,1
+	mov bl,1
 
-		mov esi, [pPageTables]
+	mov esi, pPageTables
+	add esi, ?OFSMAPPAGE	;v3.19: page tables for SYSAREA1 are now mapped at pPageTables+1000h
 if 1
-		lea esi, [esi+3*4]
-		mov ecx, 400h-3
+	lea esi, [esi+3*4]
+	mov ecx, 400h-3
 else
-		lea esi, [esi+2*4]	
-		mov ecx, 400h-2
+	lea esi, [esi+2*4]
+	mov ecx, 400h-2
 endif
-		@strout <"#pm: free sys space=%lX, entries=%lX",lf>, esi, ecx
-		call freememblock
+	@dprintf "FreeVCPIPages: free sys space=%lX, entries=%lX", esi, ecx
+	call freememblock
 
 ;--- free anything from 004-FF8 in page dir
 
-		mov esi, pPageDir			;linear address page dir
-		lea esi, [esi+4]
-		mov ecx,400h-3
-		@strout <"#pm: free page tables in page dir %lX, entries=%lX",lf>, esi, ecx
-		call freememblock
+	mov esi, pPageDir			;linear address page dir
+	lea esi, [esi+4]
+	mov ecx,400h-3
+	@dprintf "FreeVCPIPages: free page tables in page dir %lX, entries=%lX", esi, ecx
+	call freememblock
 
 ;--- copy the rest to host stack
 
-		mov bl,0
+	mov bl,0
 
-		mov esi, pPageDir			;linear address page dir
-		mov ecx,400h
-		call freememblock
+	mov esi, pPageDir			;linear address page dir
+	mov ecx,400h
+	call freememblock
 
-		@strout <"#pm: FreeVCPIPages exit, di=%X",lf>, di
+	@dprintf "FreeVCPIPages: exit, di=%X", di
 exit:
-		ret
-		align 4
+	ret
+	align 4
 
 FreeVCPIPages endp
 
 endif
 
-if ?SETCOPYPTE
+if ?SETPTE
 
+;--- set a PTE for a linear address
 ;--- edx=linear address
 ;--- eax=new PTE
 ;--- DS=GROUP16, ES=FLAT
+;--- returns the old PTE in eax
 
-		@ResetTrace
+	@ResetTrace
 
-_SetPage proc public
-		pushad
-		@strout <"#pm, SetPage: edx=%lX, eax=%lX",lf>, edx, eax
-		mov eax, edx
-		call _Linear2PT
-		mov eax, [esp].PUSHADS.rEAX
-		xchg eax, es:[edi]
-		test al,PTF_PRESENT
-		jz notcommitted
-		and al, not PTF_PRESENT
-;--- save old PTE in page pool
-		mov edi, pPageTables
-		mov ecx, pPoolMax
-		mov ebx, pMaxPageTab
-		cmp ecx, ebx
-		jnc @F
-		mov ecx, ebx
-@@:
-nextitem:
-		cmp edi, ecx
-		jnc notfound
-		mov ebx, es:[edi]
-		add edi, 4
-		test bl,PTF_PRESENT
-		jnz nextitem
-		test bh, _XMSFLAG_
-		jnz nextitem
-		mov es:[edi-4],eax
-		jmp pagestored
-notfound:
-		mov es:[edi], eax
-		mov pPoolMax, edi
-pagestored:
-		inc dwPagePool
-notcommitted:
-		mov ecx, 1
-		mov ebx, edx
-		call updatetlb
-		popad
-		ret
-		align 4
-_SetPage endp
+pm_SetPage proc public
+	pushad
+	@dprintf "SetPage: edx=%lX, eax=%lX", edx, eax
+	mov eax, edx
+	call Linear2PT		;convert address in EAX to ptr PTE in EDI
+	mov eax, [esp].PUSHADS.rEAX
+	xchg eax, es:[edi]	;set the new PTE
+	mov [esp].PUSHADS.rEAX, eax
+	mov ecx, 1
+	mov ebx, edx
+	call updatetlb
+exit:
+	popad
+	ret
+	align 4
+pm_SetPage endp
 
 endif
 
 ;--- inp: edx=linear address to copy from
+;---      ecx=pages to clone; that's just a hint,
+;---          always 1 page will be cloned.
 ;--- DS=GROUP16, ES=FLAT
-;--- out: eax=(old) PTE of cloned page
+;--- out: C=error 
+;--- eax=(new) destination PTE
+;--- ecx=(old) source PTE
 
-_ClonePage proc public
-		push edx
-		push ebx
-		call getphyspage
-		pop ebx
-		pop edx
-		jc @F
-		@strout <"#pm, _CopyPage: addr=%lX, new PTE=%lX",lf>, edx, eax
-		call CopyPageContent
-		@strout <"#pm, _CopyPage: old PTE=%lX",lf>, eax
+_ClonePage proc
+	push edi
+	push eax
+	mov eax, edx
+	call Linear2PT
+	pop eax
+ifdef ?PE
+	test byte ptr es:[edi],PTF_WRITEABLE
+	jnz @F
+else
+	test byte ptr es:[edi],PTF_DIRTY
+	jnz @F
+endif
+	mov eax, es:[edi]
+	mov ecx, eax
+	and ax, 0F000h or PTF_PRESENT or PTF_USER
+	@dprintf "ClonePage: addr=%lX, just PTE=%lX copied", edx, eax
+ifndef _DEBUG
+error1:
+endif
+	pop edi
+	ret
+ifdef _DEBUG
+error1:
+	@dprintf "ClonePage: addr=%lX, Linear2PT() failed", edx
+	pop edi
+	ret
+endif
 @@:
-		ret
-		align 4
+	pop edi
+	push edx
+	push ebx
+	call getphyspage	;get a free PTE
+	pop ebx
+	pop edx
+	jc error
+	@dprintf "ClonePage: addr=%lX, new PTE=%lX", edx, eax
+	call CopyPageContent
+	@dprintf "ClonePage: dest PTE=%lX, src PTE=%lX", eax, ecx
+error:
+	ret
+	align 4
 _ClonePage endp
 
-;--- edx=linear address to copy from
+;--- edx=linear address of source to copy from
 ;--- eax=new PTE to copy to
-;--- out: eax=(old) PTE
 
-		@ResetTrace
+;--- out: eax=(new) PTE, where content has been copied to
+;---      edx=(old) PTE, where content has been copied from
+
+	@ResetTrace
 
 CopyPageContent proc
-		pushad
-		cld
-		mov ebx, eax
-		mov esi, edx
+	pushad
+	cld
+	mov ebx, eax
+	mov esi, edx
 
 ;--- map the dest PTE
 
-		or bl,PTF_PRESENT
-		mov es:[(?SYSTEMSPACE+4)*100000h+1000h],ebx
-		mov edi, ?SYSTEMSPACE*100000h
+	or bl,PTF_PRESENT
+;--- map the page in first entry of sysarea 0
+	mov es:[?PTSYSAREA0], ebx
+	mov edi, ?SYSAREA0
 
-		push ds
+	push ds
 
 ;--- copy page content
 
-		push es
-		pop ds
-		mov ecx, 1000h/4
-		rep movsd
+	push es
+	pop ds
+	mov ecx, 1000h/4
+	rep movsd
 
 ;--- get current PTE
 
-		mov eax, edx
-		call _Linear2PT
-		mov eax, es:[edi]
+	mov eax, edx
+	call Linear2PT
+	mov eax, es:[edi]
 
 if 0
 ;--- set new PTE
-		mov [esp+4].PUSHADS.rEAX, eax
-		and al,PTF_PRESENT or PTF_WRITEABLE or PTF_USER
-		and bl, not (PTF_PRESENT or PTF_WRITEABLE or PTF_USER)
-		or bl,al
-		mov es:[edi],ebx
+	mov [esp+4].PUSHADS.rEAX, eax
+	and al,PTF_PRESENT or PTF_WRITEABLE or PTF_USER
+	and bl, not (PTF_PRESENT or PTF_WRITEABLE or PTF_USER)
+	or bl,al
+	mov es:[edi],ebx
 else
-		and al,PTF_PRESENT or PTF_WRITEABLE or PTF_USER
-		or byte ptr [esp+4].PUSHADS.rEAX, al
+	mov [esp+4].PUSHADS.rECX, eax	;v3.18: return old PTE in ecx
+	and al,PTF_PRESENT or PTF_WRITEABLE or PTF_USER
+	or byte ptr [esp+4].PUSHADS.rEAX, al
 endif
 
 ;--- update TLB
 
-		xor ecx, ecx
-		mov es:[(?SYSTEMSPACE+4)*100000h+1000h],ecx
-		inc ecx
-		mov ebx, ?SYSTEMSPACE*100000h
-;		call updatetlb
-		pop ds
-		popad
-		clc
-		ret
-		align 4
+	xor ecx, ecx
+	mov es:[?PTSYSAREA0],ecx
+	inc ecx
+	mov ebx, ?SYSAREA0
+	call updatetlb
+if 0
+	mov ecx, 1
+	lea ebx, [esi-1000h]
+	call updatetlb
+endif
+	pop ds
+	popad
+	clc
+	ret
+	align 4
 CopyPageContent endp
 
 
@@ -1894,305 +2414,342 @@ if ?FREEXMSDYN
 ;--- check the committed pages if one is
 ;--- contained in current block. If no, release block + clear PTEs in pool
 
-		@ResetTrace
+	@ResetTrace
 
 compresspagepool proc
 
-		push es
-		push byte ptr _FLATSEL_
-		pop es
+	push es
+	push byte ptr _FLATSEL_
+	pop es
 if _LTRACE_
-		mov edx, PhysBlk.dwSize
-		sub edx, PhysBlk.dwFree		;edx=pages allocated
-		shl edx, 12
-		add edx, PhysBlk.dwBase
-		@strout <"#pm, compress e: blk base=%lX, size=%lX, free=%lX, nxt free=%lX",lf>, PhysBlk.dwBase, PhysBlk.dwSize, PhysBlk.dwFree, edx
-		@strout <"#pm, compress e: pPoolMax=%lX, dwPagePool=%lX, pMaxPageTab=%lX",lf>,pPoolMax, dwPagePool, pMaxPageTab
+	mov edx, PhysBlk.dwSize
+	sub edx, PhysBlk.dwFree		;edx=pages allocated
+	shl edx, 12
+	add edx, PhysBlk.dwBase
+	@dprintf "compresspagepool: blk base=%lX, size=%lX, free=%lX, nxt free=%lX", PhysBlk.dwBase, PhysBlk.dwSize, PhysBlk.dwFree, edx
+	@dprintf "compresspagepool: dwMaxPool=%lX, dwPagePool=%lX, dwMaxOfsPT=%lX", dwMaxPool, dwPagePool, dwMaxOfsPT
 endif
 nextblock:
-		call compresspool
-		mov edx, PhysBlk.dwBase
-		mov ebx, PhysBlk.dwSize
-		sub ebx, PhysBlk.dwFree
-		shl ebx, 12
-		add ebx, edx
-		mov ecx, pMaxPageTab
-		mov edi, pPageTables
+	call compresspool
+	mov edx, PhysBlk.dwBase
+	mov ebx, PhysBlk.dwSize
+	sub ebx, PhysBlk.dwFree
+	shl ebx, 12
+	add ebx, edx
+	mov ecx, dwMaxOfsPT
+	mov edi, pPageTables
+	add ecx, edi
 nextitem:
-		cmp edi, ecx
-		jz blockisfree
-		mov eax, es:[edi]
-		add edi, 4
-		test al,PTF_PRESENT
-		jz nextitem
-		test ah,_XMSFLAG_
-		jz nextitem
-		cmp eax, edx
-		jc nextitem
-		cmp eax, ebx
-		jnc nextitem
-;--- the page is in use, but in may be just because of the page pool		
+	cmp edi, ecx
+	jz blockisfree
+	mov eax, es:[edi]
+	add edi, 4
+	test al,PTF_PRESENT
+	jz nextitem
+	test ah,_XMSFLAG_
+	jz nextitem
+	cmp eax, edx	;> lower limit?
+	jc nextitem
+	cmp eax, ebx	;< upper limit?
+	jnc nextitem
+;--- the page is in use, but in may be just because of the page pool
 ;--- this could possibly be "ignored"
-		@strout <"#pm, compress: PTE %lX in use at %lX",lf>, eax, edi
-		mov esi, pPageTables
-		lea esi, [esi+1000h];check if page is an entry in mapping page
-		lea ebp, [edi-4]
-		cmp ebp, esi
-		jnc scandone		;no, so it can't be for page pool -> abort
-		mov esi, pMaxPageTab
-		sub esi, pPageTables
-		shr esi, 10
-		add esi, ?SYSPGDIRAREA
-		and si, 0FFFCh
-		add esi, pPageTables
-		cmp ebp, esi
-		jc scandone
-		call getpoolpage		;get a pool page, but not from current block!
-		jc scandone
-		@strout <"#pm, compress: weak usage %lX %lX",lf>, ebp, eax
-		mov esi, eax
-		mov eax, ebp
-		push edx
-		push ecx
-		call PT2Linear		;modifies ECX
-		mov edx, eax
-		mov eax, es:[esi]
-		mov ecx, eax
-		call CopyPageContent	;copy 1 Page, linear addr EDX to PTE in EAX
+	@dprintf "compresspagepool: PTE %lX in use at %lX", eax, edi
 
-		mov ecx, es:[ebp]
-		or al, PTF_PRESENT	;the new PTE must be set
-		mov es:[ebp], eax
-		and cl, not PTF_PRESENT
-		mov es:[esi], ecx	;save the old PTE in the pool
-		pop ecx
-		pop edx
-		jmp nextitem
+	lea ebp, [edi-4]
+	mov esi, pPageTables
+	lea esi, [esi+1000h];check if page is an entry in mapping page (FFC00000-FFC00FFF)
+	cmp ebp, esi
+	jnc scandone		;no, so it can't be for page pool -> abort
+
+	mov esi, dwMaxOfsPT
+;	sub esi, pPageTables
+	shr esi, 10
+	add esi, ?SYSPGDIRAREA
+	and si, 0FFFCh
+	add esi, pPageTables
+	cmp ebp, esi
+	jc scandone
+	call getpoolpage		;get a pool page, but not from current block!
+	jc scandone
+	@dprintf "compresspagepool: weak usage %lX %lX", ebp, eax
+	mov esi, eax
+	mov eax, ebp
+	push edx
+	push ecx
+	call PT2Linear		;modifies ECX
+	mov edx, eax
+	mov eax, es:[esi]
+	mov ecx, eax
+	call CopyPageContent	;copy 1 Page of linear addr EDX to PTE in EAX
+
+	mov ecx, es:[ebp]
+	or al, PTF_PRESENT	;the new PTE must be set
+	mov es:[ebp], eax
+	and cl, not PTF_PRESENT
+	mov es:[esi], ecx	;save the old PTE in the pool
+if 1
+	push ebx
+	mov ebx, edx
+	mov ecx, 1
+	call updatetlb
+	pop ebx
+endif
+	pop ecx
+	pop edx
+	jmp nextitem
 blockisfree:
-		cmp dwPagePool,0
-		jz @F
-		cmp ecx, pPoolMax
-		jnc @F
-		mov ecx, pPoolMax
+	cmp dwPagePool,0
+	jz @F
+	mov eax, dwMaxPool
+	add eax, pPageTables
+	cmp ecx, eax
+	jnc @F
+	mov ecx, eax
 @@:
-		mov edi, pPageTables
+	mov edi, pPageTables
 nextitem2:
-		cmp edi, ecx
-		jz blockdone
-		mov eax, es:[edi]
-		add edi, 4
-		test ah, _XMSFLAG_
-		jz nextitem2
-		cmp eax, edx
-		jc nextitem2
-		cmp eax, ebx
-		jnc nextitem2
-		mov dword ptr es:[edi-4], PTF_NORMAL
-		dec dwPagePool
-		jmp nextitem2
+	cmp edi, ecx
+	jz blockdone
+	mov eax, es:[edi]
+	add edi, 4
+	test ah, _XMSFLAG_
+	jz nextitem2
+	cmp eax, edx
+	jc nextitem2
+	cmp eax, ebx
+	jnc nextitem2
+	mov dword ptr es:[edi-4], PTF_NORMAL
+	dec dwPagePool
+if _LTRACE_
+	jns @F
+	@dprintf "compresspagepool: page pool cnt %lX < 0", dwPagePool
+@@:
+endif
+	jmp nextitem2
 blockdone:
-		@strout <"#pm, compress: release current PHYSBLK",lf>
-		mov eax, offset PhysBlk
-		call freephyshandle
-		call setactivephyshandle
-		test PhysBlk.bFlags, PBF_XMS
-		jnz nextblock
+	@dprintf "compresspagepool: release current PHYSBLK"
+	mov eax, offset PhysBlk
+	call freephyshandle
+	call setactivephyshandle
+	test PhysBlk.bFlags, PBF_XMS
+	jnz nextblock
 scandone:
 if _LTRACE_
-		mov edx, PhysBlk.dwSize
-		sub edx, PhysBlk.dwFree		;edx=pages allocated
-		shl edx, 12
-		add edx, PhysBlk.dwBase
-		@strout <"#pm, compress x: blk base=%lX, size=%lX, free=%lX, nxt free=%lX",lf>, PhysBlk.dwBase, PhysBlk.dwSize, PhysBlk.dwFree, edx
-		@strout <"#pm, compress x: pPoolMax=%lX, dwPagePool=%lX, pMaxPageTab=%lX",lf>,pPoolMax, dwPagePool, pMaxPageTab
+	mov edx, PhysBlk.dwSize
+	sub edx, PhysBlk.dwFree		;edx=pages allocated
+	shl edx, 12
+	add edx, PhysBlk.dwBase
+	@dprintf "compresspagepool: blk base=%lX, size=%lX, free=%lX, nxt free=%lX", PhysBlk.dwBase, PhysBlk.dwSize, PhysBlk.dwFree, edx
+	@dprintf "compresspagepool: dwMaxPool=%lX, dwPagePool=%lX, dwMaxOfsPT=%lX", dwMaxPool, dwPagePool, dwMaxOfsPT
 endif
-		pop es
-		ret
-		align 4
+	pop es
+	ret
+	align 4
+
 compresspool:
-		cld
-		mov esi, pMaxPageTab
-		mov edi, esi
-		mov ecx, pPoolMax
+	cld
+	mov esi, dwMaxOfsPT
+	mov ecx, dwMaxPool
+	sub ecx, esi
+	jc cpdone
+	shr ecx, 2
+	add esi, pPageTables
+	@dprintf "compresspool start: esi=%lX (bottom), ecx=%lX PTEs", esi, ecx
+	mov edi, esi
 @@:
-		cmp esi, ecx
-		jnc @F
-		mov eax, es:[esi]
-		add esi, 4
-;		 cmp eax, PTF_NORMAL
-;		 jz @B
-		test ah,_XMSFLAG_
-		jz @B
-		add edi, 4
-		cmp edi, esi
-		jz @B
-		@strout <"#pm, pool entry %lX at %lX",lf>, eax, edi
-		mov dword ptr es:[esi-4],PTF_NORMAL
-		mov es:[edi-4], eax
-		jmp @B
+	jecxz @F
+	mov eax, es:[esi]
+	add esi, 4
+	dec ecx
+	test ah,_XMSFLAG_
+	jz @B
+	add edi, 4
+	cmp edi, esi
+	jz @B
+	@dprintfx ?LOG_PMGREXT,"compresspool: pool entry %lX at %lX", eax, edi
+	mov dword ptr es:[esi-4],PTF_NORMAL
+	mov es:[edi-4], eax
+	jmp @B
 @@:
-		mov pPoolMax, edi
-		@strout <"#pm, pPoolMax before/after compress %lX/%lX",lf>, ecx, edi
+	mov esi, pPageTables
+	sub edi, esi
+	@dprintf "compresspool: dwMaxPool old/new=%lX/%lX", dwMaxPool, edi
+	mov dwMaxPool, edi
 
-;--- the top of the pool has been adjusted		  
-;--- now free all PTEs in the mapping page (FFC00000)
+;--- the top of the pool has been adjusted
+;--- now free all PTEs in the mapping page (FFC01xxx)
 ;--- which are beyond the new pool top
+;--- example:
+; edi=FFC02444h : sub edi,esi
+; edi= 2444h      shr edi, 10
+; edi= 09h        add edi,?SYSPGDIRAREA
+; edi= 11h        and di,0fffch
+; edi= 10h        lea edi,[edi+esi+4+1000h]
+; edi=FFC01014
 
-		mov esi, pPageTables
-		sub edi, esi
-
-		shr edi, 10
-		add edi, ?SYSPGDIRAREA
-		and di, 0FFFCh
-		lea edi, [edi+esi+4]
-		lea esi, [esi+1000h]
+	shr edi, 10
+	add edi, ?SYSPGDIRAREA
+	and di, 0FFFCh
+	lea edi, [edi+esi+4+?OFSMAPPAGE]
+	lea esi, [esi+?OFSMAPPAGE+1000h]
+	@dprintf "compresspool: free PTEs start/end=%lX/%lX", edi, esi
 @@:
-		cmp edi, esi
-		jz cpdone
-		mov eax, es:[edi]
-		test al,PTF_PRESENT
-		jz cpdone
-		call freephyspage
-		stosd
-		jmp @B
+	cmp edi, esi
+	jz cpdone
+	mov eax, es:[edi]
+	test al,PTF_PRESENT
+	jz cpdone
+	call freephyspage
+	stosd
+	jmp @B
 cpdone:
 if 1
-		mov eax, cr3
-		mov cr3, eax
+	mov eax, cr3
+	mov cr3, eax
 endif
-		retn
+	retn
 
-		align 4
+	align 4
 
 ;--- get a page from pool, but not from current block
 ;--- (current block in edx - ebx)
 ;--- return not the PTE itself but its address in EAX
 
 getpoolpage:
-		pushad
-		mov edi, pMaxPageTab
-		mov ecx, pPoolMax
+	pushad
+	mov edi, pPageTables
+	mov ecx, dwMaxPool
+	add ecx, edi
+	add edi, dwMaxOfsPT
 @@:
-		cmp edi, ecx
-		jnc noppfound
-		mov eax, es:[edi]
-		add edi, 4
-		test ah, _XMSFLAG_
-		jz @B
-		cmp eax, edx
-		jc ppfound
-		cmp eax, ebx
-		jc @B
+	cmp edi, ecx
+	jnc noppfound
+	mov eax, es:[edi]
+	add edi, 4
+	test ah, _XMSFLAG_
+	jz @B
+	cmp eax, edx
+	jc ppfound
+	cmp eax, ebx
+	jc @B
 ppfound:
-		lea eax, [edi-4]
-		mov [esp].PUSHADS.rEAX, eax
-		popad
-		clc
-		retn
-		align 4
+	lea eax, [edi-4]
+	mov [esp].PUSHADS.rEAX, eax
+	popad
+	clc
+	retn
 noppfound:
-		popad
-		stc
-		retn
-		align 4
+	popad
+	stc
+	retn
+	align 4
 compresspagepool endp
 
 endif
 
-compressdos proc uses es
+;--- client has terminated. If DOS memory has been
+;--- used by pagemgr, release as much of it as possible 
+;--- in: EBX->PHYSBLK for a DOS memory block
 
-		push byte ptr _FLATSEL_
-		pop es
-		mov esi,pPageTables
-		mov ecx,pMaxPageTab
+compressdosmem proc uses es
 
-		mov edx,[ebx].PHYSBLK.dwBase
-		mov edi,[ebx].PHYSBLK.dwSize
-		sub edi,[ebx].PHYSBLK.dwFree
-		shl edi,12
-		add edi,edx
+	push byte ptr _FLATSEL_
+	pop es
+	mov esi, pPageTables
+	mov ecx, dwMaxOfsPT
+	add ecx, esi
+
+	mov edx,[ebx].PHYSBLK.dwBase
+	mov edi,[ebx].PHYSBLK.dwSize
+	sub edi,[ebx].PHYSBLK.dwFree
+	shl edi,12	;now edi = mem of this block that is used
+	add edi,edx	;edi = end of the used mem block
 
 nextitem:
-		cmp esi, ecx
-		jnc blockfree
-		mov eax,es:[esi]
-		add esi,4
-		test ah,_XMSFLAG_
-		jz nextitem
-		cmp eax, edx
-		jc nextitem
-		cmp eax, edi
-		jnc nextitem
-		test al,PTF_PRESENT					;page allocated?
-		jz nextitem
-		ret
+	cmp esi, ecx
+	jnc blockfree		;block is done
+	mov eax,es:[esi]
+	add esi,4
+	test ah,_XMSFLAG_	;page belongs to DOS/XMS/I15?
+	jz nextitem
+	cmp eax, edx		;page in block range?
+	jc nextitem
+	cmp eax, edi
+	jnc nextitem
+	test al,PTF_PRESENT	;page allocated?
+	jz nextitem
+	ret					;done, there's still a page of this block used
 blockfree:
-		mov esi,pPageTables
-		mov ecx,pPoolMax
+	mov esi, pPageTables
+	mov ecx, dwMaxPool
+	add ecx, esi
 nextitem2:
-		cmp esi, ecx
-		jnc done
-		mov eax,es:[esi]
-		add esi,4
-		test ah,_XMSFLAG_
-		jz nextitem2
-		cmp eax, edx
-		jc nextitem2
-		cmp eax, edi
-		jnc nextitem2
-		mov dword ptr es:[esi-4], PTF_NORMAL
-		dec dwPagePool
-		jmp nextitem2
+	cmp esi, ecx
+	jnc done
+	mov eax,es:[esi]
+	add esi,4
+	test ah,_XMSFLAG_	;page belongs to DOS/XMS/I15?
+	jz nextitem2
+	cmp eax, edx		;page in block range?
+	jc nextitem2
+	cmp eax, edi
+	jnc nextitem2
+	mov dword ptr es:[esi-4], PTF_NORMAL	;release page
+	dec dwPagePool		;update page pool
+if _LTRACE_
+	jns @F
+	@dprintf "compressdosmem: page pool cnt %lX < 0", dwPagePool
+@@:
+endif
+	jmp nextitem2
 done:
-		mov eax, ebx
-		call freephyshandle
-		ret
-		align 4
-compressdos endp
+	mov eax, ebx
+	call freephyshandle	;free the block handle
+	ret
+	align 4
+compressdosmem endp
 
 ;*** client termination
 ;*** memory has been released already
 ;*** physical memory and address space could be cleaned here
 
-		@ResetTrace
+	@ResetTrace
 
 pm_exitclient proc public
 
-		assume ds:GROUP16
+	assume ds:GROUP16
 
-		pushad
-		cld
-		@strout <"#pm, exitclient enter",lf>
-		mov ebx, offset PhysBlk
+	pushad
+	cld
+	@dprintf "pm_exitclient enter"
+	mov ebx, offset PhysBlk
 nextblock:
-		@strout <"#pm, PhysBlk: base=%lX, size=%lX, free=%lX, handle=%lX",lf>,\
-			[ebx].PHYSBLK.dwBase, [ebx].PHYSBLK.dwSize, [ebx].PHYSBLK.dwFree, [ebx].PHYSBLK.dwHandle
-		test [ebx].PHYSBLK.bFlags, PBF_DOS
-		jz @F
-		call compressdos
+	@dprintf "pm_exitclient, PhysBlk: base=%lX, size=%lX, free=%lX, handle=%lX",\
+		[ebx].PHYSBLK.dwBase, [ebx].PHYSBLK.dwSize, [ebx].PHYSBLK.dwFree, [ebx].PHYSBLK.dwHandle
+	test [ebx].PHYSBLK.bFlags, PBF_DOS
+	jz @F
+	call compressdosmem
 @@:
-		mov ebx, [ebx].PHYSBLK.pNext
-		and ebx, ebx
-		jnz nextblock
-		call setactivephyshandle
-		
+	mov ebx, [ebx].PHYSBLK.pNext
+	and ebx, ebx
+	jnz nextblock
+	call setactivephyshandle
+
 if ?FREEXMSDYN
-		cmp cApps,1				;this is before it is decremented
-		jnz notidle
-		test fMode, FM_RESIDENT
-		jz notidle				;host will exiting soon, do nothing
-		test PhysBlk.bFlags,PBF_XMS
-		jz notidle				;no XMS block, cannot be released
-		call compresspagepool
+	cmp cApps,1				;this is before it is decremented
+	jnz notidle
+	test fMode, FM_RESIDENT
+	jz notidle				;host will exiting soon, do nothing
+	test PhysBlk.bFlags,PBF_XMS
+	jz notidle				;no XMS block, cannot be released
+	call compresspagepool
 notidle:
 endif
-		popad
-		@strout <"   pPageDir=%lX  pPageTables=%lX",lf>,pPageDir, pPageTables
-		@strout <"  pPageTab0=%lX  pMaxPageTab=%lX",lf>,pPageTab0, pMaxPageTab
-		@strout <"pPagesStart=%lX   dwPagePool=%lX",lf>,pPagesStart, dwPagePool
-		@strout <"   pPoolMax=%lX                 ",lf>,pPoolMax
-		ret
-		align 4
+	@dprintf "pm_exitclient: dwMaxOfsPT=%lX, dwMaxPool=%lX, dwPagePool=%lX", dwMaxOfsPT, dwMaxPool, dwPagePool
+	popad
+	ret
+	align 4
 pm_exitclient endp
 
 	@ResetTrace
@@ -2203,14 +2760,20 @@ pm_exitclient endp
 ;--- preserves general registers
 ;--- TLB might be released already!
 
-pm_exitserver_pm proc public
+pm_exit_pm proc public
 	pushad
-	@strout <"#pm: exitserver_pm enter",lf>
-;------------------ save all XMS handles on stack *before* freeing memory		 
-	@strout <"#pm, start save xms handles on host stack",lf>
+	@dprintf "pm_exit_pm enter"
+;------------------ save all XMS handles on stack *before* freeing memory
+	@dprintf "pm_exit_pm: start save xms handles on host stack"
+if ?HSINEXTMEM
+	movzx ebp, [wHostPSP]
+	shl ebp,4
+	mov esi, 5ch
+else
+	mov esi, offset stacktop
+endif
 ;	mov ebx,[pPhysBlkList]
 	mov ebx, offset PhysBlk
-	mov esi, offset stacktop
 nextitem:
 	and ebx,ebx
 	jz xmsdone
@@ -2224,61 +2787,75 @@ endif
 	test [ebx].PHYSBLK.bFlags, PBF_XMS
 	jz skipitem
 	mov ax,[ebx].PHYSBLK.wHandle
+if ?HSINEXTMEM
+	mov es:[esi+ebp],ax
+else
 	mov [esi],ax
-	@strout <"#pm, xms handle %X saved",lf>,ax
+endif
+	@dprintf "pm_exit_pm: xms handle %X saved",ax
 	inc esi
 	inc esi
 skipitem:
 	mov ebx,[ebx].PHYSBLK.pNext
 	jmp nextitem
 xmsdone:
-	@strout <"#pm, done save xms handles on host stack",lf>
+	@dprintf "pm_exit_pm: done save xms handles on host stack"
 if ?FREEXMSINRM
 	mov pXMSHdls,si
   if ?FREEVCPIPAGES
 ;---- VCPI pages have to be freed in real-mode as well
 ;---- because the pages are freed with XMS.
-	@strout <"#pm: call FreeVCPIPages",lf>
+	@dprintf "pm_exit_pm: call FreeVCPIPages"
 	mov edi, esi
 	call FreeVCPIPages
 	mov pVCPIPages, di
   endif
 endif
 ife ?FREEXMSINRM
-	@strout <"#pm: free xms memory blocks",lf>
+	@dprintf "pm_exit_pm: free xms memory blocks"
 nextitem2:
 	cmp esi,esp
 	jz @F
 	pop dx
-	@strout <"#pm: free xms block %X, rm ss:sp=%X:%X",lf>,dx,ss:[tskstate.rmSS],cs:[tskstate.rmSP]
+	@dprintf "pm_exit_pm: free xms block %X, rm ss:sp=%X:%X",dx,ss:v86iret.rSS, ss:v86iret.rSP
 
-	@pushproc freexms
-	call dormprocintern
+	pushd offset freexms
+	call callrmprocintern
 	jmp nextitem2
 @@:
 endif
 if ?FREEPDIRPM
-	@strout <"#pm: restore cr3",lf>
+	@dprintf "pm_exit_pm: restore cr3"
 	mov eax,[orgcr3]
 	mov cr3,eax
-	xchg eax,[cs._cr3]
-	@strout <"#pm: free cr3 page",lf>
-	mov ax,[cr3flgs]
+	xchg eax,[v86topm._cr3]
+	@dprintf "pm_exit_pm: free cr3 page"
+;	mov ax,[cr3flgs]
 	call freephyspage
 endif
 if ?VCPIALLOC
-	@strout <"#pm: VCPI pages allocated on pm exit=%lX",lf>,dwVCPIPages
+	@dprintf "pm_exit_pm: VCPI pages allocated on pm exit=%lX",dwVCPIPages
 endif
-	@strout <"#pm: exitserver_pm exit",lf>
+	@dprintf "pm_exit_pm: exit"
 	popad
 	ret
 	align 4
-pm_exitserver_pm endp
+pm_exit_pm endp
+
+if 0
 
 ;*** free some physical memory if in i15 mode
 ;--- used to allow nested execution of clients
+;--- since v3.18, this is handled differently:
+;--- Int 15h, ax=e801h will return the full PhysBlk.dwFree
+;--- amount. It is assumed that the launching app
+;--- does NOT allocate any memory while the child is running
+;--- missing: a cleanup to adjust the free amount of memory
+;--- returned by Int 15h after a client has terminated.
+;--- simple solution: do the cleanup when the cApps counter 
+;--- goes to zero and the host is resident.
 
-_freephysmem proc public
+pm_freeI15mem proc public
 	test ss:[fHost], FH_XMS or FH_VCPI
 	jnz exit
 	push eax
@@ -2288,80 +2865,118 @@ _freephysmem proc public
 	mov eax, ss:PhysBlk.dwFree
 	shr eax, 1
 	mov ss:[dwResI15Pgs], eax
+	@dprintf "freeI15mem: pages released for int 15h,ax=e801h: %lX", eax
 @@:
 	sub ss:PhysBlk.dwFree, eax
 	pop eax
 exit:
 	ret
 	align 4
-_freephysmem endp
+pm_freeI15mem endp
 
 ;--- called after a int21, ax=4b00 in i21srvr.asm
 
-_restorephysmem proc public
+pm_restoreI15mem proc public
 	test ss:[fHost], FH_XMS or FH_VCPI
 	jnz exit
 	push eax
 	xor eax, eax
 	xchg eax, ss:[dwResI15Pgs]
 	add ss:PhysBlk.dwFree, eax
+	@dprintf "restoreI15mem: pages restored: %lX, now free: %lX", eax, ss:PhysBlk.dwFree
 	pop eax
 exit:
 	ret
 	align 4
-_restorephysmem endp
+pm_restoreI15mem endp
 
-;--- clone GROUP32 
+endif
+
+;--- clone 32-bit code & data
 ;--- inp: eax=0 -> create first VM
 ;---      else eax -> dest where copied PTEs are stored
 ;--- ES=FLAT, DS=GROUP16
+;--- out: EAX=linear address of destination block
 
-		@ResetTrace
+	@ResetTrace
 
 pm_CloneGroup32 proc public
 
-		mov ecx, offset endoftext32
-		@strout <"#pm, clone group32: alloc %lX bytes 32bit code",lf>, ecx
-		mov edx, ecx
-		shr ecx, 12
-		test dx,0FFFh
-		jz @F
-		inc ecx
+ifdef ?PE
+	mov ecx, dwVSize
+	sub ecx, 1000h
+else
+	mov ecx, offset endoftext32
+endif
+	@dprintf "pm_CloneGroup32: alloc %lX bytes 32bit code+data", ecx
+
+;	mov edx, ecx
+;	shr ecx, 12
+;	test dx,0FFFh
+;	jz @F
+;	inc ecx
+;@@:
+	add ecx,1000h-1
+	shr ecx,12
+
+	and eax, eax
+	jz isfirst
+	mov edi, eax
+	mov edx, SysAddrUp
+	@dprintf "pm_CloneGroup32: source %lX, dest=%lX, pg=%lX", edx, edi, ecx
 @@:
-		and eax, eax
-		jz isfirst
-		mov edi, eax
-;;		mov edx, ?SYSTEMSPACE * 100000h + 1000h
-		mov edx, SysAddrSpace
-		@strout <"#pm, clone group32: source %lX, dest=%lX, pg=%lX",lf>, edx, edi, ecx
-@@:
-		call _ClonePage
-		jc error
-		@strout <"#pm %lX cloned, PTE=%lX", lf>, edx, eax
-		stosd
-		add edx,1000h
-		dec SysAddrSize
-		mov SysAddrSpace, edx
-		loopnz @B
-		@strout <"#pm, clone group32 done, last PTE=%lX, ppt=%lX",lf>, eax, edi
-		ret
+	push ecx
+	call _ClonePage
+	pop ecx
+	jc error
+	@dprintf "pm_CloneGroup32: %lX cloned, PTE=%lX", edx, eax
+	stosd
+	add edx,1000h
+	mov SysAddrUp, edx
+	loop @B
+	@dprintf "pm_CloneGroup32 done, last PTE=%lX, ppt=%lX", eax, edi
+	ret
 isfirst:
-		call _AllocSysPagesRo
-		jc error
-		@strout <"#pm, clone group32: copying code to extended memory",lf>
-		mov edi, eax
-		push ds
-		push cs
-		pop ds
-		xor esi, esi
-		mov ecx, offset endoftext32
-		shr ecx, 2
-		rep movsd
-		pop ds
-		clc
+	call pm_AllocSysPagesU		;alloc pages for GROUP32
+	jc error
+	@dprintf "pm_CloneGroup32: copying code to extended memory"
+	mov edi, eax
+;	push ds
+;	push cs
+;	pop ds
+	push ecx
+ifdef ?PE
+	mov esi, 1000h
+	mov ecx, dwVSize
+	sub ecx, esi
+else
+	xor esi, esi
+	mov ecx, offset endoftext32
+endif
+	shr ecx, 2
+	rep movsd es:[edi],cs:[esi]
+	pop ecx
+;	pop ds
+ifdef ?PE
+	sub ecx,2	;the last 2 pages get special flags
+endif
+	call Linear2PT	;get PTE ptr in edi
+@@:
+ifdef ?PE
+	and byte ptr es:[edi],not (PTF_DIRTY or PTF_ACCESSED or PTF_USER or PTF_WRITEABLE)
+else
+	and byte ptr es:[edi],not (PTF_DIRTY or PTF_ACCESSED or PTF_USER)
+endif
+	add edi,4
+	loop @B
+ifdef ?PE
+	and byte ptr es:[edi],not (PTF_DIRTY or PTF_ACCESSED or PTF_USER)
+	and byte ptr es:[edi+4],not (PTF_DIRTY or PTF_ACCESSED)
+endif
+	clc
 error:
-		ret
-		align 4
+	ret
+	align 4
 pm_CloneGroup32 endp
 
 ;*** create a VM
@@ -2371,341 +2986,410 @@ pm_CloneGroup32 endp
 ;--- for the very first VM, the real-mode setup has initialized a minimal 
 ;--- system with paging enabled. CR3 is set and PDE 000 as well. page
 ;--- table 0 is allocated and valid, variable pPageTab0 is initialized.
-;--- variable PhysBlk contains a valid physical memory block.
+;--- variable PhysBlk contains a valid physical memory block, with enough
+;--- physical pages (?PAGEMIN) for a full setup:
+
+;---  1 page   page dir
+;--- +3 pages  page tables 0, FF8, FFC
+;--- +1 page   pm breaks 
+;--- +1 page   GDT + IDT
+;--- +1 page   LDT
+;--- +1 page   LPMS
+;--- +2 pages  client save state ( since v3.18, it's actually 1 page only )
+;----------------------------------
+;    10 pages
+;--- +7 pages  GROUP32 if code is moved high
+;
 
 ;--- now paging will be fully initialized:
-;--- 1. alloc 4 physical pages and map them temporarily at 3FC000-3FFFFF
+;--- 1. alloc 4 physical pages and map them temporarily at 3FC000-3FFFFF;
+;---    3FC000=SA0, 3FD000=SA1, 3FE000=PT0, 3FF000=PD
 ;--- 2. clear the page contents
 ;--- 3. copy content of page tab 0 to 3FE000
 ;--- 4. copy PDEs 000, FF8 and FFC to 3FFxxx (temp. mapped new pagedir)
 ;--- 5. restore content of old pagetab 0
 ;--- 6. test if this is the very first VM. If no, copy content of
-;---    FFC00000+1000 to 3FC000+1000 (PTEs for system area 0). This
+;---    FFC00000+1000 to 3FC000 (PTEs for system area 0). This
 ;---    will make GROUP32, GDT, and IDT accessible after CR3 has been
 ;---    switched.
 ;--- 7. set new CR3
-;--- 8. copy PTE for pagedir to FFC01004h (maps new page dir at FFBFFxxx)
+;--- 8. copy PTE for pagedir to FFC00FFCh (maps new page dir at FFBFFxxx)
 
-;*** variables set:
+;*** variables already set (will be set again):
 ;*** v86topm._cr3: CR3
-;*** pPageDir:   lin  address page dir
+;*** obsolete --- pPageDir:   lin  address page dir
 ;*** pPagesTab0: lin  address page tab 0
-;*** pPagesStart:lin  address page 
-;*** pPageTables:lin  address sys area 1
-;*** pMaxPageTab:lin  address next entry in cur. page table
+
+;*** new variables set:
+;*** obsolete --- pPageTables:lin  address page tables (=FFC00000)
+;*** dwMaxOfsPT: offset within SYSAREA1, next entry in cur. page table
 
 ?TEMPBASE	equ 3FC000h	;linear address of page tables for new VM in
 						;current VM (valid just temporarily inside here)
 
-		@ResetTrace
+	@ResetTrace
 
 pm_createvm proc public
 
-		assume ds:GROUP16
+	assume ds:GROUP16
 
-		pushad
-		mov ebp, esp
-		@strout <"#pm: createvm enter",lf>
-		@strout <"#pm: cr3=%lX pPageDir=%lX pPageTab0=%lX",lf>, v86topm._cr3, pPageDir, pPageTab0
-;		 @waitesckey
-		mov SysAddrSpace, ?SYSTEMSPACE * 100000h + 1000h
-		mov SysAddrSpace2, (?SYSTEMSPACE+4) * 100000h - 1000h
-		mov SysAddrSize, 400h-2
+	pushad
+	@dprintf "pm_createvm enter"
+	@dprintf "pm_createvm: cr3=%lX pPageDir=%lX pPageTab0=%lX", v86topm._cr3, pPageDir, pPageTab0
 
-		test fMode, FM_CLONE		;dont clear the PhysBlk var
-		jz noinit				;for the first instance
+;--- global variables may (and "should") be set here. The host instance has been
+;--- switched already in case it isn't the very first VM.
 
-		mov edx, offset GROUP16:startvdata
-		xor eax, eax
+	mov SysAddrUp, ?SYSAREA0 + 1000h
+	mov SysAddrDown, ?SYSAREA1 - 1000h
+
+	test fMode, FM_CLONE	;dont clear the PhysBlk var
+	jz noinit				;for the first instance
+
+	mov edx, offset startvdata
+	xor eax, eax
 @@:
-		mov [edx], eax
-		add edx, 4
-		cmp edx, offset GROUP16:endvdata
-		jb @B
+	mov [edx], eax
+	add edx, 4
+	cmp edx, offset endvdata
+	jb @B
 
-		test fHost, FH_XMS or FH_VCPI
-		jnz noinit
-		@strout <"#pm: no XMS or VCPI host",lf>
-		call alloci15_pm
-		jc noinit
-		@strout <"#pm: I15 mem=%lX",lf>, eax
-		mov PhysBlk.bFlags, PBF_I15 or PBF_TOPDOWN
-		mov PhysBlk.dwBase, edx
-		mov PhysBlk.dwSize, eax
-		mov PhysBlk.dwFree, eax
+	test fHost, FH_XMS or FH_VCPI
+	jnz noinit
+	call pm_alloci15
+	jc noinit
+	@dprintf "pm_createvm: I15 mem start=%lX, size=%lX", edx, eax
+	mov PhysBlk.bFlags, PBF_I15 or PBF_TOPDOWN
+	mov PhysBlk.dwBase, edx
+	mov PhysBlk.dwSize, eax
+	mov PhysBlk.dwFree, eax
+
 noinit:
 if ?FREEPDIRPM
-		mov eax, v86topm._cr3
-		mov orgcr3, eax
+	mov eax, v86topm._cr3
+	mov orgcr3, eax
 endif
 
-;--- first alloc 4 physical pages, store them onto stack
+;--- make sure that there's enough free physical pages to satisfy the creation
 
-if 1
-		invoke _GetNumPhysPages
-		@strout <"#pm: free/total phys pages: %lX/%lX",lf>, eax, edx
-endif
+	invoke pm_GetNumPhysPages
+	@dprintf "pm_createvm: free/total phys pages: %lX/%lX", eax, edx
+	cmp eax, 10
+	jc exit
 
-		@strout <"#pm: alloc 4 physical pages",lf>
-		mov ecx,4
+;--- alloc 4 physical pages for pagedir, system areas and pagetab 0;
+;--- map the pages at ?TEMPBASE;
+;--- save old PTEs onto the stack.
+
+	mov edi, pPageTab0
+	add di, 0FF0h	;this is offset of PTEs for 3FC000-3FF000
+
+	@dprintf "pm_createvm: alloc 4 physical pages"
+	xor ecx,ecx
 @@:
-		call getphyspage
-		jc exit
-		or al,?PAGETABLEATTR
-		push eax
-		loop @B
+	call getphyspage
+	jc errorx		;errors shouldn't happen here, but to be safe...
+	and al, 0F8h
+	or al, ?PAGETABLEATTR
+	xchg eax,es:[edi+ecx*4] 
+	push eax
+	inc ecx
+	cmp cl,4
+	jnz @B
 
-;--- map the pages at ?TEMPBASE - ?TEMPBASE+3FFFh
-;--- save old PTEs onto the stack
-
-		mov edi, pPageTab0
-		add di, 0FF0h
-		xor ecx, ecx
+;--- in "safe" mode, don't allow access to SYSAREA1 (page table mapping region)
+	test bEnvFlags2,ENVF2_SYSPROT
+	jz @F
+	and byte ptr es:[edi+1*4],not PTF_USER
 @@:
-		mov eax, [esp+ecx*4]
-		xchg eax, es:[edi+ecx*4]
-		mov [esp+ecx*4], eax
-		inc ecx
-		cmp cl,4
-		jnz @B
+
+;--- update the tlb!
+	mov eax,cr3
+	mov cr3,eax
 
 ;--- clear content of new pages
-
-		cld
-		mov edi, ?TEMPBASE
-		push edi
-		mov ecx, 4000h/4
-		xor eax, eax
-		rep stosd
-		pop edi
+	cld
+	mov edi, ?TEMPBASE
+	push edi
+	mov cx, 4000h/4
+	xor eax, eax
+	rep stosd
+	pop edi
 
 ;--- now clone old pagetab 0
 ;--- the new pages mapped at 3FC000h are intended to be used:
-;--- 3FC000 -> FFC00000 (system area 1)
-;--- 3FD000 -> FF800000 (system area 0)
-;--- 3FE000 -> 00000000 (page table 0)
+;--- 3FC000 -> PT of 4 MB region FF8xxxxx (system area 0)
+;--- 3FD000 -> PT of 4 MB region FFCxxxxx (system area 1)
+;--- 3FE000 -> PT of 4 MB region 000xxxxx (page table 0)
 ;--- 3FF000 -> page directory
 
-;--- the PTE copy must be done in pagetab 0, because for the very
+?SA0OFS equ 0 shl 12
+?SA1OFS equ 1 shl 12
+?PT0OFS equ 2 shl 12
+?PDOFS	equ 3 shl 12
+
+;--- the PTE copy must be done in the first 4MB (pagetab 0), because for the very
 ;--- first VM, there is no other address space available
 
-		@strout <"#pm: copy PTEs from previous pt 0, dwOfs=%lX",lf>, dwOfsPgTab0
+	@dprintf "pm_createvm: copy PTEs from previous PT0, dwOfs=%lX", dwOfsPgTab0
 
-		lea ebx, [edi + 3000h]	;mapped new page dir
-		lea edi, [edi + 2000h]	;new page tab 0
-		mov esi, pPageTab0
-		push edi
-		push esi
-		mov ecx, dwOfsPgTab0	;just copy the PTEs which are global!
-		shr ecx, 2
-		push ds
-		push es
-		pop ds
-		rep movsd
-		pop ds
-		pop esi
-		pop edi
-		mov eax, 0FF0h
-		add edi, eax			;never copy the last 4 PTEs
-		add esi, eax
+	lea ebx, [edi + ?PDOFS]	;mapped new page dir
+	lea edi, [edi + ?PT0OFS];new page tab 0
+	mov esi, pPageTab0
+	push edi
+	push esi
+	mov ecx, dwOfsPgTab0	;just copy the PTEs which are global (=conv. memory)!
+	shr ecx, 2
+	rep movsd es:[edi],es:[esi]
+	pop esi
+	pop edi
 
-;--- store the original 4 PTEs in new pagetab 0
+;--- store the original, saved 4 PTEs in new PT0
+;--- todo: explain why - this should only be done if dwOfsPgTab0 is > 2FF0h!
+;--- see test case i315046!!!
 
-		mov cl,4
+;	mov eax, 0FF0h
+	mov eax, ?TEMPBASE shr 10	; shr 10 = convert linear address to PTE offset
+	add edi, eax
+	add esi, eax	;let esi point to PTE for 3FC000h
+	mov cl,4
 @@:
-		pop eax
-		stosd
-		loop @B
+	pop eax
+	stosd
+	loop @B
 
-		test [bEnvFlags2],ENVF2_HMAMAPPING	;reinit region 100000-10FFFF ?
-		jz nohmamapping
-		sub edi,300h*4
-		mov eax,100007h
-		mov cl,10h
+	test [bEnvFlags2],ENVF2_HMAMAPPING
+	jz nohmamapping
+;--- reinit region 100000-10FFFF
+	sub edi,300h*4
+if ?DOSPGLOBAL
+	mov eax,100000h or PTF_PRESENT or PTF_WRITEABLE or PTF_USER or PTF_GLOBAL
+else
+	mov eax,100000h or PTF_PRESENT or PTF_WRITEABLE or PTF_USER
+endif
+	mov cl,10h
 @@:
-		stosd
-		add eax,1000h
-		loopd @B
+	stosd
+	add eax,1000h
+	loopd @B
 nohmamapping:
-		push es
-		pop ds
-		mov edi, ?TEMPBASE
-		lodsd
-		stosd
-		mov [ebx+?SYSTEMSPACE+4],eax
-		@strout <"#pm: new PDE for FFC00000=%lX",lf>,eax
-		lodsd
-		stosd
-		mov [ebx+?SYSTEMSPACE],eax
-		@strout <"#pm: new PDE for FF800000=%lX",lf>,eax
-		lodsd						;PDE for pagetab 000
-		stosd
-		mov [ebx+0000h],eax
-		@strout <"#pm: new PDE for 00000000=%lX",lf>,eax
-		lodsd						;new PTE for page dir
-		mov ebx, eax
 
-		mov esi, ss:pdGDT.dwBase
-		test ss:fMode, FM_CLONE
-		jz isfirst
+;--- setup new page directory (ebx)
+;--- what's done here?
+;--- 1. store mapped page tables in cloned PT0
+	push es
+	pop ds
 
-		mov eax,?TEMPBASE + 1004h  ;FF801000h
-		push ss
-		pop ds
-		call pm_CloneGroup32
+	mov edi, ?TEMPBASE+?SA1OFS
+	lodsd				;get PDE for SA0 (= 3FC000 )
+	stosd
+	mov [ebx+?SYSTEMSPACE+0],eax
+	@dprintf "pm_createvm: new PDE for FF800000=%lX",eax
+
+	lodsd				;get PDE for SA1 (= 3FD000 )
+if 0
+;--- protect page mapping region FFC00000h. drawback: slows-down host
+	and al,not PTF_USER
+endif
+	stosd
+	mov [ebx+?SYSTEMSPACE+4],eax
+	@dprintf "pm_createvm: new PDE for FFC00000=%lX",eax
+
+	lodsd				;get PDE for PT0 (= 3FE000 )
+	stosd
+	mov [ebx+0000h],eax
+	@dprintf "pm_createvm: new PDE for 00000000=%lX",eax
+
+	lodsd				;get PTE for mapped PD
+	mov ebx, eax
+
+	mov esi, ss:pdGDT.dwBase
+	test ss:fMode, FM_CLONE
+	jz isfirst
+
+	mov eax,?TEMPBASE + ?SA0OFS + 4h  ;PTE for FF801000h
+	push ss
+	pop ds
+	call pm_CloneGroup32
 
 ;--- copy PTEs of saved instance data to new address context
-;--- so it is mapped at the very same linear address: FFBFD000
-;--- but do clear the _VCPIFLAG_ and _XMSFLAG_ flags in the PTEs
-;--- this will make it sure that the physical pages are not released by the clone
+;--- so it will be mapped at the very same linear address
+;--- but do clear the _VCPIFLAG_ and _XMSFLAG_ flags in the PTEs,
+;--- so the physical pages won't be released by the clone.
+;--- Also, make them r/o.
 
-		push es
-		pop ds
-		mov esi, (?SYSTEMSPACE+4) * 100000h + 1FF4h
-		mov edi, ?TEMPBASE + 1FF4h
-		mov cl,2
+	mov eax, ltaskaddr
+	call Linear2PT
+	mov esi, edi
+	sub edi, ?PTSYSAREA0
+	add edi, ?TEMPBASE + ?SA0OFS
+	push es
+	pop ds
+	mov cl,2	;assume the data are 2 pages (to be improved).
 @@:
-		lodsd
-		and ah,not (_VCPIFLAG_ or _XMSFLAG_) 
-		stosd
-		dec cl
-		jnz @B
-;;		@strout <"#pm: snapshot PTEs: %lX %lX",lf>, <dword ptr [edi-8]>, <dword ptr [edi-4]>
-;		 sub ss:[SysAddrSpace2],2000h
-;		 sub ss:[SysAddrSize],2
+	lodsd
+	and ah,not (_VCPIFLAG_ or _XMSFLAG_)
+	and al,not (PTF_DIRTY or PTF_ACCESSED or PTF_WRITEABLE)
+	stosd
+	dec cl
+	jnz @B
+
+;;	@dprintf "pm: snapshot PTEs: %lX %lX", dword ptr [edi-8], dword ptr [edi-4]
+;	sub ss:SysAddrDown,2000h
 isfirst:
 
-;--- restore PTEs in old pagetab 0
+;--- restore PTEs for 3FC000-3FFFFF in old pagetab 0;
+;--- clear them in cloned pagetab 0.
 
-		mov esi, ?TEMPBASE + 2FF0h	;this is new pagetab 0
-		mov edi, ss:pPageTab0
-		add di, 0FF0h
-		movsd
-		movsd
-		lodsd				;dont use movsd to copy the last 2 entries.
-		push eax			;it is page table 0 + pagedir, VMware doesnt
-		lodsd				;like that and will emit an exc 0E
-		xchg eax, [esp]
-		stosd
-		pop eax
-		stosd
+;	mov esi, ?TEMPBASE + ?PT0OFS + 0FF0h	;esi -> PTEs for 3FC000h
+	mov esi, ?TEMPBASE + ?PT0OFS + ( ?TEMPBASE shr 10 )	;esi -> PTEs for 3FC000h
+	mov edi, ss:pPageTab0
+;	add di, 0FF0h
+	add di, ?TEMPBASE shr 10
+	xor ecx,ecx
+	movsd
+	mov [esi-4],ecx
+	movsd
+	mov [esi-4],ecx
+	lodsd				;dont use movsd to copy the last 2 entries.
+	mov [esi-4],ecx
+	push eax			;it is page table 0 + pagedir, VMware doesnt
+	lodsd				;like that and will emit an exc 0E
+	mov [esi-4],ecx
+	xchg eax, [esp]
+	stosd
+	pop eax
+	stosd
 
 ;--- done, the temp changes in current VM are undone,
 ;--- the new VM is ready to be used, just set CR3
 
-		push ss
-		pop ds
-		assume ds:GROUP16
-		mov eax, ebx
+	push ss
+	pop ds
+	assume ds:GROUP16
+	mov eax, ebx
 
-		and ax,0F000h
-		mov v86topm._cr3, eax
+	and ax,0F000h
+if ?NOCR3CACHE
+	or al,18h	;set PWT & PCD
+endif
+	mov v86topm._cr3, eax
 if ?FREEPDIRPM
-		push eax
-		or al,?PAGETABLEATTR
-		mov [cr3flgs],ax
-		pop eax
+;	push eax
+;	or al,?PAGETABLEATTR
+;	mov [cr3flgs],ax
+;	pop eax
 endif
 
 ;--- the new tables are set, CR3 can be reloaded now
 
-;;		@strout <"#pm: will set CR3 to %lX",lf>,eax
-		mov cr3,eax
-		@strout <"#pm: new value for CR3 set",lf>
-;		 @waitesckey
+	@dprintf "pm_createvm: will set CR3 to %lX",eax
+	mov cr3,eax
+	@dprintf "pm_createvm: new value for CR3 set"
 
-;--- new page dir is set and mapped, but the address space isn't reserved yet
+;--- v3.19: reset user bit for mapped page dir;
+;--- prevents this linaddr to be found by pm_searchphysregion (int 31h, ax=800h)
+	and bl,NOT PTF_USER
 
-;		mov eax, SysAddrSpace2
-		mov eax, (?SYSTEMSPACE+4) * 100000h - 1000h
-		mov pPageDir, eax
-		mov es:[(?SYSTEMSPACE+4) * 100000h + 1FFCh],ebx	; map page dir at FFBFF000h
+	@dprintf "pm_createvm: page dir mapped at %lX", ?PTSYSAREA0+0FFCh
+	mov es:[?PTSYSAREA0 + 0FFCh], ebx	; map page dir at FFBFF000h
 
 ;--- now reinit pPageTab0
 
-		mov pPageTab0, (?SYSTEMSPACE+4) * 100000h + ?SYSPGDIRAREA * 400h
+	mov pPageTab0, ?SYSAREA1 + ?SYSPGDIRAREA * 400h
 
 ;--- init some important variables
 
-		mov pPageTables, (?SYSTEMSPACE+4) * 100000h
-		mov pPagesStart, (?SYSTEMSPACE+4) * 100000h
+;	mov pPageTables, ?SYSAREA1
 
-		@strout <"#pm: pPageTab0=%lX,   pPageDir=%lX, pPageTables=%lX",lf>, pPageTab0, pPageDir, pPageTables
-		@strout <"#pm: pPagesStart=%lX, dwPagePool=%lX,    pPoolMax=%lX",lf>, pPagesStart, dwPagePool, pPoolMax
+	@dprintf "pm_createvm:  pPageTab0=%lX,   pPageDir=%lX, pPageTables=%lX", pPageTab0, pPageDir, pPageTables
+	@dprintf "pm_createvm: dwPagePool=%lX,  dwMaxPool=%lX", dwPagePool, dwMaxPool
 
 if ?CLEARACCBIT
-		@strout <"#pm: clear accessed+dirty bits in region 0-10FFFF",lf>
-		mov ecx,110h
-		mov edi,[pPageTab0]
+	@dprintf "pm_createvm: clear accessed+dirty bits in region 0-10FFFF"
+	mov ecx,110h
+	mov edi, pPageTab0
 @@:
-		and byte ptr es:[edi],09Fh
+	and byte ptr es:[edi],09Fh
   ifdef _DEBUG
-		mov eax,es:[edi]
-		and al,7
-		.if (al != 7)
-			@strout <"#pm: invalid PTE at %lX: %lX !!!",lf>,edi,eax
-		.endif
+	mov eax,es:[edi]
+	and al,7
+	.if (al != 7)
+		@dprintf "pm_createvm: invalid PTE at %lX: %lX !!!",edi,eax
+	.endif
   endif
-		add edi,4
-		loop @B
+	add edi,4
+	loop @B
 endif
 
 ;--- init the vm's user address space
 
-		mov esi,pPageTab0
-		add esi,dwOfsPgTab0
-;;		add esi, 32				;if a security buffer is needed
-		mov [pMaxPageTab],esi
-		@strout <"#pm: pMaxPageTab=%lX, SysAddrSpace=%lX",lf>, pMaxPageTab, SysAddrSpace
+	mov esi, ?SYSPGDIRAREA * 400h	;offset pt 0 within pagetables
+	add esi, dwOfsPgTab0
+;;	add esi, 32				;if a security buffer is needed
+	mov dwMaxOfsPT, esi
+	@dprintf "pm_createvm: dwMaxOfsPT=%lX, SysAddrUp=%lX, SysAddrDown=%lX", dwMaxOfsPT, SysAddrUp, SysAddrDown
 
-
-if ?GUARDPAGE0						;get ptr to 1. page
-		xor eax,eax
-		call _Linear2PT
-		@strout <"#pm: ptr to PTE for address 0=%lX",lf>,edi
-		sub edi,dwHostBase
-		@strout <"#pm: normalized form=%lX",lf>,edi
-		mov pg0ptr,edi
-endif
-
-		@strout <"#pm: createvm exit",lf>
-		clc
+	@dprintf "pm_createvm exit"
+	clc
 exit:
-		mov esp,ebp
-		popad
-		ret
+	popad
+	ret
+
+;--- out of memory error (shouldn't happen)
+;--- restore the PTEs in pagetab 0, offset 0FF0h
+@@:
+	pop dword ptr es:[edi+ecx*4]
+errorx:
+	dec ecx
+	jge @B
+	stc
+	popad
+	ret
+	align 4
+
 pm_createvm endp
 
 if ?VM
 
-alloci15_pm proc near
-		@strout <"#pm, alloci15: int 15h, ax=E801",lf>
-		mov ax,0E801h
-		stc
-		@simrmint 15h
-		jc e801_err
-		@strout <"#pm, alloci15: int 15h, ax=E801 ok, ax-dx=%X %X %X %X",lf>, ax, bx, cx, dx
-		and ax, ax
-		jnz @F
-		mov ax, cx
-		mov bx, dx
-@@:
-		cmp ax, 3C00h+1	;max is 3C00h (15360 kB)
-		jnc e801_err
-		movzx eax, ax
-		shr ax, 2		;kb -> pages
-		movzx ebx, bx
-		shl ebx, 4		;64kb -> pages 
-		add eax, ebx
-		@strout <"#pm, alloci15: pages=%lX",lf>, eax
-		mov edx,100000h
-		clc
-		ret
-e801_err:
-		stc
-		ret
+;--- this code is called only in raw mode, if FM_CLONE is set;
+;--- that is, HDPMI=32 is set and the second (or more)
+;--- client is launched.
+;--- it's a questionable strategy to call real-mode here, since
+;--- we should be able to get the info from the parent host directly
+;--- returns EAX=size of mem block
+;---         EDX=linear address of block
 
-alloci15_pm endp
+pm_alloci15 proc near
+	@dprintf "pm_alloci15: int 15h, ax=E801"
+	mov ax,0E801h
+	stc
+	@simrmint 15h
+	jc e801_err
+	@dprintf "pm_alloci15: int 15h, ax=E801 ok, 1M-16M=%X,%X >16M=%X,%X", ax, cx, bx, dx
+	and ax, ax
+	jnz @F
+	mov ax, cx
+	mov bx, dx
+@@:
+	cmp ax, 3C00h+1	;max is 3C00h (15360 kB)
+	jnc e801_err
+	movzx eax, ax
+	shr ax, 2		;kb -> pages
+	movzx ebx, bx
+	shl ebx, 4		;64kb -> pages 
+	add eax, ebx
+	@dprintf "pm_alloci15: pages=%lX", eax
+	mov edx,100000h
+	clc
+	ret
+e801_err:
+	@dprintf "pm_alloci15: int 15h,ax=E801h failed"
+	stc
+	ret
+	align 4
+
+pm_alloci15 endp
 
 endif
 
@@ -2715,50 +3399,53 @@ endif
 ;*** 1. b1 = _max(EMB/16,512kb)
 ;*** 2. b2 = _max(b1,req. Block)
 ;*** 3. b3 = _min(b2,max. Block)
-;*** inp: eax=pages of largest block returned by XMS
+;*** inp: eax=free xms pages returned by XMS
+;***      edx=max block, returned by XMS
 ;***      ecx=pages requested
 ;*** out: eax size of block to request
 
 getbestxmssize proc
-		mov ebx,eax 		;largest block -> ebx
+;	mov ebx,eax 		;largest block -> ebx
+	mov ebx,edx 		;largest block -> ebx
 if ?XMSBLOCKCNT
-		push ecx
-		mov cl,[bXMSBlocks]
-		cmp cl,24+1
-		jnc @F
-		shr cl,3			;0->0, 8->1, 16->2	24->3
-		neg cl				;0->0,	 -1,	-2	   -3
-		add cl,4			;	4	  3 	 2		1
-		shr eax,cl			;largest block / (16|8|4|2)
+	push ecx
+	mov cl,[bXMSBlocks]
+	cmp cl,24+1
+	jnc @F
+	shr cl,3			;0->0, 8->1, 16->2	24->3
+	neg cl				;0->0,	 -1,	-2	   -3
+	add cl,4			;	4	  3 	 2		1
+	shr eax,cl			;largest block / (16|8|4|2)
 @@:
-		pop ecx
+	pop ecx
 else
-		shr eax,4
+	shr eax,4
 endif
-		cmp eax,80h			;below 128 pages (512 kB)?
-		jae @F
-		mov al,80h			;min is 512 kB
+	cmp eax,80h			;below 128 pages (512 kB)?
+	jae @F
+	mov al,80h			;min is 512 kB
 @@:
-		cmp eax,ecx 		;is req block larger?
-		jae @F
-		mov eax,ecx 		;then use this amount
+	cmp eax,ecx 		;is req block larger?
+	jae @F
+	mov eax,ecx 		;then use this amount
 @@:
-		cmp eax,ebx 		;is this larger than max emb?
-		jb @F
-		mov eax,ebx 		;then use max emb
+	cmp eax,ebx 		;is this larger than max emb?
+	jb @F
+	mov eax,ebx 		;then use max emb
 @@:
-		ret
+	ret
+	align 4
 getbestxmssize endp
 
 
 _TEXT32  ends
 
-_TEXT16	 segment
+_TEXT16 segment
 
 
-		@ResetTrace
+	@ResetTrace
 
-;*** int 15 rm routine, called for ah=88h or ax=e801
+;*** int 15 rm routine, called for ah=88h or ax=e801h in raw mode.
 ;--- for ah=88h -> return in ax free extended memory in kB
 ;--- for ax=E801h -> return in ax ext. memory below 16 M in kB (usually 15360)
 ;--- return in bx extended memory above 16 M (64 kB blocks)
@@ -2767,203 +3454,201 @@ _TEXT16	 segment
 ;--- this mode
 
 pm_int15rm proc public
-		push ecx
-		mov ecx, cs:[dwResI15Pgs]
-		cmp ah, 0E8h
-		jz i15e801
-		cmp ecx, 0FFC0h shr 2
-		mov ax, cx
-		pop ecx
-		jb @F
-		mov ax, 0FFC0h 			;report 63 MB ext mem
-		ret
+	push ecx
+
+;--- since v3.18, there is no longer a part of the memory
+;--- "released" and regained, since this didn't really work.
+;--- now the one physical block is kept for all VMs.
+;	mov ecx, cs:[dwResI15Pgs]
+	mov ecx, cs:PhysBlk.dwFree
+
+if ?TRAPI15E801	;intercept int 15h, ax=e801h?
+	cmp ah, 0E8h
+	jz i15e801
+endif
+	cmp ecx, 0FFC0h shr 2	;less than 63 MB free?
+	mov ax, cx
+	pop ecx
+	jb @F
+	mov ax, 0FFC0h 			;report 63 MB ext mem
+	ret
 @@:
-		shl ax,2				;pages -> kb
-		ret
+	shl ax,2				;pages -> kb
+	ret
+if ?TRAPI15E801
 i15e801:
-		mov ax, 15360
-		cmp ecx, 15360 shr 2	;this is in pages, not kB
-		jnc @F
-		mov ax, cx
-		shl ax, 2				;pages -> kB
-		xor bx, bx				;nothing above 16M
-		jmp done
+;--- to return: AX/CX ext. memory between 1M-16MB in kB (max 15360)
+;--- to return: BX/DX ext. memory above 16MB in 64kB blocks
+	@drprintf "pm_int15rm, ax=e801h: free pages=%lX", ecx
+	mov ax, 15360
+	cmp ecx, 15360 shr 2	;less than 15 MB free? (ecx is pages, not kB!)
+	jnc @F
+	mov ax, cx
+	shl ax, 2				;pages -> kB
+	xor bx, bx				;nothing above 16M
+	jmp done
 
 @@:
-		sub ecx, 15360 shr 2
-		shr ecx, 4				;64k blocks
-		mov bx, cx
+	sub ecx, 15360 shr 2	;subtract 15 MB (in pages)
+	shr ecx, 4				;convert 4k-pages to 64k-blocks
+	mov bx, cx
 done:
-		pop ecx
-		mov cx, ax				;return the values in CX/DX as well
-		mov dx, bx
-		ret
+	pop ecx
+	mov cx, ax				;return the values in CX/DX as well
+	mov dx, bx
+	ret
+endif
 pm_int15rm endp
-
 
 if ?I15MEMMGR	;this is 0
 
 ;--- set int15 pages to free by server, edx=pages to free
 ;--- obsolete
 
-seti15pages proc near
-		mov eax,cs:PhysBlk.dwFree ;return size in eax
-		sub edx,cs:[dwResI15Pgs]  ;don't count the already reserved pages
-		jc set15_1				  ;size shrinks
-		cmp eax,edx 			  ;size too large
-		jb @F
+pm_seti15pages proc near
+	mov eax,cs:PhysBlk.dwFree ;return size in eax
+	sub edx,cs:[dwResI15Pgs]  ;don't count the already reserved pages
+	jc set15_1				  ;size shrinks
+	cmp eax,edx 			  ;size too large
+	jb @F
 set15_1:
-		sub cs:PhysBlk.dwFree,edx
-		add cs:[dwResI15Pgs],edx
-		clc
-		ret
+	sub cs:PhysBlk.dwFree,edx
+	add cs:[dwResI15Pgs],edx
+	clc
+	ret
 @@:
-		stc
-		ret
-seti15pages endp
+	stc
+	ret
+pm_seti15pages endp
 
 endif
 
-		@ResetTrace
-
 ;*** get memory block from XMS
-;*** inp: ECX=size of block in pages
-;*** DS=GROUP16
-;*** Out: Carry on errors, else
-;*** EAX=pages allocated
+;*** in: EDX=size of block to request in kB
+;---      AH=XMS alloc function (09h or 89h)
+;*** Out: if error, Carry + error code in BL, else
 ;*** EDX=physical address
 ;*** BX=XMS handle
 
-		@ResetTrace
+	@ResetTrace
 
-allocxms proc near uses ds
+allocxms_rm proc near
 
-		push cs
-		pop ds
-		push ecx
-		mov edx,ecx
-		shl edx,2
-		mov ah,fXMSAlloc
-		@stroutrm <"-pm, allocxms: try to alloc %lX kb XMS mem,ax=%X",lf>,edx,ax 
-		call [xmsaddr]
-		and ax,ax
-		jz allocxmserr1			;---> error
-		@stroutrm <"-pm, allocxms: EMB allocated, handle=%X",lf>,dx
-		push dx
-		mov ah,0Ch					;lock EMB
-		call [xmsaddr]
-		pop cx
-		and ax,ax
-		jz allocxmserr1			;---> error
-		push dx
-		push bx
-		pop edx 					;physical address -> edx
-		mov bx,cx
-		@stroutrm <"-pm, allocxms: EMB locked, addr=%lX",lf>, edx
-		pop eax						;get no of kbytes
-;;		shr eax,2					;convert to pages
-		test dx,0FFFh				;starts block on page boundary?
-		jz @F
-		and dx,0F000h				;if no, do a page align
-		add edx,1000h
-		dec eax
-@@: 								;RC: num pages in EAX
-if 0;_LTRACE_
-		push ax
-		push bx
-		push cx
-_GetA20State proto near 
-		call _GetA20State
-		@stroutrm <"-pm, allocxms: A20 state is %X",lf>,ax
-		pop cx
-		pop bx
-		pop ax
-endif
-		@stroutrm <"-pm, allocxms: allocated %lX pages",lf>,eax
-		clc
-		ret
-allocxmserr1:
-		pop ecx 		;adjust stack
-		mov ax,bx		;al contains error code
-		@stroutrm <"-pm, allocxms: unable to alloc XMS memory, error=%X, sp=%X",lf>,ax,sp
-		stc
-		ret
-allocxms endp
+	@drprintf "allocxms: try to alloc %lX kb XMS mem,ax=%X",edx,ax 
+	call cs:[xmsaddr]
+	and ax,ax
+	jz allocxmserr1
+	@drprintf "allocxms: EMB allocated, handle=%X",dx
+	push dx
+	mov ah,0Ch		;lock EMB
+	call cs:[xmsaddr]
+	and ax,ax
+	jnz exit
+;--- lock error. to be absolutely safe, the EMB should be released here,
+;--- but it's very unlikely that this case ever happens.
+	@drprintf "allocxms: lock EMB failed, handle=%X", dx
+allocxmserr1:		;alloc error
+	@drprintf "allocxms: unable to alloc XMS memory, error=%X, sp=%X", bx, sp
+	stc
+exit:
+	push dx
+	push bx
+	pop edx 		;physical address -> edx
+	pop bx
+	ret
+allocxms_rm endp
 
 ;*** free XMS memory handle
 ;--- DX = xms memory handle
 ;--- may modify BX
 
 freexms proc near
-		mov ah,0Dh					;unlock EMB
-		call cs:[xmsaddr]
-		mov ah,0Ah					;free EMB
-callxms::        
-		call cs:[xmsaddr]
-		ret
+	mov ah,0Dh					;unlock EMB
+	call cs:[xmsaddr]
+	mov ah,0Ah					;free EMB
+callxms::
+	@drprintf "callxms: AX=%X",ax
+	call cs:[xmsaddr]
+	ret
 freexms endp
 
-		@ResetTrace
+	@ResetTrace
 
 ;--- DS=GROUP16
 
-pm_exitserver_rm proc public
+pm_exit_rm proc public
 
 if _LTRACE_
-		nop
-		@stroutrm <"-pm: exitserver_rm enter",lf>
-;		 @waitesckey
+	nop
+	@drprintf "pm_exit_rm enter"
+;	@waitesckey
 endif
 
-		@stroutrm <"-pm: pVCPIPages=%X, pXMSHdls=%X",lf>, pVCPIPages, pXMSHdls
+	@drprintf "pm_exit_rm: pVCPIPages=%X, pXMSHdls=%X", pVCPIPages, pXMSHdls
 if ?FREEVCPIPAGES
 
-		mov si, pVCPIPages
+if ?HSINEXTMEM
+	mov es,wHostPSP
+endif
+
+	mov si, pVCPIPages
 nextitem:
-		cmp si, pXMSHdls
-		jz vcpidone
-		sub si, 4
-		mov edx,[si]
-		and dx,0F000h
-		mov ax,0DE05h
-		int 67h
+	cmp si, pXMSHdls
+	jz vcpidone
+	sub si, 4
+if ?HSINEXTMEM
+	mov edx,es:[si]
+else
+	mov edx,[si]
+endif
+	and dx,0F000h
+	mov ax,0DE05h
+	int 67h
 if _LTRACE_
-		and ah,ah
-		jz @F
-		@stroutrm <"-pm: free VCPI page %lX returned ax=%X",lf>, edx, ax
+	and ah,ah
+	jz @F
+	@drprintf "pm_exit_rm: free VCPI page %lX returned ax=%X", edx, ax
 @@:
 endif
-		and ah,ah
-		jnz nextitem
-		dec dwVCPIPages
-		@stroutrm <"-pm: free VCPI page %lX returned ax=%X, remaining %lX",lf>, edx, ax, dwVCPIPages
-		jmp nextitem
+	and ah,ah
+	jnz nextitem
+	dec dwVCPIPages
+	@drprintf "pm_exit_rm: free VCPI page %lX returned ax=%X, remaining %lX", edx, ax, dwVCPIPages
+	jmp nextitem
 vcpidone:
 else
-		mov si, pXMSHdls
+	mov si, pXMSHdls
 endif
 nextitem2:
-		cmp si, offset stacktop
-		jbe xmsdone
-		dec si
-		dec si
-		mov dx,[si]
-		@stroutrm <"-pm: free XMS handle %X",lf>, dx
-		call freexms
-		jmp nextitem2
+if ?HSINEXTMEM
+	cmp si, 5Ch
+else
+	cmp si, offset stacktop
+endif
+	jbe xmsdone
+	dec si
+	dec si
+if ?HSINEXTMEM
+	mov dx,es:[si]
+else
+	mov dx,[si]
+endif
+	@drprintf "pm_exit_rm: free XMS handle %X", dx
+	call freexms
+	jmp nextitem2
 xmsdone:
 if 0
-		test PhysBlk.bFlags, PBF_DOS
-		jz @F
-		mov es,PhysBlk.wHandle
-		@stroutrm <"-pm: free DOS mem block %X",lf>,es
-		mov ah,49h
-		int 21h
+	test PhysBlk.bFlags, PBF_DOS
+	jz @F
+	mov es,PhysBlk.wHandle
+	@drprintf "pm_exit_rm: free DOS mem block %X",es
+	mov ah,49h
+	int 21h
 @@:
 endif
-		@stroutrm <"-pm: exitserver_rm exit, sp=%X",lf>,sp
-		ret
-pm_exitserver_rm endp
+	@drprintf "pm_exit_rm: done, sp=%X",sp
+	ret
+pm_exit_rm endp
 
 _TEXT16 ends
 
@@ -2971,181 +3656,235 @@ _TEXT16 ends
 
 _ITEXT16 segment
 
-		@ResetTrace
+	@ResetTrace
+
+E820MAP struct
+baselow  dd ?
+basehigh dd ?
+lenlow   dd ?
+lenhigh  dd ?
+type_    dd ?
+E820MAP ends
 
 ;*** no XMS/VCPI host detected, try Int15 alloc
 ;*** Out: EAX=number of free pages
 ;*** Out: EDX=phys. addr of block
+;--- all std regs may be modified
 
-alloci15 proc near
-		mov cl, 0
+alloci15rm proc near
+;	mov cl, 0	;???
 if ?USEE820
-		@stroutrm <"-pm, alloci15: int 15h, ax=E820",lf>
-		xor ebx, ebx
-		sub sp, 20
-		mov di, sp
-		push ss
-		pop es
+	push bp
+	@drprintf "alloci15rm: int 15h, ax=E820"
+	xor ebx, ebx
+	xor esi, esi
+	sub sp, sizeof E820MAP
+	mov di, sp
+	push ss
+	pop es
 nextitem:
-		mov ecx, 20
-		mov edx,"SMAP"
-		mov eax,00E820h
-		int 15h
-		mov cl, 0
-		jc done
-		and ebx, ebx
-		jz done
-		.if (dword ptr es:[di+16] == 1)
-			mov edx, es:[di+0]
-			.if (edx == 100000h)
-				mov eax, es:[di+8]
-				shr eax, 12 		;bytes -> pages
-				inc cl
-				jmp done
-			.endif
-		.endif
-		jmp nextitem
-done:
-		add sp, 20
+	mov ecx, sizeof E820MAP
+	mov edx,"SMAP"
+	mov eax,0E820h
+	int 15h
+;	jc done_e820
+	cmp eax,"SMAP"
+	jnz done_e820
+	cmp es:[di].E820MAP.type_, 1;type "available"?
+	jnz skipitem
+	cmp word ptr es:[di].E820MAP.basehigh, 0	;beyond 4 GB?
+	jnz skipitem
+	cmp es:[di].E820MAP.baselow, 100000h		;base above 1 MB?
+	jb skipitem
+	mov eax, es:[di].E820MAP.lenlow
+	shr eax, 12 		;bytes -> pages
+	cmp eax,esi
+	jc @F
+	mov esi,eax
+	mov ebp,es:[di].E820MAP.baselow
+	@drprintf "alloci15rm, ax=e820: available memory, base=%lX, size=%lX pg", ebp, esi
+@@:
+skipitem:
+	and ebx, ebx
+	jnz nextitem
+done_e820:
+	mov eax, esi
+	mov edx, ebp
+	add sp, sizeof E820MAP
+	pop bp
+	and eax, eax
+	jnz exit
 endif
 if ?USEE801
-  if ?USEE820
-		cmp cl,0
-		jnz donee801
-  endif
-		@stroutrm <"-pm, alloci15: int 15h, ax=E801",lf>
-		mov ax,0E801h
-		int 15h
-		jc e801_err
-		@stroutrm <"-pm, alloci15: int 15h, ax=E801 ok, ax-dx=%X %X %X %X",lf>, ax, bx, cx, dx
-		and ax, ax
-		jnz @F
-		mov ax, cx
-		mov bx, dx
+	@drprintf "alloci15rm: int 15h, ax=E801"
+	clc
+	mov ax,0E801h
+	int 15h
+	jc e801_err
+	@drprintf "alloci15rm, ax=E801: ok, ax-dx=%X %X %X %X", ax, bx, cx, dx
+	and ax, ax
+	jnz @F
+	mov ax, cx
+	mov bx, dx
 @@:
-		cmp ax, 3C00h+1	;max is 3C00h (15360 kB)
-		jnc e801_err
-		movzx eax, ax
-		shr ax, 2		;kb -> pages
-		movzx ebx, bx
-		shl ebx, 4		;64kb -> pages 
-		add eax, ebx
-		mov cl,1
-		@stroutrm <"-pm, alloci15: pages=%lX",lf>, eax
-		jmp donee801
+	;--- max value in AX "should" be 3C00h, but there are "providers"
+	;--- that return FFC0 instead ( i.e. GRUB2 )
+	cmp ax, 3C00h+1	;max is 3C00h (15360 kB)
+	jnc e801_err
+	movzx eax, ax
+	shr ax, 2		;kb -> pages
+	movzx ebx, bx
+	shl ebx, 4		;64kb -> pages 
+	add eax, ebx
+	@drprintf "alloci15rm: pages=%lX", eax
+	jmp done
 e801_err:
-		mov cl,0
-donee801:
 endif
-		cmp cl,0
-		jnz @F
-		@stroutrm <"-pm, alloci15: int 15, ah=88h",lf>
-		mov ah,88h				;get extended memory size (kB)
-		int 15h
-		@stroutrm <"-pm, alloci15: Int 15 extended memory size=%X",lf>,ax
-		movzx eax, ax
-		shr ax,2				;kb -> pages
-		and ax,ax
-		jz exit
-@@:
-;		mov [dwNxtPageOfs],-1000h ;allocate from top to bottom
-;		mov edx,eax
-;		shl edx,12				;pages -> bytes
-;		add edx,100000h-1000h	;block starts at 0x100000 (HMA)
-		mov edx,100000h
-		clc
+	@drprintf "alloci15rm: int 15, ah=88h"
+	clc
+	mov ah,88h				;get extended memory size (kB)
+	int 15h
+	jc exit
+	@drprintf "alloci15rm: Int 15 extended memory size=%X",ax
+	movzx eax, ax
+	shr ax,2				;kb -> pages
+done:
+	mov edx,100000h
+	clc
 exit:
-		ret
+	ret
 
-alloci15 endp
+alloci15rm endp
 
 ;--- get physical address of linear address in 1. MB
 ;--- inp: eax = linear address
 ;--- out: edx = physical address
 
-getphysaddr proc
-		mov edx,eax
-		test [fHost],FH_VCPI
-		jz exit
-		push cx
-		push eax
-		shr eax,12				;get physical address from VCPI
-		mov cx,ax				;inp: page number in CX
-		mov ax,0DE06h
-		int 67h
-		and dl,0F8h				;clear R/O, USER, PRESENT bits
-		pop eax
-		pop cx
+getphysaddr_rm proc
+	mov edx,eax
+	test [fHost],FH_VCPI
+	jz exit
+	push cx
+	push eax
+	shr eax,12				;get physical address from VCPI
+	mov cx,ax				;inp: page number in CX
+	mov ax,0DE06h
+	int 67h
+	and dl,0F8h				;clear R/O, USER, PRESENT bits
+	pop eax
+	pop cx
 exit:
-		ret
-getphysaddr endp
+	ret
+getphysaddr_rm endp
 
-;*** alloc memory for 2 page tables + 4 PTEs (2010h bytes) in dos memory
-;--- this is for page table 0, page dir + 4 additional PTEs 
-;*** this is temporary until we are in protected mode
+;*** init page table 0 for the first 4 MB in DOS memory
+;--- behind this table (which starts at a page boundary
+;--- will be space for at least 4 PDEs in page dir.
+;*** it's temporary until we are in protected mode
 ;--- and will be changed in initserver_pm
+;--- in: DS=GROUP16
 ;--- out: EAX = linear address page table 0
-;--- ES= segment page table 0
+;--- modifies ES
 
-		@ResetTrace
+	@ResetTrace
 
-allocpagetab0 proc
+initpagetab0 proc
 
-		@stroutrm <"-pm, allocpagetab0: try to alloc 2000h bytes conv. memory",lf>
-		mov bx, 200h		;2 pages (8 kB), needed are 1004h bytes
-		mov ah, 48h
-		int 21h
-		jc error
-		mov word ptr [taskseg._ES],ax	;save it here, will be released soon
-		@stroutrm <"-pm, allocpagetab0: DOS memory alloc for page tabs ok (%X)",lf>,ax
+	@drprintf "initpagetab0: try to alloc 2000h bytes conv. memory"
+	mov bx, 200h		;2 pages (8 kB), needed are 1004h bytes
+	mov ah, 48h
+	int 21h
+	jc error
+	mov word ptr taskseg._ES,ax	;save it here, will be released soon
+	@drprintf "initpagetab0: DOS memory alloc for page tabs ok (%X)",ax
 
 ;--- now shrink the memory so it fits exactly
 
-		mov es,ax
-		mov ah,1            ;2 full pages
-		neg al				;+ page align the memory
-		inc ax				;+ 1 paragraph
-		mov bx,ax
-		mov ah,4Ah
-		int 21h
+	mov es,ax
+	mov ah,1            ;2 full pages
+	neg al				;+ page align the memory
+	inc ax				;+ 1 paragraph
+	mov bx,ax
+	mov ah,4Ah
+	int 21h
 if 0	;igore shrink failure
-		jc error
-		@stroutrm <"-pm, allocpagetab0: DOS memory realloc for page tabs ok (%X)",lf>,bx
+	jc error
+	@drprintf "initpagetab0: DOS memory realloc for page tabs ok (%X)",bx
 endif
-		mov ax,es
-        add ax,100h-1
-		mov al,00
-		@stroutrm <"-pm, allocpagetab0: page tab start %X",lf>,ax
+	mov ax,es
+	add ax,100h-1
+	mov al,00
+	@drprintf "initpagetab0: page tab start %X",ax
+	mov es,ax
+	movzx eax,ax
+	shl eax,4
+	mov pPageTab0, eax
+	call getphysaddr_rm		;get physical address (PDE) of PT0 in edx
+	@drprintf "initpagetab0: pPageTab0=%lX [PDE=%lX]", eax, edx
+	or dl,PTF_PRESENT or PTF_NORMAL
+	assume es:SEG16
+	mov es:[1000h+000],edx	;set PDE for pagetab0 in page dir
+	add eax,1000h
+;--- v3.19: pPageDir is a constant now
+;	mov pPageDir, eax
+	call getphysaddr_rm
+	mov v86topm._cr3, edx	;CR3 will be modified later
+	@drprintf "initpagetab0: pPageDir=%lX [CR3=%lX]", eax, edx
+
 ;--- init page table 0:
 ;--- 000000-10FFFF: phys=linear 
 ;--- 110000-3FFFFF: NULL
-		mov es,ax
-		xor di,di
-		mov cx,440h/4
-		xor eax,eax
-		or al,PTF_PRESENT or PTF_USER or PTF_WRITEABLE
-		cld
+	xor di,di
+	mov cx,440h/4
+	xor eax,eax
+if ?DOSPGLOBAL
+	or ax,PTF_PRESENT or PTF_USER or PTF_WRITEABLE or PTF_GLOBAL
+else
+	or al,PTF_PRESENT or PTF_USER or PTF_WRITEABLE
+endif
+	cld
 @@:
-		stosd
-		add eax,1000h
-		loop @B
-		mov cx,(1000h-440h)/4	;init rest of tab0
-		xor eax,eax
-		rep stosd
-		@stroutrm <"-pm, allocpagetab0: initialization pagetab0 + pagedir done",lf>
-        
-		mov ax,es
-		shl eax,4
+	stosd
+	add eax,1000h
+	loop @B
+	mov cx,(1000h-440h)/4	;init rest of tab0
+	xor eax,eax
+	rep stosd
+	@drprintf "initpagetab0: initialization pagetab0 done"
+	xor di,di
+	test [fHost],FH_VCPI
+	jz @F
+
+;--- get VCPI protected-mode interface
+;--- ds:si = pointer to 3 descriptors in GDT
+;--- es:di = page table 0
+	mov si,offset vcpidesc
+	mov ax,0DE01h			;get protected mode interface
+	int 67h
+	cmp ah,00				;returns in DI=first free entry
+	stc 					;in pagetab 0
+	jnz error
+	mov [vcpiOfs],ebx		;entry VCPI host
+	@drprintf "initpagetab0: get VCPI protected mode interface ok (%lX,%X)",ebx,di
+@@:
+;--- v3.18: ensure 1 uncommitted page exists between DOS memory
+;--- and host memory
+	cmp di,444h 			;never go below linear addr 111000h 
+	jnb @F
+	mov di,444h
+@@:
+	mov word ptr dwOfsPgTab0,di	;first free entry in page table 0
+	clc
 error:
-		ret
-allocpagetab0 endp
+	ret
+initpagetab0 endp
 
 if ?INT15XMS
 
-		@ResetTrace
+	@ResetTrace
 
 getunmanagedmem proc
-		@stroutrm <"-pm, getunmanagedmem enter",lf>
+	@drprintf "getunmanagedmem: enter"
 
 ;--- a 2.0 host cannot handle more than 65535 kb extended memory
 ;--- that would give highest address:
@@ -3154,62 +3893,55 @@ getunmanagedmem proc
 ;--- FFFF * 400 -> 3FFFC00 + 110000h -> 410FC00 - 1 -> 410FBFF
 ;--- to be sure, round up to the next page: 410FFFF
 
-		mov ecx,0410FFFFh
-		test [fHost],FH_XMS30	;xms driver 3.0+?
-		jz @F
-		mov ah, fXMSQuery
-		call xmsaddr
-		cmp ecx,110000h
-		jb error
-		mov ax,cx
-		and ah,03h
-		cmp ax,03FFh
-		jnz error
+	mov ecx,0410FFFFh
+	test [fHost],FH_XMS30	;xms driver 3.0+?
+	jz @F
+	mov ah, fXMSQuery
+	call [xmsaddr]
+	cmp ecx,110000h
+	jb error
+	mov ax,cx
+	and ah,03h
+	cmp ax,03FFh
+	jnz error
 @@:
-		@stroutrm <"-pm, getunmanagedmem highest address=%lX",lf>, ecx
-		push ecx		
-		call alloci15
-		pop ecx
-		@stroutrm <"-pm, getunmanagedmem int 15h base=%lX, size=%lX",lf>, edx, eax
+	@drprintf "getunmanagedmem: highest address=%lX", ecx
+	push ecx		
+	call alloci15rm
+	pop ecx
+	@drprintf "getunmanagedmem: int 15h base=%lX, size=%lX", edx, eax
 ;--- ecx = highest address for XMS
 ;--- eax = int 15 mem (pages)
 ;--- edx = 100000h
-		shl eax, 12
-		add eax, edx
-		inc ecx
-		sub eax,ecx
-		ja @F
+	shl eax, 12
+	add eax, edx
+	inc ecx
+	sub eax,ecx
+	ja @F
 error:
-		stc
-		ret
+	stc
+	ret
 @@:
-		mov edx, ecx
-		shr eax, 12
-		@stroutrm <"-pm, using unmanaged memory base=%lX, size=%lX",lf>, edx, eax
-		mov PhysBlk.bFlags, PBF_I15 or PBF_TOPDOWN
-		cmp eax, ?PAGEMIN		;could we get the minimum?
-		ret
+	mov edx, ecx
+	shr eax, 12
+	@drprintf "getunmanagedmem: using unmanaged memory base=%lX, size=%lX", edx, eax
+	mov PhysBlk.bFlags, PBF_I15 or PBF_TOPDOWN
+	cmp eax, ?PAGEMIN		;could we get the minimum?
+	ret
 getunmanagedmem endp
 endif
 
 ;*** initialization Page Manager RM
 ;*** allocs minimum space required for init:
-;--- 1 page   page dir
-;--- 3 pages  page tables 0, FF8, FFC
-;--- 1 page   pm breaks + GDT
-;--- 1 page   IDT
-;--- 1 page   LDT
-;--- 1 page   LPMS
-;--- 2 page   client save state
-;--- 7 pages  CGROUP if code is moved high
+;--- in: DS=GROUP16
 ;*** RC: C on errors (not enough memory)
 ;*** sets:
-;*** vcpiOfs: offset entry VCPI
-;*** v86topm._cr3: value for CR3
-;*** pPageDir:linear address page dir
-;*** pPageTables:linear address page tables
-;*** pPageTab0:linear address page table 0
-;*** dwOfsPgTab0: offset 1. free PTE in page table 0
+;***  PhysBlk: current physical memory block descriptor
+;***  vcpiOfs: offset entry VCPI if VCPI host detected
+;***  v86topm._cr3: value for CR3 if VCPI host detected
+;***  *obsolete* pPageDir:linear address page dir
+;***  pPageTab0:linear address page table 0
+;***  dwOfsPgTab0: offset 1. free PTE in page table 0
 
 ?HEAPPAGE equ 1	;add 1 page for heap
 
@@ -3219,166 +3951,153 @@ else
 ?PAGEMIN	equ 10+?HEAPPAGE
 endif
 
-		@ResetTrace
+	@ResetTrace
 
-pm_initserver_rm proc public
+pm_init_rm proc public
 
 if _LTRACE_
-		nop
-		@stroutrm <"-pm: initserver_rm enter",lf>
+	nop
+	@drprintf "pm_init_rm: enter"
 endif
-		test [fHost], FH_XMS
+	test [fHost], FH_XMS
 if ?XMSALLOCRM
-		jz noxms
+	jz noxms
   if ?INT15XMS
-		test fMode2, FM2_INT15XMS
-		jz @F
-		call getunmanagedmem
-		jnc initpagemgr_rm_1
+	test fMode2, FM2_INT15XMS
+	jz @F
+	call getunmanagedmem
+	jnc initpagemgr_rm_1
 @@:
   endif
   if ?VCPIPREF
-		test fMode2, FM2_VCPI
-		jz @F
-		test fHost, FH_VCPI
-		jz @F
-		and fHost, not (FH_XMS or FH_XMS30)
-		jmp noxms
+	test fMode2, FM2_VCPI
+	jz @F
+	test fHost, FH_VCPI
+	jz @F
+	and fHost, not (FH_XMS or FH_XMS30)
+	jmp noxms
 @@:
   endif
-		mov ah, fXMSQuery
-		mov bl,0				;some XMS hosts dont set BL on success
-		call [xmsaddr]
-		cmp bl,0
-		jnz noxms
-		test [fHost],FH_XMS30	;xms driver 3.0+?
-		jnz @F
-		movzx eax,ax
+	mov ah, fXMSQuery
+	mov bl,0				;some XMS hosts dont set BL on success
+	call [xmsaddr]
+	cmp bl,0
+	jnz noxms
+	test [fHost],FH_XMS30	;xms driver 3.0+?
+	jnz @F
+	movzx eax,ax
 @@:
-		shr eax,2				;kb->pg
-		mov cx,6				;alloc 1/32 of max free block
+	shr eax,2				;kb->pg
+	mov cx,6				;alloc 1/32 of max free block
 nexttry:
-		cmp eax, ?PAGEMIN*2
-		jb @F
-		shr eax, 1
-		loop nexttry
-@@: 	
-		cmp eax, ?PAGEMIN
-		jb noxms
-		mov ecx, eax
-		call allocxms			;alloc XMS memory
-		jc noxms
-		mov PhysBlk.wHandle,bx
-		mov PhysBlk.bFlags, PBF_XMS
-		jmp initpagemgr_rm_1
+	cmp eax, ?PAGEMIN*2
+	jb @F
+	shr eax, 1
+	loop nexttry
+@@:
+	cmp eax, ?PAGEMIN
+	jb noxms
+	mov edx, eax
+	push eax
+	shl edx,2
+	mov ah,fXMSAlloc
+	call allocxms_rm		;alloc XMS memory
+	pop eax
+	jc noxms
+	mov PhysBlk.wHandle,bx
+	mov PhysBlk.bFlags, PBF_XMS
+	test dx,0FFFh			;block's base on page boundary?
+	jz @F
+	add edx,1000h-1
+	and dx,0F000h			;if no, do a page align
+	dec eax
+@@:
+	jmp initpagemgr_rm_1
 noxms:
-		@stroutrm <"-pm: no XMS memory",lf>
+	@drprintf "pm_init_rm: no XMS memory"
 else
-		jnz initpagemgr_rm_2	;XMS exists, all ok
+	jnz initpagemgr_rm_2	;XMS exists, all ok
 endif
 if ?VCPIALLOC
-		test [fHost],FH_VCPI	;VCPI host exists?
-		jz @F
+	test [fHost],FH_VCPI	;VCPI host exists?
+	jz @F
 if ?NOVCPIANDXMS
-		test [fHost],FH_XMS		;avoid using VCPI if XMS host exists
-		jnz @F
+	test [fHost],FH_XMS		;avoid using VCPI if XMS host exists
+	jnz @F
 endif
-		mov ax,0DE03h			;get number of free pages (EDX)
-		int 67h
-		@stroutrm <"-pm: free VCPI pages=%lX",lf>, edx
-		cmp edx, ?PAGEMIN
-		jnc initpagemgr_rm_2
+	mov ax,0DE03h			;get number of free pages (EDX)
+	int 67h
+	@drprintf "pm_init_rm: free VCPI pages=%lX", edx
+	cmp edx, ?PAGEMIN
+	jnc initpagemgr_rm_2
 @@:
 endif
-		@stroutrm <"-pm: no VCPI or XMS memory",lf>
-		test fHost, FH_XMS or FH_VCPI
-		jnz @F
-		mov PhysBlk.bFlags, PBF_I15 or PBF_TOPDOWN
-		call alloci15			;try to alloc with Int 15h
-		cmp eax, ?PAGEMIN		;could we get the minimum?
-		jnb initpagemgr_rm_1	;that would be ok for now
+	@drprintf "pm_init_rm: no VCPI or XMS memory"
+	test fHost, FH_XMS or FH_VCPI
+	jnz @F
+	mov PhysBlk.bFlags, PBF_I15 or PBF_TOPDOWN
+	call alloci15rm			;try to alloc with Int 15h
+	cmp eax, ?PAGEMIN		;could we get the minimum?
+	jnb initpagemgr_rm_1	;that would be ok for now
 @@:
-		test [bEnvFlags],ENVF_INCLDOSMEM
-		stc
-		jz error
-		@stroutrm <"-pm: no extended memory found, try to alloc dos mem",lf>
-		mov bx,(?PAGEMIN+1)*100h
-		mov ah,48h
-		int 21h
-		jc error				;if this fails, we are 'out of mem'
-		mov PhysBlk.wHandle, ax
-		movzx edx,ax
-		add dx,100h-1			;align to page 
-		mov dl,0
-		shl edx,4				;make it a linear address
-		@stroutrm <"-pm: dos memory allocated, addr=%lX, size=%X paras",lf>,edx, bx
-		mov eax,?PAGEMIN
-		mov PhysBlk.bFlags, PBF_DOS or PBF_LINEAR
+	test [bEnvFlags],ENVF_INCLDOSMEM
+	stc
+	jz error
+	@drprintf "pm_init_rm: no extended memory found, try to alloc dos mem"
+	mov bx,(?PAGEMIN+1)*100h
+	mov ah,48h
+	int 21h
+	jc error				;if this fails, we are 'out of mem'
+	mov PhysBlk.wHandle, ax
+	movzx edx,ax
+	add dx,100h-1			;align to page 
+	mov dl,0
+	shl edx,4				;make it a linear address
+	@drprintf "pm_init_rm: dos memory allocated, addr=%lX, size=%X paras",edx, bx
+	mov eax,?PAGEMIN
+	mov PhysBlk.bFlags, PBF_DOS or PBF_LINEAR
+
 initpagemgr_rm_1:
-		@stroutrm <"-pm: PhysBlk init, base=%lX, size=%lX pg",lf>, edx, eax
-		mov PhysBlk.dwSize, eax 	;pages total
-		mov PhysBlk.dwFree, eax 	;pages free to allocate
-		mov PhysBlk.dwBase, edx		;phys. address
+;--- here we have a PhysBlk with enough space for initialization
+	@drprintf "pm_init_rm: PhysBlk init, base=%lX, size=%lX pg", edx, eax
+	mov PhysBlk.dwSize, eax 	;pages total
+	mov PhysBlk.dwFree, eax 	;pages free to allocate
+	mov PhysBlk.dwBase, edx		;phys. address
+
 initpagemgr_rm_2:
-		call allocpagetab0		;will set ES=page tab 0
-		jc error
-		mov [pPageTab0],eax 	;linear address page table 0
-		call getphysaddr		;phys. addr von eax nach edx
-		@stroutrm <"-pm: pPageTab0=%lX [PDE=%lX]",lf>, eax, edx
-		or dl,PTF_PRESENT or PTF_NORMAL
-		assume es:SEG16
-		mov es:[1000h+000],edx	;set PDE for pagetab0 in page dir
+	call initpagetab0
+	jc error
 
-		add eax,1000h
-		mov pPageDir, eax
-		call getphysaddr
-		mov v86topm._cr3, edx	;CR3 will be modified later
-		@stroutrm <"-pm: pPageDir=%lX [CR3=%lX]",lf>, eax, edx
-
-		xor di,di				;es:di ^ pagetable 0
-		test [fHost],FH_VCPI
-		jz @F
-		mov si,offset vcpidesc	;ds:si ^ 3 descriptors in GDT
-		mov ax,0DE01h			;get protected mode interface
-		int 67h
-		cmp ah,00				;returns in DI=first free entry
-		stc 					;in pagetab 0
-		jnz error
-		mov [vcpiOfs],ebx		;entry VCPI host
-		@stroutrm <"-pm: get protected mode interface ok (%lX,%X)",lf>,ebx,di
-@@:
-		cmp di,440h 			;never go below linear addr 110000h 
-		jnb @F
-		mov di,440h
-@@:
-		mov word ptr [dwOfsPgTab0],di	;first free entry in page table 0
-		@stroutrm <"-pm: real mode initialization ok",lf>
 if ?386SWAT
-		test fDebug,FDEBUG_KDPRESENT
-		jz @F
-		mov ebx, v86topm._cr3
-		mov edx, pPageDir
-		mov ax, 0DEF4h
-		int 67h
+	test fDebug,FDEBUG_KDPRESENT
+	jz @F
+	test fHost, FH_VCPI	;don't call if HDPMI is a VCPI client
+	jnz @F
+	mov ebx, v86topm._cr3
+;--- v3.19: pPageDir isn't the correct setting yet
+;	mov edx, pPageDir
+	mov edx, ebx
+	mov ax, 0DEF4h
+	int 67h
 @@:
 endif
-		clc
+	clc
 error:
-		@stroutrm <"-pm: initserver_rm exit",lf>
-		ret
-pm_initserver_rm endp
+	@drprintf "pm_init_rm: exit"
+	ret
+pm_init_rm endp
 
-pm_initserver2_rm proc public
-		push es
-		mov es,word ptr [taskseg._ES]
-		@stroutrm <"-pm: releasing old page tables %X",lf>, es
-		mov ah,49h
-		int 21h
-		pop es
-		ret
-pm_initserver2_rm endp
+pm_init2_rm proc public
+	push es
+	mov es,word ptr taskseg._ES
+	@drprintf "pm_init2_rm: releasing old page tables %X", es
+	mov ah,49h
+	int 21h
+	pop es
+	ret
+pm_init2_rm endp
 
 _ITEXT16 ends
 
-		end
+	end
 

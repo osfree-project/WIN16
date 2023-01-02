@@ -7,6 +7,13 @@
 		.MODEL SMALL, stdcall
 		.dosseg
 
+		; MacroLib
+		include bios.inc
+		include dos.inc
+		include dpmi.inc
+
+		.286
+
 ?XMSHOOK	equ 0		;1 doesnt work reliably!
 						;  and setting HDPMI=64 is better
 
@@ -85,9 +92,7 @@ nextitem:								;<----
 		rep movsb
 		mov es:[di],cl
 
-		mov DX,offset szSvr
-		MOV AX,3D00h
-		INT 21h
+		@OpenFil offset szSvr, 0
 		POP SI
 		JNB found						;jmp if found!
 		AND SI,SI
@@ -110,9 +115,7 @@ nextitem:								;<----
 		INC DI
 		JMP nextitem
 found:
-		MOV BX,AX
-		MOV AH,3Eh						;close file
-		INT 21h
+		@ClosFil AX
 		CLC
 		RET
 notfound:
@@ -240,8 +243,7 @@ if ?XMSHOOK
 		call InstallXMSHook
 endif
 ;--------------------- load HDPMI (is a tsr) if no dpmi server present
-		mov ax,1687h
-		int 2fh
+		@DPMI_SwitchEntry
 		and ax,ax
 		jz @F
 		call SearchPath
@@ -251,14 +253,10 @@ endif
 		mov bx,offset parmbs
 		push ds
 		pop es
-		mov dx,offset szSvr
-		mov ax,4B00h
-		int 21h
+		@Exec szSvr
 		jnc @F
 error2:
-		mov ah,9
-		mov dx,offset szErr2
-		int 21h
+		@DispStr szErr2
 		jmp done
 @@:
 
@@ -268,25 +266,16 @@ error2:
 		lds si,dword ptr pcmdl
 if 0
 		pusha
-		mov ax,3
-		int 10h
+		@GetCsr
 		lodsb
 		mov cl,al
 		.while (cl)
 			lodsb
-			mov dl,al
-			mov ah,2
-			int 21h
+			@DispCh al
 			dec cl
 		.endw
-		mov dl,13
-		mov ah,2
-		int 21h
-		mov dl,10
-		mov ah,2
-		int 21h
-		mov ah,0
-		int 16h
+		@DispCh 13, 10
+		@CharIn
 		popa
 endif
 		mov bx,si
@@ -324,13 +313,9 @@ endif
 		mov bx,offset parmb
 		push ds
 		pop es
-		mov dx,offset prg
-		mov ax,4B00h
-		int 21h
+		@Exec prg
 		jnc @F
-		mov ah,9
-		mov dx,offset szErr1
-		int 21h
+		@DispStr szErr1
 @@:
 done:
 if ?XMSHOOK
@@ -357,10 +342,8 @@ start:
 ;		inc cx
 		add bx,cx
 ;		add bx,10h
-		mov ah,4Ah
-		int 21h
+		@ModBlok
 		call main
-		mov ah,4ch
-		int 21h
+		@Exit
 
 		END start

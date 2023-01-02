@@ -13,16 +13,13 @@
 
 	option proc:private
 
-@seg _TEXT32
-if ?LOGINT31
-@seg _DATA
-endif
+	@seg CONST32
 
 if ?LOGINT31
-_DATA	segment
-        public i31func
+_DATA16 segment
+		public i31func
 i31func dw 0
-_DATA	ends
+_DATA16 ends
 endif
 
 _TEXT32 segment
@@ -45,8 +42,7 @@ endif
 intr31 endp
 
 intr31_ proc public
-	@strout <"i31 a-d=%X %X %X %X di=%lX,">,\
-		ax,bx,cx,dx,edi
+	@dprintf "i31 enter a-d=%X %lX %lX %lX esi=%lX edi=%lX hs=%lX",ax,ebx,ecx,edx,esi,edi,esp
 ;	@waitesckey
 
 if ?LOGINT31
@@ -57,12 +53,12 @@ endif
 	pop ds
 if _LTRACE_
 	jc @F
-	@strout <"NC ">
+	@printf "#i31 exit NC "
 	jmp intr31ex_1
 @@:
-	@strout <" C ">
+	@printf "#i31 exit C  "
 intr31ex_1:
-	@strout <"a-d=%X %X %X %X",lf>,ax,bx,cx,dx
+	@printf <"a-d=%X %lX %lX %lX esi=%lX edi=%lX",lf>,ax,ebx,ecx,edx,esi,edi
 endif
 if ?FASTINT31
 	jmp iret_with_CF_mod
@@ -123,6 +119,8 @@ dpmi5functions db ?FUNC05	;05 (may be modified while this code is low)
 	exitm <offset x>
 	endm
 
+CONST32 segment
+
 functab label dword
 	dd @defl(func00), @defl(func01), @defl(func02), @defl(func03)
 	dd @defl(func04), @defl(func05), @defl(func06), @defl(func07)
@@ -179,9 +177,9 @@ if ?DPMI10EXX
 endif
 
 jmpvector3 label dword
-	dd @defl(simrmint)  ;0
-	dd @defl(callrmretf);1
-	dd @defl(callrmiret);2
+	dd @defl(_callrmproc);0
+	dd @defl(_callrmproc);1
+	dd @defl(_callrmproc);2
 	dd @defl(allocrmcb) ;3
 	dd @defl(freermcb)  ;4
 	dd @defl(getsraddr) ;5 Get State Save/Restore Addresses
@@ -213,16 +211,17 @@ jmpvector9 label dword
 endif
 
 jmpvectorB label dword
-	dd @defl(allocwatch)
-	dd @defl(clearwatch)
-	dd @defl(getwatchstate)
-	dd @defl(resetwatchstate)
+	dd @defl(allocwatchp)
+	dd @defl(clearwatchp)
+	dd @defl(getwatchpstate)
+	dd @defl(resetwatchpstate)
 
 if 0
 jmpvectorE label dword
 	dd @defl(getcostate)
 	dd @defl(setcostate)
 endif
+CONST32 ends
 
 	@ResetTrace
 
@@ -242,7 +241,7 @@ error1:
 if 1
 	mov ax,8001h				;unsupported function
 endif
-	@strout <"int31, ax=%X unsupported, bx-di=%X %X %X %X %X",lf>,ax,bx,cx,dx,si,di
+	@dprintf "int31, ax=%X unsupported, bx-di=%X %X %X %X %X",ax,bx,cx,dx,si,di
 	stc
 	ret
 _i31srvr endp
@@ -260,6 +259,9 @@ func00:
 ;--- interrupt (IDT) functions
 
 func02:
+if ?ENHANCED
+	and al,7Fh
+endif
 	push offset jmpvector2
 	push byte ptr _FLATSEL_
 	pop ds
@@ -292,41 +294,41 @@ I31FR2 ends
 ;--- dos memory functions
 
 func01:
-		push offset jmpvector1
-		jmp func_01_03_05_0B
-		align 4
+	push offset jmpvector1
+	jmp func_01_03_05_0B
+	align 4
 
 ;--- mode switch functions
 
 func03:
-		push offset jmpvector3
-		jmp func_01_03_05_0B
-		align 4
+	push offset jmpvector3
+	jmp func_01_03_05_0B
+	align 4
 
 ;--- watchpoint functions
 
 func0B:
-		push offset jmpvectorB
-		jmp func_01_03_05_0B
-		align 4
+	push offset jmpvectorB
+	jmp func_01_03_05_0B
+	align 4
 
 ;--- extended memory functions
 
 func05:
-		push offset jmpvector5
-;		push byte ptr _FLATSEL_
-;		pop ds
+	push offset jmpvector5
+;	push byte ptr _FLATSEL_
+;	pop ds
 func_01_03_05_0B:
-		movzx ebx, al
-		shl ebx, 2
-		add ebx, [esp].I31FR2.dwJumpVec
-		mov ebx, cs:[ebx]
-		mov [esp].I31FR2.dwJumpVec, ebx
-		mov ebx, [esp].I31FR2.dwEbx
-		retn 4
-		align 4
+	movzx ebx, al
+	shl ebx, 2
+	add ebx, [esp].I31FR2.dwJumpVec
+	mov ebx, cs:[ebx]
+	mov [esp].I31FR2.dwJumpVec, ebx
+	mov ebx, [esp].I31FR2.dwEbx
+	retn 4
+	align 4
 
-		@ResetTrace
+	@ResetTrace
 
 HF_32BIT	equ 1	;running under a 32-bit implementation
 HF_INTINRM	equ 2	;ints reflected to real-mode
@@ -334,21 +336,21 @@ HF_VIRTMEM	equ 4	;virtual memory supported
 
 
 func04:
-		pop ebx
+	pop ebx
 if ?DPMI10
-		and al,al
-		jnz func0401
+	and al,al
+	jnz func0401
 endif
-		mov ax,ss:[wVersion] 
-		mov bx,HF_32BIT
-		test ss:[fHost], FH_VCPI
-		jnz @F
-		or bl,HF_INTINRM
+	mov ax,ss:[wVersion] 
+	mov bx,HF_32BIT
+	test ss:[fHost], FH_VCPI
+	jnz @F
+	or bl,HF_INTINRM
 @@:
-		mov cl,ss:[_cpu]			;CPU=80386/80486
-		mov dx,?MPICBASE*100h+?SPICBASE  ;PIC bases
-		ret
-		align 4
+	mov cl,ss:[_cpu]			;CPU=80386/80486
+	mov dx,?MPICBASE*100h+?SPICBASE  ;PIC bases
+	ret
+	align 4
 
 if ?DPMI10
 
@@ -362,10 +364,10 @@ DPMI10_WRITEPROTHOST	equ 64	;host cannot modify r/o pages
 
 if ?EXCRESTART
 HOSTCAPS equ DPMI10_PAGE_ACCDIRTY + DPMI10_EXCRESTART + \
-		DPMI10_DEVICEMAPPING + DPMI10_CONVMEMMAPPING + DPMI10_WRITEPROTCLIENT
+	DPMI10_DEVICEMAPPING + DPMI10_CONVMEMMAPPING + DPMI10_WRITEPROTCLIENT
 else
-HOSTCAPS equ DPMI10_PAGE_ACCDIRTY + DPMI10_DEVICEMAPPING + \
-		DPMI10_CONVMEMMAPPING + DPMI10_WRITEPROTCLIENT
+HOSTCAPS equ DPMI10_PAGE_ACCDIRTY + \
+	DPMI10_DEVICEMAPPING + DPMI10_CONVMEMMAPPING + DPMI10_WRITEPROTCLIENT
 endif
 
 dpmi10str	db ?VERMAJOR,?VERMINOR,"HDPMI",0
@@ -375,12 +377,15 @@ func0401:
 	pushad
 	mov esi, offset dpmi10str
 	mov ecx, SIZEDPMI10
+ife ?32BIT
 	movzx edi, di
+endif
 	db 2Eh				;CS segment prefix
 	rep movsb
 	popad
 	xor cx,cx
 	xor dx,dx
+;--- todo: check CR0.WP bit and set flag DPMI10_WRITEPROTHOST accordingly
 	mov ax,HOSTCAPS
 	cmp cs:dpmi5functions,5
 	jnc @F
@@ -389,7 +394,7 @@ func0401:
 	clc
 	ret
 endif
-func08:                                 ;map real -> virt
+func08: 				;map real -> virt
 	pop ebx
 if ?DPMI10
 	cmp al,1
@@ -418,7 +423,7 @@ if 0
 	jz @F
 	or ax,PTF_DIRTY
 @@:
-	call _setregionattributes
+	call pm_setregionattributes
 	pop edx
 	pop eax
 exit:

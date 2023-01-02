@@ -492,7 +492,7 @@ step2:
 	pop ss
 	mov sp,offset stacktop		; Set initial stack value
 	mov [wRMPSP],es
-	mov [TH_TOPPDB],es		; this will be changed to a selector
+;	mov [TH_TOPPDB],es		; this will be changed to a selector
 
 	mov ax,sp
 	dec ax
@@ -550,17 +550,17 @@ ife ?REAL
 @@:
 
 
-	mov dx,offset szLoader	;find env variable "DPMILDR="
-	call GetLdrEnvironmentVariable
-	jc @F
-	call getnum
-	mov wEnvFlgs,ax
+;	mov dx,offset szLoader	;find env variable "DPMILDR="
+;	call GetLdrEnvironmentVariable
+;	jc @F
+;	call getnum
+;	mov wEnvFlgs,ax
 @@:
 	CTRL_C_CK 6
 
-	cmp bx,3205h				;NT, 2k, XP?
-	jnz @F
-	or fMode, FMODE_ISNT
+;	cmp bx,3205h				;NT, 2k, XP?
+;	jnz @F
+;	or fMode, FMODE_ISNT
 if ?LFN
 ife ?LFNNT
 	and fMode, not FMODE_LFN

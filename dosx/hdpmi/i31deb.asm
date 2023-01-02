@@ -8,9 +8,7 @@
 
 	option proc:private
 
-?ENABLEWP	equ 1	;1=enable hardware breakpoints
-
-@seg _TEXT32
+?ENABLEWP equ 1	;1=enable hardware breakpoints
 
 _TEXT32 segment
 
@@ -22,8 +20,8 @@ _TEXT32 segment
 ;--- dh=type (0=execute,1=write,2=read or write)
 ;--- out: watchpoint handle in BX
 
-allocwatch proc public
-	@strout <"i31: alloc watchpoint, bx:cx=%X:%X, dx=%X",lf>,bx,cx,dx
+allocwatchp proc public
+	@dprintf "allocwatchp: bx:cx(linadd)=%X:%X, dx=%X (dl=size,dh=type)",bx,cx,dx
 if ?ENABLEWP
 	pushad
 
@@ -107,16 +105,16 @@ else
 	ret
 endif
 	align 4
-allocwatch endp
+allocwatchp endp
 
 ;--- int 31h, ax=0B01h
 ;--- BX=handle
         
-clearwatch proc public
-	@strout <"i31: clear watchpoint, bx=%X",lf>,bx
+clearwatchp proc public
+	@dprintf "clearwatchp: bx=%X",bx
 if ?ENABLEWP
 	cmp bx,4
-	jnb clearwatch_err
+	jnb clearwatchp_err
 	push eax
 	push ecx
 	mov eax,dr7
@@ -140,22 +138,22 @@ else
 	ret
 endif
 	align 4
-clearwatch endp
+clearwatchp endp
 
-clearwatch_err:
-getwatchstate_err:
-resetwatchstate_err:
+clearwatchp_err:
+getwatchpstate_err:
+resetwatchpstate_err:
 	stc
 	ret
 
 ;--- int 31h, ax=0B02h
 ;--- BX=handle
         
-getwatchstate proc public
-	@strout <"i31: get watchpoint state, bx=%X",lf>,bx
+getwatchpstate proc public
+	@dprintf "getwatchpstate: bx=%X",bx
 if ?ENABLEWP
 	cmp bx,4
-	jnb getwatchstate_err
+	jnb getwatchpstate_err
 	push ecx
 	push eax
 	mov eax,dr6
@@ -173,16 +171,16 @@ else
 	ret
 endif
 	align 4
-getwatchstate endp
+getwatchpstate endp
 
 ;--- int 31h, ax=0B03h
 ;--- BX=handle
 
-resetwatchstate proc public
-	@strout <"i31: reset watchpoint state, bx=%X",lf>,bx
+resetwatchpstate proc public
+	@dprintf "resetwatchpstate: bx=%X",bx
 if ?ENABLEWP
 	cmp bx,4
-	jnb resetwatchstate_err
+	jnb resetwatchpstate_err
 	push eax
 	push ecx
 	mov ch,1
@@ -200,7 +198,7 @@ else
 	ret
 endif
 	align 4
-resetwatchstate endp
+resetwatchpstate endp
 
 _TEXT32 ends
 

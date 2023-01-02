@@ -3,7 +3,6 @@
 public errstr2
 public errstr3
 public szDOSstr
-public szNoDPMI
 public szTerm	
 public szErr31    
 public szErr311   

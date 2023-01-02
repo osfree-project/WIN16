@@ -6,17 +6,14 @@
 	include hdpmi.inc
 	include external.inc
 
-	.286
-
 	option proc:private
 
 ?USEGLOBAL		equ 0	;1=use xms A20 "global" functions
 ?ENABLEONCE		equ 1	;1=put _enableA20() in _ITEXT16 (depends when it is called)
 ?GETA20PUBLIC	equ 0	;1=make _GetA20State() public
 ?VCPI_NOA20HOOK	equ 0	;1=ignore A20 stuff in VCPI mode
+?HOOKXMS		equ 1	;1=hook XMS chain
 
-@seg _DATA16
-@seg _TEXT16
 if ?ENABLEONCE
 @seg _ITEXT16
 endif
@@ -32,12 +29,51 @@ else
 ?DISABLE equ 6
 endif
 
+if ?HOOKXMS
 _DATA16 SEGMENT
 oldxms  dd 0
 _DATA16 ENDS
+endif
+
+if 0
+
+_TEXT32 SEGMENT
+
+_GetA20State_pm proc
+
+	push ebx
+	push ds
+	push byte ptr _FLATSEL_
+	pop ds
+	mov ebx,100000h
+
+	mov cx,1
+	mov ah,ds:[bx]
+	mov al,0AAh
+@@:
+	mov ds:[bx],al
+	cmp al,ds:[ebx]
+	jnz @F
+	xor al,0FFh
+	mov ds:[bx],al
+	cmp al,ds:[ebx]
+	jnz @F
+	dec cx
+@@:
+	mov ds:[bx],ah
+	mov ax,cx
+	pop ds
+	pop ebx
+	ret
+_GetA20State_pm endp
+
+_TEXT32 ENDS
+
+endif
 
 _TEXT16 segment
 
+if ?HOOKXMS
 ;--- XMS hook proc
 ;--- it catches the A20 enable/disable calls.
 ;--- this is done even if no client is running.
@@ -51,7 +87,7 @@ myxmshandler proc
 	nop
 @@:
 if 0
-	test cs:[fMode], FM_DISABLED
+	test cs:fMode, FM_DISABLED
 	jnz @F
 endif
 	cmp ah,?ENABLE
@@ -65,6 +101,7 @@ retsuccess:
 	retf
 
 myxmshandler endp
+endif
 
 	@ResetTrace
 
@@ -207,6 +244,7 @@ w8042:
 
 _ChangeA20 endp
 
+if ?HOOKXMS
 ;*** hook XMS chain
 ;*** is this necessary if a VCPI host has been detected?
 ;*** IIRC a VCPI host will always have A20 enabled and
@@ -223,9 +261,7 @@ setmyxmshandler proc
 	cmp al,0EAh		;is XMS chain corrupted?
 	jz @B			;since v3.12 this error is detected
 					;(but not reported)
-if 0
-	and [fHost], not FH_XMS
-endif
+;;	and [fHost], not FH_XMS
 	ret
 @@:
 	mov byte ptr es:[bx+0],0EAh
@@ -237,6 +273,7 @@ endif
 	ret
 
 setmyxmshandler endp
+endif
 
 ;--- returns AX != 0 if no error occurs
 
@@ -255,11 +292,13 @@ endif
 	call _GetA20State
 	ret
 @@:
-	@stroutrm <"-calling XMS enable A20",lf>
+	@drprintf "enablea20: calling XMS enable A20"
 	mov ah,?ENABLE
 	call [xmsaddr]
-	@stroutrm <"-install XMS hook",lf>
+if ?HOOKXMS
+	@drprintf "enablea20: install XMS hook"
 	call setmyxmshandler
+endif
 exit:
 	ret
 _enablea20 endp
@@ -268,18 +307,19 @@ if ?ENABLEONCE
 _ITEXT16 ends
 endif
 
-;--- es may be modified here, but preserve di, si
+;--- reg ES may be modified here, but preserve di, si
 ;--- DS=GROUP16
 
 _disablea20 proc public
 
-	@stroutrm <"-disable a20 enter",lf>
+	@drprintf "disablea20: enter"
 	push di
+if ?HOOKXMS
 	les di,[oldxms]	;dont test FH_XMS here, may have been cleared
 	mov ax,es
 	or ax,di
 	jz @F
-	@stroutrm <"-uninstall XMS hook, previous addr=%X:%X",lf>,es,bx
+	@drprintf "disablea20: uninstall XMS hook, previous addr=%X:%X",es,bx
 	cld
 	push si
 	mov si,offset myxmshandler
@@ -287,11 +327,15 @@ _disablea20 proc public
 	sub di,cx
 	rep movsb
 	pop si
-	@stroutrm <"-calling XMS disable A20",lf>
+else
+	cmp [xmsaddr],0
+	jz @F
+endif
+	@drprintf "disablea20: calling XMS disable A20"
 	mov ah,?DISABLE
 	call [xmsaddr]
 @@:
-	@stroutrm <"-disable A20 exit",lf>
+	@drprintf "disablea20: exit"
 	pop di
 	ret
 _disablea20 endp

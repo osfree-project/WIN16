@@ -1,112 +1,131 @@
 
-@proto intr31             ; IDT handler int 31
-@proto intr31_            ; int 31 default handler
+intr31 proto near		; IDT handler int 31
+intr31_ proto near		; int 31 default handler
 
 ;--- EBP points to I31FR1 if AH==0 or AH==2
 
 I31FR1 struct
-         	dd ?	;jump vector
-dwEbx		dd ?
-			dd ?	;return address
-union       
-dwDS		dd ?	;client DS (is used internally)
-wDS			dw ?
+		dd ?	;jump vector
+dwEbx	dd ?
+		dd ?	;return address
+union
+dwDS	dd ?	;client DS (is used internally)
+wDS		dw ?
 ends
 I31FR1 ends
 
 ;--- ah=00
 
-@proto allocsel     		;ax=0000
-@proto freesel      		;ax=0001
-@proto allocrmsel   		;ax=0002
-@proto allocxsel    		;ax=0002 helper
-@proto getincvalue  		;ax=0003
-@proto locksel      		;ax=0004 (dummy)
-@proto unlocksel    		;ax=0005 (dummy)
-@proto getbase      		;ax=0006
-@proto setbase      		;ax=0007
-@proto setlimit     		;ax=0008
-@proto setaccrights 		;ax=0009
-@proto getcsalias   		;ax=000A
-@proto getdesc      		;ax=000B
-@proto setdesc      		;ax=000C
-@proto allocspecific 		;ax=000D
-@proto getmultdesc	 		;ax=000E
-@proto setmultdesc	 		;ax=000F
+allocsel proto near			;ax=0000
+freesel proto near			;ax=0001
+allocrmsel proto near		;ax=0002
+allocxsel proto near		;ax=0002 helper
+getincvalue proto near		;ax=0003
+locksel proto near			;ax=0004 (dummy)
+unlocksel proto near		;ax=0005 (dummy)
+getbase proto near			;ax=0006
+setbase proto near			;ax=0007
+setlimit proto near			;ax=0008
+setaccrights proto near		;ax=0009
+getcsalias proto near		;ax=000A
+getdesc proto near			;ax=000B
+setdesc proto near			;ax=000C
+allocspecific proto near	;ax=000D
+getmultdesc proto near		;ax=000E
+setmultdesc proto near		;ax=000F
 
-@proto checkrmsel   
-@proto setrmsel     	 	;called by setpspsel
+checkrmsel proto near
+setrmsel proto near	 		;called by setpspsel
 
-@proto allocselx
-@proto freeselx
+ife ?32BIT
+allocselx proto near
+freeselx proto near
+endif
 
 ;--- ah=01
 
-@proto freedos
-@proto resizedos
-@proto allocdos
+freedos proto near
+resizedos proto near
+allocdos proto near
 
 ;--- ah=02
 
-@proto getrmivec 
-@proto setrmivec 
-@proto getpmevec 
-@proto setpmevec 
-@proto getpmivec 
-@proto setpmivec 
+getrmivec proto near
+setrmivec proto near 
+getpmevec proto near 
+setpmevec proto near 
+getpmivec proto near 
+setpmivec proto near 
 if ?DPMI10EXX
-@proto geteexcp 
-@proto geteexcr 
-@proto seteexcp 
-@proto seteexcr 
+geteexcp proto near 
+geteexcr proto near 
+seteexcp proto near 
+seteexcr proto near 
 endif
 
 if ?CHECKIRQRM
-@proto checkirqrm
+checkirqrm proto near
 endif
 
 ;--- ah=03
 
-@proto simrmint   
-@proto callrmiret 
-@proto callrmretf 
-@proto allocrmcb    
-@proto freermcb     
-@proto getsraddr  
-@proto getrmsa    
+;simrmint proto near
+;callrmiret proto near
+;callrmretf proto near
+_callrmproc proto near
+allocrmcb proto near
+freermcb proto near
+getsraddr proto near
+getrmsa proto near
 
-@proto _pm2rm  
-@proto _retcb  
-@proto _srtask 
+_pm2rm proto near
+_retcb proto near
+_srtask proto near
 
 ;--- ah=05
 
-@proto getmeminfo			;0500
-@proto allocmem				;0501
-@proto freemem				;0502
-@proto resizemem			;0503
+mem_createvm proto near
+getmeminfo proto near			;0500
+allocmem proto near				;0501
+freemem proto near				;0502
+resizemem proto near			;0503
+if ?DPMI10
+allocmemx proto near			;0504
+resizememx proto near			;0505
+getpageattr proto near			;0506
+setpageattr proto near			;0507
+if ?DPMI10EX
+mapphysx proto near 			;0508
+mapdos proto near				;0509
+getmemsize proto near			;050A
+getmeminfox proto near			;050B
+endif
+endif
 
 ;--- ah=08
 
-@proto mapphysregion
-@proto unmapphysregion
+mapphysregion proto near
+unmapphysregion proto near
 
 ;--- ah=0B
 
-@proto allocwatch
-@proto clearwatch
-@proto getwatchstate
-@proto resetwatchstate
+allocwatchp proto near
+clearwatchp proto near
+getwatchpstate proto near
+resetwatchpstate proto near
 
 ;--- ah=0E
 
-@proto i31f0E
+i31f0E proto near
 
 ;--- others
 
-;@proto _getspecaddrspace ;alloc specific address space
-@proto _freeclientmemory 
-@proto _AllocMem		
-;@proto _AllocMemEx		
+_allocaddrspaceX  proto near	;may be used to alloc LDT/IDT in user space
+_freeclientmemory proto near 
 
+if ?DPMI10
+_TEXT32 segment dword ?USE32 public 'CODE'
+externdef dpmi5functions:byte
+_TEXT32 ends
+endif
 
