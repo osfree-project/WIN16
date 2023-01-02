@@ -13,4 +13,4 @@ srcfiles = $(p)winver$(e)
 ADD_COPT = -zW
 IMPORTS  = SHELLABOUT SHELL.22
 
-!include $(%ROOT)/mk/appsw16.mk
+!include $(%ROOT)tools/mk/appsw16.mk

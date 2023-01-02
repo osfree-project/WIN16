@@ -6,5 +6,5 @@
 
 DIRS = logo win dosx kernel samples programs lzexpand
 
-!include $(%ROOT)/mk/all.mk
+!include $(%ROOT)tools/mk/all.mk
 

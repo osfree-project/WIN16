@@ -13,6 +13,6 @@ COM        = 1
 NOLIBS     = 1
 DEST       = os2$(SEP)mdos$(SEP)winos2
 
-!include $(%ROOT)/mk/appsdos.mk
+!include $(%ROOT)tools/mk/appsdos.mk
 
 $(PATH)$(PROJ).exe: .symbolic

@@ -30,4 +30,4 @@ JWASM      = 1
 ADD_ASMOPT = -D?32BIT=0 -c -Cp -Sg 
 DEST       = os2$(SEP)mdos$(SEP)winos2
 
-!include $(%ROOT)/mk/appsdos.mk
+!include $(%ROOT)tools/mk/appsdos.mk

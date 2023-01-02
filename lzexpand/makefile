@@ -23,4 +23,4 @@ EXPORTS = LZCOPY          .1, &
 OPTIONS = heapsize=32K libfile libentry.obj
 DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 
-!include $(%ROOT)/mk/appsw16.mk
+!include $(%ROOT)tools/mk/appsw16.mk

@@ -15,4 +15,4 @@ DIRS = hdpmi
 
 DIRS = hdpmi
 
-!include $(%ROOT)/mk/appsdos.mk
+!include $(%ROOT)tools/mk/appsdos.mk

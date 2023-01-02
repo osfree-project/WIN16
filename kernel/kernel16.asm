@@ -1900,6 +1900,7 @@ ENTRY ends
 
 _DATA segment
 
+<<<<<<< Updated upstream
 KernelNE NEHDR <"EN", 1, KernelEntries - KernelNE, 0, 0, NEHDR.szModPath - 8, 0, AF_DLL or AF_INIT>
         db 79 dup (0)
 

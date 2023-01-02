@@ -6,4 +6,4 @@
 
 DIRS = kernel krnl286 krnl386
 
-!include $(%ROOT)/mk/all.mk
+!include $(%ROOT)tools/mk/all.mk

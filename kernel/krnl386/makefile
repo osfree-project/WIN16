@@ -15,7 +15,7 @@ JWASM = 1
 DEST        = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 
 
-!include $(%ROOT)/mk/appsdos.mk
+!include $(%ROOT)tools/mk/appsdos.mk
 
 .asm: $(MYDIR)..
 

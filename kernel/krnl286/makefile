@@ -14,7 +14,7 @@ ADD_ASMOPT = -D?32BIT=0 -D?DEBUG=0 -D?REAL=0
 JWASM = 1
 DEST        = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 
-!include $(%ROOT)/mk/appsdos.mk
+!include $(%ROOT)tools/mk/appsdos.mk
 
 .asm: $(MYDIR)..
 

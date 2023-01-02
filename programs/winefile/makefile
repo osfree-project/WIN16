@@ -16,7 +16,7 @@ IMPORTS  = GETOPENFILENAME     COMMDLG.1, &
 #RESOURCE = $(PATH)rsrc.res
 CLEAN_ADD = *.mbr
 
-!include $(%ROOT)/mk/appsw16.mk
+!include $(%ROOT)tools/mk/appsw16.mk
 
 TARGETS = $(PATH)$(PROJ1).exe # subdirs
 
