@@ -41,7 +41,6 @@ DGROUP group _TEXT,CCONST,_DATA,_ITEXT
 
 _TEXT segment
 
-externdef	szNoDPMI:near
 externdef	szLF:near
 externdef	szDOSstr:near
 externdef	errstr2:near
@@ -102,8 +101,6 @@ SwitchToPMode proc
 	pop ds
 	call DumpDPMIInfo_
 	mov cs:[wKernelDS],ds
-
-	mov bp,offset cs:szNoDPMI  ;message "no dpmi server"
 
 	call restorememstrat
 

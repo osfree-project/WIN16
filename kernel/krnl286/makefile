@@ -15,10 +15,10 @@ $(p)profile$(e) $(p)strings$(e) $(p)rom$(e) $(p)file$(e) $(p)main$(e) $(p)localc
 $(p)catch$(e) $(p)nls$(e) $(p)taskc$(e) $(p)enablec$(e) $(p)div$(e) &
 $(p)mthread$(e) $(p)2protect$(e) $(p)protectc$(e) $(p)printf$(e) $(p)2ginterf$(e) $(p)selectorc$(e) $(p)task$(e)  $(p)ld$(e)
 
-ADD_ASMOPT = -Zi -Zd -Fl -D?32BIT=0 -D?DEBUG=1 -D?REAL=0 -I=$(MYDIR).. -I=$(MYDIR)..$(SEP)..$(SEP)..$(SEP)macrolib
-#            ^^^^^^^^^^^ DEBUG
-ADD_COPT = -d3 -s -2 -I=$(%WATCOM)$(SEP)h$(SEP)win
-#          ^^^ DEBUG
+ADD_ASMOPT =  -D?32BIT=0 -D?DEBUG=1 -D?REAL=0 -I=$(MYDIR).. -I=$(MYDIR)..$(SEP)..$(SEP)..$(SEP)macrolib
+#            -Zi -Zd -Fl DEBUG
+ADD_COPT =  -s -2 -I=$(%WATCOM)$(SEP)h$(SEP)win
+#          -d3 ^^^ DEBUG
 JWASM = 1
 DEBUG = all
 DEST        = os2$(SEP)mdos$(SEP)winos2$(SEP)system
