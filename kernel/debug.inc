@@ -11,7 +11,7 @@
 
 ;-- if neither 41 nor 14 are set, output is to DOS
 
-_USEINT41_		 = 1	;0 1=use Int 41h for debug output
+_USEINT41_		 = 0	;0 1=use Int 41h for debug output
 _USEINT14_		 = 0	;0 1=use Int 14h for debug output
 
 _DBGOUT_		 = 0	;0 1=route normal msgs to debug terminal
@@ -95,7 +95,7 @@ CCONST  ends
   endif
 _trace_s proto near		;used if trace on
         call _trace_s
-        dw   offset xxxx
+        dw   offset cs:xxxx
 endif
         endm
 

@@ -1,12 +1,22 @@
+;
+; osFree Windows Kernel
+;
+; ?REAL	- produce real mode kernel for real CPU mode, else standard/enchanced kernel for protected CPU mode
+; ?32BIT - use 80386-specific code (in original loader this mean create 32-bit client. We always 16-bit client)
+;
+; This code heavely uses Matt Pietrek books
+;
 
-	page ,132
 
-;*** HX loader for 16/32-Bit DPMI Apps
-;*** names:
-;*** 32Bit loader: DPMILD32.EXE
-;*** 16Bit loader: DPMILD16.EXE
+		; MacroLib
+		include bios.inc
+		include dos.inc
+		include dpmi.inc
 
-;--- best viewed with TABSIZE 4
+		; Kernel defines
+		include kernel.inc
+
+public blksize
 
 if ?DEBUG
 ?EXTLOAD		 = 0	;0 dont move loader in extended memory
@@ -14,24 +24,16 @@ else
 ?EXTLOAD		 = 1	;1 move loader in extended memory
 endif
 
-ifndef ?HDPMI
-?HDPMI			= 0		;0 1=assume HDPMI is included (stand-alone MZ stub)
-endif
-
 ?RMSEGMENTS		 = 0	;0 1=support realmode segments (doesn't work!)
-?DOSAPI			 = 1	;1 1=activate DOS API translation, required for OS/2
 ifndef ?LOADDBGDLL
 ?LOADDBGDLL		 = 1	;1 load DEBUGOUT.DLL on startup if DPMILDR=256
 endif
-ifndef ?SERVER
-?SERVER			 = 1	;1 1=load DPMI host HDPMIXX.EXE if no DPMI installed
-endif
-?CLOSEALLFILES	 = 0	;0 1=close all files before fatal exit
+?CLOSEALLFILES	 = 1	;0 1=close all files before fatal exit
 _CLEARENV_		 = 0	;0 if ?MULTPSP=1: clear PSP:[002C] on exit task
 _LOADERPARENT_	 = 1	;1 if ?MULTPSP=1: set PSP:[0016] to ldr PSP on exit task
 _SETPSP_		 = 1	;1 if ?MULTPSP=1: set owner in MCB to current PSP
 ?USELOADERPSP	 = 0	;1 1=switch to ldr PSP for segment loads.
-						;  0=for DOS MCB's, set PSP manually to the loader's	
+						;  0=for DOS MCB's, set PSP manually to the loader's
 _SUPRESDOSERR_	 = 1	;1 bei _RESIZEPSP_: suppress error msg
 _WIN87EMWAIT_	 = 0	;0 1=for WIN87EM.DLL always resolve fixup 6
 _LINKWORKAROUND_ = 1	;1 1=fix bug in old linkers (caps/small)
@@ -63,7 +65,6 @@ _RESIZEPSP_ 	 = 1	;1 1=resize loader psp to 120h after moved in ext. memory
 ?DOSEMUSUPP		= 1		;1 1=support DOSEMU
 ?PHARLABTNT		= 1		;1 1=support PharLab TNT executables (PL) (32bit only)
 ?HIDENEASWELL	= 1		;1 1=hide loader and server for NE exes if DPMILDR=8
-?CHECKCALLER	= 0		;0 1=??? (had this ever worked?)
 ?SETINIT		= 1		;1 1=set init flag for Dlls
 ?SLOADERR		= 1		;1 1=display exact error why HDPMI cannot be loaded
 ?MAKENEWENV		= 1		;1 1=make new environment if task > 0
@@ -71,35 +72,20 @@ _RESIZEPSP_ 	 = 1	;1 1=resize loader psp to 120h after moved in ext. memory
 ?FREECHILDSELS	= 1		;1 1=free selectors for psp+env
 ?USE1PSP		= 1		;1 1=use just 1 psp if DPMILDR=8
 
-ifndef ?KERNEL16
-?KERNEL16		= 1		;1
-endif
-
 ?RESETDEFPATH	= 0		;0 1= reset szPath? No, currently this is done
 						;  every time a .EXE is loaded
 ?PSPSAVEI2FADDR	= 007Ch	;address in PSP to save int vector 2Fh
 
-if ?HDPMI
-_COPY2PSP_		 = 0
-else
 _COPY2PSP_		 = 1	;1 1=copy termination code to psp at the end
-endif
 
 if ?32BIT
 _DISCARD_		= 0		;0 1=remove discardable segments if out of memory
-?OS2COMPAT		= 0		;0 1=OS/2 compatible app entry call
 ?AUTOCSALIAS	= 0		;0 1=alloc a CS alias for each code segment
-  ifndef ?NEAPPS
-?NEAPPS			= 1		;1 0=dont support NE apps
-  endif
 else
 _DISCARD_		= 1		;1 1=remove discardable segments if out of memory
-?OS2COMPAT		= 0		;1 1=OS/2 compatible app entry call
 ?AUTOCSALIAS	= 1		;1 1=optionally alloc a CS alias for code segments
-?NEAPPS			= 1		;1 0=dont support NE apps
 endif
 
-ENVIRON equ 2Ch
 PARPSP	equ 16h
 
 ;*** define segments ***
@@ -107,7 +93,7 @@ PARPSP	equ 16h
 if ?32BIT
 		.386
 ?PESUPP = 1
-;;?use16	= 1		;obsolete
+
 @use16	textequ <use16>
 
 else
@@ -118,67 +104,87 @@ else
 endif
 		
 ?PESUPP = 0
-@use16	textequ <>
 endif
 		option casemap:none
 		option proc:private
 
-if ?HDPMI
-HDPMI	segment para @use16 public 'CODE'
-HDPMI	ends
+
+extern eWinFlags: ENTRY
+
+extern szTerm: near
+extern szErr31: near
+extern szErr311: near
+extern szErr32: near
+extern szErr33: near
+extern szErr34: near
+extern szErr35: near
+extern szErr36: near
+extern szErr37: near
+extern szErr23: near
+extern es23hdl: near
+extern szErr22: near
+extern szErr21: near
+extern errstr19: near
+extern errstr20: near
+extern errstr17: near
+extern errstr16: near
+extern errstr15: near
+extern errstr14: near
+extern errstr13: near
+extern szNotaNE: near
+extern errstr11: near
+extern errstr10: near
+extern errstr9: near
+extern errstr7: near
+extern errstr6: near
+extern errstr5: near
+extern int0Berr1: near
+extern exc0derr: near
+extern errstr26: near
+extern szNotFnd: near
+extern nohandles: near
+extern szLoadErr: near
+extern szModule: near
+extern szSegment: near
+extern SegNo: near
+extern errstr24: near
+extern LENTERR: near
+extern errstr25: near
+extern modtext: near
+extern szExtErr: near
+extern szExtErrCod: near
+extern szExtErrCls: near
+extern szExtErrAct: near
+extern szExtErrLoc: near
+extern szDpmiErr: near
+extern dpmifunc: near
+extern dpmicaller: near
+extern szLF: near
+extern szEntryErr: near
+extern szEntryCode: near
+extern szLibName: near
+extern szPathConst: near
+extern szWEP: near
+extern szDotDLL: near
+extern nullstr: near
+extern errstr41: near
+extern errstr42: near
+extern errstr43: near
+ife ?REAL
+extern SwitchToPMode: near
 endif
-_TEXT	segment dword @use16 public 'CODE'
-_TEXT	ends
-CCONST	segment word @use16 public 'CODE'
-CCONST	ends
-_DATA	segment word @use16 public 'DATA'
-_DATA	ends
 
 		include ascii.inc
-		include dpmi.inc
 		include fixups.inc
-		include dpmildr.inc
 		include debug.inc
-		include debugsys.inc
+		include debuger.inc
 		include version.inc
-if ?KERNEL16
-		include kernel16.inc
-endif
 if ?PESUPP
 		include peload.inc
 		include winnt.inc
 		include mzhdr32.inc
 endif
 
-_ITEXT	segment word @use16 public 'DATA'	;use 'DATA' (OPTLINK bug)
-_ITEXT	ends
-if ?STUB
-ENDSTUB segment para @use16 public 'DATA'
-		db 16 dup (0)
-ENDSTUB ends
-endif
-_BSS	segment word @use16 public 'BSS'
-_BSS	ends
-STACK	segment para @use16 stack  'STACK'
-STACK	ends
-
-if ?HDPMI
-HDPMI	segment
-  if ?32BIT
-		include ..\hdpmi\stub32\hdpmi32.inc
-  else
-		include ..\hdpmi\stub16\hdpmi16.inc
-  endif
-  		align 16
-endhdpmi label byte        
-HDPMI	ends
-endif
-
-if ?STUB
-DGROUP	group _TEXT,CCONST,_DATA,_ITEXT,ENDSTUB,_BSS,STACK
-else
-DGROUP	group _TEXT,CCONST,_DATA,_ITEXT,_BSS,STACK
-endif
 
 ife ?EXTLOAD
 _COPY2PSP_		 = 0
@@ -214,21 +220,13 @@ _DATA segment
 ;*** global constants, initialized during start
 
 aliassel dw 0			;selector for data alias code segments
-if ?32BIT
-dStktop  dd 0			;top stack pointer
-else
 wStktop  dw 0			;top stack pointer
-endif
 
 ;*** global variables
 
-wMDSta	 dw 0			;segment of 1. element of 16bit MD table
 wTDStk	 dw offset starttaskstk ;LIFO stack for tasks
 if ?LOADDBGDLL
 hModDbg  dw 0			;handle for DEBUGOUT.DLL
-endif
-if ?HDPMI
-wResHDPMI dw 0
 endif
 fLoadMod db 0			;flag: LoadModule() called int 21h, ax=4B00h
 if ?EXTLOAD
@@ -240,9 +238,7 @@ wEnvFlgs  label word
 bEnvFlgs  db 0
 bEnvFlgs2 db 0
 
-ife ?STUB
 fCmdLOpt  db 0			;additional option from cmdline ("-g")
-endif
 
 ;*** variables used temporarily
 
@@ -266,8 +262,6 @@ _BSS segment
 
 ;*** global constants, initialized during start
 
-wDPMIFlg	dw ?			;DPMI init call CX flags (CL=CPU[2,3,4],CH=??)
-wDPMIVer	dw ?			;DPMI init call DX Flags (DPMI version)
 wEquip		dw ?			;Int 11h Equipment flags (only bit 1 used)
 wCSlim		dw ?			;limit CS (=CSSIZE-1), size of loader segment incl. stack
 wVersion	dw ?			;DOS version major+minor
@@ -280,7 +274,6 @@ wlError		dw ?			;error code (for function 4B00h)
 ife ?MULTPSP
 wCurPSP	label word
 endif
-wLdrPSP		dw ?			;PSP selector of loader
 wRMPSP	 	dw ?			;PSP segment of loader
 if ?MULTPSP
 wCurPSP  	dw ?			;PSP selector of current app
@@ -301,6 +294,8 @@ segtable	db ?MAXSEG * 8 dup (?);segment table (temporarily MZ-Header)
 RELSIZE		equ ?MAXSEG * 8		;size relocations buffer
 ParmBlk		dd 6 dup (?)		;parameter block for "exec prog"
 
+public GDTDsc
+GDTDsc dw ?
 ;*** temp variables
 blksize		dd ?			;limit for memory allocs
 blkaddr		dd ?			;address for memory allocs
@@ -313,44 +308,15 @@ _BSS ends
 
 _ITEXT segment
 
-if ?SERVER
-if ?32BIT
-HostName db "HDPMI32.EXE",00
-else
-HostName db "HDPMI16.EXE",00
-endif
-SIZE_HOSTNAME equ $-HostName
-endif
-
 if ?LOADDBGDLL
-if ?32BIT
-szDbgout   db '.\DEBUGO32.DLL',0
-else
 szDbgout   db '.\DEBUGOUT.DLL',0
 endif
-endif
 
-ife ?STUB        
 versionstring textequ @CatStr(!",%?VERMAJOR,.,%?VERMINOR,.,%?VERMINOR2,!")
-szHello    db lf
-		   db 'DPMI loader version ',versionstring,lf
-		   db 'Copyright (C) 1993-2010 Japheth',lf,lf,00
-endif           
+
 szInitErr  db 'Error in initialization, loading aborted',lf,00
 szShrkErr  db 'memory shrink Error',lf,00
-szNoDPMI   db 'No DPMI server available',lf,00
-if ?32BIT
-szNo32Bit  db "DPMI server doesn't support 32-bit apps",lf,00
-endif
-errstr2    db 'Error allocating memory for DPMI server',lf,00
-errstr3    db 'Error switching to protected mode',lf,00
-ife ?STUB
 errstr8    db 'Filename missing or invalid',lf,00
-endif
-if ?DOSAPI
-;szAPIerr	db "DOS API translation not supported",lf,00
-szDOSstr	db "MS-DOS",00
-endif
 szLoader	db 'DPMILDR=',0
 if ?DOSEMUSUPP
 szDosEmuDate db "02/25/93"
@@ -370,197 +336,146 @@ fpOSFixups label byte			 ;Floating Point OS-fixups
 	  dw FIDRQQ,0
 	  dw FIWRQQ,0
 
-szTerm	   db 'Application will be terminated',lf,00
-szErr31    db 'memory allocation (DPMI) for segment load failed',lf,00
-szErr311   db 'memory realloc failed',lf,00
-szErr32    db 'Freeing memory failed. ',0
-szErr33    db 'DPMI 0000: Allocate descriptor',lf,00
-szErr34    db 'DPMI 0007: Set segment base address',lf,00
-szErr35    db 'DPMI 0008: Set segment limit',lf,00
-szErr36    db 'DPMI 0009: Set descriptor access rights',lf,00
-szErr37    db 'DPMI 000B: Get descriptor',lf,00
-szErr23    db "Invalid module handle "
-es23hdl    db "    ",lf,00
-szErr22    db "file is corrupt",lf,00
-szErr21    db "stack segment of parent destroyed",lf,00
-errstr19   db "Can't create PSP (insufficient DOS memory)",lf,00
-if ?NEAPPS
-errstr20   db "Can't load a 2. instance of an app",lf,00
-errstr17   db 'Stack segment is readonly',lf,00
-errstr16   db 'Module has no stack',lf,00
-endif
-errstr15   db 'DLL initialization error',lf,00
-errstr14   db 'Relocatable code has zero relocations',lf,00
-errstr13   db 'Invalid FixUp Type in relocation table',lf,00
-if ?32BIT
-szNotaNE	label byte
-  if ?NEAPPS
-           db 'File is no 32-bit NE application',lf
-  endif
-           db 00
-else
-szNotaNE   db 'File is no 16-bit NE application',lf,00
-endif
-errstr11   db 'Too many segments in EXE',lf,00
-if ?NEAPPS
-errstr10   db 'Program has no valid start address',lf,00
-endif
-errstr9    db 'Cannot allocate required memory',lf,00
-errstr7    db 'Error while loading segment',lf,00
-errstr6    db 'File read error',lf,00
-errstr5    db 'Inconsistent module table size',lf,00
-int0Berr1  db 'Invalid not present exception',lf,00
-if _TRAPEXC0D_
-exc0derr   db lf,'protection exception occured',lf,0
-endif
-if ?SLOADERR
-errstr26   db "can't load ",00
-endif
-szNotFnd   db 'File not found error',lf,00
-nohandles  db 'Out of file handles error',lf,00
-szLoadErr  db "Load error. ",0
-
-szModule    db "Module ",0
-szSegment   db ", segment "
-SegNo   	db "00.",0
-
-errstr24	db 'Entry 0x'
-LENTERR		db 0,0,0,0,' not found in module ',00
-errstr25	db ' not found in name tables of module ',00
-
-modtext		db 'Module: ',00
-
-
-szExtErr	db 'Last DOS Error:'
-			db lf,9,'Extended Error Code '
-szExtErrCod	db 4 dup (0)
-			db ', Error Class '
-szExtErrCls	db 2 dup (0)
-			db lf,9,'Suggested Action '
-szExtErrAct	db 2 dup (0)
-			db ', Locus '
-szExtErrLoc	db 2 dup (0)
-			db lf,0
-
-szDpmiErr	db 'DPMI function 0x'
-dpmifunc	db 0,0,0,0
-			db ' failed at 0x'
-dpmicaller	db 0,0,0,0
-szLF		db lf,0
-
-szEntryErr	db 'Error code 0x'
-szEntryCode	db 4 dup (0)
-			db ' from LibEntry '
-szLibName	db 40h dup (0)
-
-szPathConst db 'PATH=',0
-if 0;e ?32BIT
-szCmdline	db 'CMDLINE=',0
-endif
-szWEP		db 'WEP'
-szDotDLL	db '.DLL'
-nullstr		db 00
-
-if ?RMSEGMENTS
-errstr41   db 'PMtoRMCallTHUNK: Cannot convert Selector',lf,00
-errstr42   db 'PMtoRMCallTHUNK: Cannot call real mode procedure',lf,00
-errstr43   db 'PMtoRMCallTHUNK: Invalid THUNK instruction',lf,00
-endif
-
 CCONST ends
 
 _TEXT segment
 
-;*** if the loader is loaded as overlay (by DPMIST32.BIN)
-;*** DS:DX will point to full path of DPMILDXX.EXE
-;*** and DS:BX will have path of program to load
-;*** (bad design, but cannot be changed anymore)
+externdef pascal kernelmain:far
 
-;*** the dpmi host will only be searched in directory of the loader!
+; In original loader here is overlay support. In osFree Windows Kernel
+; here is a data segment start. Segment structure (offsets in hex:
+;
+; 00 INSTANCEDATA
+; 10 THHOOK structure
+; ?? wKernelDS - address of Kernel DS
 
-wLdrDS label word
-	jmp overlayentry
+; INSTANCEDATA structure, same for each task
+ID_NULL		dw	0		; 00 /* Always 0 */
+ID_OLDSP	dw	?		; 02 /* Stack pointer; used by SwitchTaskTo() */
+ID_OLDSS	dw	?		; 04 
+ID_HEAP		dw	?		; 06 /* Pointer to the local heap information (if any) */
+ID_ATOMTABLE	dw	?		; 08 /* Pointer to the local atom table (if any) */
+ID_STACKTOP	dw	?		; 0A /* Top of the stack */
+ID_STACKMIN	dw	?		; 0C /* Lowest stack address used so far */
+ID_STACKBOTTOM	dw	?		; 0E /* Bottom of the stack */
 
-if ?DISABLESERVER
+; THHOOK structure. Offset is same as in Windows 3.0
+public TH_HGLOBALHEAP
+public TH_PGLOBALHEAP
+public TH_LOCKTDB
+TH_HGLOBALHEAP	dw	?		;  /* 00 (handle BURGERMASTER) */
+TH_PGLOBALHEAP	dw	?		;  /* 02 (selector BURGERMASTER) */
+TH_HEXEHEAD	dw	?		;  /* 04 hFirstModule */
+TH_HEXESWEEP	dw	?		;  /* 06 (unused) */
+TH_TOPPDB	dw	?		;  /* 08 (handle of KERNEL PDB) */
+TH_HEADPDB	dw	?		;  /* 0A (first PDB in list) */
+TH_TOPSIZEPDB	dw	?		;  /* 0C (unused) */
+TH_HEADTDB	dw	?		;  /* 0E hFirstTask */
+TH_CURTDB	dw	?		;  /* 10 hCurrentTask */
+TH_LOADTDB	dw	?		;  /* 12 (unused) */
+TH_LOCKTDB	dw	?		;  /* 14 hLockedTask */
 
-int2frm:
-  if ?HIDENEASWELL
-	cmp ah, 16h
-  else
-	cmp ax, 1687h
-  endif
-	jz @F
-	jmp dword ptr cs:[?PSPSAVEI2FADDR]
-@@:
-	iret
-endif
+; Kernel specific data
+wKernelDS 	dw	?		; Kernel Data segment
+
+KernelFlags DW 0, 0
+PMouseTermProc DD 0
+PKeyboardTermProc DD 0
+PSystemTermProc DD 0
 
 if _COPY2PSP_
 psp_rou:
 	int 31h		;free extended memory
-	mov ax,1
-	int 31h
+	@DPMI_FreeDesc
 	pop ax
-	mov ah,4Ch
-	int 21h
+	@Exit
 endif
 
 endoflowcode label byte
 
+;--- Main entry point. Named as BootStrap() by Matt Pietrek
+;
+; On entry:
+;
+; AL = 00h if first FCB has valid drive letter, FFh if not
+; AH = 00h if second FCB has valid drive letter, FFh if not
+; DS,ES = PSP/PDB segment
+; SS:SP as defined in .EXE header
+; (note: AX is always 0000h under DESQview)
+;
 
-if ?CHECKCALLER
-ctxt	db "DPMILDR"
-lctxt	equ $ - ctxt
+BootStrap:
+if	?DEBUG
+	jmp short skipdbg
+szEntryHello:
+	db	"Windows Kernel Entry", 13, 10, 0
+skipdbg:
 endif
-
-overlayentry:
-ife ?STUB
-	push es
-if ?KERNEL16
-	mov di,offset KernelNE.szModPath
-else
-	mov di,offset segtable
-endif
-	push cs
-	pop es
-	mov si,dx
-@@:
-	lodsb
-	stosb
-	and al,al
-	jnz @B
-	mov di,offset szPgmName
-	mov si,bx
-@@:
-	lodsb
-	stosb
-	and al,al
-	jnz @B
-	pop es
-	or byte ptr cs:[fMode],FMODE_OVERLAY
-	jmp step2
-endif
-
-;--- entry for .EXE
-
-main:
 	cld
+	push es				; Save PSP/PDB segment
+
+if	?DEBUG
+
+;
+;INT 68 - MS Windows debugging kernel - OUTPUT STRING
+;
+;	AH = 47h
+;	ES:SI -> string
+;Notes:	output a string (to inform a debugger of some events)
+;	KERNEL outputs "Windows Kernel Entry\r\n" on startup
+;
+	push	ax
+	push	bx
+	push	si
+
+	@GetInt 68h			; Get interrupt vector
+	mov ax, es
+	or ax, bx			; if =0
+	jnz @F				; then skip
+	push cs 
+	pop es
+	mov si, cs:szEntryHello		; ES:SI Inform debugger
+	mov ah, 47h
+	int 68h
+@@:
+	pop si
+	pop bx
+	pop ax
+
+	pop es
 	push es
-	mov es,ds:[ENVIRON] ;get environment
+endif
+
+; Original Windows kernel loaded via DOS MZ STUB,
+; but we just construct NE structures in memory,
+; so no need DOS STUB communication protocol
+
+if 0
+	cmp ax, "KO"			; "OK"
+	jz  @F
+	xor ax, ax
+	retf
+@@:
+endif
+
+	push cs
+	pop ds
+	mov cs:wKernelDS,cs		; Store for future usage
+
+	externdef pascal Copyright: far
+	call Copyright
+
+	mov es,[ds:ENVIRON]		; get environment
 	xor di,di
 	or  cx,-1
 	xor ax,ax
 @@:
-	repnz scasb			;search end of environment
-	scasb				;found?
-	jnz @B				;no, continue
-	inc di				;skip 0001
-	inc di				;now comes current file name
-if ?KERNEL16
-	mov si,offset KernelNE.szModPath
-else
-	mov si,offset segtable
-endif
+	repnz scasb			; search end of environment
+	scasb				; found?
+	jnz @B				; no, continue
+	inc di				; skip 0001
+	inc di				; now comes current file name
+	mov si,offset KernelNE.szModPath; name of KERNEL.EXE
 @@:
 	mov al,es:[di]
 	mov cs:[si],al
@@ -568,60 +483,39 @@ endif
 	inc di
 	and al,al
 	jnz @B
-	pop es
+	pop es				; Restore PSP segment
 step2:
-	push cs
-	pop ds
-	mov wLdrDS,ds
-	push ds
+;	push cs				; Set data segment to code segment
+;	pop ds
+;	mov wKernelDS,ds		; Store for future usage
+	push cs				; Set stack segment to data segment
 	pop ss
-	mov sp,offset stacktop
+	mov sp,offset stacktop		; Set initial stack value
 	mov [wRMPSP],es
-	mov [wLdrPSP],es		;this will be changed to a selector
-if ?STUB
-	mov [wCurPSP],es		;this also
-endif
-	mov ah,30h
-	int 21h
-	mov [wVersion],ax
+;	mov [TH_TOPPDB],es		; this will be changed to a selector
 
 	mov ax,sp
 	dec ax
-	mov [wCSlim],ax
-	sub ax,001Fh	;important: make 32 bytes room on stack
-if ?32BIT
-;	movzx eax,ax
-	mov word ptr [dStktop],ax
-else
+	mov [wCSlim],ax			; store CS segment limit
+	sub ax,001Fh			; important: make 32 bytes room on stack
 	mov [wStktop],ax
-endif
 	mov bx,sp
-if ?REAL
-	shr bx, 1
-	shr bx, 1
-	shr bx, 1
-	shr bx, 1
-else
+IF  @Cpu AND 00000010B			; 80186+
 	shr bx,4
-endif
-if ?HDPMI
-	mov ax,cs		;it's not a TINY model if HDPMI is included!
-	mov cx,es
-	sub ax,cx
-	add bx,ax
 else
-	add bx,10h		;+ PSP
+	mov cl, 4
+	shr bx, cl
 endif
-	mov ah,4Ah		;now shrink memory (Real Mode)
-	int 21h
+	add bx,10h			; + PSP
+	@ModBlok			; now shrink memory (Real Mode)
 	mov bx,offset szShrkErr
-	jc main_err1	;shrink error (can this happen?)
+	jc main_err1			;shrink error (can this happen?)
 if ?DOSEMUSUPP
-if ?REAL
+IF  @Cpu AND 00000010B			; 80186+
+	push 0F000h
+else
 	mov cx, 0F000h
 	push cx
-else
-	push 0F000h
 endif
 	pop es
 	mov di,0FFF5h
@@ -634,7 +528,7 @@ endif
 endif
 
 if ?LFN
-						;detect if lfn is installed
+					;detect if lfn is installed
 	mov ax,7147h
 	mov si,offset szPath
 	mov dl,0
@@ -642,40 +536,31 @@ if ?LFN
 	int 21h
 	jc @F
 	or fMode, FMODE_LFN
-@@:
+@@:              
 endif
-	int 11h 			;get equipment flags (MPC)
-	mov [wEquip],ax
-	call JumpToPM		;initial switch to protected mode
+
+; Switch and configure for protected mode kernels
+ife ?REAL
+	call SwitchToPMode			; initial switch to protected mode
 	jnc @F
-main_err1:
-	call strout_err
-	mov ax,4C00h + RC_INITRM
-	int 21h
+
+	@trace_s <lf,"------------------------------------",lf>
+	jmp main_err1
+
 @@:
-if ?DOSAPI
-	mov si,offset szDOSstr
-	mov ax,168Ah
-	int 2Fh
-	cmp al,0
-	jz @F
-	@trace_s <"fatal: no DOS API translation",lf>
-	mov ax,4C00h + RC_INITPM	;just exit, dont display anything
-	int 21h
+
+
+;	mov dx,offset szLoader	;find env variable "DPMILDR="
+;	call GetLdrEnvironmentVariable
+;	jc @F
+;	call getnum
+;	mov wEnvFlgs,ax
 @@:
-	@trace_s <"DOS API translation initiated",lf>
-endif
-	mov dx,offset szLoader	;find env variable "DPMILDR="
-	call GetLdrEnvironmentVariable
-	jc @F
-	call getnum
-	mov wEnvFlgs,ax
-@@:
-	mov ax,3306h
-	int 21h
-	cmp bx,3205h				;NT, 2k, XP?
-	jnz @F
-	or fMode, FMODE_ISNT
+	CTRL_C_CK 6
+
+;	cmp bx,3205h				;NT, 2k, XP?
+;	jnz @F
+;	or fMode, FMODE_ISNT
 if ?LFN
 ife ?LFNNT
 	and fMode, not FMODE_LFN
@@ -683,40 +568,55 @@ endif
 endif
 	or bEnvFlgs, ENVFL_DONTUSEDPMI1
 @@:
+endif	; not ?REAL
+
+
+;	call DebugInit
+;	call InitDosVarP
+	call InitProtMode	;init vectors, alloc internal selectors
+	jc main_err6		;--->
+
+	@Equipment 			; get equipment flags (MPC)
+	mov [wEquip],ax
+
+    	test al,2
+	jz @F			
+	or eWinFlags.wOfs, WF_80x87
+no_8087:
+
 	mov ax,1600h
 	int 2Fh
 	and al,al
 	jz @F
 	or fMode, FMODE_ISWIN9X
 @@:
-if ?32BIT
-	test fMode, FMODE_ISNT or FMODE_ISWIN9X
-	jnz @F
-	or bEnvFlgs2, ENVFL2_ALLOWGUI
+	cmp al, 3
+	je @F
+	or KernelFlags[2], 0020h
+	or eWinFlags.wOfs, WF_PMODE or WF_STANDARD
+	jmp skip_2
 @@:
-endif
-if 0	;not needed currently
-	mov ax,004Fh
-	int 41h
-	cmp ax,0F386h
-	jnz @F
-	or fMode, FMODE_DEBUGGER
-@@:
-endif
-	call InitProtMode	;init vectors, alloc internal selectors
-	jc main_err6		;--->
-ife ?STUB
-	test [fMode],FMODE_OVERLAY
-	jnz main_1
-	@strout szHello,1
+	or KernelFlags[1], 0100h
+	or eWinFlags.wOfs, WF_PMODE or WF_ENHANCED
+skip_2:
+
+	; Here we must prepare WOAname string
+
+	@GetVer
+	mov [wVersion],ax		; Get dos version
+
 main_1:
-endif
 	mov szPath,0
-if ?KERNEL16
-	call InitKernel	   ;init MD for KERNEL
-endif
+;moved to kernelmain
+;	call InitKernel	   ;init MD for KERNEL
+	call kernelmain		; C-part initialization
+
 	call GetPgmParms	   ;program name -> szPgmName, exec parm init
+	pushf
+	@strout szPgmName, 1
+	popf
 	jc main_err3	   ;---> error: no program name given
+	@trace_s <"Set INT 21H handler",lf>
 	call setvec21	   ;now set int 21h vector
 if ?LOADDBGDLL
 	call loaddbg
@@ -728,11 +628,10 @@ if ?32BIT
 endif
 	push ds
 	pop es
-	mov ax,4B00h	;launch program
-	int 21h
+	@trace_s <"Execute",lf>
+	@Exec	;launch program
 	jc @F
-	mov ah,4Dh
-	int 21h
+	@GetRet
 @@:
 fatalerror:
 	push ax
@@ -744,19 +643,17 @@ if ?CHECKTOP
 	call areweontop
 	jz @F
 	pop ax
-	mov ah,4Ch
-	int 21h
+	@Exit
 @@:
 endif
 	call resetvecs
-	@trace_s <"*** bye from DPMILDXX ***",lf>
+	@trace_s <"*** bye from KERNEL ***",lf>
 	pop ax
 if _COPY2PSP_		;free all memory (problem: we are running in
 					;it!)
 	call copy_to_psp_and_exit
 endif
-	mov ah,4Ch
-	int 21h 		;and exit loader
+	@Exit	 		;and exit loader
 main_err6:			;protected mode init error
 	mov ax,offset szInitErr
 main_err3:
@@ -766,7 +663,6 @@ main_err3:
 	jmp fatalerror
 if 0
 main_err4:
-	mov ds,cs:[wLdrDS]
 	call stroutax
 	@strout szTerm,1
 if ?CLOSEALLFILES
@@ -776,10 +672,16 @@ endif
 	jmp fatalerror
 endif
 
+main_err1:
+	@trace_s <lf,"------------------------------------",lf>
+	call strout_err
+	@trace_s <lf,"------------------------------------",lf>
+	@Exit RC_INITRM
+
 ;-------------------------------------------------------
 if _TRAPEXC0D_
 LEXC0D:
-	push cs:[wLdrDS]
+	push cs:[wKernelDS]
 	mov ax,offset exc0derr
 	push ax
 	push cs
@@ -796,16 +698,16 @@ if ?USELOADERPSP
 
 setldrpsp proc
 	push ax
-	mov ah,51h
-	int 21h
+	GET_PSP
 	push bx
-	mov bx,[wLdrPSP]
+	mov bx,[TH_TOPPDB]
 	mov ah,50h
 	int 21h
 	pop bx
 	pop ax
 	ret
 setldrpsp endp
+
 resetldrpsp proc
 	pushf			;preserve carry flag!
 	push ax
@@ -879,7 +781,7 @@ else
 endif
 	push ds
 	push es
-	mov ds,cs:[wLdrDS]
+	@SetKernelDS
 	@trace_s <"*** exc 0B handler, ErrCode=">
 if ?32BIT
 	@trace_d ebx
@@ -903,12 +805,7 @@ else
 	@trace_w EXCSP
 endif
 	@trace_s <" ***",lf>
-if ?REAL
-	xor ax, ax
-	push ax
-else
-	push 0
-endif
+	@PUSHC	0
 	pop es
 	mov ax,cs
 	and al,03
@@ -947,28 +844,18 @@ done:
 	@popa
 	@retf
 calloldexc0b:
-if ?32BIT
-	db 66h
-	db 0eah			   ;jmp ssss:oooooooo
-oldexc0b df 0
-else
 	db 0eah			   ;jmp ssss:oooo
-oldexc0b dd 0
-endif
+PrevInt3FProc dd 0
 Exc0BProc endp
 
 ;--- an invalid exception 0Bh occured
 
 exc0berrorexit proc
-	mov ds,cs:[wLdrDS]
+	@SetKernelDS
 if 0
 	push ds
 	pop ss
-  if ?32BIT
-	mov esp,[dStktop]
-  else
 	mov sp,[wStktop]
-  endif
 endif
 	push cx
 	call stroutax			;display text ^AX
@@ -990,8 +877,7 @@ if ?CLOSEALLFILES
 	call CloseAllFiles
 endif
 ;	int 3
-	mov ax,4C00h + RC_EXC0B
-	int 21h
+	@Exit RC_EXC0B
 
 exc0berrorexit endp
 
@@ -1002,13 +888,11 @@ displaymodandseg proc
 	call modnameout			;expects ES=NE hdr
 	mov ax, si
 	sub ax, es:[NEHDR.ne_segtab]
-if ?REAL
-	shr ax, 1				;size of segment table in ES is 16!!!
-	shr ax, 1
-	shr ax, 1
-	shr ax, 1
-else
+IF  @Cpu AND 00000010B			; 80186+
 	shr ax, 3+1				;size of segment table in ES is 16!!!
+else
+	mov cl, 3+1
+	shr ax, cl				;size of segment table in ES is 16!!!
 endif
 	inc ax
 	mov di, offset SegNo
@@ -1022,9 +906,9 @@ displaymodandseg endp
 
 if _TRAPEXC0D_
 if ?32BIT
-oldexc0D df 0
+PrevInt0DProc df 0
 else
-oldexc0D dd 0
+PrevInt0DProc dd 0
 endif
 endif
 
@@ -1062,9 +946,7 @@ nextitem:
 endif
 	and al,al
 	jz done
-	mov dl,al
-	mov ah,2
-	int 21h
+	@DispCh al
 	jmp nextitem
 done:
 if ?32BIT
@@ -1075,8 +957,7 @@ endif
 	pop dx
 	@iret
 ischarout:
-	mov ah,2
-	int 21h
+	@DispCh
 	@iret
 myint41 endp
 endif
@@ -1088,8 +969,7 @@ is4g proc
 	call checkpsp
 	jc jmpprevint21
 	push bx
-	mov ah,51h
-	int 21h
+	GET_PSP
 	mov es,bx
 	pop bx
 if ?DOS4GMEM
@@ -1113,12 +993,11 @@ do2131 proc
 	ret
 @@:
 	push ax
-	mov bx,[wLdrPSP]			;set psp of loader
+	mov bx,[TH_TOPPDB]			;set psp of loader
 	mov es,bx
 	mov ah,50h
 	int 21h
-	mov ax,0306h				;get real mode entry point
-	int 31h
+	@DPMI_GETRMSA				;get real mode entry point
 	pop ax
 if ?32BIT
 	push esi
@@ -1156,7 +1035,7 @@ endif
 if _LASTRC_
 do214d:
 	push ds
-	mov ds,cs:[wLdrDS]
+	@SetKernelDS
 	xor ax,ax
 	xchg ax,[wLastRC]
 	pop ds
@@ -1165,7 +1044,7 @@ endif
 
 is214b91:
 	push ds
-	mov ds,cs:[wLdrDS]
+	@SetKernelDS
 	and fMode, not FMODE_DISABLED
 	cmp bl,0
 	jnz @F
@@ -1204,10 +1083,10 @@ jmpprevint21::
 if ?32BIT
 	db 66h
 	db 0eah			   ;jmp ssss:oooooooo
-oldint21 df 0
+PrevInt21Proc df 0
 else
 	db 0eah			   ;jmp ssss:oooo
-oldint21 dd 0
+PrevInt21Proc dd 0
 endif
 	align 4
 
@@ -1269,7 +1148,7 @@ endif
 	cmp al,94h			;set wEnvFlgs?
 	jnz @F
 	push ds
-	mov ds,cs:[wLdrDS]
+	@SetKernelDS
 	mov ax,[wEnvFlgs]
 	and dx,cx
 	not cx
@@ -1287,7 +1166,7 @@ endif
 int21proc endp
 
 ;--- if CL=1, DX is number of export
-;--- if CL=0, DS:E/DX -> name of export
+;--- if CL=0, DS:DX -> name of export
 ;--- module handle in BX
 ;--- return address in dx:ax
 
@@ -1343,7 +1222,7 @@ else
 GetModuleHandle16 proc uses es ds si bx
 endif
 
-	mov bx,cs:[wMDSta]
+	mov bx,cs:[TH_HEXEHEAD]
 	push bx
 if ?32BIT
 	mov esi, edx
@@ -1380,7 +1259,7 @@ int2131:
 	@trace_s <"dpmildr: check psp ok",lf>
 ;endif
 ;endif
-	mov ds,cs:[wLdrDS]
+	@SetKernelDS
 	@trace_s <"dpmildr: int 21h ah=4C entry, task ptr(si)=">
 	mov si,[wTDStk]
 	sub si,size TASK
@@ -1435,8 +1314,7 @@ if ?32BIT
 	push eax
 	pop di
 	pop si
-	mov ax,0502h			;free stack handle
-	int 31h
+	@DPMI_FREEMEM				;free stack handle
 	pop si
 	jmp i214c_2
 @@:
@@ -1446,11 +1324,7 @@ else
 endif
 	push ds					;FreeLibrary may free the stack mem block
 	pop ss					;so set the loader stack here
-if ?32BIT
-	mov esp,[dStktop]
-else
 	mov sp,[wStktop]
-endif
 	call FreeLib16
 i214c_2:
 if ?INT24RES or ?INT23RES
@@ -1468,7 +1342,7 @@ if 0							;win31, 9x, NT, XP work with selector
 	test fMode, FMODE_ISNT
 	jz @F
 endif
-	mov ax,[wLdrPSP]			;use loader psp selector for NT!!!
+	mov ax,[TH_TOPPDB]			;use loader psp selector for NT!!!
 @@:
 	mov es:[PARPSP],ax
 
@@ -1490,7 +1364,7 @@ else
 	push bx
 
 if _LOADERPARENT_
-	mov ax,[wLdrPSP]
+	mov ax,[TH_TOPPDB]
 	mov bx,[wTDStk]
 	cmp bx,offset starttaskstk
 	jz @F
@@ -1618,12 +1492,6 @@ l214c_3:
 ;*** QWORD fcb2        ; FCB 2         (-> PSP:6C)
 
 int214b proc
-if ?CHECKCALLER
-	call checkcaller	;called by loader?
-	jnz @F
-	jmp jmpprevint21	;jmp to previous int21 handler
-@@:
-endif
 	push ds
 	push es
 if ?32BIT
@@ -1656,13 +1524,11 @@ endif
 	pop es
 	pop ds
 	jc @F					;not found or not a valid NE file 
-if ?NEAPPS        
 	push ds
 	mov ds,ax
 	test byte ptr ds:[NEHDR.APPFLGS],AF_DLL ;app or dll?
 	pop ds
 	jz StartApp16
-endif        
 	call CallAllLibEntries	;run LibEntries of dlls
 if ?32BIT
 	@trace_s <"int 21h, ax=4b00h (dll) will exit now to ">
@@ -1695,7 +1561,7 @@ endif
 	jnz int214b_1			;is not a PE executable 
 @@:
 	@saveregs_exec
-	mov ds,cs:[wLdrDS]	  ;call with full path so we dont need
+	@SetKernelDS		  ;call with full path so we dont need
 	mov edx,offset szModName  ;to search PATH again
 	call LoadModule32
 	mov [esp+1Ch],eax
@@ -1708,9 +1574,6 @@ endif
 int214b_1:
 endif
 	xor cx,cx
-if ?DISABLESERVER
-	call disableserver
-endif
 if ?32BIT
 if ?DOSEMUSUPP
 	test cs:fMode, FMODE_DOSEMU
@@ -1731,9 +1594,6 @@ loadpgmdone:
 	pushf
 	@trace_s <lf,"-------------------------------------------",lf>
 	@trace_s <"dpmildr: return from exec real mode program",lf>
-if ?DISABLESERVER
-	call enableserver
-endif
 	popf
 	pushf
 if _LASTRC_
@@ -1741,7 +1601,7 @@ if _LASTRC_
 	mov ah,4Dh
 	call doscall
 	push ds
-	mov ds,cs:[wLdrDS]
+	@SetKernelDS
 	mov [wLastRC],ax
 	pop ds
 @@:
@@ -1780,7 +1640,6 @@ endif
 	@iret
 int214b endp
 
-if ?NEAPPS
 
 ;--- start NE application (16/32 bit)
 
@@ -1806,8 +1665,7 @@ if 0
 	jmp retf2ex 		  ;exit function 4B with Carry set
 else
 StartApp_ErrExit:
-	mov ax,4C00h+RC_INITAPP
-	int 21h
+	@Exit RC_INITAPP
 endif
 
 ;*** start new NE application
@@ -1819,7 +1677,7 @@ StartApp16 proc
 
 	@saveregs_exec
 
-	mov ds,cs:[wLdrDS]
+	@SetKernelDS
 	mov si,[wTDStk]
 if ?32BIT
 	mov [si.TASK.dwESP],esp
@@ -1966,7 +1824,7 @@ else
 endif
 ife ?32BIT
 	or bx,-1
-	mov es,es:[002Ch]
+	mov es,es:[ENVIRON]
 	xor ax,ax
 @@:
 	inc bx
@@ -1978,12 +1836,7 @@ ife ?32BIT
 	cmp al,es:[bx]
 	jnz @B
 	inc bx
-if ?REAL
-	xor ax, ax
-	push ax
-else
-	push 0
-endif
+	@PUSHC	0
 	mov ax,es
 	pop es
 notos2:
@@ -2009,8 +1862,6 @@ endif
 	@iret
 StartApp16 endp
 
-endif ;?NEAPPS
-
 if ?32RTMBUG
 KillManually proc
 	mov dx,bx
@@ -2035,7 +1886,7 @@ __loadpgm proc
 	inc cl
 	inc cl
 	mov edi,offset segtable
-	mov es,cs:[wLdrDS]
+	@SetKernelDS es
 	rep movs byte ptr [edi],[esi]
 	popad
 	pop ds
@@ -2051,51 +1902,8 @@ __loadpgm endp
 endif
 endif
 
-if ?DISABLESERVER
 
-disableserver proc uses ds
-if 1
-	mov ds, cs:[wLdrPSP] 
-	mov word ptr ds:[?PSPSAVEI2FADDR+2],0
-endif
-	test cs:[bEnvFlgs], ENVFL_LOAD1APPONLY
-	jz exit
-if 0
-	cmp cs:[wTasks], 0	;is anything loaded at all?
-	jz exit
-endif
-	@push_a
-	mov bl, 2fh
-	mov ax, 200h
-	int 31h
-	mov ds:[?PSPSAVEI2FADDR+0],dx
-	mov ds:[?PSPSAVEI2FADDR+2],cx
-	mov cx, cs:[wRMPSP]
-	mov dx, 0100h+offset int2frm
-	mov ax, 0201h
-	int 31h
-	@pop_a
-exit:
-	ret
-disableserver endp
 
-enableserver proc public uses ds
-	@push_a
-	mov ds, cs:[wLdrPSP]
-	xor dx,dx
-	xor cx,cx
-	xchg dx, ds:[?PSPSAVEI2FADDR+0]
-	xchg cx, ds:[?PSPSAVEI2FADDR+2]
-	jcxz @F
-	mov bl, 2fh
-	mov ax, 0201h
-	int 31h
-@@:
-	@pop_a
-	ret
-enableserver endp
-
-endif
 
 if ?SUPAPPTITLE
 
@@ -2103,7 +1911,7 @@ if ?SUPAPPTITLE
 
 setapptitle2 proc uses ds es si ax
 
-	mov ds,cs:[wLdrDS]
+	@SetKernelDS
 	mov si,[wTDStk]
 	cmp si, offset starttaskstk
 	jz exit
@@ -2252,14 +2060,8 @@ if ?MULTPSP
 if ?MAKENEWENV
 CopyPgmInEnv proc
 	@push_a
-;### changes for differences in environment block
-  if ?OS2COMPAT
-	mov bl,ds:[0080h]			;length of cmd tail (used later)
-	inc bl						;+1 for terminator
-  endif
-;### end
 	push ds
-	mov ds,ds:[002Ch]
+	mov ds,ds:[ENVIRON]
 	xor si,si
 	xor ax,ax
 	dec si
@@ -2267,19 +2069,7 @@ CopyPgmInEnv proc
 	inc si
 	cmp ax,[si]
 	jnz @B
-;### more changes for environment
-  if ?OS2COMPAT
-	add si,2		;include 00,00 in copy
-	xor bp,bp		;bp==0 means OS/2
-	cmp es:[NEHDR.ne_exetyp], ET_OS2
-	je @f
-	add si,2		;include 01,00 as well
-	inc bp
-@@:
-  else
 	add si,4		;skip 00 00 and 01 00
-  endif
-;### end
   if ?32BIT
 	mov edx,edi
 ;	dec edi
@@ -2301,33 +2091,18 @@ CopyPgmInEnv proc
   endif
 	mov ax,si		;now calc size of environment block 
 	add ax,dx
-;### yet more changes for environment
- if ?OS2COMPAT
- 	and bp,bp
-	jnz @F
-	add ax,dx				;allow for  copy of progname
-	mov bh,00				;bl has cmd tail count from psp
-	add ax,bx
-@@:
- endif
-;### end
 	add ax,15		;paragraph align
 	and al,0F0h
-if ?REAL
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shr ax,1
-else
+IF  @Cpu AND 00000010B			; 80186+
 	shr ax,4
+else
+	mov cl, 4
+	shr ax,cl
 endif
-	mov bx,ax
   if ?LOWENV
-	mov ax,100h
-	int 31h
+	@DPMI_DOSALLOC ax
   else
-	mov ah,48h
-	int 21h
+	@GetBlok ax
   endif
 	jc done
 	push es
@@ -2352,9 +2127,6 @@ endif
   else
 	pop si
 	pop ds
-    if ?OS2COMPAT
-	mov bx,di               ;save ptr within env
-    endif
 @@:
 	lodsb
 	stosb
@@ -2362,28 +2134,8 @@ endif
 	jnz @B
   endif
 	pop ds
-	mov ds:[002Ch],es
+	mov ds:[ENVIRON],es
 	push ds
-  if ?OS2COMPAT
-;### and this is what it's all been about
-	and bp,bp				;os/2 exe type?
-	jnz done
-;	mov ds:[042h],di
-@@:
-	mov al,es:[bx]		;OS2v1 has 2 copies of progname
-	stos byte ptr es:[di]
-	inc bx
-	or al,al
-	jnz @b
-
-	mov si,0080h			;copy from psp (max 127)
-	lodsb
-	mov cl,al
-	mov ch,00
-	rep movsb
-	mov es:[di],ch			;terminate with 00
-  endif
-;### end changes for environment
 done:
 	pop ds
 	@pop_a
@@ -2424,9 +2176,7 @@ if ?USE1PSP
 	test bEnvFlgs, ENVFL_LOAD1APPONLY
 	jnz pspdone
 endif
-	mov bx,10h
-	mov ax,0100h			;alloc DOS memory for PSP
-	int 31h
+	@DPMI_DOSALLOC 10h			;alloc DOS memory for PSP
 	jc error1
 	push ax					;DX = selector, AX = segment
 	push si
@@ -2445,19 +2195,15 @@ pspdone:
 if ?COPYENV
 	push ds
 	mov ds,dx
-	cmp word ptr ds:[2ch],0		;is env of new PSP 0?
+	cmp word ptr ds:[ENVIRON],0		;is env of new PSP 0?
 	jnz @F
 	@trace_s <"environment of PSP is NULL, copy it from previous PSP",lf>
 	mov ds, cs:[wCurPSP]		;then copy it from current PSP
-	mov cx, ds:[2ch]
+	mov cx, ds:[ENVIRON]
 	mov ds, dx
-	mov ds:[2ch], cx
+	mov ds:[ENVIRON], cx
 @@:
   if ?MAKENEWENV
-   if ?OS2COMPAT
-	cmp es:[NEHDR.ne_exetyp], ET_OS2
-	je cpyenv
-   endif
 	cmp cs:[wTDStk],offset starttaskstk
 	jz @F
 cpyenv:
@@ -2520,14 +2266,12 @@ else
 	movsw
 	@pop_a
 	pop ds
-	mov ax,0001
-	int 31h
+	@DPMI_FreeDesc
 endif
 createpsp_1:
 endif
 if ?SETDTA
-	mov ah,2fh
-	int 21h
+	@GetDTA
 if ?32BIT
 	mov dword ptr [si.TASK.dta+0],ebx
 	mov word ptr [si.TASK.dta+4],es
@@ -2542,8 +2286,7 @@ if ?32BIT
 else
 	mov dx,0080h
 endif
-	mov ah,1Ah
-	int 21h 				;set DTA
+	@SetDTA				;set DTA
 	pop ds
 endif
 	clc
@@ -2561,7 +2304,7 @@ endif
 
 _SetErrorMode proc public
 	push ds
-	mov ds,cs:[wLdrDS]
+	@SetKernelDS
 	test bEnvFlgs, ENVFL_IGNNOOPENERR
 	jz dontmoderrmode
 	and dh,7Fh			;reset this bit
@@ -2660,12 +2403,12 @@ if ?USE1PSP
 	test bEnvFlgs, ENVFL_LOAD1APPONLY
 	jnz @F
 endif
-	@trace_s <"restoring loader PSP=">
-	mov bx,[wLdrPSP]
+	@trace_s <"restoring KERNEL PDB=">
+	mov bx,[TH_TOPPDB]
 	@trace_w bx
 	@trace_s <", segm=">
-	@trace_w [wRMPSP]
-	@trace_s lf
+	@trace_w [cs:wRMPSP]
+	@trace_s <" ", lf>
 	mov ah,50h
 	call doscall
 @@:
@@ -2682,42 +2425,32 @@ endif
 	call setexc
 endif
 if ?32BIT
-	mov cx,word ptr oldexc0b+4
-	mov edx,dword ptr oldexc0b+0
+	mov cx,word ptr PrevInt3FProc+4
+	mov edx,dword ptr PrevInt3FProc+0
 else
-	mov cx,word ptr oldexc0b+2
-	mov dx,word ptr oldexc0b+0
+	mov cx,word ptr PrevInt3FProc+2
+	mov dx,word ptr PrevInt3FProc+0
 endif
 	mov bl,0Bh
 	call setexc
 if _TRAPEXC0D_
-if ?32BIT
-	mov cx,word ptr oldexc0D+4
-	mov edx,dword ptr oldexc0D+0
-else
-	mov cx,word ptr oldexc0D+2
-	mov dx,word ptr oldexc0D+0
-endif
+	mov cx,word ptr PrevInt0DProc+2
+	mov dx,word ptr PrevInt0DProc+0
 	mov bl,0Dh
 	call setexc
 endif
 	mov bx,[aliassel]
 	@trace_s <"freeing alias selector ">
 	@trace_w bx
-	@trace_s lf
+	@trace_s <" ", lf>
 	mov ax,0001				;free selector
 	call dpmicall
 if ?PESUPP
 	call DeinitPELoader
 endif
 	@trace_s <"restoring vector int 0x21",lf>
-if ?32BIT
-	mov cx,word ptr ds:[oldint21+4]
-	mov edx,dword ptr ds:[oldint21+0]
-else
-	mov cx,word ptr ds:[oldint21+2]
-	mov dx,word ptr ds:[oldint21+0]
-endif
+	mov cx,word ptr ds:[PrevInt21Proc+2]
+	mov dx,word ptr ds:[PrevInt21Proc+0]
 	mov bl,21h
 	mov ax,0205h			;set pm int
 	call dpmicall
@@ -2741,9 +2474,7 @@ resetvecs endp
 
 if ?CHECKTOP
 areweontop proc
-	mov bl,21h
-	mov ax,0204h
-	int 31h
+	@DPMI_GetPMIntVec 21h
 	mov ax, cs
 	cmp ax, cx
 	ret
@@ -2756,8 +2487,7 @@ if ?CLOSEALLFILES
 CloseAllFiles proc
 	mov bx,5				;close open files >= 5 
 @@:
-	mov ah,3Eh
-	int 21h
+	@ClosFil
 	inc bx
 	cmp bx,_FILEHANDLES_
 	jnz @B
@@ -2771,7 +2501,7 @@ endif
 
 InsertModule16 proc
 	mov ax,es
-	mov cx,[wMDSta]
+	mov cx,[TH_HEXEHEAD]
 @@:
 	jcxz @F
 	mov es,cx
@@ -2792,7 +2522,7 @@ DeleteModule16 proc
 	@trace_s <"DeleteModule16 ">
 	@trace_w ax
 	@trace_s <lf>
-	mov cx,[wMDSta]
+	mov cx,[TH_HEXEHEAD]
 nextitem:
 	jcxz modnotfound
 	mov es,cx
@@ -2804,7 +2534,7 @@ nextitem:
 modfound:					;ES = current MD, BX=previous, CX=next
 	and bx,bx
 	jnz @F
-	mov [wMDSta],cx
+	mov [TH_HEXEHEAD],cx
 	clc
 	ret
 @@:
@@ -2822,7 +2552,7 @@ DeleteModule16 endp
 
 checkifreferenced proc
 	mov bx,ax
-	mov cx,[wMDSta]
+	mov cx,[TH_HEXEHEAD]
 checkifreferenced1:
 	clc
 	jcxz checkifreferencedex
@@ -2858,7 +2588,7 @@ if ?LOADDBGDLL
 endif
 	@trace_s <"*** enter auto delete mode ***",lf>
 freemodulerest3:				   ;<----
-	mov ax,[wMDSta]
+	mov ax,[TH_HEXEHEAD]
 	and ax,ax
 	jz freemodulerestex_1
 @@:
@@ -2876,7 +2606,7 @@ freemodulerest21:
 	mov ax,es
 	@trace_s <"checking references of module ">
 	@trace_w ax
-	@trace_s lf
+	@trace_s <" ", lf>
 	call checkifreferenced  ;only free modules which arent referenced
 	jc freemodulerest2
 	call FreeLib16
@@ -2888,7 +2618,7 @@ else
 endif
 freemodulerest2:
 	mov bx,ax			;current module is referenced
-	mov ax,[wMDSta] 	;so get previous module
+	mov ax,[TH_HEXEHEAD] 	;so get previous module
 	cmp ax,bx			;if there is none
 	jz freemodulerestex_1;immediate exit
 @@:
@@ -2945,7 +2675,7 @@ if ?32BIT
 else
 	@push_a
 endif
-	mov ds,cs:[wLdrDS]
+	@SetKernelDS
 	xor al,al
 	xchg [fLoadMod],al
 if ?32BIT
@@ -3014,8 +2744,6 @@ endif
 	ret
 
 SetCmdLine endp
-
-if ?NEAPPS
 
 ;--- get stack parameters for a NE module
 ;--- inp: ES -> NE-Header
@@ -3100,14 +2828,13 @@ MultInst:
 	ret
 GetSSSP endp
 
-endif
 
 ;*** search var (dx->name) in loader environment
 ;--- returns NC + offset in DI, else C
 ;--- modifies DI, AX
 
 GetLdrEnvironmentVariable proc
-	mov es,[wLdrPSP]
+	mov es,[TH_TOPPDB]
 GetEnvironmentVariable::	;<--- entry with ES=PSP 	   
 	mov es,es:[ENVIRON] 	;environment
 	SUB DI,DI				;start with es:[0]
@@ -3177,7 +2904,7 @@ if ?LFN
 	mov cx,80h
 	mov [ebp].RMCS.rSI,cx
 	mov di, 80h
-	mov es, cs:[wLdrPSP]
+	mov es, cs:[TH_TOPPDB]
 	mov esi, edx
 @@:
 if ?32BIT
@@ -3195,10 +2922,7 @@ endif
 	mov edi, ebp
 	push ss
 	pop es
-	mov bx,0021h
-	xor cx,cx
-	mov ax,0300h
-	int 31h
+	@DPMI_SimRMInt 21h, 0
 	mov ax,[ebp].RMCS.rAX
 	test [ebp].RMCS.rFlags, 1
 	lea esp, [esp+32+2]
@@ -3240,8 +2964,7 @@ nont:
 	jnz done
 nolfn:
 endif
-	MOV AX,3D00h or _SFLAGS_	;open a file for read
-	int 21h
+	@OpenFil , _SFLAGS_	;open a file for read
 done:
 	ret
 openfile endp
@@ -3367,8 +3090,7 @@ getcurrentdir proc
 	@trace_s <"enter getcurrentdir",lf>
 	push dx
 	push si
-	mov ah,19h
-	int 21h
+	@GetDrv
 	@trace_s <"int 21,ah=19h called",lf>
 	mov dl,al
 	inc dl
@@ -3377,8 +3099,7 @@ getcurrentdir proc
 	mov ax,"\:"
 	mov [si+1],ax
 	add si,3
-	mov ah,47h
-	int 21h
+	@GetDir
 	@trace_s <"int 21,ah=47h called",lf>
 	mov ah,-1
 @@:
@@ -3540,8 +3261,7 @@ checkoutoffh proc
 	jnz exit
 	@push_a
 	push es
-	mov ah,62h
-	int 21h
+	GET_PSP
 	mov es,bx
 	mov bx,es:[32h]
 	cmp bx,0EFh			;can it be increased?
@@ -3688,8 +3408,7 @@ endif
 @@:
 	mov bx,0FFFFh
 	xchg bx,es:[NEHDR.ne_hFile]
-	mov ah,3Eh			;close file
-	int 21h
+	@ClosFil			;close file
 	jc error1
 	@trace_s <"module ">
 	@tracemodule
@@ -3718,8 +3437,7 @@ error2:
 	ret
 error3:
 	push ax
-	mov ah,3Eh			;close file
-	int 21h
+	@ClosFil			;close file
 	pop ax
 	jmp errorx
 error1:
@@ -3768,8 +3486,7 @@ ReadHdrs proc
 	mov [NEHdrOfs],ax	;init offset NE-Header
 	mov cx,0040h
 	mov dx,offset MZ_Hdr
-	mov ah,3Fh			;read MZ hdr
-	int 21h
+	@Read				;read MZ hdr
 	jc error1			;DOS read error
 	cmp ax,cx			;could read 40h bytes?
 	jnz error2
@@ -3786,14 +3503,12 @@ ReadHdrs proc
 	and dx,dx
 	jz error4
 	mov [NEHdrOfs],dx	;offset NE-Headers
-	mov ax,4200h		;lseek NE hdr
-	int 21h
+	@MovePtr ,,,0		;lseek NE hdr
 	jc error5			;DOS lseek error, no NE binary
 	@trace_s <"trying to read NE-Header",lf>
 	mov cx,0040h
 	mov dx,offset NE_Hdr
-	mov ah,3Fh			;read
-	int 21h
+	@Read				;read
 	jc error6			;DOS read error
 	cmp ax,cx
 	jnz error7
@@ -3879,8 +3594,7 @@ endif
 	push ax
 	push ss
 	pop es
-	mov ax,000Bh			  ;get BX desc -> ES:(E)DI
-	int 31h
+	@DPMI_GetDescriptor			  ;get BX desc -> ES:(E)DI
 	jc exit
 	@trace_s <"CreateAlias, get descriptor ok",lf>
 if ?32BIT
@@ -3891,8 +3605,7 @@ endif
 	pop bx					  ;AX -> BX
 	push bx
 
-	mov ax,000Ch			  ;set BX desc <- ES:(E)DI
-	int 31h
+	@DPMI_SetDescriptor			  ;set BX desc <- ES:(E)DI
 if _TRACE_
 	jc exit
 	@trace_s <"CreateAlias, set descriptor ok",lf>
@@ -4071,7 +3784,7 @@ AllocMD proc uses bx
 	pop cx
 	jc errorx
 	mov dx,SF_DATA		;AX=selector
-	.if ((bEnvFlgs & ENVFL_DONTLOADHIGH) && (!wMDSta))
+	.if ((bEnvFlgs & ENVFL_DONTLOADHIGH) && (!TH_HEXEHEAD))
 		or dl, SF_PRELOD
 	.endif
 	call AllocMem		;alloc memory (+ Base,Limit der Descipt)
@@ -4125,8 +3838,7 @@ LoadSegmTable proc
 	mov dx,[NEHdrOfs]
 	add dx,es:[NEHDR.ne_segtab]	;offset segment table
 	adc cx,cx
-	mov ax,4200h				;lseek
-	int 21h
+	@MovePtr ,,,0			;lseek
 	jc error1
 	mov ax,es:[NEHDR.ne_cseg]
 	cmp ax,?MAXSEG
@@ -4136,8 +3848,7 @@ LoadSegmTable proc
 	shl ax,1
 	mov cx,ax
 	mov dx,offset segtable
-	mov ah,3Fh					;read table
-	int 21h
+	@Read						;read table
 	jc error1
 done:
 	ret
@@ -4326,7 +4037,7 @@ LoadNETables endp
 ;*** error happened (^error text in AX, if ax==0000 -> DOS error)
 ;*** if AX=-1, dont display anything
 ;--- modifies bx, di, cx, ax
-
+public stroutax
 stroutax proc
 	and ax,ax
 	jz @F
@@ -4463,8 +4174,7 @@ if _DISCARD_
 	mov dl,2
 tryagain:
 endif
-	mov ax,0501h		;alloc memory (BX:CX bytes)
-	int 31h
+	@DPMI_ALLOCMEM		;alloc memory (BX:CX bytes)
 if _DISCARD_
 	jnc @F
 	dec dl
@@ -4560,8 +4270,7 @@ else
 	shl dx,4
 endif
 	mov bx, [aliassel]
-	mov ax,7
-	int 31h
+	@DPMI_SetBase
 	mov ax, [wRMPSP]
 	push ds
 	mov ds,bx
@@ -4610,7 +4319,7 @@ discardmem proc public
 	@push_a
 	push es
 	@trace_s <"memory is scarce, try to discard segments",lf>
-	mov ax,[wMDSta]
+	mov ax,[TH_HEXEHEAD]
 discardmem_2:
 	and ax,ax
 	jz discardmem_ex
@@ -4687,27 +4396,15 @@ if ?32BIT eq 0
 ;*** out: BX=Selector  ***
 
 AllocRMSegment proc uses cx dx
-	xor ax,ax
-	mov cx,0001 			;alloc selector
-	int 31h
+	@DPMI_AllocDesc 			;alloc selector
 	jc exit
 	xchg ax,bx				;segment in bx
 	mov dx,ax				;zu addr in cx:dx
-if ?REAL
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shr ax,1
-	shr ax,1
-else
+IF  @Cpu AND 00000010B			; 80186+
 	shr ax,12
+else
+	mov cl, 12
+	shr ax, cl
 endif
 	mov cx,ax
 if ?REAL
@@ -4718,13 +4415,11 @@ if ?REAL
 else
 	shl dx,4
 endif
-	mov ax,0007
-	int 31h 				;set base
+	@DPMI_SetBase			;set base
 	jc exit
 	mov dx,-1
 	xor cx,cx
-	mov ax,0008 			;set limit to 64k
-	int 31h
+	@DPMI_SetLimit 			;set limit to 64k
 exit:
 	ret
 AllocRMSegment endp
@@ -4855,12 +4550,12 @@ setexc0b proc uses bx
 	call dpmicall
 	jc @F
 if ?32BIT
-	mov dword ptr oldexc0b+0,edx
-	mov word ptr oldexc0b+4,cx
+	mov dword ptr PrevInt3FProc+0,edx
+	mov word ptr PrevInt3FProc+4,cx
 	mov edx, offset Exc0BProc
 else
-	mov word ptr oldexc0b+0,dx
-	mov word ptr oldexc0b+2,cx
+	mov word ptr PrevInt3FProc+0,dx
+	mov word ptr PrevInt3FProc+2,cx
 	mov dx, offset Exc0BProc
 endif
 	mov cx,cs
@@ -4874,9 +4569,9 @@ setexc0b endp
 
 SetNPBase proc
 if ?32BIT
-	cmp word ptr cs:[oldexc0b+4],0	 ;is Exc 0B Handler installed?
+	cmp word ptr cs:[PrevInt3FProc+4],0	 ;is Exc 0B Handler installed?
 else
-	cmp word ptr cs:[oldexc0b+2],0
+	cmp word ptr cs:[PrevInt3FProc+2],0
 endif
 	jnz @F
 	call setexc0b
@@ -4955,8 +4650,7 @@ closefile proc
 	xchg bx,es:[NEHDR.ne_hFile]
 	cmp bx,-1
 	jz exit
-	mov ah,3Eh					   ;close file
-	int 21h
+	@ClosFil					   ;close file
 exit:
 	ret
 closefile endp
@@ -5008,8 +4702,7 @@ ls_2:
 	rcl ax,1
 	loop @B
 	mov cx,ax
-	mov ax,4200h					;lseek
-	int 21h
+	@MovePtr ,,,0					;lseek
 if _TRACE_
 	jnc @F
 	@trace_s <"Load_Segm, lseek() failed",lf>
@@ -5040,13 +4733,11 @@ endif
 	and cx,cx						;is it 64 kB?
 	jnz @F
 	mov cx,08000h
-	mov ah,3Fh
-	int 21h							;then do it in 2 reads
+	@Read							;then do it in 2 reads
 	mov dx,8000h
 	mov cx,dx
 @@:
-	mov ah,3Fh						;read segment (CX bytes)
-	int 21h
+	@Read							;read segment (CX bytes)
 readdone:
 	pop ds
 if _TRACE_
@@ -5129,16 +4820,14 @@ nextitem:
 	mov dx,sp		;this is 16-bit only
 	push ss
 	pop ds
-	mov ah,3Fh
-	int 21h
+	@Read
 	pop bp			;number of iterations
 	pop cx			;size in bytes
 	jc error
 	push es
 	pop ds
 	mov dx,si
-	mov ah,3Fh
-	int 21h
+	@Read
 	jc error
 	sub di,ax
 	jc error
@@ -5222,8 +4911,7 @@ else
 	shl bx,12
 endif
 	or bx,cx
-	mov ax,0102h		   ;the address cannot change
-	int 31h 			   ;server will do the selector tiling
+	@DPMI_DOSSIZE			;the address cannot change server will do the selector tiling
 	jc ReallocMem_err
 	mov ax,dx
 	jmp reallocmem_exx
@@ -5515,12 +5203,7 @@ done:
 	@trace_s lf
 	mov si,word ptr es:[NEHDR.MEMHDL+0] ;now do MD itself
 	mov di,word ptr es:[NEHDR.MEMHDL+2]
-if ?REAL
-	mov bx, 0
-	push bx
-else
-	push 0
-endif
+	@PUSHC	0
 	mov bx,es
 	pop es						  ;clear es before dpmi call
 	mov ax,0001
@@ -5536,7 +5219,7 @@ endif
 	jmp done2
 @@:
 ife ?MEMFORKERNEL
-	cmp [wMDSta],0
+	cmp [TH_HEXEHEAD],0
 	jz done2
 endif
 	@trace_s <"freeing memory of MD, Handle=">
@@ -5644,8 +5327,8 @@ DoRelocs proc
 	mov [wlError],0
 	mov cx,sizeof wCnReloc
 	mov dx,offset wCnReloc		;read 2 Bytes (# of relocs)
-	mov ah,3Fh					;this can be done without lseek
-	int 21h 					;since segment was read just before
+	@Read					;this can be done without lseek
+	 					;since segment was read just before
 	jc error3
 	mov cx,wCnReloc
 	jcxz error2					;this may not be null
@@ -5701,8 +5384,7 @@ else
 	shl cx,3					;each entry requirest 8 bytes
 endif
 	mov dx,offset relbuf
-	mov ah,3Fh
-	int 21h 					;read relocations
+	@Read 					;read relocations
 	jc exit
 	mov di,offset relbuf
 rr_1:
@@ -6024,8 +5706,8 @@ endif
 	mov dx,[NEHdrOfs]
 	add dx,ax
 	adc cx,cx
-	mov ax,4200h		   ;lseek
-	int 21h
+			   ;lseek
+	@MovePtr ,,,0
 	pop cx				   ;laenge restore
 	jc readmd_er1
 ;	mov bx,es:[NEHDR.ne_hFile]
@@ -6033,8 +5715,7 @@ endif
 	push ds
 	push es
 	pop ds
-	mov ah,3Fh			   ;read file
-	int 21h
+	@Read			   ;read file
 	pop ds
 	jc readmd_er2
 	add di,cx			   ;new position to di
@@ -6126,8 +5807,7 @@ LoadNResNames proc
 	mov bx,es:[NEHDR.ne_hFile]
 	mov cx,word ptr es:[NEHDR.NRESADR+2]
 	mov dx,word ptr es:[NEHDR.NRESADR+0]
-	mov ax,4200h
-	int 21h
+	@MovePtr ,,,0
 	pop cx
 	jc error
 ;	mov bx,es:[NEHDR.ne_hFile]
@@ -6135,8 +5815,7 @@ LoadNResNames proc
 	push ds
 	push es
 	pop ds
-	mov ah,3Fh
-	int 21h
+	@Read
 	pop ds
 	jc error
 	add di,cx
@@ -6308,7 +5987,7 @@ done:
 error1:									;error in LibEntry
 	@push_a
 	push ds
-	mov ds,cs:[wLdrDS]
+	@SetKernelDS
 ;;	dec es:[NEHDR.ne_count]
 	mov di,offset szEntryCode
 	call WORDOUT 				;bin2ascii(errorcode)
@@ -6387,7 +6066,7 @@ CallAllLibEntries endp
 ;---      and address of segment descriptor in ES:BX
 
 Segment2ModuleFirst:
-	mov bx,cs:[wMDSta]	;search from module list start
+	mov bx,cs:[TH_HEXEHEAD]	;search from module list start
 
 Segment2Module proc public
 
@@ -6439,7 +6118,7 @@ Segment2Module endp
 
 SearchModule16 proc near public
 
-	mov bx,cs:[wMDSta]
+	mov bx,cs:[TH_HEXEHEAD]
 	mov ax,ds
 	and ax,ax
 	jz Segment2Module	;ok, is SI is a selector
@@ -6551,7 +6230,7 @@ else
 @@:
 	inc si
 endif
-	mov ds,cs:[wLdrDS]
+	@SetKernelDS
 	mov [wlError],2			;default error "file not found"
 if ?RESETDEFPATH
 	mov szPath,00			;reset default path
@@ -6766,7 +6445,7 @@ dowep proc
 
 	@trace_s <"delete module ">
 	@tracemodule
-	@trace_s lf
+	@trace_s <" ", lf>
 
 	test byte ptr es:[NEHDR.APPFLGS],AF_DLL	;dll?
 	jz dowep_3
@@ -6780,7 +6459,7 @@ endif
 if ?32BIT
 	movzx esi,si
 endif
-	mov ds,cs:[wLdrDS]
+	@SetKernelDS
 	mov cl,3
 	call SearchNEExport		;search in resident + nonres names
 	jc dowep_2
@@ -6876,15 +6555,15 @@ FreeLib16 proc public uses ds bx si di
 endif
 
 	push es
-	mov ds,cs:[wLdrDS]
+	@SetKernelDS
 	@trace_s <"FreeLib16 ">
 	@trace_w ax
-	@trace_s <lf>
+	@trace_s <" ", lf>
 	call checkne
 	jc error23
 	@trace_s <"cnt=">
 	@trace_w es:[NEHDR.ne_count]
-	@trace_s <lf>
+	@trace_s <" ", lf>
 	cmp es:[NEHDR.ne_count],1
 	jnz @F
 	call dowep
@@ -7039,6 +6718,12 @@ SearchNEExport endp
 ;*** if second byte is ZERO, first byte is to be added to entry #
 ;--- else first byte is number of entries
 ;--- and second byte determines if entries are 3 or 6 bytes long
+
+;
+; Here only normal protected mode support.
+; For real mode kerenl it is required to modify entry table to support LRU
+; and 3FH interrupt to support movable and discardable segments.
+;
 
 GetProcAddr16 proc uses dx si di
 
@@ -7262,7 +6947,7 @@ copy_to_psp_and_exit proc
 	ret
 @@:
 	@trace_s <"critical section: create code alias for PSP and jump",lf>
-	mov bx,[wLdrPSP]
+	mov bx,[TH_TOPPDB]
 	mov ss,bx
 if ?32BIT
 	mov esp,100h
@@ -7275,14 +6960,8 @@ endif
 	mov ax,ds
 	call CreateAlias			;BX -> codesel -> AX
 	push ax						;new CS -> [SP]
-if ?HDPMI
-	mov ax, offset psp_rou + 100h
-	add ax, offset endhdpmi
-	push ax
-else
 	mov ax,offset psp_rou + 100h	;IP
 	push ax
-endif
 	mov ax,0502h
 	mov bx,cs
 	retf
@@ -7291,13 +6970,14 @@ copy_to_psp_and_exit endp
 endif	;_COPY2PSP
 endif	;?EXTLOAD
 
+public doscall
 doscall proc
 if ?32BIT
 	pushfd
-	call fword ptr cs:[oldint21]
+	call fword ptr cs:[PrevInt21Proc]
 else
 	pushf
-	call dword ptr cs:[oldint21]
+	call dword ptr cs:[PrevInt21Proc]
 endif
 	ret
 doscall endp
@@ -7322,7 +7002,7 @@ if _SUPRESDOSERR_
 endif
 	@push_a
 	push ds
-	mov ds,cs:[wLdrDS]
+	@SetKernelDS
 ife ?32BIT
 	mov bp,sp
 endif
@@ -7402,28 +7082,21 @@ if ?32BIT
 	mov edx,esp
 	mov ecx,1
 	mov bx,2		;stderr
-	mov ah,40h
-	int 21h
+	@Write
 	pop eax
 	pop edx
 	pop ecx
 	pop bx
 	pop ds
 else
-	mov dl,al
-	mov ah,02
-	int 21h
+	@DispCh al
 endif
 	ret
 printchar endp
 
 dpmildrout proc
 	@push_a
-if ?32BIT
-	@strout <"DPMILD32: ">
-else
-	@strout <"DPMILD16: ">
-endif
+	@strout <"KERNEL: ">
 	@pop_a
 	ret
 dpmildrout endp
@@ -7435,23 +7108,16 @@ stroutstk_err:
 	call dpmildrout
 							;fall throu		
 stroutstk proc public
-if ?32BIT
-	push bx
-	mov bx,[esp+4]
-else
 	push bp
 	mov bp,sp
 	push bx
 	mov bx,[bp+4]
-endif
 	push ds
-	mov ds,cs:[wLdrDS]
+	@SetKernelDS
 	call stroutBX
 	pop ds
 	pop bx
-ife ?32BIT
 	pop bp
-endif
 	ret 2
 stroutstk endp
 
@@ -7519,37 +7185,6 @@ modnameout endp
 
 	include trace.inc
 
-;--- check if int 21/4bh has been called by loader
-;--- possibly redundant
-
-if ?CHECKCALLER
-checkcaller proc
-	push ds
-	push es
-	cld
-	push cs
-	pop ds
-if ?32BIT
-	pushad
-	les edi,[esp+8*4+2*2+2]		;get cs:eip of caller
-	mov esi,offset ctxt
-	mov ecx,lctxt
-	repz cmps byte ptr [edi],[esi]
-	popad
-else
-	@push_a
-	mov bp,sp
-	mov si,offset ctxt
-	les di,[bp+8*2+2*2+2]
-	mov cx,lctxt
-	repz cmpsb
-	@pop_a
-endif
-	pop es
-	pop ds
-	ret
-checkcaller endp
-endif
 
 ;*** terminate program (int 21h, ah=4Ch) psp security check 
 ;*** search current psp in task list!
@@ -7595,7 +7230,7 @@ getpspr endp
 checkpsp proc
 	@push_a
 	push ds
-	mov ds,cs:[wLdrDS]
+	@SetKernelDS
 	mov ah,51h
 	call doscall 			;current PSP -> BX
 	mov ax,bx
@@ -7615,7 +7250,7 @@ nextitem:
   if ?USE1PSP        
 	and ax,ax
 	jnz @F
-	mov ax,wLdrPSP
+	mov ax,TH_TOPPDB
 @@:
   endif
 	call getpspr
@@ -7711,8 +7346,7 @@ moveinextmem proc
 	xor bx,bx
 	mov cx,[wCSlim] 			;alloc memory
 	inc cx
-	mov ax,0501h
-	int 31h
+	@DPMI_ALLOCMEM
 	jc exit
 	@trace_s <"extload: high memory allocated",lf>
 	mov word ptr [dwMemHdl+0],di
@@ -7722,16 +7356,13 @@ moveinextmem proc
 	mov word ptr [blkaddr+0],cx
 	mov dx,cx
 	mov cx,bx
-	mov bx,[aliassel]
-
-	mov ax,0007h				;set base
-	int 31h
+	mov bx, [aliassel]
+	@DPMI_SetBase
 	jc exit
 	@trace_s <"extload: set base ok",lf>
 	xor cx,cx
 	mov dx,[wCSlim]
-	mov ax,0008h				;set limit
-	int 31h
+	@DPMI_SetLimit				;set limit
 	jc exit
 	@trace_s <"extload: set limit ok",lf>
 
@@ -7751,9 +7382,9 @@ if ?FASTCSCHANGE
 	call CreateAlias				;descriptor BX -> AX
 	jc exit
 else
-	mov cx,1					;do it the safe way, get a temp sel
-	xor ax,ax					;alloc selector
-	int 31h
+						;do it the safe way, get a temp sel
+						;alloc selector
+	@DPMI_AllocDesc
 	jc exit
 	@trace_s <"extload: alloc temp selector ok",lf>
 	call CreateAlias				;[BX] -> [AX], AX=Codesel
@@ -7775,8 +7406,7 @@ nextsm:
 	retf
 nextsm2:
 	@trace_s <"extload: nextsm2 reached",lf>
-	mov ax,0001					;free temp selector
-	int 31h
+	@DPMI_FreeDesc					;free temp selector
 	pop bx
 endif
 if ?32BIT
@@ -7796,9 +7426,6 @@ endif
 	@trace_s <"extload: ds ss copied",lf>
 if _RESIZEPSP_
 	;--- size PSP + 20h bytes (for int2f rm)
-  if ?HDPMI
-	mov bx, [wResHDPMI]
-  else
 	mov bx, offset endoflowcode
 	mov al, bl
 	shr bx, 1
@@ -7809,9 +7436,8 @@ if _RESIZEPSP_
 	jz @F
 	inc bx
 @@:
-  endif
 	add bl,10h
-	mov dx,[wLdrPSP]
+	mov dx,[TH_TOPPDB]
 	mov ax,0102h				;resize dos memory block
 if _SUPRESDOSERR_
 	or fMode, FMODE_NOERRDISP
@@ -7828,126 +7454,6 @@ endif
 	pop ds
 	ret
 moveinextmem endp
-
-endif
-
-if ?HDPMI
-
-;--- this is for the standalone DPMILD32.BIN stub
-;--- runs in real-mode!
-
-inithdpmi proc
-	@push_a
-	push ds
-	mov ah,51h
-	int 21h
-	mov es,bx	;HDPMI expects ES=PSP
-	add bx,10h
-	push bx
-	push 0
-	mov bp,sp
-	call far16 ptr [bp]
-	add sp,4
-	pop ds
-	mov [wResHDPMI],dx
-	mov ah,0
-	cmp al,4
-	cmc
-	@pop_a
-	ret
-inithdpmi endp
-
-endif
-
-;*** load dpmi server HDPMI (still in real mode)
-;*** dont display traces in real mode! ***
-
-if ?SERVER
-loadserver proc
-	@push_a
-	mov bp,sp
-
-	push ds
-	pop es
-
-;----------------------------- build an exec param struct on stack (real mode)
-	mov cx,[wLdrPSP]
-	push cx
-	mov bx, offset 006Ch		;fcb2
-	push bx
-	push cx
-	mov bx, offset 005Ch		;fcb1
-	push bx
-	push ds
-	mov bx, offset nullstr		;dos command tail
-	push bx
-	mov bx, 0
-	push bx					;environment segment
-if ?KERNEL16
-	mov si,offset KernelNE.szModPath
-else
-	mov si,offset segtable
-endif
-	mov di,offset szModName ;copy filename
-	cld
-nextchar0:
-	mov bx,di
-nextchar:
-	lodsb
-	stosb
-	cmp al,00
-	jz donechar
-	cmp al,'\'
-	jz nextchar0
-	cmp al,'/'
-	jz nextchar0
-	jmp nextchar
-donechar:
-	mov di,bx
-	mov si,offset HostName		;strcat filename to path (HDPMI..)
-	mov cx,SIZE_HOSTNAME
-	rep movsb
-tryagain:
-	mov bx,sp
-	mov dx,offset szModName
-	mov ax,4b00h			;load dpmi server
-	int 21h
-	jc loadfailed
-doneload:
-	mov sp,bp
-	@pop_a
-	ret
-loadfailed:
-if ?STUB
-	mov di,offset szName
-	mov si,offset HostName
-	mov cx,SIZE_HOSTNAME
-	rep movsb
-	call ScanPath
-	jc @F
-	mov bx,ax
-	mov ah,3Eh
-	int 21h
-	push ds
-	pop es
-	jmp tryagain
-@@:
-	mov dx,offset szModName
-endif
-;	call checkoutoffh
-;	jc tryagain
-if ?SLOADERR
-	mov bx,offset errstr26	;"cannot load "
-	@strout_err
-	mov bx,dx				;hdpmi path
-	@stroutbx
-	@cr_out
-	xor ax,ax
-	call stroutax
-endif
-	jmp doneload
-
-loadserver endp
 
 endif
 
@@ -8005,26 +7511,12 @@ GetPgmParms proc uses ds
 	push ds
 	pop es				;es=DGROUP
 	@trace_s <"GetPgmParms enter",lf>
-if ?STUB
-  if ?KERNEL16
-	mov si,offset KernelNE.szModPath
-  else
-	mov si,offset segtable
-  endif
-	mov di,offset szPgmName
-@@:
-	lodsb
-	stosb
-	and al,al
-	jnz @B
-	mov si,0080h
-	mov ds,[wLdrPSP]
-else
+
 	mov fCmdLOpt,0
-	mov ds,[wLdrPSP]
+	mov ds,[TH_TOPPDB]
 	mov si,0080h
-	test cs:[fMode],FMODE_OVERLAY	;loaded as overlay?
-	jnz gpp_1						;then PSP is ok
+;	test cs:[fMode],FMODE_OVERLAY	;loaded as overlay?
+;	jnz gpp_1						;then PSP is ok
 	mov di,offset szPgmName
 	sub cx,cx
 	mov cl,[si] 		;get parameter line
@@ -8116,7 +7608,6 @@ copydone:
 	pop si
 	pop es
 gpp_1:
-endif	;?STUB
 
 	mov di,offset ParmBlk
 if ?32BIT
@@ -8147,138 +7638,6 @@ endif
 GetPgmParms endp
 
 
-changememstrat proc
-	mov ax,5802h			 ;save umb link state
-	int 21h
-	xor ah,ah
-	mov word ptr [blksize+0],ax
-	mov ax,5800h			 ;save memory alloc strategie
-	int 21h
-	xor ah,ah
-	mov word ptr [blksize+2],ax
-	mov ax,5803h			 ;set umb link state
-	mov bx,0001h
-	int 21h
-	mov ax,5801h			 ;set "fit best" strategy
-	mov bx,0081h			 ;first high, then low
-	int 21h
-	ret
-changememstrat endp
-
-restorememstrat proc
-	mov bx,word ptr [blksize+2]
-	mov ax,5801h			  ;memory alloc strat restore
-	int 21h
-	mov bx,word ptr [blksize+0]
-	mov ax,5803h			  ;umb link restore
-	int 21h
-	ret
-restorememstrat endp
-
-;*** JumpToPM
-;--- returns C on errors, bx->error msg 
-
-JumpToPM proc
-	call changememstrat
-if ?SERVER
-	mov cx,1
-endif
-JumpToPM_1:
-	push cx
-	mov ax,1687h			;get address of PM entry in ES:DI
-	int 2Fh
-	pop cx
-	mov bp,offset szNoDPMI  ;message "no dpmi server"
-if ?32BIT
-	and ax,ax				;ax=0 -> DPMI server installed
-	jnz JumpToPM_2
-	mov bp,offset szNo32Bit ;message "no 32 bit apps supported"
-	test bl,1
-	jnz JumpToPM_3			;jmp if ok
-else
-	and ax,ax
-	jz JumpToPM_3			;ok, DPMI host found
-endif
-JumpToPM_2:
-if ?SERVER
-	mov ax,bp
-  if ?DEBUG
-	and cx,cx
-	jz ERROR0
-  else
-	jcxz ERROR0				;just try 2 times, else error
-  endif
-	call loadserver			;try to load HDPMIxx
-	xor cx,cx
-	jmp JumpToPM_1			;try a second time
-else
-  if ?HDPMI
-	call inithdpmi
-	jnc JumpToPM_1
-  endif
-	mov ax,bp
-	jmp ERROR0
-endif
-JumpToPM_3:
-	push es
-	push di
-	test si,si
-	jz @F
-	mov bx,si
-	mov ah,48h				  ;alloc real-mode mem block
-	int 21h
-	jc ERROR1
-	mov es,ax
-@@:
-	call restorememstrat
-if ?32BIT
-	mov ax,0001
-else
-	xor ax,ax
-endif
-	mov bp,sp
-	call dword ptr [bp]
-	mov ax,offset errstr3		;cannot switch to prot-mode
-	jc ERROR3
-	@int3 _INT03JMPPM_
-	mov [wLdrDS],ds
-	mov [wDPMIFlg],cx			;DPMI Flags
-	mov [wDPMIVer],dx			;dito
-	mov [wLdrPSP],es			;psp
-if 1;?USE1PSP
-	mov [wCurPSP],es
-endif
-if ?32BIT
-	movzx eax,ax
-	movzx ebx,bx
-	movzx ecx,cx
-	movzx edx,dx
-	movzx esi,si
-	movzx edi,di
-endif
-	@trace_s <lf,"------------------------------------",lf>
-	@trace_s <"DPMILDxx now in protected mode, PSP=">
-	@trace_w es
-	@trace_s <",CS=">
-	@trace_w cs
-	@trace_s <",SS=">
-	@trace_w ss
-	@trace_s <",DS=">
-	@trace_w ds
-	@trace_s <lf>
-	add sp,4
-	ret
-ERROR1:
-	mov ax,offset errstr2	;insufficient DOS memory
-ERROR3:
-	add sp,4
-ERROR0:
-	push ax
-	call restorememstrat
-	pop bx
-	stc
-	ret
-JumpToPM endp
 
 ;*** global constructor ***
 
@@ -8286,37 +7645,21 @@ InitProtMode proc
 
 	@trace_s <"enter initialize PM",lf>
 
-	mov bl,21h				;get int 21 PM vector
-	mov ax,0204h			;get pm int
-	int 31h
-if ?32BIT
-	mov dword ptr [oldint21+0],edx
-	mov word ptr [oldint21+4],cx
-else
-	mov word ptr [oldint21+0],dx
-	mov word ptr [oldint21+2],cx
-endif
-	mov bl,31h				;get int 31 PM vector
-	int 31h
-if ?32BIT
-	mov dword ptr [oldint31+0],edx
-	mov word ptr [oldint31+4],cx
-else
+	@DPMI_GetPMIntVec 21h				;get int 21 PM vector
+				;get pm int
+	
+	mov word ptr [PrevInt21Proc+0],dx
+	mov word ptr [PrevInt21Proc+2],cx
+	@DPMI_GetPMIntVec 31h				;get int 31 PM vector
+
 	mov word ptr [oldint31+0],dx
 	mov word ptr [oldint31+2],cx
-endif
 if ?DEBUG
-	mov bl,41h
-	int 31h
-  if ?32BIT
-	mov dword ptr [oldint41+0],edx
-	mov word ptr [oldint41+4],cx
-	mov edx,offset myint41
-  else
+	@DPMI_GetPMIntVec 41h
 	mov word ptr [oldint41+0],dx
 	mov word ptr [oldint41+2],cx
 	mov dx,offset myint41
-  endif
+
 	mov al,5
 	mov cx,cs
 	int 31h
@@ -8326,19 +7669,15 @@ if _SETCSLIM_
 	mov bx,cs
 	xor cx,cx
 	mov dx,[wCSlim]
-	mov ax,0008h			;set limit	
-	int 31h
+	@DPMI_SetLimit			;set limit	
 endif
 if _SETDSLIM_
 	mov bx,ds
 	xor cx,cx
 	mov dx,[wCSlim]
-	mov ax,0008h			;set limit
-	int 31h
+	@DPMI_SetLimit			;set limit
 endif
-	mov cx,0001 			;get a selector for ALIAS segments
-	mov ax,0000
-	int 31h
+	@DPMI_AllocDesc			;get a selector for ALIAS segments
 	jc initprex
 	mov [aliassel],ax
 ;--- for 32bit clients: clear bits FF00h (dosemu + cwsdpmi)
@@ -8347,8 +7686,7 @@ if ?32BIT
 	mov bx,ax
 	lar cx,ax
 	shr cx,8
-	mov ax,0009				;set acc rights
-	int 31h
+	@DPMI_SetAccRights			;set acc rights
 endif
 endif
 
@@ -8368,16 +7706,14 @@ if ?PESUPP
 	call InitPELoader
 endif
 if _TRAPEXC0D_
-	mov bl,0Dh
-	mov ax,0202h		   ;get Exception 0D
-	int 31h
+	@DPMI_GetExcVec 0Dh	   ;get Exception 0D
   if ?32BIT		 
-	mov dword ptr oldexc0D+0,edx
-	mov word ptr oldexc0D+4,cx
+	mov dword ptr PrevInt0DProc+0,edx
+	mov word ptr PrevInt0DProc+4,cx
 	mov edx, offset LEXC0D
   else
-	mov word ptr oldexc0D+0,dx
-	mov word ptr oldexc0D+2,cx
+	mov word ptr PrevInt0DProc+0,dx
+	mov word ptr PrevInt0DProc+2,cx
 	mov dx, offset LEXC0D
   endif
 	mov cx,cs
@@ -8385,9 +7721,7 @@ if _TRAPEXC0D_
 	jc initprex
 endif
 if ?EXC01RESET
-	mov bl,01h
-	mov ax,0202h		   ;get Exception 01
-	int 31h
+	@DPMI_GetExcVec 01h	   ;get Exception 01
   if ?32BIT
 	mov dword ptr oldexc01+0,edx
 	mov word ptr oldexc01+4,cx
@@ -8403,5 +7737,5 @@ InitProtMode endp
 
 _ITEXT ends
 
-end  main
+end  BootStrap
 

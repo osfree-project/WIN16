@@ -1,0 +1,34 @@
+Windows Real Mode memory manager handles code segments using MS Overlay Manager API INT 3fH
+
+Many of old days DOS programs uses INT 3FH. Here is description of Zortech C VCM which mostly same as
+Windows Real Mode memory manager.
+
+https://digitalmars.com/ctg/vcm.html
+
+Here is general article about Windows Memory Manager
+
+https://habr.com/ru/post/154713/ (in Russian)
+
+Some here
+
+https://jeffpar.github.io/kbarchive/kb/031/Q31994/
+
+https://jeffpar.github.io/kbarchive/kb/065/Q65122/
+
+https://devblogs.microsoft.com/oldnewthing/20120622-00/?p=7303
+https://devblogs.microsoft.com/oldnewthing/20120629-00/?p=7253
+
+LRU algoritm
+https://devblogs.microsoft.com/oldnewthing/20120810-00/?p=6893
+
+longjmp
+https://devblogs.microsoft.com/oldnewthing/20140103-00/?p=2173
+
+https://devblogs.microsoft.com/oldnewthing/20141219-00/?p=43343
+
+debug
+https://devblogs.microsoft.com/oldnewthing/20141126-00/?p=43533
+
+_AHINCR
+
+https://devblogs.microsoft.com/oldnewthing/20171113-00/?p=97386

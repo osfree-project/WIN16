@@ -1,3 +1,28 @@
+		; MacroLib
+		include dpmi.inc
+
+@use16	textequ <>
+
+_TEXT	segment dword @use16 public 'CODE'
+_TEXT	ends
+CCONST	segment word @use16 public 'CODE'
+CCONST	ends
+_DATA	segment word @use16 public 'DATA'
+_DATA	ends
+_ITEXT	segment word @use16 public 'DATA'	;use 'DATA' (OPTLINK bug)
+_ITEXT	ends
+_BSS	segment word @use16 public 'BSS'
+_BSS	ends
+STACK	segment para @use16 stack  'STACK'
+STACK	ends
+
+DGROUP	group _TEXT,CCONST,_DATA,_ITEXT,_BSS,STACK
+
+	assume CS:DGROUP
+	assume DS:DGROUP
+	assume SS:NOTHING
+	assume ES:DGROUP
+
 
 ;********** global equates **********
 
@@ -11,19 +36,13 @@ ifndef ?LFN
   endif
 endif
 
-ifndef ?STUB
-?STUB			= 0		;0, 1=assume to be loaded as a stub
-endif
 ifndef _FILEHANDLES_
 _FILEHANDLES_	= 20	;20 initial no of file handles for a task
 endif
-
 ?INT24RES		= 1		;1, restore int 24 when task exits
 ?INT23RES		= 1		;1, restore int 23
 ?INT41SUPPORT	= 1		;1, support Int 41h debugging messages
 ?SUPAPPTITLE	= 1		;1, support for "application title" (win9x only, in rm!)
-;--- once HDPMI=32 works reliably, ?DISABLESERVER=1 is no longer needed
-?DISABLESERVER	= 0		;1, 1=disable DPMI server for next task (DPMILDR=8)
 ?SETDTA			= 1		;1, 1=for ?MULTPSP: init DTA to PSP:80 on start
 ?ZEROHIWORDEBP  = 1		;1, 1=if ?32BIT clear hiword(ebp) before 16-bit proc is called.
                         ;   this is essentially for ENTER/LEAVE instructions!
@@ -35,13 +54,12 @@ endif
 if ?32BIT                        
 ?DOS4G			= 1		;1, 1=support DOS4G                        
 ?DOS4GMEM		= 0		;0, 1=support DOS4G data segment in GS
-?LOCALHEAP	 	= 0		;0, 1=implement local heap as in windows
-_PROFSTRING_	= 0		;0, 1=support Get-/WritePrivateProfileString
+?LOCALHEAP	 	= 1		;0, 1=implement local heap as in windows
 else
 ?DOS4G			= 0
 ?LOCALHEAP	 	= 1		;1, 1=implement local heap as in windows
-_PROFSTRING_	= 1		;1, 1=support Get-/WritePrivateProfileString
 endif
+
 
 
 if ?LFN
@@ -114,10 +132,12 @@ RC_FATAL   equ 0FFh	;FatalExit/FatalAppExit called (16bit only)
 ;********** publics/externals **********
 
 _DATA segment
-externdef	wLdrDS:word
+externdef	wKernelDS:word
 externdef	wTDStk:word
 externdef	starttaskstk:byte
-externdef	wMDSta:word
+externdef	TH_HEXEHEAD:word
+externdef	TH_HEADTDB:word
+externdef	TH_CURTDB:word
 externdef	wLastRC:word
 externdef	bEnvFlgs:byte
 externdef	bEnvFlgs2:byte
@@ -127,7 +147,7 @@ externdef	wErrMode:word
 externdef	szPath:byte
 externdef	segtable:byte
 externdef	fMode:byte
-externdef	wLdrPSP:word
+externdef	TH_TOPPDB:word
 externdef	wCurPSP:word
 externdef	fLoadMod:byte
 externdef	wEquip:word
@@ -136,6 +156,11 @@ externdef	dStktop:dword
 else
 externdef	wStktop:word
 endif
+externdef KernelFlags: WORD
+externdef PMouseTermProc: DWORD
+externdef PKeyboardTermProc: DWORD
+externdef PSystemTermProc: DWORD
+externdef PrevInt21Proc: DWORD
 _DATA ends
 
 _TEXT segment
@@ -170,6 +195,7 @@ CopyDescriptor  proto near
 stroutBX        proto near
 InitDlls        proto near
 externdef stroutstk_err:near
+externdef pascal LoadModule:far
 _TEXT ends
 
 ;********** constants and structures ***********
@@ -362,6 +388,7 @@ local NewStr
   ifnb <bIsDefined>
 if ?REAL
 	push bx
+	push bx
 	push bp
 	mov bp ,sp
 	mov bx, offset String
@@ -378,8 +405,9 @@ NewStr  db String
 CCONST   ends
 if ?REAL
 	push bx
+	push bx
 	push bp
-	mov bp ,sp
+	mov bp, sp
 	mov bx, offset NewStr
 	xchg bx,[bp+4]
 	pop bp
@@ -497,8 +525,7 @@ endif
 
 @entercriticalsection macro
 if 1
-	mov ax,0900h
-	int 31h
+	@DPMI_DisableInt
 	push ax
 else
 	push bp
@@ -532,3 +559,64 @@ else
 endif
 	endm
 
+
+if ?32BIT
+	.386
+endif
+
+@return  macro xx
+	retf xx
+	endm
+
+@loadbx macro
+if ?32BIT
+	mov ebx,esp
+else
+	mov bx,sp
+endif
+	endm
+
+@loadparm macro ofs,xx
+if ?32BIT
+	mov xx,ss:[ebx+4+ofs]
+else
+	mov xx,ss:[bx+4+ofs]
+endif
+	endm
+
+ENTRY struct
+bSegm	db ?
+wOfs	dw ?
+ENTRY ends
+
+WF_PMODE	equ 1
+WF_CPU286	equ 2
+WF_CPU386	equ 4
+WF_CPU486	equ 8
+WF_STANDARD	equ 10h
+WF_ENHANCED	equ 20h
+WF_80x87	equ 0400h
+WF_PAGING	equ 0800h
+
+ENVIRON equ 2Ch
+
+@SetKernelDS	macro segm
+		ifnb <segm>
+			mov segm,cs:[wKernelDS]
+			assume segm:DGROUP
+		else
+			mov ds,cs:[wKernelDS]
+			assume ds:DGROUP
+		endif
+		endm
+
+
+_DATA segment
+externdef KernelNE:NEHDR
+_DATA ends
+
+_TEXT segment
+
+InitKernel proto near
+
+_TEXT ends

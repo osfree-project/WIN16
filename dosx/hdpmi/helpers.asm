@@ -8,20 +8,51 @@
 
 	option proc:private
 
-?CHECKWRITE		equ 1	;std=1, when copying from TLB make sure dst isnt r/o
-
-@seg _TEXT32
+if ?32BIT
+?CHECKWRITE	equ 1	;std=?, when copying from TLB make sure dst isnt r/o
+else
+?CHECKWRITE	equ 1	;std=1, when copying from TLB make sure dst isnt r/o
+endif
 
 _TEXT32 segment
 
+if 0
 
-_LTRACE_ = 0
+copy_far32_2_tlbxx	;copy xx bytes src FAR32   dst tlb:xx
+copy_tlbxx_2_esdi	;copy xx bytes src tlb:yy  dst es:di
+
+copy_tlbdta_2_dta	;copy xx bytes src tlbdta  dst dta
+copy_dta_2_tlbdta	;copy xx bytes src dta     dst tlbdta
+
+copy_dsdx_2_tlb 	;copy cx bytes src ds:dx   dst tlb:0,v86-ds=TLB
+copy_tlb_2_dsdx 	;copy cx bytes src tlb:0   dst ds:dx
+copy_esdi_2_tlb 	;copy cx bytes src es:di   dst tlb:0,v86-es=TLB
+copy_tlb_2_esdi 	;copy cx bytes src tlb:0   dst es:di
+
+copy_far32_2_flat	;copy cx bytes src FAR32   dst SEGM
+copy_flat_2_far32	;copy cx bytes src SEGM    dst FAR32
+
+copyz_far32_2_tlbxx	;copy asciiz   src FAR32   dst tlb:xx
+copyz_tlbxx_2_far32	;copy asciiz   src tlb:xx  dst FAR32
+
+copyz_dsdx_2_tlb	;copy asciiz   src ds:dx   dst tlb:0,v86-ds=TLB,dx=0
+copyz_dssi_2_tlb	;copy asciiz   src ds:si   dst tlb:0,v86-ds=TLB,si=0
+copyz_tlb_2_dssi	;copy asciiz   src tlb:0   dst ds:si
+copy$_dsdx_2_tlb	;copy dosstr   src ds:dx   dst tlb:0
+
+getlinaddr			;get linear address in eax from selector at [esp+4]
+getpspsel			;get descriptor for a PSP
+setpspsel			;save selector in bx,segment in dx in rm selector table
+
+endif
+
+	@ResetTrace
 
 ;*** set real-mode DS to TLB
 
 setdsreg2tlb proc public
 	push ss:[dwSegTLB]
-	pop dword ptr ss:[v86iret.rDS]
+	pop ss:v86iret.rDSd
 	ret
 	align 4
 setdsreg2tlb endp
@@ -30,7 +61,7 @@ setdsreg2tlb endp
 
 setesreg2tlb proc public
 	push ss:[dwSegTLB]
-	pop dword ptr ss:[v86iret.rES]
+	pop ss:v86iret.rESd
 	ret
 	align 4
 setesreg2tlb endp
@@ -48,7 +79,11 @@ copy$_dsdx_2_tlb proc public
 	pop es
 	cld
 	xor edi, edi
+if ?32BIT
+	mov esi, edx
+else
 	movzx esi, dx
+endif
 @@:
 	lodsb
 	stosb
@@ -184,8 +219,12 @@ copyz_tlbxx_2_far32 endp
 copyz_tlb_2_dssi proc public
 
 	push ds
+if ?32BIT
+	push esi
+else
 	push word ptr 0
 	push si
+endif
 	push 0
 	call copyz_tlbxx_2_far32
 	ret
@@ -196,8 +235,12 @@ copyz_tlb_2_dssi endp
 
 copyz_tlb_2_dsdx proc public
 	push ds
+if ?32BIT
+	push edx
+else
 	push word ptr 0
 	push dx
+endif
 	push 0				;offset in TLB
 	call copyz_tlbxx_2_far32
 @@:
@@ -210,8 +253,12 @@ copyz_tlb_2_dsdx endp
 
 copy_esdi_2_tlb proc public
 	push es
+if ?32BIT
+	push edi
+else
 	push word ptr 0
 	push di
+endif
 	call setesreg2tlb
 	push ss:[dwSegTLB]
 	call copy_far32_2_flat
@@ -224,8 +271,12 @@ copy_esdi_2_tlb endp
 
 copy_dsdx_2_tlb proc public
 	push ds
+if ?32BIT
+	push edx
+else
 	push word ptr 0
 	push dx
+endif
 	call setdsreg2tlb
 	push ss:[dwSegTLB]
 	call copy_far32_2_flat
@@ -316,8 +367,12 @@ copy_far32_2_tlbxx endp
 
 copy_tlb_2_esdi proc public
 	push es
+if ?32BIT
+	push edi
+else
 	push word ptr 0
 	push di
+endif
 	push ss:[dwSegTLB]
 	call copy_flat_2_far32
 	ret
@@ -329,8 +384,12 @@ copy_tlb_2_esdi endp
 copy_tlb_2_dsdx proc public
 
 	push ds
+if ?32BIT
+	push edx
+else
 	push word ptr 0
 	push dx
+endif
 	push ss:[dwSegTLB]
 	call copy_flat_2_far32
 	ret
@@ -357,7 +416,9 @@ copy_tlbxx_2_esdi proc public
 	pop ds
 	movzx ecx,[esp].COPYXX2ESDI.wNum
 	movzx esi,[esp].COPYXX2ESDI.wOfs
+ife ?32BIT
 	movzx edi, di
+endif
 	rep movsb
 	popad
 	pop ds
@@ -425,8 +486,12 @@ copy_flat_2_far32 endp
 
 copyz_dsdx_2_tlb proc public
 	push ds
+if ?32BIT
+	push edx
+else
 	push word ptr 0
 	push dx
+endif
 	xor dx,dx				;dx=offset 0 (start tlb)
 	push edx				;offset 0 in tlb
 	call copyz_far32_2_tlbxx
@@ -440,8 +505,12 @@ copyz_dsdx_2_tlb endp ;fall through
 
 copyz_dssi_2_tlb proc public
 	push ds
+if ?32BIT
+	push esi
+else
 	push word ptr 0
 	push si
+endif
 	xor si,si
 	push esi				;offset 0 in tlb
 	call copyz_far32_2_tlbxx
@@ -522,7 +591,7 @@ sel2segm endp
 ;--- translate v86-ds into selector
 
 ds_segm2sel proc public
-	push dword ptr ss:[v86iret.rDS]
+	push ss:v86iret.rDSd
 	call segm2sel
 	pop ds
 	ret
@@ -532,7 +601,7 @@ ds_segm2sel endp
 ;--- translate v86-es into selector
 
 es_segm2sel proc public
-	push dword ptr ss:[v86iret.rES]
+	push ss:v86iret.rESd
 	call segm2sel
 	pop es
 	ret
@@ -577,8 +646,13 @@ getlinaddr proc public uses ds ebx
 	jz error
 	mov ds,ss:[selLDT]
 	and bl,0F8h
-	cmp byte ptr [ebx].DESCRPTR.attrib,0	;selector allocated?
-	jz error
+
+;--- v3.19: check descriptor more carefully
+;	cmp byte ptr [ebx].DESCRPTR.attrib,0	;selector allocated?
+;	jz error
+	cmp [ebx].DESCRPTR.attrib,80h or 10h or ?PLVL	;present, memory segment AND ring3?
+	jb error
+
 	mov ah,[ebx].DESCRPTR.A2431
 	mov al,[ebx].DESCRPTR.A1623
 	shl eax,16
@@ -629,59 +703,9 @@ copyscratchsel endp
 
 endif
 
-_LTRACE_ = 0
-
-
-;--- alloc a DATA descriptor for real-mode memory
-;--- BX=segment 
-
-getmyseldata proc public
-	mov dx,0000
-getmyseldata endp	;fall through
-
-;--- BX=segment, type in DX (code/data big/normal)
-
-getmyselx proc public
-	mov cx,0FFFFh
-getmyselx endp		;fall through
-
-;--- get a LDT descriptor for a real-mode segment
-;--- in: BX=segment address, CX=limit, DX=Attr
-;--- out: selector in ebx
-;--- eax modified
-
-getrmdesc proc near
-	push ds
-	push ecx
-	mov cx,0001h
-	xor eax,eax				 ;alloc selector
-	@int_31
-	pop ecx
-	jc getrmdesc_err
-	push eax
-	and al,0F8h
-	movzx eax,ax
-	mov ds,ss:[selLDT]
-	movzx ebx, bx
-	shl ebx,4
-	mov [eax].DESCRPTR.A0015,bx
-	shr ebx,16
-	mov [eax].DESCRPTR.A1623,bl
-	mov [eax].DESCRPTR.limit,cx
-	or word ptr [eax.DESCRPTR.attrib],dx  ;Code/Data
-	pop ebx
-	pop ds
-	ret
-getrmdesc_err:
-	@strout <"no more LDT selectors",lf>
-	pop		ds
-	ret
-	align 4
-getrmdesc endp
-
 ;*** In: BX=PSP segment / Out: BX=PSP selector
 
-_LTRACE_ = 0
+	@ResetTrace
 
 getpspsel proc public
 	push eax
@@ -689,16 +713,14 @@ getpspsel proc public
 	call allocxsel
 	mov bx,ax		;dont touch highword EBX (just in case)
 	pop eax
-	jc getpspsel_er
-	@strout <"getpsp: selector %X marked as psp",lf>,bx
+	jc getpspsel_err
+	@dprintf "getpspsel: selector %X marked as psp",bx
+getpspsel_err:
 	ret
-getpspsel_er:
-	mov ax,_EAERR6_
-	jmp _exitclientEx
 	align 4
 getpspsel endp
 
-_LTRACE_ = 0
+	@ResetTrace
 
 ;*** In: BX=PSP segment, DX=Selector
 ;--- used by int 21h, ah=55h
@@ -747,7 +769,7 @@ next:
 	cmp ax,?DYNTLBSIZE/16 + 1
 	jb next
 	jz suitsexact
-	@strout <"found an mcb at %lX, size %X",lf>, edi, ax
+	@dprintf "AllocDosMemory: found an mcb at %lX, size %X", edi, ax
 	mov byte ptr [edi],'M'
 	mov word ptr [edi+3],?DYNTLBSIZE/16
 	mov byte ptr [edi+?DYNTLBSIZE+10h],cl
@@ -757,7 +779,7 @@ next:
 suitsexact:
 if ?SAVEPSP
 	mov ecx, ss:[dwSDA]
-	mov ax, [ecx+10h]	;get current PSP
+	mov ax, [ecx].DOSSDA.wPSP	;get current PSP
 else
 	mov ax,GROUP16
 	sub ax,10h
@@ -786,7 +808,7 @@ _FreeDosMemory proc public
 	movzx edi,si
 	shl edi,4
 	mov word ptr [edi-10h+1],0
-	@strout <"free dyn tlb at %X, size now %X",lf>,si,[edi-10h+3]
+	@dprintf "FreeDosMemory: free dyn tlb at %X, size now %X",si,word ptr [edi-10h+3]
 	pop ds
 	ret
 	align 4
@@ -808,32 +830,33 @@ selectortile2 proc
 	pop cx
 	mov ebx,eax
 	mov ax,0007
-	@int_31 				 ;set base
+	@int_31				;set base
 	jc error
 	and esi,esi
 	jz noerr
 	dec esi
-	test esi,0FFF00000h	 ;block size > 1MB
+	test esi,0FFF00000h	;block size > 1MB
 	jz @F
 	or si,0FFFh
 @@:
 	push esi
 	pop dx
 	pop cx
-	mov ax,0008h		 ;set limit (of 1. selector)
+	mov ax,0008h		;set limit (of 1. selector)
 	@int_31
 	jc error
+ife ?32BIT
 nextsel:
 	cmp esi,10000h
 	jb noerr
 	add ebx,8
 	add edi,10000h
 	sub esi,10000h
-	@strout <"selectortile: base=%lX, limit=%lX",lf>, edi, esi
+	@dprintf "selectortile2: base=%lX, limit=%lX", edi, esi
 	push edi
 	pop dx
 	pop cx
-	mov ax,0007h  			;set base
+	mov ax,0007h			;set base
 	@int_31
 if 0
 	lar ecx,ebx
@@ -850,6 +873,7 @@ endif
 	mov ax,0008h
 	@int_31
 	jmp nextsel
+endif
 noerr:
 	clc
 error:
@@ -867,15 +891,18 @@ STILEFRAME ends
 
 	@ResetTrace
 
-;--- selector_alloc proc near stdcall address:dword,size:dword
-;*** handle selectors for alloc dos memory block
+;--- desc_alloc proc near stdcall address:dword,size:dword
+;*** handle descriptors for alloc dos memory block
 ;--- out: start selector in AX
 
-selector_alloc proc public
+desc_alloc proc public
 
 	pushad
 	mov esi,[esp].STILEFRAME.dwSize
 	mov edi,[esp].STILEFRAME.dwAddr
+if ?32BIT
+	mov cx,1			;just 1 selector for 32-bit clients
+else
 	mov ebx,esi
 	mov ecx,ebx
 	shr ebx,16
@@ -883,6 +910,7 @@ selector_alloc proc public
 	inc ebx
 @@:
 	mov ecx,ebx
+endif
 	xor eax,eax			;alloc cx selector(s)
 	@int_31
 	jc error
@@ -893,25 +921,27 @@ exit:
 	popad
 	ret 8
 	align 4
-selector_alloc endp
+desc_alloc endp
 
+ife ?32BIT
 
-;--- check if there are enough free selectors for a block
+;--- check if there are enough free LDT descriptors for a block
 ;--- for 16-bit only
-;--- EDX=descriptor of block
+;--- EDX=start selector of block
 ;--- EBX=new size in bytes
 ;--- out: C on error
 
-selector_avail proc public
+desc_avail proc public
 	pushad
 	mov eax,ebx
 	xor ebp,ebp		;flag: test for sufficient free selectors
-	jmp selector_resize_1
+	jmp desc_resize_1
 	align 4
-selector_avail endp
+desc_avail endp
 
+endif
 
-;*** handle selectors for resize memory block
+;*** handle descriptors for resize memory block
 ;*** called by int 31h, ax=0102h and int 21h, ah=4Ah
 ;*** input: dx=selector
 ;***       eax=new size
@@ -922,19 +952,22 @@ selector_avail endp
 
 	@ResetTrace
 
-selector_resize proc public
+desc_resize proc public
 
-	@strout <"selector_resize: entry, sel=%X, new size=%lX",lf>,dx,eax
+	@dprintf "desc_resize: entry, sel=%X, new size=%lX",dx,eax
 	pushad
+ife ?32BIT
 	xor ebp,ebp
 	inc ebp				;alloc selectors
-selector_resize_1::
+endif
+desc_resize_1::
 	mov esi,eax			;esi holds new size
 	movzx edi,dx		;di holds base selector
+ife ?32BIT
 	mov ebx,edi
 	lsl eax,edx
 	inc eax
-	@strout <"selector_resize: old size=%lX, new size=%lX",lf>, eax, esi
+	@dprintf "desc_resize: old size=%lX, new size=%lX", eax, esi
 	add eax,10000h-1		;align old size to 64 kB
 	xor ax,ax
 	lea edx,[esi+10000h-1]	;align new size to 64 kB
@@ -946,13 +979,13 @@ selector_resize_1::
 	shr edx,16
 	shr eax,16-3
 	add ebx,eax
-	@strout <"selector_resize: need %X new selectors at %X",lf>,dx,bx
+	@dprintf "desc_resize: need %X new selectors at %X",dx,bx
 	push ds
 	mov ds,ss:[selLDT]
 	call allocselx			  ;alloc additional selectors
 	pop ds
 	jc error
-	@strout <"selector_resize: alloc of selectors was ok",lf>
+	@dprintf "desc_resize: alloc of selectors was ok"
 	jmp selectortilex_1
 smallerblock:
 	and ebp,ebp
@@ -962,13 +995,14 @@ smallerblock:
 	mov ecx,eax
 	shr edx,16-3
 	add ebx,edx
-	@strout <"selector_resize: try to free %X selectors at %X",lf>,cx,bx
+	@dprintf "desc_resize: try to free %X selectors at %X",cx,bx
 	call freeselx
 	jc error
-	@strout <"selector_resize: freeing of selectors was ok",lf>
+	@dprintf "desc_resize: freeing of selectors was ok"
 selectortilex_1:
 	and ebp,ebp
 	jz done
+endif
 	mov ebx,edi
 	mov ax,0006
 	@int_31
@@ -982,12 +1016,14 @@ done:
 @@:
 	popad
 	ret
+ife ?32BIT
 error:
-	@strout <"selector_resize: error, not enough free selectors",lf>
+	@dprintf "desc_resize: error, not enough free selectors"
 	popad
 	ret
+endif
 	align 4
-selector_resize endp
+desc_resize endp
 
 ;--- handle selectors for free memory block
 ;--- called by int 31h, ax=0101h and int 21h, ah=49h
@@ -996,8 +1032,12 @@ selector_resize endp
 
 	@ResetTrace
 
-selector_free proc public
+desc_free proc public
 	mov ebx, edx
+if ?32BIT
+	mov ax,1
+	@int_31            ;may clear DS/ES/FS/GS
+else
 	lsl eax,ebx
 	stc
 	jnz exit
@@ -1006,9 +1046,10 @@ selector_free proc public
 	mov ecx,eax
 	call freeselx
 exit:
+endif
 	ret
 	align 4
-selector_free endp
+desc_free endp
 
 _TEXT32 ends
 

@@ -8,11 +8,9 @@
 
      DPMILD16 is HX's loader for 16-bit NE binaries. It supports loading
      applications and dlls. Usually it is used to run HX DOS-extended
-     applications, but there is also built-in support for loading 16-bit
-     OS/2 binaries in DOS [for this task additional emulation dlls are 
-     required, the essential ones can be found in the HXDEV16 package].
+     applications.
      
-     DPMILD16 also exports some Win16 KERNEL functions which may simplify
+     DPMILD16 exports some Win16 KERNEL functions which may simplify
      using a "standard" 16-bit Windows development tool to create
      DOS protected-mode applications. GUI functions are not supported. A
      library called KERNEL16.LIB is supplied with HXDEV16, containing
@@ -330,8 +328,25 @@
      loading a dll, starting a task, loading a segment a.s.o are all
      reported through calls to Int 41h with AX set appropriately.
 
+ 8.  Internals
 
- 8.  History
+     Segments
+_TEXT	segment dword @use16 public 'CODE'
+_TEXT	ends
+CCONST	segment word @use16 public 'CODE'
+CCONST	ends
+_DATA	segment word @use16 public 'DATA'
+_DATA	ends
+_ITEXT	segment word @use16 public 'DATA'	;use 'DATA' (OPTLINK bug)
+_ITEXT	ends
+_BSS	segment word @use16 public 'BSS'
+_BSS	ends
+STACK	segment para @use16 stack  'STACK'
+STACK	ends
+
+ Main entry point is BootStrap in LDBOOT.ASM.
+
+ 9.  History
 
  Since DPMILD16 and DPMILD32 share the same code base and many changes
  affect DPMILD32 only, there exist versions of DPMILD16 without any
@@ -460,7 +475,7 @@
  þ bugfix: _AHINRC/_AHSHIFT weren't exported with DM linker
 
 
- 9.  Copyright
+ 10.  Copyright
 
   DPMILD16.EXE is part of HX DOS extender. This extender is freeware.
   View HXRT.TXT for licence details.

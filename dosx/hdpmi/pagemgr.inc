@@ -1,37 +1,42 @@
 
-@proto pm_createvm				;create a virtual machine
-@proto pm_exitserver_pm			;page mgr server exit protected-mode
-@proto pm_exitclient			;client termination cleanup
-@proto pm_CloneGroup32 			;copy GROUP32 to new address context
-@proto _CommitRegion			;commit region EAX, size ECX
-@proto _UncommitRegion 			;uncommit region EAX, size ECX
-@proto _CommitRegionZeroFill	;commit region EAX, size ECX and clear it
-@proto _Linear2PT				;get page table addr of linear addr
-@proto _getpageattributes		;get page flags for a region
-@proto _setpageattributes		;set page flags for a region
-@proto _MovePTEs				;move PTEs between address spaces
-@proto _AllocUserPages			;alloc memory in user address region
-@proto _AllocSysPages			;alloc memory in system region 1 (U)
-@proto _AllocSysPagesX			;alloc memory in system region 1 (S)
-@proto _AllocSysPagesRo			;alloc memory in system region 1 (R)
-@proto _AllocSysPages2			;alloc memory in system region 2
-@proto _FreeSysPages2			;free memory in system region 2
-@proto _GetNumPhysPages			;get free/total physical pages
-@proto _freephysmem				;free some mem in raw mode
-@proto _restorephysmem			;restore the mem in raw mode
-@proto _AllocUserSpace			;allocate user address space
-@proto _FreeUserSpace			;free user address space
-@proto _AllocSysAddrSpace		;allocate system address space
-@proto _getaddrspace			;get free/total user address space
-@proto _searchphysregion     	;search a mapped physical region
-@proto _mapphysregion  	    	;map physical address to user space
-@proto _ClonePage				;clone a page
-@proto _SetPage					;set PTE for a linear address
-@proto _setregionattributes		;set PTE bits for a region
+pm_createvm 		proto near		;create a virtual machine
+pm_exit_pm			proto near		;page mgr server exit protected-mode
+pm_exitclient		proto near		;client termination cleanup
+pm_CloneGroup32 	proto near		;copy GROUP32 to new address context
+pm_CommitRegion		proto near		;commit region EAX, size ECX
+pm_UncommitRegion 	proto near		;uncommit region EAX, size ECX
+pm_CommitRegionZeroFill proto near	;commit region EAX, size ECX and clear it
+pm_Linear2PT		proto near		;get page table addr of linear addr
+pm_getpageattributes proto near		;get page flags for a region
+pm_setpageattributes proto near		;set page flags for a region
+pm_MovePTEs			proto near		;move PTEs between address spaces
+pm_AllocSysPagesU	proto near		;alloc memory in sysreg 0 (user,r/w)
+pm_AllocSysPagesS	proto near		;alloc memory in sysreg 0 (system,r/w)
+pm_AllocSysPagesDn	proto near		;alloc memory in sysreg 0 down (system,r/w)
+pm_FreeSysPagesDn	proto near		;free memory in sysreg 0 down
+pm_GetNumPhysPages	proto near		;get free/total physical pages
+pm_AllocUserSpace	proto near		;allocate user address space
+pm_FreeUserSpace	proto near		;free user address space
+pm_AllocSysAddrSpace proto near		;allocate system address space
+pm_getfreeuserspace	proto near		;get addr+size of user space
+pm_searchphysregion	proto near		;search a mapped physical region
+pm_mapphysregion	proto near		;map physical address to user space
+pm_CopyPTEs			proto near
+ifdef ?PE
+pm_makeregionreadonly proto near	;make region readonly
+endif
 
-;@proto seti15pages, near16
-@proto pm_initserver_rm, near16 ;page mgr server init real-mode
-@proto pm_initserver2_rm, near16;page mgr cleanup after prot-mode init
-@proto pm_exitserver_rm, near16	;page mgr server exit real-mode
-@proto pm_int15rm, near16
+pm_init_rm			proto near16	;page mgr server init real-mode
+pm_init2_rm			proto near16	;page mgr cleanup after prot-mode init
+pm_exit_rm			proto near16	;page mgr server exit real-mode
+pm_int15rm			proto near16	;Int 15h, ah=88h and ax=e801h handler
+
+;--- obsolete
+;pm_setregionattributes proto near	;set PTE bits for a region
+;pm_freeI15mem		proto near		;free some mem for Int 15h in raw mode
+;pm_restoreI15mem	proto near		;restore the mem in raw mode
+;pm_AllocSysPagesRo	proto near		;alloc memory in sysreg 0 (user,r/o)
+;pm_AllocUserPages	proto near		;alloc memory in user address region
+;pm_SetPage 		proto near		;set PTE for a linear address
+;pm_seti15pages		proto near16
 

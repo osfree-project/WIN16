@@ -9,7 +9,7 @@ if _TRACEUSED_
 ;--- _modnameout
 ;--- _stroutESI
 
-_USESTROUT_ = 1	;1 1=use string output for trace messages
+_USESTROUT_ = 0	;1 1=use string output for trace messages
 
 _TRACE_ = 1
 
@@ -30,7 +30,7 @@ endif
 ;--- display string in ds:(e)bx
 
 _trace_s_bx proc public
-		pusha
+		@pusha
 		push	es
 		pushf
 if _USESTROUT_
@@ -58,7 +58,7 @@ endif
 done:
 		popf
 		pop 	es
-		popa
+		@popa
 		ret
 _trace_s_bx	endp
 
@@ -76,6 +76,7 @@ else
 		mov 	bp,sp
 		push	es
 		pushf
+		;int 3h
 		mov 	si,[bp+16]
 		add 	word ptr [bp+16],2
 endif
@@ -93,7 +94,7 @@ if _USESTROUT_
 		pop 	ds
 else
 nextchar:
-		cs:
+;		cs:
 		lodsb
 		and 	al,al
 		jz		done
@@ -126,11 +127,11 @@ endif
 _dwordout endp
 
 _wordout proc public
-		pusha
+		@pusha
 		mov 	bp,sp
 		pushf
 		push	ds
-		mov 	ds,cs:[wLdrDS]
+		@SetKernelDS
 if ?32BIT
 		mov 	ax,[esp+22]
 else
@@ -151,7 +152,7 @@ if ?32BIT
 endif
 		pop 	ds
 		popf
-		popa
+		@popa
 		ret 	2
 _wordout endp
 
