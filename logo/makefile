@@ -16,7 +16,7 @@ DEST        = os2$(SEP)mdos$(SEP)winos2
 
 !include $(%ROOT)tools/mk/appsdos.mk
 
-.SUFFIXES: .lgo .com
+.SUFFIXES: .lgo
 
 .lgo: $(PATH)
 
