@@ -1,12 +1,12 @@
 [submodule "tests"]
 	path = tests
 	url = https://github.com/osfree-project/win16test.git
-	update = rebase
+	update = merge
 [submodule "mouse"]
 	path = mouse
 	url = https://github.com/stsp/win31-mouse-driver
-	update = rebase
+	update = merge
 [submodule "dosx/hdpmi/contrib"]
 	path = dosx/hdpmi/contrib
 	url = https://github.com/Baron-von-Riedesel/HX
-	update = rebase
+	update = merge
