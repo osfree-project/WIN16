@@ -54,10 +54,23 @@ To send email to the maintainer of the Willows Twin Libraries.
   @todo This module uses its own global atom table. So, we need here something to replace.
 */
 
-#include <string.h>
+//#include <string.h>
 
-#include "windows.h"
-#include "windowsx.h"
+#include "win16.h"
+
+#define GlobalPtrHandle(lp) \
+  ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))
+
+#define     GlobalUnlockPtr(lp)      \
+                GlobalUnlock(GlobalPtrHandle(lp))
+
+#define GlobalFreePtr(lp) \
+  (GlobalUnlockPtr(lp),(BOOL)GlobalFree(GlobalPtrHandle(lp)))
+
+#define GlobalAllocPtr(flags, cb) \
+  (GlobalLock(GlobalAlloc((flags), (cb))))
+
+//#include "windowsx.h"
 #include "shellapi.h"
 //#include "Willows.h"
 
@@ -228,7 +241,8 @@ RegDeleteKey(HKEY hKey, LPCSTR lpszSubKey)
     }
 
     if (lpKeyStruct->lpszValue)
-	WinFree(lpKeyStruct->lpszValue);
+//	WinFree(lpKeyStruct->lpszValue);
+	GlobalFreePtr(lpKeyStruct->lpszValue);
 
     while (lpKeyStruct->hSubKey) 
 	RegDeleteKey(lpKeyStruct->hSubKey,"");
@@ -247,7 +261,8 @@ RegDeleteKey(HKEY hKey, LPCSTR lpszSubKey)
 
     DeleteAtomEx(&AtomTable,lpKeyStruct->atomKey);
 
-    WinFree((LPSTR)lpKeyStruct);
+//    WinFree((LPSTR)lpKeyStruct);
+	GlobalFreePtr((LPSTR)lpKeyStruct);
 
 //    APISTR((LF_APIRET,"RegDeleteKey: returns LONG %d\n",ERROR_SUCCESS));
     return ERROR_SUCCESS;
@@ -291,10 +306,12 @@ RegSetValue(HKEY hKey, LPCSTR lpszSubKey,
     }
 
     if (lpSubKeyStruct->lpszValue)
-	WinFree(lpSubKeyStruct->lpszValue);
+//	WinFree(lpSubKeyStruct->lpszValue);
+	GlobalFreePtr(lpSubKeyStruct->lpszValue);
 
     if (lpszValue && (*lpszValue != 0)) {
-	lpSubKeyStruct->lpszValue = (LPSTR) WinMalloc(lstrlen(lpszValue)+1);
+//	lpSubKeyStruct->lpszValue = (LPSTR) WinMalloc(lstrlen(lpszValue)+1);
+	lpSubKeyStruct->lpszValue = (LPSTR) GlobalAllocPtr(GPTR, lstrlen(lpszValue)+1);
 	lstrcpy(lpSubKeyStruct->lpszValue,lpszValue);
     }
     
@@ -468,7 +485,8 @@ ReadSetupReg()
     if ((hf = _lopen(buf,READ)) == HFILE_ERROR)
 	return;
     dwFileSize = _llseek(hf,0,2);
-    lpBuffer = (LPSTR) WinMalloc(dwFileSize+2);
+//    lpBuffer = (LPSTR) WinMalloc(dwFileSize+2);
+    lpBuffer = (LPSTR) GlobalAllocPtr(GPTR, dwFileSize+2);
     _llseek(hf,0,0);
     _lread(hf,lpBuffer,dwFileSize);
     _lclose(hf);
@@ -500,7 +518,8 @@ ReadSetupReg()
 	}
 	ptr = &lpBuffer[i+1];
     }
-    WinFree(lpBuffer);
+//    WinFree(lpBuffer);
+    GlobalFreePtr(lpBuffer);
 }
 
 static BOOL
@@ -587,8 +606,10 @@ InternalCreateKey(LPKEYSTRUCT lpKeyStruct, ATOM atomSubKey)
     LPKEYSTRUCT lpSubKey;
     LPKEYSTRUCT lpKeyTmp;
 
-    lpSubKey = (KEYSTRUCT *)WinMalloc(sizeof(KEYSTRUCT));
-    lmemset((LPSTR)lpSubKey,'\0',sizeof(KEYSTRUCT));
+//    lpSubKey = (KEYSTRUCT *)WinMalloc(sizeof(KEYSTRUCT));
+    lpSubKey = (KEYSTRUCT *)GlobalAllocPtr(GPTR, sizeof(KEYSTRUCT));
+// Not needed bacause zeroed by GlobalAllocPtr
+//    lmemset((LPSTR)lpSubKey,'\0',sizeof(KEYSTRUCT));
     if (!lpKeyStruct->hSubKey)
 	lpKeyStruct->hSubKey = (HKEY)lpSubKey;
     else {

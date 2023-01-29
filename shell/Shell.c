@@ -53,7 +53,7 @@ To send email to the maintainer of the Willows Twin Libraries.
 
 #include <string.h>
 
-#include "windows.h"
+#include "win16.h"
 #include "windowsx.h"
 /*
 #include "shellapi.h"
