@@ -52,7 +52,6 @@ To send email to the maintainer of the Willows Twin Libraries.
 
 /*
   @todo This module uses its own global atom table. So, we need here something to replace.
-  @todo Wine contains fix_win16_hkey( &hkey ); for most of functions
 */
 
 #include <string.h>
@@ -91,6 +90,14 @@ static LPKEYSTRUCT InternalCreateKey(LPKEYSTRUCT,ATOM);
 
 #define _MAX_PATH	255		// @todo not good solution, but so
 
+/* 0 and 1 are valid rootkeys in win16 shell.dll and are used by
+ * some programs. Do not remove those cases. -MM
+ */
+static inline void fix_win16_hkey( HKEY *hkey )
+{
+    if (*hkey == 0 || *hkey == (HKEY)1) *hkey = HKEY_CLASSES_ROOT;
+}
+
 /******************************************************************************
  *           RegOpenKey   [SHELL.1]
  */
@@ -100,6 +107,8 @@ RegOpenKey(HKEY hKey, LPCSTR lpszSubKey, PHKEY phkResult)
     KEYSTRUCT *lpKeyStruct;
     LPKEYSTRUCT lpSubKey;
     LONG rc;
+
+    fix_win16_hkey( &hKey );
 
     if (!fRegInitialized)
 	InitReg();
@@ -130,6 +139,8 @@ RegCreateKey(HKEY hKey, LPCSTR lpszSubKey, PHKEY phkResult)
 {
     LPKEYSTRUCT lpKeyStruct;
     LPKEYSTRUCT lpSubKey;
+
+    fix_win16_hkey( &hKey );
 
     if (!fRegInitialized)
 	InitReg();
@@ -167,6 +178,8 @@ RegCloseKey(HKEY hKey)
 
 //    APISTR((LF_APICALL,"RegCloseKey(HKEY=%x)\n",hKey));
 
+    fix_win16_hkey( &hKey );
+
     if (!fRegInitialized)
 	InitReg();
 
@@ -193,6 +206,8 @@ LONG WINAPI
 RegDeleteKey(HKEY hKey, LPCSTR lpszSubKey)
 {
     LPKEYSTRUCT lpKeyStruct,lpKeyParent,lpKeyTmp;
+
+    fix_win16_hkey( &hKey );
 
     if (!fRegInitialized)
 	InitReg();
@@ -247,6 +262,8 @@ RegSetValue(HKEY hKey, LPCSTR lpszSubKey,
 {
     KEYSTRUCT *lpKeyStruct;
     KEYSTRUCT *lpSubKeyStruct;
+
+    fix_win16_hkey( &hKey );
 
     if (!fRegInitialized)
 	InitReg();
@@ -304,6 +321,8 @@ RegQueryValue(HKEY hKey, LPCSTR lpszSubKey, LPSTR lpszValue, LPLONG lpcb)
 
     if (lpcb) *lpcb &= 0xffff;
 
+    fix_win16_hkey( &hKey );
+
     if (!fRegInitialized)
 	InitReg();
 
@@ -358,6 +377,8 @@ RegEnumKey(HKEY hKey, DWORD iSubKey, LPSTR lpszBuffer, DWORD cbBuffer)
     KEYSTRUCT *lpKeyStruct;
     char buf[128];
     int i;
+
+    fix_win16_hkey( &hKey );
 
     if (!fRegInitialized)
 	InitReg();
