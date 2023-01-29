@@ -590,16 +590,6 @@ InternalFindKey(LPKEYSTRUCT lpKeyStruct, LPCSTR lpszSubKey, WORD wFlag)
     return lpKeyStruct;
 }
 
-void far * lmemset (void far *start, int c, int len)
-{
-  char far *p = start;
-
-  while (len -- > 0)
-    *p ++ = c;
-
-  return start;
-}
-
 static LPKEYSTRUCT
 InternalCreateKey(LPKEYSTRUCT lpKeyStruct, ATOM atomSubKey)
 {
@@ -608,8 +598,7 @@ InternalCreateKey(LPKEYSTRUCT lpKeyStruct, ATOM atomSubKey)
 
 //    lpSubKey = (KEYSTRUCT *)WinMalloc(sizeof(KEYSTRUCT));
     lpSubKey = (KEYSTRUCT *)GlobalAllocPtr(GPTR, sizeof(KEYSTRUCT));
-// Not needed bacause zeroed by GlobalAllocPtr
-//    lmemset((LPSTR)lpSubKey,'\0',sizeof(KEYSTRUCT));
+
     if (!lpKeyStruct->hSubKey)
 	lpKeyStruct->hSubKey = (HKEY)lpSubKey;
     else {
