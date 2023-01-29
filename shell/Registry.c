@@ -28,16 +28,43 @@ To send email to the maintainer of the Willows Twin Libraries.
 
  */
 
+/*
+ * 				Shell Library Functions
+ *
+ * Copyright 1998 Marcus Meissner
+ * Copyright 2000 Juergen Schmied
+ * Copyright 2002 Eric Pouech
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+/*
+  @todo This module uses its own global atom table. So, we need here something to replace.
+  @todo Wine contains fix_win16_hkey( &hkey ); for most of functions
+*/
+
 #include <string.h>
 
 #include "windows.h"
 #include "windowsx.h"
 #include "shellapi.h"
-#include "Willows.h"
+//#include "Willows.h"
 
-#include "Log.h"
-#include "kerndef.h"
-#include "KrnAtoms.h"
+//#include "Log.h"
+//#include "kerndef.h"
+//#include "KrnAtoms.h"
 
 static ATOMTABLE AtomTable;
 
@@ -62,38 +89,11 @@ static LPKEYSTRUCT InternalCreateKey(LPKEYSTRUCT,ATOM);
 #define IFK_FIND	0
 #define IFK_CREATE	1
 
-LONG WINAPI
-RegCreateKey(HKEY hKey, LPCSTR lpszSubKey, PHKEY phkResult)
-{
-    LPKEYSTRUCT lpKeyStruct;
-    LPKEYSTRUCT lpSubKey;
+#define _MAX_PATH	255		// @todo not good solution, but so
 
-    if (!fRegInitialized)
-	InitReg();
-
-    APISTR((LF_APICALL,"RegCreateKey(HKEY=%x,LPCSTR=%s,PHKEY=%x)\n",
-		hKey,HIWORD(lpszSubKey)?lpszSubKey:"NULL",phkResult));
-
-    if (hKey == HKEY_CLASSES_ROOT) 
-	lpKeyStruct = &RootKey;
-    else  {
-	lpKeyStruct = (KEYSTRUCT *)hKey;
-	if (!lpKeyStruct || !lpKeyStruct->fOpen) {
-    	    APISTR((LF_APIRET,"RegCreateKey: returns LONG %d\n",ERROR_BADKEY));
-	    return ERROR_BADKEY;
-	}
-    }
-    lpSubKey = InternalFindKey(lpKeyStruct,lpszSubKey,IFK_CREATE);
-
-    if ((*phkResult = (HKEY)lpSubKey)) {
-        APISTR((LF_APIRET,"RegCreateKey: returns LONG %d\n",ERROR_SUCCESS));
-	return (LONG)ERROR_SUCCESS;
-    }
-
-    APISTR((LF_APIRET,"RegCreateKey: returns LONG %d\n",ERROR_BADKEY));
-    return ERROR_BADKEY;
-}
-
+/******************************************************************************
+ *           RegOpenKey   [SHELL.1]
+ */
 LONG WINAPI
 RegOpenKey(HKEY hKey, LPCSTR lpszSubKey, PHKEY phkResult)
 {
@@ -104,8 +104,8 @@ RegOpenKey(HKEY hKey, LPCSTR lpszSubKey, PHKEY phkResult)
     if (!fRegInitialized)
 	InitReg();
 
-    APISTR((LF_APICALL,"RegOpenKey(HKEY=%x,LPCSTR=%s,PHKEY=%x)\n",
-		hKey,HIWORD(lpszSubKey)?lpszSubKey:"NULL",phkResult));
+//    APISTR((LF_APICALL,"RegOpenKey(HKEY=%x,LPCSTR=%s,PHKEY=%x)\n",
+//		hKey,HIWORD(lpszSubKey)?lpszSubKey:"NULL",phkResult));
 
     if (hKey == HKEY_CLASSES_ROOT)
 	lpKeyStruct = &RootKey;
@@ -118,183 +118,54 @@ RegOpenKey(HKEY hKey, LPCSTR lpszSubKey, PHKEY phkResult)
 	rc = ERROR_SUCCESS;
     else
 	rc = ERROR_BADKEY;
-    APISTR((LF_APIRET,"RegOpenKey: returns LONG %d\n",rc));
+//    APISTR((LF_APIRET,"RegOpenKey: returns LONG %d\n",rc));
     return rc;
 }
 
+/******************************************************************************
+ *           RegCreateKey   [SHELL.2]
+ */
 LONG WINAPI
-RegOpenKeyEx
-(
-  HKEY  hKey,           /* handle of open key */
-  LPCTSTR  lpSubKey,    /* address of name of subkey to open */
-  DWORD  ulOptions,       /* reserved */
-  REGSAM  samDesired,   /* security access mask */
-  PHKEY  phkResult        /* address of handle of open key */
-)
+RegCreateKey(HKEY hKey, LPCSTR lpszSubKey, PHKEY phkResult)
 {
-  return( RegOpenKey( hKey,     lpSubKey,       phkResult ) );
-}
-
-
-LONG WINAPI
-RegEnumKey(HKEY hKey, DWORD iSubKey, LPSTR lpszBuffer, DWORD cbBuffer)
-{
-    KEYSTRUCT *lpKeyStruct;
-    char buf[128];
-    int i;
+    LPKEYSTRUCT lpKeyStruct;
+    LPKEYSTRUCT lpSubKey;
 
     if (!fRegInitialized)
 	InitReg();
 
-    APISTR((LF_APICALL,"RegEnumKey(HKEY=%x,DWORD=%x,LPSTR=%x,DWORD=%x)\n",
-	hKey,iSubKey,lpszBuffer,cbBuffer));
+//    APISTR((LF_APICALL,"RegCreateKey(HKEY=%x,LPCSTR=%s,PHKEY=%x)\n",
+//		hKey,HIWORD(lpszSubKey)?lpszSubKey:"NULL",phkResult));
 
-    if (hKey == HKEY_CLASSES_ROOT)
+    if (hKey == HKEY_CLASSES_ROOT) 
 	lpKeyStruct = &RootKey;
-    else
+    else  {
 	lpKeyStruct = (KEYSTRUCT *)hKey;
+	if (!lpKeyStruct || !lpKeyStruct->fOpen) {
+//    	    APISTR((LF_APIRET,"RegCreateKey: returns LONG %d\n",ERROR_BADKEY));
+	    return ERROR_BADKEY;
+	}
+    }
+    lpSubKey = InternalFindKey(lpKeyStruct,lpszSubKey,IFK_CREATE);
 
-    if (!lpKeyStruct) {
-    	APISTR((LF_APIRET,"RegEnumKey: returns LONG %d\n",ERROR_BADKEY));
-	return ERROR_BADKEY;
+    if ((*phkResult = (HKEY)lpSubKey)) {
+//        APISTR((LF_APIRET,"RegCreateKey: returns LONG %d\n",ERROR_SUCCESS));
+	return (LONG)ERROR_SUCCESS;
     }
 
-    for (i=0,lpKeyStruct = (KEYSTRUCT *)lpKeyStruct->hSubKey; 
-		i< iSubKey && lpKeyStruct;
-		i++,lpKeyStruct = (KEYSTRUCT *)lpKeyStruct->hNext);
-
-    if ((i != iSubKey) || (lpKeyStruct == NULL)) {
-    	APISTR((LF_APIRET,"RegEnumKey: returns LONG %d\n",ERROR_BADKEY));
-	return ERROR_BADKEY;
-    }
-
-    if (GetAtomNameEx(&AtomTable,lpKeyStruct->atomKey,buf,sizeof(buf)))
-	strncpy(lpszBuffer,buf,min(cbBuffer,strlen(buf)+1));
-    else
-	lpszBuffer[0] = '\0';
-
-    APISTR((LF_APIRET,"RegEnumKey: returns LONG %d\n",ERROR_SUCCESS));
-    return ERROR_SUCCESS;
+//    APISTR((LF_APIRET,"RegCreateKey: returns LONG %d\n",ERROR_BADKEY));
+    return ERROR_BADKEY;
 }
 
-LONG WINAPI
-RegQueryValue(HKEY hKey, LPCSTR lpszSubKey, LPSTR lpszValue, LONG *lpcb)
-{
-    KEYSTRUCT *lpKeyStruct;
-    KEYSTRUCT *lpSubKeyStruct;
-
-    if (!fRegInitialized)
-	InitReg();
-
-    APISTR((LF_APICALL,"RegQueryValue(HKEY=%x,LPCSTR=%s,LPSTR=%x,LONG *%x)\n",
-		hKey,(lpszSubKey)?lpszSubKey:"NULL",lpszValue,lpcb));
-
-    if (hKey == HKEY_CLASSES_ROOT)
-	lpKeyStruct = &RootKey;
-    else 
-	lpKeyStruct = (KEYSTRUCT *)hKey;
-
-    if (!lpKeyStruct) {
-    	APISTR((LF_APIRET,"RegQueryKey: returns LONG %d\n",ERROR_BADKEY));
-	return ERROR_BADKEY;
-    }
-
-#ifdef LATER
-    if (!(lpKeyStruct->fOpen)) {
-    	APISTR((LF_APIRET,"RegQueryKey: returns LONG %d\n",ERROR_BADKEY));
-	return ERROR_BADKEY;
-    }
-#endif
-
-
-    lpSubKeyStruct = InternalFindKey(lpKeyStruct,lpszSubKey,IFK_FIND);
-
-    if (!lpSubKeyStruct) {
-    	APISTR((LF_APIRET,"RegQueryKey: returns LONG %d\n",ERROR_BADKEY));
-	return ERROR_BADKEY;
-    }
-
-    if (lpSubKeyStruct->lpszValue && (*lpSubKeyStruct->lpszValue != 0)) {
-	strncpy(lpszValue,lpSubKeyStruct->lpszValue,min(*lpcb,
-		(int)strlen(lpSubKeyStruct->lpszValue)+1));
-	*lpcb = strlen(lpszValue) + 1;
-    }
-    else {
-	lpszValue[0] = '\0';
-	*lpcb = 0;
-    }
-    
-    APISTR((LF_APIRET,"RegQueryKey: returns LONG %d\n",ERROR_SUCCESS));
-    return ERROR_SUCCESS;
-}
-
-LONG
-WINAPI
-RegQueryValueEx
-(
-  HKEY hKey,
-  LPCSTR lpValueName,
-  LPDWORD lpReserved,
-  LPDWORD lpType,
-  LPBYTE lpData,
-  LPDWORD lpcbData
-)
-{
-  /* Success is 0, so return arbitrary error. */
-  return(1);
-}
-
-
-LONG WINAPI
-RegSetValue(HKEY hKey, LPCSTR lpszSubKey,
-		DWORD fdwType, LPCSTR lpszValue, DWORD cb)
-{
-    KEYSTRUCT *lpKeyStruct;
-    KEYSTRUCT *lpSubKeyStruct;
-
-    if (!fRegInitialized)
-	InitReg();
-
-    APISTR((LF_APICALL,
-	"RegSetValue(HKEY=%x,LPCSTR=%x,DWORD=%x,LPCSTR=%s,DWORD=%x)\n",
-		hKey,lpszSubKey,fdwType,
-		HIWORD(lpszValue)?lpszValue:"NULL",cb));
-
-    if (hKey == HKEY_CLASSES_ROOT)
-	lpKeyStruct = &RootKey;
-    else
-	lpKeyStruct = (KEYSTRUCT *)hKey;
-
-    if (!lpKeyStruct || !(lpKeyStruct->fOpen)) {
-        APISTR((LF_APIRET,"RegSetValue: returns LONG %d\n",ERROR_BADKEY));
-	return ERROR_BADKEY;
-    }
-
-    lpSubKeyStruct = InternalFindKey(lpKeyStruct,lpszSubKey,IFK_FIND);
-
-    if (!lpSubKeyStruct) {
-        APISTR((LF_APIRET,"RegQueryKey: returns LONG %d\n",ERROR_BADKEY));
-	return ERROR_BADKEY;
-    }
-
-    if (lpSubKeyStruct->lpszValue)
-	WinFree(lpSubKeyStruct->lpszValue);
-
-    if (lpszValue && (*lpszValue != 0)) {
-	lpSubKeyStruct->lpszValue = (LPSTR) WinMalloc(strlen(lpszValue)+1);
-	strcpy(lpSubKeyStruct->lpszValue,lpszValue);
-    }
-    
-    APISTR((LF_APIRET,"RegQueryKey: returns LONG %d\n",ERROR_SUCCESS));
-    return ERROR_SUCCESS;
-}
-
+/******************************************************************************
+ *           RegCloseKey   [SHELL.3]
+ */
 LONG WINAPI
 RegCloseKey(HKEY hKey)
 {
     KEYSTRUCT *lpKeyStruct;
 
-    APISTR((LF_APICALL,"RegCloseKey(HKEY=%x)\n",hKey));
+//    APISTR((LF_APICALL,"RegCloseKey(HKEY=%x)\n",hKey));
 
     if (!fRegInitialized)
 	InitReg();
@@ -305,16 +176,19 @@ RegCloseKey(HKEY hKey)
 	lpKeyStruct = (KEYSTRUCT *)hKey;
 
     if (!lpKeyStruct) {
-    	APISTR((LF_APIRET,"RegCreateKey: returns LONG %d\n",ERROR_BADKEY));
+//    	APISTR((LF_APIRET,"RegCreateKey: returns LONG %d\n",ERROR_BADKEY));
 	return ERROR_BADKEY;
     }
 
     lpKeyStruct->fOpen = 0;
 
-    APISTR((LF_APIRET,"RegCreateKey: returns LONG %d\n",ERROR_SUCCESS));
+//    APISTR((LF_APIRET,"RegCreateKey: returns LONG %d\n",ERROR_SUCCESS));
     return (LONG)ERROR_SUCCESS;
 }
 
+/******************************************************************************
+ *           RegDeleteKey   [SHELL.4]
+ */
 LONG WINAPI
 RegDeleteKey(HKEY hKey, LPCSTR lpszSubKey)
 {
@@ -323,18 +197,18 @@ RegDeleteKey(HKEY hKey, LPCSTR lpszSubKey)
     if (!fRegInitialized)
 	InitReg();
 
-    APISTR((LF_APICALL,"RegDeleteKey(HKEY=%x,LPCSTR=%x)\n",
-	hKey,lpszSubKey));
+//    APISTR((LF_APICALL,"RegDeleteKey(HKEY=%x,LPCSTR=%x)\n",
+//	hKey,lpszSubKey));
 
     lpKeyStruct = InternalFindKey((LPKEYSTRUCT)hKey,lpszSubKey,IFK_FIND);
 
     if (!lpKeyStruct || !lpKeyStruct->fOpen) {
-    	APISTR((LF_APIRET,"RegDeleteKey: returns LONG %d\n",ERROR_BADKEY));
+//    	APISTR((LF_APIRET,"RegDeleteKey: returns LONG %d\n",ERROR_BADKEY));
 	return ERROR_BADKEY;
     }
 
     if (lpKeyStruct == &RootKey) {
-    	APISTR((LF_APIRET,"RegDeleteKey: returns LONG %d\n",ERROR_BADKEY));
+//    	APISTR((LF_APIRET,"RegDeleteKey: returns LONG %d\n",ERROR_BADKEY));
 	return ERROR_ACCESS_DENIED;
     }
 
@@ -360,9 +234,198 @@ RegDeleteKey(HKEY hKey, LPCSTR lpszSubKey)
 
     WinFree((LPSTR)lpKeyStruct);
 
-    APISTR((LF_APIRET,"RegDeleteKey: returns LONG %d\n",ERROR_SUCCESS));
+//    APISTR((LF_APIRET,"RegDeleteKey: returns LONG %d\n",ERROR_SUCCESS));
     return ERROR_SUCCESS;
 }
+
+/******************************************************************************
+ *           RegSetValue   [SHELL.5]
+ */
+LONG WINAPI
+RegSetValue(HKEY hKey, LPCSTR lpszSubKey,
+		DWORD fdwType, LPCSTR lpszValue, DWORD cb)
+{
+    KEYSTRUCT *lpKeyStruct;
+    KEYSTRUCT *lpSubKeyStruct;
+
+    if (!fRegInitialized)
+	InitReg();
+
+//    APISTR((LF_APICALL,
+//	"RegSetValue(HKEY=%x,LPCSTR=%x,DWORD=%x,LPCSTR=%s,DWORD=%x)\n",
+//		hKey,lpszSubKey,fdwType,
+//		HIWORD(lpszValue)?lpszValue:"NULL",cb));
+
+    if (hKey == HKEY_CLASSES_ROOT)
+	lpKeyStruct = &RootKey;
+    else
+	lpKeyStruct = (KEYSTRUCT *)hKey;
+
+    if (!lpKeyStruct || !(lpKeyStruct->fOpen)) {
+//        APISTR((LF_APIRET,"RegSetValue: returns LONG %d\n",ERROR_BADKEY));
+	return ERROR_BADKEY;
+    }
+
+    lpSubKeyStruct = InternalFindKey(lpKeyStruct,lpszSubKey,IFK_FIND);
+
+    if (!lpSubKeyStruct) {
+//        APISTR((LF_APIRET,"RegQueryKey: returns LONG %d\n",ERROR_BADKEY));
+	return ERROR_BADKEY;
+    }
+
+    if (lpSubKeyStruct->lpszValue)
+	WinFree(lpSubKeyStruct->lpszValue);
+
+    if (lpszValue && (*lpszValue != 0)) {
+	lpSubKeyStruct->lpszValue = (LPSTR) WinMalloc(lstrlen(lpszValue)+1);
+	lstrcpy(lpSubKeyStruct->lpszValue,lpszValue);
+    }
+    
+//    APISTR((LF_APIRET,"RegQueryKey: returns LONG %d\n",ERROR_SUCCESS));
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
+ *           RegQueryValue   [SHELL.6]
+ *
+ * NOTES
+ *    Is this HACK still applicable?
+ *
+ * HACK
+ *    The 16bit RegQueryValue doesn't handle selectorblocks anyway, so we just
+ *    mask out the high 16 bit.  This (not so much incidentally) hopefully fixes
+ *    Aldus FH4)
+ */
+LONG WINAPI
+RegQueryValue(HKEY hKey, LPCSTR lpszSubKey, LPSTR lpszValue, LPLONG lpcb)
+{
+    KEYSTRUCT *lpKeyStruct;
+    KEYSTRUCT *lpSubKeyStruct;
+
+    if (lpcb) *lpcb &= 0xffff;
+
+    if (!fRegInitialized)
+	InitReg();
+
+//    APISTR((LF_APICALL,"RegQueryValue(HKEY=%x,LPCSTR=%s,LPSTR=%x,LONG *%x)\n",
+//		hKey,(lpszSubKey)?lpszSubKey:"NULL",lpszValue,lpcb));
+
+    if (hKey == HKEY_CLASSES_ROOT)
+	lpKeyStruct = &RootKey;
+    else 
+	lpKeyStruct = (KEYSTRUCT *)hKey;
+
+    if (!lpKeyStruct) {
+//    	APISTR((LF_APIRET,"RegQueryKey: returns LONG %d\n",ERROR_BADKEY));
+	return ERROR_BADKEY;
+    }
+
+#ifdef LATER
+    if (!(lpKeyStruct->fOpen)) {
+//    	APISTR((LF_APIRET,"RegQueryKey: returns LONG %d\n",ERROR_BADKEY));
+	return ERROR_BADKEY;
+    }
+#endif
+
+
+    lpSubKeyStruct = InternalFindKey(lpKeyStruct,lpszSubKey,IFK_FIND);
+
+    if (!lpSubKeyStruct) {
+//    	APISTR((LF_APIRET,"RegQueryKey: returns LONG %d\n",ERROR_BADKEY));
+	return ERROR_BADKEY;
+    }
+
+    if (lpSubKeyStruct->lpszValue && (*lpSubKeyStruct->lpszValue != 0)) {
+	lstrcpyn(lpszValue,lpSubKeyStruct->lpszValue,min(*lpcb,
+		(int)lstrlen(lpSubKeyStruct->lpszValue)+1));
+	*lpcb = lstrlen(lpszValue) + 1;
+    }
+    else {
+	lpszValue[0] = '\0';
+	*lpcb = 0;
+    }
+    
+//    APISTR((LF_APIRET,"RegQueryKey: returns LONG %d\n",ERROR_SUCCESS));
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
+ *           RegEnumKey   [SHELL.7]
+ */
+LONG WINAPI
+RegEnumKey(HKEY hKey, DWORD iSubKey, LPSTR lpszBuffer, DWORD cbBuffer)
+{
+    KEYSTRUCT *lpKeyStruct;
+    char buf[128];
+    int i;
+
+    if (!fRegInitialized)
+	InitReg();
+
+//    APISTR((LF_APICALL,"RegEnumKey(HKEY=%x,DWORD=%x,LPSTR=%x,DWORD=%x)\n",
+//	hKey,iSubKey,lpszBuffer,cbBuffer));
+
+    if (hKey == HKEY_CLASSES_ROOT)
+	lpKeyStruct = &RootKey;
+    else
+	lpKeyStruct = (KEYSTRUCT *)hKey;
+
+    if (!lpKeyStruct) {
+//    	APISTR((LF_APIRET,"RegEnumKey: returns LONG %d\n",ERROR_BADKEY));
+	return ERROR_BADKEY;
+    }
+
+    for (i=0,lpKeyStruct = (KEYSTRUCT *)lpKeyStruct->hSubKey; 
+		i< iSubKey && lpKeyStruct;
+		i++,lpKeyStruct = (KEYSTRUCT *)lpKeyStruct->hNext);
+
+    if ((i != iSubKey) || (lpKeyStruct == NULL)) {
+//    	APISTR((LF_APIRET,"RegEnumKey: returns LONG %d\n",ERROR_BADKEY));
+	return ERROR_BADKEY;
+    }
+
+    if (GetAtomNameEx(&AtomTable,lpKeyStruct->atomKey,buf,sizeof(buf)))
+	lstrcpyn(lpszBuffer,buf,min(cbBuffer,lstrlen(buf)+1));
+    else
+	lpszBuffer[0] = '\0';
+
+//    APISTR((LF_APIRET,"RegEnumKey: returns LONG %d\n",ERROR_SUCCESS));
+    return ERROR_SUCCESS;
+}
+
+#if 0
+LONG WINAPI
+RegOpenKeyEx
+(
+  HKEY  hKey,           /* handle of open key */
+  LPCTSTR  lpSubKey,    /* address of name of subkey to open */
+  DWORD  ulOptions,       /* reserved */
+  REGSAM  samDesired,   /* security access mask */
+  PHKEY  phkResult        /* address of handle of open key */
+)
+{
+  return( RegOpenKey( hKey,     lpSubKey,       phkResult ) );
+}
+
+LONG
+WINAPI
+RegQueryValueEx
+(
+  HKEY hKey,
+  LPCSTR lpValueName,
+  LPDWORD lpReserved,
+  LPDWORD lpType,
+  LPBYTE lpData,
+  LPDWORD lpcbData
+)
+{
+  /* Success is 0, so return arbitrary error. */
+  return(1);
+}
+
+#endif
+
+
 
 /******************************************************************************/
 
@@ -399,7 +462,7 @@ ReadSetupReg()
 	    lpBuffer[i+1] ='\0';
 	if (lpBuffer[i-1] == 0xd)	/* strip ^M */
 	    lpBuffer[i-1] = 0;
-	strncpy(lpTmp,ptr,17);
+	lstrcpyn(lpTmp,ptr,17);
 	lpTmp[17] = 0;
 	if (!lstrcmpi(lpTmp,"HKEY_CLASSES_ROOT")) { /* <key> <value> pair */
 	    lstrcpy(lpTmp,ptr);
@@ -411,7 +474,7 @@ ReadSetupReg()
 	    if (RegCreateKey((HKEY)lpKeyStruct,ptr,&hk) != ERROR_SUCCESS)
 		break;
 	    ptr += j+3;
-	    if (RegSetValue(hk,NULL,REG_SZ,ptr,strlen(ptr)) != ERROR_SUCCESS)
+	    if (RegSetValue(hk,NULL,REG_SZ,ptr,lstrlen(ptr)) != ERROR_SUCCESS)
 		break;
 	}
 	ptr = &lpBuffer[i+1];
@@ -432,6 +495,16 @@ InitReg()
     return TRUE;
 }
 
+char far *lstrchr(const char far *s, int c)
+{
+    const char ch = c;
+
+    for ( ; *s != ch; s++)
+        if (*s == '\0')
+            return 0;
+    return (char far *)s;
+}
+
 static LPKEYSTRUCT
 InternalFindKey(LPKEYSTRUCT lpKeyStruct, LPCSTR lpszSubKey, WORD wFlag)
 {
@@ -441,11 +514,11 @@ InternalFindKey(LPKEYSTRUCT lpKeyStruct, LPCSTR lpszSubKey, WORD wFlag)
     ATOM atomSubKey;
 
     if (lpszSubKey)
-	strcpy(buf,lpszSubKey);
-    if (lpszSubKey && (strlen(lpszSubKey) != 0)) {
+	lstrcpy(buf,lpszSubKey);
+    if (lpszSubKey && (lstrlen(lpszSubKey) != 0)) {
 	ptr = buf;
 	while (1) {
-	    lpTmp = strchr(ptr,'\\');
+	    lpTmp = lstrchr(ptr,'\\');
 	    if (lpTmp)
 		*lpTmp = '\0';
 	    atomSubKey = FindAtomEx(&AtomTable,ptr);
@@ -477,6 +550,16 @@ InternalFindKey(LPKEYSTRUCT lpKeyStruct, LPCSTR lpszSubKey, WORD wFlag)
     return lpKeyStruct;
 }
 
+void far * lmemset (void far *start, int c, int len)
+{
+  char far *p = start;
+
+  while (len -- > 0)
+    *p ++ = c;
+
+  return start;
+}
+
 static LPKEYSTRUCT
 InternalCreateKey(LPKEYSTRUCT lpKeyStruct, ATOM atomSubKey)
 {
@@ -484,7 +567,7 @@ InternalCreateKey(LPKEYSTRUCT lpKeyStruct, ATOM atomSubKey)
     LPKEYSTRUCT lpKeyTmp;
 
     lpSubKey = (KEYSTRUCT *)WinMalloc(sizeof(KEYSTRUCT));
-    memset((LPSTR)lpSubKey,'\0',sizeof(KEYSTRUCT));
+    lmemset((LPSTR)lpSubKey,'\0',sizeof(KEYSTRUCT));
     if (!lpKeyStruct->hSubKey)
 	lpKeyStruct->hSubKey = (HKEY)lpSubKey;
     else {
