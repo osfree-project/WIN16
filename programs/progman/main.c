@@ -20,11 +20,12 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define OEMRESOURCE
 
-#include "windows.h"
+#include "win16.h"
 #include "progman.h"
 
 GLOBALS Globals;
@@ -48,7 +49,9 @@ static VOID WineWarranty(HWND Wnd);
 int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 {
   MSG      msg;
-
+  char buffer[100];
+  wsprintf(buffer, "%d\n\r", show);
+  OutputDebugString(buffer);
   Globals.lpszIniFile         = "progman.ini";
   Globals.lpszIcoFile         = "progman.exe";
 
@@ -72,6 +75,14 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
   if (!Globals.hGroupIcon)   Globals.hGroupIcon = LoadIcon(Globals.hInstance, MAKEINTRESOURCE(GROUP_ICON_INDEX));
   if (!Globals.hDefaultIcon) Globals.hDefaultIcon = LoadIcon(0, MAKEINTRESOURCE(DEFAULTICON));
 
+/*
+  MessageBox(
+        NULL,
+        &buffer,
+        (LPCSTR)"Account Details",
+        MB_OK
+    );
+	*/
   /* Register classes */
   if (!prev)
     {
@@ -395,6 +406,11 @@ static VOID MAIN_CreateMainWindow(void)
                   WS_OVERLAPPEDWINDOW, left, top, width, height,
                   0, 0, Globals.hInstance, 0);
 
+/*        sprintf(&buffer, "Unable to register window class [%u]", GetLastError());
+        MessageBox(NULL, &buffer, "GFXBase::NewWindow", 
+                   MB_OK | MB_ICONERROR | MB_TASKMODAL);
+        return NULL;
+		*/
   ShowWindow (Globals.hMainWnd, show);
   UpdateWindow (Globals.hMainWnd);
 }

@@ -20,7 +20,7 @@
 
 
 #include <string.h>
-#include "windows.h"
+#include "win16.h"
 #include "progman.h"
 
 /***********************************************************************

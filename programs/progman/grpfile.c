@@ -19,9 +19,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "windows.h"
+#include "win16.h"
 #include "progman.h"
-#include "mmsystem.h"
+//#include "mmsystem.h"
 
 #include "grpfile.h"
 

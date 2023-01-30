@@ -26,7 +26,7 @@
 #define MAX_PATHNAME_LEN    1024
 #define MAX_LANGUAGE_NUMBER (PM_LAST_LANGUAGE - PM_FIRST_LANGUAGE)
 
-#include "windows.h"
+#include <win16.h>
 
 //int WINAPI GetOpenFileName(LPOPENFILENAME);
 

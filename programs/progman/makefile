@@ -10,10 +10,12 @@ DESC = Windows Program Manager
 srcfiles = $(p)dialog$(e) $(p)group$(e) $(p)grpfile$(e) $(p)main$(e) $(p)program$(e) $(p)string$(e)
 
 # defines additional options for C compiler
-ADD_COPT = -zW -sg -zw -bw -bg -d3 -db -hw -ml
+#ADD_COPT = -0 -sg -zw -bw -bg -d3 -db -hw -ml -od #-pl
+ADD_COPT = -sg
 #DEBUG    = watcom
 IMPORTS  = GETOPENFILENAME     COMMDLG.1, &
-           GETCURRENTDIRECTORY WINSMSG.20
+           GETCURRENTDIRECTORY KERNEL.411
+#           GETCURRENTDIRECTORY WINSMSG.20
 #RESOURCE = $(PATH)rsrc.res
 CLEAN_ADD = *.mbr
 
@@ -27,4 +29,4 @@ TARGETS = $(PATH)$(PROJ1).exe # subdirs
 
 $(PATH)$(PROJ1).exe: $(PATH)$(PROJ).exe $(MYDIR)rsrc.rc
  @$(SAY) RESCMP   $^. $(LOG)
- @wrc -q -bt=windows $]@ $[@ -fe=$@ -fo=$^@
+ @wrc -q -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -i=$(%WATCOM)$(SEP)h$(SEP)win

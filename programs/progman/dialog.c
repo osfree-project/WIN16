@@ -22,7 +22,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 
-#include "windows.h"
+#include "win16.h"
 #include "commdlg.h"
 #include "progman.h"
 #include <string.h>
@@ -603,9 +603,9 @@ static BOOL DIALOG_Browse(HWND hDlg, LPCSTR lpszzFilter,
 static VOID DIALOG_AddFilterItem(LPSTR *p, unsigned int ids, LPCSTR filter)
 {
   LoadString(Globals.hInstance, ids, *p, MAX_STRING_LEN);
-  *p += strlen(*p) + 1;
+  *p += lstrlen(*p) + 1;
   lstrcpy(*p, filter);
-  *p += strlen(*p) + 1;
+  *p += lstrlen(*p) + 1;
   **p = '\0';
 }
 
