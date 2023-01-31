@@ -14,3 +14,6 @@ It's possible to use an alternate `progman.ini' file by adding to
 progman.ini=/my/wine/path/progman.ini
 
 1) Information about checksum calculation can be found in https://books.google.ru/books?id=LIyy_CtozLcC&lpg=PP1&hl=ru&pg=PP2#v=onepage&q&f=false PCMag 12 Jan 1993
+
+https://jeffpar.github.io/kbarchive/kb/086/Q86334/
+https://www.moon-soft.com/program/format/windows/grp.htm

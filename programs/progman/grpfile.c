@@ -37,7 +37,9 @@
 #define PUT_SHORT(buffer, i, s)\
   (((buffer)[(i)] = (s) & 0xff, (buffer)[(i)+1] = ((s) >> 8) & 0xff))
 
-static BOOL   GRPFILE_ReadFileToBuffer(LPCSTR, LPSTR*, int*);
+static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HLOCAL *phBuffer,
+				     int *piSize);
+//static BOOL   GRPFILE_ReadFileToBuffer(LPCSTR, LPSTR*, int*);
 static HLOCAL GRPFILE_ScanGroup(LPCSTR, int, LPCSTR, BOOL);
 static HLOCAL GRPFILE_ScanProgram(LPCSTR, int, LPCSTR, int,
                                   LPCSTR, HLOCAL,LPCSTR);
@@ -70,10 +72,12 @@ HLOCAL GRPFILE_ReadGroupFile(LPCSTR lpszPath)
   char   szPath_gr[MAX_PATHNAME_LEN];
   BOOL   bFileNameModified = FALSE;
   OFSTRUCT dummy;
-  HLOCAL hGroup;
-  LPSTR  buffer;
+  HLOCAL hBuffer, hGroup;
+//  HLOCAL hGroup;
+//  LPSTR  buffer;
   int    size;
 
+#if 0
   /* if `.gr' file exists use that */
   GRPFILE_ModifyFileName(szPath_gr, lpszPath, MAX_PATHNAME_LEN, TRUE);
   if (OpenFile(szPath_gr, &dummy, OF_EXIST) != HFILE_ERROR)
@@ -81,21 +85,25 @@ HLOCAL GRPFILE_ReadGroupFile(LPCSTR lpszPath)
       lpszPath = szPath_gr;
       bFileNameModified = TRUE;
     }
-
+#endif
   /* Read the whole file into a buffer */
-  if (!GRPFILE_ReadFileToBuffer(lpszPath, &buffer, &size))
+  if (!GRPFILE_ReadFileToBuffer(lpszPath, &hBuffer, &size))
+//  if (!GRPFILE_ReadFileToBuffer(lpszPath, &buffer, &size))
     {
-      MAIN_MessageBoxIDS_s(IDS_GRPFILE_READ_ERROR_s, lpszPath, IDS_ERROR, MB_YESNO);
+      MAIN_MessageBoxIDS_s(IDS_FILE_READ_ERROR_s, lpszPath, IDS_ERROR, MB_YESNO);
       return(0);
     }
 
   /* Interpret buffer */
-  hGroup = GRPFILE_ScanGroup(buffer, size,
-                             lpszPath, bFileNameModified);
+  hGroup = GRPFILE_ScanGroup(LocalLock(hBuffer), size,
+			     lpszPath, bFileNameModified);
+// hGroup = GRPFILE_ScanGroup(buffer, size,
+//                             lpszPath, bFileNameModified);
   if (!hGroup)
     MAIN_MessageBoxIDS_s(IDS_GRPFILE_READ_ERROR_s, lpszPath, IDS_ERROR, MB_YESNO);
 
-  _ffree(buffer);
+//  _ffree(buffer);
+  LocalFree(hBuffer);
 
   return(hGroup);
 }
@@ -105,10 +113,13 @@ HLOCAL GRPFILE_ReadGroupFile(LPCSTR lpszPath)
  *           GRPFILE_ReadFileToBuffer
  */
 
-static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, LPSTR *buffer,
-                                     int *piSize)
+static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HLOCAL *phBuffer,
+				     int *piSize)
+//static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, LPSTR *buffer,
+//                                     int *piSize)
 {
-  UINT    len, size;
+  UINT   len, size;
+  LPSTR  buffer;
   HLOCAL hBuffer, hNewBuffer;
   HFILE  file;
 
@@ -117,32 +128,51 @@ static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, LPSTR *buffer,
 
 
   size = 0;
-  *buffer = _fmalloc(size + MALLOCHUNK + 1);
+//  *buffer = _fmalloc(size + MALLOCHUNK + 1);
+  hBuffer = LocalAlloc(LMEM_FIXED, MALLOCHUNK + 1);
   if (!hBuffer) return FALSE;
-
-  while ((len = _lread(file, (*buffer) + size, MALLOCHUNK))
+  buffer = LocalLock(hBuffer);
+  
+  while ((len = _lread(file, buffer + size, MALLOCHUNK))
+//  while ((len = _lread(file, (*buffer) + size, MALLOCHUNK))
          == MALLOCHUNK)
     {
       size += len;
-      *buffer = _frealloc(*buffer, size + MALLOCHUNK + 1);
-      if (!(*buffer))
-        {
-          _ffree(*buffer);
-          return FALSE;
-        }
-    }
+//      *buffer = _frealloc(*buffer, size + MALLOCHUNK + 1);
+//      if (!(*buffer))
+//        {
+//          _ffree(*buffer);
+//          return FALSE;
+//        }
+      hNewBuffer = LocalReAlloc(hBuffer, size + MALLOCHUNK + 1,
+				LMEM_MOVEABLE);
+      if (!hNewBuffer)
+	{
+	  LocalFree(hBuffer);
+	  return FALSE;
+	}
+      hBuffer = hNewBuffer;
+      buffer = LocalLock(hBuffer);
+  }
 
   _lclose(file);
 
+//  if (len == (UINT)HFILE_ERROR)
+//    {
+//      _ffree(*buffer);
+//      return FALSE;
+//    }
   if (len == (UINT)HFILE_ERROR)
     {
-      _ffree(*buffer);
+      LocalFree(hBuffer);
       return FALSE;
     }
-
+	
   size += len;
-  (*buffer)[size] = 0;
+//  (*buffer)[size] = 0;
+  buffer[size] = 0;
 
+  *phBuffer = hBuffer;
   *piSize   = size;
   return TRUE;
 }
@@ -272,12 +302,12 @@ static HLOCAL GRPFILE_ScanProgram(LPCSTR buffer, int size,
   nIconIndex      = GET_USHORT(program_ptr, 4);
 
   /* FIXME is this correct ?? */
-  icontype = GET_USHORT(program_ptr,  6);
+  icontype = GET_USHORT(program_ptr,  6);		// cbresource    specifies the count of bytes in the icon resource, which appears in the executable file for the application. 
   switch (icontype)
     {
     default:
       MAIN_MessageBoxIDS_s(IDS_UNKNOWN_FEATURE_s, lpszGrpFile,
-                           IDS_WARNING, MB_OK);
+                           IDS_WARNING, MB_YESNO);
     case 0x048c:
       iconXORsize     = GET_USHORT(program_ptr,  8);
       iconANDsize     = GET_USHORT(program_ptr, 10) / 8;
