@@ -49,9 +49,7 @@ static VOID WineWarranty(HWND Wnd);
 int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 {
   MSG      msg;
-  char buffer[100];
-  wsprintf(buffer, "%d\n\r", show);
-  OutputDebugString(buffer);
+
   Globals.lpszIniFile         = "progman.ini";
   Globals.lpszIcoFile         = "progman.exe";
 
@@ -75,14 +73,6 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
   if (!Globals.hGroupIcon)   Globals.hGroupIcon = LoadIcon(Globals.hInstance, MAKEINTRESOURCE(GROUP_ICON_INDEX));
   if (!Globals.hDefaultIcon) Globals.hDefaultIcon = LoadIcon(0, MAKEINTRESOURCE(DEFAULTICON));
 
-/*
-  MessageBox(
-        NULL,
-        &buffer,
-        (LPCSTR)"Account Details",
-        MB_OK
-    );
-	*/
   /* Register classes */
   if (!prev)
     {
