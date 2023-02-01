@@ -93,7 +93,7 @@ VOID GROUP_NewGroup(void)
         GROUP_AddGroup(szName, szFile, SW_SHOWNORMAL,
                        DEF_GROUP_WIN_XPOS, DEF_GROUP_WIN_YPOS,
                        DEF_GROUP_WIN_WIDTH, DEF_GROUP_WIN_HEIGHT, 0, 0,
-                       FALSE, FALSE, FALSE);
+                       FALSE);
       if (!hGroup) return;
       GRPFILE_WriteGroupFile(hGroup);
     }
@@ -111,7 +111,6 @@ VOID GROUP_NewGroup(void)
 HLOCAL GROUP_AddGroup(LPCSTR lpszName, LPCSTR lpszGrpFile, int nCmdShow,
                       int x, int y, int width, int height,
                       int iconx, int icony,
-                      BOOL bFileNameModified, BOOL bOverwriteFileOk,
                       /* FIXME shouldn't be necessary */
                       BOOL bSuppressShowWindow)
 {
@@ -153,8 +152,6 @@ HLOCAL GROUP_AddGroup(LPCSTR lpszName, LPCSTR lpszGrpFile, int nCmdShow,
   group->hNext     = 0;
   group->hName     = hName;
   group->hGrpFile  = hGrpFile;
-  group->bFileNameModified = bFileNameModified;
-  group->bOverwriteFileOk  = bOverwriteFileOk;
   group->seqnum    = seqnum;
   group->nCmdShow  = nCmdShow;
   group->x         = x;
@@ -174,17 +171,17 @@ HLOCAL GROUP_AddGroup(LPCSTR lpszName, LPCSTR lpszGrpFile, int nCmdShow,
   cs.cx      = width;
   cs.cy      = height;
   cs.style   = 0;
-  cs.lParam  = 0;
+  cs.lParam  = (LONG) hGroup;
 
   group->hWnd = (HWND)SendMessage(Globals.hMDIWnd, WM_MDICREATE, 0, (LPARAM)&cs);
 
-  SetWindowLong(group->hWnd, 0, (LONG) hGroup);
+  //SetWindowLong(group->hWnd, 0, (LONG) hGroup);
 
 #if 1
   if (!bSuppressShowWindow) /* FIXME shouldn't be necessary */
 #endif
     {
-      ShowWindow (group->hWnd, nCmdShow);
+      //ShowWindow (group->hWnd, group->nCmdShow);
       UpdateWindow (group->hWnd);
     }
 
@@ -206,8 +203,8 @@ VOID GROUP_ModifyGroup(HLOCAL hGroup)
 
   if (!DIALOG_GroupAttributes(szName, szFile, MAX_PATHNAME_LEN)) return;
 
-  if (strcmp(szFile, LocalLock(group->hGrpFile)))
-    group->bOverwriteFileOk = FALSE;
+  //if (strcmp(szFile, LocalLock(group->hGrpFile)))
+  //{};
 
   MAIN_ReplaceString(&group->hName,    szName);
   MAIN_ReplaceString(&group->hGrpFile, szFile);

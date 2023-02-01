@@ -21,12 +21,8 @@
 
 #include "win16.h"
 #include "progman.h"
-//#include "mmsystem.h"
 
 #include "grpfile.h"
-
-#include <malloc.h>
-#include <string.h>
 
 #define MALLOCHUNK 1000
 
@@ -39,28 +35,11 @@
 
 static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HLOCAL *phBuffer,
 				     int *piSize);
-//static BOOL   GRPFILE_ReadFileToBuffer(LPCSTR, LPSTR*, int*);
-static HLOCAL GRPFILE_ScanGroup(LPCSTR, int, LPCSTR, BOOL);
+static HLOCAL GRPFILE_ScanGroup(LPCSTR, int, LPCSTR/*, BOOL*/);
 static HLOCAL GRPFILE_ScanProgram(LPCSTR, int, LPCSTR, int,
                                   LPCSTR, HLOCAL,LPCSTR);
 static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group);
 
-/***********************************************************************
- *
- *           GRPFILE_ModifyFileName
- *
- *  Change extension `.grp' to `.gr'
- */
-
-static VOID GRPFILE_ModifyFileName(LPSTR lpszNewName, LPCSTR lpszOrigName,
-                                   int nSize, BOOL bModify)
-{
-  lstrcpyn(lpszNewName, lpszOrigName, nSize);
-  lpszNewName[nSize-1] = '\0';
-  if (!bModify) return;
-  if (!lstrcmpi(lpszNewName + lstrlen(lpszNewName) - 4, ".grp"))
-    lpszNewName[lstrlen(lpszNewName) - 1] = '\0';
-}
 
 /***********************************************************************
  *
@@ -70,25 +49,12 @@ static VOID GRPFILE_ModifyFileName(LPSTR lpszNewName, LPCSTR lpszOrigName,
 HLOCAL GRPFILE_ReadGroupFile(LPCSTR lpszPath)
 {
   char   szPath_gr[MAX_PATHNAME_LEN];
-  BOOL   bFileNameModified = FALSE;
   OFSTRUCT dummy;
   HLOCAL hBuffer, hGroup;
-//  HLOCAL hGroup;
-//  LPSTR  buffer;
   int    size;
 
-#if 0
-  /* if `.gr' file exists use that */
-  GRPFILE_ModifyFileName(szPath_gr, lpszPath, MAX_PATHNAME_LEN, TRUE);
-  if (OpenFile(szPath_gr, &dummy, OF_EXIST) != HFILE_ERROR)
-    {
-      lpszPath = szPath_gr;
-      bFileNameModified = TRUE;
-    }
-#endif
   /* Read the whole file into a buffer */
   if (!GRPFILE_ReadFileToBuffer(lpszPath, &hBuffer, &size))
-//  if (!GRPFILE_ReadFileToBuffer(lpszPath, &buffer, &size))
     {
       MAIN_MessageBoxIDS_s(IDS_FILE_READ_ERROR_s, lpszPath, IDS_ERROR, MB_YESNO);
       return(0);
@@ -96,13 +62,10 @@ HLOCAL GRPFILE_ReadGroupFile(LPCSTR lpszPath)
 
   /* Interpret buffer */
   hGroup = GRPFILE_ScanGroup(LocalLock(hBuffer), size,
-			     lpszPath, bFileNameModified);
-// hGroup = GRPFILE_ScanGroup(buffer, size,
-//                             lpszPath, bFileNameModified);
+			     lpszPath);
   if (!hGroup)
-    MAIN_MessageBoxIDS_s(IDS_GRPFILE_READ_ERROR_s, lpszPath, IDS_ERROR, MB_YESNO);
+    MAIN_MessageBoxIDS_s(IDS_GRPFILE_READ_ERROR_s, lpszPath, IDS_ERROR, MB_OK);
 
-//  _ffree(buffer);
   LocalFree(hBuffer);
 
   return(hGroup);
@@ -115,8 +78,6 @@ HLOCAL GRPFILE_ReadGroupFile(LPCSTR lpszPath)
 
 static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HLOCAL *phBuffer,
 				     int *piSize)
-//static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, LPSTR *buffer,
-//                                     int *piSize)
 {
   UINT   len, size;
   LPSTR  buffer;
@@ -128,22 +89,14 @@ static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HLOCAL *phBuffer,
 
 
   size = 0;
-//  *buffer = _fmalloc(size + MALLOCHUNK + 1);
   hBuffer = LocalAlloc(LMEM_FIXED, MALLOCHUNK + 1);
   if (!hBuffer) return FALSE;
   buffer = LocalLock(hBuffer);
   
   while ((len = _lread(file, buffer + size, MALLOCHUNK))
-//  while ((len = _lread(file, (*buffer) + size, MALLOCHUNK))
          == MALLOCHUNK)
     {
       size += len;
-//      *buffer = _frealloc(*buffer, size + MALLOCHUNK + 1);
-//      if (!(*buffer))
-//        {
-//          _ffree(*buffer);
-//          return FALSE;
-//        }
       hNewBuffer = LocalReAlloc(hBuffer, size + MALLOCHUNK + 1,
 				LMEM_MOVEABLE);
       if (!hNewBuffer)
@@ -157,11 +110,6 @@ static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HLOCAL *phBuffer,
 
   _lclose(file);
 
-//  if (len == (UINT)HFILE_ERROR)
-//    {
-//      _ffree(*buffer);
-//      return FALSE;
-//    }
   if (len == (UINT)HFILE_ERROR)
     {
       LocalFree(hBuffer);
@@ -169,7 +117,6 @@ static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HLOCAL *phBuffer,
     }
 	
   size += len;
-//  (*buffer)[size] = 0;
   buffer[size] = 0;
 
   *phBuffer = hBuffer;
@@ -182,8 +129,8 @@ static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HLOCAL *phBuffer,
  */
 
 static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, int size,
-                                LPCSTR lpszGrpFile,
-                                BOOL bModifiedFileName)
+                                LPCSTR lpszGrpFile
+                                /*, BOOL bModifiedFileName */)
 {
   HLOCAL  hGroup;
   int     i, seqnum;
@@ -191,18 +138,12 @@ static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, int size,
   LPCSTR  lpszName;
   int     x, y, width, height, iconx, icony, nCmdShow;
   int     number_of_programs;
-  BOOL    bOverwriteFileOk;
   struct tagGROUPHEADER * header;
 
   header=(struct tagGROUPHEADER *)buffer;
 
   if (buffer[0] != 'P' || buffer[1] != 'M') return(0);
-  if (buffer[2] == 'C' && buffer[3] == 'C')
-    /* original with checksum */
-    bOverwriteFileOk = FALSE;
-  else if (buffer[2] == 'X' && buffer[3] == 'X')
-    /* modified without checksum */
-    bOverwriteFileOk = TRUE;
+  if (buffer[2] == 'C' && buffer[3] == 'C') {}
   else return(0);
 
   /* checksum = GET_USHORT(buffer, 4)   (ignored) */
@@ -212,7 +153,6 @@ static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, int size,
   if (extension == buffer + size) extension = 0;
   else if (extension + 6 > buffer + size) return(0);
 
-/*
   nCmdShow = header->nCmdShow; //GET_USHORT(buffer,  8);
   x        = header->rcNormal.left;//GET_SHORT(buffer,  10);
   y        = header->rcNormal.top;//GET_SHORT(buffer,  12);
@@ -221,16 +161,7 @@ static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, int size,
   iconx    = header->ptMin.x;//GET_SHORT(buffer,  18);
   icony    = header->ptMin.y;//GET_SHORT(buffer,  20);
   lpszName = buffer + header->pName;//GET_USHORT(buffer, 22);
- */
 
-  nCmdShow = GET_USHORT(buffer,  8);
-  x        = GET_SHORT(buffer,  10);
-  y        = GET_SHORT(buffer,  12);
-  width    = GET_USHORT(buffer, 14);
-  height   = GET_USHORT(buffer, 16);
-  iconx    = GET_SHORT(buffer,  18);
-  icony    = GET_SHORT(buffer,  20);
-  lpszName = buffer + GET_USHORT(buffer, 22);
   if (lpszName >= buffer + size) return(0);
 
   /* unknown bytes 24 - 31 ignored */
@@ -245,7 +176,6 @@ static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, int size,
 
   hGroup = GROUP_AddGroup(lpszName, lpszGrpFile, nCmdShow, x, y,
                           width, height, iconx, icony,
-                          bModifiedFileName, bOverwriteFileOk,
                           TRUE);
   if (!hGroup) return(0);
 
@@ -409,52 +339,13 @@ static HLOCAL GRPFILE_ScanProgram(LPCSTR buffer, int size,
 
 BOOL GRPFILE_WriteGroupFile(HLOCAL hGroup)
 {
-  char szPath[MAX_PATHNAME_LEN];
   PROGGROUP *group = (PROGGROUP *)LocalLock(hGroup);
   OFSTRUCT dummy;
   HFILE file;
   BOOL ret;
 
-  GRPFILE_ModifyFileName(szPath, LocalLock(group->hGrpFile),
-                         MAX_PATHNAME_LEN,
-                         group->bFileNameModified);
-
-  /* Try not to overwrite original files */
-
-  /* group->bOverwriteFileOk == TRUE only if a file has the modified format */
-  if (!group->bOverwriteFileOk &&
-      OpenFile(szPath, &dummy, OF_EXIST) != HFILE_ERROR)
-    {
-      /* Original file exists, try `.gr' extension */
-      GRPFILE_ModifyFileName(szPath, LocalLock(group->hGrpFile),
-                             MAX_PATHNAME_LEN, TRUE);
-      if (OpenFile(szPath, &dummy, OF_EXIST) != HFILE_ERROR)
-        {
-          /* File exists. Do not overwrite */
-          MAIN_MessageBoxIDS_s(IDS_FILE_NOT_OVERWRITTEN_s, szPath,
-                               IDS_INFO, MB_OK);
-          return FALSE;
-        }
-      /* Inform about the modified file name */
-      if (IDCANCEL ==
-          MAIN_MessageBoxIDS_s(IDS_SAVE_GROUP_AS_s, szPath, IDS_INFO,
-                               MB_OKCANCEL | MB_ICONINFORMATION))
-        return FALSE;
-    }
-
-  {
-    /* Warn about the (possible) incompatibility */
-    char msg[MAX_PATHNAME_LEN + 200];
-    wsprintf(msg,
-             "Group files written by this DRAFT Program Manager "
-             "possibly cannot be read by the Microsoft Program Manager!!\n"
-             "Are you sure to write %s?", szPath);
-    if (IDOK != MessageBox(Globals.hMainWnd, msg, "WARNING",
-                           MB_OKCANCEL | MB_DEFBUTTON2)) return FALSE;
-  }
-
   /* Open file */
-  file = _lcreat(szPath, 0);
+  file = _lcreat(LocalLock(group->hGrpFile), 0);
   if (file != HFILE_ERROR)
     {
       ret = GRPFILE_DoWriteGroupFile(file, group);
@@ -463,7 +354,7 @@ BOOL GRPFILE_WriteGroupFile(HLOCAL hGroup)
   else ret = FALSE;
 
   if (!ret)
-    MAIN_MessageBoxIDS_s(IDS_FILE_WRITE_ERROR_s, szPath, IDS_ERROR, MB_OK);
+    MAIN_MessageBoxIDS_s(IDS_FILE_WRITE_ERROR_s, LocalLock(group->hGrpFile), IDS_ERROR, MB_OK);
 
   return(ret);
 }
@@ -492,8 +383,6 @@ static VOID GRPFILE_CalculateSizes(PROGRAM *program,
 
 /***********************************************************************/
 unsigned int GRPFILE_checksum;
-BOOL GRPFILE_checksum_half_word;
-BYTE GRPFILE_checksum_last_byte;
 /***********************************************************************
  *
  *           GRPFILE_InitChecksum
@@ -502,7 +391,6 @@ BYTE GRPFILE_checksum_last_byte;
 static void GRPFILE_InitChecksum(void)
 {
         GRPFILE_checksum = 0;
-        GRPFILE_checksum_half_word = 0;
 }
 
 /***********************************************************************
@@ -513,46 +401,6 @@ static void GRPFILE_InitChecksum(void)
 static unsigned int GRPFILE_GetChecksum(void)
 {
         return GRPFILE_checksum;
-}
-
-/***********************************************************************
- *
- *           GRPFILE_WriteWithChecksum
- *
- * Looks crazier than it is:
- *
- * chksum = 0;
- * chksum = cksum - 1. word;
- * chksum = cksum - 2. word;
- * ...
- *
- * if (filelen is even)
- *      great I'm finished
- * else
- *      ignore last byte
- */
-
-static UINT GRPFILE_WriteWithChecksum(HFILE file, LPCSTR str, UINT size)
-{
-        UINT i;
-        if (GRPFILE_checksum_half_word) {
-                GRPFILE_checksum -= GRPFILE_checksum_last_byte;
-        }
-        for (i=0; i < size; i++) {
-                if (GRPFILE_checksum_half_word) {
-                        GRPFILE_checksum -= str[i] << 8;
-                } else {
-                        GRPFILE_checksum -= str[i];
-                }
-                GRPFILE_checksum_half_word ^= 1;
-        }
-
-        if (GRPFILE_checksum_half_word) {
-                GRPFILE_checksum_last_byte = str[size-1];
-                GRPFILE_checksum += GRPFILE_checksum_last_byte;
-        }
-
-        return _lwrite(file, str, size);
 }
 
 
@@ -625,7 +473,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
   PUT_SHORT(buffer, 30, 0x0000); /* unknown */
   PUT_SHORT(buffer, 32, NumProg);
 
-  if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 34)) return FALSE;
+  if ((UINT)HFILE_ERROR == _lwrite(file, buffer, 34)) return FALSE;
 
   /* Program table */
   CurrProg = Progs;
@@ -636,7 +484,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
       PROGRAM *program = (PROGRAM *)LocalLock(hProgram);
 
       PUT_SHORT(buffer, 0, CurrProg);
-      if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 2))
+      if ((UINT)HFILE_ERROR == _lwrite(file, buffer, 2))
               return FALSE;
 
       GRPFILE_CalculateSizes(program, &CurrProg, &CurrIcon);
@@ -644,7 +492,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
     }
 
   /* Title */
-  if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, lpszTitle,
+  if ((UINT)HFILE_ERROR == _lwrite(file, lpszTitle,
                                                lstrlen(lpszTitle) + 1))
     return FALSE;
 
@@ -678,10 +526,10 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
       ptr += lstrlen(CmdLine) + 1;
       PUT_SHORT(buffer, 22, ptr);
 
-      if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 24) ||
-          (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, Name, lstrlen(Name) + 1) ||
-          (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, CmdLine, lstrlen(CmdLine) + 1) ||
-          (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, IconFile, lstrlen(IconFile) + 1))
+      if ((UINT)HFILE_ERROR == _lwrite(file, buffer, 24) ||
+          (UINT)HFILE_ERROR == _lwrite(file, Name, lstrlen(Name) + 1) ||
+          (UINT)HFILE_ERROR == _lwrite(file, CmdLine, lstrlen(CmdLine) + 1) ||
+          (UINT)HFILE_ERROR == _lwrite(file, IconFile, lstrlen(IconFile) + 1))
         return FALSE;
 
       GRPFILE_CalculateSizes(program, &CurrProg, &CurrIcon);
@@ -708,9 +556,9 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
       buffer[10] = iconinfo->bPlanes;
       buffer[11] = iconinfo->bBitsPerPixel;
 
-      if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 12) ||
-          (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, AndBits, sizeAnd) ||
-          (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, XorBits, sizeXor)) return FALSE;
+      if ((UINT)HFILE_ERROR == _lwrite(file, buffer, 12) ||
+          (UINT)HFILE_ERROR == _lwrite(file, AndBits, sizeAnd) ||
+          (UINT)HFILE_ERROR == _lwrite(file, XorBits, sizeXor)) return FALSE;
 
       hProgram = program->hNext;
     }
@@ -724,7 +572,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
       PUT_SHORT(buffer, 4, 0x000a);
       buffer[6] = 'P', buffer[7] = 'M';
       buffer[8] = 'C', buffer[9] = 'C';
-      if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 10))
+      if ((UINT)HFILE_ERROR == _lwrite(file, buffer, 10))
               return FALSE;
 
       seqnum = 0;
@@ -740,8 +588,8 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
               PUT_SHORT(buffer, 0, 0x8101);
               PUT_SHORT(buffer, 2, seqnum);
               PUT_SHORT(buffer, 4, 7 + lstrlen(lpszWorkDir));
-              if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 6) ||
-                  (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, lpszWorkDir, lstrlen(lpszWorkDir) + 1))
+              if ((UINT)HFILE_ERROR == _lwrite(file, buffer, 6) ||
+                  (UINT)HFILE_ERROR == _lwrite(file, lpszWorkDir, lstrlen(lpszWorkDir) + 1))
                 return FALSE;
             }
 
@@ -752,7 +600,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
               PUT_SHORT(buffer, 2, seqnum);
               PUT_SHORT(buffer, 4, 8);
               PUT_SHORT(buffer, 6, program->nHotKey);
-              if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 8)) return FALSE;
+              if ((UINT)HFILE_ERROR == _lwrite(file, buffer, 8)) return FALSE;
             }
 
           /* Show command */
@@ -762,7 +610,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
               PUT_SHORT(buffer, 2, seqnum);
               PUT_SHORT(buffer, 4, 8);
               PUT_SHORT(buffer, 6, program->nCmdShow);
-              if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 8)) return FALSE;
+              if ((UINT)HFILE_ERROR == _lwrite(file, buffer, 8)) return FALSE;
             }
 
           seqnum++;
@@ -773,7 +621,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
       PUT_SHORT(buffer, 0, 0xffff);
       PUT_SHORT(buffer, 2, 0xffff);
       PUT_SHORT(buffer, 4, 0x0000);
-      if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 6)) return FALSE;
+      if ((UINT)HFILE_ERROR == _lwrite(file, buffer, 6)) return FALSE;
     }
 
   checksum = GRPFILE_GetChecksum();

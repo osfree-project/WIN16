@@ -221,7 +221,8 @@ HLOCAL PROGRAM_AddProgram(HLOCAL hGroup, HICON hIcon, LPCSTR lpszName,
 
   SetWindowLong(program->hWnd, 0, (LONG) hProgram);
 
-  ShowWindow (program->hWnd, SW_SHOWMINIMIZED);
+  //ShowWindow (program->hWnd, SW_SHOWMINIMIZED);
+  ShowWindow (program->hWnd, program->nCmdShow);
   SetWindowPos (program->hWnd, 0, x, y, 0, 0, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE);
   UpdateWindow (program->hWnd);
 

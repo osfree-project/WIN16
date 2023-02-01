@@ -25,7 +25,7 @@
 #include "win16.h"
 #include "commdlg.h"
 #include "progman.h"
-#include <string.h>
+//#include <string.h>
 static BOOL    DIALOG_BrowsePrograms(HWND, LPSTR, int);
 static BOOL    DIALOG_BrowseSymbols(HWND, LPSTR, int);
 static int CALLBACK DIALOG_NEW_DlgProc(HWND, unsigned int, WPARAM, LPARAM);

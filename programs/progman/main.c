@@ -20,8 +20,8 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+//#include <stdlib.h>
+//#include <string.h>
 
 #define OEMRESOURCE
 
@@ -44,6 +44,8 @@ static VOID WineWarranty(HWND Wnd);
 /***********************************************************************
  *
  *           WinMain
+ *
+ * https://www.betaarchive.com/wiki/index.php?title=Microsoft_KB_Archive/85891 Information about PROGMAN.INI
  */
 
 int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
@@ -64,6 +66,17 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     GetPrivateProfileInt("Settings", "MinOnRun", 0, Globals.lpszIniFile);
   Globals.bSaveSettings =
     GetPrivateProfileInt("Settings", "SaveSettings", 1, Globals.lpszIniFile);
+  Globals.bNoRun =
+    GetPrivateProfileInt("Restrictions", "NoRun", FALSE, Globals.lpszIniFile);
+  Globals.bNoClose =
+    GetPrivateProfileInt("Restrictions", "NoClose", FALSE, Globals.lpszIniFile);
+  Globals.bNoSaveSettings =
+    GetPrivateProfileInt("Restrictions", "NoSaveSettings", FALSE, Globals.lpszIniFile);
+  if (Globals.bNoSaveSettings) Globals.bSaveSettings=FALSE;
+  Globals.bNoFileMenu =
+    GetPrivateProfileInt("Restrictions", "NoFileMenu", FALSE, Globals.lpszIniFile);
+  Globals.nEditlevel =
+    GetPrivateProfileInt("Restrictions", "Editlevel", 0, Globals.lpszIniFile);
 
   /* Load default icons */
   Globals.hMainIcon    = ExtractIcon(Globals.hInstance, Globals.lpszIcoFile, PROGMAN_ICON_INDEX);
@@ -109,6 +122,9 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 /***********************************************************************
  *
  *           MAIN_CreateGroups
+ *
+ * https://jeffpar.github.io/kbarchive/kb/084/Q84925/ Information about Order and Group keys
+ *
  */
 
 static VOID MAIN_CreateGroups(void)
@@ -473,7 +489,7 @@ int MAIN_MessageBoxIDS_s(UINT ids_text, LPCSTR str, UINT ids_title, WORD type)
 
 VOID MAIN_ReplaceString(HLOCAL *handle, LPSTR replace)
 {
-  HLOCAL newhandle = LocalAlloc(LMEM_FIXED, _fstrlen(replace) + 1);
+  HLOCAL newhandle = LocalAlloc(LMEM_FIXED, lstrlen(replace) + 1);
   if (newhandle)
     {
       LPSTR  newstring = LocalLock(newhandle);

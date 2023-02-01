@@ -36,6 +36,7 @@ HICON WINAPI ExtractIcon(HINSTANCE hInst, LPCSTR lpszExeFileName, UINT nIconInde
 #define IDI_WINLOGO        MAKEINTRESOURCE(32517)
 #define OIC_WINLOGO         32517
 #define MAX_PATH        255
+
 typedef struct tagCURSORICONINFO
 {
     POINT ptHotSpot;
@@ -45,6 +46,7 @@ typedef struct tagCURSORICONINFO
     BYTE    bPlanes;
     BYTE    bBitsPerPixel;
 } CURSORICONINFO;
+
 #define WM_PAINTICON            0x0026
 int WINAPI ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText,
                 HICON hIcon);
@@ -105,8 +107,8 @@ typedef struct
   HWND     hWnd;
   HLOCAL   hGrpFile;
   HLOCAL   hActiveProgram;
-  BOOL     bFileNameModified;
-  BOOL     bOverwriteFileOk;
+  //BOOL     bFileNameModified;
+  //BOOL     bOverwriteFileOk;
   int      seqnum;
 
   /**/                         /* Absolute */
@@ -151,6 +153,11 @@ typedef struct
   BOOL    bAutoArrange;
   BOOL    bSaveSettings;
   BOOL    bMinOnRun;
+  BOOL    bNoRun;
+  BOOL    bNoClose;
+  BOOL    bNoSaveSettings;
+  BOOL    bNoFileMenu;
+  int     nEditlevel;
   HLOCAL  hGroups;
   HLOCAL  hActiveGroup;
 } GLOBALS;
@@ -168,7 +175,6 @@ ATOM   GROUP_RegisterGroupWinClass(void);
 HLOCAL GROUP_AddGroup(LPCSTR lpszName, LPCSTR lpszGrpFile, int showcmd,
                       int x, int y, int width, int heiht,
                       int iconx, int icony,
-                      BOOL bModifiedFileName, BOOL bOverwriteFileOk,
                       /* FIXME shouldn't be necessary */
                       BOOL bSuppressShowWindow);
 VOID   GROUP_NewGroup(void);
