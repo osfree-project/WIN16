@@ -175,7 +175,7 @@ HLOCAL GROUP_AddGroup(LPCSTR lpszName, LPCSTR lpszGrpFile, int nCmdShow,
 
   group->hWnd = (HWND)SendMessage(Globals.hMDIWnd, WM_MDICREATE, 0, (LPARAM)&cs);
 
-  //SetWindowLong(group->hWnd, 0, (LONG) hGroup);
+  SetWindowLong(group->hWnd, 0, (LONG) hGroup);
 
 #if 1
   if (!bSuppressShowWindow) /* FIXME shouldn't be necessary */
