@@ -282,54 +282,61 @@ static HLOCAL GRPFILE_ScanProgram(LPCSTR buffer, int size,
   // then get icons from resources and store them in GRP file. If FALSE then reuse icons from GRP file)
   // @todo here is a some problem on modern systems. Because screen resolution too high GRP file size
   // exceed 64Kb. As result, no memory info. May be solution is to use huge pointers?
-  
-  icontype = itemdata->cbResource; //GET_USHORT(program_ptr,  6);		// cbresource    specifies the count of bytes in the icon resource, which appears in the executable file for the application. 
-  switch (icontype)
-    {
-    default:
-      MAIN_MessageBoxIDS_s(IDS_UNKNOWN_FEATURE_s, lpszGrpFile,
-                           IDS_WARNING, MB_OK);
-    case 0x048c:
-	// @todo Seems totally incorrect here. Most probably depend on Plane. And not clear why XOR and AND swapped
-      iconXORsize     = itemdata->cbANDPlane; //GET_USHORT(program_ptr,  8);
-      iconANDsize     = itemdata->cbXORPlane; //GET_USHORT(program_ptr, 10) / 8; 
-      iconinfo_ptr    = buffer + itemdata->pHeader; //GET_USHORT(program_ptr, 12);
-      iconXORbits_ptr = buffer + itemdata->pANDPlane; //GET_USHORT(program_ptr, 14);
-      iconANDbits_ptr = buffer + itemdata->pXORPlane; //GET_USHORT(program_ptr, 16);
-      iconinfo.ptHotSpot.x   = GET_USHORT(iconinfo_ptr, 0);
-      iconinfo.ptHotSpot.y   = GET_USHORT(iconinfo_ptr, 2);
-      iconinfo.nWidth        = GET_USHORT(iconinfo_ptr, 4);
-      iconinfo.nHeight       = GET_USHORT(iconinfo_ptr, 6);
-      iconinfo.nWidthBytes   = GET_USHORT(iconinfo_ptr, 8);
-      iconinfo.bPlanes       = GET_USHORT(iconinfo_ptr, 10);
-      iconinfo.bBitsPerPixel = GET_USHORT(iconinfo_ptr, 11);
-      break;
-    case 0x000c:
-      iconANDsize     = itemdata->cbANDPlane; // GET_USHORT(program_ptr,  8);
-      iconXORsize     = itemdata->cbXORPlane; // GET_USHORT(program_ptr, 10);
-      iconinfo_ptr    = buffer + itemdata->pHeader; //GET_USHORT(program_ptr, 12);
-      iconANDbits_ptr = buffer + itemdata->pANDPlane; //GET_USHORT(program_ptr, 14);
-      iconXORbits_ptr = buffer + itemdata->pXORPlane; //GET_USHORT(program_ptr, 16);
-      iconinfo.ptHotSpot.x   = GET_USHORT(iconinfo_ptr, 0);
-      iconinfo.ptHotSpot.y   = GET_USHORT(iconinfo_ptr, 2);
-      iconinfo.nWidth        = GET_USHORT(iconinfo_ptr, 4);
-      iconinfo.nHeight       = GET_USHORT(iconinfo_ptr, 6);
-      iconinfo.nWidthBytes = GET_USHORT(iconinfo_ptr, 8) * 8;
-      iconinfo.bPlanes       = GET_USHORT(iconinfo_ptr, 10);
-      iconinfo.bBitsPerPixel = GET_USHORT(iconinfo_ptr, 11);
-    }
 
-  if (iconANDbits_ptr + iconANDsize > buffer + size ||
-      iconXORbits_ptr + iconXORsize > buffer + size) return(0);
+//--------Incorrect code starts here--------------------
+  if (!bRebuildIcons)
+  {
+		icontype = itemdata->cbResource; //GET_USHORT(program_ptr,  6);		// cbresource    specifies the count of bytes in the icon resource, which appears in the executable file for the application. 
+		switch (icontype)
+		{
+		default:
+			MAIN_MessageBoxIDS_s(IDS_UNKNOWN_FEATURE_s, lpszGrpFile,
+								IDS_WARNING, MB_OK);
+		case 0x048c:
+		// @todo Seems totally incorrect here. Most probably depend on Plane. And not clear why XOR and AND swapped
+			iconXORsize     = itemdata->cbANDPlane; //GET_USHORT(program_ptr,  8);
+			iconANDsize     = itemdata->cbXORPlane; //GET_USHORT(program_ptr, 10) / 8; 
+			iconinfo_ptr    = buffer + itemdata->pHeader; //GET_USHORT(program_ptr, 12);
+			iconXORbits_ptr = buffer + itemdata->pANDPlane; //GET_USHORT(program_ptr, 14);
+			iconANDbits_ptr = buffer + itemdata->pXORPlane; //GET_USHORT(program_ptr, 16);
+			iconinfo.ptHotSpot.x   = GET_USHORT(iconinfo_ptr, 0);
+			iconinfo.ptHotSpot.y   = GET_USHORT(iconinfo_ptr, 2);
+			iconinfo.nWidth        = GET_USHORT(iconinfo_ptr, 4);
+			iconinfo.nHeight       = GET_USHORT(iconinfo_ptr, 6);
+			iconinfo.nWidthBytes   = GET_USHORT(iconinfo_ptr, 8);
+			iconinfo.bPlanes       = GET_USHORT(iconinfo_ptr, 10);
+			iconinfo.bBitsPerPixel = GET_USHORT(iconinfo_ptr, 11);
+			break;
+		case 0x000c:
+			iconANDsize     = itemdata->cbANDPlane; // GET_USHORT(program_ptr,  8);
+			iconXORsize     = itemdata->cbXORPlane; // GET_USHORT(program_ptr, 10);
+			iconinfo_ptr    = buffer + itemdata->pHeader; //GET_USHORT(program_ptr, 12);
+			iconANDbits_ptr = buffer + itemdata->pANDPlane; //GET_USHORT(program_ptr, 14);
+			iconXORbits_ptr = buffer + itemdata->pXORPlane; //GET_USHORT(program_ptr, 16);
+			iconinfo.ptHotSpot.x   = GET_USHORT(iconinfo_ptr, 0);
+			iconinfo.ptHotSpot.y   = GET_USHORT(iconinfo_ptr, 2);
+			iconinfo.nWidth        = GET_USHORT(iconinfo_ptr, 4);
+			iconinfo.nHeight       = GET_USHORT(iconinfo_ptr, 6);
+			iconinfo.nWidthBytes = GET_USHORT(iconinfo_ptr, 8) * 8;
+			iconinfo.bPlanes       = GET_USHORT(iconinfo_ptr, 10);
+			iconinfo.bBitsPerPixel = GET_USHORT(iconinfo_ptr, 11);
+		}
+		
+		if (iconANDbits_ptr + iconANDsize > buffer + size ||
+			iconXORbits_ptr + iconXORsize > buffer + size) return(0);
+		
+		hIcon = CreateIcon( Globals.hInstance, iconinfo.nWidth, iconinfo.nHeight,
+							iconinfo.bPlanes, iconinfo.bBitsPerPixel,
+							iconANDbits_ptr, iconXORbits_ptr );
+  } else {
+	  MessageBox(Globals.hMainWnd, "Rebuild icons from resources not implemented yet!",
+                                       lpszGrpFile, MB_OK);
+  }
+//--------Incorrect code ends here--------------------
 
-
-  hIcon = CreateIcon( Globals.hInstance, iconinfo.nWidth, iconinfo.nHeight,
-                      iconinfo.bPlanes, iconinfo.bBitsPerPixel,
-                      iconANDbits_ptr, iconXORbits_ptr );
-
-  lpszName        = buffer + GET_USHORT(program_ptr, 18);
-  lpszCmdLine     = buffer + GET_USHORT(program_ptr, 20);
-  lpszIconFile    = buffer + GET_USHORT(program_ptr, 22);
+  lpszName        = buffer + itemdata->pName; //GET_USHORT(program_ptr, 18);
+  lpszCmdLine     = buffer + itemdata->pCommand; //GET_USHORT(program_ptr, 20);
+  lpszIconFile    = buffer + itemdata->pIconPath; //GET_USHORT(program_ptr, 22);
   if (iconinfo_ptr + 6 > buffer + size ||
       lpszName         > buffer + size ||
       lpszCmdLine      > buffer + size ||
