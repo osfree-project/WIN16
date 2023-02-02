@@ -51,6 +51,7 @@ static VOID WineWarranty(HWND Wnd);
 int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 {
   MSG      msg;
+  HDC      hdc;
 
   Globals.lpszIniFile         = "progman.ini";
   Globals.lpszIcoFile         = "progman.exe";
@@ -58,6 +59,14 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
   Globals.hInstance           = hInstance;
   Globals.hGroups             = 0;
   Globals.hActiveGroup        = 0;
+
+  Globals.wLogPixelsX = GetSystemMetrics(SM_CXICON); 
+  Globals.wLogPixelsY = GetSystemMetrics(SM_CYICON); 
+  // @todo May be incorrect, because progman.ini contains display.drv entry. Is it valuable info about driver???
+  hdc = CreateDC("DISPLAY", NULL, NULL, NULL);
+  Globals.bPlanes=GetDeviceCaps(hdc, PLANES);
+  Globals.bBitsPixel=GetDeviceCaps(hdc, BITSPIXEL);
+  DeleteDC(hdc);
 
   /* Read Options from `progman.ini' */
   Globals.bAutoArrange =
@@ -147,13 +156,13 @@ static VOID MAIN_CreateGroups(void)
       sprintf(key, "Group%d", num);
       GetPrivateProfileString("Groups", key, "", szPath,
                               sizeof(szPath), Globals.lpszIniFile);
-      if (!szPath[0]) continue;
+      if (!szPath[0]) continue; // @todo show message box about grp file not found
 
       GRPFILE_ReadGroupFile(szPath);
 
       ptr += skip;
     }
-  /* FIXME initialize other groups, not enumerated by `Order' */
+  /* @todo FIXME initialize other groups, not enumerated by `Order' */
 }
 
 /***********************************************************************

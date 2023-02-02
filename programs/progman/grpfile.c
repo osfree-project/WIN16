@@ -37,7 +37,7 @@ static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HLOCAL *phBuffer,
 				     int *piSize);
 static HLOCAL GRPFILE_ScanGroup(LPCSTR, int, LPCSTR/*, BOOL*/);
 static HLOCAL GRPFILE_ScanProgram(LPCSTR, int, LPCSTR, int,
-                                  LPCSTR, HLOCAL,LPCSTR);
+                                  LPCSTR, HLOCAL,LPCSTR, BOOL);
 static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group);
 
 
@@ -56,7 +56,7 @@ HLOCAL GRPFILE_ReadGroupFile(LPCSTR lpszPath)
   /* Read the whole file into a buffer */
   if (!GRPFILE_ReadFileToBuffer(lpszPath, &hBuffer, &size))
     {
-      MAIN_MessageBoxIDS_s(IDS_FILE_READ_ERROR_s, lpszPath, IDS_ERROR, MB_YESNO);
+      MAIN_MessageBoxIDS_s(IDS_FILE_READ_ERROR_s, lpszPath, IDS_ERROR, MB_OK);
       return(0);
     }
 
@@ -87,12 +87,12 @@ static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HLOCAL *phBuffer,
   file=_lopen(path, OF_READ);
   if (file == HFILE_ERROR) return FALSE;
 
-
   size = 0;
   hBuffer = LocalAlloc(LMEM_FIXED, MALLOCHUNK + 1);
   if (!hBuffer) return FALSE;
   buffer = LocalLock(hBuffer);
-  
+
+  // @todo Why allocate by chunk? Is is better read whole file???
   while ((len = _lread(file, buffer + size, MALLOCHUNK))
          == MALLOCHUNK)
     {
@@ -117,7 +117,7 @@ static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HLOCAL *phBuffer,
     }
 	
   size += len;
-  buffer[size] = 0;
+  buffer[size] = 0;  // Why add zero to end of buffer???
 
   *phBuffer = hBuffer;
   *piSize   = size;
@@ -129,8 +129,7 @@ static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HLOCAL *phBuffer,
  */
 
 static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, int size,
-                                LPCSTR lpszGrpFile
-                                /*, BOOL bModifiedFileName */)
+                                LPCSTR lpszGrpFile)
 {
   HLOCAL  hGroup;
   int     i, seqnum;
@@ -139,12 +138,52 @@ static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, int size,
   int     x, y, width, height, iconx, icony, nCmdShow;
   int     number_of_programs;
   struct tagGROUPHEADER * header;
-
-  header=(struct tagGROUPHEADER *)buffer;
-
+  WORD    wCurLogPixelsX, wCurLogPixelsY;
+  BOOL    bRebuildIcons;		// TRUE if stored in GRP icons need to be rebuilded for current display
+#ifdef DEBUG
+  char DebugBuffer[200];
+#endif
   if (buffer[0] != 'P' || buffer[1] != 'M') return(0);
   if (buffer[2] == 'C' && buffer[3] == 'C') {}
   else return(0);
+
+  header=(struct tagGROUPHEADER *)buffer;
+
+#ifdef DEBUG
+  OutputDebugString("Group header\n\r");
+  OutputDebugString("============\n\r");
+  wsprintf(DebugBuffer, "Magic:\t%c%c%c%c\n\r", header->cIdentifier[0],header->cIdentifier[1],header->cIdentifier[2],header->cIdentifier[3]);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "Checksum addenum:\t%04x\n\r", header->wCheckSum);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "Size without TAGDATA:\t%04x\n\r", header->cbGroup);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "SW flags:\t%04x\n\r", header->nCmdShow);
+  OutputDebugString(DebugBuffer);
+//  RECT  rcNormal;		// Coordinates of the group window (the window in which the group icons appear). It is a rectangular structure.
+//  POINT ptMin;			// Coordinate of the lower-left corner of the group window with respect to the parent window. It is a point structure.
+  wsprintf(DebugBuffer, "Group name offset:\t%04x\n\r", header->pName);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "Target display X resolution:\t%04x\n\r", header->wLogPixelsX);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "Target display Y resolution:\t%04x\n\r", header->wLogPixelsY);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "Current display X resolution:\t%04x\n", Globals.wLogPixelsX);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "Current display Y resolution:\t%04x\n", Globals.wLogPixelsY);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "Target bits per pixel:\t%01x\n\r", header->bBitsPerPixel);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "Target planes:\t%01x\n\r", header->bPlanes);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "Current bits per pixel:\t%01x\n\r", Globals.bBitsPixel);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "Current planes:\t%01x\n\r", Globals.bPlanes);
+  OutputDebugString(DebugBuffer);
+//  WORD  wReserved;		// Must be 0
+  wsprintf(DebugBuffer, "Number of ITEMDATA pointers(?):\t%d\n", header->cItems);
+  OutputDebugString(DebugBuffer);
+#endif
 
   /* checksum = GET_USHORT(buffer, 4)   (ignored) */
 
@@ -164,10 +203,15 @@ static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, int size,
 
   if (lpszName >= buffer + size) return(0);
 
+  bRebuildIcons = (header->wLogPixelsX != Globals.wLogPixelsX) |
+				(header->wLogPixelsY != Globals.wLogPixelsY) |
+				(header->bBitsPerPixel != Globals.bBitsPixel) |
+				(header->bPlanes != Globals.bPlanes);
+
   /* unknown bytes 24 - 31 ignored */
   /*
     Unknown bytes should be:
-    wLogPixelsX = GET_SHORT(buffer, 24);
+     = GET_SHORT(buffer, 24);
     wLogPixelsY = GET_SHORT(buffer, 26);
     byBitsPerPixel = byte at 28;
     byPlanes     = byte at 29;
@@ -179,10 +223,8 @@ static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, int size,
                           TRUE);
   if (!hGroup) return(0);
 
-
-
   //number_of_programs = header->cItems;//GET_USHORT(buffer, 32);
-  number_of_programs = GET_USHORT(buffer, 32);
+  number_of_programs = header->cItems;//GET_USHORT(buffer, 32);
   if (2 * number_of_programs + 34 > size) return(0);
   //if (2 * number_of_programs + 34 > size)
   //{
@@ -196,7 +238,7 @@ static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, int size,
       if (program_ptr + 24 > buffer + size) return(0);
       if (!GET_USHORT(buffer, 34 + 2*i)) continue;
       if (!GRPFILE_ScanProgram(buffer, size, program_ptr, seqnum,
-                               extension, hGroup, lpszGrpFile))
+                               extension, hGroup, lpszGrpFile, bRebuildIcons))
         {
           GROUP_DeleteGroup(hGroup);
           return(0);
@@ -217,7 +259,7 @@ static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, int size,
 static HLOCAL GRPFILE_ScanProgram(LPCSTR buffer, int size,
                                   LPCSTR program_ptr, int seqnum,
                                   LPCSTR extension, HLOCAL hGroup,
-                                  LPCSTR lpszGrpFile)
+                                  LPCSTR lpszGrpFile, BOOL bRebuildIcons)
 {
   int    icontype;
   HICON  hIcon;
@@ -226,24 +268,34 @@ static HLOCAL GRPFILE_ScanProgram(LPCSTR buffer, int size,
   int    x, y, nIconIndex, iconANDsize, iconXORsize;
   int    nHotKey, nCmdShow;
   CURSORICONINFO iconinfo;
+  struct tagITEMDATA * itemdata;
+
+  itemdata = (struct tagITEMDATA *)program_ptr;
 
   x               = GET_SHORT(program_ptr, 0);
   y               = GET_SHORT(program_ptr, 2);
-  nIconIndex      = GET_USHORT(program_ptr, 4);
+  nIconIndex      = itemdata->iIcon; //GET_USHORT(program_ptr, 4);
 
   /* FIXME is this correct ?? */
-  icontype = GET_USHORT(program_ptr,  6);		// cbresource    specifies the count of bytes in the icon resource, which appears in the executable file for the application. 
+  // @todo no. It is incorrect. This is seems to be size of buffer for getting resource from file or buffer size for icon creation.
+  // Logic is following: If bRebuildIcons is TRUE (means icons in GRP not same as for current display),
+  // then get icons from resources and store them in GRP file. If FALSE then reuse icons from GRP file)
+  // @todo here is a some problem on modern systems. Because screen resolution too high GRP file size
+  // exceed 64Kb. As result, no memory info. May be solution is to use huge pointers?
+  
+  icontype = itemdata->cbResource; //GET_USHORT(program_ptr,  6);		// cbresource    specifies the count of bytes in the icon resource, which appears in the executable file for the application. 
   switch (icontype)
     {
     default:
       MAIN_MessageBoxIDS_s(IDS_UNKNOWN_FEATURE_s, lpszGrpFile,
-                           IDS_WARNING, MB_YESNO);
+                           IDS_WARNING, MB_OK);
     case 0x048c:
-      iconXORsize     = GET_USHORT(program_ptr,  8);
-      iconANDsize     = GET_USHORT(program_ptr, 10) / 8;
-      iconinfo_ptr    = buffer + GET_USHORT(program_ptr, 12);
-      iconXORbits_ptr = buffer + GET_USHORT(program_ptr, 14);
-      iconANDbits_ptr = buffer + GET_USHORT(program_ptr, 16);
+	// @todo Seems totally incorrect here. Most probably depend on Plane. And not clear why XOR and AND swapped
+      iconXORsize     = itemdata->cbANDPlane; //GET_USHORT(program_ptr,  8);
+      iconANDsize     = itemdata->cbXORPlane; //GET_USHORT(program_ptr, 10) / 8; 
+      iconinfo_ptr    = buffer + itemdata->pHeader; //GET_USHORT(program_ptr, 12);
+      iconXORbits_ptr = buffer + itemdata->pANDPlane; //GET_USHORT(program_ptr, 14);
+      iconANDbits_ptr = buffer + itemdata->pXORPlane; //GET_USHORT(program_ptr, 16);
       iconinfo.ptHotSpot.x   = GET_USHORT(iconinfo_ptr, 0);
       iconinfo.ptHotSpot.y   = GET_USHORT(iconinfo_ptr, 2);
       iconinfo.nWidth        = GET_USHORT(iconinfo_ptr, 4);
@@ -253,11 +305,11 @@ static HLOCAL GRPFILE_ScanProgram(LPCSTR buffer, int size,
       iconinfo.bBitsPerPixel = GET_USHORT(iconinfo_ptr, 11);
       break;
     case 0x000c:
-      iconANDsize     = GET_USHORT(program_ptr,  8);
-      iconXORsize     = GET_USHORT(program_ptr, 10);
-      iconinfo_ptr    = buffer + GET_USHORT(program_ptr, 12);
-      iconANDbits_ptr = buffer + GET_USHORT(program_ptr, 14);
-      iconXORbits_ptr = buffer + GET_USHORT(program_ptr, 16);
+      iconANDsize     = itemdata->cbANDPlane; // GET_USHORT(program_ptr,  8);
+      iconXORsize     = itemdata->cbXORPlane; // GET_USHORT(program_ptr, 10);
+      iconinfo_ptr    = buffer + itemdata->pHeader; //GET_USHORT(program_ptr, 12);
+      iconANDbits_ptr = buffer + itemdata->pANDPlane; //GET_USHORT(program_ptr, 14);
+      iconXORbits_ptr = buffer + itemdata->pXORPlane; //GET_USHORT(program_ptr, 16);
       iconinfo.ptHotSpot.x   = GET_USHORT(iconinfo_ptr, 0);
       iconinfo.ptHotSpot.y   = GET_USHORT(iconinfo_ptr, 2);
       iconinfo.nWidth        = GET_USHORT(iconinfo_ptr, 4);

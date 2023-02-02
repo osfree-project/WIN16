@@ -34,6 +34,8 @@ The group-file header contains general information about the group file. The GRO
 
 */
 
+#pragma pack( push, 1 )
+
 struct tagGROUPHEADER {
   char  cIdentifier[4];		// Identifies an array of 4 characters. If the file is a valid group file, this array must contain the string "PMCC". 
   WORD  wCheckSum;		// Negative sum of all words in the file (Means: sum of all words in file, including wCheckSum, must be zero)
@@ -68,7 +70,7 @@ Value	Flag
 0x08	SW_SHOWNA 
 0x09	SW_RESTORE 
 
-rgiItems[cItems]	Specifies an array of ITEMDATA structures. 
+rgiItems[cItems]	Specifies an array of ITEMDATA structures. (@todo offset of item or array of items???)
 
 Item Data
 
@@ -100,17 +102,15 @@ has the following form:
 */
 
 struct tagTAGDATA{
-    WORD wID;
-    WORD wItem;
-    WORD cb;
-    BYTE rgb[1];
+    WORD wID;			// type of tag data.
+    WORD wItem;			// index to the item the tag data refers to. If the data is not specific to a particular item, this value is 0xFFFF.
+    WORD cb;			// size of the TAGDATA structure, in bytes.
+    BYTE rgb[1];		// an array of byte values. The length of this array can be found by subtracting 6 from the value of the cb member.
 };
 
 /*
 
-Following are the members in the TAGDATA structure: 
-
-wID	Specifies the type of tag data. This member can have one of the following values: 
+wID	can have one of the following values: 
 
 Value	Meaning
 
@@ -120,10 +120,6 @@ user.
 0x8103	Minimized version of the item is displayed. If this value is specified, the array to which the rgb member 
 points is not present in the structure and the value of the cb member is 0x06. 
 
-wItem	Specifies the index to the item the tag data refers to. If the data is not specific to a particular item, this value is 0xFFFF. 
-cb	Specifies the size of the TAGDATA structure, in bytes. 
-rgb	Specifies an array of byte values. The length of this array can be found by subtracting 6 from the value of the cb 
-member. 
 
 */
 
@@ -137,3 +133,5 @@ struct tagICONRESOURCEHEADER {
 	BYTE bPlanes;    // Count of planes
 	BYTE bBitsPixel; // Bits per pixel
 };
+
+#pragma pack( pop )

@@ -58,6 +58,7 @@ int WINAPI ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText,
 #define PROGMAN_ICON_INDEX 0
 #define GROUP_ICON_INDEX   6
 #define DEFAULT_ICON_INDEX 7
+#define MSDOS_ICON_INDEX 9
 
 #define DEF_GROUP_WIN_XPOS   100
 #define DEF_GROUP_WIN_YPOS   100
@@ -158,6 +159,10 @@ typedef struct
   BOOL    bNoSaveSettings;
   BOOL    bNoFileMenu;
   int     nEditLevel;
+  WORD    wLogPixelsX;			// Current display X resolution
+  WORD    wLogPixelsY;			// Current display Y resolution
+  BYTE    bPlanes;				// Current count of planes
+  BYTE    bBitsPixel;			// Current bits per pixel
   HLOCAL  hGroups;
   HLOCAL  hActiveGroup;
 } GLOBALS;
