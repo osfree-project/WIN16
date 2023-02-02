@@ -61,6 +61,17 @@ VOID STRING_LoadMenus(VOID)
   Globals.hWindowsMenu  = GetSubMenu(hMainMenu, 2);
   Globals.hLanguageMenu = GetSubMenu(hMainMenu, 3);
 
+  /* Apply restrictions */
+  if (Globals.bNoFileMenu)
+  {
+	  DestroyMenu(Globals.hFileMenu);
+	  DeleteMenu(hMainMenu, 0, MF_BYPOSITION);
+  }
+  if (Globals.bNoRun) EnableMenuItem(hMainMenu, PM_EXECUTE, MF_BYCOMMAND | MF_GRAYED);
+  if (Globals.bNoClose) EnableMenuItem(hMainMenu, PM_EXIT, MF_BYCOMMAND | MF_GRAYED);
+  if (Globals.bNoSaveSettings) EnableMenuItem(hMainMenu, PM_SAVE_SETTINGS, MF_BYCOMMAND | MF_GRAYED);
+
+ 
   if (Globals.hMDIWnd)
     SendMessage(Globals.hMDIWnd, WM_MDISETMENU,
                 (WPARAM) hMainMenu,

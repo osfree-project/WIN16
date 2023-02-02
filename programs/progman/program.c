@@ -38,8 +38,19 @@ static LRESULT CALLBACK PROGRAM_ProgramWndProc(HWND hWnd, UINT msg, WPARAM wPara
         PROGRAM *program = (PROGRAM *)LocalLock(hProgram);
         PROGGROUP   *group   = (PROGGROUP   *)LocalLock(program->hGroup);
         group->hActiveProgram = hProgram;
-        EnableMenuItem(Globals.hFileMenu, PM_MOVE , MF_ENABLED);
-        EnableMenuItem(Globals.hFileMenu, PM_COPY , MF_ENABLED);
+
+		if (Globals.nEditLevel>=2)
+		{
+			EnableMenuItem(Globals.hFileMenu, PM_NEW, MF_BYCOMMAND | MF_GRAYED);
+			EnableMenuItem(Globals.hFileMenu, PM_MOVE, MF_BYCOMMAND | MF_GRAYED);
+			EnableMenuItem(Globals.hFileMenu, PM_COPY, MF_BYCOMMAND | MF_GRAYED);
+			EnableMenuItem(Globals.hFileMenu, PM_DELETE, MF_BYCOMMAND | MF_GRAYED);
+		} else {
+			EnableMenuItem(Globals.hFileMenu, PM_MOVE , MF_ENABLED);
+			EnableMenuItem(Globals.hFileMenu, PM_COPY , MF_ENABLED);
+			EnableMenuItem(Globals.hFileMenu, PM_NEW , MF_ENABLED);
+			EnableMenuItem(Globals.hFileMenu, PM_DELETE , MF_ENABLED);
+		}
         break;
       }
     case WM_NCLBUTTONDBLCLK:
@@ -221,7 +232,8 @@ HLOCAL PROGRAM_AddProgram(HLOCAL hGroup, HICON hIcon, LPCSTR lpszName,
 
   SetWindowLong(program->hWnd, 0, (LONG) hProgram);
 
-  ShowWindow (program->hWnd, SW_SHOWMINIMIZED);
+  //ShowWindow (program->hWnd, SW_SHOWMINIMIZED);
+  ShowWindow (program->hWnd, program->nCmdShow);
   SetWindowPos (program->hWnd, 0, x, y, 0, 0, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE);
   UpdateWindow (program->hWnd);
 

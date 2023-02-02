@@ -20,8 +20,8 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+//#include <stdlib.h>
+//#include <string.h>
 
 #define OEMRESOURCE
 
@@ -44,11 +44,14 @@ static VOID WineWarranty(HWND Wnd);
 /***********************************************************************
  *
  *           WinMain
+ *
+ * https://www.betaarchive.com/wiki/index.php?title=Microsoft_KB_Archive/85891 Information about PROGMAN.INI
  */
 
 int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 {
   MSG      msg;
+  HDC      hdc;
 
   Globals.lpszIniFile         = "progman.ini";
   Globals.lpszIcoFile         = "progman.exe";
@@ -57,6 +60,14 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
   Globals.hGroups             = 0;
   Globals.hActiveGroup        = 0;
 
+  Globals.wLogPixelsX = GetSystemMetrics(SM_CXICON); 
+  Globals.wLogPixelsY = GetSystemMetrics(SM_CYICON); 
+  // @todo May be incorrect, because progman.ini contains display.drv entry. Is it valuable info about driver???
+  hdc = CreateDC("DISPLAY", NULL, NULL, NULL);
+  Globals.bPlanes=GetDeviceCaps(hdc, PLANES);
+  Globals.bBitsPixel=GetDeviceCaps(hdc, BITSPIXEL);
+  DeleteDC(hdc);
+
   /* Read Options from `progman.ini' */
   Globals.bAutoArrange =
     GetPrivateProfileInt("Settings", "AutoArrange", 0, Globals.lpszIniFile);
@@ -64,6 +75,17 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     GetPrivateProfileInt("Settings", "MinOnRun", 0, Globals.lpszIniFile);
   Globals.bSaveSettings =
     GetPrivateProfileInt("Settings", "SaveSettings", 1, Globals.lpszIniFile);
+  Globals.bNoRun =
+    GetPrivateProfileInt("Restrictions", "NoRun", FALSE, Globals.lpszIniFile);
+  Globals.bNoClose =
+    GetPrivateProfileInt("Restrictions", "NoClose", FALSE, Globals.lpszIniFile);
+  Globals.bNoSaveSettings =
+    GetPrivateProfileInt("Restrictions", "NoSaveSettings", FALSE, Globals.lpszIniFile);
+  if (Globals.bNoSaveSettings) Globals.bSaveSettings=FALSE;
+  Globals.bNoFileMenu =
+    GetPrivateProfileInt("Restrictions", "NoFileMenu", FALSE, Globals.lpszIniFile);
+  Globals.nEditLevel =
+    GetPrivateProfileInt("Restrictions", "EditLevel", 0, Globals.lpszIniFile);
 
   /* Load default icons */
   Globals.hMainIcon    = ExtractIcon(Globals.hInstance, Globals.lpszIcoFile, PROGMAN_ICON_INDEX);
@@ -109,6 +131,9 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 /***********************************************************************
  *
  *           MAIN_CreateGroups
+ *
+ * https://jeffpar.github.io/kbarchive/kb/084/Q84925/ Information about Order and Group keys
+ *
  */
 
 static VOID MAIN_CreateGroups(void)
@@ -131,13 +156,13 @@ static VOID MAIN_CreateGroups(void)
       sprintf(key, "Group%d", num);
       GetPrivateProfileString("Groups", key, "", szPath,
                               sizeof(szPath), Globals.lpszIniFile);
-      if (!szPath[0]) continue;
+      if (!szPath[0]) continue; // @todo show message box about grp file not found
 
       GRPFILE_ReadGroupFile(szPath);
 
       ptr += skip;
     }
-  /* FIXME initialize other groups, not enumerated by `Order' */
+  /* @todo FIXME initialize other groups, not enumerated by `Order' */
 }
 
 /***********************************************************************
@@ -473,7 +498,7 @@ int MAIN_MessageBoxIDS_s(UINT ids_text, LPCSTR str, UINT ids_title, WORD type)
 
 VOID MAIN_ReplaceString(HLOCAL *handle, LPSTR replace)
 {
-  HLOCAL newhandle = LocalAlloc(LMEM_FIXED, _fstrlen(replace) + 1);
+  HLOCAL newhandle = LocalAlloc(LMEM_FIXED, lstrlen(replace) + 1);
   if (newhandle)
     {
       LPSTR  newstring = LocalLock(newhandle);

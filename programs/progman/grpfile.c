@@ -21,12 +21,8 @@
 
 #include "win16.h"
 #include "progman.h"
-//#include "mmsystem.h"
 
 #include "grpfile.h"
-
-#include <malloc.h>
-#include <string.h>
 
 #define MALLOCHUNK 1000
 
@@ -39,28 +35,11 @@
 
 static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HLOCAL *phBuffer,
 				     int *piSize);
-//static BOOL   GRPFILE_ReadFileToBuffer(LPCSTR, LPSTR*, int*);
-static HLOCAL GRPFILE_ScanGroup(LPCSTR, int, LPCSTR, BOOL);
+static HLOCAL GRPFILE_ScanGroup(LPCSTR, int, LPCSTR/*, BOOL*/);
 static HLOCAL GRPFILE_ScanProgram(LPCSTR, int, LPCSTR, int,
-                                  LPCSTR, HLOCAL,LPCSTR);
+                                  LPCSTR, HLOCAL,LPCSTR, BOOL);
 static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group);
 
-/***********************************************************************
- *
- *           GRPFILE_ModifyFileName
- *
- *  Change extension `.grp' to `.gr'
- */
-
-static VOID GRPFILE_ModifyFileName(LPSTR lpszNewName, LPCSTR lpszOrigName,
-                                   int nSize, BOOL bModify)
-{
-  lstrcpyn(lpszNewName, lpszOrigName, nSize);
-  lpszNewName[nSize-1] = '\0';
-  if (!bModify) return;
-  if (!lstrcmpi(lpszNewName + lstrlen(lpszNewName) - 4, ".grp"))
-    lpszNewName[lstrlen(lpszNewName) - 1] = '\0';
-}
 
 /***********************************************************************
  *
@@ -70,39 +49,23 @@ static VOID GRPFILE_ModifyFileName(LPSTR lpszNewName, LPCSTR lpszOrigName,
 HLOCAL GRPFILE_ReadGroupFile(LPCSTR lpszPath)
 {
   char   szPath_gr[MAX_PATHNAME_LEN];
-  BOOL   bFileNameModified = FALSE;
   OFSTRUCT dummy;
   HLOCAL hBuffer, hGroup;
-//  HLOCAL hGroup;
-//  LPSTR  buffer;
   int    size;
 
-#if 0
-  /* if `.gr' file exists use that */
-  GRPFILE_ModifyFileName(szPath_gr, lpszPath, MAX_PATHNAME_LEN, TRUE);
-  if (OpenFile(szPath_gr, &dummy, OF_EXIST) != HFILE_ERROR)
-    {
-      lpszPath = szPath_gr;
-      bFileNameModified = TRUE;
-    }
-#endif
   /* Read the whole file into a buffer */
   if (!GRPFILE_ReadFileToBuffer(lpszPath, &hBuffer, &size))
-//  if (!GRPFILE_ReadFileToBuffer(lpszPath, &buffer, &size))
     {
-      MAIN_MessageBoxIDS_s(IDS_FILE_READ_ERROR_s, lpszPath, IDS_ERROR, MB_YESNO);
+      MAIN_MessageBoxIDS_s(IDS_FILE_READ_ERROR_s, lpszPath, IDS_ERROR, MB_OK);
       return(0);
     }
 
   /* Interpret buffer */
   hGroup = GRPFILE_ScanGroup(LocalLock(hBuffer), size,
-			     lpszPath, bFileNameModified);
-// hGroup = GRPFILE_ScanGroup(buffer, size,
-//                             lpszPath, bFileNameModified);
+			     lpszPath);
   if (!hGroup)
-    MAIN_MessageBoxIDS_s(IDS_GRPFILE_READ_ERROR_s, lpszPath, IDS_ERROR, MB_YESNO);
+    MAIN_MessageBoxIDS_s(IDS_GRPFILE_READ_ERROR_s, lpszPath, IDS_ERROR, MB_OK);
 
-//  _ffree(buffer);
   LocalFree(hBuffer);
 
   return(hGroup);
@@ -115,8 +78,6 @@ HLOCAL GRPFILE_ReadGroupFile(LPCSTR lpszPath)
 
 static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HLOCAL *phBuffer,
 				     int *piSize)
-//static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, LPSTR *buffer,
-//                                     int *piSize)
 {
   UINT   len, size;
   LPSTR  buffer;
@@ -126,24 +87,16 @@ static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HLOCAL *phBuffer,
   file=_lopen(path, OF_READ);
   if (file == HFILE_ERROR) return FALSE;
 
-
   size = 0;
-//  *buffer = _fmalloc(size + MALLOCHUNK + 1);
   hBuffer = LocalAlloc(LMEM_FIXED, MALLOCHUNK + 1);
   if (!hBuffer) return FALSE;
   buffer = LocalLock(hBuffer);
-  
+
+  // @todo Why allocate by chunk? Is is better read whole file???
   while ((len = _lread(file, buffer + size, MALLOCHUNK))
-//  while ((len = _lread(file, (*buffer) + size, MALLOCHUNK))
          == MALLOCHUNK)
     {
       size += len;
-//      *buffer = _frealloc(*buffer, size + MALLOCHUNK + 1);
-//      if (!(*buffer))
-//        {
-//          _ffree(*buffer);
-//          return FALSE;
-//        }
       hNewBuffer = LocalReAlloc(hBuffer, size + MALLOCHUNK + 1,
 				LMEM_MOVEABLE);
       if (!hNewBuffer)
@@ -157,11 +110,6 @@ static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HLOCAL *phBuffer,
 
   _lclose(file);
 
-//  if (len == (UINT)HFILE_ERROR)
-//    {
-//      _ffree(*buffer);
-//      return FALSE;
-//    }
   if (len == (UINT)HFILE_ERROR)
     {
       LocalFree(hBuffer);
@@ -169,8 +117,7 @@ static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HLOCAL *phBuffer,
     }
 	
   size += len;
-//  (*buffer)[size] = 0;
-  buffer[size] = 0;
+  buffer[size] = 0;  // Why add zero to end of buffer???
 
   *phBuffer = hBuffer;
   *piSize   = size;
@@ -182,8 +129,7 @@ static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HLOCAL *phBuffer,
  */
 
 static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, int size,
-                                LPCSTR lpszGrpFile,
-                                BOOL bModifiedFileName)
+                                LPCSTR lpszGrpFile)
 {
   HLOCAL  hGroup;
   int     i, seqnum;
@@ -191,19 +137,53 @@ static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, int size,
   LPCSTR  lpszName;
   int     x, y, width, height, iconx, icony, nCmdShow;
   int     number_of_programs;
-  BOOL    bOverwriteFileOk;
   struct tagGROUPHEADER * header;
+  WORD    wCurLogPixelsX, wCurLogPixelsY;
+  BOOL    bRebuildIcons;		// TRUE if stored in GRP icons need to be rebuilded for current display
+#ifdef DEBUG
+  char DebugBuffer[200];
+#endif
+  if (buffer[0] != 'P' || buffer[1] != 'M') return(0);
+  if (buffer[2] == 'C' && buffer[3] == 'C') {}
+  else return(0);
 
   header=(struct tagGROUPHEADER *)buffer;
 
-  if (buffer[0] != 'P' || buffer[1] != 'M') return(0);
-  if (buffer[2] == 'C' && buffer[3] == 'C')
-    /* original with checksum */
-    bOverwriteFileOk = FALSE;
-  else if (buffer[2] == 'X' && buffer[3] == 'X')
-    /* modified without checksum */
-    bOverwriteFileOk = TRUE;
-  else return(0);
+#ifdef DEBUG
+  OutputDebugString("Group header\n\r");
+  OutputDebugString("============\n\r");
+  wsprintf(DebugBuffer, "Magic:\t%c%c%c%c\n\r", header->cIdentifier[0],header->cIdentifier[1],header->cIdentifier[2],header->cIdentifier[3]);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "Checksum addenum:\t%04x\n\r", header->wCheckSum);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "Size without TAGDATA:\t%04x\n\r", header->cbGroup);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "SW flags:\t%04x\n\r", header->nCmdShow);
+  OutputDebugString(DebugBuffer);
+//  RECT  rcNormal;		// Coordinates of the group window (the window in which the group icons appear). It is a rectangular structure.
+//  POINT ptMin;			// Coordinate of the lower-left corner of the group window with respect to the parent window. It is a point structure.
+  wsprintf(DebugBuffer, "Group name offset:\t%04x\n\r", header->pName);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "Target display X resolution:\t%04x\n\r", header->wLogPixelsX);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "Target display Y resolution:\t%04x\n\r", header->wLogPixelsY);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "Current display X resolution:\t%04x\n", Globals.wLogPixelsX);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "Current display Y resolution:\t%04x\n", Globals.wLogPixelsY);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "Target bits per pixel:\t%01x\n\r", header->bBitsPerPixel);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "Target planes:\t%01x\n\r", header->bPlanes);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "Current bits per pixel:\t%01x\n\r", Globals.bBitsPixel);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "Current planes:\t%01x\n\r", Globals.bPlanes);
+  OutputDebugString(DebugBuffer);
+//  WORD  wReserved;		// Must be 0
+  wsprintf(DebugBuffer, "Number of ITEMDATA pointers(?):\t%d\n", header->cItems);
+  OutputDebugString(DebugBuffer);
+#endif
 
   /* checksum = GET_USHORT(buffer, 4)   (ignored) */
 
@@ -212,7 +192,6 @@ static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, int size,
   if (extension == buffer + size) extension = 0;
   else if (extension + 6 > buffer + size) return(0);
 
-/*
   nCmdShow = header->nCmdShow; //GET_USHORT(buffer,  8);
   x        = header->rcNormal.left;//GET_SHORT(buffer,  10);
   y        = header->rcNormal.top;//GET_SHORT(buffer,  12);
@@ -221,22 +200,18 @@ static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, int size,
   iconx    = header->ptMin.x;//GET_SHORT(buffer,  18);
   icony    = header->ptMin.y;//GET_SHORT(buffer,  20);
   lpszName = buffer + header->pName;//GET_USHORT(buffer, 22);
- */
 
-  nCmdShow = GET_USHORT(buffer,  8);
-  x        = GET_SHORT(buffer,  10);
-  y        = GET_SHORT(buffer,  12);
-  width    = GET_USHORT(buffer, 14);
-  height   = GET_USHORT(buffer, 16);
-  iconx    = GET_SHORT(buffer,  18);
-  icony    = GET_SHORT(buffer,  20);
-  lpszName = buffer + GET_USHORT(buffer, 22);
   if (lpszName >= buffer + size) return(0);
+
+  bRebuildIcons = (header->wLogPixelsX != Globals.wLogPixelsX) |
+				(header->wLogPixelsY != Globals.wLogPixelsY) |
+				(header->bBitsPerPixel != Globals.bBitsPixel) |
+				(header->bPlanes != Globals.bPlanes);
 
   /* unknown bytes 24 - 31 ignored */
   /*
     Unknown bytes should be:
-    wLogPixelsX = GET_SHORT(buffer, 24);
+     = GET_SHORT(buffer, 24);
     wLogPixelsY = GET_SHORT(buffer, 26);
     byBitsPerPixel = byte at 28;
     byPlanes     = byte at 29;
@@ -245,14 +220,11 @@ static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, int size,
 
   hGroup = GROUP_AddGroup(lpszName, lpszGrpFile, nCmdShow, x, y,
                           width, height, iconx, icony,
-                          bModifiedFileName, bOverwriteFileOk,
                           TRUE);
   if (!hGroup) return(0);
 
-
-
   //number_of_programs = header->cItems;//GET_USHORT(buffer, 32);
-  number_of_programs = GET_USHORT(buffer, 32);
+  number_of_programs = header->cItems;//GET_USHORT(buffer, 32);
   if (2 * number_of_programs + 34 > size) return(0);
   //if (2 * number_of_programs + 34 > size)
   //{
@@ -266,7 +238,7 @@ static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, int size,
       if (program_ptr + 24 > buffer + size) return(0);
       if (!GET_USHORT(buffer, 34 + 2*i)) continue;
       if (!GRPFILE_ScanProgram(buffer, size, program_ptr, seqnum,
-                               extension, hGroup, lpszGrpFile))
+                               extension, hGroup, lpszGrpFile, bRebuildIcons))
         {
           GROUP_DeleteGroup(hGroup);
           return(0);
@@ -287,7 +259,7 @@ static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, int size,
 static HLOCAL GRPFILE_ScanProgram(LPCSTR buffer, int size,
                                   LPCSTR program_ptr, int seqnum,
                                   LPCSTR extension, HLOCAL hGroup,
-                                  LPCSTR lpszGrpFile)
+                                  LPCSTR lpszGrpFile, BOOL bRebuildIcons)
 {
   int    icontype;
   HICON  hIcon;
@@ -296,58 +268,75 @@ static HLOCAL GRPFILE_ScanProgram(LPCSTR buffer, int size,
   int    x, y, nIconIndex, iconANDsize, iconXORsize;
   int    nHotKey, nCmdShow;
   CURSORICONINFO iconinfo;
+  struct tagITEMDATA * itemdata;
+
+  itemdata = (struct tagITEMDATA *)program_ptr;
 
   x               = GET_SHORT(program_ptr, 0);
   y               = GET_SHORT(program_ptr, 2);
-  nIconIndex      = GET_USHORT(program_ptr, 4);
+  nIconIndex      = itemdata->iIcon; //GET_USHORT(program_ptr, 4);
 
   /* FIXME is this correct ?? */
-  icontype = GET_USHORT(program_ptr,  6);		// cbresource    specifies the count of bytes in the icon resource, which appears in the executable file for the application. 
-  switch (icontype)
-    {
-    default:
-      MAIN_MessageBoxIDS_s(IDS_UNKNOWN_FEATURE_s, lpszGrpFile,
-                           IDS_WARNING, MB_YESNO);
-    case 0x048c:
-      iconXORsize     = GET_USHORT(program_ptr,  8);
-      iconANDsize     = GET_USHORT(program_ptr, 10) / 8;
-      iconinfo_ptr    = buffer + GET_USHORT(program_ptr, 12);
-      iconXORbits_ptr = buffer + GET_USHORT(program_ptr, 14);
-      iconANDbits_ptr = buffer + GET_USHORT(program_ptr, 16);
-      iconinfo.ptHotSpot.x   = GET_USHORT(iconinfo_ptr, 0);
-      iconinfo.ptHotSpot.y   = GET_USHORT(iconinfo_ptr, 2);
-      iconinfo.nWidth        = GET_USHORT(iconinfo_ptr, 4);
-      iconinfo.nHeight       = GET_USHORT(iconinfo_ptr, 6);
-      iconinfo.nWidthBytes   = GET_USHORT(iconinfo_ptr, 8);
-      iconinfo.bPlanes       = GET_USHORT(iconinfo_ptr, 10);
-      iconinfo.bBitsPerPixel = GET_USHORT(iconinfo_ptr, 11);
-      break;
-    case 0x000c:
-      iconANDsize     = GET_USHORT(program_ptr,  8);
-      iconXORsize     = GET_USHORT(program_ptr, 10);
-      iconinfo_ptr    = buffer + GET_USHORT(program_ptr, 12);
-      iconANDbits_ptr = buffer + GET_USHORT(program_ptr, 14);
-      iconXORbits_ptr = buffer + GET_USHORT(program_ptr, 16);
-      iconinfo.ptHotSpot.x   = GET_USHORT(iconinfo_ptr, 0);
-      iconinfo.ptHotSpot.y   = GET_USHORT(iconinfo_ptr, 2);
-      iconinfo.nWidth        = GET_USHORT(iconinfo_ptr, 4);
-      iconinfo.nHeight       = GET_USHORT(iconinfo_ptr, 6);
-      iconinfo.nWidthBytes = GET_USHORT(iconinfo_ptr, 8) * 8;
-      iconinfo.bPlanes       = GET_USHORT(iconinfo_ptr, 10);
-      iconinfo.bBitsPerPixel = GET_USHORT(iconinfo_ptr, 11);
-    }
+  // @todo no. It is incorrect. This is seems to be size of buffer for getting resource from file or buffer size for icon creation.
+  // Logic is following: If bRebuildIcons is TRUE (means icons in GRP not same as for current display),
+  // then get icons from resources and store them in GRP file. If FALSE then reuse icons from GRP file)
+  // @todo here is a some problem on modern systems. Because screen resolution too high GRP file size
+  // exceed 64Kb. As result, no memory info. May be solution is to use huge pointers?
 
-  if (iconANDbits_ptr + iconANDsize > buffer + size ||
-      iconXORbits_ptr + iconXORsize > buffer + size) return(0);
+//--------Incorrect code starts here--------------------
+  if (!bRebuildIcons)
+  {
+		icontype = itemdata->cbResource; //GET_USHORT(program_ptr,  6);		// cbresource    specifies the count of bytes in the icon resource, which appears in the executable file for the application. 
+		switch (icontype)
+		{
+		default:
+			MAIN_MessageBoxIDS_s(IDS_UNKNOWN_FEATURE_s, lpszGrpFile,
+								IDS_WARNING, MB_OK);
+		case 0x048c:
+		// @todo Seems totally incorrect here. Most probably depend on Plane. And not clear why XOR and AND swapped
+			iconXORsize     = itemdata->cbANDPlane; //GET_USHORT(program_ptr,  8);
+			iconANDsize     = itemdata->cbXORPlane; //GET_USHORT(program_ptr, 10) / 8; 
+			iconinfo_ptr    = buffer + itemdata->pHeader; //GET_USHORT(program_ptr, 12);
+			iconXORbits_ptr = buffer + itemdata->pANDPlane; //GET_USHORT(program_ptr, 14);
+			iconANDbits_ptr = buffer + itemdata->pXORPlane; //GET_USHORT(program_ptr, 16);
+			iconinfo.ptHotSpot.x   = GET_USHORT(iconinfo_ptr, 0);
+			iconinfo.ptHotSpot.y   = GET_USHORT(iconinfo_ptr, 2);
+			iconinfo.nWidth        = GET_USHORT(iconinfo_ptr, 4);
+			iconinfo.nHeight       = GET_USHORT(iconinfo_ptr, 6);
+			iconinfo.nWidthBytes   = GET_USHORT(iconinfo_ptr, 8);
+			iconinfo.bPlanes       = GET_USHORT(iconinfo_ptr, 10);
+			iconinfo.bBitsPerPixel = GET_USHORT(iconinfo_ptr, 11);
+			break;
+		case 0x000c:
+			iconANDsize     = itemdata->cbANDPlane; // GET_USHORT(program_ptr,  8);
+			iconXORsize     = itemdata->cbXORPlane; // GET_USHORT(program_ptr, 10);
+			iconinfo_ptr    = buffer + itemdata->pHeader; //GET_USHORT(program_ptr, 12);
+			iconANDbits_ptr = buffer + itemdata->pANDPlane; //GET_USHORT(program_ptr, 14);
+			iconXORbits_ptr = buffer + itemdata->pXORPlane; //GET_USHORT(program_ptr, 16);
+			iconinfo.ptHotSpot.x   = GET_USHORT(iconinfo_ptr, 0);
+			iconinfo.ptHotSpot.y   = GET_USHORT(iconinfo_ptr, 2);
+			iconinfo.nWidth        = GET_USHORT(iconinfo_ptr, 4);
+			iconinfo.nHeight       = GET_USHORT(iconinfo_ptr, 6);
+			iconinfo.nWidthBytes = GET_USHORT(iconinfo_ptr, 8) * 8;
+			iconinfo.bPlanes       = GET_USHORT(iconinfo_ptr, 10);
+			iconinfo.bBitsPerPixel = GET_USHORT(iconinfo_ptr, 11);
+		}
+		
+		if (iconANDbits_ptr + iconANDsize > buffer + size ||
+			iconXORbits_ptr + iconXORsize > buffer + size) return(0);
+		
+		hIcon = CreateIcon( Globals.hInstance, iconinfo.nWidth, iconinfo.nHeight,
+							iconinfo.bPlanes, iconinfo.bBitsPerPixel,
+							iconANDbits_ptr, iconXORbits_ptr );
+  } else {
+	  MessageBox(Globals.hMainWnd, "Rebuild icons from resources not implemented yet!",
+                                       lpszGrpFile, MB_OK);
+  }
+//--------Incorrect code ends here--------------------
 
-
-  hIcon = CreateIcon( Globals.hInstance, iconinfo.nWidth, iconinfo.nHeight,
-                      iconinfo.bPlanes, iconinfo.bBitsPerPixel,
-                      iconANDbits_ptr, iconXORbits_ptr );
-
-  lpszName        = buffer + GET_USHORT(program_ptr, 18);
-  lpszCmdLine     = buffer + GET_USHORT(program_ptr, 20);
-  lpszIconFile    = buffer + GET_USHORT(program_ptr, 22);
+  lpszName        = buffer + itemdata->pName; //GET_USHORT(program_ptr, 18);
+  lpszCmdLine     = buffer + itemdata->pCommand; //GET_USHORT(program_ptr, 20);
+  lpszIconFile    = buffer + itemdata->pIconPath; //GET_USHORT(program_ptr, 22);
   if (iconinfo_ptr + 6 > buffer + size ||
       lpszName         > buffer + size ||
       lpszCmdLine      > buffer + size ||
@@ -409,52 +398,13 @@ static HLOCAL GRPFILE_ScanProgram(LPCSTR buffer, int size,
 
 BOOL GRPFILE_WriteGroupFile(HLOCAL hGroup)
 {
-  char szPath[MAX_PATHNAME_LEN];
   PROGGROUP *group = (PROGGROUP *)LocalLock(hGroup);
   OFSTRUCT dummy;
   HFILE file;
   BOOL ret;
 
-  GRPFILE_ModifyFileName(szPath, LocalLock(group->hGrpFile),
-                         MAX_PATHNAME_LEN,
-                         group->bFileNameModified);
-
-  /* Try not to overwrite original files */
-
-  /* group->bOverwriteFileOk == TRUE only if a file has the modified format */
-  if (!group->bOverwriteFileOk &&
-      OpenFile(szPath, &dummy, OF_EXIST) != HFILE_ERROR)
-    {
-      /* Original file exists, try `.gr' extension */
-      GRPFILE_ModifyFileName(szPath, LocalLock(group->hGrpFile),
-                             MAX_PATHNAME_LEN, TRUE);
-      if (OpenFile(szPath, &dummy, OF_EXIST) != HFILE_ERROR)
-        {
-          /* File exists. Do not overwrite */
-          MAIN_MessageBoxIDS_s(IDS_FILE_NOT_OVERWRITTEN_s, szPath,
-                               IDS_INFO, MB_OK);
-          return FALSE;
-        }
-      /* Inform about the modified file name */
-      if (IDCANCEL ==
-          MAIN_MessageBoxIDS_s(IDS_SAVE_GROUP_AS_s, szPath, IDS_INFO,
-                               MB_OKCANCEL | MB_ICONINFORMATION))
-        return FALSE;
-    }
-
-  {
-    /* Warn about the (possible) incompatibility */
-    char msg[MAX_PATHNAME_LEN + 200];
-    wsprintf(msg,
-             "Group files written by this DRAFT Program Manager "
-             "possibly cannot be read by the Microsoft Program Manager!!\n"
-             "Are you sure to write %s?", szPath);
-    if (IDOK != MessageBox(Globals.hMainWnd, msg, "WARNING",
-                           MB_OKCANCEL | MB_DEFBUTTON2)) return FALSE;
-  }
-
   /* Open file */
-  file = _lcreat(szPath, 0);
+  file = _lcreat(LocalLock(group->hGrpFile), 0);
   if (file != HFILE_ERROR)
     {
       ret = GRPFILE_DoWriteGroupFile(file, group);
@@ -463,7 +413,7 @@ BOOL GRPFILE_WriteGroupFile(HLOCAL hGroup)
   else ret = FALSE;
 
   if (!ret)
-    MAIN_MessageBoxIDS_s(IDS_FILE_WRITE_ERROR_s, szPath, IDS_ERROR, MB_OK);
+    MAIN_MessageBoxIDS_s(IDS_FILE_WRITE_ERROR_s, LocalLock(group->hGrpFile), IDS_ERROR, MB_OK);
 
   return(ret);
 }
@@ -492,8 +442,6 @@ static VOID GRPFILE_CalculateSizes(PROGRAM *program,
 
 /***********************************************************************/
 unsigned int GRPFILE_checksum;
-BOOL GRPFILE_checksum_half_word;
-BYTE GRPFILE_checksum_last_byte;
 /***********************************************************************
  *
  *           GRPFILE_InitChecksum
@@ -502,7 +450,6 @@ BYTE GRPFILE_checksum_last_byte;
 static void GRPFILE_InitChecksum(void)
 {
         GRPFILE_checksum = 0;
-        GRPFILE_checksum_half_word = 0;
 }
 
 /***********************************************************************
@@ -513,46 +460,6 @@ static void GRPFILE_InitChecksum(void)
 static unsigned int GRPFILE_GetChecksum(void)
 {
         return GRPFILE_checksum;
-}
-
-/***********************************************************************
- *
- *           GRPFILE_WriteWithChecksum
- *
- * Looks crazier than it is:
- *
- * chksum = 0;
- * chksum = cksum - 1. word;
- * chksum = cksum - 2. word;
- * ...
- *
- * if (filelen is even)
- *      great I'm finished
- * else
- *      ignore last byte
- */
-
-static UINT GRPFILE_WriteWithChecksum(HFILE file, LPCSTR str, UINT size)
-{
-        UINT i;
-        if (GRPFILE_checksum_half_word) {
-                GRPFILE_checksum -= GRPFILE_checksum_last_byte;
-        }
-        for (i=0; i < size; i++) {
-                if (GRPFILE_checksum_half_word) {
-                        GRPFILE_checksum -= str[i] << 8;
-                } else {
-                        GRPFILE_checksum -= str[i];
-                }
-                GRPFILE_checksum_half_word ^= 1;
-        }
-
-        if (GRPFILE_checksum_half_word) {
-                GRPFILE_checksum_last_byte = str[size-1];
-                GRPFILE_checksum += GRPFILE_checksum_last_byte;
-        }
-
-        return _lwrite(file, str, size);
 }
 
 
@@ -625,7 +532,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
   PUT_SHORT(buffer, 30, 0x0000); /* unknown */
   PUT_SHORT(buffer, 32, NumProg);
 
-  if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 34)) return FALSE;
+  if ((UINT)HFILE_ERROR == _lwrite(file, buffer, 34)) return FALSE;
 
   /* Program table */
   CurrProg = Progs;
@@ -636,7 +543,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
       PROGRAM *program = (PROGRAM *)LocalLock(hProgram);
 
       PUT_SHORT(buffer, 0, CurrProg);
-      if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 2))
+      if ((UINT)HFILE_ERROR == _lwrite(file, buffer, 2))
               return FALSE;
 
       GRPFILE_CalculateSizes(program, &CurrProg, &CurrIcon);
@@ -644,7 +551,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
     }
 
   /* Title */
-  if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, lpszTitle,
+  if ((UINT)HFILE_ERROR == _lwrite(file, lpszTitle,
                                                lstrlen(lpszTitle) + 1))
     return FALSE;
 
@@ -678,10 +585,10 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
       ptr += lstrlen(CmdLine) + 1;
       PUT_SHORT(buffer, 22, ptr);
 
-      if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 24) ||
-          (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, Name, lstrlen(Name) + 1) ||
-          (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, CmdLine, lstrlen(CmdLine) + 1) ||
-          (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, IconFile, lstrlen(IconFile) + 1))
+      if ((UINT)HFILE_ERROR == _lwrite(file, buffer, 24) ||
+          (UINT)HFILE_ERROR == _lwrite(file, Name, lstrlen(Name) + 1) ||
+          (UINT)HFILE_ERROR == _lwrite(file, CmdLine, lstrlen(CmdLine) + 1) ||
+          (UINT)HFILE_ERROR == _lwrite(file, IconFile, lstrlen(IconFile) + 1))
         return FALSE;
 
       GRPFILE_CalculateSizes(program, &CurrProg, &CurrIcon);
@@ -708,9 +615,9 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
       buffer[10] = iconinfo->bPlanes;
       buffer[11] = iconinfo->bBitsPerPixel;
 
-      if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 12) ||
-          (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, AndBits, sizeAnd) ||
-          (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, XorBits, sizeXor)) return FALSE;
+      if ((UINT)HFILE_ERROR == _lwrite(file, buffer, 12) ||
+          (UINT)HFILE_ERROR == _lwrite(file, AndBits, sizeAnd) ||
+          (UINT)HFILE_ERROR == _lwrite(file, XorBits, sizeXor)) return FALSE;
 
       hProgram = program->hNext;
     }
@@ -724,7 +631,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
       PUT_SHORT(buffer, 4, 0x000a);
       buffer[6] = 'P', buffer[7] = 'M';
       buffer[8] = 'C', buffer[9] = 'C';
-      if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 10))
+      if ((UINT)HFILE_ERROR == _lwrite(file, buffer, 10))
               return FALSE;
 
       seqnum = 0;
@@ -740,8 +647,8 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
               PUT_SHORT(buffer, 0, 0x8101);
               PUT_SHORT(buffer, 2, seqnum);
               PUT_SHORT(buffer, 4, 7 + lstrlen(lpszWorkDir));
-              if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 6) ||
-                  (UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, lpszWorkDir, lstrlen(lpszWorkDir) + 1))
+              if ((UINT)HFILE_ERROR == _lwrite(file, buffer, 6) ||
+                  (UINT)HFILE_ERROR == _lwrite(file, lpszWorkDir, lstrlen(lpszWorkDir) + 1))
                 return FALSE;
             }
 
@@ -752,7 +659,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
               PUT_SHORT(buffer, 2, seqnum);
               PUT_SHORT(buffer, 4, 8);
               PUT_SHORT(buffer, 6, program->nHotKey);
-              if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 8)) return FALSE;
+              if ((UINT)HFILE_ERROR == _lwrite(file, buffer, 8)) return FALSE;
             }
 
           /* Show command */
@@ -762,7 +669,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
               PUT_SHORT(buffer, 2, seqnum);
               PUT_SHORT(buffer, 4, 8);
               PUT_SHORT(buffer, 6, program->nCmdShow);
-              if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 8)) return FALSE;
+              if ((UINT)HFILE_ERROR == _lwrite(file, buffer, 8)) return FALSE;
             }
 
           seqnum++;
@@ -773,7 +680,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
       PUT_SHORT(buffer, 0, 0xffff);
       PUT_SHORT(buffer, 2, 0xffff);
       PUT_SHORT(buffer, 4, 0x0000);
-      if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 6)) return FALSE;
+      if ((UINT)HFILE_ERROR == _lwrite(file, buffer, 6)) return FALSE;
     }
 
   checksum = GRPFILE_GetChecksum();

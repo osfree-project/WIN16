@@ -34,20 +34,22 @@ The group-file header contains general information about the group file. The GRO
 
 */
 
+#pragma pack( push, 1 )
+
 struct tagGROUPHEADER {
   char  cIdentifier[4];		// Identifies an array of 4 characters. If the file is a valid group file, this array must contain the string "PMCC". 
-  WORD  wCheckSum;		// Specifies the negative sum of all words in the file (Means: sum of all words in file, including wCheckSum, must be zero)
-  WORD  cbGroup;		// Specifies the size of the group file, in bytes, excluding TAGDATA (Can be treated as TAGDATA offset)
-  WORD  nCmdShow;		// Specifies whether Program Manager should display the group in minimized, normal, or maximized form.
-  RECT  rcNormal;		// Specifies the coordinates of the group window (the window in which the group icons appear). It is a rectangular structure.
-  POINT ptMin;			// Specifies the coordinate of the lower-left corner of the group window with respect to the parent window. It is a point structure.
-  WORD  pName;			// Specifies an offset from the beginning of the file to a null-terminated string that specifies the group name.
-  WORD  wLogPixelsX;		// Specifies the horizontal resolution of the display for which the group icons were created.
-  WORD  wLogPixelsY;		// Specifies the vertical resolution of the display for which the group icons were created.
-  BYTE  byBitsPerPixel;		// Specifies the format of the icon bitmaps, in bits per pixel. Error: as WORD in SDK https://jeffpar.github.io/kbarchive/kb/086/Q86334/
-  BYTE  byPlanes;		// Specifies the count of planes in the icon bitmaps. Error: as WORD in SDK https://jeffpar.github.io/kbarchive/kb/086/Q86334/
+  WORD  wCheckSum;		// Negative sum of all words in the file (Means: sum of all words in file, including wCheckSum, must be zero)
+  WORD  cbGroup;		// Size of the group file, in bytes, excluding TAGDATA (Can be treated as TAGDATA offset)
+  WORD  nCmdShow;		// Whether Program Manager should display the group in minimized, normal, or maximized form.
+  RECT  rcNormal;		// Coordinates of the group window (the window in which the group icons appear). It is a rectangular structure.
+  POINT ptMin;			// Coordinate of the lower-left corner of the group window with respect to the parent window. It is a point structure.
+  WORD  pName;			// Offset from the beginning of the file to a null-terminated string that specifies the group name.
+  WORD  wLogPixelsX;		// Horizontal resolution of the display for which the group icons were created.
+  WORD  wLogPixelsY;		// Vertical resolution of the display for which the group icons were created.
+  BYTE  bBitsPerPixel;		// Format of the icon bitmaps, in bits per pixel. Error: as WORD in SDK https://jeffpar.github.io/kbarchive/kb/086/Q86334/
+  BYTE  bPlanes;		// Count of planes in the icon bitmaps. Error: as WORD in SDK https://jeffpar.github.io/kbarchive/kb/086/Q86334/
   WORD  wReserved;		// Must be 0
-  WORD  cItems;			// Specifies the number of ITEMDATA structures in the rgiItems array. This is not necessarily the number of items in the group, because there may be NULL entries in the rgiItems array.
+  WORD  cItems;			// Number of ITEMDATA structures in the rgiItems array. This is not necessarily the number of items in the group, because there may be NULL entries in the rgiItems array.
 };
 
 /* 
@@ -68,7 +70,7 @@ Value	Flag
 0x08	SW_SHOWNA 
 0x09	SW_RESTORE 
 
-rgiItems[cItems]	Specifies an array of ITEMDATA structures. 
+rgiItems[cItems]	Specifies an array of ITEMDATA structures. (@todo offset of item or array of items???)
 
 Item Data
 
@@ -77,17 +79,17 @@ The item data contains information about a particular application and its icon. 
 */
 
 struct tagITEMDATA {
-    POINT pt;			// Specifies the coordinates for the lower-left corner of an icon in the group window. It is a point structure. 
-    WORD  iIcon;		// Specifies the index value for an icon. This value indicates the position of the icon in an executable file. 
-    WORD  cbResource;		// Specifies the count of bytes in the icon resource, which appears in the executable file for the application. 
-    WORD  cbANDPlane;		// Specifies the count of bytes in the AND mask for the icon.
-    WORD  cbXORPlane;		// Specifies the count of bytes in the XOR mask for the icon. 
-    WORD  pHeader;		// Specifies an offset from the beginning of the group file to the resource header for the icon. 
-    WORD  pANDPlane;		// Specifies an offset from the beginning of the group file to the AND mask for the icon. 
-    WORD  pXORPlane;		// Specifies an offset from the beginning of the group file to the XOR mask for the icon. 
-    WORD  pName;		// Specifies an offset from the beginning of the group file to a string that specifies the item name.
-    WORD  pCommand;		// Specifies an offset from the beginning of the group file to a string that specifies the name of the executable file containing the application.
-    WORD  pIconPath;		// Specifies an offset from the beginning of the group file to a string that specifies the path where the file with icon resource is located.
+    POINT pt;			// Coordinates for the lower-left corner of an icon in the group window. It is a point structure. 
+    WORD  iIcon;		// Index value for an icon. This value indicates the position of the icon in an executable file. 
+    WORD  cbResource;		// Count of bytes in the icon resource, which appears in the executable file for the application. 
+    WORD  cbANDPlane;		// Count of bytes in the AND mask for the icon.
+    WORD  cbXORPlane;		// Count of bytes in the XOR mask for the icon. 
+    WORD  pHeader;		// Offset from the beginning of the group file to the resource header for the icon. 
+    WORD  pANDPlane;		// Offset from the beginning of the group file to the AND mask for the icon. 
+    WORD  pXORPlane;		// Offset from the beginning of the group file to the XOR mask for the icon. 
+    WORD  pName;		// Offset from the beginning of the group file to a string that specifies the item name.
+    WORD  pCommand;		// Offset from the beginning of the group file to a string that specifies the name of the executable file containing the application.
+    WORD  pIconPath;		// Offset from the beginning of the group file to a string that specifies the path where the file with icon resource is located.
 };
 
 /*
@@ -100,17 +102,15 @@ has the following form:
 */
 
 struct tagTAGDATA{
-    WORD wID;
-    WORD wItem;
-    WORD cb;
-    BYTE rgb[1];
+    WORD wID;			// type of tag data.
+    WORD wItem;			// index to the item the tag data refers to. If the data is not specific to a particular item, this value is 0xFFFF.
+    WORD cb;			// size of the TAGDATA structure, in bytes.
+    BYTE rgb[1];		// an array of byte values. The length of this array can be found by subtracting 6 from the value of the cb member.
 };
 
 /*
 
-Following are the members in the TAGDATA structure: 
-
-wID	Specifies the type of tag data. This member can have one of the following values: 
+wID	can have one of the following values: 
 
 Value	Meaning
 
@@ -120,21 +120,18 @@ user.
 0x8103	Minimized version of the item is displayed. If this value is specified, the array to which the rgb member 
 points is not present in the structure and the value of the cb member is 0x06. 
 
-wItem	Specifies the index to the item the tag data refers to. If the data is not specific to a particular item, this value is 0xFFFF. 
-cb	Specifies the size of the TAGDATA structure, in bytes. 
-rgb	Specifies an array of byte values. The length of this array can be found by subtracting 6 from the value of the cb 
-member. 
 
 */
 
 struct tagICONRESOURCEHEADER {
+	int xHotSpot;    // Should be 0
+	int yHotSpot;    // Should be 0
+	int cx;          // Icon width
+	int cy;          // Icon height
+	int cbWidth;     // Bytes per row accounting
+					// for WORD alignment
+	BYTE bPlanes;    // Count of planes
+	BYTE bBitsPixel; // Bits per pixel
+};
 
-            int xHotSpot;    // Should be 0
-            int yHotSpot;    // Should be 0
-            int cx;          // Icon width
-            int cy;          // Icon height
-            int cbWidth;     // Bytes per row accounting
-                             // for WORD alignment
-            BYTE bPlanes;    // Count of planes
-            BYTE bBitsPixel; // Bits per pixel
-}
+#pragma pack( pop )
