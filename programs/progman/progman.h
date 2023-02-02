@@ -157,7 +157,7 @@ typedef struct
   BOOL    bNoClose;
   BOOL    bNoSaveSettings;
   BOOL    bNoFileMenu;
-  int     nEditlevel;
+  int     nEditLevel;
   HLOCAL  hGroups;
   HLOCAL  hActiveGroup;
 } GLOBALS;

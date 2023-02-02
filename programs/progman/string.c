@@ -70,7 +70,8 @@ VOID STRING_LoadMenus(VOID)
   if (Globals.bNoRun) EnableMenuItem(hMainMenu, PM_EXECUTE, MF_BYCOMMAND | MF_GRAYED);
   if (Globals.bNoClose) EnableMenuItem(hMainMenu, PM_EXIT, MF_BYCOMMAND | MF_GRAYED);
   if (Globals.bNoSaveSettings) EnableMenuItem(hMainMenu, PM_SAVE_SETTINGS, MF_BYCOMMAND | MF_GRAYED);
-  
+
+ 
   if (Globals.hMDIWnd)
     SendMessage(Globals.hMDIWnd, WM_MDISETMENU,
                 (WPARAM) hMainMenu,

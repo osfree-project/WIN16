@@ -75,8 +75,8 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
   if (Globals.bNoSaveSettings) Globals.bSaveSettings=FALSE;
   Globals.bNoFileMenu =
     GetPrivateProfileInt("Restrictions", "NoFileMenu", FALSE, Globals.lpszIniFile);
-  Globals.nEditlevel =
-    GetPrivateProfileInt("Restrictions", "Editlevel", 0, Globals.lpszIniFile);
+  Globals.nEditLevel =
+    GetPrivateProfileInt("Restrictions", "EditLevel", 0, Globals.lpszIniFile);
 
   /* Load default icons */
   Globals.hMainIcon    = ExtractIcon(Globals.hInstance, Globals.lpszIcoFile, PROGMAN_ICON_INDEX);

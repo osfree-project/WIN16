@@ -43,6 +43,21 @@ static LRESULT CALLBACK GROUP_GroupWndProc(HWND hWnd, UINT msg,
     case WM_CHILDACTIVATE:
     case WM_NCLBUTTONDOWN:
       Globals.hActiveGroup = (HLOCAL) GetWindowLong(hWnd, 0);
+
+		if (Globals.nEditLevel>=1)
+		{
+			EnableMenuItem(Globals.hFileMenu, PM_NEW, MF_BYCOMMAND | MF_GRAYED);
+			EnableMenuItem(Globals.hFileMenu, PM_MOVE, MF_BYCOMMAND | MF_GRAYED);
+			EnableMenuItem(Globals.hFileMenu, PM_COPY, MF_BYCOMMAND | MF_GRAYED);
+			EnableMenuItem(Globals.hFileMenu, PM_DELETE, MF_BYCOMMAND | MF_GRAYED);
+		} else {
+			EnableMenuItem(Globals.hFileMenu, PM_MOVE , MF_ENABLED);
+			EnableMenuItem(Globals.hFileMenu, PM_COPY , MF_ENABLED);
+			EnableMenuItem(Globals.hFileMenu, PM_NEW , MF_ENABLED);
+			EnableMenuItem(Globals.hFileMenu, PM_DELETE , MF_ENABLED);
+		}
+
+		// This is temporary, until implemented
       EnableMenuItem(Globals.hFileMenu, PM_MOVE , MF_GRAYED);
       EnableMenuItem(Globals.hFileMenu, PM_COPY , MF_GRAYED);
       break;

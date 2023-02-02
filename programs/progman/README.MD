@@ -141,11 +141,11 @@ EditLevel=n			Sets restrictions for what users can modify in Program Manager. Yo
 					deleting program items. If you specify this value, the New, Move, Copy, and
 					Delete commands on the File menu are not available at all.
 
-					3 sets all restrictions in EditLevel-2, plus prevents the user from changing
+					3 sets all restrictions in EditLevel=2, plus prevents the user from changing
 					command lines for program items. If you specify this value, the text in the
 					Command Line box in the Properties dialog box cannot be changed.
 
-					4 sets all restrictions in EditLevel-3, plus prevents the user from changing any
+					4 sets all restrictions in EditLevel=3, plus prevents the user from changing any
 					program item information. If you specify this value, none of the areas in the
 					Properties dialog box can be modified. The user can view the dialog box, but all
 					of the areas are dimmed.
