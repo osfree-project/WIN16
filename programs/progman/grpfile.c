@@ -188,7 +188,7 @@ static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, int size,
   /* checksum = GET_USHORT(buffer, 4)   (ignored) */
 
   //extension = buffer + header->cbGroup; //GET_USHORT(buffer, 6);
-  extension = buffer + GET_USHORT(buffer, 6);
+  extension = buffer + header->cbGroup; // GET_USHORT(buffer, 6);
   if (extension == buffer + size) extension = 0;
   else if (extension + 6 > buffer + size) return(0);
 
@@ -275,6 +275,13 @@ static HLOCAL GRPFILE_ScanProgram(LPCSTR buffer, int size,
   x               = GET_SHORT(program_ptr, 0);
   y               = GET_SHORT(program_ptr, 2);
   nIconIndex      = itemdata->iIcon; //GET_USHORT(program_ptr, 4);
+  lpszName        = buffer + itemdata->pName; //GET_USHORT(program_ptr, 18);
+  lpszCmdLine     = buffer + itemdata->pCommand; //GET_USHORT(program_ptr, 20);
+  lpszIconFile    = buffer + itemdata->pIconPath; //GET_USHORT(program_ptr, 22);
+  if (iconinfo_ptr + 6 > buffer + size ||
+      lpszName         > buffer + size ||
+      lpszCmdLine      > buffer + size ||
+      lpszIconFile     > buffer + size) return(0);
 
   /* FIXME is this correct ?? */
   // @todo no. It is incorrect. This is seems to be size of buffer for getting resource from file or buffer size for icon creation.
@@ -329,18 +336,12 @@ static HLOCAL GRPFILE_ScanProgram(LPCSTR buffer, int size,
 							iconinfo.bPlanes, iconinfo.bBitsPerPixel,
 							iconANDbits_ptr, iconXORbits_ptr );
   } else {
-	  MessageBox(Globals.hMainWnd, "Rebuild icons from resources not implemented yet!",
-                                       lpszGrpFile, MB_OK);
+		hIcon = ExtractIcon( Globals.hInstance, lpszIconFile, nIconIndex);
+//	  MessageBox(Globals.hMainWnd, "Rebuild icons from resources not implemented yet!",
+//                                       lpszGrpFile, MB_OK);
   }
 //--------Incorrect code ends here--------------------
 
-  lpszName        = buffer + itemdata->pName; //GET_USHORT(program_ptr, 18);
-  lpszCmdLine     = buffer + itemdata->pCommand; //GET_USHORT(program_ptr, 20);
-  lpszIconFile    = buffer + itemdata->pIconPath; //GET_USHORT(program_ptr, 22);
-  if (iconinfo_ptr + 6 > buffer + size ||
-      lpszName         > buffer + size ||
-      lpszCmdLine      > buffer + size ||
-      lpszIconFile     > buffer + size) return(0);
 
   /* Scan Extensions */
   lpszWorkDir = "";
