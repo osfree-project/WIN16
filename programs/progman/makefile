@@ -27,6 +27,8 @@ TARGETS = $(PATH)$(PROJ1).exe # subdirs
 # @$(SAY) WINRES   $^. $(LOG)
 # @winres $^< -I $(%WATCOM)$(SEP)h$(SEP)win -o $^@
 
+.ico: $(MYDIR)res
+
 $(PATH)$(PROJ1).exe: $(PATH)$(PROJ).exe $(MYDIR)rsrc.rc
  @$(SAY) RESCMP   $^. $(LOG)
- @wrc -q -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -i=$(%WATCOM)$(SEP)h$(SEP)win
+ @wrc -q -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win
