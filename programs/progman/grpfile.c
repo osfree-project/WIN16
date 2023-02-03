@@ -269,6 +269,9 @@ static HLOCAL GRPFILE_ScanProgram(LPCSTR buffer, int size,
   int    nHotKey, nCmdShow;
   CURSORICONINFO iconinfo;
   struct tagITEMDATA * itemdata;
+#ifdef DEBUG
+  char DebugBuffer[200];
+#endif
 
   itemdata = (struct tagITEMDATA *)program_ptr;
 
@@ -282,6 +285,19 @@ static HLOCAL GRPFILE_ScanProgram(LPCSTR buffer, int size,
       lpszName         > buffer + size ||
       lpszCmdLine      > buffer + size ||
       lpszIconFile     > buffer + size) return(0);
+
+#ifdef DEBUG
+  OutputDebugString("Program header\n\r");
+  OutputDebugString("============\n\r");
+  wsprintf(DebugBuffer, "Icon index:\t%d\n\r", itemdata->iIcon);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "Program name:\t%s\n\r", buffer+itemdata->pName);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "Program commandline:\t%s\n\r", buffer+itemdata->pCommand);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "Icon filename:\t%s\n\r", buffer+itemdata->pIconPath);
+  OutputDebugString(DebugBuffer);
+#endif
 
   /* FIXME is this correct ?? */
   // @todo no. It is incorrect. This is seems to be size of buffer for getting resource from file or buffer size for icon creation.
@@ -389,7 +405,7 @@ static HLOCAL GRPFILE_ScanProgram(LPCSTR buffer, int size,
   return (PROGRAM_AddProgram(hGroup, hIcon, lpszName, x, y,
                              lpszCmdLine, lpszIconFile,
                              nIconIndex, lpszWorkDir,
-                             nHotKey, nCmdShow));
+                             nHotKey, SW_SHOWNORMAL /*nCmdShow*/));
 }
 
 /***********************************************************************

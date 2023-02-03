@@ -75,6 +75,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     GetPrivateProfileInt("Settings", "MinOnRun", 0, Globals.lpszIniFile);
   Globals.bSaveSettings =
     GetPrivateProfileInt("Settings", "SaveSettings", 1, Globals.lpszIniFile);
+#ifndef RESTRICTED
   Globals.bNoRun =
     GetPrivateProfileInt("Restrictions", "NoRun", FALSE, Globals.lpszIniFile);
   Globals.bNoClose =
@@ -86,6 +87,14 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     GetPrivateProfileInt("Restrictions", "NoFileMenu", FALSE, Globals.lpszIniFile);
   Globals.nEditLevel =
     GetPrivateProfileInt("Restrictions", "EditLevel", 0, Globals.lpszIniFile);
+#else
+  Globals.bNoRun = TRUE;
+  Globals.bNoClose = TRUE;
+  Globals.bNoSaveSettings = TRUE;
+  Globals.bSaveSettings=FALSE;
+  Globals.bNoFileMenu = TRUE;
+  Globals.nEditLevel = 4; // Maximum level
+#endif
 
   /* Load default icons */
   Globals.hMainIcon    = ExtractIcon(Globals.hInstance, Globals.lpszIcoFile, PROGMAN_ICON_INDEX);

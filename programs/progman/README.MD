@@ -152,3 +152,8 @@ EditLevel=n			Sets restrictions for what users can modify in Program Manager. Yo
 					
 					To enable any of the commands or remove any of the EditLevel= restrictions,
 					either remove the entry from the PROGMAN.INI file, or set the value to 0.
+
+## Build defines
+
+RESTRICTED - produce restricted version (also known as PROGMANR.EXE)
+DEBUG - produce debug version (output debug information to debugger)

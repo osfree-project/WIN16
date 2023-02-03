@@ -65,6 +65,7 @@ static LRESULT CALLBACK PROGRAM_ProgramWndProc(HWND hWnd, UINT msg, WPARAM wPara
         PROGRAM *program;
         PAINTSTRUCT      ps;
         HDC              hdc;
+
         hdc     = BeginPaint(hWnd,&ps);
         program = (PROGRAM *)LocalLock((HLOCAL) GetWindowLong(hWnd, 0));
         if (program->hIcon)
@@ -232,8 +233,7 @@ HLOCAL PROGRAM_AddProgram(HLOCAL hGroup, HICON hIcon, LPCSTR lpszName,
 
   SetWindowLong(program->hWnd, 0, (LONG) hProgram);
 
-  //ShowWindow (program->hWnd, SW_SHOWMINIMIZED);
-  ShowWindow (program->hWnd, program->nCmdShow);
+  ShowWindow (program->hWnd, SW_SHOWMINIMIZED);
   SetWindowPos (program->hWnd, 0, x, y, 0, 0, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE);
   UpdateWindow (program->hWnd);
 
