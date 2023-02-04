@@ -77,6 +77,8 @@ typedef struct
   int      x, y;               /*  0 -  3 */
   int      nIconIndex;         /*  4 -  5 */
   HICON    hIcon;
+  RECT     rcTitle;		// Icon title rectangle
+
   /* icon flags ??? */         /*  6 -  7 */
   /* iconANDsize */            /*  8 -  9 */
   /* iconXORsize */            /* 10 - 11 */
@@ -101,6 +103,7 @@ typedef struct
   /* BitsPerPixel    */        /* 11 - 11 */
 } PROGRAM;
 
+/* This is in-memory program group structure */
 typedef struct
 {
   HLOCAL   hPrior;
@@ -108,11 +111,9 @@ typedef struct
   HWND     hWnd;
   HLOCAL   hGrpFile;
   HLOCAL   hActiveProgram;
-  //BOOL     bFileNameModified;
-  //BOOL     bOverwriteFileOk;
   int      seqnum;
 
-  /**/                         /* Absolute */
+  /* */                         /* Absolute */
   /* magic `PMCC'  */          /*  0 -  3 */
   /* checksum      */          /*  4 -  5 */
   /* Extension ptr */          /*  6 -  7 */
@@ -151,6 +152,13 @@ typedef struct
   HMENU   hLanguageMenu;
   LPCSTR  lpszIniFile;
   LPCSTR  lpszIcoFile;
+  HFONT   hIconFont;			// Font for Icon titles
+  int     cxSpacing, cySpacing;		// Icon spacing
+  int     cyBorder;			// Border size
+  int     cxOffset;			// Offset
+  int     cyOffset;			// Offset
+  int     cxIconSpace;
+  int     cyIconSpace;
   BOOL    bAutoArrange;
   BOOL    bSaveSettings;		// Save settings on exit
   BOOL    bMinOnRun;

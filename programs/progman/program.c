@@ -180,6 +180,8 @@ HLOCAL PROGRAM_AddProgram(HLOCAL hGroup, HICON hIcon, LPCSTR lpszName,
 {
   PROGGROUP *group = (PROGGROUP *)LocalLock(hGroup);
   PROGRAM *program;
+  HDC hdc;
+  HFONT hFont;
   HLOCAL hPrior, *p;
   HLOCAL hProgram  = LocalAlloc(LMEM_FIXED, sizeof(PROGRAM));
   HLOCAL hName     = LocalAlloc(LMEM_FIXED, 1 + lstrlen(lpszName));
@@ -224,18 +226,24 @@ HLOCAL PROGRAM_AddProgram(HLOCAL hGroup, HICON hIcon, LPCSTR lpszName,
   program->hIcon      = hIcon;
   program->nCmdShow   = nCmdShow;
   program->nHotKey    = nHotKey;
+  program->x          = x;
+  program->y          = y;
+  SetRectEmpty(&program->rcTitle);
 
-  program->hWnd =
-    CreateWindow (STRING_PROGRAM_WIN_CLASS_NAME, lpszName,
-                  WS_CHILD | WS_CAPTION,
-                  x, y, CW_USEDEFAULT, CW_USEDEFAULT,
-                  group->hWnd, 0, Globals.hInstance, 0);
+  hdc = GetDC(group->hWnd);
+  hFont = SelectObject(hdc, Globals.hIconFont);
 
-  SetWindowLong(program->hWnd, 0, (LONG) hProgram);
+  program->rcTitle.right = Globals.cxSpacing - (2 * Globals.cxOffset);
+  DrawText(hdc, lpszName, -1, &program->rcTitle, DT_CALCRECT | DT_WORDBREAK | DT_NOPREFIX);
 
-  ShowWindow (program->hWnd, SW_SHOWMINIMIZED);
-  SetWindowPos (program->hWnd, 0, x, y, 0, 0, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE);
-  UpdateWindow (program->hWnd);
+  if (hFont) SelectObject(hdc, hFont);
+  ReleaseDC(group->hWnd, hdc);
+
+  program->rcTitle.right += Globals.cxOffset * 2;
+  program->rcTitle.bottom += Globals.cyBorder * 2;
+
+  OffsetRect(&program->rcTitle, x+(Globals.cxIconSpace/2)-((program->rcTitle.right-program->rcTitle.left)/2),
+                  y + Globals.cyIconSpace - Globals.cyBorder);
 
   return hProgram;
 }

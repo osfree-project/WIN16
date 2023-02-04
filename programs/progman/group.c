@@ -21,6 +21,19 @@
 #include <stdio.h>
 #include <string.h>
 #include "win16.h"
+
+#define GlobalPtrHandle(lp) \
+  ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))
+
+#define     GlobalUnlockPtr(lp)      \
+                GlobalUnlock(GlobalPtrHandle(lp))
+
+#define GlobalFreePtr(lp) \
+  (GlobalUnlockPtr(lp),(BOOL)GlobalFree(GlobalPtrHandle(lp)))
+
+#define GlobalAllocPtr(flags, cb) \
+  (GlobalLock(GlobalAlloc((flags), (cb))))
+
 #include "progman.h"
 
 /***********************************************************************
@@ -31,14 +44,49 @@
 static LRESULT CALLBACK GROUP_GroupWndProc(HWND hWnd, UINT msg,
                                    WPARAM wParam, LPARAM lParam)
 {
-#if 0
-  printf("G %4.4x %4.4x\n", msg, wParam);
-#endif
   switch (msg)
     {
     case WM_SYSCOMMAND:
       if (wParam == SC_CLOSE) wParam = SC_MINIMIZE;
       break;
+
+    case WM_PAINT: {
+      PROGRAM *program;
+      PAINTSTRUCT ps;
+      HLOCAL hProgram;
+      RECT far * rt;
+      HFONT hFont;
+      HDC hdc = BeginPaint(hWnd, &ps);
+
+      SetBkMode(hdc, TRANSPARENT);
+
+      // Select icon font
+      hFont = SelectObject(hdc, Globals.hIconFont);
+
+      for (hProgram = PROGRAM_FirstProgram((HLOCAL) GetWindowLong(hWnd, 0)); hProgram;
+           hProgram = PROGRAM_NextProgram(hProgram))
+      {
+        program = (PROGRAM *)LocalLock(hProgram);
+        DrawIcon(hdc, program->x, program->y, program->hIcon);
+        rt=(RECT far *)GlobalAllocPtr(GPTR, sizeof(RECT));
+        rt->left=program->x;
+        rt->top=program->y+32;
+        rt->right=program->x+32;
+        rt->bottom=program->y+32+32;
+        DrawText(hdc, PROGRAM_ProgramName(hProgram), -1, &program->rcTitle, DT_CENTER|DT_WORDBREAK);
+        GlobalFreePtr(rt);
+        LocalUnlock(hProgram);
+      }
+ 
+      // Restore font
+      if (hFont) SelectObject(hdc, hFont);
+
+      // Restore normal mode
+      SetBkMode(hdc, OPAQUE);
+     
+      EndPaint(hWnd, &ps);
+      break;
+    }
 
     case WM_CHILDACTIVATE:
     case WM_NCLBUTTONDOWN:

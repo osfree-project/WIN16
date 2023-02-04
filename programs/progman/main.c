@@ -26,6 +26,19 @@
 #define OEMRESOURCE
 
 #include "win16.h"
+
+#define GlobalPtrHandle(lp) \
+  ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))
+
+#define     GlobalUnlockPtr(lp)      \
+                GlobalUnlock(GlobalPtrHandle(lp))
+
+#define GlobalFreePtr(lp) \
+  (GlobalUnlockPtr(lp),(BOOL)GlobalFree(GlobalPtrHandle(lp)))
+
+#define GlobalAllocPtr(flags, cb) \
+  (GlobalLock(GlobalAlloc((flags), (cb))))
+
 #include "progman.h"
 
 GLOBALS Globals;
@@ -52,6 +65,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 {
   MSG      msg;
   HDC      hdc;
+  LOGFONT far * lf;
 
   Globals.lpszIniFile         = "progman.ini";
   Globals.lpszIcoFile         = "progman.exe";
@@ -105,12 +119,26 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
   if (!Globals.hGroupIcon)   Globals.hGroupIcon = LoadIcon(Globals.hInstance, MAKEINTRESOURCE(GROUP_ICON_INDEX));
   if (!Globals.hDefaultIcon) Globals.hDefaultIcon = LoadIcon(0, MAKEINTRESOURCE(DEFAULTICON));
 
+  /* Initialize font for Icon drawing */
+  lf=(LOGFONT far *)GlobalAllocPtr(GPTR, sizeof(LOGFONT));
+  SystemParametersInfo(SPI_GETICONTITLELOGFONT, sizeof(lf), (LPWORD)lf, FALSE);
+  Globals.hIconFont = CreateFontIndirect(lf);
+  GlobalFreePtr(lf);
+
+  SystemParametersInfo(SPI_ICONHORIZONTALSPACING, 0, (LPINT)&Globals.cxSpacing, FALSE);
+  SystemParametersInfo(SPI_ICONVERTICALSPACING, 0, (LPINT)&Globals.cySpacing, FALSE);
+  Globals.cyBorder = GetSystemMetrics(SM_CYBORDER);
+  Globals.cxOffset = 2 * GetSystemMetrics(SM_CXBORDER);
+  Globals.cyOffset = 2 * Globals.cyBorder;
+  Globals.cxIconSpace = GetSystemMetrics(SM_CXICON) + 2 * Globals.cxOffset;
+  Globals.cyIconSpace = GetSystemMetrics(SM_CYICON) + 2 * Globals.cyOffset;
+
   /* Register classes */
   if (!prev)
     {
       if (!MAIN_RegisterMainWinClass()) return(FALSE);
       if (!GROUP_RegisterGroupWinClass()) return(FALSE);
-      if (!PROGRAM_RegisterProgramWinClass()) return(FALSE);
+//      if (!PROGRAM_RegisterProgramWinClass()) return(FALSE);
     }
 
   /* Create main window */
@@ -235,6 +263,31 @@ static LRESULT CALLBACK MAIN_MainWndProc(HWND hWnd, UINT msg,
                     MF_BYCOMMAND | (Globals.bSaveSettings ? MF_CHECKED : MF_UNCHECKED));
       break;
 
+#if 0
+    case WM_PAINT: {
+      PROGGROUP *group;
+      PAINTSTRUCT ps;
+      HLOCAL hGroup;
+      RECT far * rt;
+      HDC hdc = BeginPaint(hWnd, &ps);
+      for (hGroup = GROUP_FirstGroup(); hGroup; hGroup = GROUP_NextGroup(hGroup))
+      {
+        group = (PROGGROUP *)LocalLock(hGroup);
+        DrawIcon(hdc, group->iconx, group->icony, Globals.hGroupIcon);
+        rt=(RECT far *)GlobalAllocPtr(GPTR, sizeof(RECT));
+        rt->left=group->iconx;
+        rt->top=group->icony+32;
+        rt->right=group->iconx+32;
+        rt->bottom=group->icony+32+32;
+        DrawText(hdc, GROUP_GroupName(hGroup), -1, rt, DT_CENTER|DT_WORDBREAK);
+        GlobalFreePtr(rt);
+        LocalUnlock(hGroup);
+      }
+     
+      EndPaint(hWnd, &ps);
+      break;
+    }
+#endif
     case WM_COMMAND:
       if (wParam < PM_FIRST_CHILD){
         MAIN_MenuCommand(hWnd, wParam, lParam);
@@ -245,7 +298,7 @@ static LRESULT CALLBACK MAIN_MainWndProc(HWND hWnd, UINT msg,
       PostQuitMessage (0);
       break;
     }
-  return(DefFrameProc(hWnd, Globals.hMDIWnd, msg, wParam, lParam));
+  return(DefWindowProc(hWnd, msg, wParam, lParam)/*DefFrameProc(hWnd, Globals.hMDIWnd, msg, wParam, lParam)*/);
 }
 
 /***********************************************************************
@@ -409,7 +462,7 @@ static ATOM MAIN_RegisterMainWinClass(void)
   class.hInstance     = Globals.hInstance;
   class.hIcon         = Globals.hMainIcon;
   class.hCursor       = LoadCursor (0, IDC_ARROW);
-  class.hbrBackground = GetStockObject (NULL_BRUSH);
+  class.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1); //GetStockObject (NULL_BRUSH);
   class.lpszMenuName  = 0;
   class.lpszClassName = STRING_MAIN_WIN_CLASS_NAME;
 
