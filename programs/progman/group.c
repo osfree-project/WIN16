@@ -177,12 +177,20 @@ HLOCAL GROUP_AddGroup(LPCSTR lpszName, LPCSTR lpszGrpFile, int nCmdShow,
   HLOCAL hGroup   = LocalAlloc(LMEM_FIXED, sizeof(PROGGROUP));
   HLOCAL hName    = LocalAlloc(LMEM_FIXED, 1 + lstrlen(lpszName));
   HLOCAL hGrpFile = LocalAlloc(LMEM_FIXED, 1 + lstrlen(lpszGrpFile));
+
+#ifdef DEBUG
+  OutputDebugString(__FUNCTION__ " Start\n\r");
+#endif
+
   if (!hGroup || !hName || !hGrpFile)
     {
       MAIN_MessageBoxIDS(IDS_OUT_OF_MEMORY, IDS_ERROR, MB_OK);
       if (hGroup)   LocalFree(hGroup);
       if (hName)    LocalFree(hName);
       if (hGrpFile) LocalFree(hGrpFile);
+#ifdef DEBUG
+      OutputDebugString("Error allocate memory\n\r");
+#endif
       return(0);
     }
   _fmemcpy(LocalLock(hName), lpszName, 1 + lstrlen(lpszName));
@@ -237,10 +245,13 @@ HLOCAL GROUP_AddGroup(LPCSTR lpszName, LPCSTR lpszGrpFile, int nCmdShow,
   if (!bSuppressShowWindow) /* FIXME shouldn't be necessary */
 #endif
     {
-      //ShowWindow (group->hWnd, group->nCmdShow);
+      ShowWindow (group->hWnd, group->nCmdShow);
       UpdateWindow (group->hWnd);
     }
 
+#ifdef DEBUG
+      OutputDebugString(__FUNCTION__ "End\n\r");
+#endif
   return(hGroup);
 }
 

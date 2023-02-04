@@ -296,7 +296,7 @@ static LRESULT CALLBACK MAIN_MainWndProc(HWND hWnd, UINT msg,
       PostQuitMessage (0);
       break;
     }
-  return(DefWindowProc(hWnd, msg, wParam, lParam)/*DefFrameProc(hWnd, Globals.hMDIWnd, msg, wParam, lParam)*/);
+  return(DefFrameProc(hWnd, Globals.hMDIWnd, msg, wParam, lParam));
 }
 
 /***********************************************************************

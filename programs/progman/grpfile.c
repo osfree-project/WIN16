@@ -34,9 +34,9 @@
   (((buffer)[(i)] = (s) & 0xff, (buffer)[(i)+1] = ((s) >> 8) & 0xff))
 
 static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HLOCAL *phBuffer,
-				     int *piSize);
-static HLOCAL GRPFILE_ScanGroup(LPCSTR, int, LPCSTR/*, BOOL*/);
-static HLOCAL GRPFILE_ScanProgram(LPCSTR, int, LPCSTR, int,
+				     unsigned int *piSize);
+static HLOCAL GRPFILE_ScanGroup(LPCSTR, unsigned int, LPCSTR/*, BOOL*/);
+static HLOCAL GRPFILE_ScanProgram(LPCSTR, unsigned int, LPCSTR, int,
                                   LPCSTR, HLOCAL,LPCSTR, BOOL);
 static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group);
 
@@ -50,23 +50,47 @@ HLOCAL GRPFILE_ReadGroupFile(LPCSTR lpszPath)
 {
   char   szPath_gr[MAX_PATHNAME_LEN];
   OFSTRUCT dummy;
-  HLOCAL hBuffer, hGroup;
-  int    size;
+  HLOCAL hGroup;
+  HGLOBAL hBuffer;
+  unsigned int size;
+  LPSTR buffer;
+
+#ifdef DEBUG
+  char DebugBuffer[200];
+  OutputDebugString(__FUNCTION__" Start\n\r");
+#endif
 
   /* Read the whole file into a buffer */
   if (!GRPFILE_ReadFileToBuffer(lpszPath, &hBuffer, &size))
     {
       MAIN_MessageBoxIDS_s(IDS_FILE_READ_ERROR_s, lpszPath, IDS_ERROR, MB_OK);
+#ifdef DEBUG
+      OutputDebugString(__FUNCTION__" Error read to buffer\n\r");
+#endif
       return(0);
     }
 
   /* Interpret buffer */
-  hGroup = GRPFILE_ScanGroup(LocalLock(hBuffer), size,
+  buffer = GlobalLock(hBuffer);
+#ifdef DEBUG
+  wsprintf(DebugBuffer, "buffer=%p, size=%d, lpszPath=%p\n\r", buffer, size, lpszPath);
+  OutputDebugString(DebugBuffer);
+#endif
+  hGroup = GRPFILE_ScanGroup(buffer, size,
 			     lpszPath);
   if (!hGroup)
+  {
     MAIN_MessageBoxIDS_s(IDS_GRPFILE_READ_ERROR_s, lpszPath, IDS_ERROR, MB_OK);
+#ifdef DEBUG
+    OutputDebugString(__FUNCTION__" Error parse buffer\n\r");
+#endif
+  }
 
-  LocalFree(hBuffer);
+  GlobalFree(hBuffer);
+
+#ifdef DEBUG
+  OutputDebugString(__FUNCTION__" end\n\r");
+#endif
 
   return(hGroup);
 }
@@ -76,43 +100,59 @@ HLOCAL GRPFILE_ReadGroupFile(LPCSTR lpszPath)
  *           GRPFILE_ReadFileToBuffer
  */
 
-static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HLOCAL *phBuffer,
-				     int *piSize)
+static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HGLOBAL *phBuffer,
+				     unsigned int *piSize)
 {
   UINT   len, size;
   LPSTR  buffer;
-  HLOCAL hBuffer, hNewBuffer;
+  HGLOBAL hBuffer, hNewBuffer;
   HFILE  file;
+
+#ifdef DEBUG
+  OutputDebugString(__FUNCTION__" Start\n\r");
+#endif
 
   file=_lopen(path, OF_READ);
   if (file == HFILE_ERROR) return FALSE;
 
   size = 0;
-  hBuffer = LocalAlloc(LMEM_FIXED, MALLOCHUNK + 1);
-  if (!hBuffer) return FALSE;
-  buffer = LocalLock(hBuffer);
+  hBuffer = GlobalAlloc(GMEM_MOVEABLE, MALLOCHUNK + 1);
+  if (!hBuffer)
+  {
+#ifdef DEBUG
+    OutputDebugString("Error allocate buffer\n\r");
+#endif
+    return FALSE;
+  }
+  buffer = GlobalLock(hBuffer);
 
   // @todo Why allocate by chunk? Is is better read whole file???
   while ((len = _lread(file, buffer + size, MALLOCHUNK))
          == MALLOCHUNK)
     {
       size += len;
-      hNewBuffer = LocalReAlloc(hBuffer, size + MALLOCHUNK + 1,
-				LMEM_MOVEABLE);
+      hNewBuffer = GlobalReAlloc(hBuffer, size + MALLOCHUNK + 1,
+				GMEM_MOVEABLE);
       if (!hNewBuffer)
 	{
-	  LocalFree(hBuffer);
+	  GlobalFree(hBuffer);
+#ifdef DEBUG
+    OutputDebugString("Error reallocate buffer\n\r");
+#endif
 	  return FALSE;
 	}
       hBuffer = hNewBuffer;
-      buffer = LocalLock(hBuffer);
+      buffer = GlobalLock(hBuffer);
   }
 
   _lclose(file);
 
   if (len == (UINT)HFILE_ERROR)
     {
-      LocalFree(hBuffer);
+      GlobalFree(hBuffer);
+#ifdef DEBUG
+      OutputDebugString("Error read to buffer\n\r");
+#endif
       return FALSE;
     }
 	
@@ -128,7 +168,7 @@ static BOOL GRPFILE_ReadFileToBuffer(LPCSTR path, HLOCAL *phBuffer,
  *           GRPFILE_ScanGroup
  */
 
-static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, int size,
+static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, unsigned int size,
                                 LPCSTR lpszGrpFile)
 {
   HLOCAL  hGroup;
@@ -136,18 +176,26 @@ static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, int size,
   LPCSTR  extension;
   LPCSTR  lpszName;
   int     x, y, width, height, iconx, icony, nCmdShow;
-  int     number_of_programs;
-  struct tagGROUPHEADER * header;
+  unsigned int     number_of_programs;
+  struct tagGROUPHEADER far * header;
   WORD    wCurLogPixelsX, wCurLogPixelsY;
   BOOL    bRebuildIcons;		// TRUE if stored in GRP icons need to be rebuilded for current display
 #ifdef DEBUG
   char DebugBuffer[200];
-#endif
-  if (buffer[0] != 'P' || buffer[1] != 'M') return(0);
-  if (buffer[2] == 'C' && buffer[3] == 'C') {}
-  else return(0);
 
-  header=(struct tagGROUPHEADER *)buffer;
+  OutputDebugString(__FUNCTION__ " Start\n\r");
+  wsprintf(DebugBuffer, "size=%d, buffer=%08x, lpszGrpFile=%08x\n\r", size, buffer, lpszGrpFile);
+  OutputDebugString(DebugBuffer);
+#endif
+  if (buffer[0] != 'P' || buffer[1] != 'M' ||
+      buffer[2] != 'C' || buffer[3] != 'C')
+  {
+#ifdef DEBUG
+    OutputDebugString("Error signature\n\r");
+#endif
+    return(0);
+  }
+  header=(struct tagGROUPHEADER far *)buffer;
 
 #ifdef DEBUG
   OutputDebugString("Group header\n\r");
@@ -190,7 +238,13 @@ static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, int size,
   //extension = buffer + header->cbGroup; //GET_USHORT(buffer, 6);
   extension = buffer + header->cbGroup; // GET_USHORT(buffer, 6);
   if (extension == buffer + size) extension = 0;
-  else if (extension + 6 > buffer + size) return(0);
+  else if (extension + 6 > buffer + size) 
+  {
+#ifdef DEBUG
+    OutputDebugString("Error reading extensions\n\r");
+#endif
+    return(0);
+  }
 
   nCmdShow = header->nCmdShow; //GET_USHORT(buffer,  8);
   x        = header->rcNormal.left;//GET_SHORT(buffer,  10);
@@ -201,7 +255,13 @@ static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, int size,
   icony    = header->ptMin.y;//GET_SHORT(buffer,  20);
   lpszName = buffer + header->pName;//GET_USHORT(buffer, 22);
 
-  if (lpszName >= buffer + size) return(0);
+  if (lpszName >= buffer + size)
+  {
+#ifdef DEBUG
+    OutputDebugString("Error: Bad group name offset\n\r");
+#endif
+    return(0);
+  }
 
   bRebuildIcons = (header->wLogPixelsX != Globals.wLogPixelsX) |
 				(header->wLogPixelsY != Globals.wLogPixelsY) |
@@ -221,26 +281,53 @@ static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, int size,
   hGroup = GROUP_AddGroup(lpszName, lpszGrpFile, nCmdShow, x, y,
                           width, height, iconx, icony,
                           TRUE);
-  if (!hGroup) return(0);
+  if (!hGroup) 
+  {
+#ifdef DEBUG
+    OutputDebugString("Error adding group\n\r");
+#endif
+    return(0);
+  }
 
-  //number_of_programs = header->cItems;//GET_USHORT(buffer, 32);
   number_of_programs = header->cItems;//GET_USHORT(buffer, 32);
-  if (2 * number_of_programs + 34 > size) return(0);
+  if (2 * number_of_programs + 34 /*sizeof(struct tagGROUPHEADER)*/ /*34*/ > size)
+  {
+#ifdef DEBUG
+    wsprintf(DebugBuffer, "Error: Bad cItem=%d eof=%d size=%d\n\r", number_of_programs, 2 * number_of_programs + 34, size);
+    OutputDebugString(DebugBuffer);
+#endif
+    return(0);
+  }
   //if (2 * number_of_programs + 34 > size)
   //{
-  //!!! THis is number of items in array not number of programs in group!
+  //!!! This is number of items in array not number of programs in group!
   //    MessageBox(Globals.hMainWnd, "1", "debug", MB_YESNO);
   //    return(0);
   //}
   for (i=0, seqnum=0; i < number_of_programs; i++, seqnum++)
     {
-      LPCSTR program_ptr = buffer + GET_USHORT(buffer, 34 + 2*i);
-      if (program_ptr + 24 > buffer + size) return(0);
-      if (!GET_USHORT(buffer, 34 + 2*i)) continue;
+      LPCSTR program_ptr = buffer + GET_USHORT(buffer, 34 /*sizeof(struct tagGROUPHEADER)*/ /*34*/ + 2*i);
+      if (program_ptr + 24 > buffer + size)
+      {
+#ifdef DEBUG
+        OutputDebugString("Error: Bad program_ptr\n\r");
+#endif
+        return(0);
+      }
+      if (!GET_USHORT(buffer, 34 /*sizeof(struct tagGROUPHEADER)*/ /*34*/ + 2*i)) continue; // empty offset. skip
+#ifdef DEBUG
+  wsprintf(DebugBuffer, "buffer=%p, size=%d, program_ptr=%08x\n\r", (DWORD)buffer, size, (DWORD)program_ptr);
+  OutputDebugString(DebugBuffer);
+  wsprintf(DebugBuffer, "Magic:\t%c%c%c%c\n\r", buffer[0],buffer[1],buffer[2],buffer[3]);
+  OutputDebugString(DebugBuffer);
+#endif
       if (!GRPFILE_ScanProgram(buffer, size, program_ptr, seqnum,
                                extension, hGroup, lpszGrpFile, bRebuildIcons))
         {
           GROUP_DeleteGroup(hGroup);
+#ifdef DEBUG
+          OutputDebugString("Error scan programs\n\r");
+#endif
           return(0);
         }
     }
@@ -256,7 +343,7 @@ static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, int size,
  *           GRPFILE_ScanProgram
  */
 
-static HLOCAL GRPFILE_ScanProgram(LPCSTR buffer, int size,
+static HLOCAL GRPFILE_ScanProgram(LPCSTR buffer, unsigned int size,
                                   LPCSTR program_ptr, int seqnum,
                                   LPCSTR extension, HLOCAL hGroup,
                                   LPCSTR lpszGrpFile, BOOL bRebuildIcons)
@@ -268,23 +355,34 @@ static HLOCAL GRPFILE_ScanProgram(LPCSTR buffer, int size,
   int    x, y, nIconIndex, iconANDsize, iconXORsize;
   int    nHotKey, nCmdShow;
   CURSORICONINFO iconinfo;
-  struct tagITEMDATA * itemdata;
+  struct tagITEMDATA far * itemdata;
 #ifdef DEBUG
   char DebugBuffer[200];
+
+  OutputDebugString(__FUNCTION__ " Start\n\r");
+  wsprintf(DebugBuffer, "buffer=%04x:%04x, size=%d, program_ptr=%04x:%04x\n\r", SELECTOROF(buffer), OFFSETOF(buffer), size, SELECTOROF(program_ptr), OFFSETOF(program_ptr));
+  OutputDebugString(DebugBuffer);
 #endif
 
-  itemdata = (struct tagITEMDATA *)program_ptr;
+  itemdata = (struct tagITEMDATA far *)program_ptr;
 
   x               = GET_SHORT(program_ptr, 0);
   y               = GET_SHORT(program_ptr, 2);
   nIconIndex      = itemdata->iIcon; //GET_USHORT(program_ptr, 4);
+  iconinfo_ptr    = buffer + itemdata->pHeader; //GET_USHORT(program_ptr, 12);
   lpszName        = buffer + itemdata->pName; //GET_USHORT(program_ptr, 18);
   lpszCmdLine     = buffer + itemdata->pCommand; //GET_USHORT(program_ptr, 20);
   lpszIconFile    = buffer + itemdata->pIconPath; //GET_USHORT(program_ptr, 22);
   if (iconinfo_ptr + 6 > buffer + size ||
       lpszName         > buffer + size ||
       lpszCmdLine      > buffer + size ||
-      lpszIconFile     > buffer + size) return(0);
+      lpszIconFile     > buffer + size) 
+  {
+#ifdef DEBUG
+    OutputDebugString("Error offsets\n\r");
+#endif
+    return(0);
+  }
 
 #ifdef DEBUG
   OutputDebugString("Program header\n\r");
