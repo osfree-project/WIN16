@@ -152,16 +152,16 @@ typedef struct
   LPCSTR  lpszIniFile;
   LPCSTR  lpszIcoFile;
   BOOL    bAutoArrange;
-  BOOL    bSaveSettings;
+  BOOL    bSaveSettings;		// Save settings on exit
   BOOL    bMinOnRun;
-  BOOL    bNoRun;
-  BOOL    bNoClose;
-  BOOL    bNoSaveSettings;
-  BOOL    bNoFileMenu;
-  int     nEditLevel;
+  BOOL    bNoRun;			// Disable Run menu item
+  BOOL    bNoClose;			// Prevent progman close
+  BOOL    bNoSaveSettings;		// Disable Save Settings
+  BOOL    bNoFileMenu;			// Remove File Menu
+  int     nEditLevel;			// Level of restrictions
   WORD    wLogPixelsX;			// Current display X resolution
   WORD    wLogPixelsY;			// Current display Y resolution
-  BYTE    bPlanes;				// Current count of planes
+  BYTE    bPlanes;			// Current count of planes
   BYTE    bBitsPixel;			// Current bits per pixel
   HLOCAL  hGroups;
   HLOCAL  hActiveGroup;

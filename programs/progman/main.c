@@ -60,6 +60,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
   Globals.hGroups             = 0;
   Globals.hActiveGroup        = 0;
 
+  /* Read current display information */
   Globals.wLogPixelsX = GetSystemMetrics(SM_CXICON); 
   Globals.wLogPixelsY = GetSystemMetrics(SM_CYICON); 
   // @todo May be incorrect, because progman.ini contains display.drv entry. Is it valuable info about driver???

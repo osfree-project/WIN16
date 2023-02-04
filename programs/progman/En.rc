@@ -419,7 +419,7 @@ MAIN_MENU MENU //LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
    MENUITEM "&Open\tEnter",             PM_OPEN
    MENUITEM "&Move...\tF7",             PM_MOVE,      GRAYED
    MENUITEM "&Copy...\tF8",             PM_COPY,      GRAYED
-   MENUITEM "&Delete\tEntf",           PM_DELETE
+   MENUITEM "&Delete\tDel",             PM_DELETE
    MENUITEM "&Attributes...\tAlt+Enter",       PM_ATTRIBUTES
    MENUITEM SEPARATOR
    MENUITEM "&Run...",          PM_EXECUTE
