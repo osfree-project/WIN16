@@ -65,7 +65,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 {
   MSG      msg;
   HDC      hdc;
-  LOGFONT far * lf;
+  LOGFONT  lf;
 
   Globals.lpszIniFile         = "progman.ini";
   Globals.lpszIcoFile         = "progman.exe";
@@ -120,10 +120,8 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
   if (!Globals.hDefaultIcon) Globals.hDefaultIcon = LoadIcon(0, MAKEINTRESOURCE(DEFAULTICON));
 
   /* Initialize font for Icon drawing */
-  lf=(LOGFONT far *)GlobalAllocPtr(GPTR, sizeof(LOGFONT));
-  SystemParametersInfo(SPI_GETICONTITLELOGFONT, sizeof(lf), (LPWORD)lf, FALSE);
-  Globals.hIconFont = CreateFontIndirect(lf);
-  GlobalFreePtr(lf);
+  SystemParametersInfo(SPI_GETICONTITLELOGFONT, sizeof(lf), (LPWORD)&lf, FALSE);
+  Globals.hIconFont = CreateFontIndirect(&lf);
 
   SystemParametersInfo(SPI_ICONHORIZONTALSPACING, 0, (LPINT)&Globals.cxSpacing, FALSE);
   SystemParametersInfo(SPI_ICONVERTICALSPACING, 0, (LPINT)&Globals.cySpacing, FALSE);

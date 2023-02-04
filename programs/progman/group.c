@@ -39,7 +39,7 @@
 /***********************************************************************
  *
  *           GROUP_GroupWndProc
- */
+*/
 
 static LRESULT CALLBACK GROUP_GroupWndProc(HWND hWnd, UINT msg,
                                    WPARAM wParam, LPARAM lParam)
@@ -54,7 +54,6 @@ static LRESULT CALLBACK GROUP_GroupWndProc(HWND hWnd, UINT msg,
       PROGRAM *program;
       PAINTSTRUCT ps;
       HLOCAL hProgram;
-      RECT far * rt;
       HFONT hFont;
       HDC hdc = BeginPaint(hWnd, &ps);
 
@@ -68,13 +67,7 @@ static LRESULT CALLBACK GROUP_GroupWndProc(HWND hWnd, UINT msg,
       {
         program = (PROGRAM *)LocalLock(hProgram);
         DrawIcon(hdc, program->x, program->y, program->hIcon);
-        rt=(RECT far *)GlobalAllocPtr(GPTR, sizeof(RECT));
-        rt->left=program->x;
-        rt->top=program->y+32;
-        rt->right=program->x+32;
-        rt->bottom=program->y+32+32;
         DrawText(hdc, PROGRAM_ProgramName(hProgram), -1, &program->rcTitle, DT_CENTER|DT_WORDBREAK);
-        GlobalFreePtr(rt);
         LocalUnlock(hProgram);
       }
  
