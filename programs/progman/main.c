@@ -21,7 +21,7 @@
 
 #include <stdio.h>
 //#include <stdlib.h>
-//#include <string.h>
+#include <string.h>	// memset
 
 #define OEMRESOURCE
 
@@ -142,7 +142,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
  *           MAIN_CreateGroups
  *
  * https://jeffpar.github.io/kbarchive/kb/084/Q84925/ Information about Order and Group keys
- *
+ * https://jeffpar.github.io/kbarchive/kb/095/Q95873/ Information about maximum number of groups
  */
 
 static VOID MAIN_CreateGroups(void)
@@ -150,6 +150,10 @@ static VOID MAIN_CreateGroups(void)
   char buffer[BUFFER_SIZE];
   char szPath[MAX_PATHNAME_LEN];
   char key[20], *ptr;
+  int i;
+  BOOL inited[40];
+
+  memset(inited, 0, sizeof(inited));
 
   /* Initialize groups according the `Order' entry of `progman.ini' */
   GetPrivateProfileString("Settings", "Order", "", buffer, sizeof(buffer), Globals.lpszIniFile);
@@ -165,13 +169,27 @@ static VOID MAIN_CreateGroups(void)
       sprintf(key, "Group%d", num);
       GetPrivateProfileString("Groups", key, "", szPath,
                               sizeof(szPath), Globals.lpszIniFile);
-      if (!szPath[0]) continue; // @todo show message box about grp file not found
+      if (!szPath[0]) continue; // @todo show message box about GroupX not found
 
       GRPFILE_ReadGroupFile(szPath);
+      inited[num]=TRUE;
 
       ptr += skip;
     }
-  /* @todo FIXME initialize other groups, not enumerated by `Order' */
+
+  /* Initialize other groups, not enumerated by `Order'. Max is 40 groups (limit set by win 3.1, win 3.0 has no such limit)  */
+  for (i = 0; i < 39; i++ )
+  {
+    if (!inited[i])
+    {
+      sprintf(key, "Group%d", i);
+      GetPrivateProfileString("Groups", key, "", szPath,
+                              sizeof(szPath), Globals.lpszIniFile);
+      if (!szPath[0]) continue; // Group not found
+
+      GRPFILE_ReadGroupFile(szPath);
+    }
+  }
 }
 
 /***********************************************************************
