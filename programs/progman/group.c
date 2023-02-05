@@ -174,10 +174,19 @@ static LRESULT CALLBACK GROUP_GroupWndProc(HWND hWnd, UINT msg,
       }
 
       ReleaseDC(hWnd, hdc);
-      return 0;
+      break;
+//      return 0;
     }
+
+   case WM_LBUTTONDBLCLK:
+      {
+        PROGGROUP   *group   = (PROGGROUP   *)LocalLock((HLOCAL) GetWindowLong(hWnd, 0));
+        PROGRAM_ExecuteProgram(group->hActiveProgram);
+        return(0);
+      }
+
     case WM_CHILDACTIVATE:
-    case WM_NCLBUTTONDOWN:
+//    case WM_NCLBUTTONDOWN:
       Globals.hActiveGroup = (HLOCAL) GetWindowLong(hWnd, 0);
 
 		if (Globals.nEditLevel>=1)
@@ -210,7 +219,7 @@ ATOM GROUP_RegisterGroupWinClass(void)
 {
   WNDCLASS class;
 
-  class.style         = CS_HREDRAW | CS_VREDRAW;
+  class.style         = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
   class.lpfnWndProc   = GROUP_GroupWndProc;
   class.cbClsExtra    = 0;
   class.cbWndExtra    = sizeof(LONG);
