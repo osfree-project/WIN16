@@ -115,9 +115,7 @@ static LRESULT CALLBACK GROUP_GroupWndProc(HWND hWnd, UINT msg,
  // Нажали левую клавишу мыши
     case WM_LBUTTONDOWN:
     {
-      WORD xPos, yPos, nSize;
-      BYTE szBuf[80];
-      HDC hdc;
+      WORD xPos, yPos;
       PROGRAM *program;
       HLOCAL hProgram;
       POINT pt;
@@ -128,16 +126,6 @@ static LRESULT CALLBACK GROUP_GroupWndProc(HWND hWnd, UINT msg,
       xPos   = LOWORD(lParam);
       yPos   = HIWORD(lParam);
 
-      hdc = GetDC(hWnd);
-
-      // Подготавливаем текстовую строку, содержащую
-      // координаты курсора мыши
-//      nSize = wsprintf(szBuf, "(%d, %d)", xPos, yPos);
-
-      // Выводим координаты курсора мыши
-      // в точке, соответствующей положению
-      // курсора мыши 
-//      TextOut(hdc, xPos, yPos, szBuf, nSize);
 
       hGroup = (HLOCAL) GetWindowLong(hWnd, 0);
       for (hProgram = PROGRAM_FirstProgram(hGroup); hProgram;
@@ -173,7 +161,6 @@ static LRESULT CALLBACK GROUP_GroupWndProc(HWND hWnd, UINT msg,
         LocalUnlock(hProgram);
       }
 
-      ReleaseDC(hWnd, hdc);
       break;
 //      return 0;
     }

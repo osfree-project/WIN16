@@ -1,0 +1,6 @@
+MODULE    = expand.exe
+IMPORTS   = setupapi
+
+EXTRADLLFLAGS = -mconsole
+
+C_SRCS = expand.c
