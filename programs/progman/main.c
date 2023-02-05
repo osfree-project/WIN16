@@ -69,6 +69,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 
   Globals.lpszIniFile         = "progman.ini";
   Globals.lpszIcoFile         = "progman.exe";
+  Globals.lpszHlpFile         = "progman.hlp";
 
   Globals.hInstance           = hInstance;
   Globals.hGroups             = 0;
@@ -413,12 +414,12 @@ static VOID MAIN_MenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
       /* Menu Help */
     case PM_CONTENTS:
-      if (!WinHelp(Globals.hMainWnd, "progman.hlp", HELP_CONTENTS, 0))
+      if (!WinHelp(Globals.hMainWnd, Globals.lpszHlpFile, HELP_CONTENTS, 0))
         MAIN_MessageBoxIDS(IDS_WINHELP_ERROR, IDS_ERROR, MB_OK);
       break;
 
     case PM_HELPONHELP:
-      if (!WinHelp(Globals.hMainWnd, "progman.hlp", HELP_HELPONHELP, 0))
+      if (!WinHelp(Globals.hMainWnd, Globals.lpszHlpFile, HELP_HELPONHELP, 0))
         MAIN_MessageBoxIDS(IDS_WINHELP_ERROR, IDS_ERROR, MB_OK);
       break;
 

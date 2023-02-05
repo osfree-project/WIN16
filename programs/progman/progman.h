@@ -149,9 +149,9 @@ typedef struct
   HMENU   hFileMenu;
   HMENU   hOptionMenu;
   HMENU   hWindowsMenu;
-  HMENU   hLanguageMenu;
-  LPCSTR  lpszIniFile;
-  LPCSTR  lpszIcoFile;
+  LPCSTR  lpszIniFile;			// Name of INI file
+  LPCSTR  lpszIcoFile;			// Name of Icon file
+  LPCSTR  lpszHlpFile;			// Name of HLP file
   HFONT   hIconFont;			// Font for Icon titles
   int     cxSpacing, cySpacing;		// Icon spacing
   int     cyBorder;			// Border size

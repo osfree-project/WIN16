@@ -59,7 +59,6 @@ VOID STRING_LoadMenus(VOID)
   Globals.hFileMenu     = GetSubMenu(hMainMenu, 0);
   Globals.hOptionMenu   = GetSubMenu(hMainMenu, 1);
   Globals.hWindowsMenu  = GetSubMenu(hMainMenu, 2);
-  Globals.hLanguageMenu = GetSubMenu(hMainMenu, 3);
 
   /* Apply restrictions */
   if (Globals.bNoFileMenu)
