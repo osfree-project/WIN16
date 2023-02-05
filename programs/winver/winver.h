@@ -1,0 +1,1 @@
+#define IDS_PACKAGE_NAME 101

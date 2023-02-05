@@ -29,15 +29,24 @@ To send email to the maintainer of the Willows Twin Libraries.
  */
 
 #include "windows.h"
-#include "windowsx.h"
+//#include "windowsx.h"
 #include "commdlg.h"
-#include "Log.h"
-#include "Dialog.h"
+//#include "Log.h"
+//#include "Dialog.h"
 #include "About.h"
 
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+
+#define TWIN_PLATFORM	"DOS"
+#define GET_WM_COMMAND_ID(wp, lp)                   (wp)
+
+typedef struct {
+	LPSTR	lpszCaption;
+	LPSTR	lpszText;
+	HICON	hIcon;
+} SHELLABOUTDATA;
 
 typedef struct {
 	char *win_version;
@@ -48,7 +57,7 @@ typedef struct {
 
 TWIN_VersionStructure * TWIN_GetVersionInfo();
 
-static BOOL ShellAboutHandler(HWND, unsigned, WPARAM, LPARAM);
+static BOOL FAR PASCAL ShellAboutHandler(HWND, unsigned, WPARAM, LPARAM);
 
 void
 ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText,
@@ -61,7 +70,8 @@ ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText,
 	
 
 	if(hWnd)
-		hInst = GetWindowInstance(hWnd);
+//		hInst = GetWindowInstance(hWnd);
+		hInst = ((HMODULE)GetWindowWord(hWnd,GWW_HINSTANCE));
 	else    hInst = 0;
 
 	lpProc= MakeProcInstance((FARPROC)ShellAboutHandler,hInst);
@@ -79,8 +89,6 @@ ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText,
 		);
 	FreeProcInstance(lpProc); 
 }
-
-DWORD TWIN_GetModuleFileName(HMODULE ,LPTSTR , DWORD ,int );
 
 static BOOL FAR PASCAL
 ShellAboutHandler(HWND hDlg, unsigned msg, WPARAM wParam, LPARAM lParam)
@@ -115,7 +123,7 @@ ShellAboutHandler(HWND hDlg, unsigned msg, WPARAM wParam, LPARAM lParam)
 		/************************************************/
 		/*	Twin specific 5 lines			*/
 		/************************************************/
-		TWIN_GetModuleFileName(0,abouttext,256,0);
+		GetModuleFileName(0,abouttext,256);
 
 		/* add any shell about specific string */
 		SendDlgItemMessage(hDlg, SAB_USER, WM_SETTEXT, 0,

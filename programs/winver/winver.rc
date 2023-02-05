@@ -1,0 +1,6 @@
+#include "winver.h"
+
+STRINGTABLE PRELOAD
+BEGIN
+    IDS_PACKAGE_NAME, "Windows Version#"
+END

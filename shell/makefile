@@ -7,7 +7,7 @@
 PROJ     = shell
 TRGT     = $(PROJ).dll
 DESC     = Windows Shell API Library
-srcfiles = $(p)Registry$(e)
+srcfiles = $(p)About$(e) $(p)Registry$(e) 
 # linking dll file
 DLL     = 1
 EXPORTS = &

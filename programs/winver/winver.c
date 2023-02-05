@@ -18,17 +18,17 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-//#include "config.h"
 #include "windows.h"
+#include "winver.h"
 
 int WINAPI ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText,
                 HICON hIcon);
 
 int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 {
-   return ShellAbout(NULL, ""/*PACKAGE_NAME*/, ""/*PACKAGE_STRING*/, 0);
+   char szTitle[50];
+
+   LoadString(inst, IDS_PACKAGE_NAME, szTitle, 50);
+   return ShellAbout(NULL, szTitle, NULL, NULL);
 }
 
-/* Local Variables:     */
-/* c-files style: "GNU" */
-/* End:                 */
