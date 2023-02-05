@@ -3,8 +3,8 @@
 # (c) osFree project,
 #
 
-PROJ  = winemine1
-PROJ1 = winemine
+PROJ  = winmine1
+PROJ1 = winmine
 TRGT = $(PROJ1).exe
 DESC = Windows Mine Sweeper
 srcfiles = $(p)winemine$(e) $(p)winemdlg$(e)
