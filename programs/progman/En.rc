@@ -448,7 +448,7 @@ POPUP "&Help" {
    POPUP "&Info..." {
      MENUITEM "&License",        PM_LICENSE
      MENUITEM "&NO WARRANTY",    PM_NO_WARRANTY
-     MENUITEM "&About WINE",     PM_ABOUT_WINE
+     MENUITEM "&About Program Manager",     PM_ABOUT_WINE
    }
  }
 }

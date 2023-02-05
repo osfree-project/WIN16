@@ -44,6 +44,10 @@
 static LRESULT CALLBACK GROUP_GroupWndProc(HWND hWnd, UINT msg,
                                    WPARAM wParam, LPARAM lParam)
 {
+#ifdef DEBUG
+  char DebugBuffer[200];
+#endif
+
   switch (msg)
     {
     case WM_SYSCOMMAND:
@@ -55,7 +59,12 @@ static LRESULT CALLBACK GROUP_GroupWndProc(HWND hWnd, UINT msg,
       PAINTSTRUCT ps;
       HLOCAL hProgram;
       HFONT hFont;
-      HDC hdc = BeginPaint(hWnd, &ps);
+      HDC hdc;
+#ifdef DEBUG
+//  wsprintf(DebugBuffer, "hGroup=%04x:%04x\n\r", SELECTOROF(GetWindowLong(hWnd, 0)), OFFSETOF(GetWindowLong(hWnd, 0)));
+//  OutputDebugString(DebugBuffer);
+#endif
+      hdc = BeginPaint(hWnd, &ps);
 
       SetBkMode(hdc, TRANSPARENT);
 
@@ -66,6 +75,8 @@ static LRESULT CALLBACK GROUP_GroupWndProc(HWND hWnd, UINT msg,
            hProgram = PROGRAM_NextProgram(hProgram))
       {
         program = (PROGRAM *)LocalLock(hProgram);
+//  wsprintf(DebugBuffer, "program=%04x:%04x\n\r", SELECTOROF(program), OFFSETOF(program));
+//  OutputDebugString(DebugBuffer);
         DrawIcon(hdc, program->x, program->y, program->hIcon);
         DrawText(hdc, PROGRAM_ProgramName(hProgram), -1, &program->rcTitle, DT_CENTER|DT_WORDBREAK);
         LocalUnlock(hProgram);
@@ -76,9 +87,21 @@ static LRESULT CALLBACK GROUP_GroupWndProc(HWND hWnd, UINT msg,
 
       // Restore normal mode
       SetBkMode(hdc, OPAQUE);
-     
+
       EndPaint(hWnd, &ps);
-      break;
+      return(0);
+    }
+
+    case WM_CREATE:
+    {
+      /* Associate child window data with window */
+      SetWindowLong(hWnd, 0, lParam);
+#ifdef DEBUG
+  wsprintf(DebugBuffer, "hGroup=%04x:%04x\n\r", SELECTOROF(lParam), OFFSETOF(lParam));
+  OutputDebugString(DebugBuffer);
+#endif
+
+      return 0;
     }
 
     case WM_CHILDACTIVATE:
@@ -118,7 +141,7 @@ ATOM GROUP_RegisterGroupWinClass(void)
   class.style         = CS_HREDRAW | CS_VREDRAW;
   class.lpfnWndProc   = GROUP_GroupWndProc;
   class.cbClsExtra    = 0;
-  class.cbWndExtra    = sizeof(int);
+  class.cbWndExtra    = sizeof(LONG);
   class.hInstance     = Globals.hInstance;
   class.hIcon         = Globals.hGroupIcon;
   class.hCursor       = LoadCursor (0, IDC_ARROW);
@@ -179,6 +202,7 @@ HLOCAL GROUP_AddGroup(LPCSTR lpszName, LPCSTR lpszGrpFile, int nCmdShow,
   HLOCAL hGrpFile = LocalAlloc(LMEM_FIXED, 1 + lstrlen(lpszGrpFile));
 
 #ifdef DEBUG
+  char DebugBuffer[200];
   OutputDebugString(__FUNCTION__ " Start\n\r");
 #endif
 
@@ -237,9 +261,19 @@ HLOCAL GROUP_AddGroup(LPCSTR lpszName, LPCSTR lpszGrpFile, int nCmdShow,
   cs.style   = 0;
   cs.lParam  = (LONG) hGroup;
 
+#ifdef DEBUG
+  wsprintf(DebugBuffer, "hGroup=%04x:%04x\n\r", SELECTOROF(hGroup), OFFSETOF(hGroup));
+  OutputDebugString(DebugBuffer);
+#endif
+
   group->hWnd = (HWND)SendMessage(Globals.hMDIWnd, WM_MDICREATE, 0, (LPARAM)&cs);
 
-  SetWindowLong(group->hWnd, 0, (LONG) hGroup);
+  SetWindowLong(group->hWnd, 0, (UINT) hGroup);
+#ifdef DEBUG
+//  wsprintf(DebugBuffer, "hGroup=%04x:%04x\n\r", SELECTOROF(GetWindowLong(hWnd, 0)), OFFSETOF(GetWindowLong(hWnd, 0)));
+// OutputDebugString(DebugBuffer);
+//  if ((UINT)hGroup!=GetWindowLong(group->hWnd, 0)) return(0);
+#endif
 
 #if 1
   if (!bSuppressShowWindow) /* FIXME shouldn't be necessary */
