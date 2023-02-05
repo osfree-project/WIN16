@@ -60,6 +60,7 @@ static LRESULT CALLBACK GROUP_GroupWndProc(HWND hWnd, UINT msg,
       HLOCAL hProgram;
       HFONT hFont;
       HDC hdc;
+      HLOCAL hGroup;
 #ifdef DEBUG
 //  wsprintf(DebugBuffer, "hGroup=%04x:%04x\n\r", SELECTOROF(GetWindowLong(hWnd, 0)), OFFSETOF(GetWindowLong(hWnd, 0)));
 //  OutputDebugString(DebugBuffer);
@@ -71,19 +72,26 @@ static LRESULT CALLBACK GROUP_GroupWndProc(HWND hWnd, UINT msg,
       // Select icon font
       hFont = SelectObject(hdc, Globals.hIconFont);
 
-      for (hProgram = PROGRAM_FirstProgram((HLOCAL) GetWindowLong(hWnd, 0)); hProgram;
+      hGroup = (HLOCAL) GetWindowLong(hWnd, 0);
+      for (hProgram = PROGRAM_FirstProgram(hGroup); hProgram;
            hProgram = PROGRAM_NextProgram(hProgram))
       {
+        PROGGROUP   *group   = (PROGGROUP   *)LocalLock(hGroup);
         program = (PROGRAM *)LocalLock(hProgram);
-//  wsprintf(DebugBuffer, "program=%04x:%04x\n\r", SELECTOROF(program), OFFSETOF(program));
-//  OutputDebugString(DebugBuffer);
         DrawIcon(hdc, program->x, program->y, program->hIcon);
+        if (group->hActiveProgram == hProgram)
+        {
+	   FillRect(hdc, &program->rcTitle, CreateSolidBrush(GetSysColor(COLOR_ACTIVECAPTION)));
+        }
+
         DrawText(hdc, PROGRAM_ProgramName(hProgram), -1, &program->rcTitle, DT_CENTER|DT_WORDBREAK);
         LocalUnlock(hProgram);
+        LocalUnlock(hGroup);
       }
  
       // Restore font
       if (hFont) SelectObject(hdc, hFont);
+      GetStockObject(WHITE_BRUSH);
 
       // Restore normal mode
       SetBkMode(hdc, OPAQUE);
@@ -104,6 +112,70 @@ static LRESULT CALLBACK GROUP_GroupWndProc(HWND hWnd, UINT msg,
       return 0;
     }
 
+ // Нажали левую клавишу мыши
+    case WM_LBUTTONDOWN:
+    {
+      WORD xPos, yPos, nSize;
+      BYTE szBuf[80];
+      HDC hdc;
+      PROGRAM *program;
+      HLOCAL hProgram;
+      POINT pt;
+      RECT rt;
+      HLOCAL hGroup;
+
+      // Сохраняем координаты курсора мыши
+      xPos   = LOWORD(lParam);
+      yPos   = HIWORD(lParam);
+
+      hdc = GetDC(hWnd);
+
+      // Подготавливаем текстовую строку, содержащую
+      // координаты курсора мыши
+//      nSize = wsprintf(szBuf, "(%d, %d)", xPos, yPos);
+
+      // Выводим координаты курсора мыши
+      // в точке, соответствующей положению
+      // курсора мыши 
+//      TextOut(hdc, xPos, yPos, szBuf, nSize);
+
+      hGroup = (HLOCAL) GetWindowLong(hWnd, 0);
+      for (hProgram = PROGRAM_FirstProgram(hGroup); hProgram;
+           hProgram = PROGRAM_NextProgram(hProgram))
+      {
+        program = (PROGRAM *)LocalLock(hProgram);
+        pt.x=xPos;
+        pt.y=yPos;
+        rt.left=program->x;
+        rt.top=program->y;
+        rt.right=program->x+32;
+        rt.bottom=program->y+32;
+        if (PtInRect(&program->rcTitle, pt)||PtInRect(&rt, pt)) 
+        {
+          PROGGROUP   *group   = (PROGGROUP   *)LocalLock(hGroup);
+          group->hActiveProgram = hProgram;
+          LocalUnlock(hGroup);
+          InvalidateRect(hWnd, NULL, TRUE);
+
+		if (Globals.nEditLevel>=2)
+		{
+			EnableMenuItem(Globals.hFileMenu, PM_NEW, MF_BYCOMMAND | MF_GRAYED);
+			EnableMenuItem(Globals.hFileMenu, PM_MOVE, MF_BYCOMMAND | MF_GRAYED);
+			EnableMenuItem(Globals.hFileMenu, PM_COPY, MF_BYCOMMAND | MF_GRAYED);
+			EnableMenuItem(Globals.hFileMenu, PM_DELETE, MF_BYCOMMAND | MF_GRAYED);
+		} else {
+			EnableMenuItem(Globals.hFileMenu, PM_MOVE , MF_ENABLED);
+			EnableMenuItem(Globals.hFileMenu, PM_COPY , MF_ENABLED);
+			EnableMenuItem(Globals.hFileMenu, PM_NEW , MF_ENABLED);
+			EnableMenuItem(Globals.hFileMenu, PM_DELETE , MF_ENABLED);
+		}
+        }
+        LocalUnlock(hProgram);
+      }
+
+      ReleaseDC(hWnd, hdc);
+      return 0;
+    }
     case WM_CHILDACTIVATE:
     case WM_NCLBUTTONDOWN:
       Globals.hActiveGroup = (HLOCAL) GetWindowLong(hWnd, 0);
