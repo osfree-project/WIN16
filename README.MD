@@ -10,7 +10,7 @@ heavy used to reconstruct Kernel internal structure.
 Because original OS/2 uses mostly unchanged Windows so you can consider
 this is reimplementation of vanilla Windows 3.x. This means most of
 code is written to start without any underline system, like Win32 or
-XFree or something like this. KRNL386/386 must start from pure DOS and
+XFree or something like this. KRNL286/386 must start from pure DOS and
 start working.
 
 Most of initialization code and module manager are from HX-DOS. HX-DOS
@@ -28,3 +28,32 @@ level dll also not implemented.
 First goal is to correctly start simple program like WinVer or something like this.
 This means KERNEL must correctly load and initialise drivers (system, mouse, keyboard)
 and GDI.EXE with USER.EXE.
+
+### Dirs
+
+bin
+bmp			Icont from TWIN
+debugger
+dll
+dlls		Standard Windows DLLs
+doc			Some documentation. Mostly outdated and for reference only.
+dosx		286 DOS Extender
+drivers		Standard Windows drivers
+fonts		FONT from Wine
+include		Include files. For reference only.
+intp32		Seems to be 80386 emulator
+kernel		KERNEL.EXE/KRNL286.EXE/KRNL386.EXE - new kernel
+logo		Boot logo
+memory
+mmsystem
+mouse		Mouse driver using DOS Mouse Driver
+multimedia
+pal			Platform Abstration Layer - drivers for X11
+programs	Standard Windows programs
+readline
+samples		Various Sample programs
+template
+tests		WIN16 unit tests
+utilities
+win			WIN.COM - Windows loader
+winkrnl		TWIN Windows kernel, gdi, user. For reference only. Current kernel in kernel directory.
