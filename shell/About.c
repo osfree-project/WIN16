@@ -48,18 +48,11 @@ typedef struct {
 	HICON	hIcon;
 } SHELLABOUTDATA;
 
-typedef struct {
-	char *win_version;
-	char *ver_info;
-	char *bld_info;
-	char *win_info;
-} TWIN_VersionStructure;
 
-TWIN_VersionStructure * TWIN_GetVersionInfo();
 
 static BOOL FAR PASCAL ShellAboutHandler(HWND, unsigned, WPARAM, LPARAM);
 
-void
+void WINAPI
 ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText,
 		HICON hIcon)
 {
@@ -98,8 +91,8 @@ ShellAboutHandler(HWND hDlg, unsigned msg, WPARAM wParam, LPARAM lParam)
 	HDC	        hDC;
 	char		abouttext[256];
 	char		dirname[256];
+	DWORD		version;
 	int		bpp;
-	TWIN_VersionStructure *vs = TWIN_GetVersionInfo();
 
 	switch(msg) {
 	case WM_INITDIALOG:
@@ -156,13 +149,14 @@ ShellAboutHandler(HWND hDlg, unsigned msg, WPARAM wParam, LPARAM lParam)
 		bpp = GetDeviceCaps(hDC, BITSPIXEL);
 		ReleaseDC(hDlg, hDC);
 
-		sprintf(abouttext,"Mode: %s  %d bpp  %s",
-			vs->win_info, bpp, vs->bld_info);
-		SendDlgItemMessage(hDlg, SAB_TERM, WM_SETTEXT, 0,
-			(LONG)abouttext);
 
 		/* add the current mode... */
-		sprintf(abouttext,"Version:%s", vs->ver_info);
+		version = GetVersion();
+		sprintf(abouttext,"Version: %s %d.%d build %d) ",
+			"Win32",
+			LOBYTE(LOWORD(version)), HIBYTE(LOWORD(version)),
+			HIWORD(version)
+			);
 		SendDlgItemMessage(hDlg, SAB_VERSION, WM_SETTEXT, 0,
 			(LONG)abouttext);
 	

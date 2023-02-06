@@ -78,6 +78,8 @@ To send email to the maintainer of the Willows Twin Libraries.
 //#include "kerndef.h"
 //#include "KrnAtoms.h"
 
+#include "atomex.h"
+
 static ATOMTABLE AtomTable;
 
 static BOOL fRegInitialized = FALSE;
