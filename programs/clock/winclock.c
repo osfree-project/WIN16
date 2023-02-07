@@ -30,10 +30,11 @@
 #include "windows.h"
 #include "winclock.h"
 
+#include <dos.h>
 #define FaceColor (GetSysColor(COLOR_WINDOWTEXT))
 #define HandColor (GetSysColor(COLOR_WINDOWTEXT))
 #define TickColor (GetSysColor(COLOR_WINDOWTEXT))
-#define ShadowColor (GetSysColor(COLOR_WINDOWTEXT))
+#define ShadowColor (GetSysColor(COLOR_GRAYTEXT))
 #define BackgroundColor (GetSysColor(COLOR_WINDOW))
 
 #define M_PI 3.14
@@ -142,15 +143,15 @@ static void PositionHands(const POINT* centre, int radius, BOOL bSeconds)
 {
 //    SYSTEMTIME st;
     double hour, minute, second;
+    struct dostime_t t;
+
+    _dos_gettime (&t);
+    hour = t.hour;
+	minute = t.minute;
+	second = t.second;
 
     /* 0 <= hour,minute,second < 2pi */
-    /* Adding the millisecond count makes the second hand move more smoothly */
 
-    //GetLocalTime(&st);
-
-    second = 10 ;
-    minute = 30;
-    hour   = 3;
 
     PositionHand(centre, radius * 0.5,  hour/12   * 2*M_PI, &HourHand);
     PositionHand(centre, radius * 0.65, minute/60 * 2*M_PI, &MinuteHand);
@@ -185,15 +186,10 @@ HFONT SizeFont(HDC dc, int x, int y, BOOL bSeconds, const LOGFONT* font)
     HFONT oldFont, newFont;
     char szTime[255];
     int chars;
+    struct dostime_t t;
 
-//    chars = GetTimeFormat(LOCALE_USER_DEFAULT, bSeconds ? 0 : TIME_NOSECONDS, NULL,
-                           //NULL, szTime, ARRAY_SIZE(szTime));
-    //if (!chars)
-	//return 0;
-
-    //--chars;
-
-    lstrcpy(szTime, "11:11:11");
+    _dos_gettime (&t);
+    sprintf(szTime, "%02d:%02d:%02d", t.hour, t.minute, t.second);
 	chars=lstrlen(szTime);
 
     lf = *font;
@@ -220,14 +216,10 @@ void DigitalClock(HDC dc, int x, int y, BOOL bSeconds, HFONT font)
     HFONT oldFont;
     char szTime[255];
     int chars;
+    struct dostime_t t;
 
-//    chars = GetTimeFormat(LOCALE_USER_DEFAULT, bSeconds ? 0 : TIME_NOSECONDS, NULL,
-//                           NULL, szTime, ARRAY_SIZE(szTime));
-//    if (!chars)
-	//return;
-//    --chars;
-
-    lstrcpy(szTime, "11:11:11");
+    _dos_gettime (&t);
+    sprintf(szTime, "%02d:%02d:%02d", t.hour, t.minute, t.second);
 	chars=lstrlen(szTime);
 
     oldFont = SelectObject(dc, font);
