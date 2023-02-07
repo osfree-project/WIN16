@@ -6,7 +6,7 @@
 
 # First directory must be UNI which produces C/C++ header files
 
-DIRS = progman winver winmine clock
+DIRS = progman winver winmine clock calc
 
 !include $(%ROOT)tools/mk/all.mk
 
