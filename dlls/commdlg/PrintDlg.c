@@ -29,6 +29,7 @@ To send email to the maintainer of the Willows Twin Libraries.
  */
 
 #include "windows.h"
+#include "drivinit.h"
 //#include "windowsx.h"
 #include "dlgs.h"
 #include "print.h"
