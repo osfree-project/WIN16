@@ -1,0 +1,75 @@
+# This Makefile will build the WinFile Classic application.
+
+# Object files to create for the executable
+OBJS = dbg.o \
+       lfn.o \
+       lfnmisc.o \
+       numfmt.o \
+       res.o \
+       suggest.o \
+       tbar.o \
+       treectl.o \
+       wfassoc.o \
+       wfchgnot.o \
+       wfcomman.o \
+       wfcopy.o \
+       wfdir.o \
+       wfdirrd.o \
+       wfdirsrc.o \
+       wfdlgs.o \
+       wfdlgs2.o \
+       wfdlgs3.o \
+       wfdos.o \
+       wfdrives.o \
+       wfext.o \
+       wffile.o \
+       wfinfo.o \
+       wfinit.o \
+       wfmem.o \
+       wfprint.o \
+       wfsearch.o \
+       wftree.o \
+       wfutil.o \
+       winfile.o \
+       wnetcaps.o
+
+# Warnings to be raised by the C compiler
+WARNS =
+
+# Names of tools to use when building
+CC = gcc
+RC = windres
+EXE = WinFile.exe
+
+# Compiler flags
+CFLAGS = -O2 -std=c99 -D UNICODE -D _UNICODE -D _WIN32_IE=0x0400 -D WINVER=0x0400 -D FASTMOVE -D LFNCLIPBOARD -D MEMDOUBLE -D USELASTDOT ${WARNS}
+
+# Linker flags
+LDFLAGS = -s -lgdi32 -lcomctl32 -Wl,--subsystem,windows
+
+.PHONY: all clean deps
+
+# Build executable by default
+all: ${EXE}
+
+# Delete all build output
+clean:
+	if exist ${EXE}  del /q ${EXE}
+	if exist *.obj   del /q *.obj
+
+# Compile object files for executable
+%.o: %.c
+	${CC} ${CFLAGS} -c "$<" -o "$@"
+
+# Build the resources
+res.o: res.rc *.bmp *.cur *.ico
+	${RC} -i "$<" -o "$@"
+
+# Build the exectuable
+${EXE}: ${OBJS}
+	${CC} -o "$@" ${OBJS} ${LDFLAGS}
+
+deps:
+	${CC} -MM *.c > Makefile.deps
+
+-include Makefile.deps

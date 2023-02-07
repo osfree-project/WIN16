@@ -1,0 +1,59 @@
+dbg.o: dbg.c winfile.h mpr.h fmifs.h suggest.h numfmt.h wfexti.h wfhelp.h \
+ wfmem.h wfinfo.h wfdlgs.h dbg.h
+lfn.o: lfn.c winfile.h mpr.h fmifs.h suggest.h numfmt.h wfexti.h wfhelp.h \
+ wfmem.h wfinfo.h wfdlgs.h lfn.h wfcopy.h
+lfnmisc.o: lfnmisc.c winfile.h mpr.h fmifs.h suggest.h numfmt.h wfexti.h \
+ wfhelp.h wfmem.h wfinfo.h wfdlgs.h lfn.h
+numfmt.o: numfmt.c winfile.h mpr.h fmifs.h suggest.h numfmt.h wfexti.h \
+ wfhelp.h wfmem.h wfinfo.h wfdlgs.h
+suggest.o: suggest.c winfile.h mpr.h fmifs.h suggest.h numfmt.h wfexti.h \
+ wfhelp.h wfmem.h wfinfo.h wfdlgs.h suggest.db
+tbar.o: tbar.c winfile.h mpr.h fmifs.h suggest.h numfmt.h wfexti.h \
+ wfhelp.h wfmem.h wfinfo.h wfdlgs.h
+treectl.o: treectl.c winfile.h mpr.h fmifs.h suggest.h numfmt.h wfexti.h \
+ wfhelp.h wfmem.h wfinfo.h wfdlgs.h treectl.h lfn.h wfcopy.h dbg.h
+wfassoc.o: wfassoc.c winfile.h mpr.h fmifs.h suggest.h numfmt.h wfexti.h \
+ wfhelp.h wfmem.h wfinfo.h wfdlgs.h lfn.h
+wfchgnot.o: wfchgnot.c winfile.h mpr.h fmifs.h suggest.h numfmt.h \
+ wfexti.h wfhelp.h wfmem.h wfinfo.h wfdlgs.h
+wfcomman.o: wfcomman.c winfile.h mpr.h fmifs.h suggest.h numfmt.h \
+ wfexti.h wfhelp.h wfmem.h wfinfo.h wfdlgs.h lfn.h wfcopy.h wnetcaps.h
+wfcopy.o: wfcopy.c winfile.h mpr.h fmifs.h suggest.h numfmt.h wfexti.h \
+ wfhelp.h wfmem.h wfinfo.h wfdlgs.h lfn.h wfcopy.h
+wfdir.o: wfdir.c winfile.h mpr.h fmifs.h suggest.h numfmt.h wfexti.h \
+ wfhelp.h wfmem.h wfinfo.h wfdlgs.h lfn.h wfcopy.h
+wfdirrd.o: wfdirrd.c winfile.h mpr.h fmifs.h suggest.h numfmt.h wfexti.h \
+ wfhelp.h wfmem.h wfinfo.h wfdlgs.h lfn.h
+wfdirsrc.o: wfdirsrc.c winfile.h mpr.h fmifs.h suggest.h numfmt.h \
+ wfexti.h wfhelp.h wfmem.h wfinfo.h wfdlgs.h
+wfdlgs.o: wfdlgs.c winfile.h mpr.h fmifs.h suggest.h numfmt.h wfexti.h \
+ wfhelp.h wfmem.h wfinfo.h wfdlgs.h lfn.h wfcopy.h
+wfdlgs2.o: wfdlgs2.c winfile.h mpr.h fmifs.h suggest.h numfmt.h wfexti.h \
+ wfhelp.h wfmem.h wfinfo.h wfdlgs.h lfn.h wfcopy.h wnetcaps.h
+wfdlgs3.o: wfdlgs3.c winfile.h mpr.h fmifs.h suggest.h numfmt.h wfexti.h \
+ wfhelp.h wfmem.h wfinfo.h wfdlgs.h lfn.h wfcopy.h
+wfdos.o: wfdos.c winfile.h mpr.h fmifs.h suggest.h numfmt.h wfexti.h \
+ wfhelp.h wfmem.h wfinfo.h wfdlgs.h
+wfdrives.o: wfdrives.c winfile.h mpr.h fmifs.h suggest.h numfmt.h \
+ wfexti.h wfhelp.h wfmem.h wfinfo.h wfdlgs.h treectl.h lfn.h wfcopy.h
+wfext.o: wfext.c winfile.h mpr.h fmifs.h suggest.h numfmt.h wfexti.h \
+ wfhelp.h wfmem.h wfinfo.h wfdlgs.h
+wffile.o: wffile.c winfile.h mpr.h fmifs.h suggest.h numfmt.h wfexti.h \
+ wfhelp.h wfmem.h wfinfo.h wfdlgs.h lfn.h wfcopy.h treectl.h
+wfinfo.o: wfinfo.c winfile.h mpr.h fmifs.h suggest.h numfmt.h wfexti.h \
+ wfhelp.h wfmem.h wfinfo.h wfdlgs.h wnetcaps.h
+wfinit.o: wfinit.c winfile.h mpr.h fmifs.h suggest.h numfmt.h wfexti.h \
+ wfhelp.h wfmem.h wfinfo.h wfdlgs.h lfn.h wnetcaps.h
+wfmem.o: wfmem.c wfmem.h
+wfprint.o: wfprint.c winfile.h mpr.h fmifs.h suggest.h numfmt.h wfexti.h \
+ wfhelp.h wfmem.h wfinfo.h wfdlgs.h
+wfsearch.o: wfsearch.c winfile.h mpr.h fmifs.h suggest.h numfmt.h \
+ wfexti.h wfhelp.h wfmem.h wfinfo.h wfdlgs.h lfn.h
+wftree.o: wftree.c winfile.h mpr.h fmifs.h suggest.h numfmt.h wfexti.h \
+ wfhelp.h wfmem.h wfinfo.h wfdlgs.h lfn.h wfcopy.h
+wfutil.o: wfutil.c winfile.h mpr.h fmifs.h suggest.h numfmt.h wfexti.h \
+ wfhelp.h wfmem.h wfinfo.h wfdlgs.h lfn.h
+winfile.o: winfile.c winfile.h mpr.h fmifs.h suggest.h numfmt.h wfexti.h \
+ wfhelp.h wfmem.h wfinfo.h wfdlgs.h lfn.h
+wnetcaps.o: wnetcaps.c winfile.h mpr.h fmifs.h suggest.h numfmt.h \
+ wfexti.h wfhelp.h wfmem.h wfinfo.h wfdlgs.h wnetcaps.h

@@ -1,0 +1,5 @@
+Missed functions (need to implement or rewrite code not to use it)
+
+GetEffectiveClientRect
+CreateStatusWindow
+GetVolumeInformation
