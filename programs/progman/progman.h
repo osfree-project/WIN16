@@ -48,6 +48,7 @@ typedef struct tagCURSORICONINFO
 } CURSORICONINFO;
 
 #define WM_PAINTICON            0x0026
+
 int WINAPI ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText,
                 HICON hIcon);
 

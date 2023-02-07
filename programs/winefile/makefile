@@ -9,7 +9,7 @@ TRGT = $(PROJ1).exe
 DESC = Windows File Manager
 srcfiles = $(p)splitpath$(e) $(p)winefile$(e)
 # defines additional options for C compiler
-ADD_COPT = -zW -sg -zw -bw -bg -d3 -db -hw
+ADD_COPT = -zW -sg -zw -bw -bg -d3 -db -hw -d_NO_EXTENSIONS
 #DEBUG    = watcom
 IMPORTS  = GETOPENFILENAME     COMMDLG.1, &
            GETCURRENTDIRECTORY WINSMSG.20
@@ -26,4 +26,4 @@ TARGETS = $(PATH)$(PROJ1).exe # subdirs
 
 $(PATH)$(PROJ1).exe: $(PATH)$(PROJ).exe $(MYDIR)rsrc.rc
  @$(SAY) RESCMP   $^. $(LOG)
- @wrc -q -bt=windows $]@ $[@ -fe=$@ -fo=$^@
+ @wrc -q -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -d_NO_EXTENSIONS

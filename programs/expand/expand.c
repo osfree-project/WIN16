@@ -24,7 +24,7 @@
 #include <string.h>
 #include <windows.h>
 #include <lzexpand.h>
-#include <setupapi.h>
+//#include <setupapi.h>
 
 static int WINAPIV myprintf(const char* format, ...)
 {

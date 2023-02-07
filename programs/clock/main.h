@@ -25,7 +25,7 @@
 
 typedef struct
 {
-  LOGFONTW logfont;
+  LOGFONT logfont;
   HFONT   hFont;
   HANDLE  hInstance;
   HWND    hMainWnd;
@@ -42,3 +42,6 @@ typedef struct
 } CLOCK_GLOBALS;
 
 extern CLOCK_GLOBALS Globals;
+
+int WINAPI ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText,
+                HICON hIcon);

@@ -30,11 +30,13 @@
 #include "windows.h"
 #include "winclock.h"
 
-#define FaceColor (GetSysColor(COLOR_3DFACE))
-#define HandColor (GetSysColor(COLOR_3DHIGHLIGHT))
-#define TickColor (GetSysColor(COLOR_3DHIGHLIGHT))
-#define ShadowColor (GetSysColor(COLOR_3DDKSHADOW))
-#define BackgroundColor (GetSysColor(COLOR_3DFACE))
+#define FaceColor (GetSysColor(COLOR_WINDOWTEXT))
+#define HandColor (GetSysColor(COLOR_WINDOWTEXT))
+#define TickColor (GetSysColor(COLOR_WINDOWTEXT))
+#define ShadowColor (GetSysColor(COLOR_WINDOWTEXT))
+#define BackgroundColor (GetSysColor(COLOR_WINDOW))
+
+#define M_PI 3.14
 
 static const int SHADOW_DEPTH = 2;
  
@@ -138,17 +140,17 @@ static void PositionHand(const POINT* centre, double length, double angle, HandD
 
 static void PositionHands(const POINT* centre, int radius, BOOL bSeconds)
 {
-    SYSTEMTIME st;
+//    SYSTEMTIME st;
     double hour, minute, second;
 
     /* 0 <= hour,minute,second < 2pi */
     /* Adding the millisecond count makes the second hand move more smoothly */
 
-    GetLocalTime(&st);
+    //GetLocalTime(&st);
 
-    second = st.wSecond + st.wMilliseconds/1000.0;
-    minute = st.wMinute + second/60.0;
-    hour   = st.wHour % 12 + minute/60.0;
+    second = 10 ;
+    minute = 30;
+    hour   = 3;
 
     PositionHand(centre, radius * 0.5,  hour/12   * 2*M_PI, &HourHand);
     PositionHand(centre, radius * 0.65, minute/60 * 2*M_PI, &MinuteHand);
@@ -175,21 +177,24 @@ void AnalogClock(HDC dc, int x, int y, BOOL bSeconds, BOOL border)
 }
 
 
-HFONT SizeFont(HDC dc, int x, int y, BOOL bSeconds, const LOGFONTW* font)
+HFONT SizeFont(HDC dc, int x, int y, BOOL bSeconds, const LOGFONT* font)
 {
     SIZE extent;
-    LOGFONTW lf;
+    LOGFONT lf;
     double xscale, yscale;
     HFONT oldFont, newFont;
-    WCHAR szTime[255];
+    char szTime[255];
     int chars;
 
-    chars = GetTimeFormatW(LOCALE_USER_DEFAULT, bSeconds ? 0 : TIME_NOSECONDS, NULL,
-                           NULL, szTime, ARRAY_SIZE(szTime));
-    if (!chars)
-	return 0;
+//    chars = GetTimeFormat(LOCALE_USER_DEFAULT, bSeconds ? 0 : TIME_NOSECONDS, NULL,
+                           //NULL, szTime, ARRAY_SIZE(szTime));
+    //if (!chars)
+	//return 0;
 
-    --chars;
+    //--chars;
+
+    lstrcpy(szTime, "11:11:11");
+	chars=lstrlen(szTime);
 
     lf = *font;
     lf.lfHeight = -20;
@@ -197,14 +202,14 @@ HFONT SizeFont(HDC dc, int x, int y, BOOL bSeconds, const LOGFONTW* font)
     x -= 2 * SHADOW_DEPTH;
     y -= 2 * SHADOW_DEPTH;
 
-    oldFont = SelectObject(dc, CreateFontIndirectW(&lf));
-    GetTextExtentPointW(dc, szTime, chars, &extent);
+    oldFont = SelectObject(dc, CreateFontIndirect(&lf));
+    GetTextExtentPoint(dc, szTime, chars, &extent);
     DeleteObject(SelectObject(dc, oldFont));
 
     xscale = (double)x/extent.cx;
     yscale = (double)y/extent.cy;
     lf.lfHeight *= min(xscale, yscale);    
-    newFont = CreateFontIndirectW(&lf);
+    newFont = CreateFontIndirect(&lf);
 
     return newFont;
 }
@@ -213,25 +218,28 @@ void DigitalClock(HDC dc, int x, int y, BOOL bSeconds, HFONT font)
 {
     SIZE extent;
     HFONT oldFont;
-    WCHAR szTime[255];
+    char szTime[255];
     int chars;
 
-    chars = GetTimeFormatW(LOCALE_USER_DEFAULT, bSeconds ? 0 : TIME_NOSECONDS, NULL,
-                           NULL, szTime, ARRAY_SIZE(szTime));
-    if (!chars)
-	return;
-    --chars;
+//    chars = GetTimeFormat(LOCALE_USER_DEFAULT, bSeconds ? 0 : TIME_NOSECONDS, NULL,
+//                           NULL, szTime, ARRAY_SIZE(szTime));
+//    if (!chars)
+	//return;
+//    --chars;
+
+    lstrcpy(szTime, "11:11:11");
+	chars=lstrlen(szTime);
 
     oldFont = SelectObject(dc, font);
-    GetTextExtentPointW(dc, szTime, chars, &extent);
+    GetTextExtentPoint(dc, szTime, chars, &extent);
 
     SetBkColor(dc, BackgroundColor);
     SetTextColor(dc, ShadowColor);
-    TextOutW(dc, (x - extent.cx)/2 + SHADOW_DEPTH, (y - extent.cy)/2 + SHADOW_DEPTH, szTime, chars);
+    TextOut(dc, (x - extent.cx)/2 + SHADOW_DEPTH, (y - extent.cy)/2 + SHADOW_DEPTH, szTime, chars);
     SetBkMode(dc, TRANSPARENT);
 
     SetTextColor(dc, HandColor);
-    TextOutW(dc, (x - extent.cx)/2, (y - extent.cy)/2, szTime, chars);
+    TextOut(dc, (x - extent.cx)/2, (y - extent.cy)/2, szTime, chars);
 
     SelectObject(dc, oldFont);
 }

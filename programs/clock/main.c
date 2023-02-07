@@ -26,7 +26,7 @@
 #include <stdio.h>
 
 #include "windows.h"
-#include "commctrl.h"
+//#include "commctrl.h"
 #include "commdlg.h"
 #include "shellapi.h"
 
@@ -48,13 +48,17 @@ static VOID CLOCK_UpdateMenuCheckmarks(VOID)
     if(Globals.bAnalog) {
 
         /* analog clock */
-        CheckMenuRadioItem(hPropertiesMenu, IDM_ANALOG, IDM_DIGITAL, IDM_ANALOG, MF_CHECKED);
+        CheckMenuItem(hPropertiesMenu, IDM_ANALOG, MF_CHECKED);
+        CheckMenuItem(hPropertiesMenu, IDM_DIGITAL, MF_UNCHECKED);
+
         EnableMenuItem(hPropertiesMenu, IDM_FONT, MF_GRAYED);
     }
     else
     {
         /* digital clock */
-        CheckMenuRadioItem(hPropertiesMenu, IDM_ANALOG, IDM_DIGITAL, IDM_DIGITAL, MF_CHECKED);
+        CheckMenuItem(hPropertiesMenu, IDM_ANALOG, MF_UNCHECKED);
+        CheckMenuItem(hPropertiesMenu, IDM_DIGITAL, MF_CHECKED);
+
         EnableMenuItem(hPropertiesMenu, IDM_FONT, 0);
     }
 
@@ -67,12 +71,12 @@ static VOID CLOCK_UpdateMenuCheckmarks(VOID)
 
 static VOID CLOCK_UpdateWindowCaption(VOID)
 {
-    WCHAR szCaption[MAX_STRING_LEN];
+    char szCaption[MAX_STRING_LEN];
     int chars = 0;
 
     /* Set frame caption */
-    if (Globals.bDate) {
-	chars = GetDateFormatW(LOCALE_USER_DEFAULT, DATE_LONGDATE, NULL, NULL,
+/*    if (Globals.bDate) {
+	chars = GetDateFormat(LOCALE_USER_DEFAULT, DATE_LONGDATE, NULL, NULL,
                                szCaption, ARRAY_SIZE(szCaption));
         if (chars) {
 	    --chars;
@@ -82,8 +86,9 @@ static VOID CLOCK_UpdateWindowCaption(VOID)
 	    szCaption[chars] = '\0';
 	}
     }
-    LoadStringW(0, IDS_CLOCK, szCaption + chars, MAX_STRING_LEN - chars);
-    SetWindowTextW(Globals.hMainWnd, szCaption);
+	*/
+    LoadString(0, IDS_CLOCK, szCaption + chars, MAX_STRING_LEN - chars);
+    SetWindowText(Globals.hMainWnd, szCaption);
 }
 
 /***********************************************************************
@@ -105,9 +110,9 @@ static BOOL CLOCK_ResetTimer(void)
 	period = 1000;
 
     if (!SetTimer (Globals.hMainWnd, TIMER_ID, period, NULL)) {
-        WCHAR szApp[MAX_STRING_LEN];
-        LoadStringW(Globals.hInstance, IDS_CLOCK, szApp, MAX_STRING_LEN);
-        MessageBoxW(0, L"No available timers", szApp, MB_ICONEXCLAMATION | MB_OK);
+        char szApp[MAX_STRING_LEN];
+        LoadString(Globals.hInstance, IDS_CLOCK, szApp, MAX_STRING_LEN);
+        MessageBox(0, "No available timers", szApp, MB_ICONEXCLAMATION | MB_OK);
         return FALSE;
     }
     return TRUE;
@@ -137,15 +142,15 @@ static VOID CLOCK_ResetFont(VOID)
  */
 static VOID CLOCK_ChooseFont(VOID)
 {
-    LOGFONTW lf;
-    CHOOSEFONTW cf;
+    LOGFONT lf;
+    CHOOSEFONT cf;
     memset(&cf, 0, sizeof(cf));
     lf = Globals.logfont;
     cf.lStructSize = sizeof(cf);
     cf.hwndOwner = Globals.hMainWnd;
     cf.lpLogFont = &lf;
-    cf.Flags = CF_SCREENFONTS | CF_INITTOLOGFONTSTRUCT | CF_NOVERTFONTS;
-    if (ChooseFontW(&cf)) {
+    cf.Flags = CF_SCREENFONTS | CF_INITTOLOGFONTSTRUCT;// | CF_NOVERTFONTS;
+    if (ChooseFont(&cf)) {
 	Globals.logfont = lf;
 	CLOCK_ResetFont();
     }
@@ -158,7 +163,7 @@ static VOID CLOCK_ChooseFont(VOID)
 static VOID CLOCK_ToggleTitle(VOID)
 {
     /* Also shows/hides the menu */
-    LONG style = GetWindowLongW(Globals.hMainWnd, GWL_STYLE);
+    LONG style = GetWindowLong(Globals.hMainWnd, GWL_STYLE);
     if ((Globals.bWithoutTitle = !Globals.bWithoutTitle)) {
 	style = (style & ~WS_OVERLAPPEDWINDOW) | WS_POPUP|WS_THICKFRAME;
 	SetMenu(Globals.hMainWnd, 0);
@@ -166,9 +171,9 @@ static VOID CLOCK_ToggleTitle(VOID)
     else {
 	style = (style & ~(WS_POPUP|WS_THICKFRAME)) | WS_OVERLAPPEDWINDOW;
         SetMenu(Globals.hMainWnd, Globals.hMainMenu);
-        SetWindowRgn(Globals.hMainWnd, 0, TRUE);
+        //SetWindowRgn(Globals.hMainWnd, 0, TRUE);
     }
-    SetWindowLongW(Globals.hMainWnd, GWL_STYLE, style);
+    SetWindowLong(Globals.hMainWnd, GWL_STYLE, style);
     SetWindowPos(Globals.hMainWnd, 0,0,0,0,0, 
 		 SWP_DRAWFRAME|SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER);
     
@@ -201,8 +206,8 @@ static VOID CLOCK_ToggleOnTop(VOID)
 
 static int CLOCK_MenuCommand (WPARAM wParam)
 {
-    WCHAR szApp[MAX_STRING_LEN];
-    WCHAR szAppRelease[MAX_STRING_LEN];
+    char szApp[MAX_STRING_LEN];
+    char szAppRelease[MAX_STRING_LEN];
     switch (wParam) {
         /* switch to analog */
         case IDM_ANALOG: {
@@ -255,9 +260,9 @@ static int CLOCK_MenuCommand (WPARAM wParam)
         }
             /* show "about" box */
         case IDM_ABOUT: {
-            LoadStringW(Globals.hInstance, IDS_CLOCK, szApp, ARRAY_SIZE(szApp));
-            lstrcpyW(szAppRelease,szApp);
-            ShellAboutW(Globals.hMainWnd, szApp, szAppRelease, 0);
+            LoadString(Globals.hInstance, IDS_CLOCK, szApp, sizeof(szApp));
+            lstrcpy(szAppRelease,szApp);
+            ShellAbout(Globals.hMainWnd, szApp, szAppRelease, 0);
             break;
         }
     }
@@ -285,7 +290,7 @@ static VOID CLOCK_Paint(HWND hWnd)
 
     SetViewportOrgEx(dcMem, -ps.rcPaint.left, -ps.rcPaint.top, NULL);
     /* Erase the background */
-    FillRect(dcMem, &ps.rcPaint, GetSysColorBrush(COLOR_3DFACE));
+    FillRect(dcMem, &ps.rcPaint,  CreateSolidBrush(GetSysColor(COLOR_WINDOW)));
 
     if(Globals.bAnalog)
 	AnalogClock(dcMem, Globals.MaxX, Globals.MaxY, Globals.bSeconds, Globals.bWithoutTitle);
@@ -317,7 +322,7 @@ static LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
     switch (msg) {
 	/* L button drag moves the window */
         case WM_NCHITTEST: {
-	    LRESULT ret = DefWindowProcW(hWnd, msg, wParam, lParam);
+	    LRESULT ret = DefWindowProc(hWnd, msg, wParam, lParam);
 	    if (ret == HTCLIENT)
 		ret = HTCAPTION;
             return ret;
@@ -341,7 +346,7 @@ static LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
             if (Globals.bAnalog && Globals.bWithoutTitle)
             {
                 RECT rect;
-                INT diameter = min( Globals.MaxX, Globals.MaxY );
+                int diameter = min( Globals.MaxX, Globals.MaxY );
                 HRGN hrgn = CreateEllipticRgn( (Globals.MaxX - diameter) / 2,
                                                (Globals.MaxY - diameter) / 2,
                                                (Globals.MaxX + diameter) / 2,
@@ -349,7 +354,7 @@ static LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
                 GetWindowRect( hWnd, &rect );
                 MapWindowPoints( 0, hWnd, (LPPOINT)&rect, 2 );
                 OffsetRgn( hrgn, -rect.left, -rect.top );
-                SetWindowRgn( Globals.hMainWnd, hrgn, TRUE );
+                //SetWindowRgn( Globals.hMainWnd, hrgn, TRUE );
             }
 	    CLOCK_ResetFont();
             break;
@@ -374,7 +379,7 @@ static LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
         }
 
         default:
-            return DefWindowProcW(hWnd, msg, wParam, lParam);
+            return DefWindowProc(hWnd, msg, wParam, lParam);
     }
     return 0;
 }
@@ -388,9 +393,9 @@ static LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
 int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 {
     MSG      msg;
-    WNDCLASSW class;
+    WNDCLASS class;
 
-    InitCommonControls();
+//    InitCommonControls();
 
     /* Setup Globals */
     memset(&Globals.hFont, 0, sizeof (Globals.hFont));
@@ -403,17 +408,17 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
         class.cbClsExtra    = 0;
         class.cbWndExtra    = 0;
         class.hInstance     = hInstance;
-        class.hIcon         = LoadIconW(0, (LPCWSTR)IDI_APPLICATION);
-        class.hCursor       = LoadCursorW(0, (LPCWSTR)IDC_ARROW);
+        class.hIcon         = LoadIcon(0, (LPCSTR)IDI_APPLICATION);
+        class.hCursor       = LoadCursor(0, (LPCSTR)IDC_ARROW);
         class.hbrBackground = 0;
         class.lpszMenuName  = 0;
-        class.lpszClassName = L"CLClass";
+        class.lpszClassName = "CLClass";
     }
 
-    if (!RegisterClassW(&class)) return FALSE;
+    if (!RegisterClass(&class)) return FALSE;
 
     Globals.MaxX = Globals.MaxY = INITIAL_WINDOW_SIZE;
-    Globals.hMainWnd = CreateWindowW(L"CLClass", L"Clock", WS_OVERLAPPEDWINDOW,
+    Globals.hMainWnd = CreateWindow("CLClass", "Clock", WS_OVERLAPPEDWINDOW,
                                      CW_USEDEFAULT, CW_USEDEFAULT,
                                      Globals.MaxX, Globals.MaxY, 0,
                                      0, hInstance, 0);
@@ -421,7 +426,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     if (!CLOCK_ResetTimer())
         return FALSE;
 
-    Globals.hMainMenu = LoadMenuW(0, MAKEINTRESOURCEW(MAIN_MENU));
+    Globals.hMainMenu = LoadMenu(0, MAKEINTRESOURCE(MAIN_MENU));
     SetMenu(Globals.hMainWnd, Globals.hMainMenu);
     CLOCK_UpdateMenuCheckmarks();
     CLOCK_UpdateWindowCaption();
@@ -429,9 +434,9 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     ShowWindow (Globals.hMainWnd, show);
     UpdateWindow (Globals.hMainWnd);
     
-    while (GetMessageW(&msg, 0, 0, 0)) {
+    while (GetMessage(&msg, 0, 0, 0)) {
         TranslateMessage(&msg);
-        DispatchMessageW(&msg);
+        DispatchMessage(&msg);
     }
 
     KillTimer(Globals.hMainWnd, TIMER_ID);
