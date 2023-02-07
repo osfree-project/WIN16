@@ -32,7 +32,7 @@ and GDI.EXE with USER.EXE.
 ### Dirs
 
 
-resources	Icons from TWIN, fonts from Wine
+resources	Icons, bitmaps, cursors from TWIN, fonts from Wine
 debugger
 dlls		Standard Windows DLLs
 doc			Some documentation. Mostly outdated and for reference only.
