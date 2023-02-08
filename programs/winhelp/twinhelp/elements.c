@@ -274,7 +274,7 @@ RETVAL __far __pascal CreateElementLists
   fpHelpFileInfo = (FPHLPFILEINFO) GlobalLock( hHelpFileInfo );
 
   /* Lock file's Phrases info. */
-  if( fpHelpFileInfo->hPhrasesInfo != NULL )
+  if( fpHelpFileInfo->hPhrasesInfo != 0 )
   {
     fpPhraseInfo = ( FPPHRASEINFO ) GlobalLock( fpHelpFileInfo->hPhrasesInfo );
   }
@@ -286,7 +286,7 @@ RETVAL __far __pascal CreateElementLists
   if( RetVal != NO_ERROR )
   {
     /* Unlock file's Phrases info. */
-    if( fpHelpFileInfo->hPhrasesInfo != NULL )
+    if( fpHelpFileInfo->hPhrasesInfo != 0 )
     {
       GlobalUnlock( fpHelpFileInfo->hPhrasesInfo );
     }
@@ -307,7 +307,7 @@ RETVAL __far __pascal CreateElementLists
     if( ! AllocElementList( hNonScrollElementsPtr ) )
     {
       /* Unlock file's Phrases info. */
-      if( fpHelpFileInfo->hPhrasesInfo != NULL )
+      if( fpHelpFileInfo->hPhrasesInfo != 0 )
       {
         GlobalUnlock( fpHelpFileInfo->hPhrasesInfo );
       }
@@ -335,7 +335,7 @@ RETVAL __far __pascal CreateElementLists
       if( RetVal != NO_ERROR )
       {
         /* Unlock file's Phrases info. */
-        if( fpHelpFileInfo->hPhrasesInfo != NULL )
+        if( fpHelpFileInfo->hPhrasesInfo != 0 )
         {
           GlobalUnlock( fpHelpFileInfo->hPhrasesInfo );
         }
@@ -347,7 +347,8 @@ RETVAL __far __pascal CreateElementLists
         CloseTopicDataStream( &TopicStream );        
         
         /* Free the topic elements list. */
-        DestroyElementList( *hNonScrollElementsPtr );
+        //DestroyElementList( *hNonScrollElementsPtr );
+        DestroyElementList( hNonScrollElementsPtr );
 
         return( RetVal );
       }
@@ -365,7 +366,7 @@ RETVAL __far __pascal CreateElementLists
           if( RetVal != NO_ERROR )
           {
             /* Unlock file's Phrases info. */
-            if( fpHelpFileInfo->hPhrasesInfo != NULL )
+            if( fpHelpFileInfo->hPhrasesInfo != 0 )
             {
               GlobalUnlock( fpHelpFileInfo->hPhrasesInfo );
             }
@@ -391,7 +392,8 @@ RETVAL __far __pascal CreateElementLists
             else 
             {
               /* Free the topic elements list. */
-              DestroyElementList( *hNonScrollElementsPtr );
+//              DestroyElementList( *hNonScrollElementsPtr );
+              DestroyElementList( hNonScrollElementsPtr );
     
               return( RetVal );
             }
@@ -410,7 +412,7 @@ RETVAL __far __pascal CreateElementLists
           if( RetVal != NO_ERROR )
           {
             /* Unlock file's Phrases info. */
-            if( fpHelpFileInfo->hPhrasesInfo != NULL )
+            if( fpHelpFileInfo->hPhrasesInfo != 0 )
             {
               GlobalUnlock( fpHelpFileInfo->hPhrasesInfo );
             }
@@ -436,7 +438,8 @@ RETVAL __far __pascal CreateElementLists
             else 
             {
               /* Free the topic elements list. */
-              DestroyElementList( *hNonScrollElementsPtr );
+//              DestroyElementList( *hNonScrollElementsPtr );
+              DestroyElementList( hNonScrollElementsPtr );
     
               return( RetVal );
             }
@@ -454,7 +457,7 @@ RETVAL __far __pascal CreateElementLists
   /* No non-scrollable topic data. */
   else
   {
-    *hNonScrollElementsPtr = NULL;
+    *hNonScrollElementsPtr = 0;
   }
 
 
@@ -462,7 +465,7 @@ RETVAL __far __pascal CreateElementLists
   if( ! AllocElementList( hScrollElementsPtr ) )
   {
     /* Unlock file's Phrases info. */
-    if( fpHelpFileInfo->hPhrasesInfo != NULL )
+    if( fpHelpFileInfo->hPhrasesInfo != 0 )
     {
       GlobalUnlock( fpHelpFileInfo->hPhrasesInfo );
     }
@@ -474,7 +477,8 @@ RETVAL __far __pascal CreateElementLists
     CloseTopicDataStream( &TopicStream );
 
     /* Free the topic elements list. */
-    DestroyElementList( *hNonScrollElementsPtr );
+//    DestroyElementList( *hNonScrollElementsPtr );
+    DestroyElementList( hNonScrollElementsPtr );
 
     /* Failure. */
     return( ERR_MEMORY );
@@ -494,7 +498,7 @@ RETVAL __far __pascal CreateElementLists
     if( RetVal != NO_ERROR )
     {
       /* Unlock file's Phrases info. */
-      if( fpHelpFileInfo->hPhrasesInfo != NULL )
+      if( fpHelpFileInfo->hPhrasesInfo != 0 )
       {
         GlobalUnlock( fpHelpFileInfo->hPhrasesInfo );
       }
@@ -506,8 +510,10 @@ RETVAL __far __pascal CreateElementLists
       CloseTopicDataStream( &TopicStream );        
         
       /* Free the topic elements list. */
-      DestroyElementList( *hNonScrollElementsPtr );
-      DestroyElementList( *hScrollElementsPtr );
+//      DestroyElementList( *hNonScrollElementsPtr );
+//      DestroyElementList( *hScrollElementsPtr );
+      DestroyElementList( hNonScrollElementsPtr );
+      DestroyElementList( hScrollElementsPtr );
 
       return( RetVal );
     }
@@ -527,7 +533,7 @@ RETVAL __far __pascal CreateElementLists
           if( RetVal != NO_ERROR )
           {
             /* Unlock file's Phrases info. */
-            if( fpHelpFileInfo->hPhrasesInfo != NULL )
+            if( fpHelpFileInfo->hPhrasesInfo != 0 )
             {
               GlobalUnlock( fpHelpFileInfo->hPhrasesInfo );
             }
@@ -553,8 +559,10 @@ RETVAL __far __pascal CreateElementLists
             else 
             {
               /* Free the topic elements list. */
-              DestroyElementList( *hNonScrollElementsPtr );
-              DestroyElementList( *hScrollElementsPtr );
+//              DestroyElementList( *hNonScrollElementsPtr );
+//              DestroyElementList( *hScrollElementsPtr );
+              DestroyElementList( hNonScrollElementsPtr );
+              DestroyElementList( hScrollElementsPtr );
         
               return( RetVal );
             }
@@ -573,7 +581,7 @@ RETVAL __far __pascal CreateElementLists
           if( RetVal != NO_ERROR )
           {
             /* Unlock file's Phrases info. */
-            if( fpHelpFileInfo->hPhrasesInfo != NULL )
+            if( fpHelpFileInfo->hPhrasesInfo != 0 )
             {
               GlobalUnlock( fpHelpFileInfo->hPhrasesInfo );
             }
@@ -599,8 +607,10 @@ RETVAL __far __pascal CreateElementLists
             else 
             {
               /* Free the topic elements list. */
-              DestroyElementList( *hNonScrollElementsPtr );
-              DestroyElementList( *hScrollElementsPtr );
+//              DestroyElementList( *hNonScrollElementsPtr );
+//              DestroyElementList( *hScrollElementsPtr );
+              DestroyElementList( hNonScrollElementsPtr );
+              DestroyElementList( hScrollElementsPtr );
       
               return( RetVal );
             }
@@ -617,7 +627,7 @@ RETVAL __far __pascal CreateElementLists
 
 
   /* Unlock file's Phrases info. */
-  if( fpHelpFileInfo->hPhrasesInfo != NULL )
+  if( fpHelpFileInfo->hPhrasesInfo != 0 )
   {
     GlobalUnlock( fpHelpFileInfo->hPhrasesInfo );
   }
@@ -2415,7 +2425,7 @@ static RETVAL __far __pascal AllocTextRecord
           
   /* Allocate record's data. */
   TopicElement.RecDataPtr = MyAlloc( fpElementList->fpMemoryList, sizeof(TEXTREC) );
-  if( TopicElement.RecDataPtr == NULL )
+  if( TopicElement.RecDataPtr == 0 )
   {
     /* Failure. */
     return( ERR_MEMORY );
@@ -2426,7 +2436,7 @@ static RETVAL __far __pascal AllocTextRecord
 
   /* Allocate initial space for the text string. */
   hText = GlobalAlloc( GHND, sizeof(char) * MORE_SPACE );
-  if( hText == NULL )
+  if( hText == 0 )
   {
     /* Failure. */
     return( ERR_MEMORY );
@@ -2551,7 +2561,7 @@ static RETVAL __far __pascal AllocTextRecord
       /* Allocate bigger buffer. */
       hText = GlobalReAlloc( hText, wStringSaveSize, LMEM_MOVEABLE | GMEM_ZEROINIT );
       
-      if( hText == NULL )
+      if( hText == 0 )
       {
         /* Failure. */
         return( ERR_MEMORY );
@@ -3153,7 +3163,7 @@ static RETVAL __far __pascal AllocBitmapPictRec
 
   /* Allocate record's data. */
   fpTopicElement->hRecData = GlobalAlloc( GHND, sizeof(BITMAPREC) );
-  if( fpTopicElement->hRecData == NULL )
+  if( fpTopicElement->hRecData == 0 )
   {
     /* Failure. */
     return( ERR_MEMORY );
@@ -3264,7 +3274,7 @@ static RETVAL __far __pascal AllocBitmapPictRec
     {
       /* Allocate the bitmap data buffer. */         
       fpBitmapRec->hBitmapData = GlobalAlloc( LMEM_ZEROINIT | LMEM_MOVEABLE, dwUncompressSize );
-      if( fpBitmapRec->hBitmapData == NULL )
+      if( fpBitmapRec->hBitmapData == 0 )
       {
         /* Unlock the record's  data. */
         GlobalUnlock( fpTopicElement->hRecData );
@@ -3289,7 +3299,7 @@ static RETVAL __far __pascal AllocBitmapPictRec
   {
     /* Allocate the bitmap data buffer. */         
     fpBitmapRec->hBitmapData = GlobalAlloc( LMEM_ZEROINIT | LMEM_MOVEABLE, dwBitmapDataSize );
-    if( fpBitmapRec->hBitmapData == NULL )
+    if( fpBitmapRec->hBitmapData == 0 )
     {
       /* Unlock the record's  data. */
       GlobalUnlock( fpTopicElement->hRecData );
@@ -3315,7 +3325,7 @@ static RETVAL __far __pascal AllocBitmapPictRec
   /* Allocate bitmap header and palette. */
   fpBitmapRec->hBitmapInfo = GlobalAlloc( LMEM_ZEROINIT | LMEM_MOVEABLE,
                              sizeof(BITMAPINFOHEADER) + (wNumColors * sizeof(RGBQUAD)) ); 
-  if( fpBitmapRec->hBitmapInfo == NULL )
+  if( fpBitmapRec->hBitmapInfo == 0 )
   {
     /* Free bitmap data buffer. */
     GlobalFree( fpBitmapRec->hBitmapData );
@@ -3540,7 +3550,7 @@ static RETVAL __far __pascal AllocMetaFilePictRec
 
   /* Allocate record's data. */
   fpTopicElement->hRecData = GlobalAlloc( GHND, sizeof(METAREC) );
-  if( fpTopicElement->hRecData == NULL )
+  if( fpTopicElement->hRecData == 0 )
   {
     /* Failure. */
     return( ERR_MEMORY );
@@ -3841,7 +3851,7 @@ static RETVAL __far __pascal UncompressPict
   
   /* Allocate starting size for the output data buffer. */         
   *hOutBuffer = GlobalAlloc( LMEM_ZEROINIT | LMEM_MOVEABLE, dwUnCompressSize );
-  if( *hOutBuffer == NULL )
+  if( *hOutBuffer == 0 )
   {
     /* Failure. */
     return( ERR_MEMORY );
@@ -3908,7 +3918,7 @@ static RETVAL __far __pascal UncompressPict
         /* Allocate bigger buffer. */
         *hOutBuffer = GlobalReAlloc( *hOutBuffer, dwUnCompressSize, LMEM_MOVEABLE | GMEM_ZEROINIT );
       
-        if( *hOutBuffer == NULL )
+        if( *hOutBuffer == 0 )
         {
           /* Failure. */
           return( ERR_MEMORY );
@@ -4018,7 +4028,7 @@ static RETVAL __far __pascal UncompressPict2
 
     /* Allocate starting size for the output data buffer. */         
     *hOutBuffer = GlobalAlloc( LMEM_ZEROINIT | LMEM_MOVEABLE, dwUnCompressedSize );
-    if( *hOutBuffer == NULL )
+    if( *hOutBuffer == 0 )
     {
       /* Failure. */
       return( ERR_MEMORY );
@@ -4088,7 +4098,7 @@ static RETVAL __far __pascal UncompressPict2
             /* Allocate bigger buffer. */
             *hOutBuffer = GlobalReAlloc( *hOutBuffer, dwUnCompressedSize, LMEM_MOVEABLE | GMEM_ZEROINIT );
             
-            if( *hOutBuffer == NULL )
+            if( *hOutBuffer == 0 )
             {
               /* Failure. */
               return( ERR_MEMORY );
@@ -4137,7 +4147,7 @@ static RETVAL __far __pascal UncompressPict2
             /* Allocate bigger buffer. */
             *hOutBuffer = GlobalReAlloc( *hOutBuffer, dwUnCompressedSize, LMEM_MOVEABLE | GMEM_ZEROINIT );
             
-            if( *hOutBuffer == NULL )
+            if( *hOutBuffer == 0 )
             {
               /* Failure. */
               return( ERR_MEMORY );
@@ -4499,7 +4509,7 @@ static BOOL __far __pascal AllocElementList( HGLOBAL __far * hElementList )
   ** Allocate the element list structure. 
   */
   *hElementList =  GlobalAlloc( GHND, sizeof(ELEMENTLIST) );
-  if( *hElementList == NULL )
+  if( *hElementList == 0 )
   {
     /* Failure. */
     return( FALSE );
@@ -4531,7 +4541,7 @@ static BOOL __far __pascal AllocElementList( HGLOBAL __far * hElementList )
   ** Allocate an initial size for the record list. 
   */
   fpElementList->hRecordList = GlobalAlloc( GHND, INCREMENT_SIZE * sizeof(TOPICELEMENT) );
-  if( fpElementList->hRecordList == NULL )
+  if( fpElementList->hRecordList == 0 )
   {
     /* Free the memory page list info. */
     GlobalUnlock( fpElementList->hMemoryList );
@@ -4575,7 +4585,7 @@ static BOOL __far __pascal ReAllocElementList( FPELEMENTLIST fpElementList )
                                GMEM_MOVEABLE | GMEM_ZEROINIT );
   
   /* Error? */
-  if( fpElementList->hRecordList == NULL )
+  if( fpElementList->hRecordList == 0 )
   {
     /* Failure. */
     return( FALSE );
@@ -4646,7 +4656,7 @@ void __far __pascal DestroyElementList( HGLOBAL __far * hElementList )
 
 
   /* Empty list. */
-  if( *hElementList == NULL ) return;
+  if( *hElementList == 0 ) return;
   
   /* Lock the element list info. */
   fpElementList = ( FPELEMENTLIST ) GlobalLock( *hElementList );
@@ -4703,7 +4713,7 @@ void __far __pascal DestroyElementList( HGLOBAL __far * hElementList )
   /* Free the element list info. */
   GlobalFree( *hElementList );
 
-  *hElementList = NULL;
+  *hElementList = 0;
 }
 
 

@@ -122,7 +122,7 @@ HGLOBAL __far _pascal OpenHelpFile( HWND hMainWnd, char __far * szHelpFilePath )
   hHelpFileBuffer = (HGLOBAL) WndData( hMainWnd, WDM_GETFILEBUFFER, 0L, NULL );
 
   /* Error - No buffer. */
-  if( hHelpFileBuffer == NULL ) return( NULL );
+  if( hHelpFileBuffer == 0 ) return( NULL );
 
   /* Find help file in file buffer. */
   RetVal = GetFileBufferRec( hHelpFileBuffer, szHelpFilePath, (FPHLPFILEBUFFREC) &HelpFileBufferRec );
@@ -134,7 +134,7 @@ HGLOBAL __far _pascal OpenHelpFile( HWND hMainWnd, char __far * szHelpFilePath )
   if( RetVal != NO_ERROR )
   {
     /* Loading the help file info may take a while. */
-    hOldCursor = SetCursor( LoadCursor( NULL, IDC_WAIT ) );
+    hOldCursor = SetCursor( LoadCursor( 0, IDC_WAIT ) );
   
     /* Load the help file info. */
     RetVal = LoadHelpFileInfo( hMainWnd, szHelpFilePath, &(HelpFileBufferRec).hHelpFileInfo );
@@ -152,7 +152,7 @@ HGLOBAL __far _pascal OpenHelpFile( HWND hMainWnd, char __far * szHelpFilePath )
       }
 
       /* Failure. */
-      return( NULL );
+      return( 0 );
     }
 
     /* 
@@ -172,7 +172,7 @@ HGLOBAL __far _pascal OpenHelpFile( HWND hMainWnd, char __far * szHelpFilePath )
       }
 
       /* Failure. */
-      return( NULL );
+      return( 0 );
     }
 
     /* Save the file's path. */  
@@ -225,7 +225,7 @@ HGLOBAL __far _pascal LockTopicData( HWND hMainWnd, char __far * szHelpFilePath,
   hHelpFileBuffer = (HGLOBAL) WndData( hMainWnd, WDM_GETFILEBUFFER, 0L, NULL );
 
   /* Error - No buffer. */
-  if( hHelpFileBuffer == NULL ) return( NULL );
+  if( hHelpFileBuffer == 0 ) return( 0 );
 
   /* Find help file in file buffer. */
   RetVal = GetFileBufferRec( hHelpFileBuffer, szHelpFilePath, (FPHLPFILEBUFFREC) &HelpFileBufferRec );
