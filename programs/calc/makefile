@@ -11,13 +11,15 @@ srcfiles = $(p)dialog$(e) $(p)stats$(e) $(p)winecalc$(e)
 
 # defines additional options for C compiler
 #ADD_COPT = -0 -sg -zw -bw -bg -d3 -db -hw -ml -od #-pl
-ADD_COPT = -sg -DDEBUG=1
+ADD_COPT =  -dDEBUG=0
 #DEBUG    = watcom
 #IMPORTS  = CHOOSEFONT     COMMDLG.15
 
 #           GETCURRENTDIRECTORY WINSMSG.20
 #RESOURCE = $(PATH)rsrc.res
 CLEAN_ADD = *.mbr
+STACKSIZE = 34096
+#HEAPSIZE = 50960
 
 !include $(%ROOT)tools/mk/appsw16.mk
 

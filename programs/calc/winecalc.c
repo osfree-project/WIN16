@@ -19,6 +19,8 @@
  */
 
 #include <stdio.h> // sprintf
+#include <stdlib.h>
+#include <string.h>
 #include <math.h>
 
 #include <windows.h>
@@ -528,7 +530,7 @@ LRESULT CALLBACK MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     if (!(pGlobalMemory = GlobalLock(hGlobalMemory)))
                         return 0;
 
-                    strcpy(s, pGlobalMemory);
+                    lstrcpy(s, pGlobalMemory);
 
                     GlobalUnlock(hGlobalMemory);
 
