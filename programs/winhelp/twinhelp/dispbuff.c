@@ -71,7 +71,7 @@ typedef BOOL ( CALLBACK * SYSTEMRECPROC )( FPSYSTEMREC fpSysRec, LPARAM lParam )
 **
 ***********************************/
 
-
+#if 0
 GetDisplayBuffer( void   )
 {
   long            FileStart;          /* Beginning position of a WHIFS file. */
@@ -92,4 +92,4 @@ GetDisplayBuffer( void   )
 
 }
 
-
+#endif

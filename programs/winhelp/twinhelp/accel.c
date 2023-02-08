@@ -207,7 +207,7 @@ void __far __pascal StopAccelSupport( HWND hDataWnd )
   hAccelSys = (HACCELSYS) WndData( hDataWnd, WDM_GETACCELSYS, 0, NULL );
   
   /* If we have a accel. support. */
-  if( hAccelSys != NULL )
+  if( hAccelSys != 0 )
   {
     /* Lock accel. support data. */
     AccelSysPtr = ( FPACCELSYS ) GlobalLock( hAccelSys );
@@ -248,7 +248,7 @@ BOOL __far __pascal KeyIsPressed( HWND hDataWnd, WORD wKey )
   hAccelSys = (HACCELSYS) WndData( hDataWnd, WDM_GETACCELSYS, 0, NULL );
   
   /* If we have a accel. support. */
-  if( hAccelSys != NULL )
+  if( hAccelSys != 0 )
   {
     /* Lock data. */
     AccelSysPtr = ( FPACCELSYS ) GlobalLock( hAccelSys );

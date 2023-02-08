@@ -216,7 +216,7 @@ BOOL __far __pascal InsertBackTopic( HWND hDataWnd, HTOPICDATA hTopicData  )
 
                    
   /* No topic data. */
-  if( hTopicData == NULL ) return FALSE;
+  if( hTopicData == 0 ) return FALSE;
 
   /* Get the back data. */
   hBackBtnData = ( HBACKBTNDATA ) WndData( hDataWnd, WDM_GETBACKDATA, 0L, NULL );
@@ -300,7 +300,7 @@ void __far __pascal ClearAllBackVertPos( HWND hDataWnd )
   hBackBtnData = ( HBACKBTNDATA ) WndData( hDataWnd, WDM_GETBACKDATA, 0L, NULL );
 
   /* No back data. */
-  if( hBackBtnData == NULL ) return; 
+  if( hBackBtnData == 0 ) return; 
 
   /* Lock back data. */
   fpBackBtnData = ( FPBACKBTNDATA ) GlobalLock( hBackBtnData );
@@ -407,7 +407,7 @@ static void __far __pascal FreeBackList( HWND hDataWnd, HBACKLIST __far * hBackL
 
   
   /* If empty list. */
-  if( *hBackList == NULL ) return;
+  if( *hBackList == 0 ) return;
   
   /* Get our first record's handle. */
   hBackRec = *hBackList;
@@ -433,7 +433,7 @@ static void __far __pascal FreeBackList( HWND hDataWnd, HBACKLIST __far * hBackL
   while( hBackRec != *hBackList );
 
   /* Init. the list handle. */
-  *hBackList = NULL;
+  *hBackList = 0;
   
   /* No record in the list. */
   *wBackCount = 0;
@@ -518,7 +518,7 @@ static BOOL __far __pascal InsertBackRecord
     hNewTopRec = AllocBackRecord( hDataWnd, fpTopicData->szHelpFile, fpTopicData->dwTopicCharOffset );
 
     /* Allocation error? */
-    if( hNewTopRec == NULL ) 
+    if( hNewTopRec == 0 ) 
     {
       /* Unlock topic's data. */
       GlobalUnlock( hTopicData );
@@ -716,14 +716,14 @@ static HGLOBAL __far __pascal AllocBackRecord( HWND hDataWnd, char __far * fpHel
   if( !GlobalAllocMem( hDataWnd, &hBackRec, sizeof(BACKREC) ) )
   {
     /* Failure. */
-    return( NULL );
+    return( 0 );
   }
   
   /* Store the info. in the new record. */
   if( ! SaveBackRecordData( hDataWnd, hBackRec, fpHelpFilePath, dwTopicCharOffset ) )
   {
     /* Error. */
-    return( NULL );
+    return( 0 );
   }
 
   /* Success. */
@@ -786,7 +786,7 @@ static BOOL __far __pascal SaveBackRecordData( HWND hDataWnd, HBACKREC hBackRec,
   fpBackRec->hHelpFilePath = CopyString( hDataWnd, fpHelpFilePath );
   
   /* Copy error? */
-  if( fpBackRec->hHelpFilePath == NULL )
+  if( fpBackRec->hHelpFilePath == 0 )
   {
     /* Unlock the record. */
     GlobalUnlock( hBackRec );

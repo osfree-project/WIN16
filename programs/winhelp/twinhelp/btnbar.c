@@ -320,7 +320,7 @@ HWND __far __pascal CreateButtonBarWnd( HWND hDataWnd, HWND hParentWnd, HINSTANC
             );
             
   /* If we have a window. */
-  if( hButtonBarWnd != NULL )
+  if( hButtonBarWnd != 0 )
   {
     /* Save handle to the macro engine. */
     SetWindowWord( hButtonBarWnd, XBYTE_HDATAWND, (WORD) hDataWnd );
@@ -399,7 +399,7 @@ LONG FAR PASCAL __export ButtonWndProc ( HWND hWnd, UINT message, WPARAM wParam,
       ReleaseDC( hWnd, hDC );
       
       /* Got font? */
-      if( hButtonFont == NULL ) return -1;
+      if( hButtonFont == 0 ) return -1;
         
       /* Save button bar window's old font to extrabytes data. */
       SetWindowWord( hWnd, XBYTE_BUTTONFONT, (WORD) hButtonFont );
@@ -1171,7 +1171,7 @@ static HBUTTONINFO __far __pascal NewButtonInfo( HWND hErrorWnd, FPBUTTONINFO fp
 
   
   /* Allocate the new button info. */
-  if( ! GlobalAllocMem( hErrorWnd, &hNewButtonInfo, sizeof(BUTTONINFO) ) ) return NULL;
+  if( ! GlobalAllocMem( hErrorWnd, &hNewButtonInfo, sizeof(BUTTONINFO) ) ) return 0;
   
   /* Lock it. */
   fpNewButtonInfo = (FPBUTTONINFO) GlobalLock( hNewButtonInfo ) ;

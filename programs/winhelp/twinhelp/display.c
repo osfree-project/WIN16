@@ -782,26 +782,26 @@ static void __far __pascal ClearDisplaySystem( HWND hWnd, FPDISPLAYINFO fpDispla
 
   /* Destroy the font buffer. */
   FreeFontBuffer( hWnd, fpDisplayInfo->hFontBuffer );
-  fpDisplayInfo->hFontBuffer = NULL;
+  fpDisplayInfo->hFontBuffer = 0;
 
   /* Destroy the text display list. */
   FreeDisplayList( fpDisplayInfo->hTxtDisplayList );
-  fpDisplayInfo->hTxtDisplayList = NULL;
+  fpDisplayInfo->hTxtDisplayList = 0;
 
   /* Destroy the border display list. */
   FreeDisplayList( fpDisplayInfo->hBorderDisplayList );
-  fpDisplayInfo->hBorderDisplayList = NULL;
+  fpDisplayInfo->hBorderDisplayList = 0;
 
   /* Destroy the justified pictures' display list. */
   FreeDisplayList( fpDisplayInfo->hPictDisplayList );
-  fpDisplayInfo->hPictDisplayList = NULL;
+  fpDisplayInfo->hPictDisplayList = 0;
 
   /* Free the hotspot buffer. */
   FreeHotSpotBuffer( fpDisplayInfo->hHotSpotBuffer );
-  fpDisplayInfo->hHotSpotBuffer = NULL;
+  fpDisplayInfo->hHotSpotBuffer = 0;
 
   /* Release the current topic. */
-  if( fpDisplayInfo->hTopicData != NULL && !bNonScrollWnd )
+  if( fpDisplayInfo->hTopicData != 0 && !bNonScrollWnd )
   {
     /* Get the handle of the data window. */
     hDataWnd = (HWND) WndData( hWnd, WDM_GETDATAHWND, 0L, NULL );
@@ -809,7 +809,7 @@ static void __far __pascal ClearDisplaySystem( HWND hWnd, FPDISPLAYINFO fpDispla
     /* Release the lock on the current topic's data. */
     UnlockTopicData( hDataWnd, fpDisplayInfo->hTopicData );
 
-    fpDisplayInfo->hTopicData = NULL;
+    fpDisplayInfo->hTopicData = 0;
   }
 }
 
@@ -852,7 +852,7 @@ BOOL __far __pascal SameHelpFile( HWND hWnd, FPNEWTOPICSTRUCT NewTopicStructPtr 
   /* 
   ** If a topic is already being displayed. 
   */
-  if( fpDisplayInfo->hTopicData != NULL )
+  if( fpDisplayInfo->hTopicData != 0 )
   {
     /* Lock the window's current topic data. */
     fpOldTopicsData = (FPTOPICDATA) GlobalLock( fpDisplayInfo->hTopicData );
@@ -931,7 +931,7 @@ BOOL __far __pascal UnlockSameTopic( HWND hWnd, FPNEWTOPICSTRUCT NewTopicStructP
   /* 
   ** If a topic is already being displayed. 
   */
-  if( fpDisplayInfo->hTopicData != NULL )
+  if( fpDisplayInfo->hTopicData != 0 )
   {
     /* Lock the window's current topic data. */
     fpOldTopicsData = (FPTOPICDATA) GlobalLock( fpDisplayInfo->hTopicData );
@@ -1074,7 +1074,7 @@ void __far __pascal SetNewDisplayTopic( HWND hWnd, FPNEWTOPICSTRUCT NewTopicStru
   /* 
   ** If a topic is already being displayed. 
   */
-  if( fpDisplayInfo->hTopicData != NULL )
+  if( fpDisplayInfo->hTopicData != 0 )
   {
     /* Lock the window's current topic data. */
     fpOldTopicsData = (FPTOPICDATA) GlobalLock( fpDisplayInfo->hTopicData );
@@ -1224,7 +1224,7 @@ BOOL __far __pascal SizePopupWindow( HWND hWnd, RECT __far * HotSpotWndRect )
   fpDisplayInfo = (FPDISPLAYINFO) GlobalLock( hDisplayInfo );
   
   /* Nothing to display. */
-  if( fpDisplayInfo->hTopicData == NULL ) 
+  if( fpDisplayInfo->hTopicData == 0 ) 
   {
     /* Unlock the display info. */
     GlobalUnlock( hDisplayInfo );
@@ -1250,9 +1250,9 @@ BOOL __far __pascal SizePopupWindow( HWND hWnd, RECT __far * HotSpotWndRect )
   ClearDisplayList( fpDisplayInfo->hBorderDisplayList );
   
   /* Lock the different display layout lists. */
-  fpDisplayInfo->fpTxtDisplayList = GlobalLock( fpDisplayInfo->hTxtDisplayList );
-  fpDisplayInfo->fpBorderDisplayList = GlobalLock( fpDisplayInfo->hBorderDisplayList );
-  fpDisplayInfo->fpPictDisplayList = GlobalLock( fpDisplayInfo->hPictDisplayList );
+  fpDisplayInfo->fpTxtDisplayList = (FPDISPLAYLIST)GlobalLock( fpDisplayInfo->hTxtDisplayList );
+  fpDisplayInfo->fpBorderDisplayList = (FPDISPLAYLIST)GlobalLock( fpDisplayInfo->hBorderDisplayList );
+  fpDisplayInfo->fpPictDisplayList = (FPDISPLAYLIST)GlobalLock( fpDisplayInfo->hPictDisplayList );
 
   /* Clear the hotspot pages information. */
   ClearPagesHotSpots( fpDisplayInfo->hHotSpotBuffer );
@@ -1264,7 +1264,7 @@ BOOL __far __pascal SizePopupWindow( HWND hWnd, RECT __far * HotSpotWndRect )
   ** If there is non-scrollable part of the topic,
   ** layout that part of the page. 
   */
-  if( fpTopicData->hNonScrollElements != NULL )
+  if( fpTopicData->hNonScrollElements != 0 )
   {
     UseNonScrollable = TRUE;
 
@@ -1420,7 +1420,7 @@ BOOL __far __pascal SizePopupWindow( HWND hWnd, RECT __far * HotSpotWndRect )
   }
   
   /* Set window width, height, x, y position. */
-  SetWindowPos( hWnd, NULL, WindowXPos, WindowYPos, WindowWidth, WindowHeight, 
+  SetWindowPos( hWnd, 0, WindowXPos, WindowYPos, WindowWidth, WindowHeight, 
                 SWP_NOACTIVATE | SWP_NOZORDER );
   
   ReleaseDC( hWnd, hDC ); 
@@ -1463,7 +1463,7 @@ BOOL __far __pascal DisplayPopupTopic( HWND hWnd )
   fpDisplayInfo = (FPDISPLAYINFO) GlobalLock( hDisplayInfo );
   
   /* Nothing to display. */
-  if( fpDisplayInfo->hTopicData == NULL ) 
+  if( fpDisplayInfo->hTopicData == 0 ) 
   {
     /* Get rid of the WM_PAINT message. */
     ValidateRect( hWnd, NULL ); 
@@ -1484,7 +1484,7 @@ BOOL __far __pascal DisplayPopupTopic( HWND hWnd )
   ** If there is non-scrollable part of the topic,
   ** draw that part of the page. 
   */
-  if( fpTopicData->hNonScrollElements != NULL )
+  if( fpTopicData->hNonScrollElements != 0 )
   {
     UseNonScrollable = TRUE;
 
@@ -1498,9 +1498,9 @@ BOOL __far __pascal DisplayPopupTopic( HWND hWnd )
   GlobalUnlock( fpDisplayInfo->hTopicData );  
 
   /* Lock the different display layout lists. */
-  fpDisplayInfo->fpTxtDisplayList = GlobalLock( fpDisplayInfo->hTxtDisplayList );
-  fpDisplayInfo->fpBorderDisplayList = GlobalLock( fpDisplayInfo->hBorderDisplayList );
-  fpDisplayInfo->fpPictDisplayList = GlobalLock( fpDisplayInfo->hPictDisplayList );
+  fpDisplayInfo->fpTxtDisplayList = (FPDISPLAYLIST)GlobalLock( fpDisplayInfo->hTxtDisplayList );
+  fpDisplayInfo->fpBorderDisplayList = (FPDISPLAYLIST)GlobalLock( fpDisplayInfo->hBorderDisplayList );
+  fpDisplayInfo->fpPictDisplayList = (FPDISPLAYLIST)GlobalLock( fpDisplayInfo->hPictDisplayList );
 
   /* Display the a part of the topic. */
   bReturn = DrawPage( hDC, hWnd, fpDisplayInfo, UseNonScrollable );
@@ -1559,7 +1559,7 @@ BOOL __far __pascal SizeNonScrollWindow( HWND hWnd, RECT __far * fpMaxSizeRect )
   fpDisplayInfo = (FPDISPLAYINFO) GlobalLock( hDisplayInfo );
   
   /* Nothing to display. */
-  if( fpDisplayInfo->hTopicData == NULL ) 
+  if( fpDisplayInfo->hTopicData == 0 ) 
   {
     /* Unlock the display info. */
     GlobalUnlock( hDisplayInfo );
@@ -1581,9 +1581,9 @@ BOOL __far __pascal SizeNonScrollWindow( HWND hWnd, RECT __far * fpMaxSizeRect )
   ClearDisplayList( fpDisplayInfo->hBorderDisplayList );
   
   /* Lock the different display layout lists. */
-  fpDisplayInfo->fpTxtDisplayList = GlobalLock( fpDisplayInfo->hTxtDisplayList );
-  fpDisplayInfo->fpBorderDisplayList = GlobalLock( fpDisplayInfo->hBorderDisplayList );
-  fpDisplayInfo->fpPictDisplayList = GlobalLock( fpDisplayInfo->hPictDisplayList );
+  fpDisplayInfo->fpTxtDisplayList = (FPDISPLAYLIST)GlobalLock( fpDisplayInfo->hTxtDisplayList );
+  fpDisplayInfo->fpBorderDisplayList = (FPDISPLAYLIST)GlobalLock( fpDisplayInfo->hBorderDisplayList );
+  fpDisplayInfo->fpPictDisplayList = (FPDISPLAYLIST)GlobalLock( fpDisplayInfo->hPictDisplayList );
   
   /* Clear the hotspot pages information. */
   ClearPagesHotSpots( fpDisplayInfo->hHotSpotBuffer );
@@ -1703,7 +1703,7 @@ BOOL __far __pascal DisplayNonScrollTopic( HWND hWnd )
   fpDisplayInfo = (FPDISPLAYINFO) GlobalLock( hDisplayInfo );
   
   /* Nothing to display. */
-  if( fpDisplayInfo->hTopicData == NULL ) 
+  if( fpDisplayInfo->hTopicData == 0 ) 
   {
     /* Get rid of the WM_PAINT message. */
     ValidateRect( hWnd, NULL ); 
@@ -1718,9 +1718,9 @@ BOOL __far __pascal DisplayNonScrollTopic( HWND hWnd )
   hDC = BeginPaint( hWnd, &PaintStruct ); 
   
   /* Lock the different display layout lists. */
-  fpDisplayInfo->fpTxtDisplayList = GlobalLock( fpDisplayInfo->hTxtDisplayList );
-  fpDisplayInfo->fpBorderDisplayList = GlobalLock( fpDisplayInfo->hBorderDisplayList );
-  fpDisplayInfo->fpPictDisplayList = GlobalLock( fpDisplayInfo->hPictDisplayList );
+  fpDisplayInfo->fpTxtDisplayList = (FPDISPLAYLIST)GlobalLock( fpDisplayInfo->hTxtDisplayList );
+  fpDisplayInfo->fpBorderDisplayList = (FPDISPLAYLIST)GlobalLock( fpDisplayInfo->hBorderDisplayList );
+  fpDisplayInfo->fpPictDisplayList = (FPDISPLAYLIST)GlobalLock( fpDisplayInfo->hPictDisplayList );
   
   /* Display the a part of the topic. */
   bReturn = DrawPage( hDC, hWnd, fpDisplayInfo, TRUE );
@@ -1774,7 +1774,7 @@ BOOL __far __pascal DisplayTopic( HWND hWnd )
   fpDisplayInfo = (FPDISPLAYINFO) GlobalLock( hDisplayInfo );
   
   /* Nothing to display. */
-  if( fpDisplayInfo->hTopicData == NULL ) 
+  if( fpDisplayInfo->hTopicData == 0 ) 
   {
     /* Get rid of the WM_PAINT message. */
     ValidateRect( hWnd, NULL ); 
@@ -1818,9 +1818,9 @@ BOOL __far __pascal DisplayTopic( HWND hWnd )
       ClearDisplayList( fpDisplayInfo->hBorderDisplayList );
     
       /* Lock the different display layout lists. */
-      fpDisplayInfo->fpTxtDisplayList = GlobalLock( fpDisplayInfo->hTxtDisplayList );
-      fpDisplayInfo->fpBorderDisplayList = GlobalLock( fpDisplayInfo->hBorderDisplayList );
-      fpDisplayInfo->fpPictDisplayList = GlobalLock( fpDisplayInfo->hPictDisplayList );
+      fpDisplayInfo->fpTxtDisplayList = (FPDISPLAYLIST)GlobalLock( fpDisplayInfo->hTxtDisplayList );
+      fpDisplayInfo->fpBorderDisplayList = (FPDISPLAYLIST)GlobalLock( fpDisplayInfo->hBorderDisplayList );
+      fpDisplayInfo->fpPictDisplayList = (FPDISPLAYLIST)GlobalLock( fpDisplayInfo->hPictDisplayList );
   
       /* Fill the display list with display data. */
       bReturn = LayoutPage( hDC, hWnd, fpDisplayInfo, FALSE );
@@ -1869,9 +1869,9 @@ BOOL __far __pascal DisplayTopic( HWND hWnd )
   }
   
   /* Lock the different display layout lists. */
-  fpDisplayInfo->fpTxtDisplayList = GlobalLock( fpDisplayInfo->hTxtDisplayList );
-  fpDisplayInfo->fpBorderDisplayList = GlobalLock( fpDisplayInfo->hBorderDisplayList );
-  fpDisplayInfo->fpPictDisplayList = GlobalLock( fpDisplayInfo->hPictDisplayList );
+  fpDisplayInfo->fpTxtDisplayList = (FPDISPLAYLIST)GlobalLock( fpDisplayInfo->hTxtDisplayList );
+  fpDisplayInfo->fpBorderDisplayList = (FPDISPLAYLIST)GlobalLock( fpDisplayInfo->hBorderDisplayList );
+  fpDisplayInfo->fpPictDisplayList = (FPDISPLAYLIST)GlobalLock( fpDisplayInfo->hPictDisplayList );
   
   /* Display the topic data. */
   bReturn = DrawPage( hDC, hWnd, fpDisplayInfo, FALSE );
@@ -1915,7 +1915,7 @@ BOOL __far __pascal HasNonScrollData( HWND hWnd )
   fpDisplayInfo = (FPDISPLAYINFO) GlobalLock( hDisplayInfo );
   
   /* Nothing to display. */
-  if( fpDisplayInfo->hTopicData == NULL ) 
+  if( fpDisplayInfo->hTopicData == 0 ) 
   {
     /* Unlock the display info. */
     GlobalUnlock( hDisplayInfo );
@@ -1930,7 +1930,7 @@ BOOL __far __pascal HasNonScrollData( HWND hWnd )
   ** If there is non-scrollable part of the topic,
   ** draw that part of the page. 
   */
-  if( fpTopicData->hNonScrollElements != NULL )
+  if( fpTopicData->hNonScrollElements != 0 )
   {
     bReturn = TRUE;
 
@@ -4392,7 +4392,7 @@ static BOOL __far __pascal SetFontObject
   ** Did not find an existing font. 
   ** Make a new font.
   */
-  if( hFont == NULL )
+  if( hFont == 0 )
   {
     /* Set font features. */
     lf.lfWidth =  0;
@@ -4817,7 +4817,7 @@ static BOOL __far __pascal DrawBorder
   hPen = CreatePen( nPenStyle, fpBorderDisplayRec->wLineWidth, ColorRef );
   
   /* Pen creation error. */
-  if( hPen == NULL )
+  if( hPen == 0 )
   {
     return FALSE;
   }
@@ -6748,7 +6748,7 @@ WORD __far __pascal GetVertScrollPos( HWND hWnd )
   /* 
   ** If a topic is already being displayed. 
   */
-  if( fpDisplayInfo->hTopicData != NULL )
+  if( fpDisplayInfo->hTopicData != 0 )
   {
     wVertPos = fpDisplayInfo->ScrollData.wVertPos;
   }
@@ -7240,13 +7240,13 @@ BOOL __far __pascal GetHotSpotTopicInfo
   hDC = GetDC( hWnd );
   LPtoDP( hDC, (LPPOINT) WndPosRect, 2 );
   ReleaseDC( hWnd, hDC );
-  MapWindowPoints( hWnd, NULL, (POINT __far *) WndPosRect, 2 );
+  MapWindowPoints( hWnd, 0, (POINT __far *) WndPosRect, 2 );
 
   /* Get the handle of the data window. */
   hDataWnd = (HWND) WndData( hWnd, WDM_GETDATAHWND, 0L, NULL );
         
   /* Get file info. */
-  if( HotSpotInfo.HelpFilePathPtr != NULL )
+  if( HotSpotInfo.HelpFilePathPtr != 0 )
   {
     /* Use help file specified. */
     fpHelpFilePath = HotSpotInfo.HelpFilePathPtr;
@@ -7265,7 +7265,7 @@ BOOL __far __pascal GetHotSpotTopicInfo
 
   /* Get file info. */
   hHelpFileInfo = OpenHelpFile( hDataWnd, fpHelpFilePath );
-  if( hHelpFileInfo == NULL )
+  if( hHelpFileInfo == 0 )
   {
     /* Unlock file path buffer. */
     if( HotSpotInfo.HelpFilePathPtr == NULL )
@@ -7300,7 +7300,7 @@ BOOL __far __pascal GetHotSpotTopicInfo
 
   /* Get the new topic's data. */
   *hNewTopicsData = LockTopicData( hDataWnd, fpHelpFilePath, dwTopicCharOffset );
-  if( *hNewTopicsData == NULL )
+  if( *hNewTopicsData == 0 )
   {
     /* Unlock file path buffer. */
     if( HotSpotInfo.HelpFilePathPtr == NULL )
@@ -7354,7 +7354,7 @@ static HGLOBAL __far __pascal AllocDisplayList( HWND hWnd, WORD wRecSize )
   if( !GlobalAllocMem( hWnd, &hDisplayList, sizeof(DISPLAYLIST) ) )
   {
     /* Failure. */
-    return( NULL );
+    return( 0 );
   }
 
   /* Lock display list. */
@@ -7373,7 +7373,7 @@ static HGLOBAL __far __pascal AllocDisplayList( HWND hWnd, WORD wRecSize )
     GlobalFree( hDisplayList );  
 
     /* Failure. */
-    return( NULL );
+    return( 0 );
   }
   
   /* Set the record counts. */
@@ -7426,13 +7426,13 @@ static void __far __pascal FreeDisplayList( HGLOBAL hDisplayList )
 
   
   /* Lock display list. */
-  if( hDisplayList == NULL ) return;  
+  if( hDisplayList == 0 ) return;  
   
   /* Lock display list. */
   fpDisplayList = (FPDISPLAYLIST) GlobalLock( hDisplayList );  
   
   /* Free the buffer itself. */
-  if( fpDisplayList->hRecordList != NULL ) 
+  if( fpDisplayList->hRecordList != 0 ) 
   {
     GlobalFree( fpDisplayList->hRecordList );
   }
@@ -7457,7 +7457,7 @@ static void __far __pascal ClearDisplayList( HGLOBAL hDisplayList )
 
   
   /* Lock display list. */
-  if( hDisplayList == NULL ) return;  
+  if( hDisplayList == 0 ) return;  
   
   /* Lock display list. */
   fpDisplayList = (FPDISPLAYLIST) GlobalLock( hDisplayList );  
@@ -7489,7 +7489,7 @@ static BOOL __far __pascal InsertTxtDisplayListRec
    
   
   /* No list. */
-  if( fpDisplayList->hRecordList == NULL ) return FALSE;
+  if( fpDisplayList->hRecordList == 0 ) return FALSE;
   
   /* Do we need to increase the size of the list? */
   if( fpDisplayList->wNumRecords == fpDisplayList->wMaxRecords )
@@ -7539,7 +7539,7 @@ static BOOL __far __pascal UpdateTxtDisplayListRec
    
   
   /* No list. */
-  if( fpDisplayList->hRecordList == NULL ) return FALSE;
+  if( fpDisplayList->hRecordList == 0 ) return FALSE;
   
   /* Do we need to increase the size of the list? */
   if( wRecordNum >= fpDisplayList->wNumRecords )
@@ -7582,7 +7582,7 @@ static BOOL __far __pascal GetTxtDisplayListRec
 
   
   /* No list. */
-  if( fpDisplayList->hRecordList == NULL ) return FALSE;
+  if( fpDisplayList->hRecordList == 0 ) return FALSE;
   
   /* Are we past the end of the list? */
   if( wRecordNum >= fpDisplayList->wNumRecords )
@@ -7630,7 +7630,7 @@ static BOOL __far __pascal MoveTxtDisplayRecHortPos
   
 
   /* No list. */
-  if( fpDisplayList->hRecordList == NULL ) return FALSE;
+  if( fpDisplayList->hRecordList == 0 ) return FALSE;
   
   /* We will pass the end of the list? */
   if( wEndTxtDispRec >= fpDisplayList->wNumRecords )
@@ -7712,7 +7712,7 @@ static BOOL __far __pascal InsertPictDisplayListRec
    
   
   /* No list. */
-  if( fpDisplayList->hRecordList == NULL ) return FALSE;
+  if( fpDisplayList->hRecordList == 0 ) return FALSE;
   
   /* Do we need to increase the size of the list? */
   if( fpDisplayList->wNumRecords == fpDisplayList->wMaxRecords )
@@ -7762,7 +7762,7 @@ static BOOL __far __pascal UpdatePictDisplayListRec
    
   
   /* No list. */
-  if( fpDisplayList->hRecordList == NULL ) return FALSE;
+  if( fpDisplayList->hRecordList == 0 ) return FALSE;
   
   /* Do we need to increase the size of the list? */
   if( wRecordNum >= fpDisplayList->wNumRecords )
@@ -7804,7 +7804,7 @@ static BOOL __far __pascal GetPictDisplayListRec
   FPPICTDISPLAYREC fpPictDisplayRec;
 
   /* No list. */
-  if( fpDisplayList->hRecordList == NULL ) return FALSE;
+  if( fpDisplayList->hRecordList == 0 ) return FALSE;
   
   /* Are we at the end of the list? */
   if( wRecordNum >= fpDisplayList->wNumRecords )
@@ -7867,7 +7867,7 @@ static BOOL __far __pascal InsertBorderDisplayListRec
    
   
   /* No list. */
-  if( fpDisplayList->hRecordList == NULL ) return FALSE;
+  if( fpDisplayList->hRecordList == 0 ) return FALSE;
   
   /* Do we need to increase the size of the list? */
   if( fpDisplayList->wNumRecords == fpDisplayList->wMaxRecords )
@@ -7917,7 +7917,7 @@ static BOOL __far __pascal GetBorderDisplayListRec
   FPBORDERDISPLAYREC fpBorderDisplayRec;
 
   /* No list. */
-  if( fpDisplayList->hRecordList == NULL ) return FALSE;
+  if( fpDisplayList->hRecordList == 0 ) return FALSE;
   
   /* Are we at the end of the list? */
   if( wRecordNum >= fpDisplayList->wNumRecords )
