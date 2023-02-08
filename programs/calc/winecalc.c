@@ -117,7 +117,7 @@ extern HWND hWndListBox;
 
 HINSTANCE hInstance;
 
-int WINAPI WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmdshow )
+int PASCAL WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmdshow )
 {
     MSG msg;
     WNDCLASS wc;
@@ -212,7 +212,7 @@ int WINAPI WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmd
     return msg.wParam;
 }
 
-LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     HDC hdc;
     PAINTSTRUCT ps;

@@ -21,7 +21,9 @@
 
 #include "winemine.h"
 #include "winemres.h"
-#include "Stdlib.h" 
+#include "stdlib.h" 
+#include "stdio.h" 
+#include "string.h" 
 
 /* Windows 1.x/2.x has no mechanisim for passing parameters to dialogs 
    so we must use globals instead */
@@ -31,7 +33,7 @@ BOARD *g_board;
 
 //#define RAND_MAX 0x7fff
 
-static const DWORD wnd_style =  WS_POPUP | WS_BORDER | WS_CAPTION | WS_SYSMENU;
+static const DWORD wnd_style =  WS_OVERLAPPEDWINDOW/*WS_POPUP*/ | WS_BORDER | WS_CAPTION | WS_SYSMENU;
 
 void CheckLevel(BOARD * p_board )
 {
@@ -150,7 +152,7 @@ void SaveBoard( BOARD *p_board )
 
     for( i = 0; i < 3; i++ ) {
         sprintf( key_name, "Name%u", i+1 );
-        strcpy( data, p_board->best_name[i], sizeof( data ) );
+        lstrcpyn( data, p_board->best_name[i], sizeof( data ) );
         WriteProfileString("WineMine", key_name, data);
     }
 
@@ -875,7 +877,7 @@ LRESULT CALLBACK MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     static BOARD board;
 
     switch( msg ) {
-    case WM_CREATE:
+	case WM_CREATE:
         board.hInst = ((LPCREATESTRUCT) lParam)->hInstance;
         board.hWnd = hWnd;
         board.IsFullRepaint = TRUE;
@@ -889,7 +891,6 @@ LRESULT CALLBACK MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         InitBoard( &board );
         CreateBoard( &board );
         return 0;
-
     case WM_PAINT:
       {
         HDC hMemDC;
@@ -997,7 +998,7 @@ LRESULT CALLBACK MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         return 0;
     }
-    
+  
     case WM_SETFOCUS:     
     {
         UpdateWindow(board.hWnd);
@@ -1064,7 +1065,7 @@ LRESULT CALLBACK MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return( DefWindowProc( hWnd, msg, wParam, lParam ));
 }
 
-int FAR PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmdshow )
+int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmdshow )
 {
     MSG msg;
     WNDCLASS wc;
