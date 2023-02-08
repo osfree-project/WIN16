@@ -254,7 +254,7 @@ BOOL __far __pascal AddFont( HWND hWnd, HFONTBUFFER hFontBuffer, HFONT hFont, WO
   fpFontBuffer = ( FPFONTBUFFER ) GlobalLock( hFontBuffer );
   
   /* Get pointer to the first font info node. */
-  fpFontInfo = GlobalLock( fpFontBuffer->hFontInfo );
+  fpFontInfo = (FPFONTINFO)GlobalLock( fpFontBuffer->hFontInfo );
 
   /* If we haven't reached - add space for the new font to the buffer. */
   if( fpFontBuffer->wNumFonts < MAX_FONTS )
