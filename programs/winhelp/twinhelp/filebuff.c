@@ -122,7 +122,7 @@ HGLOBAL __far _pascal OpenHelpFile( HWND hMainWnd, char __far * szHelpFilePath )
   hHelpFileBuffer = (HGLOBAL) WndData( hMainWnd, WDM_GETFILEBUFFER, 0L, NULL );
 
   /* Error - No buffer. */
-  if( hHelpFileBuffer == 0 ) return( NULL );
+  if( hHelpFileBuffer == 0 ) return( 0 );
 
   /* Find help file in file buffer. */
   RetVal = GetFileBufferRec( hHelpFileBuffer, szHelpFilePath, (FPHLPFILEBUFFREC) &HelpFileBufferRec );
@@ -231,7 +231,7 @@ HGLOBAL __far _pascal LockTopicData( HWND hMainWnd, char __far * szHelpFilePath,
   RetVal = GetFileBufferRec( hHelpFileBuffer, szHelpFilePath, (FPHLPFILEBUFFREC) &HelpFileBufferRec );
 
   /* Finding file has failed. */
-  if( RetVal != NO_ERROR ) return( NULL );
+  if( RetVal != NO_ERROR ) return( 0 );
 
 
   /* Retrieve topics data. */
@@ -244,7 +244,7 @@ HGLOBAL __far _pascal LockTopicData( HWND hMainWnd, char __far * szHelpFilePath,
   if( RetVal != NO_ERROR )
   {
     /* Loading the topic's info may take a while. */
-    hOldCursor = SetCursor( LoadCursor( NULL, IDC_WAIT ) );
+    hOldCursor = SetCursor( LoadCursor( 0, IDC_WAIT ) );
   
     /* Load the topic's info. */
     RetVal = FillTopicBuffRec( hMainWnd, dwTopicCharOffset, &HelpFileBufferRec, &TopicDataRec );
@@ -262,7 +262,7 @@ HGLOBAL __far _pascal LockTopicData( HWND hMainWnd, char __far * szHelpFilePath,
       }
 
       /* Failure. */
-      return( NULL );
+      return( 0 );
     }
 
     /* Save topic data to buffer. */
@@ -278,7 +278,7 @@ HGLOBAL __far _pascal LockTopicData( HWND hMainWnd, char __far * szHelpFilePath,
       ClearTopicBufferRec( &TopicDataRec );
       
       /* Failure. */
-      return( NULL );
+      return( 0 );
     }
   }
 
@@ -286,7 +286,7 @@ HGLOBAL __far _pascal LockTopicData( HWND hMainWnd, char __far * szHelpFilePath,
   hTopicData = GlobalAlloc( GHND, sizeof(TOPICDATA) );
 
   /* Creating structure has failed. */
-  if( hTopicData == NULL )
+  if( hTopicData == 0 )
   {
     /* Display error message. */
     MsgBox( GetLibInst(), hMainWnd, IDS_ERRORTITLE, IDS_MEMORYALLOC, MB_ICONHAND | MB_OK );
@@ -295,7 +295,7 @@ HGLOBAL __far _pascal LockTopicData( HWND hMainWnd, char __far * szHelpFilePath,
     ClearTopicBufferRec( &TopicDataRec );
       
     /* Failure. */
-    return( NULL );
+    return( 0 );
   }
 
   /* Lock topic data. */
@@ -345,7 +345,7 @@ void __far _pascal UnlockTopicData( HWND hMainWnd, HGLOBAL hTopicData )
   hHelpFileBuffer = (HGLOBAL) WndData( hMainWnd, WDM_GETFILEBUFFER, 0L, NULL );
 
   /* Error - No buffer. */
-  if( hHelpFileBuffer == NULL ) return;
+  if( hHelpFileBuffer == 0 ) return;
 
   /* Lock topic data. */
   fpTopicData = (FPTOPICDATA) GlobalLock( hTopicData );  
@@ -405,7 +405,7 @@ void __far __pascal FreeHelpFileBuffer( HWND hMainWnd  )
   /* Get the handle to the file buffer. */
   hHelpFileBuffer = (HGLOBAL) WndData( hMainWnd, WDM_GETFILEBUFFER, 0L, NULL );
 
-  if( hHelpFileBuffer == NULL ) return;
+  if( hHelpFileBuffer == 0 ) return;
   
   /* 
   ** Free all information in the buffer. 
@@ -443,10 +443,10 @@ void __far __pascal FreeHelpFileBuffer( HWND hMainWnd  )
 static void __far __pascal ClearFileBufferRec( FPHLPFILEBUFFREC fpRec )
 {
   /* Free the file's HLPFILEINFO structure. */
-  if( fpRec->hHelpFileInfo != NULL ) FreeHelpFileInfo( fpRec->hHelpFileInfo );  
+  if( fpRec->hHelpFileInfo != 0) FreeHelpFileInfo( fpRec->hHelpFileInfo );  
 
   /* Free the file's topic buffer. */
-  if( fpRec->hTopicBuffer != NULL ) FreeTopicBuffer( fpRec->hTopicBuffer );    
+  if( fpRec->hTopicBuffer != 0 ) FreeTopicBuffer( fpRec->hTopicBuffer );    
 
   /* Record does not contain valid info. */
   fpRec->bValid = FALSE;
@@ -712,7 +712,7 @@ static RETVAL __far __pascal AllocTopicBuffer( HWND hErrorWnd, HGLOBAL __far * h
   *hTopicBuffer = GlobalAlloc( GHND, sizeof(TOPICBUFFREC) * MAXTOPICBUFF );
   
   /* Error? */
-  if( *hTopicBuffer == NULL )
+  if( *hTopicBuffer == 0 )
   {
     /* Failure. */
     return( ERR_MEMORY );
