@@ -11,11 +11,11 @@ DESC = Windows File Manager
 #       $(p)lfn$(e) &
 #       $(p)lfnmisc$(e) &
 srcfiles = &
+       $(p)tbar$(e) &
        $(p)winfile$(e) &
        $(p)numfmt$(e) &
        $(p)res$(e) &
        $(p)suggest$(e) &
-       $(p)tbar$(e) &
        $(p)treectl$(e) &
        $(p)wfassoc$(e) &
        $(p)wfchgnot$(e) &

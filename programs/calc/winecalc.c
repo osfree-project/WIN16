@@ -188,8 +188,8 @@ int PASCAL WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmd
         CW_USEDEFAULT,
         calc.sciMode ? CALC_STANDARD_WIDTH :  CALC_SCIENTIFIC_WIDTH,
         calc.sciMode ? CALC_STANDARD_HEIGHT : CALC_SCIENTIFIC_HEIGHT,
-        0/*NULL*/,
-        0/*NULL*/,
+        0,
+        0,
         hInst,
         NULL );
 
@@ -202,7 +202,7 @@ int PASCAL WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmd
     if (!(haccel = LoadAccelerators(hInst, "MAIN_MENU")))
         exit(1);
 
-    while( GetMessage(&msg, 0/*NULL*/, 0, 0) ) {
+    while( GetMessage(&msg, 0, 0, 0) ) {
         if (hWndDlgStats == 0 || !IsDialogMessage(hWndDlgStats, &msg)) {
            if (!TranslateAccelerator( hWnd, haccel, &msg )) {
               TranslateMessage( &msg );

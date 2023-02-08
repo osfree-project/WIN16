@@ -22,7 +22,8 @@
 #define SIZEOF(a) sizeof(a)/sizeof((a)[0])
 
 #include "notepad_res.h"
-
+#include <dos.h>
+#define MAX_PATH NAME_MAX
 #define MAX_STRING_LEN      255
 
 typedef struct
@@ -34,25 +35,25 @@ typedef struct
   HFONT   hFont; /* Font used by the edit control */
   LOGFONT lfFont;
   BOOL    bWrapLongLines;
-  WCHAR   szFindText[MAX_PATH];
-  WCHAR   szFileName[MAX_PATH];
-  WCHAR   szFileTitle[MAX_PATH];
-  WCHAR   szFilter[2 * MAX_STRING_LEN + 100];
-  INT     iMarginTop;
-  INT     iMarginBottom;
-  INT     iMarginLeft;
-  INT     iMarginRight;
-  WCHAR   szHeader[MAX_PATH];
-  WCHAR   szFooter[MAX_PATH];
+  char   szFindText[MAX_PATH];
+  char   szFileName[MAX_PATH];
+  char   szFileTitle[MAX_PATH];
+  char   szFilter[2 * MAX_STRING_LEN + 100];
+  int     iMarginTop;
+  int     iMarginBottom;
+  int     iMarginLeft;
+  int     iMarginRight;
+  char   szHeader[MAX_PATH];
+  char   szFooter[MAX_PATH];
 
-  FINDREPLACE find;
-  FINDREPLACE lastFind;
+  //FINDREPLACE find;
+  //FINDREPLACE lastFind;
   HGLOBAL hDevMode; /* printer mode */
   HGLOBAL hDevNames; /* printer names */
 } NOTEPAD_GLOBALS;
 
 extern NOTEPAD_GLOBALS Globals;
 
-VOID SetFileName(LPCWSTR szFileName);
-void NOTEPAD_DoFind(FINDREPLACE *fr);
+VOID SetFileName(LPCSTR szFileName);
+//void NOTEPAD_DoFind(FINDREPLACE *fr);
 DWORD get_dpi(void);

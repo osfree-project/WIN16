@@ -47,10 +47,13 @@ VOID DIALOG_HelpHelp(VOID);
 VOID DIALOG_HelpAboutNotepad(VOID);
 
 VOID DIALOG_TimeDate(VOID);
-int DIALOG_StringMsgBox(HWND hParent, int formatId, LPCWSTR szString, DWORD dwFlags);
+int DIALOG_StringMsgBox(HWND hParent, int formatId, LPCSTR szString, DWORD dwFlags);
 
 /* utility functions */
 VOID ShowLastError(void);
-BOOL FileExists(LPCWSTR szFilename);
+BOOL FileExists(LPCSTR szFilename);
 BOOL DoCloseFile(void);
-void DoOpenFile(LPCWSTR szFileName);
+void DoOpenFile(LPCSTR szFileName);
+
+int WINAPI ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText,
+                HICON hIcon);
