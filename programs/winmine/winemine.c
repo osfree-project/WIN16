@@ -33,7 +33,7 @@ BOARD *g_board;
 
 //#define RAND_MAX 0x7fff
 
-static const DWORD wnd_style =  WS_OVERLAPPEDWINDOW/*WS_POPUP*/ | WS_BORDER | WS_CAPTION | WS_SYSMENU;
+static const DWORD wnd_style =  WS_POPUP | WS_BORDER | WS_CAPTION | WS_SYSMENU;
 
 void CheckLevel(BOARD * p_board )
 {
