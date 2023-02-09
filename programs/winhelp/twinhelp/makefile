@@ -7,6 +7,8 @@ PROJ  = winhelp1
 PROJ1 = winhelp
 TRGT = $(PROJ1).exe
 DESC = Windows Help
+#		$(p)menu$(e) &
+#		$(p)topicdat$(e) &
 srcfiles = &
 		$(p)accel$(e) &
 		$(p)back$(e) &
@@ -26,12 +28,10 @@ srcfiles = &
 		$(p)inifile$(e) &
 		$(p)libmain$(e) &
 		$(p)macroeng$(e) &
-		$(p)menu$(e) &
 		$(p)msgbox$(e) &
 		$(p)portable$(e) &
 		$(p)search$(e) &
 		$(p)secwnd$(e) &
-		$(p)topicdat$(e) &
 		$(p)winmem$(e) &
 		$(p)wnddata$(e) &
 		$(p)wndlist$(e) $(p)wndpos$(e)
@@ -39,7 +39,7 @@ srcfiles = &
 
 # defines additional options for C compiler
 #ADD_COPT = -0 -sg -zw -bw -bg -d3 -db -hw -ml -od #-pl
-ADD_COPT = -sg -DDEBUG=1
+ADD_COPT = -ml -zc -i=$(MYDIR)..$(SEP)tvlib -dSTRICT
 #DEBUG    = watcom
 IMPORTS  = GETOPENFILENAME     COMMDLG.1, &
            GETCURRENTDIRECTORY KERNEL.411

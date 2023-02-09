@@ -205,7 +205,7 @@ static BOOL __far __pascal EnumFiles( char __far * szWildName, FILESENUMPROC Enu
     /* If we should let other applications execute. */
     if( Yield )
     {
-      while ( PeekMessage( &Msg, NULL, 0, 0, PM_REMOVE ) )
+      while ( PeekMessage( &Msg, 0, 0, 0, PM_REMOVE ) )
       {
         TranslateMessage( &Msg );
         DispatchMessage( &Msg );
@@ -287,7 +287,7 @@ static BOOL __far __pascal EnumFiles( char __far * szWildName, FILESENUMPROC Enu
           /* If we should let other applications execute. */
           if( Yield )
           {
-            while ( PeekMessage( &Msg, NULL, 0, 0, PM_REMOVE ) )
+            while ( PeekMessage( &Msg, 0, 0, 0, PM_REMOVE ) )
             {
               TranslateMessage( &Msg );
               DispatchMessage( &Msg );
@@ -295,7 +295,7 @@ static BOOL __far __pascal EnumFiles( char __far * szWildName, FILESENUMPROC Enu
           }
           
           /* Get the next element in the path and terminate it */
-          szPathCopy = strchr( szNextPath, AUTOEXEC_PATH_DELIMITER );
+          szPathCopy = _fstrchr( szNextPath, AUTOEXEC_PATH_DELIMITER );
           if( szPathCopy )
           {
             *szPathCopy = 0;  /* End the current part. */

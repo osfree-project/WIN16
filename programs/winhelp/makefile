@@ -6,7 +6,7 @@
 
 # First directory must be UNI which produces C/C++ header files
 
-DIRS = #progman winver
+DIRS = twinhelp
 
 !include $(%ROOT)tools/mk/all.mk
 

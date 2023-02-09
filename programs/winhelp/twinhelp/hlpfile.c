@@ -288,10 +288,10 @@ RETVAL __far __pascal LoadHelpFileInfo( HWND hErrorWnd, char __far * szFilePath,
   _fstrcpy( fpHelpFileInfo->szFilePath, szFilePath ); 
 
   /* Initialize variables in the structure. */
-  fpHelpFileInfo->hPhrasesInfo = NULL;
-  fpHelpFileInfo->hCTXOMAPInfo = NULL;
-  fpHelpFileInfo->hTTLBTREEInfo = NULL;
-  fpHelpFileInfo->hContextInfo = NULL;
+  fpHelpFileInfo->hPhrasesInfo = 0;
+  fpHelpFileInfo->hCTXOMAPInfo = 0;
+  fpHelpFileInfo->hTTLBTREEInfo = 0;
+  fpHelpFileInfo->hContextInfo = 0;
 
   /* 
   ** Load the file's main header. 
@@ -527,7 +527,7 @@ static RETVAL __far __pascal AllocHelpFileInfo( HWND hErrorWnd, HGLOBAL __far * 
 {
   /* Allocate memory. */
   *hGlobal =  GlobalAlloc( GHND, sizeof( HLPFILEINFO ) );
-  if( *hGlobal == NULL )
+  if( *hGlobal == 0 )
   {
     return( ERR_MEMORY );
   }
@@ -684,7 +684,7 @@ static RETVAL __far __pascal LoadWHIFSInfo( HWND hErrorWnd, HFILE hHelpFile, lon
 
   /* Allocate memory. */
   fpWHIFSInfo->hFileData =  GlobalAlloc( GHND, sizeof( WHIFFILEINFO ) * fpWHIFSInfo->WHIFSHeader.TotalWHIFSEntries );
-  if( fpWHIFSInfo->hFileData == NULL )
+  if( fpWHIFSInfo->hFileData == 0 )
   {
     return( ERR_MEMORY );
   }
@@ -988,10 +988,10 @@ static RETVAL __far __pascal LoadSystemFile
   /* Initialize the SYSTEMINFO structure's fields. */
   fpSystemInfo->dwContentsTopic = 0;
   _fstrcpy( fpSystemInfo->szContentsFile, szHelpFilePath );
-  fpSystemInfo->hTitleText = NULL;
-  fpSystemInfo->hIcon = NULL;
-  fpSystemInfo->hMacroData = NULL;
-  fpSystemInfo->hSecondWndData = NULL;
+  fpSystemInfo->hTitleText = 0;
+  fpSystemInfo->hIcon = 0;
+  fpSystemInfo->hMacroData = 0;
+  fpSystemInfo->hSecondWndData = 0;
 
 
   /* 
@@ -1010,7 +1010,7 @@ static RETVAL __far __pascal LoadSystemFile
     ** 1 is added to size for the NULL character at the end.
     */
     fpSystemInfo->hTitleText =  GlobalAlloc( GHND, wStringSize );
-    if( fpSystemInfo->hTitleText == NULL )
+    if( fpSystemInfo->hTitleText == 0 )
     {
       return( ERR_MEMORY );
     }
@@ -1078,7 +1078,7 @@ static RETVAL __far __pascal LoadSystemFile
           ** 1 is added to size for the NULL character at the end.
           */
           fpSystemInfo->hTitleText =  GlobalAlloc( GHND, SystemRec.DataSize + 1 );
-          if( fpSystemInfo->hTitleText == NULL )
+          if( fpSystemInfo->hTitleText == 0 )
           {
             FreeSystemInfo( fpSystemInfo );
             return( ERR_MEMORY );
@@ -1108,7 +1108,7 @@ static RETVAL __far __pascal LoadSystemFile
           fpSystemInfo->hIcon = CreateHelpFileIcon( hErrorWnd, hHelpFile, SystemRec.DataSize );
   
           /* Error? */
-          if( fpSystemInfo->hIcon == NULL )
+          if( fpSystemInfo->hIcon == 0 )
           {
             FreeSystemInfo( fpSystemInfo );
             return( ERR_OTHER );
@@ -1127,7 +1127,7 @@ static RETVAL __far __pascal LoadSystemFile
         {
           /* Allocate space for the system record's variable length data. */
           hRecData =  GlobalAlloc( GHND, SystemRec.DataSize );
-          if( hRecData == NULL )
+          if( hRecData == 0 )
           {
             FreeSystemInfo( fpSystemInfo );
             return( ERR_MEMORY );
@@ -1575,9 +1575,9 @@ static HICON __far __pascal CreateHelpFileIcon( HWND hErrorWnd, HFILE hHelpFile,
   
   /* Allocate space to read in the icon's data. */
   hGlobal = GlobalAlloc( GHND, wSize );
-  if( hGlobal == NULL )
+  if( hGlobal == 0 )
   {
-    return( NULL );
+    return( 0 );
   }
   
   /* Lock the data buffer. */
@@ -1592,7 +1592,7 @@ static HICON __far __pascal CreateHelpFileIcon( HWND hErrorWnd, HFILE hHelpFile,
     GlobalUnlock( hGlobal );
     GlobalFree( hGlobal );
 
-    return( NULL );
+    return( 0 );
   }
     
   /* Get number of colors. */
@@ -1674,7 +1674,7 @@ static HICON __far __pascal CreateHelpFileIcon( HWND hErrorWnd, HFILE hHelpFile,
   
   /* Allocate space for the AND bitmap's bits buffer. */
   hANDBitmapBits = GlobalAlloc( GHND, wANDBitmapBitsSize );
-  if( hANDBitmapBits == NULL )
+  if( hANDBitmapBits == 0 )
   {
     /* Free data buffer. */
     GlobalUnlock( hGlobal );
@@ -1686,7 +1686,7 @@ static HICON __far __pascal CreateHelpFileIcon( HWND hErrorWnd, HFILE hHelpFile,
     /* Delete the XOR bitmap. */
     DeleteObject( hXORBitmap );
 
-    return( NULL );
+    return( 0 );
   }
   
   /* Lock the AND bitmap's bits buffer. */
@@ -1709,7 +1709,7 @@ static HICON __far __pascal CreateHelpFileIcon( HWND hErrorWnd, HFILE hHelpFile,
   
   /* Allocate space for the XOR bitmap's bits buffer. */
   hXORBitmapBits = GlobalAlloc( GHND, wXORBitmapBitsSize );
-  if( hXORBitmapBits == NULL )
+  if( hXORBitmapBits == 0 )
   {
     /* Free data buffer. */
     GlobalUnlock( hGlobal );
@@ -1725,7 +1725,7 @@ static HICON __far __pascal CreateHelpFileIcon( HWND hErrorWnd, HFILE hHelpFile,
     /* Delete the XOR bitmap. */
     DeleteObject( hXORBitmap );
 
-    return( NULL );
+    return( 0 );
   }
   
   /* Lock the XOR bitmap's bits buffer. */
@@ -1808,14 +1808,14 @@ static void __far __pascal FreeSystemInfo( FPSYSTEMINFO fpSystemInfo )
   if( fpSystemInfo->hTitleText )
   {
     GlobalFree( fpSystemInfo->hTitleText );
-    fpSystemInfo->hTitleText = NULL; 
+    fpSystemInfo->hTitleText = 0; 
   }
 
   /* Free alternate icon. */
-  if( fpSystemInfo->hIcon != NULL )
+  if( fpSystemInfo->hIcon != 0 )
   {
     DestroyIcon( fpSystemInfo->hIcon );
-    fpSystemInfo->hIcon = NULL;
+    fpSystemInfo->hIcon = 0;
   }
 
   /* Free macro records data. */
@@ -1823,7 +1823,7 @@ static void __far __pascal FreeSystemInfo( FPSYSTEMINFO fpSystemInfo )
   {
     EnumSysRecords( FreeSystemVarLengthData, fpSystemInfo->hMacroData, 0L );
     GlobalFree( fpSystemInfo->hMacroData );
-    fpSystemInfo->hMacroData = NULL;
+    fpSystemInfo->hMacroData = 0;
   }
 
   /* Free secondary window records data. */
@@ -1831,7 +1831,7 @@ static void __far __pascal FreeSystemInfo( FPSYSTEMINFO fpSystemInfo )
   {
     EnumSysRecords( FreeSystemVarLengthData, fpSystemInfo->hSecondWndData, 0L );
     GlobalFree( fpSystemInfo->hSecondWndData );
-    fpSystemInfo->hSecondWndData = NULL;
+    fpSystemInfo->hSecondWndData = 0;
   }
 }
 
@@ -1867,11 +1867,11 @@ static RETVAL __far __pascal InsertSysRecord( HWND hErrorWnd, FPREADSYSTEMREC fp
                  
                  
   /* First record. */
-  if( *hRecordBuffer == NULL )
+  if( *hRecordBuffer == 0 )
   {
     /* Allocate space for the new system record. */
     *hRecordBuffer =  GlobalAlloc( GHND, sizeof(SYSTEMREC) * 2 );
-    if( *hRecordBuffer == NULL )
+    if( *hRecordBuffer == 0 )
     {
       return( ERR_MEMORY );
     }
@@ -1897,7 +1897,7 @@ static RETVAL __far __pascal InsertSysRecord( HWND hErrorWnd, FPREADSYSTEMREC fp
     ** the first slot that holds the array count.
     */
     *hRecordBuffer = GlobalReAlloc( *hRecordBuffer, sizeof(SYSTEMREC) * (wArrayCount + 2), GMEM_MOVEABLE | GMEM_ZEROINIT );
-    if( *hRecordBuffer == NULL )
+    if( *hRecordBuffer == 0 )
     {
       return( ERR_MEMORY );
     }
@@ -1939,7 +1939,7 @@ void __far __pascal EnumSysRecords( SYSTEMRECPROC fpCallback, HGLOBAL hRecordBuf
   
   
   /* No buffer. */
-  if( hRecordBuffer == NULL ) return;
+  if( hRecordBuffer == 0 ) return;
 
   /* Lock memory. */
   fpRecord = ( FPSYSTEMREC ) GlobalLock( hRecordBuffer );
@@ -2060,7 +2060,7 @@ BOOL __far __pascal SetContentsTopic( HWND hWnd, HGLOBAL hHelpFileInfo, char __f
 
   /* Open and load the Contents button's help file's info. */
   hContentsHelpFileInfo = OpenHelpFile( hWnd, szContentsHelpFilePath );
-  if( hHelpFileInfo == NULL )
+  if( hHelpFileInfo == 0 )
   {
     /* Failure. */
     return( FALSE );
@@ -2106,7 +2106,7 @@ HGLOBAL __far __pascal GetTitleText( HGLOBAL hHelpFileInfo )
   
 
   /* No help file data. */
-  if( hHelpFileInfo == NULL ) return( NULL );
+  if( hHelpFileInfo == 0 ) return( 0 );
 
   /* Lock help data. */
   fpHelpFileInfo = (FPHLPFILEINFO) GlobalLock( hHelpFileInfo );
@@ -2204,7 +2204,7 @@ static RETVAL __far __pascal LoadPhrasesFile
 
   /* Allocate memory for offsets table and uncompressed phrases. */
   *hPhrasesInfo =  GlobalAlloc( GHND, PhraseHdr.PhrasesSize + OffsetsTableSize );
-  if( *hPhrasesInfo == NULL )
+  if( *hPhrasesInfo == 0 )
   {
     return( ERR_MEMORY );
   }
@@ -2298,7 +2298,7 @@ static void __far __pascal FreePhrasesInfo( HGLOBAL __far * fphPhraseInfo )
   if( *fphPhraseInfo )
   {
     GlobalFree( *fphPhraseInfo );
-    *fphPhraseInfo = NULL; 
+    *fphPhraseInfo = 0; 
   }
 }
 
@@ -2370,7 +2370,7 @@ static RETVAL __far __pascal LoadCTXOMAPFile( HWND hErrorWnd, HFILE hHelpFile, l
   ** in the MapID field.
   */
   *hCTXOMAPInfo =  GlobalAlloc( GHND, (wNumRecs + 1) * sizeof(CTXOMAPREC) );
-  if( *hCTXOMAPInfo == NULL )
+  if( *hCTXOMAPInfo == 0 )
   {
     return( ERR_MEMORY );
   }
@@ -2417,7 +2417,7 @@ static void __far __pascal FreeCTXOMAPInfo( HGLOBAL __far * fphCTXOMAPInfo )
   if( *fphCTXOMAPInfo )
   {
     GlobalFree( *fphCTXOMAPInfo );
-    *fphCTXOMAPInfo = NULL; 
+    *fphCTXOMAPInfo = 0; 
   }
 }
 
@@ -2440,7 +2440,7 @@ BOOL __far __pascal GetCTXOMAPOffset( HWND hErrorWnd, HGLOBAL hHelpFileInfo, lon
   fpHelpFileInfo = (FPHLPFILEINFO) GlobalLock( hHelpFileInfo );
 
   /* Verify that we even have a CTXOMAP table to read from. */
-  if( fpHelpFileInfo->hCTXOMAPInfo == NULL )
+  if( fpHelpFileInfo->hCTXOMAPInfo == 0 )
   {
     /* Show error message. */
     MsgBox( GetLibInst(), hErrorWnd, IDS_ERRORTITLE, IDS_CTXOMAP, MB_ICONHAND | MB_OK );
@@ -2544,7 +2544,7 @@ void __far __pascal GetTopicTitle( HGLOBAL hHelpFileInfo, DWORD dwTopicCharOffse
   fpHelpFileInfo = (FPHLPFILEINFO) GlobalLock( hHelpFileInfo );
 
   /* No table. */
-  if( fpHelpFileInfo->hTTLBTREEInfo == NULL ) return;
+  if( fpHelpFileInfo->hTTLBTREEInfo == 0 ) return;
   
   /* Lock the data. */
   fpData = ( BYTE __huge * ) GlobalLock( fpHelpFileInfo->hTTLBTREEInfo );
@@ -2719,7 +2719,7 @@ BOOL __far __pascal GetContextOffset( HGLOBAL hHelpFileInfo, DWORD dwHashValue, 
   fpHelpFileInfo = (FPHLPFILEINFO) GlobalLock( hHelpFileInfo );
 
   /* No table. */
-  if( fpHelpFileInfo->hContextInfo == NULL ) return FALSE;
+  if( fpHelpFileInfo->hContextInfo == 0 ) return FALSE;
   
   /* Lock the data. */
   fpData = ( BYTE __huge * ) GlobalLock( fpHelpFileInfo->hContextInfo );
@@ -3290,8 +3290,8 @@ static void __far __pascal InitKeywordData
   fpHelpFileInfo = (FPHLPFILEINFO) GlobalLock( hHelpFileInfo );
 
   /* No data in the buffers. */
-  fpHelpFileInfo->KeywordInfo.hKWBTREEInfo = NULL;
-  fpHelpFileInfo->KeywordInfo.hKWDATAInfo = NULL;
+  fpHelpFileInfo->KeywordInfo.hKWBTREEInfo = 0;
+  fpHelpFileInfo->KeywordInfo.hKWDATAInfo = 0;
 
   /* Unlock help info. */
   GlobalUnlock( hHelpFileInfo );
@@ -3347,7 +3347,7 @@ BOOL __far __pascal LoadKeywordData( HWND hErrorWnd, char chKey, HGLOBAL hHelpFi
   **************************************/
 
   /* If not already loaded. */
-  if( fpHelpFileInfo->KeywordInfo.hKWBTREEInfo == NULL )
+  if( fpHelpFileInfo->KeywordInfo.hKWBTREEInfo == 0 )
   {
     /* Make KWBTREE filename. */
     _fstrcpy( WHIFName, KWBTREE_FILE );
@@ -3371,7 +3371,7 @@ BOOL __far __pascal LoadKeywordData( HWND hErrorWnd, char chKey, HGLOBAL hHelpFi
     if( RetVal != NO_ERROR )
     {
       /* Init. handle. */
-      fpHelpFileInfo->KeywordInfo.hKWBTREEInfo = NULL;
+      fpHelpFileInfo->KeywordInfo.hKWBTREEInfo = 0;
       
       /* Unlock help info. */
       GlobalUnlock( hHelpFileInfo );
@@ -3388,7 +3388,7 @@ BOOL __far __pascal LoadKeywordData( HWND hErrorWnd, char chKey, HGLOBAL hHelpFi
   **************************************/
 
   /* If not already loaded. */
-  if( fpHelpFileInfo->KeywordInfo.hKWDATAInfo == NULL )
+  if( fpHelpFileInfo->KeywordInfo.hKWDATAInfo == 0 )
   {
     /* Make KWDATA filename. */
     _fstrcpy( WHIFName, KWDATA_FILE );
@@ -3488,19 +3488,19 @@ void __far __pascal FreeKeywordData( HGLOBAL hHelpFileInfo )
   fpHelpFileInfo = (FPHLPFILEINFO) GlobalLock( hHelpFileInfo );
 
   /* Is there KWBTREE data to free. */
-  if( fpHelpFileInfo->KeywordInfo.hKWBTREEInfo != NULL )
+  if( fpHelpFileInfo->KeywordInfo.hKWBTREEInfo != 0 )
   {
     /* Use standard b-tree freeing function for now. */
     FreeBTreeFile( &(fpHelpFileInfo->KeywordInfo).hKWBTREEInfo );
-    fpHelpFileInfo->KeywordInfo.hKWBTREEInfo = NULL;
+    fpHelpFileInfo->KeywordInfo.hKWBTREEInfo = 0;
   }
 
   /* Is there KWDATA data to free. */
-  if( fpHelpFileInfo->KeywordInfo.hKWDATAInfo != NULL )
+  if( fpHelpFileInfo->KeywordInfo.hKWDATAInfo != 0 )
   {
     /* Use standard b-tree freeing function for now. */
     GlobalFree( fpHelpFileInfo->KeywordInfo.hKWDATAInfo );
-    fpHelpFileInfo->KeywordInfo.hKWDATAInfo = NULL;
+    fpHelpFileInfo->KeywordInfo.hKWDATAInfo = 0;
   }
 
   /* Unlock help info. */
@@ -3599,7 +3599,7 @@ static RETVAL __far __pascal LoadFontFile( HWND hErrorWnd, HFILE hHelpFile, long
   */
   FontFacesSize = FontHdr.NumFonts * FONTFACESIZE;
   hFontFaces = GlobalAlloc( GHND, FontFacesSize );
-  if( hFontFaces == NULL )
+  if( hFontFaces == 0 )
   {
     return( ERR_MEMORY );
   }
@@ -3633,7 +3633,7 @@ static RETVAL __far __pascal LoadFontFile( HWND hErrorWnd, HFILE hHelpFile, long
   ** in the dwTopicCharOffset field.
   */
   fpFontInfo->hFontList = GlobalAlloc( GHND, fpFontInfo->wFontCount * sizeof( FONTLISTREC ) );
-  if( fpFontInfo->hFontList == NULL )
+  if( fpFontInfo->hFontList == 0 )
   {
     /* Unlock font face string buffer. */
     GlobalUnlock( hFontFaces );
@@ -3742,7 +3742,7 @@ static void __far __pascal FreeFontInfo( FPFONTINFO fpFontInfo )
   /* Free the CONTEXT table. */
   GlobalFree( fpFontInfo->hFontList );
   
-  fpFontInfo->hFontList = NULL;
+  fpFontInfo->hFontList = 0;
 }
 
 
@@ -3824,7 +3824,7 @@ RETVAL __far __pascal LoadPictFile( HWND hErrorWnd, FPHLPFILEINFO fpHelpFileInfo
 
   /* Allocate space for the picture's data. */
   *hPictData = GlobalAlloc( GHND, FileHdr.FileSize );
-  if( *hPictData == NULL )
+  if( *hPictData == 0 )
   {
     /* Close help file. */
     _lclose( hHelpFile );
@@ -3897,9 +3897,9 @@ RETVAL __far __pascal OpenTopicDataStream
   
   /* Init. topic stream structure. */
   TopicStreamPtr->hHelpFile       = HFILE_ERROR;
-  TopicStreamPtr->hFileDataBuffer = NULL;
-  TopicStreamPtr->hText           = NULL;
-  TopicStreamPtr->hCodes          = NULL;
+  TopicStreamPtr->hFileDataBuffer = 0;
+  TopicStreamPtr->hText           = 0;
+  TopicStreamPtr->hCodes          = 0;
 
   /* Open the help file. */
   TopicStreamPtr->hHelpFile = OpenFile( fpHelpFileInfo->szFilePath, &OpenBuffer, OF_READ );
@@ -3980,7 +3980,7 @@ RETVAL __far __pascal OpenTopicDataStream
   }
   
   /* Allocation eror. */
-  if( TopicStreamPtr->hFileDataBuffer == NULL )
+  if( TopicStreamPtr->hFileDataBuffer == 0 )
   {
     /* Close the data stream. */
     CloseTopicDataStream( TopicStreamPtr );
@@ -4193,20 +4193,20 @@ void __far __pascal CloseTopicDataStream
   }
 
   /* Free file buffer. */
-  if( TopicStreamPtr->hFileDataBuffer != NULL )
+  if( TopicStreamPtr->hFileDataBuffer != 0 )
   {        
     GlobalUnlock( TopicStreamPtr->hFileDataBuffer );
     GlobalFree( TopicStreamPtr->hFileDataBuffer );
   }
 
   /* Free topic text buffer. */
-  if( TopicStreamPtr->hText != NULL )
+  if( TopicStreamPtr->hText != 0 )
   {
     GlobalFree( TopicStreamPtr->hText );
   }
 
   /* Free topic codes buffer. */
-  if( TopicStreamPtr->hCodes != NULL )
+  if( TopicStreamPtr->hCodes != 0 )
   {
     GlobalFree( TopicStreamPtr->hCodes );
   }
@@ -4317,11 +4317,11 @@ RETVAL __far __pascal ReadTopicData
       if( TopicLink.DataLen1 > 0 ) 
       {
         /* First time reading topic code data for this topic. */
-        if( TopicStreamPtr->hCodes == NULL )
+        if( TopicStreamPtr->hCodes == 0 )
         {
           /* Allocate space for the display codes information.  */
           TopicStreamPtr->hCodes = GlobalAlloc( GHND, (DWORD) TopicLink.DataLen1 );
-          if( TopicStreamPtr->hCodes == NULL )
+          if( TopicStreamPtr->hCodes == 0 )
           {
             return( ERR_MEMORY );
           }
@@ -4341,7 +4341,7 @@ RETVAL __far __pascal ReadTopicData
           {
             /* Allocate space for the display codes information.  */
             TopicStreamPtr->hCodes = GlobalReAlloc( TopicStreamPtr->hCodes, (DWORD) TopicLink.DataLen1, GMEM_MOVEABLE | GMEM_ZEROINIT );
-            if( TopicStreamPtr->hCodes == NULL )
+            if( TopicStreamPtr->hCodes == 0 )
             {
               return( ERR_MEMORY );
             }
@@ -4383,11 +4383,11 @@ RETVAL __far __pascal ReadTopicData
       if( TopicLink.DataLen2 > 0 ) 
       {
         /* First time reading topic text data. */
-        if( TopicStreamPtr->hText == NULL )
+        if( TopicStreamPtr->hText == 0 )
         {
           /* Allocate space for the text data.  */
           TopicStreamPtr->hText = GlobalAlloc( GHND, (DWORD) TopicLink.DataLen2 );
-          if( TopicStreamPtr->hText == NULL )
+          if( TopicStreamPtr->hText == 0 )
           {
             return( ERR_MEMORY );
           }
@@ -4407,7 +4407,7 @@ RETVAL __far __pascal ReadTopicData
           {
             /* Allocate space for the display text information.  */
             TopicStreamPtr->hText = GlobalReAlloc( TopicStreamPtr->hText, (DWORD) TopicLink.DataLen2, GMEM_MOVEABLE | GMEM_ZEROINIT );
-            if( TopicStreamPtr->hText == NULL )
+            if( TopicStreamPtr->hText == 0 )
             {
               return( ERR_MEMORY );
             }
@@ -4554,10 +4554,10 @@ void __far __pascal FreeTopicInfo
   HGLOBAL hNonScrollCodes 
 )
 {
-  if( hScrollText != NULL ) GlobalFree( hScrollText );
-  if( hScrollCodes != NULL ) GlobalFree( hScrollCodes );
-  if( hNonScrollText != NULL ) GlobalFree( hNonScrollText );
-  if( hNonScrollCodes != NULL ) GlobalFree( hNonScrollCodes );
+  if( hScrollText != 0 ) GlobalFree( hScrollText );
+  if( hScrollCodes != 0 ) GlobalFree( hScrollCodes );
+  if( hNonScrollText != 0 ) GlobalFree( hNonScrollText );
+  if( hNonScrollCodes != 0 ) GlobalFree( hNonScrollCodes );
 }
   
 
@@ -5455,7 +5455,7 @@ static RETVAL __far __pascal LoadBTreeFile( HWND hErrorWnd, HFILE hHelpFile, lon
   ** Allocate memory for the B-Tree data.
   */
   *hBtreeInfo = GlobalAlloc( GHND, FileHdr.FileSize );
-  if( *hBtreeInfo == NULL )
+  if( *hBtreeInfo == 0 )
   {
     return( ERR_MEMORY );
   }
@@ -5497,13 +5497,13 @@ static RETVAL __far __pascal LoadBTreeFile( HWND hErrorWnd, HFILE hHelpFile, lon
 static void __far __pascal FreeBTreeFile( HGLOBAL __far * hBtreeInfo )
 {
   /* No table. */
-  if( *hBtreeInfo == NULL ) return;
+  if( *hBtreeInfo == 0 ) return;
   
   /* Free the B-Tree table. */
   GlobalFree( *hBtreeInfo );
   
   /* Handle is invalid. */
-  *hBtreeInfo = NULL;
+  *hBtreeInfo = 0;
 }
 
 

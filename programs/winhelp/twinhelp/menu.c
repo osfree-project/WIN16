@@ -177,7 +177,7 @@ BOOL __far __pascal StartMenuSupport( HWND hDataWnd )
   GlobalUnlock( hMenuSys );
 
     /* Set the menu sys. data. */
-  WndData( hDataWnd, WDM_SETMENUSYS, (DWORD) hMenuSys, NULL );
+  WndData( hDataWnd, WDM_SETMENUSYS, (DWORD) hMenuSys, 0 );
             
   /* Success. */
   return( TRUE );  

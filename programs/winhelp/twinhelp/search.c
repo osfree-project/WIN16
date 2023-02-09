@@ -151,7 +151,7 @@ BOOL __far __pascal DoHelpKey_PartialKeyMsg( HWND hWnd, UINT SrchMsg, HGLOBAL hH
                       
   /* Open and load the help file's info. */
   hHelpFileInfo = OpenHelpFile( hWnd, fpHelpParams->Path );
-  if( hHelpFileInfo == NULL )
+  if( hHelpFileInfo == 0 )
   {
     /* Unlock handle to message stucture. */
     GlobalUnlock( hHelpParams );
@@ -197,7 +197,7 @@ BOOL __far __pascal DoHelpKey_PartialKeyMsg( HWND hWnd, UINT SrchMsg, HGLOBAL hH
 
     /* Get the topic's data. */
     hTopicData = LockTopicData( hWnd, fpHelpParams->Path, dwTopicCharOffset );
-    if( hTopicData == NULL )
+    if( hTopicData == 0 )
     {
       /* Unlock handle to message stucture. */
       GlobalUnlock( hHelpParams );
@@ -319,7 +319,7 @@ BOOL __far __pascal DoHelpMultiKeyMsg( HWND hWnd, FPHELPPARAMS fpHelpParams )
                       
   /* Open and load the help file's info. */
   hHelpFileInfo = OpenHelpFile( hWnd, fpHelpParams->Path );
-  if( hHelpFileInfo == NULL )
+  if( hHelpFileInfo == 0 )
   {
     /* Failure. */
     return( FALSE );
@@ -357,7 +357,7 @@ BOOL __far __pascal DoHelpMultiKeyMsg( HWND hWnd, FPHELPPARAMS fpHelpParams )
 
   /* Get the topic's data. */
   hTopicData = LockTopicData( hWnd, fpHelpParams->Path, dwTopicCharOffset );
-  if( hTopicData == NULL )
+  if( hTopicData == 0 )
   {
     /* Failure. */
     return( FALSE );
@@ -413,7 +413,7 @@ BOOL __far __pascal ShowCurrHelpFilesKeywords( HWND hDataWnd )
   fpDisplayInfo = (FPDISPLAYINFO) GlobalLock( hDisplayInfo );
   
   /* No file info loaded. */
-  if( fpDisplayInfo->hTopicData == NULL ) 
+  if( fpDisplayInfo->hTopicData == 0 ) 
   {
     /* Unlock the display info. */
     GlobalUnlock( hDisplayInfo );
@@ -875,7 +875,7 @@ LRESULT CALLBACK __export EditKeywordWndProc( HWND hWnd, UINT Msg, WPARAM wParam
       GlobalUnlock( hEditSearchWndData );
 
       /* Pass to edit control's old WndProc(). */
-      lResult = CallWindowProc( OldEditWndProc, hWnd, Msg, wParam, lParam );
+      lResult = CallWindowProc( (WNDPROC)OldEditWndProc, hWnd, Msg, wParam, lParam );
   
       /* Show selected keyword in edit control. */
       SelectClosestKeyword( hDlgWnd );

@@ -154,10 +154,10 @@ HWND __far __pascal StartHistorySystem( HWND hMainWnd, HWND hMainTopicWnd )
   hHistoryWnd = CreateDialogParam( GetLibInst(), "DLG_HISTORY", hMainWnd, HistoryDlgProc, (LPARAM) ( FPHISTWNDDATA ) &HistWndData ); 
 
   /* Error? */
-  if( hHistoryWnd == NULL )
+  if( hHistoryWnd == 0 )
   {
     MsgBox( GetLibInst(), hMainWnd, IDS_ERRORTITLE, IDS_HISTORYWND, MB_ICONHAND | MB_OK );
-    return( NULL );
+    return( 0 );
   }
 
   /* Save the history window's handle. */
@@ -392,7 +392,7 @@ static void __far __pascal FreeHistoryList( HHISTORYLIST hHistoryList )
 
   
   /* If empty list. */
-  if( hHistoryList == NULL ) return;
+  if( hHistoryList == 0 ) return;
   
   /* Get our first record's handle. */
   hHistoryRec = hHistoryList;
@@ -435,7 +435,7 @@ static void __far __pascal InsertHistoryRecord( HWND hWnd, HGLOBAL __far * hHist
   
                    
   /* Lock topic's data. */
-  if( hTopicData == NULL ) return;
+  if( hTopicData == 0 ) return;
   fpTopicData = ( FPTOPICDATA ) GlobalLock( hTopicData );
   
 #if 0
@@ -495,7 +495,7 @@ static void __far __pascal InsertHistoryRecord( HWND hWnd, HGLOBAL __far * hHist
     hNewTopRec = AllocHistoryRecord( hWnd, szTopicTitle, fpTopicData->szHelpFile, fpTopicData->dwTopicCharOffset );
 
     /* Allocation error? */
-    if( hNewTopRec == NULL ) 
+    if( hNewTopRec == 0 ) 
     {
       /* Unlock topic's data. */
       GlobalUnlock( hTopicData );
@@ -681,7 +681,7 @@ static void __far __pascal GotoHistoryTopic( HWND hListBoxWnd, HGLOBAL hHistoryL
   dwListBoxIndex = SendMessage( hListBoxWnd, LB_GETCURSEL, 0, 0L );
 
   /* No records in list. */
-  if( hHistoryList == NULL ) return;
+  if( hHistoryList == 0 ) return;
 
   /* Get our first record's handle. */
   hHistoryRec = hHistoryList;
@@ -717,7 +717,7 @@ static void __far __pascal GotoHistoryTopic( HWND hListBoxWnd, HGLOBAL hHistoryL
     
   /* Get file info. */
   hHelpFileInfo = OpenHelpFile( hMainWnd, fpFilePath );
-  if( hHelpFileInfo == NULL )
+  if( hHelpFileInfo == 0 )
   {
     /* Unlock the record's file path data. */
     GlobalUnlock( fpHistoryRec->hHelpFilePath );
@@ -735,7 +735,7 @@ static void __far __pascal GotoHistoryTopic( HWND hListBoxWnd, HGLOBAL hHistoryL
   */
 
   hTopicData = LockTopicData( hMainWnd, fpFilePath, fpHistoryRec->dwTopicCharOffset );
-  if( hTopicData == NULL )
+  if( hTopicData == 0 )
   {
     /* Unlock the record's file path data. */
     GlobalUnlock( fpHistoryRec->hHelpFilePath );
@@ -786,7 +786,7 @@ static void __far __pascal ShowHistoryTitles( HWND hListBoxWnd, HGLOBAL hHistory
   SendMessage( hListBoxWnd, LB_RESETCONTENT, 0, 0L ); 
 
   /* No records in list. */
-  if( hHistoryList == NULL ) return;
+  if( hHistoryList == 0 ) return;
 
   /* Get our first record's handle. */
   hHistoryRec = hHistoryList;
@@ -916,7 +916,7 @@ static HGLOBAL __far __pascal AllocHistoryRecord( HWND hWnd, char __far * szTopi
   if( !GlobalAllocMem( hWnd, &hHistoryRec, sizeof(HISTORYREC) ) )
   {
     /* Failure. */
-    return( NULL );
+    return( 0 );
   }
   
   /* Store the info. in the new record. */
@@ -926,7 +926,7 @@ static HGLOBAL __far __pascal AllocHistoryRecord( HWND hWnd, char __far * szTopi
     GlobalFree( hHistoryRec );
     
     /* Failure. */
-    return( NULL );
+    return( 0 );
   }
 
   /* Success. */
@@ -993,7 +993,7 @@ static BOOL __far __pascal SaveHistoryRecordData( HWND hWnd, HHISTORYREC hHistor
   fpHistoryRec->hHelpFilePath = CopyString( hWnd, fpHelpFilePath );
   
   /* Copy error? */
-  if( fpHistoryRec->hHelpFilePath == NULL )
+  if( fpHistoryRec->hHelpFilePath == 0 )
   {
     /* Unlock the record. */
     GlobalUnlock( hHistoryRec );
@@ -1009,7 +1009,7 @@ static BOOL __far __pascal SaveHistoryRecordData( HWND hWnd, HHISTORYREC hHistor
   fpHistoryRec->hTopicTitle = CopyString( hWnd, szTopicTitle );
 
   /* Copy error? */
-  if( fpHistoryRec->hTopicTitle == NULL )
+  if( fpHistoryRec->hTopicTitle == 0 )
   {
     /* Unlock the record. */
     GlobalUnlock( hHistoryRec );

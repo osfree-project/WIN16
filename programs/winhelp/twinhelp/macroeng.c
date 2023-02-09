@@ -292,9 +292,9 @@ static BOOL __far __pascal HexConvert( char __far * ArgPtr, long unsigned int __
 /* Default macros. */
 static MACROTABLEENTRY DefaultMacros[] =
 {
-  "LoadMacroTable",       MacroLoadMacroTable,       NULL,  
-  "UnloadMacroTable",     MacroUnloadMacroTable,     NULL,  
-  "ExecuteMacroFile",     MacroExecuteMacroFile,     NULL  
+  "LoadMacroTable",       MacroLoadMacroTable,       0,  
+  "UnloadMacroTable",     MacroUnloadMacroTable,     0,  
+  "ExecuteMacroFile",     MacroExecuteMacroFile,     0  
 };
 
 
@@ -328,16 +328,16 @@ HMACROENGINE __far __pascal __export StartMacroEngine( HWND hErrorWnd, HGLOBAL h
   if( ! GlobalAllocMem( hErrorWnd, &hMacroEngine, sizeof(MACROENGINE) ) )
   {
     /* Failure. */
-    return( NULL );
+    return( 0 );
   }
 
   /* Lock engine data. */
   MacroEnginePtr = (MACROENGINEPTR) GlobalLock( hMacroEngine );
   
   /* Initialize structure. */
-  MacroEnginePtr->hRegTableList   = NULL;
-  MacroEnginePtr->hLoadTableStack = NULL;
-  MacroEnginePtr->hExecutionStack = NULL;
+  MacroEnginePtr->hRegTableList   = 0;
+  MacroEnginePtr->hLoadTableStack = 0;
+  MacroEnginePtr->hExecutionStack = 0;
   MacroEnginePtr->hAppData        = hAppData;
   
   /* Register default macro table. */
@@ -349,7 +349,7 @@ HMACROENGINE __far __pascal __export StartMacroEngine( HWND hErrorWnd, HGLOBAL h
     GlobalFree( hMacroEngine );
   
     /* Failure. */
-    return( NULL );
+    return( 0 );
   }
   
   /* Load default macro table. */
@@ -363,7 +363,7 @@ HMACROENGINE __far __pascal __export StartMacroEngine( HWND hErrorWnd, HGLOBAL h
     GlobalFree( hMacroEngine );
   
     /* Failure. */
-    return( NULL );
+    return( 0 );
   }
 
   /* Unlock engine data. */
@@ -391,9 +391,9 @@ void __far __pascal __export StopMacroEngine( HMACROENGINE __far * hMacroEngineP
   MacroEnginePtr = (MACROENGINEPTR) GlobalLock( *hMacroEnginePtr );
   
   /* Initialize structure. */
-  MacroEnginePtr->hRegTableList   = NULL;
-  MacroEnginePtr->hLoadTableStack = NULL;
-  MacroEnginePtr->hExecutionStack = NULL;
+  MacroEnginePtr->hRegTableList   = 0;
+  MacroEnginePtr->hLoadTableStack = 0;
+  MacroEnginePtr->hExecutionStack = 0;
 
   /* Destroy macro table registration list. */
   DestroyRegTableList( &(MacroEnginePtr)->hRegTableList );
@@ -407,7 +407,7 @@ void __far __pascal __export StopMacroEngine( HMACROENGINE __far * hMacroEngineP
   /* Free engine data. */
   GlobalUnlock( *hMacroEnginePtr );
   GlobalFree( *hMacroEnginePtr );
-  *hMacroEnginePtr = NULL;
+  *hMacroEnginePtr = 0;
 }
 
 
@@ -510,7 +510,7 @@ BOOL __far __pascal __export UnregisterMacroTable
   hDestroyTableRec = DestroyRegMacroTable( &(MacroEnginePtr)->hRegTableList, szTableName );
 
   /* If we found something to delete, update the loaded table stack. */
-  if( hDestroyTableRec != NULL )
+  if( hDestroyTableRec != 0 )
   {
     /* Remove all instances of the table from the loaded table stack. */
     UnloadAllOneTable( &(MacroEnginePtr)->hLoadTableStack, hDestroyTableRec );
@@ -520,7 +520,7 @@ BOOL __far __pascal __export UnregisterMacroTable
   GlobalUnlock( hMacroEngine );
   
   /* Success/Failure. */
-  return( hDestroyTableRec != NULL );
+  return( hDestroyTableRec != 0 );
 }
 
 
@@ -556,17 +556,17 @@ static BOOL __far __pascal CreateRegMacroTable
   
   
   /* Not empty list. */                                  
-  if( *hRegTableListPtr != NULL )
+  if( *hRegTableListPtr != 0 )
   {
     /* Set search criteria. */
-    FindRegTableData.hRegTableRec = NULL;
+    FindRegTableData.hRegTableRec = 0;
     FindRegTableData.szTableName  = szTableName;
     
     /* Verify that no other table with that name exists. */
     EnumRegTable( *hRegTableListPtr, FindRegTable, (LPARAM) (FINDREGTABLEDATAPTR) &FindRegTableData );
   
     /* Duplicate found? */
-    if( FindRegTableData.hRegTableRec != NULL )
+    if( FindRegTableData.hRegTableRec != 0 )
     {
       /* Failure. */
       return( FALSE );
@@ -587,8 +587,8 @@ static BOOL __far __pascal CreateRegMacroTable
   /* Initialize the record's data. */
   _fstrcpy( NewRegTableRecPtr->szTableName, szTableName );
   NewRegTableRecPtr->wNumMacros = wNumMacros;
-  NewRegTableRecPtr->hAtomList = NULL;
-  NewRegTableRecPtr->hMacroTable = NULL;
+  NewRegTableRecPtr->hAtomList = 0;
+  NewRegTableRecPtr->hMacroTable = 0;
   
 
   /* Allocate the atom list. */
@@ -651,7 +651,7 @@ static BOOL __far __pascal CreateRegMacroTable
   GlobalUnlock( hNewRegTableRec );
   
   /* Not empty list. */                                  
-  if( *hRegTableListPtr != NULL )
+  if( *hRegTableListPtr != 0 )
   {
     /* Lock the reg. table list. */
     RegTableRecPtr = (REGTABLERECPTR) GlobalLock( *hRegTableListPtr );
@@ -667,7 +667,7 @@ static BOOL __far __pascal CreateRegMacroTable
   RegTableRecPtr = (REGTABLERECPTR) GlobalLock( hNewRegTableRec );
 
   /* Set previous record. */
-  RegTableRecPtr->hPrev = NULL;
+  RegTableRecPtr->hPrev = 0;
   RegTableRecPtr->hNext = *hRegTableListPtr;
   
   /* Unlock the new reg. table record. */
@@ -709,15 +709,15 @@ static HREGTABLEREC __far __pascal DestroyRegMacroTable
     
   
   /* Empty list. */                                  
-  if( *hRegTableListPtr == NULL ) return NULL;
+  if( *hRegTableListPtr == 0 ) return 0;
 
   /* Nothing destroyed yet. */
-  hDestroyTableRec = NULL;
+  hDestroyTableRec = 0;
  
   /* Get handle to first record. */
   hCurrTableRec = *hRegTableListPtr;
   
-  while( hCurrTableRec != NULL )
+  while( hCurrTableRec != 0 )
   {
     /* Lock the current reg. table record. */
     CurrTableRecPtr = (REGTABLERECPTR) GlobalLock( hCurrTableRec );
@@ -729,7 +729,7 @@ static HREGTABLEREC __far __pascal DestroyRegMacroTable
       hDestroyTableRec = hCurrTableRec;
       
       /* Adjust prev. record to point to next. */
-      if( CurrTableRecPtr->hPrev != NULL )
+      if( CurrTableRecPtr->hPrev != 0 )
       {
         /* Lock the prev. reg. table record. */
         TempTableRecPtr = (REGTABLERECPTR) GlobalLock( CurrTableRecPtr->hPrev );
@@ -742,7 +742,7 @@ static HREGTABLEREC __far __pascal DestroyRegMacroTable
       }
     
       /* Adjust next record to point to prev. */
-      if( CurrTableRecPtr->hNext != NULL )
+      if( CurrTableRecPtr->hNext != 0 )
       {
         /* Lock the next reg. table record. */
         TempTableRecPtr = (REGTABLERECPTR) GlobalLock( CurrTableRecPtr->hNext );
@@ -793,7 +793,7 @@ static HREGTABLEREC __far __pascal DestroyRegMacroTable
       GlobalFree( hCurrTableRec);
 
       /* Stop looking. */
-      hCurrTableRec = NULL;
+      hCurrTableRec = 0;
     }
      
     /* Keep looking. */
@@ -834,7 +834,7 @@ static void __far __pascal DestroyRegTableList
   /* Get handle to first record. */
   hCurrTableRec = *hRegTableListPtr;
   
-  while( hCurrTableRec != NULL )
+  while( hCurrTableRec != 0 )
   {
     /* Lock the current reg. table record. */
     CurrTableRecPtr = (REGTABLERECPTR) GlobalLock( hCurrTableRec );
@@ -879,7 +879,7 @@ static void __far __pascal DestroyRegTableList
   }
 
   /* Empty list. */
-  *hRegTableListPtr = NULL;
+  *hRegTableListPtr = 0;
 }
 
 
@@ -911,7 +911,7 @@ static BOOL __far __pascal FindRegTable( HREGTABLEREC hRegTableRec, LPARAM lPara
   GlobalUnlock( hRegTableRec );
   
   /* If we didn't found it keep enumerating. */
-  return( FindRegTableDataPtr->hRegTableRec == NULL );
+  return( FindRegTableDataPtr->hRegTableRec == 0 );
 }  
 
 
@@ -942,7 +942,7 @@ static void __far __pascal EnumRegTable
   hCurr = hRegTableList;
   
   /* Not empty list. */                                  
-  while( hCurr != NULL )
+  while( hCurr != 0 )
   {
     /* Lock the reg. table record. */
     RegTableRecPtr = (REGTABLERECPTR) GlobalLock( hCurr );
@@ -967,7 +967,7 @@ static void __far __pascal EnumRegTable
     else 
     { 
       /* Stop. */
-      hCurr = NULL;
+      hCurr = 0;
     }
   } 
 }
@@ -1089,14 +1089,14 @@ BOOL __far __pascal __export LoadMacroTable
   MacroEnginePtr = (MACROENGINEPTR) GlobalLock( hMacroEngine );
   
   /* Set search criteria. */
-  FindRegTableData.hRegTableRec = NULL;
+  FindRegTableData.hRegTableRec = 0;
   FindRegTableData.szTableName  = szTableName;
     
   /* Find the registered table's handle. */
   EnumRegTable( MacroEnginePtr->hRegTableList, FindRegTable, (LPARAM) (FINDREGTABLEDATAPTR) &FindRegTableData );
   
   /* Not found? */
-  if( FindRegTableData.hRegTableRec == NULL )
+  if( FindRegTableData.hRegTableRec == 0 )
   {
     /* Unlock engine data. */
     GlobalUnlock( hMacroEngine );
@@ -1116,7 +1116,7 @@ BOOL __far __pascal __export LoadMacroTable
   }
   
   /* Not empty stack. */                                  
-  if( MacroEnginePtr->hLoadTableStack != NULL )
+  if( MacroEnginePtr->hLoadTableStack != 0 )
   {
     /* Lock the top of stack. */
     LoadTableRecPtr = (LOADEDTABLERECPTR) GlobalLock( MacroEnginePtr->hLoadTableStack );
@@ -1132,7 +1132,7 @@ BOOL __far __pascal __export LoadMacroTable
   LoadTableRecPtr = (LOADEDTABLERECPTR) GlobalLock( hNewLoadTableRec );
   
   /* Set new record's data. */
-  LoadTableRecPtr->hPrev = NULL;
+  LoadTableRecPtr->hPrev = 0;
   LoadTableRecPtr->hNext = MacroEnginePtr->hLoadTableStack;
   LoadTableRecPtr->hRegTableRec = FindRegTableData.hRegTableRec;
   
@@ -1184,7 +1184,7 @@ BOOL __far __pascal __export UnloadMacroTable
   MacroEnginePtr = (MACROENGINEPTR) GlobalLock( hMacroEngine );
   
   /* Empty stack? */
-  if( MacroEnginePtr->hLoadTableStack == NULL ) 
+  if( MacroEnginePtr->hLoadTableStack == 0 ) 
   {
     /* Unlock engine data. */
     GlobalUnlock( hMacroEngine );
@@ -1194,14 +1194,14 @@ BOOL __far __pascal __export UnloadMacroTable
   }
   
   /* Set search criteria. */
-  FindRegTableData.hRegTableRec = NULL;
+  FindRegTableData.hRegTableRec = 0;
   FindRegTableData.szTableName  = szTableName;
     
   /* Find the registered table's handle. */
   EnumRegTable( MacroEnginePtr->hRegTableList, FindRegTable, (LPARAM) (FINDREGTABLEDATAPTR) &FindRegTableData );
   
   /* Not found? */
-  if( FindRegTableData.hRegTableRec == NULL )
+  if( FindRegTableData.hRegTableRec == 0 )
   {
     /* Unlock engine data. */
     GlobalUnlock( hMacroEngine );
@@ -1217,7 +1217,7 @@ BOOL __far __pascal __export UnloadMacroTable
   hCurrLoadTableRec = MacroEnginePtr->hLoadTableStack;
    
   /* For each record. */
-  while( hCurrLoadTableRec != NULL )
+  while( hCurrLoadTableRec != 0 )
   {
     /* Lock the current record. */
     CurrLoadTableRecPtr = (LOADEDTABLERECPTR) GlobalLock( hCurrLoadTableRec );
@@ -1229,7 +1229,7 @@ BOOL __far __pascal __export UnloadMacroTable
       bUnloaded = TRUE;
       
       /* Adjust prev. record to point to next. */
-      if( CurrLoadTableRecPtr->hPrev != NULL )
+      if( CurrLoadTableRecPtr->hPrev != 0 )
       {
         /* Lock the prev. record. */
         TempTableRecPtr = (LOADEDTABLERECPTR) GlobalLock( CurrLoadTableRecPtr->hPrev );
@@ -1242,7 +1242,7 @@ BOOL __far __pascal __export UnloadMacroTable
       }
     
       /* Adjust next record to point to prev. */
-      if( CurrLoadTableRecPtr->hNext != NULL )
+      if( CurrLoadTableRecPtr->hNext != 0 )
       {
         /* Lock the next reg. table record. */
         TempTableRecPtr = (LOADEDTABLERECPTR) GlobalLock( CurrLoadTableRecPtr->hNext );
@@ -1265,7 +1265,7 @@ BOOL __far __pascal __export UnloadMacroTable
       GlobalFree( hCurrLoadTableRec);
 
       /* Stop looking. */
-      hCurrLoadTableRec = NULL;
+      hCurrLoadTableRec = 0;
     }
      
     /* Keep looking. */
@@ -1313,7 +1313,7 @@ static BOOL __far __pascal UnloadAllOneTable
   
                                   
   /* Empty stack? */
-  if( *hLoadTableStackPtr == NULL ) 
+  if( *hLoadTableStackPtr == 0 ) 
   {
     /* Failure. */
     return FALSE;
@@ -1326,7 +1326,7 @@ static BOOL __far __pascal UnloadAllOneTable
   hCurrLoadTableRec = *hLoadTableStackPtr;
    
   /* For each record. */
-  while( hCurrLoadTableRec != NULL )
+  while( hCurrLoadTableRec != 0 )
   {
     /* Lock the current record. */
     CurrLoadTableRecPtr = (LOADEDTABLERECPTR) GlobalLock( hCurrLoadTableRec );
@@ -1338,7 +1338,7 @@ static BOOL __far __pascal UnloadAllOneTable
       bUnloaded = TRUE;
       
       /* Adjust prev. record to point to next. */
-      if( CurrLoadTableRecPtr->hPrev != NULL )
+      if( CurrLoadTableRecPtr->hPrev != 0 )
       {
         /* Lock the prev. record. */
         TempTableRecPtr = (LOADEDTABLERECPTR) GlobalLock( CurrLoadTableRecPtr->hPrev );
@@ -1351,7 +1351,7 @@ static BOOL __far __pascal UnloadAllOneTable
       }
     
       /* Adjust next record to point to prev. */
-      if( CurrLoadTableRecPtr->hNext != NULL )
+      if( CurrLoadTableRecPtr->hNext != 0 )
       {
         /* Lock the next reg. table record. */
         TempTableRecPtr = (LOADEDTABLERECPTR) GlobalLock( CurrLoadTableRecPtr->hNext );
@@ -1420,7 +1420,7 @@ static void __far __pascal DestroyLoadTableStack
   hCurrLoadTableRec = *hLoadTableStackPtr;
    
   /* For each record. */
-  while( hCurrLoadTableRec != NULL )
+  while( hCurrLoadTableRec != 0 )
   {
     /* Lock the current record. */
     CurrLoadTableRecPtr = (LOADEDTABLERECPTR) GlobalLock( hCurrLoadTableRec );
@@ -1437,7 +1437,7 @@ static void __far __pascal DestroyLoadTableStack
   }
   
   /* Empty stack. */
-  *hLoadTableStackPtr = NULL;
+  *hLoadTableStackPtr = 0;
 }
 
 
@@ -1469,7 +1469,7 @@ static void __far __pascal EnumLoadTableStack
   hCurr = hLoadTableStack;
   
   /* Not empty list. */                                  
-  while( hCurr != NULL )
+  while( hCurr != 0 )
   {
     /* Lock the reg. table record. */
     LoadedTableRecPtr = (LOADEDTABLERECPTR) GlobalLock( hCurr );
@@ -1494,7 +1494,7 @@ static void __far __pascal EnumLoadTableStack
     else 
     { 
       /* Stop. */
-      hCurr = NULL;
+      hCurr = 0;
     }
   } 
 }
@@ -1688,7 +1688,7 @@ static BOOL __far __pascal PushMacroString
   GlobalUnlock( hMacroString );
 
   /* Not empty stack. */                                  
-  if( *hExecutionStackPtr != NULL )
+  if( *hExecutionStackPtr != 0 )
   {
     /* Lock the top of stack. */
     ExecRecPtr = (EXECRECPTR) GlobalLock( *hExecutionStackPtr );
@@ -1704,7 +1704,7 @@ static BOOL __far __pascal PushMacroString
   ExecRecPtr = (EXECRECPTR) GlobalLock( hNewExecRec );
   
   /* Set new record's data. */
-  ExecRecPtr->hPrev          = NULL;
+  ExecRecPtr->hPrev          = 0;
   ExecRecPtr->hNext          = *hExecutionStackPtr;
   ExecRecPtr->wPosition      = 0;
   ExecRecPtr->hMacroString   = hMacroString;
@@ -1738,7 +1738,7 @@ static BOOL __far __pascal PopMacroString
   EXECRECPTR NextExecRecPtr;
   
   /* Not empty stack. */                                  
-  if( *hExecutionStackPtr == NULL ) return( FALSE );
+  if( *hExecutionStackPtr == 0 ) return( FALSE );
 
   /* Save handle of record being freed. */
   hOldExecRec = *hExecutionStackPtr;
@@ -1750,13 +1750,13 @@ static BOOL __far __pascal PopMacroString
   *hExecutionStackPtr = OldExecRecPtr->hNext;
   
   /* If there is a next record. */
-  if( OldExecRecPtr->hNext != NULL )
+  if( OldExecRecPtr->hNext != 0 )
   {
     /* Lock the next record. */
     NextExecRecPtr = (EXECRECPTR) GlobalLock( OldExecRecPtr->hNext );
   
     /* Set prev. to nothing. */
-    NextExecRecPtr->hPrev = NULL;
+    NextExecRecPtr->hPrev = 0;
 
     /* Unlock the next record. */
     GlobalUnlock( OldExecRecPtr->hNext );
@@ -1793,7 +1793,7 @@ static void __far __pascal DestroyExecutionStack
   hCurrExecRec = *hExecutionStackPtr;
    
   /* For each record. */
-  while( hCurrExecRec != NULL )
+  while( hCurrExecRec != 0 )
   {
     /* Lock the current record. */
     CurrExecRecPtr = (EXECRECPTR) GlobalLock( hCurrExecRec );

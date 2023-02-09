@@ -226,28 +226,28 @@ BOOL CALLBACK SetContentsMacroProc
 /* Default help macros. */
 static MACROTABLEENTRY DefaultMacros[] =
 {
-  "AA",                  AddAcceleratorMacroProc,      NULL,
-  "AddAccelerator",      AddAcceleratorMacroProc,      NULL,
-  "Back",                BackMacroProc,                NULL,
-  "BrowseButtons",       BrowseButtonsMacroProc,       NULL,
-  "Contents",            ContentsMacroProc,            NULL,
-  "CreateButton",        CreateButtonMacroProc,        NULL,
-  "CB",                  CreateButtonMacroProc,        NULL,
-  "ChangeButtonBinding", ChangeButtonBindingMacroProc, NULL,
-  "CBB",                 ChangeButtonBindingMacroProc, NULL,
-  "DestroyButton",       DestroyButtonMacroProc,       NULL,
-  "DisableButton",       DisableButtonMacroProc,       NULL,
-  "DB",                  DisableButtonMacroProc,       NULL,
-  "EnableButton",        EnableButtonMacroProc,        NULL,
-  "EB",                  EnableButtonMacroProc,        NULL,
-  "History",             HistoryMacroProc,             NULL,
-  "JumpContents",        JumpContentsMacroProc,        NULL,
-  "Next",                NextMacroProc,                NULL,
-  "Prev",                PrevMacroProc,                NULL,
-  "RA",                  RemoveAcceleratorMacroProc,   NULL,
-  "RemoveAccelerator",   RemoveAcceleratorMacroProc,   NULL,
-  "Search",              SearchMacroProc,              NULL,
-  "SetContents",         SetContentsMacroProc,         NULL
+  "AA",                  AddAcceleratorMacroProc,      0,
+  "AddAccelerator",      AddAcceleratorMacroProc,      0,
+  "Back",                BackMacroProc,                0,
+  "BrowseButtons",       BrowseButtonsMacroProc,       0,
+  "Contents",            ContentsMacroProc,            0,
+  "CreateButton",        CreateButtonMacroProc,        0,
+  "CB",                  CreateButtonMacroProc,        0,
+  "ChangeButtonBinding", ChangeButtonBindingMacroProc, 0,
+  "CBB",                 ChangeButtonBindingMacroProc, 0,
+  "DestroyButton",       DestroyButtonMacroProc,       0,
+  "DisableButton",       DisableButtonMacroProc,       0,
+  "DB",                  DisableButtonMacroProc,       0,
+  "EnableButton",        EnableButtonMacroProc,        0,
+  "EB",                  EnableButtonMacroProc,        0,
+  "History",             HistoryMacroProc,             0,
+  "JumpContents",        JumpContentsMacroProc,        0,
+  "Next",                NextMacroProc,                0,
+  "Prev",                PrevMacroProc,                0,
+  "RA",                  RemoveAcceleratorMacroProc,   0,
+  "RemoveAccelerator",   RemoveAcceleratorMacroProc,   0,
+  "Search",              SearchMacroProc,              0,
+  "SetContents",         SetContentsMacroProc,         0
 };
 
 
@@ -302,7 +302,7 @@ BOOL __far __pascal StartMacroSupport( HWND hDataWnd, HWND hErrorWnd )
   hMacroEngine = StartMacroEngine( hErrorWnd, hHelpMacroData );
 
   /* Error. */
-  if( hMacroEngine == NULL )
+  if( hMacroEngine == 0 )
   {
     /* Free help macro data. */
     GlobalFree( hHelpMacroData ); 
@@ -374,7 +374,7 @@ void __far __pascal StopMacroSupport( HWND hDataWnd )
   hMacroEngine = (HMACROENGINE) WndData( hDataWnd, WDM_GETMACROENGINE, 0, NULL );
             
   /* If we have a macro engine. */
-  if( hMacroEngine != NULL )
+  if( hMacroEngine != 0 )
   {
     /* Get the macro data that we originally sent to the engine. */
     hHelpMacroData = GetMacroEngineAppData( hMacroEngine );
@@ -493,7 +493,7 @@ void __far __pascal RunHelpMacro
   hMacroEngine = (HMACROENGINE) WndData( hDataWnd, WDM_GETMACROENGINE, 0, NULL );
             
   /* If we have a macro engine. */
-  if( hMacroEngine != NULL )
+  if( hMacroEngine != 0 )
   {
     ExecuteMacro( hErrorWnd, hMacroEngine, MacroStringPtr, &MacroRetValPtr );
   }

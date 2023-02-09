@@ -251,7 +251,7 @@ void __far __pascal ShowSecWndTopic
     /* Set the "on-top" menu item. */
     if( bOnTop )
     {
-      SetAlwaysOnTop( hDataWnd, TRUE );
+      //SetAlwaysOnTop( hDataWnd, TRUE ); //@todo missed function
     }
 
     /* 
@@ -388,7 +388,7 @@ BOOL __far __pascal DoMainSecWindow
   /* Set the "on-top" menu item. */
   if( bOnTop )
   {
-    SetAlwaysOnTop( hMainWnd, TRUE );
+    // SetAlwaysOnTop( hMainWnd, TRUE );//@todo missed function
   }
 
   /* Found secondary window info. */

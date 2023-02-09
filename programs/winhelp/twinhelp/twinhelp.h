@@ -180,7 +180,7 @@ void __far __pascal SendShowNewTopicMsg
   HWND    hTopicWnd, 
   HGLOBAL hNewTopicsData,
   BOOL    bUpdateBackList,
-  BOOL    bFromHistoryBack,
+  //BOOL    bFromHistoryBack,
   WORD    wVertPos
 );
 

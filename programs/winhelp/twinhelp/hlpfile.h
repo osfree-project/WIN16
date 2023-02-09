@@ -380,7 +380,7 @@ typedef struct tagTOPICSTREAMSTRUCT
 
   long int        BufferDataSize;     /* Size of data in file buffer.              */
   long int        CurrBufferPos;      /* Current position in the file data buffer. */
-  long int        CurrBlockNum;       /* Current block number in topic data.       */
+  unsigned long int        CurrBlockNum;       /* Current block number in topic data.       */
 
   long int        ScrollOffset;       /* What is the offset for scrollable topic data. */
   BOOL            bFoundScrollOffset; /* Have we found the offset for scrollable topic data. */
