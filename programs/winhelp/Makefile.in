@@ -1,0 +1,34 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = winhelp.exe
+APPMODE   = -mwindows
+IMPORTS   = comdlg32 shell32 user32 gdi32 kernel32
+PROGRAMS  = hlp2sgml
+
+C_SRCS = \
+	callback.c \
+	hlpfile.c \
+	macro.c \
+	string.c \
+	winhelp.c
+
+EXTRA_SRCS = macro.lex.l
+EXTRA_OBJS = @LEX_OUTPUT_ROOT@.o
+
+EXTRARCFLAGS = -DWINELIB
+
+RC_SRCS = rsrc.rc
+
+@MAKE_PROG_RULES@
+
+all: $(PROGRAMS)
+
+hlp2sgml: hlp2sgml.o hlpfile.o
+	$(CC) -o hlp2sgml hlp2sgml.o hlpfile.o $(LDFLAGS)
+
+@LEX_OUTPUT_ROOT@.c: macro.lex.l
+	$(LEX) -8 -i $(SRCDIR)/macro.lex.l
+
+### Dependencies:
