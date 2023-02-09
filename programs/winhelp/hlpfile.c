@@ -63,7 +63,7 @@ static inline unsigned GET_UINT(const BYTE* buffer, unsigned i)
     return GET_USHORT(buffer, i) + 0x10000 * GET_USHORT(buffer, i + 2);
 }
 
-static HLPFILE *first_hlpfile = 0;
+static HLPFILE far *first_hlpfile = 0;
 static BYTE    *file_buffer;
 
 static struct
@@ -89,22 +89,22 @@ static struct
     HLPFILE_LINK*       link;
 } attributes;
 
-static BOOL  HLPFILE_DoReadHlpFile(HLPFILE*, LPCSTR);
+static BOOL  HLPFILE_DoReadHlpFile(HLPFILE far *, LPCSTR);
 static BOOL  HLPFILE_ReadFileToBuffer(HFILE);
 static BOOL  HLPFILE_FindSubFile(LPCSTR name, BYTE**, BYTE**);
-static BOOL  HLPFILE_SystemCommands(HLPFILE*);
+static BOOL  HLPFILE_SystemCommands(HLPFILE far *);
 static int   HLPFILE_UncompressedLZ77_Size(BYTE *ptr, BYTE *end);
-static BYTE* HLPFILE_UncompressLZ77(BYTE *ptr, BYTE *end, BYTE *newptr);
-static BOOL  HLPFILE_UncompressLZ77_Phrases(HLPFILE*);
-static BOOL  HLPFILE_Uncompress_Phrases40(HLPFILE*);
-static BOOL  HLPFILE_Uncompress_Topic(HLPFILE*);
-static BOOL  HLPFILE_GetContext(HLPFILE*);
-static BOOL  HLPFILE_AddPage(HLPFILE*, BYTE*, BYTE*, unsigned);
-static BOOL  HLPFILE_AddParagraph(HLPFILE*, BYTE *, BYTE*, unsigned*);
-static void  HLPFILE_Uncompress2(const BYTE*, const BYTE*, BYTE*, const BYTE*);
-static BOOL  HLPFILE_Uncompress3(char*, const char*, const BYTE*, const BYTE*);
-static void  HLPFILE_UncompressRLE(const BYTE* src, const BYTE* end, BYTE** dst, unsigned dstsz);
-static BOOL  HLPFILE_ReadFont(HLPFILE* hlpfile);
+static BYTE* HLPFILE_UncompressLZ77(BYTE *ptr, BYTE *end, BYTE far *newptr);
+static BOOL  HLPFILE_UncompressLZ77_Phrases(HLPFILE far *);
+static BOOL  HLPFILE_Uncompress_Phrases40(HLPFILE far *);
+static BOOL  HLPFILE_Uncompress_Topic(HLPFILE far *);
+static BOOL  HLPFILE_GetContext(HLPFILE far *);
+static BOOL  HLPFILE_AddPage(HLPFILE far *, BYTE*, BYTE*, unsigned);
+static BOOL  HLPFILE_AddParagraph(HLPFILE far *, BYTE *, BYTE*, unsigned*);
+static void  HLPFILE_Uncompress2(const BYTE far *, const BYTE far *, BYTE far *, const BYTE far *);
+static BOOL  HLPFILE_Uncompress3(char far *, const char far *, const BYTE*, const BYTE*);
+static void  HLPFILE_UncompressRLE(const BYTE far * src, const BYTE far * end, BYTE far * far * dst, unsigned dstsz);
+static BOOL  HLPFILE_ReadFont(HLPFILE far * hlpfile);
 
 #if 0
 /***********************************************************************
@@ -142,10 +142,10 @@ static HLPFILE_PAGE *HLPFILE_PageByNumber(LPCSTR lpszPath, UINT wNum)
  *
  *
  */
-HLPFILE_PAGE *HLPFILE_PageByOffset(HLPFILE* hlpfile, LONG offset)
+HLPFILE_PAGE far *HLPFILE_PageByOffset(HLPFILE far * hlpfile, LONG offset)
 {
-    HLPFILE_PAGE*       page;
-    HLPFILE_PAGE*       found;
+    HLPFILE_PAGE far *       page;
+    HLPFILE_PAGE far *       found;
 
     if (!hlpfile) return 0;
 
@@ -169,7 +169,7 @@ HLPFILE_PAGE *HLPFILE_PageByOffset(HLPFILE* hlpfile, LONG offset)
  *
  *           HLPFILE_HlpFilePageByHash
  */
-HLPFILE_PAGE *HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash)
+HLPFILE_PAGE far *HLPFILE_PageByHash(HLPFILE far * hlpfile, LONG lHash)
 {
     int                 i;
 
@@ -191,9 +191,9 @@ HLPFILE_PAGE *HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash)
  *
  *           HLPFILE_Contents
  */
-HLPFILE_PAGE* HLPFILE_Contents(HLPFILE *hlpfile)
+HLPFILE_PAGE far * HLPFILE_Contents(HLPFILE far *hlpfile)
 {
-    HLPFILE_PAGE*       page = NULL;
+    HLPFILE_PAGE far *       page = NULL;
 
     if (!hlpfile) return NULL;
 
@@ -229,13 +229,13 @@ LONG HLPFILE_Hash(LPCSTR lpszContext)
  *
  *           HLPFILE_ReadHlpFile
  */
-HLPFILE *HLPFILE_ReadHlpFile(LPCSTR lpszPath)
+HLPFILE far *HLPFILE_ReadHlpFile(LPCSTR lpszPath)
 {
     HLPFILE far *      hlpfile;
 
     for (hlpfile = first_hlpfile; hlpfile; hlpfile = hlpfile->next)
     {
-        if (!strcmp(lpszPath, hlpfile->lpszPath))
+        if (!lstrcmp(lpszPath, hlpfile->lpszPath))
         {
             hlpfile->wRefCount++;
             return hlpfile;
@@ -266,7 +266,7 @@ HLPFILE *HLPFILE_ReadHlpFile(LPCSTR lpszPath)
     hlpfile->numWindows         = 0;
     hlpfile->windows            = NULL;
 
-    strcpy(hlpfile->lpszPath, lpszPath);
+    lstrcpy(hlpfile->lpszPath, lpszPath);
 
     first_hlpfile = hlpfile;
     if (hlpfile->next) hlpfile->next->prev = hlpfile;
@@ -295,7 +295,7 @@ HLPFILE *HLPFILE_ReadHlpFile(LPCSTR lpszPath)
  *
  *           HLPFILE_DoReadHlpFile
  */
-static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
+static BOOL HLPFILE_DoReadHlpFile(HLPFILE far *hlpfile, LPCSTR lpszPath)
 {
     BOOL        ret;
     HFILE       hFile;
@@ -373,12 +373,12 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
  *
  *           HLPFILE_AddPage
  */
-static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned offset)
+static BOOL HLPFILE_AddPage(HLPFILE far *hlpfile, BYTE *buf, BYTE *end, unsigned offset)
 {
     HLPFILE_PAGE far * page;
     BYTE*         title;
     UINT          titlesize;
-    char*         ptr;
+    LPSTR         ptr;
     HLPFILE_MACRO far *macro;
 
     if (buf + 0x31 > end) {//WINE_WARN("page1\n"); 
@@ -408,7 +408,7 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned off
         }
         else
         {
-            memcpy(page->lpszTitle, title, titlesize);
+            _fmemcpy(page->lpszTitle, title, titlesize);
         }
     }
 
@@ -416,7 +416,7 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned off
 
     if (hlpfile->first_page)
     {
-        HLPFILE_PAGE  *p;
+        HLPFILE_PAGE far *p;
 
         for (p = hlpfile->first_page; p->next; p = p->next);
         page->prev = p;
@@ -445,14 +445,14 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned off
     memset(&attributes, 0, sizeof(attributes));
 
     /* now load macros */
-    ptr = page->lpszTitle + strlen(page->lpszTitle) + 1;
+    ptr = page->lpszTitle + lstrlen(page->lpszTitle) + 1;
     while (ptr < page->lpszTitle + titlesize)
     {
-        unsigned len = strlen(ptr);
+        unsigned len = lstrlen(ptr);
         //WINE_TRACE("macro: %s\n", ptr);
         macro = (HLPFILE_MACRO far *) GlobalAllocPtr(GPTR, sizeof(HLPFILE_MACRO) + len + 1);
         macro->lpszMacro = (char*)(macro + 1);
-        memcpy((char*)macro->lpszMacro, ptr, len + 1);
+        _fmemcpy((char*)macro->lpszMacro, ptr, len + 1);
         /* FIXME: shall we really link macro in reverse order ??
          * may produce strange results when played at page opening
          */
@@ -538,11 +538,11 @@ static unsigned short fetch_ushort(BYTE** ptr)
  *
  * Decompress the data part of a bitmap or a metafile
  */
-static BYTE*    HLPFILE_DecompressGfx(BYTE* src, unsigned csz, unsigned sz, BYTE packing)
+static BYTE far *    HLPFILE_DecompressGfx(BYTE* src, unsigned csz, unsigned sz, BYTE packing)
 {
-    BYTE*       dst;
-    BYTE*       tmp;
-    BYTE*       tmp2;
+    BYTE far *  dst;
+    BYTE far *  tmp;
+    BYTE far *  tmp2;
     unsigned    sz77;
 
     //WINE_TRACE("Unpacking (%d) from %u bytes to %u bytes\n", packing, csz, sz);
@@ -555,7 +555,7 @@ static BYTE*    HLPFILE_DecompressGfx(BYTE* src, unsigned csz, unsigned sz, BYTE
         dst = src;
         break;
     case 1: /* RunLen */
-        tmp = dst = GlobalAllocPtr(GPTR, sz);
+        tmp = dst = (BYTE far *)GlobalAllocPtr(GPTR, sz);
         if (!dst) return NULL;
         HLPFILE_UncompressRLE(src, src + csz, &tmp, sz);
         if (tmp - dst != sz)
@@ -852,7 +852,7 @@ static HLPFILE_LINK*       HLPFILE_AllocLink(int cookie, const char* str, LONG h
  *
  *           HLPFILE_AddParagraph
  */
-static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned* len)
+static BOOL HLPFILE_AddParagraph(HLPFILE far *hlpfile, BYTE *buf, BYTE *end, unsigned* len)
 {
     HLPFILE_PAGE      *page;
     HLPFILE_PARAGRAPH far *paragraph, **paragraphptr;
@@ -1175,7 +1175,7 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
  *
  *
  */
-static BOOL HLPFILE_ReadFont(HLPFILE* hlpfile)
+static BOOL HLPFILE_ReadFont(HLPFILE far * hlpfile)
 {
     BYTE        *ref, *end;
     unsigned    i, len, idx;
@@ -1374,7 +1374,7 @@ static BOOL HLPFILE_FindSubFile(LPCSTR name, BYTE **subbuf, BYTE **subend)
  *
  *           HLPFILE_SystemCommands
  */
-static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
+static BOOL HLPFILE_SystemCommands(HLPFILE far * hlpfile)
 {
     BYTE *buf, *ptr, *end;
     HLPFILE_MACRO far *macro, **m;
@@ -1527,7 +1527,7 @@ static int HLPFILE_UncompressedLZ77_Size(BYTE *ptr, BYTE *end)
  *
  *           HLPFILE_UncompressLZ77
  */
-static BYTE *HLPFILE_UncompressLZ77(BYTE *ptr, BYTE *end, BYTE *newptr)
+static BYTE *HLPFILE_UncompressLZ77(BYTE *ptr, BYTE *end, BYTE far *newptr)
 {
     int i;
 
@@ -1556,7 +1556,7 @@ static BYTE *HLPFILE_UncompressLZ77(BYTE *ptr, BYTE *end, BYTE *newptr)
  *
  *           HLPFILE_UncompressLZ77_Phrases
  */
-static BOOL HLPFILE_UncompressLZ77_Phrases(HLPFILE* hlpfile)
+static BOOL HLPFILE_UncompressLZ77_Phrases(HLPFILE far * hlpfile)
 {
     UINT i, num, dec_size;
     BYTE *buf, *end;
@@ -1587,7 +1587,7 @@ static BOOL HLPFILE_UncompressLZ77_Phrases(HLPFILE* hlpfile)
  *
  *           HLPFILE_Uncompress_Phrases40
  */
-static BOOL HLPFILE_Uncompress_Phrases40(HLPFILE* hlpfile)
+static BOOL HLPFILE_Uncompress_Phrases40(HLPFILE far * hlpfile)
 {
     UINT num, dec_size, cpr_size;
     BYTE *buf_idx, *end_idx;
@@ -1657,7 +1657,7 @@ static BOOL HLPFILE_Uncompress_Phrases40(HLPFILE* hlpfile)
  *
  *           HLPFILE_Uncompress_Topic
  */
-static BOOL HLPFILE_Uncompress_Topic(HLPFILE* hlpfile)
+static BOOL HLPFILE_Uncompress_Topic(HLPFILE far * hlpfile)
 {
     BYTE *buf, *ptr, *end, *newptr;
     int  i, newsize = 0;
@@ -1834,7 +1834,7 @@ static BOOL HLPFILE_Uncompress3(char* dst, const char* dst_end,
  *
  *
  */
-static void HLPFILE_UncompressRLE(const BYTE* src, const BYTE* end, BYTE** dst, unsigned dstsz)
+static void HLPFILE_UncompressRLE(const BYTE far * src, const BYTE far * end, BYTE far * far * dst, unsigned dstsz)
 {
     BYTE        ch;
     BYTE*       sdst = *dst + dstsz;
@@ -1924,7 +1924,7 @@ static unsigned myfn(const BYTE* ptr, void* user)
  *
  *           HLPFILE_GetContext
  */
-static BOOL HLPFILE_GetContext(HLPFILE *hlpfile)
+static BOOL HLPFILE_GetContext(HLPFILE far *hlpfile)
 {
     BYTE                *cbuf, *cend;
     struct myfncb       m;
@@ -1951,7 +1951,7 @@ static BOOL HLPFILE_GetContext(HLPFILE *hlpfile)
  *
  *
  */
-void HLPFILE_FreeLink(HLPFILE_LINK* link)
+void HLPFILE_FreeLink(HLPFILE_LINK far * link)
 {
     if (link && !--link->wRefCount)
         GlobalFreePtr(link);
@@ -2017,7 +2017,7 @@ static void HLPFILE_DeletePage(HLPFILE_PAGE* page)
  *
  *           HLPFILE_FreeHlpFile
  */
-void HLPFILE_FreeHlpFile(HLPFILE* hlpfile)
+void HLPFILE_FreeHlpFile(HLPFILE far * hlpfile)
 {
     unsigned i;
 

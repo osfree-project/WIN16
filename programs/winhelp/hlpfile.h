@@ -78,7 +78,7 @@ typedef struct tagHlpFileParagraph
         } gfx; /* for bitmaps and metafiles */
     } u;
 
-    HLPFILE_LINK*               link;
+    HLPFILE_LINK far *               link;
 
     struct tagHlpFileParagraph* next;
 } HLPFILE_PARAGRAPH;
@@ -86,24 +86,24 @@ typedef struct tagHlpFileParagraph
 typedef struct tagHlpFileMacro
 {
     LPCSTR                      lpszMacro;
-    struct tagHlpFileMacro*     next;
+    struct tagHlpFileMacro far * next;
 } HLPFILE_MACRO;
 
 typedef struct tagHlpFilePage
 {
     LPSTR                       lpszTitle;
     HLPFILE_PARAGRAPH*          first_paragraph;
-    HLPFILE_MACRO*              first_macro;
+    HLPFILE_MACRO far *         first_macro;
 
     unsigned                    wNumber;
     unsigned                    offset;
-    struct tagHlpFilePage*      next;
-    struct tagHlpFilePage*      prev;
+    struct tagHlpFilePage far * next;
+    struct tagHlpFilePage far * prev;
 
     DWORD                       browse_bwd;
     DWORD                       browse_fwd;
 
-    struct tagHlpFileFile*      file;
+    struct tagHlpFileFile far * file;
 } HLPFILE_PAGE;
 
 typedef struct
@@ -124,14 +124,14 @@ typedef struct tagHlpFileFile
     LPSTR                       lpszPath;
     LPSTR                       lpszTitle;
     LPSTR                       lpszCopyright;
-    HLPFILE_PAGE*               first_page;
+    HLPFILE_PAGE far *          first_page;
     HLPFILE_MACRO*              first_macro;
     unsigned                    wContextLen;
-    HLPFILE_CONTEXT far *            Context;
+    HLPFILE_CONTEXT far *       Context;
     unsigned long               contents_start;
 
-    struct tagHlpFileFile*      prev;
-    struct tagHlpFileFile*      next;
+    struct tagHlpFileFile far * prev;
+    struct tagHlpFileFile far * next;
 
     unsigned                    wRefCount;
 
@@ -143,16 +143,16 @@ typedef struct tagHlpFileFile
     HBITMAP far *               bmps;
 
     unsigned                    numFonts;
-    HLPFILE_FONT far *               fonts;
+    HLPFILE_FONT far *          fonts;
 
     unsigned                    numWindows;
-    HLPFILE_WINDOWINFO far *         windows;
+    HLPFILE_WINDOWINFO far *    windows;
 } HLPFILE;
 
-HLPFILE*      HLPFILE_ReadHlpFile(LPCSTR lpszPath);
-HLPFILE_PAGE* HLPFILE_Contents(HLPFILE* hlpfile);
-HLPFILE_PAGE* HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash);
-HLPFILE_PAGE* HLPFILE_PageByOffset(HLPFILE* hlpfile, LONG offset);
+HLPFILE far * HLPFILE_ReadHlpFile(LPCSTR lpszPath);
+HLPFILE_PAGE far * HLPFILE_Contents(HLPFILE far * hlpfile);
+HLPFILE_PAGE far * HLPFILE_PageByHash(HLPFILE far * hlpfile, LONG lHash);
+HLPFILE_PAGE far * HLPFILE_PageByOffset(HLPFILE far * hlpfile, LONG offset);
 LONG          HLPFILE_Hash(LPCSTR lpszContext);
-void          HLPFILE_FreeLink(HLPFILE_LINK* link);
-void          HLPFILE_FreeHlpFile(HLPFILE*);
+void          HLPFILE_FreeLink(HLPFILE_LINK far * link);
+void          HLPFILE_FreeHlpFile(HLPFILE far *);

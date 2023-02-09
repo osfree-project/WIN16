@@ -67,16 +67,16 @@ typedef struct tagHelpLinePart
             HMETAFILE   hMetaFile;
         } metafile;
     } u;
-    HLPFILE_LINK*       link;
+    HLPFILE_LINK far *       link;
 
-    struct tagHelpLinePart *next;
+    struct tagHelpLinePart far *next;
 } WINHELP_LINE_PART;
 
 typedef struct tagHelpLine
 {
     RECT                rect;
     WINHELP_LINE_PART   first_part;
-    struct tagHelpLine* next;
+    struct tagHelpLine far * next;
 } WINHELP_LINE;
 
 typedef struct tagHelpButton
@@ -100,7 +100,7 @@ typedef struct tagWinHelp
 
     WINHELP_BUTTON*     first_button;
     HLPFILE_PAGE*       page;
-    WINHELP_LINE*       first_line;
+    WINHELP_LINE far *       first_line;
 
     HWND                hMainWnd;
     HWND                hButtonBoxWnd;
@@ -122,7 +122,7 @@ typedef struct tagWinHelp
     HLPFILE_PAGE*       back[40];
     unsigned            backIndex;
 
-    struct tagWinHelp*  next;
+    struct tagWinHelp far * next;
 } WINHELP_WINDOW;
 
 #define DC_NOMSG     0x00000000
@@ -162,8 +162,8 @@ typedef struct
     HWND                hPopupWnd;
     UINT                wStringTableOffset;
     BOOL                isBook;
-    WINHELP_WINDOW*     active_win;
-    WINHELP_WINDOW*     win_list;
+    WINHELP_WINDOW far *active_win;
+    WINHELP_WINDOW far *win_list;
     WNDPROC             button_proc;
     WINHELP_DLL*        dlls;
 } WINHELP_GLOBALS;
@@ -171,11 +171,11 @@ typedef struct
 extern WINHELP_GLOBALS Globals;
 extern FARPROC         Callbacks[];
 
-BOOL WINHELP_CreateHelpWindowByHash(HLPFILE*, LONG, HLPFILE_WINDOWINFO*, int);
+BOOL WINHELP_CreateHelpWindowByHash(HLPFILE far *, LONG, HLPFILE_WINDOWINFO*, int);
 BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE*, HLPFILE_WINDOWINFO*, int);
 int  WINHELP_MessageBoxIDS(UINT, UINT, WORD);
 int  WINHELP_MessageBoxIDS_s(UINT, LPCSTR, UINT, WORD);
-HLPFILE* WINHELP_LookupHelpFile(LPCSTR lpszFile);
+HLPFILE far * WINHELP_LookupHelpFile(LPCSTR lpszFile);
 HLPFILE_WINDOWINFO* WINHELP_GetWindowInfo(HLPFILE* hlpfile, LPCSTR name);
 
 extern const char MAIN_WIN_CLASS_NAME[];

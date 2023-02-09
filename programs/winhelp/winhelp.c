@@ -63,10 +63,10 @@ static LRESULT CALLBACK WINHELP_ShadowWndProc(HWND, UINT, WPARAM, LPARAM);
 static void    WINHELP_CheckPopup(UINT);
 static BOOL    WINHELP_SplitLines(HWND hWnd, LPSIZE);
 static void    WINHELP_InitFonts(HWND hWnd);
-static void    WINHELP_DeleteLines(WINHELP_WINDOW*);
-static void    WINHELP_DeleteWindow(WINHELP_WINDOW*);
+static void    WINHELP_DeleteLines(WINHELP_WINDOW far *);
+static void    WINHELP_DeleteWindow(WINHELP_WINDOW far *);
 static void    WINHELP_SetupText(HWND hWnd);
-static WINHELP_LINE_PART* WINHELP_IsOverLink(WINHELP_WINDOW*, WPARAM, LPARAM);
+static WINHELP_LINE_PART far * WINHELP_IsOverLink(WINHELP_WINDOW*, WPARAM, LPARAM);
 
 WINHELP_GLOBALS Globals = {3, 0, 0, 0, TRUE, NULL, NULL, NULL, NULL};
 
@@ -122,7 +122,7 @@ HLPFILE_WINDOWINFO*     WINHELP_GetWindowInfo(HLPFILE* hlpfile, LPCSTR name)
 
     if (hlpfile)
         for (i = 0; i < hlpfile->numWindows; i++)
-            if (!strcmp(hlpfile->windows[i].name, name))
+            if (!lstrcmp(hlpfile->windows[i].name, name))
                 return &hlpfile->windows[i];
 
 #ifdef DEBUG
@@ -162,7 +162,7 @@ HLPFILE_WINDOWINFO*     WINHELP_GetWindowInfo(HLPFILE* hlpfile, LPCSTR name)
  *
  *
  */
-static HLPFILE_WINDOWINFO*     WINHELP_GetPopupWindowInfo(HLPFILE* hlpfile, HWND hParentWnd, POINT* mouse)
+static HLPFILE_WINDOWINFO*     WINHELP_GetPopupWindowInfo(HLPFILE far * hlpfile, HWND hParentWnd, POINT* mouse)
 {
     static      HLPFILE_WINDOWINFO      wi;
 
@@ -436,7 +436,7 @@ static LRESULT  WINHELP_HandleCommand(HWND hSrcWnd, LPARAM lParam)
  *
  *
  */
-static BOOL     WINHELP_ReuseWindow(WINHELP_WINDOW* win, WINHELP_WINDOW* oldwin, 
+static BOOL     WINHELP_ReuseWindow(WINHELP_WINDOW far * win, WINHELP_WINDOW far * oldwin, 
                                     HLPFILE_PAGE* page, int nCmdShow)
 {
     unsigned int i;
@@ -528,7 +528,8 @@ static BOOL     WINHELP_ReuseWindow(WINHELP_WINDOW* win, WINHELP_WINDOW* oldwin,
 BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
                               int nCmdShow)
 {
-    WINHELP_WINDOW far *win, *oldwin;
+    WINHELP_WINDOW far *win;
+    WINHELP_WINDOW far *oldwin;
     HWND hWnd;
     BOOL bPrimary;
     BOOL bPopup;
@@ -610,7 +611,7 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
             win->histIndex = win->backIndex = 1;
             win->history[0] = win->back[0] = page;
             page->file->wRefCount += 2;
-            strcpy(wi->caption, page->file->lpszTitle);
+            lstrcpy(wi->caption, page->file->lpszTitle);
         }
     }
 
@@ -631,7 +632,7 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
  *
  *           WINHELP_CreateHelpWindowByHash
  */
-BOOL WINHELP_CreateHelpWindowByHash(HLPFILE* hlpfile, LONG lHash, 
+BOOL WINHELP_CreateHelpWindowByHash(HLPFILE far * hlpfile, LONG lHash, 
                                     HLPFILE_WINDOWINFO* wi, int nCmdShow)
 {
     HLPFILE_PAGE*       page = NULL;
@@ -904,8 +905,8 @@ static LRESULT CALLBACK WINHELP_ButtonWndProc(HWND hWnd, UINT msg, WPARAM wParam
 static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     WINHELP_WINDOW    *win;
-    WINHELP_LINE      *line;
-    WINHELP_LINE_PART *part;
+    WINHELP_LINE  far *line;
+    WINHELP_LINE_PART far *part;
     WINDOWPOS         *winpos;
     PAINTSTRUCT        ps;
     HDC   hDc;
@@ -1143,7 +1144,7 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
         part = WINHELP_IsOverLink(win, wParam, lParam);
         if (part)
         {
-            HLPFILE*            hlpfile;
+            HLPFILE far *       hlpfile;
             HLPFILE_WINDOWINFO* wi;
 
             mouse.x = LOWORD(lParam);
@@ -1255,7 +1256,7 @@ static LRESULT CALLBACK WINHELP_HistoryWndProc(HWND hWnd, UINT msg, WPARAM wPara
         for (i = 0; i < win->histIndex; i++)
         {
             TextOut(hDc, 0, i * tm.tmHeight, win->history[i]->lpszTitle, 
-                    strlen(win->history[i]->lpszTitle));
+                    lstrlen(win->history[i]->lpszTitle));
         }
         EndPaint(hWnd, &ps);
         break;
@@ -1310,11 +1311,11 @@ static void WINHELP_SetupText(HWND hWnd)
  *
  *           WINHELP_AppendText
  */
-static BOOL WINHELP_AppendText(WINHELP_LINE ***linep, WINHELP_LINE_PART ***partp,
+static BOOL WINHELP_AppendText(WINHELP_LINE far * far * far *linep, WINHELP_LINE_PART far * far * far *partp,
 			       LPSIZE space, LPSIZE textsize,
 			       int *line_ascent, int ascent,
 			       LPCSTR text, UINT textlen,
-			       HFONT font, COLORREF color, HLPFILE_LINK *link,
+			       HFONT font, COLORREF color, HLPFILE_LINK far *link,
                                unsigned underline)
 {
     WINHELP_LINE far *line;
@@ -1330,7 +1331,7 @@ static BOOL WINHELP_AppendText(WINHELP_LINE ***linep, WINHELP_LINE_PART ***partp
 
         line->next    = 0;
         part          = &line->first_part;
-        ptr           = (char*)line + sizeof(WINHELP_LINE);
+        ptr           = (LPSTR)line + sizeof(WINHELP_LINE);
 
         line->rect.top    = (**linep ? (**linep)->rect.bottom : 0) + space->cy;
         line->rect.bottom = line->rect.top;
@@ -1347,7 +1348,7 @@ static BOOL WINHELP_AppendText(WINHELP_LINE ***linep, WINHELP_LINE_PART ***partp
 
         if (*line_ascent < ascent)
 	{
-            WINHELP_LINE_PART *p;
+            WINHELP_LINE_PART far *p;
             for (p = &line->first_part; p; p = p->next)
 	    {
                 p->rect.top    += ascent - *line_ascent;
@@ -1361,10 +1362,10 @@ static BOOL WINHELP_AppendText(WINHELP_LINE ***linep, WINHELP_LINE_PART ***partp
                          sizeof(WINHELP_LINE_PART) + textlen);
         if (!part) return FALSE;
         **partp = part;
-        ptr     = (char*)part + sizeof(WINHELP_LINE_PART);
+        ptr     = (char far *)part + sizeof(WINHELP_LINE_PART);
     }
 
-    memcpy(ptr, text, textlen);
+    _fmemcpy(ptr, text, textlen);
     part->cookie            = hlp_line_part_text;
     part->rect.left         = line->rect.right + (*partp ? space->cx : 0);
     part->rect.right        = part->rect.left + textsize->cx;
@@ -1401,9 +1402,9 @@ static BOOL WINHELP_AppendText(WINHELP_LINE ***linep, WINHELP_LINE_PART ***partp
  *
  *           WINHELP_AppendGfxObject
  */
-static WINHELP_LINE_PART* WINHELP_AppendGfxObject(WINHELP_LINE ***linep, WINHELP_LINE_PART ***partp,
+static WINHELP_LINE_PART far * WINHELP_AppendGfxObject(WINHELP_LINE far * far * far *linep, WINHELP_LINE_PART far * far * far *partp,
                                                   LPSIZE space, LPSIZE gfxSize,
-                                                  HLPFILE_LINK *link, unsigned pos)
+                                                  HLPFILE_LINK far *link, unsigned pos)
 {
     WINHELP_LINE  far *line;
     WINHELP_LINE_PART far *part;
@@ -1435,7 +1436,7 @@ static WINHELP_LINE_PART* WINHELP_AppendGfxObject(WINHELP_LINE ***linep, WINHELP
         part = (WINHELP_LINE_PART far *)GlobalAllocPtr(GPTR, sizeof(WINHELP_LINE_PART));
         if (!part) return NULL;
         **partp = part;
-        ptr = (char*)part + sizeof(WINHELP_LINE_PART);
+        ptr = (char far *)part + sizeof(WINHELP_LINE_PART);
     }
 
     /* part->cookie should be set by caller (image or metafile) */
@@ -1467,10 +1468,10 @@ static WINHELP_LINE_PART* WINHELP_AppendGfxObject(WINHELP_LINE ***linep, WINHELP
  */
 static BOOL WINHELP_SplitLines(HWND hWnd, LPSIZE newsize)
 {
-    WINHELP_WINDOW     *win = (WINHELP_WINDOW*) GetWindowLong(hWnd, 0);
-    HLPFILE_PARAGRAPH  *p;
-    WINHELP_LINE      **line = &win->first_line;
-    WINHELP_LINE_PART **part = 0;
+    WINHELP_WINDOW   far  *win = (WINHELP_WINDOW far *) GetWindowLong(hWnd, 0);
+    HLPFILE_PARAGRAPH far *p;
+    WINHELP_LINE  far * far *line = &win->first_line;
+    WINHELP_LINE_PART far * far *part = 0;
     int                 line_ascent = 0;
     SIZE                space;
     RECT                rect;
@@ -1505,7 +1506,7 @@ static BOOL WINHELP_SplitLines(HWND hWnd, LPSIZE newsize)
                 SIZE textsize    = {0, 0};
                 LPCSTR text      = p->u.text.lpszText;
                 UINT indent      = 0;
-                UINT len         = strlen(text);
+                UINT len         = lstrlen(text);
                 unsigned underline = 0;
 
                 HFONT hFont = 0;
@@ -1617,7 +1618,7 @@ static BOOL WINHELP_SplitLines(HWND hWnd, LPSIZE newsize)
             {
                 SIZE                    gfxSize;
                 int                     free_width;
-                WINHELP_LINE_PART*      ref_part;
+                WINHELP_LINE_PART far * ref_part;
 
                 if (p->u.gfx.pos & 0x8000)
                 {
@@ -1698,10 +1699,12 @@ static void WINHELP_CheckPopup(UINT msg)
  *
  *           WINHELP_DeleteLines
  */
-static void WINHELP_DeleteLines(WINHELP_WINDOW *win)
+static void WINHELP_DeleteLines(WINHELP_WINDOW far *win)
 {
-    WINHELP_LINE      *line, *next_line;
-    WINHELP_LINE_PART *part, *next_part;
+    WINHELP_LINE     far *line;
+    WINHELP_LINE     far *next_line;
+    WINHELP_LINE_PART far *part;
+    WINHELP_LINE_PART far *next_part;
     for (line = win->first_line; line; line = next_line)
     {
         next_line = line->next;
@@ -1719,12 +1722,12 @@ static void WINHELP_DeleteLines(WINHELP_WINDOW *win)
  *
  *           WINHELP_DeleteWindow
  */
-static void WINHELP_DeleteWindow(WINHELP_WINDOW* win)
+static void WINHELP_DeleteWindow(WINHELP_WINDOW far * win)
 {
-    WINHELP_WINDOW**    w;
+    WINHELP_WINDOW far * far * w;
     unsigned int        i;
-    WINHELP_BUTTON*     b;
-    WINHELP_BUTTON*     bp;
+    WINHELP_BUTTON far * b;
+    WINHELP_BUTTON far * bp;
 
     for (w = &Globals.win_list; *w; w = &(*w)->next)
     {
@@ -1831,11 +1834,11 @@ int WINHELP_MessageBoxIDS_s(UINT ids_text, LPCSTR str, UINT ids_title, WORD type
  *
  *
  */
-WINHELP_LINE_PART* WINHELP_IsOverLink(WINHELP_WINDOW* win, WPARAM wParam, LPARAM lParam)
+WINHELP_LINE_PART far * WINHELP_IsOverLink(WINHELP_WINDOW* win, WPARAM wParam, LPARAM lParam)
 {
     POINT mouse;
-    WINHELP_LINE      *line;
-    WINHELP_LINE_PART *part;
+    WINHELP_LINE  far *line;
+    WINHELP_LINE_PART far  *part;
     int scroll_pos = GetScrollPos(win->hTextWnd, SB_VERT);
 
     mouse.x = LOWORD(lParam);
