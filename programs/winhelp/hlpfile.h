@@ -127,7 +127,7 @@ typedef struct tagHlpFileFile
     HLPFILE_PAGE*               first_page;
     HLPFILE_MACRO*              first_macro;
     unsigned                    wContextLen;
-    HLPFILE_CONTEXT*            Context;
+    HLPFILE_CONTEXT far *            Context;
     unsigned long               contents_start;
 
     struct tagHlpFileFile*      prev;
@@ -140,13 +140,13 @@ typedef struct tagHlpFileFile
     unsigned                    hasPhrases; /* Phrases or PhrIndex/PhrImage */
 
     unsigned                    numBmps;
-    HBITMAP*                    bmps;
+    HBITMAP far *               bmps;
 
     unsigned                    numFonts;
-    HLPFILE_FONT*               fonts;
+    HLPFILE_FONT far *               fonts;
 
     unsigned                    numWindows;
-    HLPFILE_WINDOWINFO*         windows;
+    HLPFILE_WINDOWINFO far *         windows;
 } HLPFILE;
 
 HLPFILE*      HLPFILE_ReadHlpFile(LPCSTR lpszPath);

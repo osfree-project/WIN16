@@ -69,7 +69,7 @@ static BYTE    *file_buffer;
 static struct
 {
     UINT        num;
-    unsigned*   offsets;
+    unsigned far *   offsets;
     char*       buffer;
 } phrases;
 
@@ -231,7 +231,7 @@ LONG HLPFILE_Hash(LPCSTR lpszContext)
  */
 HLPFILE *HLPFILE_ReadHlpFile(LPCSTR lpszPath)
 {
-    HLPFILE*      hlpfile;
+    HLPFILE far *      hlpfile;
 
     for (hlpfile = first_hlpfile; hlpfile; hlpfile = hlpfile->next)
     {
@@ -242,7 +242,7 @@ HLPFILE *HLPFILE_ReadHlpFile(LPCSTR lpszPath)
         }
     }
 
-    hlpfile = GlobalAllocPtr(GPTR, sizeof(HLPFILE) + lstrlen(lpszPath) + 1);
+    hlpfile = (HLPFILE far *)GlobalAllocPtr(GPTR, sizeof(HLPFILE) + lstrlen(lpszPath) + 1);
     if (!hlpfile) return 0;
 
     hlpfile->lpszPath           = (char*)hlpfile + sizeof(HLPFILE);
@@ -375,11 +375,11 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
  */
 static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned offset)
 {
-    HLPFILE_PAGE* page;
+    HLPFILE_PAGE far * page;
     BYTE*         title;
     UINT          titlesize;
     char*         ptr;
-    HLPFILE_MACRO*macro;
+    HLPFILE_MACRO far *macro;
 
     if (buf + 0x31 > end) {//WINE_WARN("page1\n"); 
 		return FALSE;
@@ -390,7 +390,7 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned off
 	};
 
     titlesize = GET_UINT(buf, 4);
-    page = GlobalAllocPtr(GPTR, sizeof(HLPFILE_PAGE) + titlesize + 1);
+    page = (HLPFILE_PAGE far *) GlobalAllocPtr(GPTR, sizeof(HLPFILE_PAGE) + titlesize + 1);
     if (!page) return FALSE;
     page->lpszTitle = (char*)page + sizeof(HLPFILE_PAGE);
 
@@ -450,7 +450,7 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned off
     {
         unsigned len = strlen(ptr);
         //WINE_TRACE("macro: %s\n", ptr);
-        macro = GlobalAllocPtr(GPTR, sizeof(HLPFILE_MACRO) + len + 1);
+        macro = (HLPFILE_MACRO far *) GlobalAllocPtr(GPTR, sizeof(HLPFILE_MACRO) + len + 1);
         macro->lpszMacro = (char*)(macro + 1);
         memcpy((char*)macro->lpszMacro, ptr, len + 1);
         /* FIXME: shall we really link macro in reverse order ??
@@ -598,11 +598,11 @@ static BOOL HLPFILE_LoadBitmap(BYTE* beg, BYTE type, BYTE pack,
 {
     BYTE*               ptr;
     BYTE*               pict_beg;
-    BITMAPINFO*         bi;
+    BITMAPINFO far *    bi;
     unsigned long       off, csz;
     HDC                 hdc;
 
-    bi = GlobalAllocPtr(GPTR, sizeof(*bi));
+    bi = (BITMAPINFO far *) GlobalAllocPtr(GPTR, sizeof(*bi));
     if (!bi) return FALSE;
 
     ptr = beg + 2; /* for type and pack */
@@ -640,7 +640,7 @@ static BOOL HLPFILE_LoadBitmap(BYTE* beg, BYTE type, BYTE pack,
         if (!nc && bi->bmiHeader.biBitCount <= 8)
             nc = 1 << bi->bmiHeader.biBitCount;
         
-        bi = GlobalLock(GlobalReAlloc(GlobalPtrHandle(bi), sizeof(*bi) + nc * sizeof(RGBQUAD), 0));
+        bi = (BITMAPINFO far *)GlobalLock(GlobalReAlloc(GlobalPtrHandle(bi), sizeof(*bi) + nc * sizeof(RGBQUAD), 0));
         if (!bi) return FALSE;
         for (i = 0; i < nc; i++)
         {
@@ -704,9 +704,9 @@ static BOOL     HLPFILE_LoadMetaFile(BYTE* beg, BYTE pack, HLPFILE_PARAGRAPH* pa
 
     paragraph->cookie = para_metafile;
 
-    mfp.hMF = NULL;
+    mfp.hMF = 0;
 
-    paragraph->u.gfx.u.mf.hMetaFile = SetMetaFileBits(/*size,*/ bits);
+    paragraph->u.gfx.u.mf.hMetaFile = SetMetaFileBits(/*size,*/ GlobalPtrHandle(bits));
 
     if (!paragraph->u.gfx.u.mf.hMetaFile)
 		{}//WINE_FIXME("Couldn't load metafile\n");
@@ -783,7 +783,7 @@ static  BOOL    HLPFILE_LoadGfxByIndex(HLPFILE *hlpfile, unsigned index,
 
     //WINE_TRACE("Loading picture #%d\n", index);
 
-    if (index < hlpfile->numBmps && hlpfile->bmps[index] != NULL)
+    if (index < hlpfile->numBmps && hlpfile->bmps[index] != 0)
     {
         paragraph->u.gfx.u.bmp.hBitmap = hlpfile->bmps[index];
         return TRUE;
@@ -806,10 +806,10 @@ static  BOOL    HLPFILE_LoadGfxByIndex(HLPFILE *hlpfile, unsigned index,
         {
             hlpfile->numBmps = index + 1;
 	    if (hlpfile->bmps)
-        	hlpfile->bmps = GlobalLock(GlobalReAlloc(GlobalPtrHandle(hlpfile->bmps), 
+        	hlpfile->bmps = (HBITMAP far *)GlobalLock(GlobalReAlloc(GlobalPtrHandle(hlpfile->bmps), 
                                         hlpfile->numBmps * sizeof(hlpfile->bmps[0]), 0));
 	    else
-	    	hlpfile->bmps = GlobalAllocPtr(GPTR, 
+	    	hlpfile->bmps = (HBITMAP far *)GlobalAllocPtr(GPTR, 
                                         hlpfile->numBmps * sizeof(hlpfile->bmps[0]));
 
         }
@@ -826,12 +826,12 @@ static  BOOL    HLPFILE_LoadGfxByIndex(HLPFILE *hlpfile, unsigned index,
 static HLPFILE_LINK*       HLPFILE_AllocLink(int cookie, const char* str, LONG hash,
                                              BOOL clrChange, unsigned wnd)
 {
-    HLPFILE_LINK*  link;
+    HLPFILE_LINK far *  link;
 
     /* FIXME: should build a string table for the attributes.link.lpszPath
      * they are reallocated for each link
      */
-    link = GlobalAllocPtr(GPTR, sizeof(HLPFILE_LINK) + strlen(str) + 1);
+    link = (HLPFILE_LINK far *) GlobalAllocPtr(GPTR, sizeof(HLPFILE_LINK) + strlen(str) + 1);
     if (!link) return NULL;
 
     link->cookie     = cookie;
@@ -855,7 +855,7 @@ static HLPFILE_LINK*       HLPFILE_AllocLink(int cookie, const char* str, LONG h
 static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned* len)
 {
     HLPFILE_PAGE      *page;
-    HLPFILE_PARAGRAPH *paragraph, **paragraphptr;
+    HLPFILE_PARAGRAPH far *paragraph, **paragraphptr;
     UINT               textsize;
     BYTE              *format, *format_end, *text, *text_end;
     long               size;
@@ -950,7 +950,7 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
             textsize = strlen(text) + 1;
             if (textsize > 1)
             {
-                paragraph = GlobalAllocPtr(GPTR,
+                paragraph = (HLPFILE_PARAGRAPH far *) GlobalAllocPtr(GPTR,
                                       sizeof(HLPFILE_PARAGRAPH) + textsize);
                 if (!paragraph) return FALSE;
                 *paragraphptr = paragraph;
@@ -1031,7 +1031,7 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
                     format += 2;
                     size = fetch_long(&format);
 
-                    paragraph = GlobalAllocPtr(GPTR,
+                    paragraph = (HLPFILE_PARAGRAPH far *)GlobalAllocPtr(GPTR,
                                           sizeof(HLPFILE_PARAGRAPH) + textsize);
                     if (!paragraph) return FALSE;
                     *paragraphptr = paragraph;
@@ -1201,7 +1201,7 @@ static BOOL HLPFILE_ReadFont(HLPFILE* hlpfile)
       //         face_num, face_offset, dscr_num, dscr_offset);
 
     hlpfile->numFonts = dscr_num;
-    hlpfile->fonts = GlobalAllocPtr(GPTR, sizeof(HLPFILE_FONT) * dscr_num);
+    hlpfile->fonts = (HLPFILE_FONT far *)GlobalAllocPtr(GPTR, sizeof(HLPFILE_FONT) * dscr_num);
 
     len = (dscr_offset - face_offset) / face_num;
 /* EPP     for (i = face_offset; i < dscr_offset; i += len) */
@@ -1377,7 +1377,7 @@ static BOOL HLPFILE_FindSubFile(LPCSTR name, BYTE **subbuf, BYTE **subend)
 static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
 {
     BYTE *buf, *ptr, *end;
-    HLPFILE_MACRO *macro, **m;
+    HLPFILE_MACRO far *macro, **m;
     LPSTR p;
     unsigned short magic, minor, major, flags;
 
@@ -1439,7 +1439,7 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
             break;
 
 	case 4:
-            macro = GlobalAllocPtr(GPTR, sizeof(HLPFILE_MACRO) + lstrlen(ptr + 4) + 1);
+            macro = (HLPFILE_MACRO far *)GlobalAllocPtr(GPTR, sizeof(HLPFILE_MACRO) + lstrlen(ptr + 4) + 1);
             if (!macro) break;
             p = (char*)macro + sizeof(HLPFILE_MACRO);
             lstrcpy(p, (LPSTR)ptr + 4);
@@ -1455,10 +1455,10 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
 			}
 
 	    if (hlpfile->windows) 
-        	hlpfile->windows = GlobalLock(GlobalReAlloc(GlobalPtrHandle(hlpfile->windows), 
+        	hlpfile->windows = (HLPFILE_WINDOWINFO far *)GlobalLock(GlobalReAlloc(GlobalPtrHandle(hlpfile->windows), 
                                            sizeof(HLPFILE_WINDOWINFO) * ++hlpfile->numWindows, 0));
 	    else 
-        	hlpfile->windows = GlobalAllocPtr(GPTR, 
+        	hlpfile->windows = (HLPFILE_WINDOWINFO far *)GlobalAllocPtr(GPTR, 
                                            sizeof(HLPFILE_WINDOWINFO) * ++hlpfile->numWindows);
 	    
             if (hlpfile->windows)
@@ -1570,7 +1570,7 @@ static BOOL HLPFILE_UncompressLZ77_Phrases(HLPFILE* hlpfile)
 
     dec_size = HLPFILE_UncompressedLZ77_Size(buf + 0x13 + 2 * num, end);
 
-    phrases.offsets = GlobalAllocPtr(GPTR, sizeof(unsigned) * (num + 1));
+    phrases.offsets = (unsigned far *) GlobalAllocPtr(GPTR, sizeof(unsigned) * (num + 1));
     phrases.buffer  = GlobalAllocPtr(GPTR, dec_size);
     if (!phrases.offsets || !phrases.buffer) return FALSE;
 
@@ -1625,7 +1625,7 @@ static BOOL HLPFILE_Uncompress_Phrases40(HLPFILE* hlpfile)
         dec_size = max(dec_size, HLPFILE_UncompressedLZ77_Size(buf_phs + 9, end_phs));
     }
 
-    phrases.offsets = GlobalAllocPtr(GPTR, sizeof(unsigned) * (num + 1));
+    phrases.offsets = (unsigned far *)GlobalAllocPtr(GPTR, sizeof(unsigned) * (num + 1));
     phrases.buffer  = GlobalAllocPtr(GPTR, dec_size);
     if (!phrases.offsets || !phrases.buffer) return FALSE;
 
@@ -1935,7 +1935,7 @@ static BOOL HLPFILE_GetContext(HLPFILE *hlpfile)
 	}
 
     clen = GET_UINT(cbuf, 0x2b);
-    hlpfile->Context = GlobalAllocPtr(GPTR, clen * sizeof(HLPFILE_CONTEXT));
+    hlpfile->Context = (HLPFILE_CONTEXT far *)GlobalAllocPtr(GPTR, clen * sizeof(HLPFILE_CONTEXT));
     if (!hlpfile->Context) return FALSE;
     hlpfile->wContextLen = clen;
 

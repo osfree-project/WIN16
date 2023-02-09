@@ -61,13 +61,13 @@ static WORD CALLBACK WHD_Close(HANDLE fs)
 static HANDLE CALLBACK WHD_OpenBag(HANDLE fs, LPSTR name, BYTE flags)
 {
     //WINE_FIXME("(%p %s %x)\n", fs, name, flags);
-    return NULL;
+    return 0;
 }
 
 static HANDLE CALLBACK WHD_CloseBag(HANDLE bag)
 {
     //WINE_FIXME("()\n");
-    return NULL;
+    return 0;
 }
 
 static LONG CALLBACK WHD_ReadBag(HANDLE bag, BYTE* ptr, LONG len)

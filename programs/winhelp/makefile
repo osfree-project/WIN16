@@ -18,7 +18,7 @@ srcfiles = &
 
 # defines additional options for C compiler
 #ADD_COPT = -0 -sg -zw -bw -bg -d3 -db -hw -ml -od #-pl
-ADD_COPT = -ml -zc -dSTRICT
+ADD_COPT = -sg -zc -dDEBUG #-dSTRICT
 #DEBUG    = watcom
 IMPORTS  = GETOPENFILENAME     COMMDLG.1, &
            PRINTDLG       COMMDLG.20

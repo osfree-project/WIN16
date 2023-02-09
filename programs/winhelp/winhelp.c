@@ -68,20 +68,20 @@ static void    WINHELP_DeleteWindow(WINHELP_WINDOW*);
 static void    WINHELP_SetupText(HWND hWnd);
 static WINHELP_LINE_PART* WINHELP_IsOverLink(WINHELP_WINDOW*, WPARAM, LPARAM);
 
-WINHELP_GLOBALS Globals = {3, NULL, NULL, 0, TRUE, NULL, NULL, NULL, NULL};
+WINHELP_GLOBALS Globals = {3, 0, 0, 0, TRUE, NULL, NULL, NULL, NULL};
 
 /***********************************************************************
  *
  *           WINHELP_LookupHelpFile
  */
-HLPFILE* WINHELP_LookupHelpFile(LPCSTR lpszFile)
+HLPFILE far * WINHELP_LookupHelpFile(LPCSTR lpszFile)
 {
-    HLPFILE*        hlpfile;
+    HLPFILE far *        hlpfile;
 
     hlpfile = HLPFILE_ReadHlpFile(lpszFile);
 
     /* Add Suffix `.hlp' */
-    if (!hlpfile && lstrcmpi(lpszFile + strlen(lpszFile) - 4, ".hlp") != 0)
+    if (!hlpfile && lstrcmpi(lpszFile + lstrlen(lpszFile) - 4, ".hlp") != 0)
     {
         char      szFile_hlp[MAX_PATHNAME_LEN];
 
@@ -109,32 +109,51 @@ HLPFILE_WINDOWINFO*     WINHELP_GetWindowInfo(HLPFILE* hlpfile, LPCSTR name)
     static      HLPFILE_WINDOWINFO      mwi;
     unsigned int     i;
 
+#ifdef DEBUG
+    OutputDebugString("WINHELP_GetWindowInfo\n");
+#endif
+
     if (!name || !name[0])
         name = Globals.active_win->lpszName;
+
+#ifdef DEBUG
+    OutputDebugString("1\n");
+#endif
 
     if (hlpfile)
         for (i = 0; i < hlpfile->numWindows; i++)
             if (!strcmp(hlpfile->windows[i].name, name))
                 return &hlpfile->windows[i];
 
-    if (strcmp(name, "main") != 0)
+#ifdef DEBUG
+    OutputDebugString("2\n");
+#endif
+    if (lstrcmp(name, "main") != 0)
     {
         //WINE_FIXME("Couldn't find window info for %s\n", name);
         assert(0);
         return NULL;
     }
+
+#ifdef DEBUG
+    OutputDebugString("3\n");
+#endif
+
     if (!mwi.name[0])
     {
-        strcpy(mwi.type, "primary");
-        strcpy(mwi.name, "main");
+        lstrcpy(mwi.type, "primary");
+        lstrcpy(mwi.name, "main");
         if (!LoadString(Globals.hInstance, STID_WINE_HELP, 
                         mwi.caption, sizeof(mwi.caption)))
-            strcpy(mwi.caption, hlpfile->lpszTitle);
+            lstrcpy(mwi.caption, hlpfile->lpszTitle);
         mwi.origin.x = mwi.origin.y = mwi.size.cx = mwi.size.cy = CW_USEDEFAULT;
         mwi.style = SW_SHOW;
         mwi.win_style = WS_OVERLAPPEDWINDOW;
         mwi.sr_color = mwi.sr_color = 0xFFFFFF;
     }
+#ifdef DEBUG
+    OutputDebugString("4\n");
+#endif
     return &mwi;
 }
 
@@ -180,14 +199,26 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
     HLPFILE*    hlpfile;
     char*       quote;
     WINHELP_DLL*        dll;
+#ifdef DEBUG
+  char DebugBuffer[200];
+#endif
 
     Globals.hInstance = hInstance;
-    
+
+#ifdef DEBUG
+    wsprintf(DebugBuffer, "Winmain start: cmdline=%04x:%04x\n", cmdline);
+    OutputDebugString(DebugBuffer);
+    //wsprintf(DebugBuffer, "Winmain start: cmdline=%c\n", *cmdline);
+    OutputDebugString(DebugBuffer);
+#endif
+
+#if 0
     /* Get options */
     while (*cmdline && (*cmdline == ' ' || *cmdline == '-'))
     {
         char   option;
         LPCSTR topic_id;
+
         if (*cmdline++ == ' ') continue;
 
         option = *cmdline;
@@ -218,6 +249,8 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
             break;
 	}
     }
+#endif
+    OutputDebugString("Register window\n");
 
     /* Create primary window */
     if (!WINHELP_RegisterWinClasses())
@@ -225,7 +258,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
         //WINE_FIXME("Couldn't register classes\n");
         return 0;
     }
-
+#if 0
     if (*cmdline)
     {
         if ((*cmdline == '"') && (quote = strchr(cmdline+1, '"')))
@@ -237,8 +270,18 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
         if (!hlpfile) return 0;
     }
     else hlpfile = NULL;
+#endif
+    hlpfile = NULL;
+	
+#ifdef DEBUG
+    OutputDebugString("Create main window\n");
+#endif
+
     WINHELP_CreateHelpWindowByHash(hlpfile, lHash, 
                                    WINHELP_GetWindowInfo(hlpfile, "main"), show);
+
+
+    OutputDebugString("MSG loop\n");
 
     /* Message loop */
     while (GetMessage(&msg, 0, 0, 0))
@@ -485,16 +528,20 @@ static BOOL     WINHELP_ReuseWindow(WINHELP_WINDOW* win, WINHELP_WINDOW* oldwin,
 BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
                               int nCmdShow)
 {
-    WINHELP_WINDOW *win, *oldwin;
+    WINHELP_WINDOW far *win, *oldwin;
     HWND hWnd;
     BOOL bPrimary;
     BOOL bPopup;
+
+#ifdef DEBUG
+    OutputDebugString("WINHELP_CreateHelpWindow\n");
+#endif
 
     bPrimary = !lstrcmpi(wi->name, "main");
     bPopup = wi->win_style & WS_POPUP;
 
     /* Initialize WINHELP_WINDOW struct */
-    win = GlobalAllocPtr(GPTR, sizeof(WINHELP_WINDOW) + strlen(wi->name) + 1);
+    win = (WINHELP_WINDOW far *) GlobalAllocPtr(GPTR, sizeof(WINHELP_WINDOW) + strlen(wi->name) + 1);
     if (!win) return FALSE;
 
     win->next = Globals.win_list;
@@ -571,7 +618,7 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
                         wi->caption, 
                         bPrimary ? WS_OVERLAPPEDWINDOW : wi->win_style,
                         wi->origin.x, wi->origin.y, wi->size.cx, wi->size.cy,
-                        NULL, bPrimary ? LoadMenu(Globals.hInstance, MAKEINTRESOURCE(MAIN_MENU)) : 0,
+                        0, bPrimary ? LoadMenu(Globals.hInstance, MAKEINTRESOURCE(MAIN_MENU)) : 0,
                         Globals.hInstance, win);
 
     ShowWindow(hWnd, nCmdShow);
@@ -588,6 +635,10 @@ BOOL WINHELP_CreateHelpWindowByHash(HLPFILE* hlpfile, LONG lHash,
                                     HLPFILE_WINDOWINFO* wi, int nCmdShow)
 {
     HLPFILE_PAGE*       page = NULL;
+
+#ifdef DEBUG
+    OutputDebugString("WINHELP_CreateHelpWindowByHash\n");
+#endif
 
     if (hlpfile)
         page = lHash ? HLPFILE_PageByHash(hlpfile, lHash) : 
@@ -1266,16 +1317,15 @@ static BOOL WINHELP_AppendText(WINHELP_LINE ***linep, WINHELP_LINE_PART ***partp
 			       HFONT font, COLORREF color, HLPFILE_LINK *link,
                                unsigned underline)
 {
-    WINHELP_LINE      *line;
-    WINHELP_LINE_PART *part;
+    WINHELP_LINE far *line;
+    WINHELP_LINE_PART far *part;
     LPSTR ptr;
 
     if (!*partp) /* New line */
     {
         *line_ascent  = ascent;
 
-        line = GlobalAllocPtr(GPTR,
-                         sizeof(WINHELP_LINE) + textlen);
+        line = (WINHELP_LINE far *) GlobalAllocPtr(GPTR, sizeof(WINHELP_LINE) + textlen);
         if (!line) return FALSE;
 
         line->next    = 0;
@@ -1307,7 +1357,7 @@ static BOOL WINHELP_AppendText(WINHELP_LINE ***linep, WINHELP_LINE_PART ***partp
             *line_ascent = ascent;
 	}
 
-        part = GlobalAllocPtr(GPTR,
+        part = (WINHELP_LINE_PART far *) GlobalAllocPtr(GPTR,
                          sizeof(WINHELP_LINE_PART) + textlen);
         if (!part) return FALSE;
         **partp = part;
@@ -1355,13 +1405,13 @@ static WINHELP_LINE_PART* WINHELP_AppendGfxObject(WINHELP_LINE ***linep, WINHELP
                                                   LPSIZE space, LPSIZE gfxSize,
                                                   HLPFILE_LINK *link, unsigned pos)
 {
-    WINHELP_LINE      *line;
-    WINHELP_LINE_PART *part;
+    WINHELP_LINE  far *line;
+    WINHELP_LINE_PART far *part;
     LPSTR              ptr;
 
     if (!*partp || pos == 1) /* New line */
     {
-        line = GlobalAllocPtr(GPTR, sizeof(WINHELP_LINE));
+        line = (WINHELP_LINE far *)GlobalAllocPtr(GPTR, sizeof(WINHELP_LINE));
         if (!line) return NULL;
 
         line->next    = NULL;
@@ -1382,7 +1432,7 @@ static WINHELP_LINE_PART* WINHELP_AppendGfxObject(WINHELP_LINE ***linep, WINHELP
         if (pos == 2) {}//WINE_FIXME("Left alignment not handled\n");
         line = **linep;
 
-        part = GlobalAllocPtr(GPTR, sizeof(WINHELP_LINE_PART));
+        part = (WINHELP_LINE_PART far *)GlobalAllocPtr(GPTR, sizeof(WINHELP_LINE_PART));
         if (!part) return NULL;
         **partp = part;
         ptr = (char*)part + sizeof(WINHELP_LINE_PART);

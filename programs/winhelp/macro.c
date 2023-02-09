@@ -161,7 +161,7 @@ static struct MacroDesc MACRO_Builtins[] = {
     {NULL,                  NULL, 0, NULL,     NULL}
 };
 
-static struct MacroDesc*MACRO_Loaded /* = NULL */;
+static struct MacroDesc far *MACRO_Loaded /* = NULL */;
 static unsigned         MACRO_NumLoaded /* = 0 */;
 
 static int MACRO_DoLookUp(struct MacroDesc* start, const char* name, struct lexret* lr, unsigned len)
@@ -282,7 +282,7 @@ void CALLBACK MACRO_BrowseButtons(void)
 void CALLBACK MACRO_ChangeButtonBinding(LPCSTR id, LPCSTR macro)
 {
     WINHELP_WINDOW*     win = Globals.active_win;
-    WINHELP_BUTTON*     button;
+    WINHELP_BUTTON far *     button;
     WINHELP_BUTTON**    b;
     LONG                size;
     LPSTR               ptr;
@@ -298,7 +298,7 @@ void CALLBACK MACRO_ChangeButtonBinding(LPCSTR id, LPCSTR macro)
     size = sizeof(WINHELP_BUTTON) + lstrlen(id) +
         lstrlen((*b)->lpszName) + lstrlen(macro) + 3;
 
-    button = GlobalAllocPtr(GPTR, size);
+    button = (WINHELP_BUTTON far *) GlobalAllocPtr(GPTR, size);
     if (!button) return;
 
     button->next  = (*b)->next;
@@ -395,7 +395,7 @@ void CALLBACK MACRO_CopyTopic(void)
 void CALLBACK MACRO_CreateButton(LPCSTR id, LPCSTR name, LPCSTR macro)
 {
     WINHELP_WINDOW *win = Globals.active_win;
-    WINHELP_BUTTON *button, **b;
+    WINHELP_BUTTON far *button, **b;
     LONG            size;
     LPSTR           ptr;
 
@@ -403,7 +403,7 @@ void CALLBACK MACRO_CreateButton(LPCSTR id, LPCSTR name, LPCSTR macro)
 
     size = sizeof(WINHELP_BUTTON) + lstrlen(id) + lstrlen(name) + lstrlen(macro) + 3;
 
-    button = GlobalAllocPtr(GPTR, size);
+    button = (WINHELP_BUTTON far *)GlobalAllocPtr(GPTR, size);
     if (!button) return;
 
     button->next  = 0;
@@ -856,7 +856,7 @@ void CALLBACK MACRO_RegisterRoutine(LPCSTR dll_name, LPCSTR proc, LPCSTR args)
 {
     FARPROC             fn = NULL;
     int                 size;
-    WINHELP_DLL*        dll;
+    WINHELP_DLL far *        dll;
 
     //WINE_TRACE("(\"%s\", \"%s\", \"%s\")\n", dll_name, proc, args);
 
@@ -878,12 +878,12 @@ void CALLBACK MACRO_RegisterRoutine(LPCSTR dll_name, LPCSTR proc, LPCSTR args)
         /* FIXME: should look in the directory where current hlpfile
          * is loaded from
          */
-        if (hLib == NULL)
+        if (hLib == 0)
         {
             /* FIXME: internationalisation for error messages */
             //WINE_FIXME("Cannot find dll %s\n", dll_name);
         }
-        else if ((dll = GlobalAllocPtr(GPTR, sizeof(*dll))))
+        else if ((dll = (WINHELP_DLL far *)GlobalAllocPtr(GPTR, sizeof(*dll))))
         {
             dll->hLib = hLib;
             dll->name = _fstrdup(dll_name); /* FIXME */
@@ -904,8 +904,8 @@ void CALLBACK MACRO_RegisterRoutine(LPCSTR dll_name, LPCSTR proc, LPCSTR args)
     }
 
     size = ++MACRO_NumLoaded * sizeof(struct MacroDesc);
-    if (!MACRO_Loaded) MACRO_Loaded = GlobalAllocPtr(GPTR, size);
-    else MACRO_Loaded = GlobalLock(GlobalReAlloc(GlobalPtrHandle(MACRO_Loaded), size, 0));
+    if (!MACRO_Loaded) MACRO_Loaded = (struct MacroDesc far *)GlobalAllocPtr(GPTR, size);
+    else MACRO_Loaded = (struct MacroDesc far *)GlobalLock(GlobalReAlloc(GlobalPtrHandle(MACRO_Loaded), size, 0));
     MACRO_Loaded[MACRO_NumLoaded - 1].name      = strdup(proc); /* FIXME */
     MACRO_Loaded[MACRO_NumLoaded - 1].alias     = NULL;
     MACRO_Loaded[MACRO_NumLoaded - 1].isBool    = 0;
