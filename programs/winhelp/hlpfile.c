@@ -44,6 +44,8 @@
 
 #include "winhelp.h"
 
+#include <hlpfmt.h>
+
 //#include "wine/debug.h"
 
 //WINE_DEFAULT_DEBUG_CHANNEL(winhelp);
@@ -228,11 +230,22 @@ LONG HLPFILE_Hash(LPCSTR lpszContext)
 /***********************************************************************
  *
  *           HLPFILE_ReadHlpFile
+ *
+ *  Read Help file and return pointer to HLPFILE structure.
+ *
+ *  Input:
+ *  LPCSTR lpszPath
+ *		Filename of file to open
+ *
+ *  Output:
+ *  LPHLPFILE on Success
+ *  NULL if error
  */
-HLPFILE far *HLPFILE_ReadHlpFile(LPCSTR lpszPath)
+LPHLPFILE HLPFILE_ReadHlpFile(LPCSTR lpszPath)
 {
-    HLPFILE far *      hlpfile;
+    LPHLPFILE hlpfile;
 
+	// If file was already open, then just return pointer to HLPFILE
     for (hlpfile = first_hlpfile; hlpfile; hlpfile = hlpfile->next)
     {
         if (!lstrcmp(lpszPath, hlpfile->lpszPath))
@@ -242,10 +255,11 @@ HLPFILE far *HLPFILE_ReadHlpFile(LPCSTR lpszPath)
         }
     }
 
-    hlpfile = (HLPFILE far *)GlobalAllocPtr(GPTR, sizeof(HLPFILE) + lstrlen(lpszPath) + 1);
-    if (!hlpfile) return 0;
+	// Allocate space for header and filename
+    hlpfile = (LPHLPFILE)GlobalAllocPtr(GPTR, sizeof(HLPFILE) + lstrlen(lpszPath) + 1);
+    if (!hlpfile) return NULL;
 
-    hlpfile->lpszPath           = (char*)hlpfile + sizeof(HLPFILE);
+    hlpfile->lpszPath           = (char far *)hlpfile + sizeof(HLPFILE);
     hlpfile->lpszTitle          = NULL;
     hlpfile->lpszCopyright      = NULL;
     hlpfile->first_page         = NULL;
@@ -307,6 +321,7 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE far *hlpfile, LPCSTR lpszPath)
     hFile = OpenFile(lpszPath, &ofs, OF_READ);
     if (hFile == HFILE_ERROR) return FALSE;
 
+	// Read file to buffer
     ret = HLPFILE_ReadFileToBuffer(hFile);
     _lclose(hFile);
     if (!ret) return FALSE;
@@ -1276,33 +1291,57 @@ static BOOL HLPFILE_ReadFont(HLPFILE far * hlpfile)
 /***********************************************************************
  *
  *           HLPFILE_ReadFileToBuffer
+ *
+ *  Read help file to buffer
+ *
+ * Returns:
+ *	TRUE Success
+ *	FALSE Error
  */
 static BOOL HLPFILE_ReadFileToBuffer(HFILE hFile)
 {
-    BYTE  header[16], dummy[1];
-    UINT  size;
+    BYTE   dummy[1];
+    DWORD  size;
+	HELPHEADER header;
 
-    if (_hread(hFile, header, 16) != 16) {//WINE_WARN("header\n"); 
+    if (_hread(hFile, &header, sizeof(HELPHEADER)) != sizeof(HELPHEADER))
+	{
+#ifdef DEBUG
+		OutputDebugString("HLPFILE_ReadFileToBuffer: Header read error\n");
+#endif
 		return FALSE;
 	};
 
     /* sanity checks */
-    if (GET_ULONG(header, 0) != 0x00035F3F) // @todo fix it!!
-    {//WINE_WARN("wrong header\n"); 
+    if (header.Magic != 0x00035F3F) 
+    {
+#ifdef DEBUG
+		OutputDebugString("HLPFILE_ReadFileToBuffer: wrong header\n");
+#endif
 		return FALSE;
 	};
 
-    size = GET_ULONG(header, 12);
-    file_buffer = GlobalAllocPtr(GPTR, size + 1);
+    size = header.EntireFileSize;
+    file_buffer = GlobalAllocPtr(GPTR, size + 1); // Allocate memory for file_buffer plus protective zero byte
     if (!file_buffer) return FALSE;
 
-    _fmemcpy(file_buffer, header, 16);
-    if (_hread(hFile, file_buffer + 16, size - 16) != size - 16)
-    {//WINE_WARN("filesize1\n"); 
+    _fmemcpy(file_buffer, &header, sizeof(HELPHEADER)); // Copy header to buffer
+	// read rest of file
+    if (_hread(hFile, file_buffer + sizeof(HELPHEADER), size - sizeof(HELPHEADER)) != size - sizeof(HELPHEADER))
+    {
+#ifdef DEBUG
+		OutputDebugString("HLPFILE_ReadFileToBuffer: Error read file to buffer\n");
+#endif
 		return FALSE;
 	};
 
-    if (_hread(hFile, dummy, 1) != 0) {};//WINE_WARN("filesize2\n");
+	// Try to read after file end
+    if (_hread(hFile, dummy, sizeof(dummy)) != 0) 
+	{
+#ifdef DEBUG
+		OutputDebugString("HLPFILE_ReadFileToBuffer: Warning: Extra bytes after file end\n");
+#endif
+	};
 
     file_buffer[size] = '\0'; /* FIXME: was '0', sounds ackward to me */
 
@@ -1312,27 +1351,38 @@ static BOOL HLPFILE_ReadFileToBuffer(HFILE hFile)
 /***********************************************************************
  *
  *           HLPFILE_FindSubFile
+ *
+ *  Find subfile with name pointed by lpszName and return start and end pointers in buffer
+ *
+ *  Input:
+ *	LPCSTR lpszName
+ *  Output:
+ *  subbuf - start address
+ *  subend - end address
+ *  FALSE - Failure
+ *  TRUE - Success
  */
-static BOOL HLPFILE_FindSubFile(LPCSTR name, BYTE far * far*subbuf, BYTE far * far *subend)
+static BOOL HLPFILE_FindSubFile(LPCSTR lpszName, BYTE far * far*subbuf, BYTE far * far *subend)
 {
-    BYTE far *root = file_buffer + GET_ULONG(file_buffer,  4);
-    BYTE far *end  = file_buffer + GET_ULONG(file_buffer, 12);
+    BYTE far *root = file_buffer + ((LPHELPHEADER)file_buffer)->DirectoryStart;//GET_ULONG(file_buffer,  4);
+    BYTE far *end  = file_buffer + ((LPHELPHEADER)file_buffer)->EntireFileSize;//GET_ULONG(file_buffer, 12);
     BYTE far *ptr;
-    BYTE far *bth;
+    LPBTREEHEADER bth;
 
-    unsigned    pgsize;
+    WORD    pgsize;
     unsigned    pglast;
     unsigned    nentries;
     unsigned    i, n;
 
-    bth = root + 9;
+    bth = (LPBTREEHEADER)(root + sizeof(FILEHEADER));//9;
 
     /* FIXME: this should be using the EnumBTree functions from this file */
-    pgsize = GET_USHORT(bth, 4);
+    pgsize = bth->PageSize;//GET_USHORT(bth, 4);
     //WINE_TRACE("%s => pgsize=%u #pg=%u rootpg=%u #lvl=%u\n", 
       //         name, pgsize, GET_USHORT(bth, 30), GET_USHORT(bth, 26), GET_USHORT(bth, 32));
 
-    ptr = bth + 38 + GET_USHORT(bth, 26) * pgsize;
+    //ptr = bth + 38 + GET_USHORT(bth, 26) * pgsize;
+	ptr = bth + 38 + bth->RootPage * pgsize;
 
     for (n = 1; n < GET_USHORT(bth, 32); n++)
     {
@@ -1344,7 +1394,7 @@ static BOOL HLPFILE_FindSubFile(LPCSTR name, BYTE far * far*subbuf, BYTE far * f
         for (i = 0; i < nentries; i++)
         {
             //WINE_TRACE("<= %s\n", ptr);
-            if (lstrcmp(name, ptr) < 0) break;
+            if (lstrcmp(lpszName, ptr) < 0) break;
             ptr += lstrlen(ptr) + 1;
             pglast = GET_USHORT(ptr, 0);
             ptr += 2;
@@ -1359,7 +1409,7 @@ static BOOL HLPFILE_FindSubFile(LPCSTR name, BYTE far * far*subbuf, BYTE far * f
         LPSTR   fname = ptr;
         ptr += lstrlen(fname) + 1;
         //WINE_TRACE("\\- %s\n", fname);
-        if (lstrcmp(fname, name) == 0)
+        if (lstrcmp(fname, lpszName) == 0)
         {
             *subbuf = file_buffer + GET_ULONG(ptr, 0);
             *subend = *subbuf + GET_ULONG(*subbuf, 0);

@@ -149,6 +149,8 @@ typedef struct tagHlpFileFile
     HLPFILE_WINDOWINFO far *    windows;
 } HLPFILE;
 
+typedef HLPFILE far * LPHLPFILE;
+
 HLPFILE far * HLPFILE_ReadHlpFile(LPCSTR lpszPath);
 HLPFILE_PAGE far * HLPFILE_Contents(HLPFILE far * hlpfile);
 HLPFILE_PAGE far * HLPFILE_PageByHash(HLPFILE far * hlpfile, LONG lHash);
