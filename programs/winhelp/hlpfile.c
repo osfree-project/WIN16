@@ -91,7 +91,7 @@ static struct
 
 static BOOL  HLPFILE_DoReadHlpFile(HLPFILE far *, LPCSTR);
 static BOOL  HLPFILE_ReadFileToBuffer(HFILE);
-static BOOL  HLPFILE_FindSubFile(LPCSTR name, BYTE far **, BYTE far **);
+static BOOL  HLPFILE_FindSubFile(LPCSTR name, BYTE far * far *, BYTE far * far *);
 static BOOL  HLPFILE_SystemCommands(HLPFILE far *);
 static int   HLPFILE_UncompressedLZ77_Size(BYTE far * ptr, BYTE far * end);
 static BYTE far * HLPFILE_UncompressLZ77(BYTE far * ptr, BYTE far * end, BYTE far *newptr);
@@ -1313,7 +1313,7 @@ static BOOL HLPFILE_ReadFileToBuffer(HFILE hFile)
  *
  *           HLPFILE_FindSubFile
  */
-static BOOL HLPFILE_FindSubFile(LPCSTR name, BYTE far **subbuf, BYTE far **subend)
+static BOOL HLPFILE_FindSubFile(LPCSTR name, BYTE far * far*subbuf, BYTE far * far *subend)
 {
     BYTE far *root = file_buffer + GET_ULONG(file_buffer,  4);
     BYTE far *end  = file_buffer + GET_ULONG(file_buffer, 12);
@@ -1540,6 +1540,10 @@ static BYTE far * HLPFILE_UncompressLZ77(BYTE far * ptr, BYTE far * end, BYTE fa
 {
     int i;
 
+#ifdef DEBUG
+	OutputDebugString("HLPFILE_UncompressLZ77 start\n");
+#endif
+
     while (ptr < end)
     {
         int mask = *ptr++;
@@ -1557,6 +1561,10 @@ static BYTE far * HLPFILE_UncompressLZ77(BYTE far * ptr, BYTE far * end, BYTE fa
             else *newptr++ = *ptr++;
 	}
     }
+
+#ifdef DEBUG
+	OutputDebugString("HLPFILE_UncompressLZ77 end\n");
+#endif
 
     return newptr;
 }
@@ -1677,17 +1685,33 @@ static BOOL HLPFILE_Uncompress_Topic(HLPFILE far * hlpfile)
 	BYTE far *newptr;
     int  i, newsize = 0;
 
+#ifdef DEBUG
+		OutputDebugString("HLPFILE_Uncompress_Topic\n");
+#endif
+
     if (!HLPFILE_FindSubFile("|TOPIC", &buf, &end))
-    {//WINE_WARN("topic0\n"); 
+    {
+#ifdef DEBUG
+		OutputDebugString("topic0\n");
+#endif
 		return FALSE;
 	}
+
+#ifdef DEBUG
+		OutputDebugString("HLPFILE_Uncompress_Topic: checking flags\n");
+#endif
 
     switch (hlpfile->flags & (8|4))
     {
     case 8:
-        //WINE_FIXME("Unsupported format\n");
+#ifdef DEBUG
+		OutputDebugString("Unsupported format\n");
+#endif
         return FALSE;
     case 4:
+#ifdef DEBUG
+		OutputDebugString("HLPFILE_Uncompress_Topic: case 4\n");
+#endif
         buf += 9;
         topic.wMapLen = (end - buf - 1) / 0x1000 + 1;
         
@@ -1700,23 +1724,42 @@ static BOOL HLPFILE_Uncompress_Topic(HLPFILE far * hlpfile)
 
             newsize += HLPFILE_UncompressedLZ77_Size(ptr + 0xc, min(end, ptr + 0x1000));
         }
+
+#ifdef DEBUG
+		OutputDebugString("HLPFILE_Uncompress_Topic: Allocate map index\n");
+#endif
         
         topic.map = (BYTE far * far *)GlobalAllocPtr(GPTR,
                               topic.wMapLen * sizeof(topic.map[0]) + newsize);
         if (!topic.map) return FALSE;
-        newptr = (char*)(topic.map + topic.wMapLen);
+
+#ifdef DEBUG
+		OutputDebugString("HLPFILE_Uncompress_Topic: Move pointers\n");
+#endif
+
+        newptr = (char far *)(topic.map + topic.wMapLen);
         topic.end = newptr + newsize;
+
+#ifdef DEBUG
+		OutputDebugString("HLPFILE_Uncompress_Topic: Uncompress\n");
+#endif
 
         for (i = 0; i < topic.wMapLen; i++)
         {
             ptr = buf + i * 0x1000;
             if (ptr + 0x44 > end) ptr = end - 0x44;
-
             topic.map[i] = newptr;
+
+#ifdef DEBUG
+			OutputDebugString("HLPFILE_Uncompress_Topic: Uncompress block\n");
+#endif
             newptr = HLPFILE_UncompressLZ77(ptr + 0xc, min(end, ptr + 0x1000), newptr);
         }
         break;
     case 0:
+#ifdef DEBUG
+		OutputDebugString("HLPFILE_Uncompress_Topic: case 0\n");
+#endif
         /* basically, we need to copy the 0x1000 byte pages (removing the first 0x0C) in
          * one single are in memory
          */
@@ -1728,7 +1771,7 @@ static BOOL HLPFILE_Uncompress_Topic(HLPFILE far * hlpfile)
         topic.map = (BYTE far * far *)GlobalAllocPtr(GPTR,
                               topic.wMapLen * (sizeof(topic.map[0]) + DST_LEN));
         if (!topic.map) return FALSE;
-        newptr = (char*)(topic.map + topic.wMapLen);
+        newptr = (char far *)(topic.map + topic.wMapLen);
         topic.end = newptr + newsize;
 
         for (i = 0; i < topic.wMapLen; i++)
