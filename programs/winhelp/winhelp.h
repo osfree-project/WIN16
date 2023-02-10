@@ -91,16 +91,16 @@ typedef struct tagHelpButton
 
     RECT                rect;
 
-    struct tagHelpButton*next;
+    struct tagHelpButton far * next;
 } WINHELP_BUTTON;
 
 typedef struct tagWinHelp
 {
     LPCSTR              lpszName;
 
-    WINHELP_BUTTON*     first_button;
-    HLPFILE_PAGE*       page;
-    WINHELP_LINE far *       first_line;
+    WINHELP_BUTTON far * first_button;
+    HLPFILE_PAGE far *  page;
+    WINHELP_LINE far *  first_line;
 
     HWND                hMainWnd;
     HWND                hButtonBoxWnd;
@@ -114,12 +114,12 @@ typedef struct tagWinHelp
     HCURSOR             hArrowCur;
     HCURSOR             hHandCur;
 
-    HLPFILE_WINDOWINFO* info;
+    HLPFILE_WINDOWINFO far * info;
 
     /* FIXME: for now it's a fixed size */
-    HLPFILE_PAGE*       history[40];
+    HLPFILE_PAGE far *  history[40];
     unsigned            histIndex;
-    HLPFILE_PAGE*       back[40];
+    HLPFILE_PAGE far *  back[40];
     unsigned            backIndex;
 
     struct tagWinHelp far * next;
@@ -149,10 +149,10 @@ typedef long (CALLBACK *WINHELP_LDLLHandler)(WORD, LONG, LONG);
 typedef struct tagDll
 {
     HANDLE              hLib;
-    const char*         name;
+    const char far *    name;
     WINHELP_LDLLHandler handler;
     DWORD               class;
-    struct tagDll*      next;
+    struct tagDll far * next;
 } WINHELP_DLL;
 
 typedef struct
@@ -165,18 +165,18 @@ typedef struct
     WINHELP_WINDOW far *active_win;
     WINHELP_WINDOW far *win_list;
     WNDPROC             button_proc;
-    WINHELP_DLL*        dlls;
+    WINHELP_DLL far *   dlls;
 } WINHELP_GLOBALS;
 
 extern WINHELP_GLOBALS Globals;
 extern FARPROC         Callbacks[];
 
-BOOL WINHELP_CreateHelpWindowByHash(HLPFILE far *, LONG, HLPFILE_WINDOWINFO*, int);
-BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE*, HLPFILE_WINDOWINFO*, int);
+BOOL WINHELP_CreateHelpWindowByHash(HLPFILE far *, LONG, HLPFILE_WINDOWINFO far *, int);
+BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE far *, HLPFILE_WINDOWINFO far *, int);
 int  WINHELP_MessageBoxIDS(UINT, UINT, WORD);
 int  WINHELP_MessageBoxIDS_s(UINT, LPCSTR, UINT, WORD);
 HLPFILE far * WINHELP_LookupHelpFile(LPCSTR lpszFile);
-HLPFILE_WINDOWINFO* WINHELP_GetWindowInfo(HLPFILE* hlpfile, LPCSTR name);
+HLPFILE_WINDOWINFO far * WINHELP_GetWindowInfo(HLPFILE far * hlpfile, LPCSTR name);
 
 extern const char MAIN_WIN_CLASS_NAME[];
 extern const char BUTTON_BOX_WIN_CLASS_NAME[];

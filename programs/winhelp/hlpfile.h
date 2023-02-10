@@ -80,7 +80,7 @@ typedef struct tagHlpFileParagraph
 
     HLPFILE_LINK far *               link;
 
-    struct tagHlpFileParagraph* next;
+    struct tagHlpFileParagraph far * next;
 } HLPFILE_PARAGRAPH;
 
 typedef struct tagHlpFileMacro
@@ -92,7 +92,7 @@ typedef struct tagHlpFileMacro
 typedef struct tagHlpFilePage
 {
     LPSTR                       lpszTitle;
-    HLPFILE_PARAGRAPH*          first_paragraph;
+    HLPFILE_PARAGRAPH far *     first_paragraph;
     HLPFILE_MACRO far *         first_macro;
 
     unsigned                    wNumber;
@@ -125,7 +125,7 @@ typedef struct tagHlpFileFile
     LPSTR                       lpszTitle;
     LPSTR                       lpszCopyright;
     HLPFILE_PAGE far *          first_page;
-    HLPFILE_MACRO*              first_macro;
+    HLPFILE_MACRO far *         first_macro;
     unsigned                    wContextLen;
     HLPFILE_CONTEXT far *       Context;
     unsigned long               contents_start;

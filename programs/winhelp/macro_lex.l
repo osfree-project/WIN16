@@ -144,7 +144,7 @@ static const char* ts(int t)
     }
 }
 
-static int MACRO_CallBoolFunc(FARPROC fn, const char* args, void** ret);
+static int MACRO_CallBoolFunc(FARPROC fn, const char far * args, void ** ret);
 
 /******************************************************************
  *		MACRO_CheckArgs
@@ -153,7 +153,7 @@ static int MACRO_CallBoolFunc(FARPROC fn, const char* args, void** ret);
  * stack pa for later call
  * returns -1 on error, otherwise the number of pushed parameters
  */
-static int MACRO_CheckArgs(void* pa[], unsigned max, const char* args)
+static int MACRO_CheckArgs(void* pa[], unsigned max, const char far * args)
 {
     int         t;
     int         idx = 0;
@@ -224,9 +224,9 @@ static int MACRO_CheckArgs(void* pa[], unsigned max, const char* args)
  * Invokes boolean function fn, which arguments are defined by args
  * stores bool result into ret
  */
-static int MACRO_CallBoolFunc(FARPROC fn, const char* args, void** ret)
+static int MACRO_CallBoolFunc(FARPROC fn, const char far * args, void** ret)
 {
-    void*       pa[2];
+    void *       pa[2];
     int         idx = MACRO_CheckArgs(pa, sizeof(pa)/sizeof(pa[0]), args);
 
     if (idx == -1) return 0;
@@ -249,7 +249,7 @@ static int MACRO_CallBoolFunc(FARPROC fn, const char* args, void** ret)
  *
  *
  */
-static int MACRO_CallVoidFunc(FARPROC fn, const char* args)
+static int MACRO_CallVoidFunc(FARPROC fn, const char far * args)
 {
     void*       pa[6];
     int         idx = MACRO_CheckArgs(pa, sizeof(pa)/sizeof(pa[0]), args);

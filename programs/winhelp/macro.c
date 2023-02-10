@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <malloc.h>
 
 #include <dos.h>
 #include <errno.h>
@@ -52,10 +53,10 @@
 /*               Macro table                      */
 /**************************************************/
 struct MacroDesc {
-    char*       name;
-    char*       alias;
+    char far *  name;
+    char far *  alias;
     BOOL        isBool;
-    char*       arguments;
+    char far *  arguments;
     FARPROC     fn;
 };
 
@@ -164,13 +165,13 @@ static struct MacroDesc MACRO_Builtins[] = {
 static struct MacroDesc far *MACRO_Loaded /* = NULL */;
 static unsigned         MACRO_NumLoaded /* = 0 */;
 
-static int MACRO_DoLookUp(struct MacroDesc* start, const char* name, struct lexret* lr, unsigned len)
+static int MACRO_DoLookUp(struct MacroDesc far * start, const char far * name, struct lexret* lr, unsigned len)
 {
-    struct MacroDesc*   md;
+    struct MacroDesc far *   md;
 
     for (md = start; md->name && len != 0; md++, len--)
     {
-        if (strcasecmp(md->name, name) == 0 || (md->alias != NULL && strcasecmp(md->alias, name) == 0))
+        if (lstrcmpi(md->name, name) == 0 || (md->alias != NULL && lstrcmpi(md->alias, name) == 0))
         {
             lr->proto = md->arguments;
             lr->function = md->fn;
@@ -195,9 +196,9 @@ int MACRO_Lookup(const char* name, struct lexret* lr)
 
 /*******      helper functions     *******/
 
-static WINHELP_BUTTON**        MACRO_LookupButton(WINHELP_WINDOW* win, LPCSTR name)
+static WINHELP_BUTTON far * far *        MACRO_LookupButton(WINHELP_WINDOW far * win, LPCSTR name)
 {
-    WINHELP_BUTTON**    b;
+    WINHELP_BUTTON far * far *    b;
 
     for (b = &win->first_button; *b; b = &(*b)->next)
         if (!lstrcmpi(name, (*b)->lpszID)) break;
@@ -233,7 +234,7 @@ void CALLBACK MACRO_AppendItem(LPCSTR str1, LPCSTR str2, LPCSTR str3, LPCSTR str
 
 void CALLBACK MACRO_Back(void)
 {
-    WINHELP_WINDOW* win = Globals.active_win;
+    WINHELP_WINDOW far * win = Globals.active_win;
 
     //WINE_TRACE("()\n");
 
@@ -244,7 +245,7 @@ void CALLBACK MACRO_Back(void)
 
 void CALLBACK MACRO_BackFlush(void)
 {
-    WINHELP_WINDOW* win = Globals.active_win;
+    WINHELP_WINDOW far * win = Globals.active_win;
 
     //WINE_TRACE("()\n");
 
@@ -281,9 +282,9 @@ void CALLBACK MACRO_BrowseButtons(void)
 
 void CALLBACK MACRO_ChangeButtonBinding(LPCSTR id, LPCSTR macro)
 {
-    WINHELP_WINDOW*     win = Globals.active_win;
-    WINHELP_BUTTON far *     button;
-    WINHELP_BUTTON**    b;
+    WINHELP_WINDOW far * win = Globals.active_win;
+    WINHELP_BUTTON far * button;
+    WINHELP_BUTTON far * far * b;
     LONG                size;
     LPSTR               ptr;
 
@@ -343,7 +344,7 @@ void CALLBACK MACRO_CheckItem(LPCSTR str)
 
 void CALLBACK MACRO_CloseSecondarys(void)
 {
-    WINHELP_WINDOW *win;
+    WINHELP_WINDOW far *win;
 
     //WINE_TRACE("()\n");
     for (win = Globals.win_list; win; win = win->next)
@@ -353,7 +354,7 @@ void CALLBACK MACRO_CloseSecondarys(void)
 
 void CALLBACK MACRO_CloseWindow(LPCSTR lpszWindow)
 {
-    WINHELP_WINDOW *win;
+    WINHELP_WINDOW far *win;
 
     //WINE_TRACE("(\"%s\")\n", lpszWindow);
 
@@ -394,8 +395,8 @@ void CALLBACK MACRO_CopyTopic(void)
 
 void CALLBACK MACRO_CreateButton(LPCSTR id, LPCSTR name, LPCSTR macro)
 {
-    WINHELP_WINDOW *win = Globals.active_win;
-    WINHELP_BUTTON far *button, **b;
+    WINHELP_WINDOW far *win = Globals.active_win;
+    WINHELP_BUTTON far *button, far * far *b;
     LONG            size;
     LPSTR           ptr;
 
@@ -447,7 +448,7 @@ void CALLBACK MACRO_DestroyButton(LPCSTR str)
 
 void CALLBACK MACRO_DisableButton(LPCSTR id)
 {
-    WINHELP_BUTTON**    b;
+    WINHELP_BUTTON far * far *    b;
 
     //WINE_FIXME("(\"%s\")\n", id);
 
@@ -467,7 +468,7 @@ void CALLBACK MACRO_DisableItem(LPCSTR str)
 
 void CALLBACK MACRO_EnableButton(LPCSTR id)
 {
-    WINHELP_BUTTON**    b;
+    WINHELP_BUTTON far * far *    b;
 
     //WINE_TRACE("(\"%s\")\n", id);
 
@@ -523,11 +524,17 @@ void CALLBACK MACRO_ExtInsertMenu(LPCSTR str1, LPCSTR str2, LPCSTR str3, LONG u1
     //WINE_FIXME("(\"%s\", \"%s\", \"%s\", %lu, %lu)\n", str1, str2, str3, u1, u2);
 }
 
+
 BOOL CALLBACK MACRO_FileExist(LPCSTR str)
 {
 	unsigned attr;
+	BOOL rc;
+	char * f = malloc( lstrlen(str)+1 ); 
+	lstrcpy(f, str);
     //WINE_TRACE("(\"%s\")\n", str);
-    return _dos_getfileattr(str, &attr) != ENOENT;
+    rc = _dos_getfileattr(f, &attr) != ENOENT;
+	free(f);
+	return rc;
 }
 
 void CALLBACK MACRO_FileOpen(void)
@@ -578,7 +585,7 @@ void CALLBACK MACRO_FileOpen(void)
 
     if (GetOpenFileName(&openfilename))
     {
-        HLPFILE*        hlpfile = WINHELP_LookupHelpFile(szPath);
+        HLPFILE far *        hlpfile = WINHELP_LookupHelpFile(szPath);
 
         WINHELP_CreateHelpWindowByHash(hlpfile, 0,
                                        WINHELP_GetWindowInfo(hlpfile, "main"), SW_SHOWNORMAL);
@@ -607,7 +614,7 @@ void CALLBACK MACRO_Flush(void)
 
 void CALLBACK MACRO_FocusWindow(LPCSTR lpszWindow)
 {
-    WINHELP_WINDOW *win;
+    WINHELP_WINDOW far *win;
 
     //WINE_TRACE("(\"%s\")\n", lpszWindow);
 
@@ -697,7 +704,7 @@ BOOL CALLBACK MACRO_IsNotMark(LPCSTR str)
 
 void CALLBACK MACRO_JumpContents(LPCSTR lpszPath, LPCSTR lpszWindow)
 {
-    HLPFILE*    hlpfile;
+    HLPFILE far * hlpfile;
 
     //WINE_TRACE("(\"%s\", \"%s\")\n", lpszPath, lpszWindow);
     hlpfile = WINHELP_LookupHelpFile(lpszPath);
@@ -715,7 +722,7 @@ void CALLBACK MACRO_JumpContext(LPCSTR lpszPath, LPCSTR lpszWindow, LONG context
 
 void CALLBACK MACRO_JumpHash(LPCSTR lpszPath, LPCSTR lpszWindow, LONG lHash)
 {
-    HLPFILE*    hlpfile;
+    HLPFILE far *    hlpfile;
 
     //WINE_TRACE("(\"%s\", \"%s\", %lu)\n", lpszPath, lpszWindow, lHash);
     hlpfile = WINHELP_LookupHelpFile(lpszPath);
@@ -765,7 +772,7 @@ void CALLBACK MACRO_MPrintID(LPCSTR str)
 
 void CALLBACK MACRO_Next(void)
 {
-    HLPFILE_PAGE*   page;
+    HLPFILE_PAGE far *   page;
 
     //WINE_TRACE("()\n");
     page = Globals.active_win->page;
@@ -804,7 +811,7 @@ void CALLBACK MACRO_PositionWindow(LONG i1, LONG i2, LONG u1, LONG u2, LONG u3, 
 
 void CALLBACK MACRO_Prev(void)
 {
-    HLPFILE_PAGE*   page;
+    HLPFILE_PAGE far *   page;
 
     //WINE_TRACE("()\n");
     page = Globals.active_win->page;
@@ -856,7 +863,7 @@ void CALLBACK MACRO_RegisterRoutine(LPCSTR dll_name, LPCSTR proc, LPCSTR args)
 {
     FARPROC             fn = NULL;
     int                 size;
-    WINHELP_DLL far *        dll;
+    WINHELP_DLL far *   dll;
 
     //WINE_TRACE("(\"%s\", \"%s\", \"%s\")\n", dll_name, proc, args);
 
@@ -906,10 +913,10 @@ void CALLBACK MACRO_RegisterRoutine(LPCSTR dll_name, LPCSTR proc, LPCSTR args)
     size = ++MACRO_NumLoaded * sizeof(struct MacroDesc);
     if (!MACRO_Loaded) MACRO_Loaded = (struct MacroDesc far *)GlobalAllocPtr(GPTR, size);
     else MACRO_Loaded = (struct MacroDesc far *)GlobalLock(GlobalReAlloc(GlobalPtrHandle(MACRO_Loaded), size, 0));
-    MACRO_Loaded[MACRO_NumLoaded - 1].name      = strdup(proc); /* FIXME */
+    MACRO_Loaded[MACRO_NumLoaded - 1].name      = _fstrdup(proc); /* FIXME */
     MACRO_Loaded[MACRO_NumLoaded - 1].alias     = NULL;
     MACRO_Loaded[MACRO_NumLoaded - 1].isBool    = 0;
-    MACRO_Loaded[MACRO_NumLoaded - 1].arguments = strdup(args); /* FIXME */
+    MACRO_Loaded[MACRO_NumLoaded - 1].arguments = _fstrdup(args); /* FIXME */
     MACRO_Loaded[MACRO_NumLoaded - 1].fn        = fn;
     //WINE_TRACE("Added %s(%s) at %p\n", proc, args, fn);
 }

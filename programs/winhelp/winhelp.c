@@ -104,7 +104,7 @@ HLPFILE far * WINHELP_LookupHelpFile(LPCSTR lpszFile)
  *
  *
  */
-HLPFILE_WINDOWINFO*     WINHELP_GetWindowInfo(HLPFILE* hlpfile, LPCSTR name)
+HLPFILE_WINDOWINFO far *     WINHELP_GetWindowInfo(HLPFILE far * hlpfile, LPCSTR name)
 {
     static      HLPFILE_WINDOWINFO      mwi;
     unsigned int     i;
@@ -196,9 +196,9 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 {
     MSG         msg;
     LONG        lHash = 0;
-    HLPFILE*    hlpfile;
+    HLPFILE far * hlpfile;
     char*       quote;
-    WINHELP_DLL*        dll;
+    WINHELP_DLL far * dll;
 #ifdef DEBUG
   char DebugBuffer[200];
 #endif
@@ -437,7 +437,7 @@ static LRESULT  WINHELP_HandleCommand(HWND hSrcWnd, LPARAM lParam)
  *
  */
 static BOOL     WINHELP_ReuseWindow(WINHELP_WINDOW far * win, WINHELP_WINDOW far * oldwin, 
-                                    HLPFILE_PAGE* page, int nCmdShow)
+                                    HLPFILE_PAGE far * page, int nCmdShow)
 {
     unsigned int i;
 
@@ -525,7 +525,7 @@ static BOOL     WINHELP_ReuseWindow(WINHELP_WINDOW far * win, WINHELP_WINDOW far
  *
  *           WINHELP_CreateHelpWindow
  */
-BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
+BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE far * page, HLPFILE_WINDOWINFO far * wi,
                               int nCmdShow)
 {
     WINHELP_WINDOW far *win;
@@ -587,7 +587,7 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
     /* Initialize file specific pushbuttons */
     if (!(wi->win_style & WS_POPUP) && page)
     {
-        HLPFILE_MACRO  *macro;
+        HLPFILE_MACRO far *macro;
         for (macro = page->file->first_macro; macro; macro = macro->next)
             MACRO_ExecuteMacro(macro->lpszMacro);
 
@@ -633,9 +633,9 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
  *           WINHELP_CreateHelpWindowByHash
  */
 BOOL WINHELP_CreateHelpWindowByHash(HLPFILE far * hlpfile, LONG lHash, 
-                                    HLPFILE_WINDOWINFO* wi, int nCmdShow)
+                                    HLPFILE_WINDOWINFO far * wi, int nCmdShow)
 {
-    HLPFILE_PAGE*       page = NULL;
+    HLPFILE_PAGE far * page = NULL;
 
 #ifdef DEBUG
     OutputDebugString("WINHELP_CreateHelpWindowByHash\n");
@@ -655,7 +655,7 @@ BOOL WINHELP_CreateHelpWindowByHash(HLPFILE far * hlpfile, LONG lHash,
 static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     WINHELP_WINDOW *win;
-    WINHELP_BUTTON *button;
+    WINHELP_BUTTON far *button;
     RECT rect, button_box_rect;
     int  text_top, curPos, min, max, dy, keyDelta;
 
@@ -795,7 +795,7 @@ static LRESULT CALLBACK WINHELP_ButtonBoxWndProc(HWND hWnd, UINT msg, WPARAM wPa
 {
     WINDOWPOS      *winpos;
     WINHELP_WINDOW *win;
-    WINHELP_BUTTON *button;
+    WINHELP_BUTTON far *button;
     SIZE button_size;
     int  x, y;
 
@@ -1145,7 +1145,7 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
         if (part)
         {
             HLPFILE far *       hlpfile;
-            HLPFILE_WINDOWINFO* wi;
+            HLPFILE_WINDOWINFO far * wi;
 
             mouse.x = LOWORD(lParam);
             mouse.y = HIWORD(lParam);
@@ -1514,7 +1514,7 @@ static BOOL WINHELP_SplitLines(HWND hWnd, LPSIZE newsize)
 
                 if (p->u.text.wFont < win->page->file->numFonts)
                 {
-                    HLPFILE*    hlpfile = win->page->file;
+                    HLPFILE far * hlpfile = win->page->file;
 
                     if (!hlpfile->fonts[p->u.text.wFont].hFont)
                         hlpfile->fonts[p->u.text.wFont].hFont = CreateFontIndirect(&hlpfile->fonts[p->u.text.wFont].LogFont);

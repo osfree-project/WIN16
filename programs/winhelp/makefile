@@ -13,7 +13,7 @@ srcfiles = &
 	$(p)macro$(e) &
 	$(p)string$(e) &
 	$(p)callback$(e) &
-	$(p)macro_lex$(e)
+	$(PATH)macro_lex$(e)
 
 
 # defines additional options for C compiler
@@ -33,10 +33,9 @@ TARGETS = $(PATH)$(PROJ1).exe # subdirs
 
 .ico: $(MYDIR)res
 
+$(PATH)macro_lex$(e): $(PATH)macro_lex.c
 
-$(PATH)macro_lex.obj: $(PATH)macro_lex.c
-
-$(PATH)macro_lex$(e): $(MYDIR)macro_lex.l
+$(PATH)macro_lex.c: $(MYDIR)macro_lex.l .symbolic
 
 $(PATH)$(PROJ1).exe: $(PATH)$(PROJ).exe $(MYDIR)rsrc.rc
  @$(SAY) RESCMP   $^. $(LOG)
