@@ -19,7 +19,7 @@
  *
  *  Stuctures of HLP file format. Heavely based on documentation at
  *  https://www.oocities.org/mwinterhoff/helpdeco.htm
- *
+ *  https://entropymine.wordpress.com/2020/02/06/notes-on-winhelp-format-part-1/
  */
 
 #include <windows.h>

@@ -1382,9 +1382,10 @@ static BOOL HLPFILE_FindSubFile(LPCSTR lpszName, BYTE far * far*subbuf, BYTE far
       //         name, pgsize, GET_USHORT(bth, 30), GET_USHORT(bth, 26), GET_USHORT(bth, 32));
 
     //ptr = bth + 38 + GET_USHORT(bth, 26) * pgsize;
-	ptr = bth + 38 + bth->RootPage * pgsize;
+	ptr = bth + sizeof(BTREEHEADER) + bth->RootPage * pgsize;
 
-    for (n = 1; n < GET_USHORT(bth, 32); n++)
+//    for (n = 1; n < GET_USHORT(bth, 32); n++)
+    for (n = 1; n < bth->NLevels; n++)
     {
         nentries = GET_USHORT(ptr, 2);
         pglast = GET_USHORT(ptr, 4);
@@ -1399,7 +1400,8 @@ static BOOL HLPFILE_FindSubFile(LPCSTR lpszName, BYTE far * far*subbuf, BYTE far
             pglast = GET_USHORT(ptr, 0);
             ptr += 2;
         }
-        ptr = bth + 38 + pglast * pgsize;
+//        ptr = bth + 38 + pglast * pgsize;
+	ptr = bth + sizeof(BTREEHEADER) + pglast * pgsize;
     }
 
     nentries = GET_USHORT(ptr, 2);
