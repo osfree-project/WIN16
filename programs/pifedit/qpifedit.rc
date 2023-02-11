@@ -89,7 +89,7 @@ BEGIN
 #endif				/* IFDEF LANG_GR */
 END
 
-IDD_FRAME DIALOG 0, 0, 270, 200
+IDD_FRAME DIALOG 0, 0, 270, 270
 STYLE DS_LOCALEDIT | WS_OVERLAPPED | WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX
 MENU MenuApp
 FONT 8, "MS Sans Serif"
@@ -134,16 +134,46 @@ BEGIN
 			NOT WS_GROUP
     EDITTEXT	    IDE_FILENAME, 88, 29, 166, 12, ES_AUTOHSCROLL
 
-    LTEXT	    "&Window Title:", IDT_TITLE, 12, 49, 46, 8, NOT WS_GROUP
+    LTEXT	    "Window &Title:", IDT_TITLE, 12, 49, 46, 8, NOT WS_GROUP
     EDITTEXT	    IDE_TITLE, 88, 49, 135, 12, ES_AUTOHSCROLL
 
-    LTEXT	    "Optional Para&meters:", IDT_PARAMS, 12, 69, 69, 8,
+    LTEXT	    "&Optional Parameters:", IDT_PARAMS, 12, 69, 69, 8,
 			NOT WS_GROUP
     EDITTEXT	    IDE_PARAMS, 88, 69, 166, 12, ES_AUTOHSCROLL
 
     LTEXT	    "&Start-up Directory:", IDT_DIRECTORY, 12, 89, 61, 8,
 			NOT WS_GROUP
     EDITTEXT	    IDE_DIRECTORY, 88, 89, 166, 12, ES_AUTOHSCROLL
+
+    LTEXT	    "Memory Requirements:", IDT_DOSMEM, 12, 109, 119, 8, NOT WS_GROUP
+
+    LTEXT	    "KB &Required", IDT_DOSMIN, 95, 109, 46, 8, NOT WS_GROUP
+    EDITTEXT	    IDE_DOSMIN, 140, 107, 19, 12, ES_AUTOHSCROLL | WS_GROUP
+
+    LTEXT	    "KB &Desired", IDT_DOSMAX, 160, 109, 46, 8, NOT WS_GROUP
+    EDITTEXT	    IDE_DOSMAX, 200, 107, 19, 12, ES_AUTOHSCROLL | WS_GROUP
+
+    CONTROL	    "&Locked", IDB_DOSLOCK, "Button",
+  		    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP, 227, 108, 40, 10
+
+    GROUPBOX	    "Display Usage", IDG_DISPLAY, 10, 125, 83, 37,
+			NOT WS_TABSTOP
+
+    CONTROL	    "F&ull Screen", IDB_FULLSCREEN, "Button",
+		    BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP, 18, 137, 50, 10
+    CONTROL	    "&Windowed", IDB_WINDOWED, "Button",
+		    BS_AUTORADIOBUTTON | WS_TABSTOP, 18, 147, 47, 10
+
+    GROUPBOX	    "Execution", IDG_EXEC, 105, 125, 83, 37, NOT WS_TABSTOP
+
+    CONTROL	    "&Background", IDB_BACKEXEC, "Button",
+		    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP, 113, 137, 52, 10
+    CONTROL	    "&Exclusive", IDB_EXCLEXEC, "Button",
+		    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP, 113, 147, 44, 10
+
+    CONTROL	    "&Close Window on exit", IDB_CLOSEEXIT, "Button",
+		    BS_AUTOCHECKBOX | WS_TABSTOP, 12, 167, 83, 10
+
 #endif				/* IFDEF LANG_GR */
 
 ; Memory
@@ -199,6 +229,7 @@ BEGIN
     CONTROL	"&Nutzt HMA", IDB_XMSHMA, "Button",
 		BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP, 213, 104, 47, 10
 #else
+#if 0
     GROUPBOX	"&Qualitas DOSMAX for Windows", IDG_SUPERDOS, 5, 24, 260, 25,
 		NOT WS_TABSTOP
 
@@ -208,10 +239,11 @@ BEGIN
 		BS_AUTORADIOBUTTON | WS_TABSTOP, 132, 33, 25, 12
     CONTROL	"OFF", IDB_SUPERVM_OFF, "BUTTON",
 		BS_AUTORADIOBUTTON | WS_TABSTOP, 174, 33, 27, 12
-
+#endif
     GROUPBOX	"Memory Options (Sizes in KB)", IDG_MEMOPTS,
 		5, 53, 260, 70, NOT WS_TABSTOP
 
+#if 0
     LTEXT	"&DOS:", IDT_DOSMEM, 15, 69, 19, 8, NOT WS_GROUP
 
     LTEXT	"Min", IDT_DOSMIN, 46, 69, 13, 8, NOT WS_GROUP
@@ -222,7 +254,7 @@ BEGIN
 
     CONTROL	"&Locked", IDB_DOSLOCK, "Button",
 		BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP, 167, 68, 40, 10
-
+#endif
     LTEXT	"&EMS:", IDT_EMSMEM, 15, 87, 19, 8, NOT WS_GROUP
 
     LTEXT	"Min", IDT_EMSMIN, 46, 87, 13, 8, NOT WS_GROUP
@@ -249,6 +281,7 @@ BEGIN
 
     CONTROL	"&Uses HMA", IDB_XMSHMA, "Button",
 		BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP, 213, 104, 47, 10
+
 #endif				/* IFDEF LANG_GR */
 
 ; Video
@@ -288,13 +321,6 @@ BEGIN
     CONTROL	    "&Bildschirmspeicher erhalten", IDB_RETAIN, "Button",
 		    BS_AUTOCHECKBOX | WS_TABSTOP, 134, 95, 108, 10
 #else
-    GROUPBOX	    "&Display Usage", IDG_DISPLAY, 10, 25, 83, 37,
-			NOT WS_TABSTOP
-
-    CONTROL	    "Full Screen", IDB_FULLSCREEN, "Button",
-		    BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP, 18, 37, 50, 10
-    CONTROL	    "Windowed", IDB_WINDOWED, "Button",
-		    BS_AUTORADIOBUTTON | WS_TABSTOP, 18, 47, 47, 10
 
     GROUPBOX	    "&Video Memory", IDG_VIDEOMEM, 10, 65, 83, 46,
 			NOT WS_TABSTOP
@@ -359,12 +385,6 @@ BEGIN
     CONTROL	    "&Detect Idle Time", IDB_DETECTIDLE, "Button",
 		    BS_AUTOCHECKBOX | WS_TABSTOP, 102, 53, 67, 10
 
-    GROUPBOX	    "Execution", IDG_EXEC, 5, 77, 260, 28, NOT WS_TABSTOP
-
-    CONTROL	    "Bac&kground", IDB_BACKEXEC, "Button",
-		    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP, 24, 89, 52, 10
-    CONTROL	    "&Exclusive", IDB_EXCLEXEC, "Button",
-		    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP, 138, 88, 44, 10
 #endif				/* IFDEF LANG_GR */
 
 ; Other
@@ -426,8 +446,6 @@ BEGIN
 		    BS_AUTOCHECKBOX | WS_TABSTOP, 21, 73, 64, 10
     CONTROL	    "Allo&w close when active", IDB_ALLOWCLOSE, "Button",
 		    BS_AUTOCHECKBOX | WS_TABSTOP, 21, 83, 91, 10
-    CONTROL	    "Close Window on e&xit", IDB_CLOSEEXIT, "Button",
-		    BS_AUTOCHECKBOX | WS_TABSTOP, 21, 93, 83, 10
 
     GROUPBOX	    "Reserve Shortcut Keys", IDG_RESERVE, 167, 24, 94, 86,
 			NOT WS_TABSTOP
