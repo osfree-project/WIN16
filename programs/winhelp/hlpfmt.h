@@ -71,10 +71,10 @@ typedef struct BTREEINDEXHEADER /* structure at beginning of every index-page */
 
 typedef struct BTREENODEHEADER /* structure at beginning of every leaf-page */
 {
-    WORD Unknown;  /* Sorry, no ID to identify a leaf-page */
-    WORD NEntries;          /* number of entires in this leaf-page */
-    WORD PreviousPage;      /* page number of preceeding leaf-page or -1 */
-    WORD NextPage;          /* page number of next leaf-page or -1 */
+    WORD Unknown;           /* 0  Sorry, no ID to identify a leaf-page */
+    WORD NEntries;          /* 2  number of entires in this leaf-page */
+    WORD PreviousPage;      /* 4  page number of preceeding leaf-page or -1 */
+    WORD NextPage;          /* 8  page number of next leaf-page or -1 */
 } BTREENODEHEADER;
 
 #pragma pack( pop )
