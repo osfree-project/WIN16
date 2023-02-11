@@ -126,13 +126,14 @@ BOOL	CALLBACK _export SMMsgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lP
 #define IDB_TEXT		404
 #define IDB_LOW 		405
 #define IDB_HIGH		406
-#define IDG_MONITOR		407
+#define IDT_MONITOR		407
 #define IDB_MONTEXT		408
 #define IDB_MONLOW		409
 #define IDB_MONHIGH		410
 #define IDG_OTHER		411
 #define IDB_EMULATE		412
 #define IDB_RETAIN		413
+#define IDT_VIDMEM		414
 
 #define IDD_TASK	105		// 'Task' dialog
 
@@ -148,13 +149,13 @@ BOOL	CALLBACK _export SMMsgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lP
 
 #define IDD_OTHER	106		// 'Other' dialog
 
-#define IDG_SHORTCUT		600
+#define IDT_SHORTCUT		600
 #define IDB_ALT 		601
 #define IDB_CTRL		602
 #define IDB_SHIFT		603
 #define IDT_KEY 		604
 #define IDE_KEY 		605
-#define IDG_RESERVE		606
+#define IDT_RESERVE		606
 #define IDB_ALTTAB		607
 #define IDB_ALTESC		608
 #define IDB_CTRLESC		609
