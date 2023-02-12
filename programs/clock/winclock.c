@@ -52,9 +52,13 @@ static HandData HourHand, MinuteHand, SecondHand;
 static void DrawTicks(HDC dc, const POINT* centre, int radius)
 {
     int t;
+    HPEN oldhPen, hPen;
 
     /* Minute divisions */
     if (radius>64)
+    {
+        hPen=CreatePen(PS_SOLID, 2, TickColor);
+        oldhPen=SelectObject(dc, hPen);
         for(t=0; t<60; t++) {
             MoveToEx(dc,
                      centre->x + sin(t*M_PI/30)*0.9*radius,
@@ -64,11 +68,14 @@ static void DrawTicks(HDC dc, const POINT* centre, int radius)
 		   centre->x + sin(t*M_PI/30)*0.89*radius,
 		   centre->y - cos(t*M_PI/30)*0.89*radius);
 	}
-
+        SelectObject(dc, oldhPen);
+        DeleteObject(hPen);
+    }
     /* Hour divisions */
+    hPen=CreatePen(PS_SOLID, 5, HandColor);
+    oldhPen=SelectObject(dc, hPen);
     for(t=0; t<12; t++) {
 
-        DeleteObject(SelectObject(dc, CreatePen(PS_SOLID, 5, HandColor)));
         MoveToEx(dc,
                  centre->x + sin(t*M_PI/6)*0.9*radius,
                  centre->y - cos(t*M_PI/6)*0.9*radius,
@@ -76,8 +83,9 @@ static void DrawTicks(HDC dc, const POINT* centre, int radius)
         LineTo(dc,
                centre->x + sin(t*M_PI/6)*0.89*radius,
                centre->y - cos(t*M_PI/6)*0.89*radius);
-        DeleteObject(SelectObject(dc, GetStockObject(NULL_PEN)));
     }
+    SelectObject(dc, oldhPen);
+    DeleteObject(hPen);
 }
 
 static void DrawFace(HDC dc, const POINT* centre, int radius, int border)
@@ -91,7 +99,6 @@ static void DrawFace(HDC dc, const POINT* centre, int radius, int border)
     DeleteObject(SelectObject(dc, CreatePen(PS_SOLID, 2, TickColor)));
     OffsetWindowOrgEx(dc, SHADOW_DEPTH, SHADOW_DEPTH, NULL);
 #endif
-    SelectObject(dc, CreatePen(PS_SOLID, 2, TickColor));
     DrawTicks(dc, centre, radius);
 #if 0
 // Windows 3.x doesn't  draw circle arout a clock
@@ -102,7 +109,6 @@ static void DrawFace(HDC dc, const POINT* centre, int radius, int border)
         Ellipse(dc, centre->x - radius, centre->y - radius, centre->x + radius, centre->y + radius);
     }
 #endif
-    DeleteObject(SelectObject(dc, GetStockObject(NULL_PEN)));
 }
 
 static void DrawHand(HDC dc,HandData* hand)
@@ -137,10 +143,9 @@ static void DrawHands(HDC dc, BOOL bSeconds)
     OffsetWindowOrg(dc, SHADOW_DEPTH, SHADOW_DEPTH);
 
 #endif
-    DeleteObject(SelectObject(dc, CreatePen(PS_SOLID, 4, HandColor)));
+    SelectObject(dc, CreatePen(PS_SOLID, 4, HandColor));
     DrawHand(dc, &MinuteHand);
     DrawHand(dc, &HourHand);
-
     DeleteObject(SelectObject(dc, GetStockObject(NULL_PEN)));
 }
 

@@ -88,7 +88,7 @@ static VOID CLOCK_UpdateWindowCaption(VOID)
 	}
     }
 	*/
-    LoadString(0, IDS_CLOCK, szCaption + chars, MAX_STRING_LEN - chars);
+    LoadString(Globals.hInstance, IDS_CLOCK, szCaption + chars, MAX_STRING_LEN - chars);
     SetWindowText(Globals.hMainWnd, szCaption);
 }
 
@@ -103,10 +103,10 @@ static BOOL CLOCK_ResetTimer(void)
     KillTimer(Globals.hMainWnd, TIMER_ID);
 
     if (Globals.bSeconds)
-	if (Globals.bAnalog)
-	    period = 50;
-	else
-	    period = 500;
+//	if (Globals.bAnalog)
+	    period = 500; // was 500 for smooth tick, but we don't support smooth tick in win 3.x ;)
+//	else
+//	    period = 500;
     else
 	period = 1000;
 
@@ -326,7 +326,8 @@ static LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
 	/* L button drag moves the window */
         case WM_NCHITTEST: {
 	    LRESULT ret = DefWindowProc(hWnd, msg, wParam, lParam);
-	    if (ret == HTCLIENT)
+            if (Globals.bWithoutTitle) 
+	      if (ret == HTCLIENT)
 		ret = HTCAPTION;
             return ret;
 	}
@@ -404,9 +405,11 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 //    InitCommonControls();
 
     /* Setup Globals */
-    memset(&Globals.hFont, 0, sizeof (Globals.hFont));
+    memset(&Globals, 0, sizeof (Globals));
     Globals.bAnalog         = TRUE;
     Globals.bSeconds        = TRUE;
+    Globals.bDate           = TRUE;
+    Globals.hInstance       = hInstance;
     
     if (!prev){
         class.style         = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
@@ -432,7 +435,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     if (!CLOCK_ResetTimer())
         return FALSE;
 
-    Globals.hMainMenu = LoadMenu(0, MAKEINTRESOURCE(MAIN_MENU));
+    Globals.hMainMenu = LoadMenu(hInstance, MAKEINTRESOURCE(MAIN_MENU));
     SetMenu(Globals.hMainWnd, Globals.hMainMenu);
     CLOCK_UpdateMenuCheckmarks();
     CLOCK_UpdateWindowCaption();
