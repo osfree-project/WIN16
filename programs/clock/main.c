@@ -24,6 +24,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include "windows.h"
 //#include "commctrl.h"
@@ -144,6 +145,7 @@ static VOID CLOCK_ChooseFont(VOID)
 {
     LOGFONT lf;
     CHOOSEFONT cf;
+
     memset(&cf, 0, sizeof(cf));
     lf = Globals.logfont;
     cf.lStructSize = sizeof(cf);
@@ -208,6 +210,7 @@ static int CLOCK_MenuCommand (WPARAM wParam)
 {
     char szApp[MAX_STRING_LEN];
     char szAppRelease[MAX_STRING_LEN];
+
     switch (wParam) {
         /* switch to analog */
         case IDM_ANALOG: {
@@ -261,7 +264,7 @@ static int CLOCK_MenuCommand (WPARAM wParam)
             /* show "about" box */
         case IDM_ABOUT: {
             LoadString(Globals.hInstance, IDS_CLOCK, szApp, sizeof(szApp));
-            lstrcpy(szAppRelease,szApp);
+            lstrcpy(szAppRelease, szApp);
             ShellAbout(Globals.hMainWnd, szApp, szAppRelease, 0);
             break;
         }
@@ -290,7 +293,7 @@ static VOID CLOCK_Paint(HWND hWnd)
 
     SetViewportOrgEx(dcMem, -ps.rcPaint.left, -ps.rcPaint.top, NULL);
     /* Erase the background */
-    FillRect(dcMem, &ps.rcPaint,  CreateSolidBrush(GetSysColor(COLOR_WINDOW)));
+    FillRect(dcMem, &ps.rcPaint,  CreateSolidBrush(BackgroundColor));
 
     if(Globals.bAnalog)
 	AnalogClock(dcMem, Globals.MaxX, Globals.MaxY, Globals.bSeconds, Globals.bWithoutTitle);
@@ -343,6 +346,8 @@ static LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
         case WM_SIZE: {
             Globals.MaxX = LOWORD(lParam);
             Globals.MaxY = HIWORD(lParam);
+#if 0
+// Windows 3.x doesn't support window regions
             if (Globals.bAnalog && Globals.bWithoutTitle)
             {
                 RECT rect;
@@ -356,6 +361,7 @@ static LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
                 OffsetRgn( hrgn, -rect.left, -rect.top );
                 //SetWindowRgn( Globals.hMainWnd, hrgn, TRUE );
             }
+#endif
 	    CLOCK_ResetFont();
             break;
         }

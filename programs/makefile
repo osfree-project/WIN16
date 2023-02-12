@@ -6,7 +6,7 @@
 
 # First directory must be UNI which produces C/C++ header files
 
-DIRS = progman winver winmine clock calc notepad pifedit
+DIRS = calc clock notepad pifedit progman winhelp winmine winver 
 
 !include $(%ROOT)tools/mk/all.mk
 

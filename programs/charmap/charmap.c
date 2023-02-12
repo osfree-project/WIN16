@@ -24,13 +24,15 @@ HICON     hSmIcon;
 HICON     hBgIcon;
 SETTINGS  Settings;
 
+#if 0
+// don't know how to be with charset
 static
 VOID
 FillCharacterSetComboList(HWND hwndCombo)
 {
     char szCharSetText[256];
     LPSTR trimmedName;
-    CPINFOEXW cpInfo;
+    CPINFOEX cpInfo;
     int i;
 
     if (LoadString(hInstance, IDS_UNICODE, szCharSetText, SIZEOF(szCharSetText)))
@@ -43,34 +45,36 @@ FillCharacterSetComboList(HWND hwndCombo)
 
     for (i = 0; i < SIZEOF(codePages); i++)
     {
-        if (GetCPInfoExW(codePages[i], 0, &cpInfo))
+        if (GetCPInfo(codePages[i], 0, &cpInfo))
         {
             trimmedName = wcschr(cpInfo.CodePageName, L'(');
             if (!trimmedName)
                 trimmedName = cpInfo.CodePageName;
 
-            SendMessageW(hwndCombo,
+            SendMessage(hwndCombo,
                          CB_ADDSTRING,
                          0,
                          (LPARAM)trimmedName);
         }
     }
 
-    SendMessageW(hwndCombo, CB_SETCURSEL, 0, 0);
+    SendMessage(hwndCombo, CB_SETCURSEL, 0, 0);
 }
+
+#endif
 
 static
 VOID
 FillGroupByComboList(HWND hwndCombo)
 {
-    WCHAR szAllText[256];
+    char szAllText[256];
 
-    if (LoadStringW(hInstance, IDS_ALL, szAllText, SIZEOF(szAllText)))
+    if (LoadString(hInstance, IDS_ALL, szAllText, SIZEOF(szAllText)))
     {
-        SendMessageW(hwndCombo, CB_ADDSTRING, 0, (LPARAM)szAllText);
+        SendMessage(hwndCombo, CB_ADDSTRING, 0, (LPARAM)szAllText);
     }
 
-    SendMessageW(hwndCombo, CB_SETCURSEL, 0, 0);
+    SendMessage(hwndCombo, CB_SETCURSEL, 0, 0);
 }
 
 /* Font-enumeration callback */
@@ -83,23 +87,23 @@ EnumFontNames(ENUMLOGFONTEXW *lpelfe,
               LPARAM lParam)
 {
     HWND hwndCombo = (HWND)lParam;
-    LPWSTR pszName  = lpelfe->elfLogFont.lfFaceName;
+    LPSTR pszName  = lpelfe->elfLogFont.lfFaceName;
 
     /* Skip rotated font */
     if(pszName[0] == L'@') return 1;
 
     /* make sure font doesn't already exist in our list */
-    if(SendMessageW(hwndCombo,
+    if(SendMessage(hwndCombo,
                     CB_FINDSTRINGEXACT,
                     0,
                     (LPARAM)pszName) == CB_ERR)
     {
-        INT idx;
+        int idx;
         BOOL fFixed;
         BOOL fTrueType;
 
         /* add the font */
-        idx = (INT)SendMessageW(hwndCombo,
+        idx = (int)SendMessage(hwndCombo,
                                 CB_ADDSTRING,
                                 0,
                                 (LPARAM)pszName);
@@ -109,7 +113,7 @@ EnumFontNames(ENUMLOGFONTEXW *lpelfe,
         fTrueType = (lpelfe->elfLogFont.lfOutPrecision == OUT_STROKE_PRECIS) ? TRUE : FALSE;
 
         /* store this information in the list-item's userdata area */
-        SendMessageW(hwndCombo,
+        SendMessage(hwndCombo,
                      CB_SETITEMDATA,
                      idx,
                      MAKEWPARAM(fFixed, fTrueType));
@@ -129,7 +133,7 @@ FillFontStyleComboList(HWND hwndCombo)
 
     /* FIXME: for fun, draw each font in its own style */
     HFONT hFont = GetStockObject(DEFAULT_GUI_FONT);
-    SendMessageW(hwndCombo,
+    SendMessage(hwndCombo,
                  WM_SETFONT,
                  (WPARAM)hFont,
                  0);
@@ -149,7 +153,7 @@ FillFontStyleComboList(HWND hwndCombo)
     ReleaseDC(hwndCombo,
               hdc);
 
-    SendMessageW(hwndCombo,
+    SendMessage(hwndCombo,
                  CB_SETCURSEL,
                  0,
                  0);
@@ -162,12 +166,12 @@ ChangeMapFont(HWND hDlg)
 {
     HWND hCombo;
     HWND hMap;
-    LPWSTR lpFontName;
+    LPSTR lpFontName;
     INT Len;
 
     hCombo = GetDlgItem(hDlg, IDC_FONTCOMBO);
 
-    Len = GetWindowTextLengthW(hCombo);
+    Len = GetWindowTextLength(hCombo);
 
     if (Len != 0)
     {
@@ -177,14 +181,14 @@ ChangeMapFont(HWND hDlg)
 
         if (lpFontName)
         {
-            SendMessageW(hCombo,
+            SendMessage(hCombo,
                          WM_GETTEXT,
                          Len + 1,
                          (LPARAM)lpFontName);
 
             hMap = GetDlgItem(hDlg, IDC_FONTMAP);
 
-            SendMessageW(hMap,
+            SendMessage(hMap,
                          FM_SETFONT,
                          0,
                          (LPARAM)lpFontName);
@@ -211,18 +215,18 @@ CopyCharacters(HWND hDlg)
     if(dwStart == dwEnd) {
 
         // Select the whole text
-        SendMessageW(hText, EM_SETSEL, 0, -1);
+        SendMessage(hText, EM_SETSEL, 0, -1);
 
         // Copy text
-        SendMessageW(hText, WM_COPY, 0, 0);
+        SendMessage(hText, WM_COPY, 0, 0);
 
         // Restore previous values
-        SendMessageW(hText, EM_SETSEL, (WPARAM)dwStart, (LPARAM)dwEnd);
+        SendMessage(hText, EM_SETSEL, (WPARAM)dwStart, (LPARAM)dwEnd);
 
     } else {
 
         // Copy text
-        SendMessageW(hText, WM_COPY, 0, 0);
+        SendMessage(hText, WM_COPY, 0, 0);
     }
 }
 
@@ -258,7 +262,7 @@ AddCharToSelection(HWND hDlg, WCHAR ch)
     // Retrieve current character selected
     if (ch == 0)
     {
-        ch = (WCHAR) SendMessageW(hMap, FM_GETCHAR, 0, 0);
+        ch = (WCHAR) SendMessage(hMap, FM_GETCHAR, 0, 0);
         if (!ch)
             return;
     }
@@ -309,12 +313,12 @@ UpdateSettings(HWND hDlg)
 VOID
 UpdateStatusBar(WCHAR wch)
 {
-    WCHAR buff[MAX_PATH];
-    WCHAR szDesc[MAX_PATH];
+    char buff[MAX_PATH];
+    char szDesc[MAX_PATH];
 
     GetUName(wch, szDesc);
-    wsprintfW(buff, L"U+%04X: %s", wch, szDesc);
-    SendMessageW(hStatusWnd, SB_SETTEXT, 0, (LPARAM)buff);
+    wsprintf(buff, L"U+%04X: %s", wch, szDesc);
+    SendMessage(hStatusWnd, SB_SETTEXT, 0, (LPARAM)buff);
 }
 
 static

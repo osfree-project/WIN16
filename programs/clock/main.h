@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "colors.h"
 #include "clock_res.h"
 
 #define MAX_STRING_LEN      255
@@ -26,7 +27,8 @@
 typedef struct
 {
   LOGFONT logfont;
-  HFONT   hFont;
+  HFONT   hFont;	// Font for time in digital clock mode
+  HFONT   hDateFont;	// Font for date in digital clock mode
   HANDLE  hInstance;
   HWND    hMainWnd;
   HMENU   hMainMenu;
@@ -45,3 +47,5 @@ extern CLOCK_GLOBALS Globals;
 
 int WINAPI ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText,
                 HICON hIcon);
+
+

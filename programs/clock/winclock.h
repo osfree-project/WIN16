@@ -21,6 +21,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "colors.h"
+
 void AnalogClock(HDC dc, int X, int Y, BOOL bSeconds, BOOL border);
 HFONT SizeFont(HDC dc, int x, int y, BOOL bSeconds, const LOGFONT* font);
 void DigitalClock(HDC dc, int X, int Y, BOOL bSeconds, HFONT font);
