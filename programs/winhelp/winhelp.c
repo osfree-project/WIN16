@@ -197,7 +197,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
     MSG         msg;
     LONG        lHash = 0;
     HLPFILE far * hlpfile;
-    char*       quote;
+    char far *       quote;
     WINHELP_DLL far * dll;
 #ifdef DEBUG
   char DebugBuffer[200];
@@ -212,7 +212,6 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
     OutputDebugString(DebugBuffer);
 #endif
 
-#if 0
     /* Get options */
     while (*cmdline && (*cmdline == ' ' || *cmdline == '-'))
     {
@@ -249,7 +248,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
             break;
 	}
     }
-#endif
+
     OutputDebugString("Register window\n");
 
     /* Create primary window */
@@ -258,10 +257,10 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
         //WINE_FIXME("Couldn't register classes\n");
         return 0;
     }
-#if 0
+
     if (*cmdline)
     {
-        if ((*cmdline == '"') && (quote = strchr(cmdline+1, '"')))
+        if ((*cmdline == '"') && (quote = _fstrchr(cmdline+1, '"')))
         {
             cmdline++;
             *quote = '\0';
@@ -270,7 +269,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
         if (!hlpfile) return 0;
     }
     else hlpfile = NULL;
-#endif
+
     hlpfile = NULL;
 	
 #ifdef DEBUG
@@ -289,6 +288,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
+
     for (dll = Globals.dlls; dll; dll = dll->next)
     {
         if (dll->class & DC_INITTERM) dll->handler(DW_TERM, 0, 0);
@@ -549,7 +549,7 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE far * page, HLPFILE_WINDOWINFO far * 
     Globals.win_list = win;
 
     win->lpszName = (char far *)win + sizeof(WINHELP_WINDOW);
-    lstrcpy((char*)win->lpszName, wi->name);
+    lstrcpy((LPSTR)win->lpszName, wi->name);
 
     win->page = page;
     win->first_button = 0;
@@ -1426,7 +1426,7 @@ static WINHELP_LINE_PART far * WINHELP_AppendGfxObject(WINHELP_LINE far * far * 
         if (**linep) *linep = &(**linep)->next;
         **linep = line;
         space->cy = 0;
-        ptr = (char*)line + sizeof(WINHELP_LINE);
+        ptr = (char far *)line + sizeof(WINHELP_LINE);
     }
     else /* Same line */
     {

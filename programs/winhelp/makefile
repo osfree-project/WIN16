@@ -35,7 +35,7 @@ TARGETS = $(PATH)$(PROJ1).exe # subdirs
 
 $(PATH)macro_lex$(e): $(PATH)macro_lex.c
 
-$(PATH)macro_lex.c: $(MYDIR)macro_lex.l .symbolic
+$(PATH)macro_lex.c: $(MYDIR)macro_lex.l
 
 $(PATH)$(PROJ1).exe: $(PATH)$(PROJ).exe $(MYDIR)rsrc.rc
  @$(SAY) RESCMP   $^. $(LOG)
