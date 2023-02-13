@@ -430,7 +430,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 
     /* Get the geometry of the main window */
     GetPrivateProfileString("Clock", "Options", "", buffer, sizeof(buffer), Globals.lpszIniFile);
-    if (6 == sscanf(buffer, "%d,%d,%d,%d,%d,%d", &(Globals.bAnalog), &(Globals.bMinimized), &(Globals.bSeconds), &(Globals.bWithoutTitle), NULL, &(Globals.bDate)))
+    if (6 == sscanf(buffer, "%d,%d,%d,%d,%d,%d", &(Globals.bAnalog), &(Globals.bMinimized), &(Globals.bSeconds), &(Globals.bWithoutTitle), &(Globals.bAlwaysOnTop), &(Globals.bDate)))
     {
       Globals.bSeconds=!Globals.bSeconds;
       Globals.bDate=!Globals.bDate;
@@ -489,6 +489,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     
     ShowWindow (Globals.hMainWnd, show);
     if (Globals.bWithoutTitle) {CLOCK_ToggleTitle(); CLOCK_ToggleTitle();}
+    if (Globals.bAlwaysOnTop) {CLOCK_ToggleOnTop(); CLOCK_ToggleOnTop();}
     UpdateWindow (Globals.hMainWnd);
     
     while (GetMessage(&msg, 0, 0, 0)) {
