@@ -32,6 +32,7 @@ typedef struct
   HANDLE  hInstance;
   HWND    hMainWnd;
   HMENU   hMainMenu;
+  HMENU   hSysMenu;
 
   LPSTR   lpszIniFile;	// INI filename
 

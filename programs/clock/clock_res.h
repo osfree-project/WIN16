@@ -27,6 +27,6 @@
 
 #define IDM_ABOUT                 0x110
 
-#define IDM_ONTOP                 0x113
+#define IDM_ONTOP                 0x313
 
 #define IDS_CLOCK                 0x10C

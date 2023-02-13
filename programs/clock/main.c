@@ -65,9 +65,11 @@ static VOID CLOCK_UpdateMenuCheckmarks(VOID)
 
     CheckMenuItem(hPropertiesMenu, IDM_NOTITLE, (Globals.bWithoutTitle ? MF_CHECKED : MF_UNCHECKED));
 
-    CheckMenuItem(hPropertiesMenu, IDM_ONTOP, (Globals.bAlwaysOnTop ? MF_CHECKED : MF_UNCHECKED));
+    //CheckMenuItem(hPropertiesMenu, IDM_ONTOP, (Globals.bAlwaysOnTop ? MF_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hPropertiesMenu, IDM_SECONDS, (Globals.bSeconds ? MF_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hPropertiesMenu, IDM_DATE, (Globals.bDate ? MF_CHECKED : MF_UNCHECKED));
+
+    CheckMenuItem(Globals.hSysMenu, IDM_ONTOP, (Globals.bAlwaysOnTop ? MF_CHECKED : MF_UNCHECKED));
 }
 
 static VOID CLOCK_UpdateWindowCaption(VOID)
@@ -382,11 +384,20 @@ static LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
             break;
         }
 
+		case WM_SYSCOMMAND: {
+			if (wParam==IDM_ONTOP)
+			{
+				CLOCK_ToggleOnTop();
+				return 0;
+			}
+			return DefWindowProc(hWnd, msg, wParam, lParam);
+		}
+
         case WM_COMMAND: {
             CLOCK_MenuCommand(wParam);
             break;
         }
-            
+
         case WM_TIMER: {
             /* Could just invalidate what has changed,
              * but it doesn't really seem worth the effort
@@ -480,6 +491,13 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
                                      left, top,
                                      Globals.MaxX, Globals.MaxY, 0,
                                      0, hInstance, 0);
+
+ if (Globals.hMainWnd)
+  {
+    Globals.hSysMenu = GetSystemMenu(Globals.hMainWnd, FALSE);
+    InsertMenu(Globals.hSysMenu, 10, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+    InsertMenu(Globals.hSysMenu, 11, MF_BYPOSITION |(Globals.bAlwaysOnTop ? MF_CHECKED : MF_UNCHECKED), (UINT) IDM_ONTOP, "Always on &Top");
+  }
 
     if (!CLOCK_ResetTimer())
         return FALSE;
