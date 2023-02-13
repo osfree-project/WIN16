@@ -33,11 +33,14 @@ typedef struct
   HWND    hMainWnd;
   HMENU   hMainMenu;
 
+  LPSTR   lpszIniFile;	// INI filename
+
   BOOL    bAnalog;
   BOOL    bAlwaysOnTop;
   BOOL    bWithoutTitle;
   BOOL    bSeconds;
   BOOL    bDate;
+  BOOL    bMaximized;
 
   int     MaxX;
   int     MaxY;

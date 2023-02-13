@@ -406,16 +406,34 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 {
     MSG      msg;
     WNDCLASS class;
-
-//    InitCommonControls();
+	char buffer[100];
+    LONG style = WS_OVERLAPPEDWINDOW;
+    int  left , top, right, bottom;
 
     /* Setup Globals */
     memset(&Globals, 0, sizeof (Globals));
-    Globals.bAnalog         = TRUE;
-    Globals.bSeconds        = TRUE;
-    Globals.bDate           = TRUE;
     Globals.hInstance       = hInstance;
-    
+    Globals.lpszIniFile     = "clock.ini";
+
+    /* Read Options from `clock.ini' */
+    Globals.bMaximized = GetPrivateProfileInt("Clock", "Maximized", 0, Globals.lpszIniFile);
+
+    /* Get the geometry of the main window */
+    GetPrivateProfileString("Clock", "Options", "", buffer, sizeof(buffer), Globals.lpszIniFile);
+    if (6 == sscanf(buffer, "%d,%d,%d,%d,%d,%d", &(Globals.bAnalog), NULL, &(Globals.bSeconds), &(Globals.bWithoutTitle), NULL, &(Globals.bDate)))
+    {
+      Globals.bSeconds=!Globals.bSeconds;
+      Globals.bDate=!Globals.bDate;
+    }
+    else
+    {
+      Globals.bAnalog         = TRUE;
+      Globals.bSeconds        = TRUE;
+      Globals.bDate           = TRUE;
+    }
+
+	if (Globals.bMaximized) show=SW_SHOWMAXIMIZED;
+
     if (!prev){
         class.style         = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
         class.lpfnWndProc   = CLOCK_WndProc;
@@ -431,11 +449,22 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 
     if (!RegisterClass(&class)) return FALSE;
 
-    Globals.MaxX = Globals.MaxY = INITIAL_WINDOW_SIZE;
-	Globals.MaxY +=GetSystemMetrics(SM_CYCAPTION);//+GetSystemMetrics(SM_CYMENU);
+
+    GetPrivateProfileString("Clock", "Position", "", buffer, sizeof(buffer), Globals.lpszIniFile);
+    if (4 == sscanf(buffer, "%d,%d,%d,%d", &left, &top, &right, &bottom))
+    {
+      Globals.MaxX = right - left;
+      Globals.MaxY = bottom - top;
+    }
+    else
+    {
+      left = top = CW_USEDEFAULT;
+      Globals.MaxX = Globals.MaxY = INITIAL_WINDOW_SIZE;
+      Globals.MaxY +=GetSystemMetrics(SM_CYCAPTION);//+GetSystemMetrics(SM_CYMENU);
+    }
 	
-    Globals.hMainWnd = CreateWindow("CLClass", "Clock", WS_OVERLAPPEDWINDOW,
-                                     CW_USEDEFAULT, CW_USEDEFAULT,
+    Globals.hMainWnd = CreateWindow("CLClass", "Clock", style/*WS_OVERLAPPEDWINDOW*/,
+                                     left, top,
                                      Globals.MaxX, Globals.MaxY, 0,
                                      0, hInstance, 0);
 
@@ -448,6 +477,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     CLOCK_UpdateWindowCaption();
     
     ShowWindow (Globals.hMainWnd, show);
+    if (Globals.bWithoutTitle) {CLOCK_ToggleTitle(); CLOCK_ToggleTitle();}
     UpdateWindow (Globals.hMainWnd);
     
     while (GetMessage(&msg, 0, 0, 0)) {
