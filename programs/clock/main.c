@@ -352,6 +352,16 @@ static LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
         case WM_SIZE: {
             Globals.MaxX = LOWORD(lParam);
             Globals.MaxY = HIWORD(lParam);
+			if (wParam==SIZE_MINIMIZED)
+			{
+				Globals.bMaximized=FALSE;
+				Globals.bMinimized=TRUE;
+			}
+			if (wParam==SIZE_MAXIMIZED)
+			{
+				Globals.bMaximized=TRUE;
+				Globals.bMinimized=FALSE;
+			}
 #if 0
 // Windows 3.x doesn't support window regions
             if (Globals.bAnalog && Globals.bWithoutTitle)
@@ -368,7 +378,7 @@ static LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
                 //SetWindowRgn( Globals.hMainWnd, hrgn, TRUE );
             }
 #endif
-	    CLOCK_ResetFont();
+			CLOCK_ResetFont();
             break;
         }
 
@@ -420,7 +430,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 
     /* Get the geometry of the main window */
     GetPrivateProfileString("Clock", "Options", "", buffer, sizeof(buffer), Globals.lpszIniFile);
-    if (6 == sscanf(buffer, "%d,%d,%d,%d,%d,%d", &(Globals.bAnalog), NULL, &(Globals.bSeconds), &(Globals.bWithoutTitle), NULL, &(Globals.bDate)))
+    if (6 == sscanf(buffer, "%d,%d,%d,%d,%d,%d", &(Globals.bAnalog), &(Globals.bMinimized), &(Globals.bSeconds), &(Globals.bWithoutTitle), NULL, &(Globals.bDate)))
     {
       Globals.bSeconds=!Globals.bSeconds;
       Globals.bDate=!Globals.bDate;
@@ -433,6 +443,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     }
 
 	if (Globals.bMaximized) show=SW_SHOWMAXIMIZED;
+	if (Globals.bMinimized) show=SW_SHOWMINIMIZED;
 
     if (!prev){
         class.style         = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;

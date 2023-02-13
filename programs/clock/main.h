@@ -41,6 +41,7 @@ typedef struct
   BOOL    bSeconds;
   BOOL    bDate;
   BOOL    bMaximized;
+  BOOL    bMinimized;
 
   int     MaxX;
   int     MaxY;
