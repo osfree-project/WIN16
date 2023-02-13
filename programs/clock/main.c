@@ -34,7 +34,7 @@
 #include "main.h"
 #include "winclock.h"
 
-#define INITIAL_WINDOW_SIZE 200
+#define INITIAL_WINDOW_SIZE 208
 #define TIMER_ID 1
 
 CLOCK_GLOBALS Globals;
@@ -102,12 +102,12 @@ static BOOL CLOCK_ResetTimer(void)
 
     KillTimer(Globals.hMainWnd, TIMER_ID);
 
-    if (Globals.bSeconds)
+//    if (Globals.bSeconds)
 //	if (Globals.bAnalog)
-	    period = 500; // was 500 for smooth tick, but we don't support smooth tick in win 3.x ;)
+//	    period = 500; // was 500 for smooth tick, but we don't support smooth tick in win 3.x ;)
 //	else
 //	    period = 500;
-    else
+//    else
 	period = 1000;
 
     if (!SetTimer (Globals.hMainWnd, TIMER_ID, period, NULL)) {
@@ -281,8 +281,10 @@ static VOID CLOCK_Paint(HWND hWnd)
     PAINTSTRUCT ps;
     HDC dcMem, dc;
     HBITMAP bmMem, bmOld;
-
+    HBRUSH hBrush;
+	
     dc = BeginPaint(hWnd, &ps);
+
 
     /* Use an offscreen dc to avoid flicker */
     dcMem = CreateCompatibleDC(dc);
@@ -292,8 +294,11 @@ static VOID CLOCK_Paint(HWND hWnd)
     bmOld = SelectObject(dcMem, bmMem);
 
     SetViewportOrgEx(dcMem, -ps.rcPaint.left, -ps.rcPaint.top, NULL);
+
+    hBrush=CreateSolidBrush(BackgroundColor);
     /* Erase the background */
-    FillRect(dcMem, &ps.rcPaint,  CreateSolidBrush(BackgroundColor));
+    FillRect(dcMem, &ps.rcPaint,  hBrush);
+    DeleteObject(hBrush);
 
     if(Globals.bAnalog)
 	AnalogClock(dcMem, Globals.MaxX, Globals.MaxY, Globals.bSeconds, Globals.bWithoutTitle);
@@ -311,7 +316,7 @@ static VOID CLOCK_Paint(HWND hWnd)
     SelectObject(dcMem, bmOld);
     DeleteObject(bmMem);
     DeleteDC(dcMem);
-    
+  
     EndPaint(hWnd, &ps);
 }
 
@@ -427,6 +432,8 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     if (!RegisterClass(&class)) return FALSE;
 
     Globals.MaxX = Globals.MaxY = INITIAL_WINDOW_SIZE;
+	Globals.MaxY +=GetSystemMetrics(SM_CYCAPTION);//+GetSystemMetrics(SM_CYMENU);
+	
     Globals.hMainWnd = CreateWindow("CLClass", "Clock", WS_OVERLAPPEDWINDOW,
                                      CW_USEDEFAULT, CW_USEDEFAULT,
                                      Globals.MaxX, Globals.MaxY, 0,
