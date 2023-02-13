@@ -473,6 +473,8 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
       Globals.MaxX = Globals.MaxY = INITIAL_WINDOW_SIZE;
       Globals.MaxY +=GetSystemMetrics(SM_CYCAPTION);//+GetSystemMetrics(SM_CYMENU);
     }
+
+    GetPrivateProfileString("Clock", "sFont", "", Globals.logfont.lfFaceName, sizeof(Globals.logfont.lfFaceName), Globals.lpszIniFile);
 	
     Globals.hMainWnd = CreateWindow("CLClass", "Clock", style/*WS_OVERLAPPEDWINDOW*/,
                                      left, top,
