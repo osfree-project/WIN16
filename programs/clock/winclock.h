@@ -26,3 +26,4 @@
 void AnalogClock(HDC dc, int X, int Y, BOOL bSeconds, BOOL border);
 HFONT SizeFont(HDC dc, int x, int y, BOOL bSeconds, const LOGFONT* font);
 void DigitalClock(HDC dc, int X, int Y, BOOL bSeconds, HFONT font);
+void FormatDate(char * szDate);

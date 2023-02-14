@@ -74,22 +74,24 @@ static VOID CLOCK_UpdateMenuCheckmarks(VOID)
 
 static VOID CLOCK_UpdateWindowCaption(VOID)
 {
-    char szCaption[MAX_STRING_LEN];
+    char szCaption[MAX_STRING_LEN]="";
     int chars = 0;
 
     /* Set frame caption */
-/*    if (Globals.bDate) {
-	chars = GetDateFormat(LOCALE_USER_DEFAULT, DATE_LONGDATE, NULL, NULL,
-                               szCaption, ARRAY_SIZE(szCaption));
+    if (Globals.bDate && Globals.bAnalog) {
+/*	chars = GetDateFormat(LOCALE_USER_DEFAULT, DATE_LONGDATE, NULL, NULL,
+                               szCaption, ARRAY_SIZE(szCaption));*/
+		FormatDate(szCaption);
+		chars=strlen(szCaption);
         if (chars) {
-	    --chars;
+	    //--chars;
 	    szCaption[chars++] = ' ';
 	    szCaption[chars++] = '-';
 	    szCaption[chars++] = ' ';
 	    szCaption[chars] = '\0';
 	}
     }
-	*/
+
     LoadString(Globals.hInstance, IDS_CLOCK, szCaption + chars, MAX_STRING_LEN - chars);
     SetWindowText(Globals.hMainWnd, szCaption);
 }
@@ -218,6 +220,7 @@ static int CLOCK_MenuCommand (WPARAM wParam)
         case IDM_ANALOG: {
 			Globals.bAnalog = TRUE;
 			CLOCK_UpdateMenuCheckmarks();
+			CLOCK_UpdateWindowCaption();
 			CLOCK_ResetTimer();
 			InvalidateRect(Globals.hMainWnd, NULL, FALSE);
             break;
@@ -226,9 +229,9 @@ static int CLOCK_MenuCommand (WPARAM wParam)
         case IDM_DIGITAL: {
             Globals.bAnalog = FALSE;
             CLOCK_UpdateMenuCheckmarks();
-	    CLOCK_ResetTimer();
-	    CLOCK_ResetFont();
-	    InvalidateRect(Globals.hMainWnd, NULL, FALSE);
+			CLOCK_ResetTimer();
+			CLOCK_ResetFont();
+			InvalidateRect(Globals.hMainWnd, NULL, FALSE);
             break;
         }
             /* change font */
@@ -459,6 +462,8 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 	GetProfileString("intl", "sTime", ":", Globals.sTime, sizeof(Globals.sTime));
     Globals.iTime=GetProfileInt("intl", "iTime", 0);
     Globals.iTLZero=GetProfileInt("intl", "iTLZero", 0);
+	GetProfileString("intl", "sDate", "/", Globals.sDate, sizeof(Globals.sDate));
+	GetProfileString("intl", "sShortDate", "MM/dd/yy", Globals.sShortDate, sizeof(Globals.sShortDate));
 
     /* Read Options from `clock.ini' */
     Globals.bMaximized = GetPrivateProfileInt("Clock", "Maximized", 0, Globals.lpszIniFile);
