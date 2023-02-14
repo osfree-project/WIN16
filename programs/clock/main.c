@@ -216,10 +216,10 @@ static int CLOCK_MenuCommand (WPARAM wParam)
     switch (wParam) {
         /* switch to analog */
         case IDM_ANALOG: {
-            Globals.bAnalog = TRUE;
-            CLOCK_UpdateMenuCheckmarks();
-	    CLOCK_ResetTimer();
-	    InvalidateRect(Globals.hMainWnd, NULL, FALSE);
+			Globals.bAnalog = TRUE;
+			CLOCK_UpdateMenuCheckmarks();
+			CLOCK_ResetTimer();
+			InvalidateRect(Globals.hMainWnd, NULL, FALSE);
             break;
         }
             /* switch to digital */
@@ -238,22 +238,22 @@ static int CLOCK_MenuCommand (WPARAM wParam)
         }
             /* hide title bar */
         case IDM_NOTITLE: {
-	    CLOCK_ToggleTitle();
+			CLOCK_ToggleTitle();
             break;
         }
             /* always on top */
         case IDM_ONTOP: {
-	    CLOCK_ToggleOnTop();
+			CLOCK_ToggleOnTop();
             break;
         }
             /* show or hide seconds */
         case IDM_SECONDS: {
             Globals.bSeconds = !Globals.bSeconds;
             CLOCK_UpdateMenuCheckmarks();
-	    CLOCK_ResetTimer();
-	    if (!Globals.bAnalog)
-		CLOCK_ResetFont();
-	    InvalidateRect(Globals.hMainWnd, NULL, FALSE);
+			CLOCK_ResetTimer();
+			if (!Globals.bAnalog)
+			CLOCK_ResetFont();
+			InvalidateRect(Globals.hMainWnd, NULL, FALSE);
             break;
         }
             /* show or hide date */
@@ -303,9 +303,9 @@ static VOID CLOCK_Paint(HWND hWnd)
     DeleteObject(hBrush);
 
     if(Globals.bAnalog)
-	AnalogClock(dcMem, Globals.MaxX, Globals.MaxY, Globals.bSeconds, Globals.bWithoutTitle);
+		AnalogClock(dcMem, Globals.MaxX, Globals.MaxY, Globals.bSeconds, Globals.bWithoutTitle);
     else
-	DigitalClock(dcMem, Globals.MaxX, Globals.MaxY, Globals.bSeconds, Globals.hFont);
+		DigitalClock(dcMem, Globals.MaxX, Globals.MaxY, Globals.bSeconds, Globals.hFont);
 
     /* Blit the changes to the screen */
     BitBlt(dc, 
@@ -330,7 +330,7 @@ static VOID CLOCK_Paint(HWND hWnd)
 static LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg) {
-	/* L button drag moves the window */
+	/* L button drag moves the window if no title mode */
         case WM_NCHITTEST: {
 	    LRESULT ret = DefWindowProc(hWnd, msg, wParam, lParam);
             if (Globals.bWithoutTitle) 
@@ -453,9 +453,16 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     Globals.hInstance       = hInstance;
     Globals.lpszIniFile     = "clock.ini";
 
+    /* Read Options from `win.ini' */
+	GetProfileString("intl", "s1159", "AM", Globals.s1159, sizeof(Globals.s1159));
+	GetProfileString("intl", "s2359", "PM", Globals.s2359, sizeof(Globals.s2359));
+	GetProfileString("intl", "sTime", ":", Globals.sTime, sizeof(Globals.sTime));
+    Globals.iTime=GetProfileInt("intl", "iTime", 0);
+    Globals.iTLZero=GetProfileInt("intl", "iTLZero", 0);
+
     /* Read Options from `clock.ini' */
     Globals.bMaximized = GetPrivateProfileInt("Clock", "Maximized", 0, Globals.lpszIniFile);
-
+ 
     /* Get the geometry of the main window */
     GetPrivateProfileString("Clock", "Options", "", buffer, sizeof(buffer), Globals.lpszIniFile);
     if (6 == sscanf(buffer, "%d,%d,%d,%d,%d,%d", &(Globals.bAnalog), &(Globals.bMinimized), &(Globals.bSeconds), &(Globals.bWithoutTitle), &(Globals.bAlwaysOnTop), &(Globals.bDate)))

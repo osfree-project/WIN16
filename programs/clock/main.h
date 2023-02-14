@@ -43,6 +43,15 @@ typedef struct
   BOOL    bDate;
   BOOL    bMaximized;
   BOOL    bMinimized;
+  // Time settings
+  char    s1159[10];
+  char    s2359[10];
+  char    sTime[5];
+  int     iTime;
+  int     iTLZero;
+  // Date settings
+  char    sShortDate[20];
+  char    sDate[3];
 
   int     MaxX;
   int     MaxY;

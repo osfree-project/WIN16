@@ -36,6 +36,7 @@
 
 // Application headers
 #include "winclock.h"
+#include "main.h"
 
 #define M_PI 3.14
 
@@ -194,6 +195,97 @@ void AnalogClock(HDC dc, int x, int y, BOOL bSeconds, BOOL border)
     DrawHands(dc, bSeconds);
 }
 
+void FormatDate(char * szDate)
+{
+    struct dosdate_t d;
+    char f[3][5]={"","",""};
+	int i;
+	char dFormat[20]="";
+	char buf[20]="";
+	
+	strcpy(dFormat,"%[dMy]");
+	strcat(dFormat, Globals.sDate);
+	strcat(dFormat, "%[dMy]");
+	strcat(dFormat, Globals.sDate);
+	strcat(dFormat, "%[dMy]");
+
+    _dos_getdate (&d);
+
+	if (3==sscanf(Globals.sShortDate, dFormat, &f[0],&f[1],&f[2]))
+	{
+		for (i=0; i<3; i++)
+		{
+			if (!strcmp("d", f[i])) {
+				sprintf(buf, "%d", d.day);
+				strcat(szDate, buf);
+			}
+			else if (!strcmp("dd", f[i])) {
+				sprintf(buf, "%02d", d.day);
+				strcat(szDate, buf);
+			}
+			else if (!strcmp("M", f[i])) {
+				sprintf(buf, "%d", d.month);
+				strcat(szDate, buf);
+			}
+			else if (!strcmp("MM", f[i])) {
+				sprintf(buf, "%02d", d.month);
+				strcat(szDate, buf);
+			}
+			else if (!strcmp("yy", f[i])) {
+				sprintf(buf, "%02d", d.year % 100);
+				strcat(szDate, buf);
+			}
+			else if (!strcmp("yyyy", f[i])) {
+				sprintf(buf, "%04d", d.year);
+				strcat(szDate, buf);
+			} else {
+				strcat(szDate, "error");
+			};
+			if (i<2) strcat(szDate, Globals.sDate);
+		}
+	}
+}
+ 
+void FormatTime(char * szTime)
+{
+	char tFormat[20]="";
+    struct dostime_t t;
+
+    _dos_gettime (&t);
+
+	if (Globals.iTLZero) 
+	{
+		strcpy(tFormat, "%02d");
+	} else {
+		strcpy(tFormat, "%d");
+	}
+	strcat(tFormat, Globals.sTime);
+	strcat(tFormat, "%02d");
+	if (Globals.bSeconds)
+	{
+		strcat(tFormat, Globals.sTime);
+		strcat(tFormat, "%02d");
+	}
+	if (!Globals.iTime) // 12h
+	{
+		strcat(tFormat, " %s");
+		if (Globals.bSeconds) 
+		{
+			sprintf(szTime, tFormat, (t.hour % 12)?(t.hour % 12):12, t.minute, t.second, (t.hour<12)?Globals.s1159:Globals.s2359);
+		} else {
+			sprintf(szTime, tFormat, (t.hour % 12)?(t.hour % 12):12, t.minute, (t.hour<12)?Globals.s1159:Globals.s2359);
+		}
+	} else { // 24h
+		if (Globals.bSeconds) 
+		{
+			sprintf(szTime, tFormat, t.hour, t.minute, t.second);
+		} else {
+			sprintf(szTime, tFormat, t.hour, t.minute);
+		}
+	}
+
+}
+
 
 HFONT SizeFont(HDC dc, int x, int y, BOOL bSeconds, const LOGFONT* font)
 {
@@ -203,15 +295,8 @@ HFONT SizeFont(HDC dc, int x, int y, BOOL bSeconds, const LOGFONT* font)
     HFONT oldFont, newFont;
     char szTime[255];
     int chars;
-    struct dostime_t t;
 
-    _dos_gettime (&t);
-    if (bSeconds) 
-    {
-      sprintf(szTime, "%02d:%02d:%02d", t.hour, t.minute, t.second);
-    } else {
-      sprintf(szTime, "%02d:%02d", t.hour, t.minute);
-    }
+    FormatTime(szTime);
     chars=lstrlen(szTime);
 
     lf = *font;
@@ -232,29 +317,23 @@ HFONT SizeFont(HDC dc, int x, int y, BOOL bSeconds, const LOGFONT* font)
     return newFont;
 }
 
+
 void DigitalClock(HDC dc, int x, int y, BOOL bSeconds, HFONT font)
 {
     SIZE extent;
     HFONT oldFont;
-    char szTime[255];
-    char szDate[255];
+    char szTime[255]="";
+    char szDate[255]="";
     int tchars;
     int dchars;
-    struct dostime_t t;
-    struct dosdate_t d;
 
-    _dos_gettime (&t);
-    if (bSeconds) 
-    {
-      sprintf(szTime, "%02d:%02d:%02d", t.hour, t.minute, t.second);
-    } else {
-      sprintf(szTime, "%02d:%02d", t.hour, t.minute);
-    }
+	FormatDate(szDate);
+    dchars=lstrlen(szDate);
+
+
+	FormatTime(szTime);
     tchars=lstrlen(szTime);
 
-    _dos_getdate (&d);
-    sprintf(szDate, "%02d.%02d.%02d", d.day, d.month, d.year);
-    dchars=lstrlen(szDate);
 
     oldFont = SelectObject(dc, font);
 
