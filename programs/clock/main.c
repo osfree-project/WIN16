@@ -407,6 +407,23 @@ static LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
         }
 
         case WM_DESTROY: {
+	char buffer[100];
+    RECT rect;
+    WritePrivateProfileString("Clock", "Maximized",
+                              Globals.bMaximized ? "1" : "0",
+                              Globals.lpszIniFile);
+
+    wsprintf(buffer, "%d,%d,%d,%d,%d,%d", Globals.bAnalog, Globals.bMinimized, !Globals.bSeconds, Globals.bWithoutTitle, Globals.bAlwaysOnTop, !Globals.bDate);
+    WritePrivateProfileString("Clock", "Options", buffer, Globals.lpszIniFile);
+
+    WritePrivateProfileString("Clock", "sFont",
+                              Globals.logfont.lfFaceName,
+                              Globals.lpszIniFile);
+
+    GetWindowRect(Globals.hMainWnd, &rect);
+
+    wsprintf(buffer, "%d,%d,%d,%d", rect.left, rect.top, rect.right, rect.bottom);
+    WritePrivateProfileString("Clock", "Position", buffer, Globals.lpszIniFile);
             PostQuitMessage (0);
             break;
         }
@@ -519,6 +536,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 
     KillTimer(Globals.hMainWnd, TIMER_ID);
     DeleteObject(Globals.hFont);
+
 
     return 0;
 }
