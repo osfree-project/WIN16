@@ -229,6 +229,7 @@ static int CLOCK_MenuCommand (WPARAM wParam)
         case IDM_DIGITAL: {
             Globals.bAnalog = FALSE;
             CLOCK_UpdateMenuCheckmarks();
+			CLOCK_UpdateWindowCaption();
 			CLOCK_ResetTimer();
 			CLOCK_ResetFont();
 			InvalidateRect(Globals.hMainWnd, NULL, FALSE);
