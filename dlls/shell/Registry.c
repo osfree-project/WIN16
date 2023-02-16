@@ -55,6 +55,7 @@ To send email to the maintainer of the Willows Twin Libraries.
 */
 
 //#include <string.h>
+#include "direct.h"
 
 #include "win16.h"
 

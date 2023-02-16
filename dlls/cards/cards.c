@@ -19,9 +19,8 @@
  */
 
 #include <stdarg.h>
-#include <windef.h>
-#include <wingdi.h>
-#include <winuser.h>
+
+#include <windows.h>
 
 #include "cards.h"
 
@@ -33,14 +32,14 @@ HINSTANCE g_hModule = 0;
  */
 BOOL WINAPI WEP(DWORD Unknown)
 {
-    UNREFERENCED_PARAMETER(Unknown);
+//    UNREFERENCED_PARAMETER(Unknown);
     return TRUE;
 }
 
 /*
  * Initialize card library and return cards width and height
  */
-BOOL WINAPI cdtInit(INT *Width, INT *Height)
+BOOL WINAPI cdtInit(int *Width, int *Height)
 {
     DWORD dwIndex;
 
@@ -51,7 +50,7 @@ BOOL WINAPI cdtInit(INT *Width, INT *Height)
     /* Load images */
     for (dwIndex = 0; dwIndex < MAX_CARD_BITMAPS; ++dwIndex)
         g_CardBitmaps[dwIndex] =
-            (HBITMAP)LoadBitmapA(g_hModule, MAKEINTRESOURCEA(dwIndex + 1));
+            (HBITMAP)LoadBitmap(g_hModule, MAKEINTRESOURCE(dwIndex + 1));
 
     return TRUE;
 }
@@ -71,7 +70,7 @@ VOID WINAPI cdtTerm(VOID)
 /*
  * Render card with no stretching
  */
-BOOL WINAPI cdtDraw(HDC hdc, INT x, INT y, INT card, INT type, COLORREF color)
+BOOL WINAPI cdtDraw(HDC hdc, int x, int y, int card, int type, COLORREF color)
 {
     return cdtDrawExt(hdc, x, y, CARD_WIDTH, CARD_HEIGHT, card, type, color);
 }
@@ -79,7 +78,7 @@ BOOL WINAPI cdtDraw(HDC hdc, INT x, INT y, INT card, INT type, COLORREF color)
 /*
  * internal
  */
-static __inline VOID BltCard(HDC hdc, INT x, INT y, INT dx, INT dy, HDC hdcCard, DWORD dwRasterOp, BOOL bStretch)
+static __inline VOID BltCard(HDC hdc, int x, int y, int dx, int dy, HDC hdcCard, DWORD dwRasterOp, BOOL bStretch)
 {
     if (bStretch)
     {
@@ -121,7 +120,7 @@ static __inline VOID BltCard(HDC hdc, INT x, INT y, INT dx, INT dy, HDC hdcCard,
  *    type - One of edt* constants
  *    color - Background color (?)
  */
-BOOL WINAPI cdtDrawExt(HDC hdc, INT x, INT y, INT dx, INT dy, INT card, INT type, COLORREF color)
+BOOL WINAPI cdtDrawExt(HDC hdc, int x, int y, int dx, int dy, int card, int type, COLORREF color)
 {
     DWORD dwRasterOp = SRCCOPY;
     BOOL bSaveEdges = TRUE;
@@ -170,10 +169,13 @@ BOOL WINAPI cdtDrawExt(HDC hdc, INT x, INT y, INT dx, INT dy, INT card, INT type
     {
         POINT pPoint;
         HBRUSH hBrush, hOldBrush;
+        DWORD dPoint;
 
         hBrush = CreateSolidBrush(color);
-        GetDCOrgEx(hdc, &pPoint);
-        SetBrushOrgEx(hdc, pPoint.x, pPoint.y, 0);
+        dPoint=GetDCOrg(hdc);
+        pPoint.x=LOWORD(dPoint);
+        pPoint.y=HIWORD(dPoint);
+        SetBrushOrg(hdc, pPoint.x, pPoint.y);
         hOldBrush = SelectObject(hdc, hBrush);
         PatBlt(hdc, x, y, dx, dy, PATCOPY);
         SelectObject(hdc, hOldBrush);
@@ -237,19 +239,19 @@ BOOL WINAPI cdtDrawExt(HDC hdc, INT x, INT y, INT dx, INT dy, INT card, INT type
  */
 BOOL WINAPI cdtAnimate(HDC hdc, int cardback, int x, int y, int frame)
 {
-    UNREFERENCED_PARAMETER(frame);
-    UNREFERENCED_PARAMETER(y);
-    UNREFERENCED_PARAMETER(x);
-    UNREFERENCED_PARAMETER(cardback);
-    UNREFERENCED_PARAMETER(hdc);
+//    UNREFERENCED_PARAMETER(frame);
+//    UNREFERENCED_PARAMETER(y);
+//    UNREFERENCED_PARAMETER(x);
+//    UNREFERENCED_PARAMETER(cardback);
+//    UNREFERENCED_PARAMETER(hdc);
     return TRUE;
 }
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    UNREFERENCED_PARAMETER(lpvReserved);
+  //  UNREFERENCED_PARAMETER(lpvReserved);
 
-    if (fdwReason == DLL_PROCESS_ATTACH)
+    if (fdwReason == 1)
         g_hModule = hinstDLL;
 
     return TRUE;
