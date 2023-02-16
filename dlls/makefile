@@ -4,7 +4,7 @@
 # author
 #
 
-DIRS = lzexpand shell
+DIRS = cards lzexpand shell toolhelp
 
 !include $(%ROOT)tools/mk/all.mk
 
