@@ -2,7 +2,7 @@
 	path = tests
 	url = https://github.com/osfree-project/win16test.git
 	update = merge
-[submodule "mouse"]
+[submodule "drivers/mouse"]
 	path = mouse
 	url = https://github.com/stsp/win31-mouse-driver
 	update = merge
