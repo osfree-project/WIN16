@@ -39,6 +39,73 @@
 
 CLOCK_GLOBALS Globals;
 
+void CLOCK_SaveConfiguration(void)
+{
+	char buffer[100];
+    RECT rect;
+    WritePrivateProfileString("Clock", "Maximized",
+                              Globals.bMaximized ? "1" : "0",
+                              Globals.lpszIniFile);
+
+    wsprintf(buffer, "%d,%d,%d,%d,%d,%d", Globals.bAnalog, Globals.bMinimized, !Globals.bSeconds, Globals.bWithoutTitle, Globals.bAlwaysOnTop, !Globals.bDate);
+    WritePrivateProfileString("Clock", "Options", buffer, Globals.lpszIniFile);
+
+    WritePrivateProfileString("Clock", "sFont",
+                              Globals.logfont.lfFaceName,
+                              Globals.lpszIniFile);
+
+    GetWindowRect(Globals.hMainWnd, &rect);
+
+    wsprintf(buffer, "%d,%d,%d,%d", rect.left, rect.top, rect.right, rect.bottom);
+    WritePrivateProfileString("Clock", "Position", buffer, Globals.lpszIniFile);
+}
+
+void CLOCK_ReadConfiguration(void)
+{
+    int  right, bottom;
+	char buffer[100];
+
+    /* Read Options from `win.ini' */
+	GetProfileString("intl", "s1159", "AM", Globals.s1159, sizeof(Globals.s1159));
+	GetProfileString("intl", "s2359", "PM", Globals.s2359, sizeof(Globals.s2359));
+	GetProfileString("intl", "sTime", ":", Globals.sTime, sizeof(Globals.sTime));
+    Globals.iTime=GetProfileInt("intl", "iTime", 0);
+    Globals.iTLZero=GetProfileInt("intl", "iTLZero", 0);
+	GetProfileString("intl", "sDate", "/", Globals.sDate, sizeof(Globals.sDate));
+	GetProfileString("intl", "sShortDate", "MM/dd/yy", Globals.sShortDate, sizeof(Globals.sShortDate));
+
+    /* Read Options from `clock.ini' */
+    Globals.bMaximized = GetPrivateProfileInt("Clock", "Maximized", FALSE, Globals.lpszIniFile);
+    Globals.bWin30Style = GetPrivateProfileInt("Clock", "Win30Style", FALSE, Globals.lpszIniFile);
+    GetPrivateProfileString("Clock", "sFont", "", Globals.logfont.lfFaceName, sizeof(Globals.logfont.lfFaceName), Globals.lpszIniFile);
+    GetPrivateProfileString("Clock", "Options", "", buffer, sizeof(buffer), Globals.lpszIniFile);
+    if (6 == sscanf(buffer, "%d,%d,%d,%d,%d,%d", &(Globals.bAnalog), &(Globals.bMinimized), &(Globals.bSeconds), &(Globals.bWithoutTitle), &(Globals.bAlwaysOnTop), &(Globals.bDate)))
+    {
+      Globals.bSeconds=!Globals.bSeconds;
+      Globals.bDate=!Globals.bDate;
+    }
+    else
+    {
+      Globals.bAnalog         = TRUE;
+      Globals.bSeconds        = TRUE;
+      Globals.bDate           = TRUE;
+    }
+
+    GetPrivateProfileString("Clock", "Position", "", buffer, sizeof(buffer), Globals.lpszIniFile);
+    if (4 == sscanf(buffer, "%d,%d,%d,%d", &(Globals.x), &(Globals.y), &right, &bottom))
+    {
+      Globals.MaxX = right - Globals.x;
+      Globals.MaxY = bottom - Globals.y;
+    }
+    else
+    {
+      Globals.x = Globals.y = CW_USEDEFAULT;
+      Globals.MaxX = Globals.MaxY = INITIAL_WINDOW_SIZE;
+      Globals.MaxY +=GetSystemMetrics(SM_CYCAPTION);
+    }
+
+}
+
 static VOID CLOCK_UpdateMenuCheckmarks(VOID)
 {
     HMENU hPropertiesMenu;
@@ -411,24 +478,8 @@ static LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
         }
 
         case WM_DESTROY: {
-	char buffer[100];
-    RECT rect;
-    WritePrivateProfileString("Clock", "Maximized",
-                              Globals.bMaximized ? "1" : "0",
-                              Globals.lpszIniFile);
-
-    wsprintf(buffer, "%d,%d,%d,%d,%d,%d", Globals.bAnalog, Globals.bMinimized, !Globals.bSeconds, Globals.bWithoutTitle, Globals.bAlwaysOnTop, !Globals.bDate);
-    WritePrivateProfileString("Clock", "Options", buffer, Globals.lpszIniFile);
-
-    WritePrivateProfileString("Clock", "sFont",
-                              Globals.logfont.lfFaceName,
-                              Globals.lpszIniFile);
-
-    GetWindowRect(Globals.hMainWnd, &rect);
-
-    wsprintf(buffer, "%d,%d,%d,%d", rect.left, rect.top, rect.right, rect.bottom);
-    WritePrivateProfileString("Clock", "Position", buffer, Globals.lpszIniFile);
-            PostQuitMessage (0);
+				CLOCK_SaveConfiguration();
+				PostQuitMessage (0);
             break;
         }
 
@@ -436,6 +487,24 @@ static LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
             return DefWindowProc(hWnd, msg, wParam, lParam);
     }
     return 0;
+}
+
+BOOL CLOCK_RegisterMainWinClass(void)
+{
+	WNDCLASS class;
+	
+	class.style         = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
+	class.lpfnWndProc   = CLOCK_WndProc;
+	class.cbClsExtra    = 0;
+	class.cbWndExtra    = 0;
+	class.hInstance     = Globals.hInstance;
+	class.hIcon         = LoadIcon(0, (LPCSTR)IDI_APPLICATION);
+	class.hCursor       = LoadCursor(0, (LPCSTR)IDC_ARROW);
+	class.hbrBackground = 0;
+	class.lpszMenuName  = 0;
+	class.lpszClassName = "CLClass";
+
+    return RegisterClass(&class);
 }
 
 
@@ -447,90 +516,38 @@ static LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
 int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 {
     MSG      msg;
-    WNDCLASS class;
-	char buffer[100];
     LONG style = WS_OVERLAPPEDWINDOW;
-    int  left , top, right, bottom;
 
     /* Setup Globals */
     memset(&Globals, 0, sizeof (Globals));
     Globals.hInstance       = hInstance;
     Globals.lpszIniFile     = "clock.ini";
 
-    /* Read Options from `win.ini' */
-	GetProfileString("intl", "s1159", "AM", Globals.s1159, sizeof(Globals.s1159));
-	GetProfileString("intl", "s2359", "PM", Globals.s2359, sizeof(Globals.s2359));
-	GetProfileString("intl", "sTime", ":", Globals.sTime, sizeof(Globals.sTime));
-    Globals.iTime=GetProfileInt("intl", "iTime", 0);
-    Globals.iTLZero=GetProfileInt("intl", "iTLZero", 0);
-	GetProfileString("intl", "sDate", "/", Globals.sDate, sizeof(Globals.sDate));
-	GetProfileString("intl", "sShortDate", "MM/dd/yy", Globals.sShortDate, sizeof(Globals.sShortDate));
-
-    /* Read Options from `clock.ini' */
-    Globals.bMaximized = GetPrivateProfileInt("Clock", "Maximized", 0, Globals.lpszIniFile);
- 
-    /* Get the geometry of the main window */
-    GetPrivateProfileString("Clock", "Options", "", buffer, sizeof(buffer), Globals.lpszIniFile);
-    if (6 == sscanf(buffer, "%d,%d,%d,%d,%d,%d", &(Globals.bAnalog), &(Globals.bMinimized), &(Globals.bSeconds), &(Globals.bWithoutTitle), &(Globals.bAlwaysOnTop), &(Globals.bDate)))
-    {
-      Globals.bSeconds=!Globals.bSeconds;
-      Globals.bDate=!Globals.bDate;
-    }
-    else
-    {
-      Globals.bAnalog         = TRUE;
-      Globals.bSeconds        = TRUE;
-      Globals.bDate           = TRUE;
-    }
+	/* Read application configuration */
+	CLOCK_ReadConfiguration();
+	
+	if (!prev)
+	{
+		if (!CLOCK_RegisterMainWinClass()) return(FALSE);
+	}
 
 	if (Globals.bMaximized) show=SW_SHOWMAXIMIZED;
 	if (Globals.bMinimized) show=SW_SHOWMINIMIZED;
 
-    if (!prev){
-        class.style         = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
-        class.lpfnWndProc   = CLOCK_WndProc;
-        class.cbClsExtra    = 0;
-        class.cbWndExtra    = 0;
-        class.hInstance     = hInstance;
-        class.hIcon         = LoadIcon(0, (LPCSTR)IDI_APPLICATION);
-        class.hCursor       = LoadCursor(0, (LPCSTR)IDC_ARROW);
-        class.hbrBackground = 0;
-        class.lpszMenuName  = 0;
-        class.lpszClassName = "CLClass";
-    }
-
-    if (!RegisterClass(&class)) return FALSE;
-
-
-    GetPrivateProfileString("Clock", "Position", "", buffer, sizeof(buffer), Globals.lpszIniFile);
-    if (4 == sscanf(buffer, "%d,%d,%d,%d", &left, &top, &right, &bottom))
-    {
-      Globals.MaxX = right - left;
-      Globals.MaxY = bottom - top;
-    }
-    else
-    {
-      left = top = CW_USEDEFAULT;
-      Globals.MaxX = Globals.MaxY = INITIAL_WINDOW_SIZE;
-      Globals.MaxY +=GetSystemMetrics(SM_CYCAPTION);//+GetSystemMetrics(SM_CYMENU);
-    }
-
-    GetPrivateProfileString("Clock", "sFont", "", Globals.logfont.lfFaceName, sizeof(Globals.logfont.lfFaceName), Globals.lpszIniFile);
-	
     Globals.hMainWnd = CreateWindow("CLClass", "Clock", style/*WS_OVERLAPPEDWINDOW*/,
-                                     left, top,
+                                     Globals.x, Globals.y,
                                      Globals.MaxX, Globals.MaxY, 0,
                                      0, hInstance, 0);
 
- if (Globals.hMainWnd)
-  {
-    Globals.hSysMenu = GetSystemMenu(Globals.hMainWnd, FALSE);
-    InsertMenu(Globals.hSysMenu, 10, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
-    InsertMenu(Globals.hSysMenu, 11, MF_BYPOSITION |(Globals.bAlwaysOnTop ? MF_CHECKED : MF_UNCHECKED), (UINT) IDM_ONTOP, "Always on &Top");
-  }
+	if (Globals.hMainWnd)
+	{
+		Globals.hSysMenu = GetSystemMenu(Globals.hMainWnd, FALSE);
+		InsertMenu(Globals.hSysMenu, 10, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+		InsertMenu(Globals.hSysMenu, 11, MF_BYPOSITION |(Globals.bAlwaysOnTop ? MF_CHECKED : MF_UNCHECKED), (UINT) IDM_ONTOP, "Always on &Top");
+	}
 
     if (!CLOCK_ResetTimer())
-        return FALSE;
+		return FALSE;
 
     Globals.hMainMenu = LoadMenu(hInstance, MAKEINTRESOURCE(MAIN_MENU));
     SetMenu(Globals.hMainWnd, Globals.hMainMenu);
@@ -549,7 +566,6 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 
     KillTimer(Globals.hMainWnd, TIMER_ID);
     DeleteObject(Globals.hFont);
-
 
     return 0;
 }

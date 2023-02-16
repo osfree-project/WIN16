@@ -36,25 +36,33 @@ typedef struct
 
   LPSTR   lpszIniFile;	// INI filename
 
-  BOOL    bAnalog;
-  BOOL    bAlwaysOnTop;
-  BOOL    bWithoutTitle;
-  BOOL    bSeconds;
-  BOOL    bDate;
-  BOOL    bMaximized;
-  BOOL    bMinimized;
+  // Clock configuration
+  BOOL    bAnalog;			// Show analog clock
+  BOOL    bAlwaysOnTop;		// Always on tom
+  BOOL    bWithoutTitle;	// Without title
+  BOOL    bSeconds;			// Show seconds
+  BOOL    bDate;			// Show date
+  BOOL    bMaximized;		// Maximize window
+  BOOL    bMinimized;		// Minimize window
+  BOOL    bWin30Style;		// Use Windows 3.0 style (red border, white background, black ticks)
+  
+  // Window position
+  int     x;
+  int     y;
+  int     MaxX;
+  int     MaxY;
+  
   // Time settings
   char    s1159[10];
   char    s2359[10];
   char    sTime[5];
   int     iTime;
   int     iTLZero;
+  
   // Date settings
   char    sShortDate[20];
   char    sDate[3];
 
-  int     MaxX;
-  int     MaxY;
 } CLOCK_GLOBALS;
 
 extern CLOCK_GLOBALS Globals;
