@@ -2,11 +2,10 @@
 	path = tests
 	url = https://github.com/osfree-project/win16test.git
 	update = merge
-[submodule "drivers/mouse"]
-	path = mouse
-	url = https://github.com/stsp/win31-mouse-driver
-	update = merge
 [submodule "dosx/hdpmi/contrib"]
 	path = dosx/hdpmi/contrib
 	url = https://github.com/Baron-von-Riedesel/HX
 	update = merge
+[submodule "drivers/mouse"]
+	path = drivers/mouse
+	url = https://github.com/stsp/win31-mouse-driver
