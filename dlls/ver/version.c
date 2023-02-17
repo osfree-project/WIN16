@@ -92,6 +92,15 @@ typedef IMAGE_RESOURCE_DIRECTORY_STRING *PIMAGE_RESOURCE_DIRECTORY_STRING;
 
 #pragma pack(pop)
 
+/* Image resource data entry */
+typedef struct _IMAGE_RESOURCE_DATA_ENTRY {
+    DWORD   OffsetToData;
+    DWORD   Size;
+    DWORD   CodePage;
+    DWORD   Reserved;
+} IMAGE_RESOURCE_DATA_ENTRY;
+typedef IMAGE_RESOURCE_DATA_ENTRY   *PIMAGE_RESOURCE_DATA_ENTRY;
+
 typedef struct _IMAGE_FILE_HEADER {
   WORD  Machine;
   WORD  NumberOfSections;
@@ -108,6 +117,46 @@ typedef struct _IMAGE_DATA_DIRECTORY {
     DWORD   Size;
 } IMAGE_DATA_DIRECTORY;
 typedef IMAGE_DATA_DIRECTORY    *PIMAGE_DATA_DIRECTORY;
+
+#define IMAGE_NUMBEROF_DIRECTORY_ENTRIES    16
+
+/* Optional header for PE image files (32-bit version) */
+typedef struct _IMAGE_OPTIONAL_HEADER {
+    WORD                    Magic;
+    BYTE                    MajorLinkerVersion;
+    BYTE                    MinorLinkerVersion;
+    DWORD                   SizeOfCode;
+    DWORD                   SizeOfInitializedData;
+    DWORD                   SizeOfUninitializedData;
+    DWORD                   AddressOfEntryPoint;
+    DWORD                   BaseOfCode;
+    DWORD                   BaseOfData;
+    DWORD                   ImageBase;
+    DWORD                   SectionAlignment;
+    DWORD                   FileAlignment;
+    WORD                    MajorOperatingSystemVersion;
+    WORD                    MinorOperatingSystemVersion;
+    WORD                    MajorImageVersion;
+    WORD                    MinorImageVersion;
+    WORD                    MajorSubsystemVersion;
+    WORD                    MinorSubsystemVersion;
+    DWORD                   Win32VersionValue;
+    DWORD                   SizeOfImage;
+    DWORD                   SizeOfHeaders;
+    DWORD                   CheckSum;
+    WORD                    Subsystem;
+    WORD                    DllCharacteristics;
+    DWORD                   SizeOfStackReserve;
+    DWORD                   SizeOfStackCommit;
+    DWORD                   SizeOfHeapReserve;
+    DWORD                   SizeOfHeapCommit;
+    DWORD                   LoaderFlags;
+    DWORD                   NumberOfRvaAndSizes;
+    IMAGE_DATA_DIRECTORY    DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
+} IMAGE_OPTIONAL_HEADER32;
+typedef IMAGE_OPTIONAL_HEADER32 *PIMAGE_OPTIONAL_HEADER32;
+
+#define IMAGE_DIRECTORY_ENTRY_RESOURCE          2
 
 #define IMAGE_SIZEOF_SHORT_NAME 8
 
@@ -133,6 +182,8 @@ typedef struct _IMAGE_NT_HEADERS {
   IMAGE_OPTIONAL_HEADER32 OptionalHeader;	/* 0x18 */
 } IMAGE_NT_HEADERS, *PIMAGE_NT_HEADERS;
 
+#define RT_VERSION          MAKEINTRESOURCE( 16 )
+#define VS_VERSION_INFO 1
 
 /**********************************************************************
  *  find_entry_by_id
@@ -140,20 +191,20 @@ typedef struct _IMAGE_NT_HEADERS {
  * Find an entry by id in a resource directory
  * Copied from loader/pe_resource.c
  */
-static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_id( const IMAGE_RESOURCE_DIRECTORY *dir,
-                                                         WORD id, const void *root )
+static const IMAGE_RESOURCE_DIRECTORY far *find_entry_by_id( const IMAGE_RESOURCE_DIRECTORY far *dir,
+                                                         WORD id, const void far *root )
 {
-    const IMAGE_RESOURCE_DIRECTORY_ENTRY *entry;
+    const IMAGE_RESOURCE_DIRECTORY_ENTRY far *entry;
     int min, max, pos;
 
-    entry = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
+    entry = (const IMAGE_RESOURCE_DIRECTORY_ENTRY far *)(dir + 1);
     min = dir->NumberOfNamedEntries;
     max = min + dir->NumberOfIdEntries - 1;
     while (min <= max)
     {
         pos = (min + max) / 2;
         if (entry[pos].u.Id == id)
-            return (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + entry[pos].u2.s2.OffsetToDirectory);
+            return (const IMAGE_RESOURCE_DIRECTORY far *)((const char far *)root + entry[pos].u2.s2.OffsetToDirectory);
         if (entry[pos].u.Id > id) max = pos - 1;
         else min = pos + 1;
     }
@@ -167,13 +218,13 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_id( const IMAGE_RESOURCE_DI
  * Find a default entry in a resource directory
  * Copied from loader/pe_resource.c
  */
-static const IMAGE_RESOURCE_DIRECTORY *find_entry_default( const IMAGE_RESOURCE_DIRECTORY *dir,
-                                                           const void *root )
+static const IMAGE_RESOURCE_DIRECTORY far *find_entry_default( const IMAGE_RESOURCE_DIRECTORY far *dir,
+                                                           const void far *root )
 {
-    const IMAGE_RESOURCE_DIRECTORY_ENTRY *entry;
+    const IMAGE_RESOURCE_DIRECTORY_ENTRY far *entry;
 
-    entry = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
-    return (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + entry->u2.s2.OffsetToDirectory);
+    entry = (const IMAGE_RESOURCE_DIRECTORY_ENTRY far *)(dir + 1);
+    return (const IMAGE_RESOURCE_DIRECTORY far *)((const char far *)root + entry->u2.s2.OffsetToDirectory);
 }
 
 
@@ -226,10 +277,10 @@ int latoi(char far *h)
  * Find an entry by name in a resource directory
  * Copied from loader/pe_resource.c
  */
-static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_name( const IMAGE_RESOURCE_DIRECTORY *dir,
-                                                           LPCSTR name, const void *root )
+static const IMAGE_RESOURCE_DIRECTORY far *find_entry_by_name( const IMAGE_RESOURCE_DIRECTORY far *dir,
+                                                           LPCSTR name, const void far *root )
 {
-    const IMAGE_RESOURCE_DIRECTORY *ret = NULL;
+    const IMAGE_RESOURCE_DIRECTORY far *ret = NULL;
     DWORD namelen=lstrlen(name);
 
     if (!HIWORD(name)) return find_entry_by_id( dir, LOWORD(name), root );
@@ -504,7 +555,7 @@ static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     LPBYTE resSection;
     DWORD resSectionSize;
     const void far *resDir;
-    const IMAGE_RESOURCE_DIRECTORY *resPtr;
+    const IMAGE_RESOURCE_DIRECTORY far *resPtr;
     const IMAGE_RESOURCE_DATA_ENTRY *resData;
     int i, nSections;
     BOOL ret = FALSE;
@@ -713,13 +764,156 @@ DWORD WINAPI GetFileVersionInfo( LPCSTR filename, DWORD handle, DWORD datasize, 
     return GetFileResource( filename, (LPCSTR)RT_VERSION, (LPCSTR)VS_VERSION_INFO, 0, datasize, data );
 }
 
+/******************************************************************************
+ *   testFileExistenceA
+ *
+ *   Tests whether a given path/file combination exists.  If the file does
+ *   not exist, the return value is zero.  If it does exist, the return
+ *   value is non-zero.
+ *
+ *   Revision history
+ *      30-May-1997 Dave Cuthbert (dacut@ece.cmu.edu)
+ *         Original implementation
+ *
+ */
+static int testFileExistenceA( char const far * path, char const far * file, BOOL excl )
+{
+    char  filename[1024];
+    int  filenamelen;
+    OFSTRUCT  fileinfo;
+
+    fileinfo.cBytes = sizeof(OFSTRUCT);
+
+    lstrcpy(filename, path);
+    filenamelen = lstrlen(filename);
+
+    /* Add a trailing \ if necessary */
+    if(filenamelen) {
+	if(filename[filenamelen - 1] != '\\')
+	    lstrcat(filename, "\\");
+    }
+    else /* specify the current directory */
+		lstrcpy(filename, ".\\");
+
+    /* Create the full pathname */
+    lstrcat(filename, file);
+
+    return (OpenFile(filename, &fileinfo,
+                     OF_EXIST | (excl ? OF_SHARE_EXCLUSIVE : 0)) != HFILE_ERROR);
+}
+
+/*****************************************************************************
+ *   VerFindFileA [internal]
+ *
+ *   Determines where to install a file based on whether it locates another
+ *   version of the file in the system.  The values VerFindFile returns are
+ *   used in a subsequent call to the VerInstallFile function.
+ *
+ *   Revision history:
+ *      30-May-1997   Dave Cuthbert (dacut@ece.cmu.edu)
+ *         Reimplementation of VerFindFile from original stub.
+ */
+DWORD WINAPI VerFindFileA(
+    UINT flags,
+    LPCSTR lpszFilename,
+    LPCSTR lpszWinDir,
+    LPCSTR lpszAppDir,
+    LPSTR lpszCurDir,
+    UINT *lpuCurDirLen,
+    LPSTR lpszDestDir,
+    UINT *lpuDestDirLen )
+{
+    DWORD  retval = 0;
+    const char far *curDir;
+    const char far *destDir;
+    unsigned int  curDirSizeReq;
+    unsigned int  destDirSizeReq;
+    char  systemDir[MAX_PATH];
+
+    /* Print out debugging information */
+/*    TRACE("flags = %x filename=%s windir=%s appdir=%s curdirlen=%p(%u) destdirlen=%p(%u)\n",
+          flags, debugstr_a(lpszFilename), debugstr_a(lpszWinDir), debugstr_a(lpszAppDir),
+          lpuCurDirLen, lpuCurDirLen ? *lpuCurDirLen : 0,
+          lpuDestDirLen, lpuDestDirLen ? *lpuDestDirLen : 0 );
+*/
+    /* Figure out where the file should go; shared files default to the
+       system directory */
+
+    GetSystemDirectory(systemDir, sizeof(systemDir));
+    curDir = "";
+    destDir = "";
+
+    if(flags & VFFF_ISSHAREDFILE)
+    {
+        destDir = systemDir;
+        /* Were we given a filename?  If so, try to find the file. */
+        if(lpszFilename)
+        {
+            if(testFileExistenceA(destDir, lpszFilename, FALSE)) curDir = destDir;
+            else if(lpszAppDir && testFileExistenceA(lpszAppDir, lpszFilename, FALSE))
+            {
+                curDir = lpszAppDir;
+                retval |= VFF_CURNEDEST;
+            }
+        }
+    }
+    else /* not a shared file */
+    {
+        if(lpszAppDir)
+        {
+            destDir = lpszAppDir;
+            if(lpszFilename)
+            {
+                if(testFileExistenceA(destDir, lpszFilename, FALSE)) curDir = destDir;
+                else if(testFileExistenceA(systemDir, lpszFilename, FALSE))
+                {
+                    curDir = systemDir;
+                    retval |= VFF_CURNEDEST;
+                }
+            }
+        }
+    }
+
+    if (lpszFilename && !testFileExistenceA(curDir, lpszFilename, TRUE))
+        retval |= VFF_FILEINUSE;
+
+    curDirSizeReq = lstrlen(curDir) + 1;
+    destDirSizeReq = lstrlen(destDir) + 1;
+
+    /* Make sure that the pointers to the size of the buffers are
+       valid; if not, do NOTHING with that buffer.  If that pointer
+       is valid, then make sure that the buffer pointer is valid, too! */
+
+    if(lpuDestDirLen && lpszDestDir)
+    {
+        if (*lpuDestDirLen < destDirSizeReq) retval |= VFF_BUFFTOOSMALL;
+        lstrcpyn(lpszDestDir, destDir, *lpuDestDirLen);
+        *lpuDestDirLen = destDirSizeReq;
+    }
+    if(lpuCurDirLen && lpszCurDir)
+    {
+        if(*lpuCurDirLen < curDirSizeReq) retval |= VFF_BUFFTOOSMALL;
+        lstrcpyn(lpszCurDir, curDir, *lpuCurDirLen);
+        *lpuCurDirLen = curDirSizeReq;
+    }
+
+/*
+    TRACE("ret = %lu (%s%s%s) curdir=%s destdir=%s\n", retval,
+          (retval & VFF_CURNEDEST) ? "VFF_CURNEDEST " : "",
+          (retval & VFF_FILEINUSE) ? "VFF_FILEINUSE " : "",
+          (retval & VFF_BUFFTOOSMALL) ? "VFF_BUFFTOOSMALL " : "",
+          debugstr_a(lpszCurDir), debugstr_a(lpszDestDir));
+*/
+    return retval;
+}
+
 /*************************************************************************
  * VerFindFile                             [VER.8]
  */
-DWORD WINAPI VerFindFile( UINT16 flags, LPSTR lpszFilename,
+DWORD WINAPI VerFindFile( UINT flags, LPSTR lpszFilename,
                             LPSTR lpszWinDir, LPSTR lpszAppDir,
-                            LPSTR lpszCurDir, UINT16 *lpuCurDirLen,
-                            LPSTR lpszDestDir, UINT16 *lpuDestDirLen )
+                            LPSTR lpszCurDir, UINT far *lpuCurDirLen,
+                            LPSTR lpszDestDir, UINT far *lpuDestDirLen )
 {
     UINT curDirLen, destDirLen;
     UINT *pcurDirLen = NULL, *pdestDirLen = NULL;
@@ -736,19 +930,224 @@ DWORD WINAPI VerFindFile( UINT16 flags, LPSTR lpszFilename,
     retv = VerFindFileA( flags, lpszFilename, lpszWinDir, lpszAppDir,
                                 lpszCurDir, pcurDirLen, lpszDestDir, pdestDirLen );
     if (lpuCurDirLen)
-        *lpuCurDirLen = (UINT16)curDirLen;
+        *lpuCurDirLen = (UINT)curDirLen;
     if (lpuDestDirLen)
-        *lpuDestDirLen = (UINT16)destDirLen;
+        *lpuDestDirLen = (UINT)destDirLen;
     return retv;
+}
+
+static LPBYTE
+_fetch_versioninfo(LPSTR fn,VS_FIXEDFILEINFO **vffi) {
+    DWORD	alloclen;
+    LPBYTE	buf;
+    DWORD	ret;
+
+    alloclen = 1000;
+    buf=GlobalAllocPtr(GPTR, alloclen);
+    if(buf == NULL) {
+        //WARN("Memory exausted while fetching version info!\n");
+        return NULL;
+    }
+    while (1) {
+    	ret = GetFileVersionInfoA(fn,0,alloclen,buf);
+	if (!ret) {
+	    GlobalFreePtr(buf);
+	    return NULL;
+	}
+	if (alloclen<*(WORD*)buf) {
+	    alloclen = *(WORD*)buf;
+	    GlobalFreePtr(buf);
+	    buf = GlobalAllocPtr(GPTR, alloclen);
+            if(buf == NULL) {
+          //     WARN("Memory exausted while fetching version info!\n");
+               return NULL;
+            }
+	} else {
+	    *vffi = (VS_FIXEDFILEINFO*)(buf+0x14);
+	    if ((*vffi)->dwSignature == 0x004f0049) /* hack to detect unicode */
+	    	*vffi = (VS_FIXEDFILEINFO*)(buf+0x28);
+	    if ((*vffi)->dwSignature != VS_FFI_SIGNATURE)
+		{
+	    //	WARN("Bad VS_FIXEDFILEINFO signature 0x%08lx\n",(*vffi)->dwSignature);
+		}
+	    return buf;
+	}
+    }
+}
+
+/******************************************************************************
+ * VerInstallFileA [internal]
+ */
+DWORD WINAPI VerInstallFileA(
+	UINT flags,LPCSTR srcfilename,LPCSTR destfilename,LPCSTR srcdir,
+ 	LPCSTR destdir,LPCSTR curdir,LPSTR tmpfile,UINT *tmpfilelen )
+{
+    LPCSTR pdest;
+    char	destfn[260],tmpfn[260],srcfn[260];
+    HFILE	hfsrc,hfdst;
+    DWORD	attr,ret,xret,tmplast;
+    LPBYTE	buf1,buf2;
+    OFSTRUCT	ofs;
+
+//    TRACE("(%x,%s,%s,%s,%s,%s,%p,%d)\n",
+//	    flags,srcfilename,destfilename,srcdir,destdir,curdir,tmpfile,*tmpfilelen
+//    );
+    xret = 0;
+    sprintf(srcfn,"%s\\%s",srcdir,srcfilename);
+    if (!destdir || !*destdir) pdest = srcdir;
+    else pdest = destdir;
+    sprintf(destfn,"%s\\%s",pdest,destfilename);
+    hfsrc=LZOpenFile(srcfn,&ofs,OF_READ);
+    if (hfsrc < 0)
+    	return VIF_CANNOTREADSRC;
+    sprintf(tmpfn,"%s\\%s",pdest,destfilename);
+    tmplast=lstrlen(pdest)+1;
+    attr = GetFileAttributes(tmpfn);
+    if (attr != INVALID_FILE_ATTRIBUTES) {
+	if (attr & FILE_ATTRIBUTE_READONLY) {
+	    LZClose(hfsrc);
+	    return VIF_WRITEPROT;
+	}
+	/* FIXME: check if file currently in use and return VIF_FILEINUSE */
+    }
+    attr = INVALID_FILE_ATTRIBUTES;
+    if (flags & VIFF_FORCEINSTALL) {
+    	if (tmpfile[0]) {
+	    sprintf(tmpfn,"%s\\%s",pdest,tmpfile);
+	    tmplast = lstrlen(pdest)+1;
+	    attr = GetFileAttributes(tmpfn);
+	    /* if it exists, it has been copied by the call before.
+	     * we jump over the copy part...
+	     */
+	}
+    }
+    if (attr == INVALID_FILE_ATTRIBUTES) {
+    	char	*s;
+
+	GetTempFileName(pdest,"ver",0,tmpfn); /* should not fail ... */
+	s=strrchr(tmpfn,'\\');
+	if (s)
+	    tmplast = s-tmpfn;
+	else
+	    tmplast = 0;
+	hfdst = OpenFile(tmpfn,&ofs,OF_CREATE);
+	if (hfdst == HFILE_ERROR) {
+	    LZClose(hfsrc);
+	    return VIF_CANNOTCREATE; /* | translated dos error */
+	}
+	ret = LZCopy(hfsrc,hfdst);
+	_lclose(hfdst);
+	if (((long) ret) < 0) {
+	    /* translate LZ errors into VIF_xxx */
+	    switch (ret) {
+	    case LZERROR_BADINHANDLE:
+	    case LZERROR_READ:
+	    case LZERROR_BADVALUE:
+	    case LZERROR_UNKNOWNALG:
+		ret = VIF_CANNOTREADSRC;
+		break;
+	    case LZERROR_BADOUTHANDLE:
+	    case LZERROR_WRITE:
+		ret = VIF_OUTOFSPACE;
+		break;
+	    case LZERROR_GLOBALLOC:
+	    case LZERROR_GLOBLOCK:
+		ret = VIF_OUTOFMEMORY;
+		break;
+	    default: /* unknown error, should not happen */
+		ret = 0;
+		break;
+	    }
+	    if (ret) {
+		LZClose(hfsrc);
+		return ret;
+	    }
+	}
+    }
+    xret = 0;
+    if (!(flags & VIFF_FORCEINSTALL)) {
+	VS_FIXEDFILEINFO *destvffi,*tmpvffi;
+    	buf1 = _fetch_versioninfo(destfn,&destvffi);
+	if (buf1) {
+	    buf2 = _fetch_versioninfo(tmpfn,&tmpvffi);
+	    if (buf2) {
+	    	char	*tbuf1,*tbuf2;
+		UINT	len1,len2;
+
+		len1=len2=40;
+
+		/* compare file versions */
+		if ((destvffi->dwFileVersionMS > tmpvffi->dwFileVersionMS)||
+		    ((destvffi->dwFileVersionMS==tmpvffi->dwFileVersionMS)&&
+		     (destvffi->dwFileVersionLS > tmpvffi->dwFileVersionLS)
+		    )
+		)
+		    xret |= VIF_MISMATCH|VIF_SRCOLD;
+		/* compare filetypes and filesubtypes */
+		if ((destvffi->dwFileType!=tmpvffi->dwFileType) ||
+		    (destvffi->dwFileSubtype!=tmpvffi->dwFileSubtype)
+		)
+		    xret |= VIF_MISMATCH|VIF_DIFFTYPE;
+		if (VerQueryValueA(buf1,"\\VarFileInfo\\Translation",(LPVOID*)&tbuf1,&len1) &&
+		    VerQueryValueA(buf2,"\\VarFileInfo\\Translation",(LPVOID*)&tbuf2,&len2)
+		) {
+		    /* irgendwas mit tbuf1 und tbuf2 machen
+		     * generiert DIFFLANG|MISMATCH
+		     */
+		}
+		HeapFree(GetProcessHeap(), 0, buf2);
+	    } else
+		xret=VIF_MISMATCH|VIF_SRCOLD;
+	    HeapFree(GetProcessHeap(), 0, buf1);
+	}
+    }
+    if (xret) {
+	if (*tmpfilelen<strlen(tmpfn+tmplast)) {
+	    xret|=VIF_BUFFTOOSMALL;
+	    DeleteFileA(tmpfn);
+	} else {
+	    strcpy(tmpfile,tmpfn+tmplast);
+	    *tmpfilelen = strlen(tmpfn+tmplast)+1;
+	    xret|=VIF_TEMPFILE;
+	}
+    } else {
+    	if (-1!=GetFileAttributesA(destfn))
+	    if (!DeleteFileA(destfn)) {
+		xret|=_error2vif(GetLastError())|VIF_CANNOTDELETE;
+		DeleteFileA(tmpfn);
+		LZClose(hfsrc);
+		return xret;
+	    }
+	if ((!(flags & VIFF_DONTDELETEOLD))	&&
+	    curdir				&&
+	    *curdir				&&
+	    lstrcmpiA(curdir,pdest)
+	) {
+	    char curfn[260];
+
+	    sprintf(curfn,"%s\\%s",curdir,destfilename);
+	    if (INVALID_FILE_ATTRIBUTES != GetFileAttributesA(curfn)) {
+		/* FIXME: check if in use ... if it is, VIF_CANNOTDELETECUR */
+		if (!DeleteFileA(curfn))
+	    	    xret|=_error2vif(GetLastError())|VIF_CANNOTDELETECUR;
+	    }
+	}
+	if (!MoveFileA(tmpfn,destfn)) {
+	    xret|=_error2vif(GetLastError())|VIF_CANNOTRENAME;
+	    DeleteFileA(tmpfn);
+	}
+    }
+    LZClose(hfsrc);
+    return xret;
 }
 
 /*************************************************************************
  * VerInstallFile                          [VER.9]
  */
-DWORD WINAPI VerInstallFile( UINT16 flags,
+DWORD WINAPI VerInstallFile( UINT flags,
                                LPSTR lpszSrcFilename, LPSTR lpszDestFilename,
                                LPSTR lpszSrcDir, LPSTR lpszDestDir, LPSTR lpszCurDir,
-                               LPSTR lpszTmpFile, UINT16 *lpwTmpFileLen )
+                               LPSTR lpszTmpFile, UINT far *lpwTmpFileLen )
 {
     UINT filelen = *lpwTmpFileLen;
 
@@ -756,14 +1155,14 @@ DWORD WINAPI VerInstallFile( UINT16 flags,
                                     lpszSrcDir, lpszDestDir, lpszCurDir,
                                     lpszTmpFile, &filelen);
 
-    *lpwTmpFileLen = (UINT16)filelen;
+    *lpwTmpFileLen = (UINT)filelen;
     return retv;
 }
 
 /*************************************************************************
  * VerLanguageName                        [VER.10]
  */
-DWORD WINAPI VerLanguageName( UINT16 uLang, LPSTR lpszLang, UINT16 cbLang )
+DWORD WINAPI VerLanguageName( UINT uLang, LPSTR lpszLang, UINT cbLang )
 {
     return VerLanguageNameA( uLang, lpszLang, cbLang );
 }
@@ -771,10 +1170,10 @@ DWORD WINAPI VerLanguageName( UINT16 uLang, LPSTR lpszLang, UINT16 cbLang )
 /*************************************************************************
  * VerQueryValue                          [VER.11]
  */
-DWORD WINAPI VerQueryValue( SEGPTR spvBlock, LPSTR lpszSubBlock,
-                              SEGPTR *lpspBuffer, UINT16 *lpcb )
+DWORD WINAPI VerQueryValue( void * spvBlock, LPSTR lpszSubBlock,
+                              void far *lpspBuffer, UINT far  *lpcb )
 {
-    LPVOID lpvBlock = MapSL( spvBlock );
+    LPVOID lpvBlock = spvBlock;
     LPVOID buffer = lpvBlock;
     UINT buflen;
     DWORD retv;
@@ -785,7 +1184,7 @@ DWORD WINAPI VerQueryValue( SEGPTR spvBlock, LPSTR lpszSubBlock,
     retv = VerQueryValueA( lpvBlock, lpszSubBlock, &buffer, &buflen );
     if ( !retv ) return FALSE;
 
-    if ( OFFSETOF( spvBlock ) + ((char *) buffer - (char *) lpvBlock) >= 0x10000 )
+    if ( OFFSETOF( spvBlock ) + ((char far *) buffer - (char far *) lpvBlock) >= 0x10000 )
     {
 //        FIXME("offset %08X too large relative to %04X:%04X\n",
 //               (char *) buffer - (char *) lpvBlock, SELECTOROF( spvBlock ), OFFSETOF( spvBlock ) );
@@ -793,7 +1192,7 @@ DWORD WINAPI VerQueryValue( SEGPTR spvBlock, LPSTR lpszSubBlock,
     }
 
     if (lpcb) *lpcb = buflen;
-    *lpspBuffer = (SEGPTR) ((char *) spvBlock + ((char *) buffer - (char *) lpvBlock));
+    *lpspBuffer = (void far *) ((char far *) spvBlock + ((char far *) buffer - (char far *) lpvBlock));
 
     return retv;
 }
