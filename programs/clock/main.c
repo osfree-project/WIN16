@@ -64,6 +64,9 @@ void CLOCK_ReadConfiguration(void)
 {
     int  right, bottom;
 	char buffer[100];
+	DWORD dwVersion;
+	BYTE bMajorVersion;
+	BYTE bMinorVersion;
 
     /* Read Options from `win.ini' */
 	GetProfileString("intl", "s1159", "AM", Globals.s1159, sizeof(Globals.s1159));
@@ -76,7 +79,14 @@ void CLOCK_ReadConfiguration(void)
 
     /* Read Options from `clock.ini' */
     Globals.bMaximized = GetPrivateProfileInt("Clock", "Maximized", FALSE, Globals.lpszIniFile);
-    Globals.bWin30Style = GetPrivateProfileInt("Clock", "Win30Style", FALSE, Globals.lpszIniFile);
+
+    // Get the Windows version.
+    dwVersion = GetVersion();
+ 
+    bMajorVersion = (LOBYTE(LOWORD(dwVersion)));
+    bMinorVersion = (HIBYTE(LOWORD(dwVersion)));
+	
+    Globals.bWin30Style = GetPrivateProfileInt("Clock", "Win30Style", (bMajorVersion==3)&&(bMinorVersion==0), Globals.lpszIniFile);
     GetPrivateProfileString("Clock", "sFont", "", Globals.logfont.lfFaceName, sizeof(Globals.logfont.lfFaceName), Globals.lpszIniFile);
     GetPrivateProfileString("Clock", "Options", "", buffer, sizeof(buffer), Globals.lpszIniFile);
     if (6 == sscanf(buffer, "%d,%d,%d,%d,%d,%d", &(Globals.bAnalog), &(Globals.bMinimized), &(Globals.bSeconds), &(Globals.bWithoutTitle), &(Globals.bAlwaysOnTop), &(Globals.bDate)))
@@ -358,7 +368,6 @@ static VOID CLOCK_Paint(HWND hWnd)
 	
     dc = BeginPaint(hWnd, &ps);
 
-
     /* Use an offscreen dc to avoid flicker */
     dcMem = CreateCompatibleDC(dc);
     bmMem = CreateCompatibleBitmap(dc, ps.rcPaint.right - ps.rcPaint.left,
@@ -412,12 +421,12 @@ static LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
 
         case WM_NCLBUTTONDBLCLK:
         case WM_LBUTTONDBLCLK: {
-	    CLOCK_ToggleTitle();
+			CLOCK_ToggleTitle();
             break;
         }
 
         case WM_PAINT: {
-	    CLOCK_Paint(hWnd);
+			CLOCK_Paint(hWnd);
             break;
 
         }
@@ -549,7 +558,13 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     if (!CLOCK_ResetTimer())
 		return FALSE;
 
-    Globals.hMainMenu = LoadMenu(hInstance, MAKEINTRESOURCE(MAIN_MENU));
+	if (Globals.bWin30Style)
+	{
+		Globals.hMainMenu = LoadMenu(hInstance, MAKEINTRESOURCE(MAIN3_MENU));
+	} else {
+		Globals.hMainMenu = LoadMenu(hInstance, MAKEINTRESOURCE(MAIN_MENU));
+	}
+	
     SetMenu(Globals.hMainWnd, Globals.hMainMenu);
     CLOCK_UpdateMenuCheckmarks();
     CLOCK_UpdateWindowCaption();

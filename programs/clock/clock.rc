@@ -43,6 +43,16 @@ MAIN_MENU MENU
  }
 }
 
+MAIN3_MENU MENU
+{
+ POPUP "&Settings" {
+  MENUITEM "&Analog", IDM_ANALOG
+  MENUITEM "&Digital", IDM_DIGITAL
+  MENUITEM SEPARATOR
+  MENUITEM "A&bout Clock", IDM_ABOUT
+ }
+}
+
 STRINGTABLE
 {
 IDS_CLOCK, "Clock"

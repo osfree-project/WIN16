@@ -17,6 +17,7 @@
  */
 
 
+#define MAIN3_MENU                0x200
 #define MAIN_MENU                 0x100
 #define IDM_ANALOG                0x101
 #define IDM_DIGITAL               0x102

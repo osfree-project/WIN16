@@ -484,7 +484,7 @@ static VOID MAIN_CreateMainWindow(void)
   /* Get the geometry of the main window */
   GetPrivateProfileString("Settings", "Window", "",
                           buffer, sizeof(buffer), Globals.lpszIniFile);
-  if (5 == sscanf(buffer, "%d %d %d %d %d", &left, &top, &right, &bottom, &show))
+  if (5 == sscanf(buffer, "%d,%d,%d,%d,%d", &left, &top, &right, &bottom, &show))
   {
     width  = right - left;
     height = bottom - top;
