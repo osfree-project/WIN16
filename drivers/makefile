@@ -4,7 +4,7 @@
 # author
 #
 
-DIRS = display
+DIRS = display keyboard
 
 !include $(%ROOT)tools/mk/all.mk
 
