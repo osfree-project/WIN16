@@ -4,10 +4,10 @@
 # author, date
 #
 
-PROJ  = xlat8661
-PROJ1 = xlat866
+PROJ  = xlat4371
+PROJ1 = xlat437
 TRGT = $(PROJ1).bin
-srcfiles    = $(p)xlat866$(e)
+srcfiles    = $(p)xlat437$(e)
 JWASM       = 1
 COM         = 1
 NOLIBS      = 1
@@ -21,7 +21,7 @@ DEST        = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 
 TARGETS = $(PATH)$(PROJ1).bin
 
-#.bin: $(PATH)
+.bin.com: $(PATH)
 
 #$(PATH)$(PROJ1).bin: $(PATH)$(PROJ).com 
 # @$(CP) $(PATH)$(PROJ).com $(PATH)$(PROJ).bin $(BLACKHOLE)
