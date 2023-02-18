@@ -7,7 +7,7 @@
 PROJ     = ver
 TRGT     = $(PROJ).dll
 DESC     = Windows ver API Library
-srcfiles = $(p)version$(e)
+srcfiles = $(p)version$(e) $(p)movefile$(e)
 # linking dll file
 DLL     = 1
 EXPORTS = &
