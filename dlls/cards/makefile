@@ -4,8 +4,8 @@
 # author, date
 #
 
-PROJ     = cards1
-PROJ1    = cards
+PROJ     = cards
+PROJ1    = cards1
 TRGT     = $(PROJ).dll
 DESC     = Windows Cards API Library
 srcfiles = $(p)cards$(e)
@@ -23,6 +23,7 @@ EXPORTS = &
 
 OPTIONS = heapsize=32K libfile libentry.obj
 DEST = os2$(SEP)mdos$(SEP)winos2
+
 !include $(%ROOT)tools/mk/appsw16.mk
 
 TARGETS = $(PATH)$(PROJ1).dll
