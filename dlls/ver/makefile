@@ -12,12 +12,12 @@ srcfiles = $(p)version$(e)
 DLL     = 1
 EXPORTS = &
 	GetFileResourceSize.2, &
-	GetFileResource.3.2, &
-	GetFileVersionInfoSize.6.2, &
-	GetFileVersionInfo.7.2, &
-	VerFindFile.8.2, &
-	VerInstallFile.9.2, &
-	VerLanguageName.10.2, &
+	GetFileResource.3, &
+	GetFileVersionInfoSize.6, &
+	GetFileVersionInfo.7, &
+	VerFindFile.8, &
+	VerInstallFile.9, &
+	VerLanguageName.10, &
 	VerQueryValue.11
 
 
@@ -39,7 +39,7 @@ EXPORTS = &
   
 # WEP.8 Need this?
 
-OPTIONS = heapsize=32K libfile libentry.obj
+OPTIONS = heapsize=32K lib lzexpand.lib libfile libentry.obj
 DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 #ADD_COPT=-pl
 

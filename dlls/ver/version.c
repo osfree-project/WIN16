@@ -25,6 +25,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <dos.h>
+#include <ctype.h>
 #include <sys/types.h>
 
 #define NONAMELESSUNION
@@ -187,7 +188,24 @@ typedef struct _IMAGE_NT_HEADERS {
 
 #define RT_VERSION          MAKEINTRESOURCE( 16 )
 
-#define INVALID_FILE_ATTRIBUTES     0xFFFFFFFFL
+#define INVALID_FILE_ATTRIBUTES     0xFFFF
+
+/***********************************************************************
+ * Version Info Structure
+ */
+
+typedef struct
+{
+    WORD  wLength;
+    WORD  wValueLength;
+    char  szKey[1];
+#if 0   /* variable length structure */
+    /* DWORD aligned */
+    BYTE  Value[];
+    /* DWORD aligned */
+    VS_VERSION_INFO_STRUCT16 Children[];
+#endif
+} VS_VERSION_INFO_STRUCT16;
 
 /**********************************************************************
  *  find_entry_by_id
@@ -832,7 +850,7 @@ DWORD WINAPI VerFindFileA(
     const char far *destDir;
     unsigned int  curDirSizeReq;
     unsigned int  destDirSizeReq;
-    char  systemDir[MAX_PATH];
+    char  systemDir[260];  // @todo use some constant here
 
     /* Print out debugging information */
 /*    TRACE("flags = %x filename=%s windir=%s appdir=%s curdirlen=%p(%u) destdirlen=%p(%u)\n",
@@ -940,6 +958,138 @@ UINT WINAPI VerFindFile( UINT flags, LPCSTR lpszFilename,
     return retv;
 }
 
+#define DWORD_ALIGN( base, ptr ) \
+    ( (LPBYTE)(base) + ((((LPBYTE)(ptr) - (LPBYTE)(base)) + 3) & ~3) )
+
+#define VersionInfo16_Value( ver )  \
+    DWORD_ALIGN( (ver), (ver)->szKey + strlen((ver)->szKey) + 1 )
+#define VersionInfo16_Next( ver ) \
+    (VS_VERSION_INFO_STRUCT16 *)( (LPBYTE)ver + (((ver)->wLength + 3) & ~3) )
+
+#define VersionInfo16_Value( ver )  \
+    DWORD_ALIGN( (ver), (ver)->szKey + strlen((ver)->szKey) + 1 )
+
+#define VersionInfo16_Children( ver )  \
+    (const VS_VERSION_INFO_STRUCT16 far *)( VersionInfo16_Value( ver ) + \
+                           ( ( (ver)->wValueLength + 3 ) & ~3 ) )
+
+/***********************************************************************
+ *           VersionInfo16_FindChild             [internal]
+ */
+static const VS_VERSION_INFO_STRUCT16 far *VersionInfo16_FindChild( const VS_VERSION_INFO_STRUCT16 far *info,
+                                                                LPCSTR key, UINT len )
+{
+    const VS_VERSION_INFO_STRUCT16 far *child = VersionInfo16_Children( info );
+
+    while ((char far *)child < (char far *)info + info->wLength )
+    {
+        if (!_fstrnicmp( child->szKey, key, len ) && !child->szKey[len])
+            return child;
+
+        if (!(child->wLength)) return NULL;
+        child = VersionInfo16_Next( child );
+    }
+
+    return NULL;
+}
+
+/***********************************************************************
+ *           VersionInfo16_QueryValue              [internal]
+ *
+ *    Gets a value from a 16-bit NE resource
+ */
+static BOOL VersionInfo16_QueryValue( const VS_VERSION_INFO_STRUCT16 far *info, LPCSTR lpSubBlock,
+                               LPVOID *lplpBuffer, UINT far *puLen )
+{
+    while ( *lpSubBlock )
+    {
+        /* Find next path component */
+        LPCSTR lpNextSlash;
+        for ( lpNextSlash = lpSubBlock; *lpNextSlash; lpNextSlash++ )
+            if ( *lpNextSlash == '\\' )
+                break;
+
+        /* Skip empty components */
+        if ( lpNextSlash == lpSubBlock )
+        {
+            lpSubBlock++;
+            continue;
+        }
+
+        /* We have a non-empty component: search info for key */
+        info = VersionInfo16_FindChild( info, lpSubBlock, lpNextSlash-lpSubBlock );
+        if ( !info )
+        {
+            if (puLen) *puLen = 0 ;
+//            SetLastError( ERROR_RESOURCE_TYPE_NOT_FOUND );
+            return FALSE;
+        }
+
+        /* Skip path component */
+        lpSubBlock = lpNextSlash;
+    }
+
+    /* Return value */
+    *lplpBuffer = VersionInfo16_Value( info );
+    if (puLen)
+        *puLen = info->wValueLength;
+
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           VerQueryValueA              [internal]
+ */
+BOOL WINAPI VerQueryValueA( void const far * pBlock, LPCSTR lpSubBlock,
+                               LPVOID *lplpBuffer, UINT far * puLen )
+{
+    static const char rootA[] = "\\";
+    const VS_VERSION_INFO_STRUCT16 far *info = pBlock;
+
+//    TRACE("(%p,%s,%p,%p)\n",
+//                pBlock, debugstr_a(lpSubBlock), lplpBuffer, puLen );
+
+     if (!pBlock)
+        return FALSE;
+
+    if (lpSubBlock == NULL || lpSubBlock[0] == '\0')
+        lpSubBlock = rootA;
+
+    return VersionInfo16_QueryValue(info, lpSubBlock, lplpBuffer, puLen);
+}
+
+/*************************************************************************
+ * VerQueryValue                          [VER.11]
+ */
+int WINAPI VerQueryValue( void const far * spvBlock, LPCSTR lpszSubBlock,
+                              void far * far *lpspBuffer, UINT far  *lpcb )
+{
+    LPVOID lpvBlock = (LPVOID)spvBlock;
+    LPVOID buffer = lpvBlock;
+    UINT buflen;
+    DWORD retv;
+
+//    TRACE("(%p, %s, %p, %p)\n",
+//                lpvBlock, debugstr_a(lpszSubBlock), lpspBuffer, lpcb );
+
+    retv = VerQueryValueA( lpvBlock, lpszSubBlock, &buffer, &buflen );
+    if ( !retv ) return FALSE;
+
+    if ( OFFSETOF( spvBlock ) + ((char far *) buffer - (char far *) lpvBlock) >= 0x10000 )
+    {
+//        FIXME("offset %08X too large relative to %04X:%04X\n",
+//               (char *) buffer - (char *) lpvBlock, SELECTOROF( spvBlock ), OFFSETOF( spvBlock ) );
+        return FALSE;
+    }
+
+    if (lpcb) *lpcb = buflen;
+    *lpspBuffer = (void far *) ((char far *) spvBlock + ((char far *) buffer - (char far *) lpvBlock));
+
+    return retv;
+}
+
+
 static LPBYTE
 _fetch_versioninfo(LPSTR fn,VS_FIXEDFILEINFO **vffi) {
     DWORD	alloclen;
@@ -1034,7 +1184,7 @@ DWORD WINAPI VerInstallFileA(
     if (attr == INVALID_FILE_ATTRIBUTES) {
     	char far *s;
 
-	GetTempFileName(pdest,"ver",0,tmpfn); /* should not fail ... */
+	GetTempFileName(*pdest,"ver",0,tmpfn); /* should not fail ... */
 	s=_fstrrchr(tmpfn,'\\');
 	if (s)
 	    tmplast = s-tmpfn;
@@ -1123,7 +1273,7 @@ DWORD WINAPI VerInstallFileA(
     } else {
     	if (!_dos_getfileattr(destfn, &attr))
 	    if (!remove(destfn)) {
-		xret|=_error2vif(GetLastError())|VIF_CANNOTDELETE;
+		xret|=/*_error2vif(GetLastError())|*/VIF_CANNOTDELETE;
 		remove(tmpfn);
 		LZClose(hfsrc);
 		return xret;
@@ -1139,11 +1289,11 @@ DWORD WINAPI VerInstallFileA(
 	    if (!_dos_getfileattr(curfn, &attr)) {
 		/* FIXME: check if in use ... if it is, VIF_CANNOTDELETECUR */
 		if (!remove(curfn))
-	    	    xret|=_error2vif(GetLastError())|VIF_CANNOTDELETECUR;
+	    	    xret|=/*_error2vif(GetLastError())|*/VIF_CANNOTDELETECUR;
 	    }
 	}
 	if (!MoveFile(tmpfn,destfn)) {
-	    xret|=_error2vif(GetLastError())|VIF_CANNOTRENAME;
+	    xret|=/*_error2vif(GetLastError())|*/VIF_CANNOTRENAME;
 	    remove(tmpfn);
 	}
     }
@@ -1179,32 +1329,8 @@ UINT WINAPI VerLanguageName( UINT uLang, LPSTR lpszLang, UINT cbLang )
     return 0;
 }
 
-/*************************************************************************
- * VerQueryValue                          [VER.11]
- */
-int WINAPI VerQueryValue( void const far * spvBlock, LPCSTR lpszSubBlock,
-                              void far * far *lpspBuffer, UINT far  *lpcb )
+BOOL FAR PASCAL LibMain( HINSTANCE hInstance, WORD wDataSegment,
+                         WORD wHeapSize, LPSTR lpszCmdLine )
 {
-    LPVOID lpvBlock = (LPVOID)spvBlock;
-    LPVOID buffer = lpvBlock;
-    UINT buflen;
-    DWORD retv;
-
-//    TRACE("(%p, %s, %p, %p)\n",
-//                lpvBlock, debugstr_a(lpszSubBlock), lpspBuffer, lpcb );
-
-    retv = VerQueryValueA( lpvBlock, lpszSubBlock, &buffer, &buflen );
-    if ( !retv ) return FALSE;
-
-    if ( OFFSETOF( spvBlock ) + ((char far *) buffer - (char far *) lpvBlock) >= 0x10000 )
-    {
-//        FIXME("offset %08X too large relative to %04X:%04X\n",
-//               (char *) buffer - (char *) lpvBlock, SELECTOROF( spvBlock ), OFFSETOF( spvBlock ) );
-        return FALSE;
-    }
-
-    if (lpcb) *lpcb = buflen;
-    *lpspBuffer = (void far *) ((char far *) spvBlock + ((char far *) buffer - (char far *) lpvBlock));
-
-    return retv;
+  return( 1 );
 }
