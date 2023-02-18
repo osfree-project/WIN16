@@ -23,12 +23,15 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+#include <dos.h>
 #include <sys/types.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include <windows.h>
 #include <lzexpand.h>
+#include <ver.h>
 
 
 #define GlobalPtrHandle(lp) \
@@ -183,7 +186,8 @@ typedef struct _IMAGE_NT_HEADERS {
 } IMAGE_NT_HEADERS, *PIMAGE_NT_HEADERS;
 
 #define RT_VERSION          MAKEINTRESOURCE( 16 )
-#define VS_VERSION_INFO 1
+
+#define INVALID_FILE_ATTRIBUTES     0xFFFFFFFFL
 
 /**********************************************************************
  *  find_entry_by_id
@@ -711,7 +715,7 @@ DWORD WINAPI GetFileResourceSize( LPCSTR lpszFileName, LPCSTR lpszResType,
 /*************************************************************************
  * GetFileResource                         [VER.3]
  */
-DWORD WINAPI GetFileResource( LPCSTR lpszFileName, LPCSTR lpszResType,
+int WINAPI GetFileResource( LPCSTR lpszFileName, LPCSTR lpszResType,
                                 LPCSTR lpszResId, DWORD dwFileOffset,
                                 DWORD dwResLen, LPVOID lpvData )
 {
@@ -757,7 +761,7 @@ DWORD WINAPI GetFileVersionInfoSize( LPCSTR filename, LPDWORD handle )
 /*************************************************************************
  * GetFileVersionInfo                      [VER.7]
  */
-DWORD WINAPI GetFileVersionInfo( LPCSTR filename, DWORD handle, DWORD datasize, LPVOID data )
+int WINAPI GetFileVersionInfo( LPCSTR filename, DWORD handle, DWORD datasize, LPVOID data )
 {
 //    TRACE("(%s, %08lx, %ld, %p)\n", debugstr_a(filename), handle, datasize, data );
 
@@ -910,8 +914,8 @@ DWORD WINAPI VerFindFileA(
 /*************************************************************************
  * VerFindFile                             [VER.8]
  */
-DWORD WINAPI VerFindFile( UINT flags, LPSTR lpszFilename,
-                            LPSTR lpszWinDir, LPSTR lpszAppDir,
+UINT WINAPI VerFindFile( UINT flags, LPCSTR lpszFilename,
+                            LPCSTR lpszWinDir, LPCSTR lpszAppDir,
                             LPSTR lpszCurDir, UINT far *lpuCurDirLen,
                             LPSTR lpszDestDir, UINT far *lpuDestDirLen )
 {
@@ -949,7 +953,7 @@ _fetch_versioninfo(LPSTR fn,VS_FIXEDFILEINFO **vffi) {
         return NULL;
     }
     while (1) {
-    	ret = GetFileVersionInfoA(fn,0,alloclen,buf);
+    	ret = GetFileVersionInfo(fn,0,alloclen,buf);
 	if (!ret) {
 	    GlobalFreePtr(buf);
 	    return NULL;
@@ -985,7 +989,8 @@ DWORD WINAPI VerInstallFileA(
     LPCSTR pdest;
     char	destfn[260],tmpfn[260],srcfn[260];
     HFILE	hfsrc,hfdst;
-    DWORD	attr,ret,xret,tmplast;
+    unsigned    attr;
+    DWORD	ret,xret,tmplast;
     LPBYTE	buf1,buf2;
     OFSTRUCT	ofs;
 
@@ -1002,9 +1007,10 @@ DWORD WINAPI VerInstallFileA(
     	return VIF_CANNOTREADSRC;
     sprintf(tmpfn,"%s\\%s",pdest,destfilename);
     tmplast=lstrlen(pdest)+1;
-    attr = GetFileAttributes(tmpfn);
-    if (attr != INVALID_FILE_ATTRIBUTES) {
-	if (attr & FILE_ATTRIBUTE_READONLY) {
+//    attr = GetFileAttributes(tmpfn);
+    if (!_dos_getfileattr(tmpfn, &attr)) {
+//	if (attr & FILE_ATTRIBUTE_READONLY) {
+        if (attr & _A_RDONLY	) {
 	    LZClose(hfsrc);
 	    return VIF_WRITEPROT;
 	}
@@ -1015,17 +1021,21 @@ DWORD WINAPI VerInstallFileA(
     	if (tmpfile[0]) {
 	    sprintf(tmpfn,"%s\\%s",pdest,tmpfile);
 	    tmplast = lstrlen(pdest)+1;
-	    attr = GetFileAttributes(tmpfn);
+//	    attr = GetFileAttributes(tmpfn);
+            if (_dos_getfileattr(tmpfn, &attr)) 
+            {
+              attr = INVALID_FILE_ATTRIBUTES;
+            }
 	    /* if it exists, it has been copied by the call before.
 	     * we jump over the copy part...
 	     */
 	}
     }
     if (attr == INVALID_FILE_ATTRIBUTES) {
-    	char	*s;
+    	char far *s;
 
 	GetTempFileName(pdest,"ver",0,tmpfn); /* should not fail ... */
-	s=strrchr(tmpfn,'\\');
+	s=_fstrrchr(tmpfn,'\\');
 	if (s)
 	    tmplast = s-tmpfn;
 	else
@@ -1095,46 +1105,46 @@ DWORD WINAPI VerInstallFileA(
 		     * generiert DIFFLANG|MISMATCH
 		     */
 		}
-		HeapFree(GetProcessHeap(), 0, buf2);
+		GlobalFreePtr(buf2);
 	    } else
 		xret=VIF_MISMATCH|VIF_SRCOLD;
-	    HeapFree(GetProcessHeap(), 0, buf1);
+	    GlobalFreePtr(buf1);
 	}
     }
     if (xret) {
-	if (*tmpfilelen<strlen(tmpfn+tmplast)) {
+	if (*tmpfilelen<lstrlen(tmpfn+tmplast)) {
 	    xret|=VIF_BUFFTOOSMALL;
-	    DeleteFileA(tmpfn);
+	    remove(tmpfn);
 	} else {
-	    strcpy(tmpfile,tmpfn+tmplast);
-	    *tmpfilelen = strlen(tmpfn+tmplast)+1;
+	    lstrcpy(tmpfile,tmpfn+tmplast);
+	    *tmpfilelen = lstrlen(tmpfn+tmplast)+1;
 	    xret|=VIF_TEMPFILE;
 	}
     } else {
-    	if (-1!=GetFileAttributesA(destfn))
-	    if (!DeleteFileA(destfn)) {
+    	if (!_dos_getfileattr(destfn, &attr))
+	    if (!remove(destfn)) {
 		xret|=_error2vif(GetLastError())|VIF_CANNOTDELETE;
-		DeleteFileA(tmpfn);
+		remove(tmpfn);
 		LZClose(hfsrc);
 		return xret;
 	    }
 	if ((!(flags & VIFF_DONTDELETEOLD))	&&
 	    curdir				&&
 	    *curdir				&&
-	    lstrcmpiA(curdir,pdest)
+	    lstrcmpi(curdir,pdest)
 	) {
 	    char curfn[260];
 
 	    sprintf(curfn,"%s\\%s",curdir,destfilename);
-	    if (INVALID_FILE_ATTRIBUTES != GetFileAttributesA(curfn)) {
+	    if (!_dos_getfileattr(curfn, &attr)) {
 		/* FIXME: check if in use ... if it is, VIF_CANNOTDELETECUR */
-		if (!DeleteFileA(curfn))
+		if (!remove(curfn))
 	    	    xret|=_error2vif(GetLastError())|VIF_CANNOTDELETECUR;
 	    }
 	}
-	if (!MoveFileA(tmpfn,destfn)) {
+	if (!MoveFile(tmpfn,destfn)) {
 	    xret|=_error2vif(GetLastError())|VIF_CANNOTRENAME;
-	    DeleteFileA(tmpfn);
+	    remove(tmpfn);
 	}
     }
     LZClose(hfsrc);
@@ -1145,8 +1155,8 @@ DWORD WINAPI VerInstallFileA(
  * VerInstallFile                          [VER.9]
  */
 DWORD WINAPI VerInstallFile( UINT flags,
-                               LPSTR lpszSrcFilename, LPSTR lpszDestFilename,
-                               LPSTR lpszSrcDir, LPSTR lpszDestDir, LPSTR lpszCurDir,
+                               LPCSTR lpszSrcFilename, LPCSTR lpszDestFilename,
+                               LPCSTR lpszSrcDir, LPCSTR lpszDestDir, LPCSTR lpszCurDir,
                                LPSTR lpszTmpFile, UINT far *lpwTmpFileLen )
 {
     UINT filelen = *lpwTmpFileLen;
@@ -1159,21 +1169,23 @@ DWORD WINAPI VerInstallFile( UINT flags,
     return retv;
 }
 
+
 /*************************************************************************
  * VerLanguageName                        [VER.10]
  */
-DWORD WINAPI VerLanguageName( UINT uLang, LPSTR lpszLang, UINT cbLang )
+UINT WINAPI VerLanguageName( UINT uLang, LPSTR lpszLang, UINT cbLang )
 {
-    return VerLanguageNameA( uLang, lpszLang, cbLang );
+    // in Windows 3.x country information stored in control.inf file
+    return 0;
 }
 
 /*************************************************************************
  * VerQueryValue                          [VER.11]
  */
-DWORD WINAPI VerQueryValue( void * spvBlock, LPSTR lpszSubBlock,
-                              void far *lpspBuffer, UINT far  *lpcb )
+int WINAPI VerQueryValue( void const far * spvBlock, LPCSTR lpszSubBlock,
+                              void far * far *lpspBuffer, UINT far  *lpcb )
 {
-    LPVOID lpvBlock = spvBlock;
+    LPVOID lpvBlock = (LPVOID)spvBlock;
     LPVOID buffer = lpvBlock;
     UINT buflen;
     DWORD retv;
