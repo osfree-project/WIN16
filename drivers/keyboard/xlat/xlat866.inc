@@ -1,0 +1,1 @@
+CODEPAGE	DW	866	; Russia
