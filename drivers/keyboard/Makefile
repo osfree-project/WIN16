@@ -4,7 +4,7 @@
 # author
 #
 
-DIRS = keyboard
+DIRS = keyboard tables
 
 !include $(%ROOT)tools/mk/all.mk
 
