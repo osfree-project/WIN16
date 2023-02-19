@@ -433,11 +433,11 @@ BYTE WINAPI EnableKBSysReq(WORD fSys)
 	{
 		case 1: fSysReq=fSysReq | 1;
 		        break;
-		case 2: fSysReq=fSysReq & 1;
+		case 2: fSysReq=fSysReq & !1;
 		        break;
 		case 4: fSysReq=fSysReq | 2;
 		        break;
-		case 8: fSysReq=fSysReq & 2;
+		case 8: fSysReq=fSysReq & !2;
 		        break;
 	}
 	return fSysReq;
