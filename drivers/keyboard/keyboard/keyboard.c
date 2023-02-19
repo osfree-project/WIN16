@@ -27,7 +27,9 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "windows.h"
+#include <windows.h>
+
+#include "vkeys.h"
 
 //WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
 
@@ -48,6 +50,108 @@ static WORD wScreenSwitchEnable=1;	// Screen switch enabled by default
 static FARPROC lpOldInt09=NULL;		// Old INT 09H handler
 static BYTE fSysReq=0;			// Enables CTRL-ALT-SysReq if NZ
 extern BYTE near * PASCAL tablestart;	// OEM<>ANSI XLAT tables
+
+static BYTE keyTrTab[89] ={
+		-1			,
+		VK_ESCAPE 	,
+		VK_1      	,// 02h 2
+		VK_2      	,// 03h 3
+		VK_3      	,// 04h 4
+		VK_4      	,// 05h 5
+		VK_5      	,// 06h 6
+		VK_6      	,// 07h 7
+		VK_7      	,// 08h 8
+		VK_8      	,// 09h 9
+		VK_9      	,// 0ah 10
+		VK_0      	,// 0bh 11
+
+		VK_OEM_MINUS	,// 0ch 12	; variable
+		VK_OEM_PLUS 	,// 0dh 13	; variable
+		VK_BACK   	,// 0eh 14
+		VK_TAB    	,// 0fh 15
+		VK_Q      	,// 010h 16	; variable -- also VK_A
+		VK_W      	,// 011h 17	; variable -- also VK_Z
+		VK_E      	,// 012h 18
+		VK_R      	,// 013h 19
+		VK_T      	,// 014h 20
+		VK_Y      	,// 015h 21	; variable -- also VK_Z
+		VK_U      	,// 016h 22
+		VK_I      	,// 017h 23
+		VK_O      	,// 018h 24
+		VK_P      	,// 019h 25
+		VK_OEM_4    	,// 01ah 26	; variable
+		VK_OEM_6    	,// 01bh 27	; variable
+		VK_RETURN 	,// 01ch 28
+		VK_CONTROL	,// 01dh 29
+		VK_A      	,// 01eh 30	; variable -- also VK_Q
+		VK_S      	,// 01fh 31
+		VK_D      	,// 020h 32
+		VK_F      	,// 021h 33
+		VK_G      	,// 022h 34
+		VK_H      	,// 023h 35
+		VK_J      	,// 024h 36
+		VK_K      	,// 025h 37
+		VK_L      	,// 026h 38
+		VK_OEM_1    	,// 027h 39	; variable -- also VK_M
+		VK_OEM_7    	,// 028h 40	; variable
+//; X1	label byte	; swap for AT (no swap for USA version)
+		VK_OEM_3    	,// 029h 41	; variable
+		VK_SHIFT  	,// 02ah 42
+// X2	label byte	; swap for AT
+		VK_OEM_5    	,// 02bh 43	; variable
+		VK_Z      	,// 02ch 44	; variable -- also VK_Y
+		VK_X      	,// 02dh 45
+		VK_C      	,// 02eh 46
+		VK_V      	,// 02fh 47
+		VK_B      	,// 030h 48
+		VK_N      	,// 031h 49
+		VK_M      	,// 032h 50	; variable --
+
+		VK_OEM_COMMA	,// 033h 51	; variable
+		VK_OEM_PERIOD	,// 034h 52	; variable
+		VK_OEM_2    	,// 035h 53	; variable
+
+		VK_SHIFT  	,// 036h 54
+		VK_MULTIPLY	,// 037h 55
+		VK_MENU   	,// 038h 56
+		VK_SPACE  	,// 039h 57
+		VK_CAPITAL	,// 03ah 58
+		VK_F1     	,// 03bh 59
+		VK_F2     	,// 03ch 60
+		VK_F3     	,// 03dh 61
+		VK_F4     	,// 03eh 62
+		VK_F5     	,// 03fh 63
+		VK_F6     	,// 040h 64
+		VK_F7     	,// 041h 65
+		VK_F8     	,// 042h 66
+		VK_F9     	,// 043h 67
+		VK_F10    	,// 044h 68
+
+	//; (scancodes 69..83 for most keyboards -- overlaid for Nokia type 6)
+
+//LabNok6 label byte
+		VK_NUMLOCK	,// 045h 69
+		VK_OEM_SCROLL	,// 046h 70
+		VK_HOME   	,// 047h 71
+		VK_UP     	,// 048h 72
+		VK_PRIOR  	,// 049h 73
+		VK_SUBTRACT	,// 04ah 74
+		VK_LEFT   	,// 04bh 75
+		VK_CLEAR  	,// 04ch 76
+		VK_RIGHT  	,// 04dh 77
+		VK_ADD    	,// 04eh 78
+		VK_END    	,// 04fh 79
+		VK_DOWN   	,// 050h 80
+		VK_NEXT   	,// 051h 81
+		VK_INSERT 	,// 052h 82
+		VK_DELETE 	,// 053h 83
+// Enhanced
+		-1		,// 054h 84
+		-1		,// 055h 85
+		VK_OEM_102	,// 056h 86
+		VK_F11    	,// 057h 87
+		VK_F12    	// 058h 88
+};
 
 /***********************************************************************
  *		Inquire (KEYBOARD.1)
