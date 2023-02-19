@@ -14,9 +14,16 @@ ADD_COPT = -dCARDSTYLE_DEFAULT
 # linking dll file
 DLL     = 1
 EXPORTS = &
+	Inquire     	.1, &
+	Enable      	.2, &
+	Disable     	.3, &
 	ToAscii 	.4, &
 	AnsiToOem 	.5, &
 	OemToAnsi 	.6, &
+	SetSpeed    	.7, &
+	ScreenSwitchEnable.100, &
+	GetTableSeg     .126, &
+	NewTable	.127, &
 	OemKeyScan 	.128, &
 	VkKeyScan 	.129, &
 	GetKeyboardType .130, &
@@ -24,7 +31,9 @@ EXPORTS = &
 	GetKBCodePage 	.132, &
 	GetKeyNameText 	.133, &
 	AnsiToOemBuff 	.134, &
-	OemToAnsiBuff 	.135
+	OemToAnsiBuff 	.135, &
+	EnableKBSysReq	.136, &
+	GetBIOSKeyProc	.137
 
 OPTIONS = heapsize=32K libfile libentry.obj
 DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system

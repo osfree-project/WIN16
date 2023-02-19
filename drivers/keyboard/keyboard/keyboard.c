@@ -44,8 +44,9 @@ typedef struct _KBINFO
 
 static FARPROC DefKeybEventProc;
 static LPBYTE pKeyStateTable;
-static WORD wScreenSwitchEnable=1; // Screen switch enabled by default
-
+static WORD wScreenSwitchEnable=1;	// Screen switch enabled by default
+static FARPROC lpOldInt09=NULL;		// Old INT 09H handler
+static BYTE fSysReq=0;			// Enables CTRL-ALT-SysReq if NZ
 
 /***********************************************************************
  *		Inquire (KEYBOARD.1)
@@ -128,12 +129,50 @@ WORD WINAPI SetSpeed(WORD unused)
  *   screen switches, and a NONZERO value to re-enable them.
  *   At startup, screen switches are enabled.
  *
- *   This flag is for OS/2 1.x DOS Compatibility Box
+ *   This flag is for OS/2 1.x DOS Compatibility Box.
  *
  */
 VOID WINAPI ScreenSwitchEnable(WORD fEnable)
 {
 	wScreenSwitchEnable=fEnable;
+}
+
+/***********************************************************************
+ *           GetTableSeg   (KEYBOARD.126)
+ *
+ *  This function used to initialize internal table segment variable to
+ *  internal tables. As side result returns it on exit.
+ *
+ */
+WORD WINAPI GetTableSeg(VOID)
+{
+  return 0;
+}
+
+/***************************************************************************
+ *		NewTable (KEYBOARD.127)
+ *
+ *	Change keyboard tables, if a keyboard table DLL is defined in
+ *	SYSTEM.INI and the function GetKbdTable() exists and returns
+ *	successfully.
+ *
+ *	This function is passed no parameters by the caller -- it obtains
+ *	the following from SYSTEM.INI:
+ *
+ *	      [keyboard]
+ *		TYPE = 4			; 1..6.  4 is enhanced kbd.
+ *		SUBTYPE = 0			; 0 for all but Olivetti
+ *						; 8086 systems & AT&T 6300+
+ *		KEYBOARD.DLL = kbdus.dll	; name of DLL file
+ *		OEMANSI.BIN = XLATNO.BIN	; oem/ansi tables file
+ *
+ *	The module name of the DLL is expected to be the root of the DLL's
+ *	file name.  In any event, the module name must be different for
+ *	each keyboard-table DLL!
+ *
+ */
+VOID WINAPI NewTable(VOID)
+{
 }
 
 /**********************************************************************
@@ -250,6 +289,43 @@ void WINAPI OemToAnsiBuff( LPCSTR s, LPSTR d, UINT len )
     if (len != 0) //OemToCharBuffA( s, d, len );
         if(s != d)
                 lstrcpyn(d,s,len);
+}
+
+/***********************************************************************
+ *           EnableKBSysReq   (KEYBOARD.136)
+ *
+ *   This function enables and shuttles off NMI interrupt simulation
+ *   (trap to debugger) when CTRL-ALT-SysReq is pressed.
+ *   CVWBreak overides int 2.
+ *   fSys	= 01	enable	int 2
+ *		= 02	disable int 2
+ *		= 04	enable	CVWBreak
+ *		= 08	disable CVWBreak
+ *
+ */
+
+BYTE WINAPI EnableKBSysReq(WORD fSys)
+{
+	switch(fSys)
+	{
+		case 1: fSysReq=fSysReq | 1;
+		        break;
+		case 2: fSysReq=fSysReq & 1;
+		        break;
+		case 4: fSysReq=fSysReq | 2;
+		        break;
+		case 8: fSysReq=fSysReq & 2;
+		        break;
+	}
+	return fSysReq;
+}
+
+/***********************************************************************
+ *           GetBIOSKeyProc   (KEYBOARD.137)
+ */
+FARPROC WINAPI GetBIOSKeyProc(VOID)
+{
+	return lpOldInt09;
 }
 
 BOOL WINAPI LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
