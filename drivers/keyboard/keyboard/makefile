@@ -8,8 +8,9 @@ PROJ     = keyboard1
 PROJ1    = keyboard
 TRGT     = $(PROJ1).drv
 DESC     = Windows keyboard driver
-srcfiles = $(p)keyboard$(e)
+srcfiles = $(p)keyboard$(e) $(p)xlatus$(e)
 ADD_COPT = -dCARDSTYLE_DEFAULT
+ADD_ASMOPT = -i=..$(SEP)tables$(SEP)xlat
 
 # linking dll file
 DLL     = 1

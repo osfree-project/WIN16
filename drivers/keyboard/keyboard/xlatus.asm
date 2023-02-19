@@ -3,6 +3,7 @@ code	segment
 
 tablesize	dw	tableend - tablestart
 
+public tablestart
 tablestart:
 
 	include xlat437.inc

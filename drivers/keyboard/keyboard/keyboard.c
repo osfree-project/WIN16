@@ -47,6 +47,7 @@ static LPBYTE pKeyStateTable;
 static WORD wScreenSwitchEnable=1;	// Screen switch enabled by default
 static FARPROC lpOldInt09=NULL;		// Old INT 09H handler
 static BYTE fSysReq=0;			// Enables CTRL-ALT-SysReq if NZ
+extern BYTE near * PASCAL tablestart;	// OEM<>ANSI XLAT tables
 
 /***********************************************************************
  *		Inquire (KEYBOARD.1)
@@ -146,7 +147,8 @@ VOID WINAPI ScreenSwitchEnable(WORD fEnable)
  */
 WORD WINAPI GetTableSeg(VOID)
 {
-  return 0;
+	// @todo Not correct yet
+	return SELECTOROF(tablestart);
 }
 
 /***************************************************************************
@@ -260,7 +262,7 @@ UINT WINAPI MapVirtualKey(UINT wCode, UINT wMapType)
  */
 int WINAPI GetKBCodePage(void)
 {
-//    return GetKBCodePage();
+	return *tablestart;
 }
 
 /****************************************************************************
@@ -330,6 +332,5 @@ FARPROC WINAPI GetBIOSKeyProc(VOID)
 
 BOOL WINAPI LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-
-    return TRUE;
+	return TRUE;
 }
