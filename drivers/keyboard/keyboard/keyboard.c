@@ -44,6 +44,8 @@ typedef struct _KBINFO
 
 static FARPROC DefKeybEventProc;
 static LPBYTE pKeyStateTable;
+static WORD wScreenSwitchEnable=1; // Screen switch enabled by default
+
 
 /***********************************************************************
  *		Inquire (KEYBOARD.1)
@@ -121,10 +123,17 @@ WORD WINAPI SetSpeed(WORD unused)
 
 /**********************************************************************
  *		ScreenSwitchEnable (KEYBOARD.100)
+ *
+ *   The fEnable parameter is set to 0 to disable
+ *   screen switches, and a NONZERO value to re-enable them.
+ *   At startup, screen switches are enabled.
+ *
+ *   This flag is for OS/2 1.x DOS Compatibility Box
+ *
  */
-VOID WINAPI ScreenSwitchEnable(WORD unused)
+VOID WINAPI ScreenSwitchEnable(WORD fEnable)
 {
-//  FIXME("(%04x): stub\n", unused);
+	wScreenSwitchEnable=fEnable;
 }
 
 /**********************************************************************
