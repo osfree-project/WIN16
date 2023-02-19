@@ -51,6 +51,10 @@ static FARPROC lpOldInt09=NULL;		// Old INT 09H handler
 static BYTE fSysReq=0;			// Enables CTRL-ALT-SysReq if NZ
 extern BYTE near * PASCAL tablestart;	// OEM<>ANSI XLAT tables
 
+// This table used by keyboard interrupt handler to produce virtual key
+// code VK_? from keyboard scan code. This table can be changed by NewTable
+// function. Also MapVirtualKey uses it.
+
 static BYTE keyTrTab[89] ={
 		-1			,
 		VK_ESCAPE 	,
@@ -64,7 +68,6 @@ static BYTE keyTrTab[89] ={
 		VK_8      	,// 09h 9
 		VK_9      	,// 0ah 10
 		VK_0      	,// 0bh 11
-
 		VK_OEM_MINUS	,// 0ch 12	; variable
 		VK_OEM_PLUS 	,// 0dh 13	; variable
 		VK_BACK   	,// 0eh 14
@@ -106,11 +109,9 @@ static BYTE keyTrTab[89] ={
 		VK_B      	,// 030h 48
 		VK_N      	,// 031h 49
 		VK_M      	,// 032h 50	; variable --
-
 		VK_OEM_COMMA	,// 033h 51	; variable
 		VK_OEM_PERIOD	,// 034h 52	; variable
 		VK_OEM_2    	,// 035h 53	; variable
-
 		VK_SHIFT  	,// 036h 54
 		VK_MULTIPLY	,// 037h 55
 		VK_MENU   	,// 038h 56
@@ -126,9 +127,7 @@ static BYTE keyTrTab[89] ={
 		VK_F8     	,// 042h 66
 		VK_F9     	,// 043h 67
 		VK_F10    	,// 044h 68
-
 	//; (scancodes 69..83 for most keyboards -- overlaid for Nokia type 6)
-
 //LabNok6 label byte
 		VK_NUMLOCK	,// 045h 69
 		VK_OEM_SCROLL	,// 046h 70
@@ -145,7 +144,7 @@ static BYTE keyTrTab[89] ={
 		VK_NEXT   	,// 051h 81
 		VK_INSERT 	,// 052h 82
 		VK_DELETE 	,// 053h 83
-// Enhanced
+// Enhanced keyboard
 		-1		,// 054h 84
 		-1		,// 055h 85
 		VK_OEM_102	,// 056h 86
@@ -355,10 +354,28 @@ int WINAPI GetKeyboardType(int nTypeFlag)
  *		MapVirtualKey (KEYBOARD.131)
  *
  * MapVirtualKey translates keycodes from one format to another
+ * MAPVK_VK_TO_VSC 0 The uCode parameter is a virtual-key code and is 
+ *                   translated into a scan code. If it is a virtual-key 
+ *                   code that does not distinguish between left- and 
+ *                   right-hand keys, the left-hand scan code is returned.
+ *                   If there is no translation, the function returns 0.
+ * MAPVK_VSC_TO_VK 1 The uCode parameter is a scan code and is translated
+ *                   into a virtual-key code that does not distinguish 
+ *                   between left- and right-hand keys. If there is no 
+ *                   translation, the function returns 0.
+ * MAPVK_VK_TO_CHAR 2 The uCode parameter is a virtual-key code and is 
+ *                   translated into an unshifted character value in the
+ *                   low order word of the return value. Dead keys 
+ *                   (diacritics) are indicated by setting the top 
+ *                   bit of the return value. If there is no translation, 
+ *                   the function returns 0. See Remarks.
+ *
+ * @todo only wMapType=1 supported for now
  */
 UINT WINAPI MapVirtualKey(UINT wCode, UINT wMapType)
 {
-//    return MapVirtualKeyA(wCode,wMapType);
+	if (wMapType==2) return keyTrTab[wCode];
+	return 0;
 }
 
 /****************************************************************************
