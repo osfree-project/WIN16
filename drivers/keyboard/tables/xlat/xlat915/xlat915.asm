@@ -5,10 +5,11 @@ tablesize	dw	tableend - tablestart
 
 tablestart:
 
-	include xlat866.inc
+	include xlat915.inc
 
 tableend:
 
+; This is seems to be optional
 	include	copyright.inc
 
 code	ends
