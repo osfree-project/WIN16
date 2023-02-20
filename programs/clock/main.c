@@ -42,7 +42,7 @@ CLOCK_GLOBALS Globals;
 void CLOCK_SaveConfiguration(void)
 {
 	char buffer[100];
-    RECT rect;
+    //RECT rect;
     WritePrivateProfileString("Clock", "Maximized",
                               Globals.bMaximized ? "1" : "0",
                               Globals.lpszIniFile);
@@ -54,9 +54,9 @@ void CLOCK_SaveConfiguration(void)
                               Globals.logfont.lfFaceName,
                               Globals.lpszIniFile);
 
-    GetWindowRect(Globals.hMainWnd, &rect);
+//    GetWindowRect(Globals.hMainWnd, &rect);
 
-    wsprintf(buffer, "%d,%d,%d,%d", rect.left, rect.top, rect.right, rect.bottom);
+    wsprintf(buffer, "%d,%d,%d,%d", Globals.x, Globals.y, Globals.x+Globals.MaxX, Globals.y+Globals.MaxY);
     WritePrivateProfileString("Clock", "Position", buffer, Globals.lpszIniFile);
 }
 
@@ -111,7 +111,7 @@ void CLOCK_ReadConfiguration(void)
     {
       Globals.x = Globals.y = CW_USEDEFAULT;
       Globals.MaxX = Globals.MaxY = INITIAL_WINDOW_SIZE;
-      Globals.MaxY +=GetSystemMetrics(SM_CYCAPTION);
+//      Globals.MaxY +=GetSystemMetrics(SM_CYCAPTION);
     }
 
 }
@@ -245,6 +245,7 @@ static VOID CLOCK_ChooseFont(VOID)
  */
 static VOID CLOCK_ToggleTitle(VOID)
 {
+			RECT rect;
     /* Also shows/hides the menu */
     LONG style = GetWindowLong(Globals.hMainWnd, GWL_STYLE);
     if ((Globals.bWithoutTitle = !Globals.bWithoutTitle)) {
@@ -259,7 +260,7 @@ static VOID CLOCK_ToggleTitle(VOID)
     SetWindowLong(Globals.hMainWnd, GWL_STYLE, style);
     SetWindowPos(Globals.hMainWnd, 0,0,0,0,0, 
 		 SWP_DRAWFRAME|SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER);
-    
+
     CLOCK_UpdateMenuCheckmarks();
     CLOCK_UpdateWindowCaption();
 }
@@ -365,7 +366,7 @@ static VOID CLOCK_Paint(HWND hWnd)
     HDC dcMem, dc;
     HBITMAP bmMem, bmOld;
     HBRUSH hBrush;
-	
+
     dc = BeginPaint(hWnd, &ps);
 
     /* Use an offscreen dc to avoid flicker */
@@ -383,7 +384,7 @@ static VOID CLOCK_Paint(HWND hWnd)
     DeleteObject(hBrush);
 
     if(Globals.bAnalog)
-		AnalogClock(dcMem, Globals.MaxX, Globals.MaxY, Globals.bSeconds, Globals.bWithoutTitle);
+		AnalogClock(dcMem, Globals.MaxX, ps.rcPaint.bottom-ps.rcPaint.top, Globals.bSeconds, Globals.bWithoutTitle);
     else
 		DigitalClock(dcMem, Globals.MaxX, Globals.MaxY, Globals.bSeconds, Globals.hFont);
 
@@ -431,19 +432,87 @@ static LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
 
         }
 
+		case 0x26 /*WM_PAINTICON*/:
+	//	case WM_NCPAINT:
+		{
+			PAINTSTRUCT      ps;
+			HDC              hdc;
+			HPEN	hbrush, hbrushOldBrush;
+			HBRUSH hBrush;
+			if (IsIconic(hWnd))
+			{
+			
+			hdc     = BeginPaint(hWnd,&ps);
+
+			// Выбираем кисть в контекст отображения, сохраняя
+			// идентификатор старой кисти
+			hbrushOldBrush = SelectObject(hdc, hbrush);
+
+    hBrush=CreateSolidBrush(BackgroundColor);
+    /* Erase the background */
+    //FillRect(hdc, &ps.rcPaint,  hBrush);
+    DeleteObject(hBrush);
+
+			// Создаем кисть зеленого цвета
+			hbrush = CreatePen(PS_SOLID, 1,  RGB(0,0,0));
+			SelectObject(hdc, hbrush);
+			MoveTo(hdc, 0, 0);
+			LineTo(hdc, 40,40);
+
+			// Выбираем старую кисть
+			SelectObject(hdc, hbrushOldBrush);
+SetPixel(hdc, ps.rcPaint.left, ps.rcPaint.top, RGB(0xff, 0, 0));
+
+			EndPaint(hWnd,&ps);
+			//ReleaseDC(hWnd, hdc);
+			//break;
+			return DefWindowProc(hWnd, msg, wParam, lParam);
+			} else {
+			return DefWindowProc(hWnd, msg, wParam, lParam);
+			}
+		}
+
+        case WM_MOVE: {
+			RECT rect;
+			if (!IsIconic(hWnd))
+			{
+				GetWindowRect(Globals.hMainWnd, &rect);
+				Globals.x = rect.left;
+				Globals.y = rect.top;
+				Globals.MaxX = rect.right-rect.left;
+				Globals.MaxY = rect.bottom-rect.top;
+			}
+			return DefWindowProc(hWnd, msg, wParam, lParam);
+		}
+		
         case WM_SIZE: {
-            Globals.MaxX = LOWORD(lParam);
-            Globals.MaxY = HIWORD(lParam);
+			RECT rect;
+			
+			if (!IsIconic(hWnd))
+			{
+				GetWindowRect(Globals.hMainWnd, &rect);
+				Globals.x = rect.left;
+				Globals.y = rect.top;
+				Globals.MaxX = rect.right-rect.left;
+				Globals.MaxY = rect.bottom-rect.top;
+			}
+			
 			if (wParam==SIZE_MINIMIZED)
 			{
 				Globals.bMaximized=FALSE;
 				Globals.bMinimized=TRUE;
-			}
+			} else
 			if (wParam==SIZE_MAXIMIZED)
 			{
 				Globals.bMaximized=TRUE;
 				Globals.bMinimized=FALSE;
+			} else
+			if (wParam==SIZE_RESTORED)
+			{
+				Globals.bMaximized=FALSE;
+				Globals.bMinimized=FALSE;
 			}
+			
 #if 0
 // Windows 3.x doesn't support window regions
             if (Globals.bAnalog && Globals.bWithoutTitle)
@@ -461,7 +530,7 @@ static LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
             }
 #endif
 			CLOCK_ResetFont();
-            break;
+            return DefWindowProc(hWnd, msg, wParam, lParam);
         }
 
 		case WM_SYSCOMMAND: {
@@ -482,7 +551,7 @@ static LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
             /* Could just invalidate what has changed,
              * but it doesn't really seem worth the effort
              */
-	    InvalidateRect(Globals.hMainWnd, NULL, FALSE);
+			InvalidateRect(Globals.hMainWnd, NULL, FALSE);
 	    break;
         }
 
