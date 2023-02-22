@@ -366,9 +366,27 @@ static VOID CLOCK_Paint(HWND hWnd)
     HDC dcMem, dc;
     HBITMAP bmMem, bmOld;
     HBRUSH hBrush;
+	RECT rc;
 
     dc = BeginPaint(hWnd, &ps);
 
+	if (IsIconic(hWnd)) 
+    { 
+        GetClientRect(hWnd, &rc); 
+        //SetMapMode(dc, MM_ANISOTROPIC); 
+        SetWindowExt(dc, 100, 100); 
+        SetViewportExt(dc, rc.right, rc.bottom); 
+		hBrush=CreateSolidBrush(BackgroundColor);
+		/* Erase the background */
+		FillRect(dc, &rc,  hBrush);
+		DeleteObject(hBrush);
+		if(Globals.bAnalog)
+			AnalogClock(dc, rc.right-rc.left, rc.bottom-rc.top, Globals.bSeconds, Globals.bWithoutTitle);
+		else
+			DigitalClock(dc, rc.right-rc.left, rc.bottom-rc.top, Globals.bSeconds, Globals.hFont);
+    } 
+    else 
+	{	
     /* Use an offscreen dc to avoid flicker */
     dcMem = CreateCompatibleDC(dc);
     bmMem = CreateCompatibleBitmap(dc, ps.rcPaint.right - ps.rcPaint.left,
@@ -399,7 +417,8 @@ static VOID CLOCK_Paint(HWND hWnd)
     SelectObject(dcMem, bmOld);
     DeleteObject(bmMem);
     DeleteDC(dcMem);
-  
+	}
+	
     EndPaint(hWnd, &ps);
 }
 
@@ -431,46 +450,6 @@ static LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
             break;
 
         }
-
-		case 0x26 /*WM_PAINTICON*/:
-	//	case WM_NCPAINT:
-		{
-			PAINTSTRUCT      ps;
-			HDC              hdc;
-			HPEN	hbrush, hbrushOldBrush;
-			HBRUSH hBrush;
-			if (IsIconic(hWnd))
-			{
-			
-			hdc     = BeginPaint(hWnd,&ps);
-
-			// Выбираем кисть в контекст отображения, сохраняя
-			// идентификатор старой кисти
-			hbrushOldBrush = SelectObject(hdc, hbrush);
-
-    hBrush=CreateSolidBrush(BackgroundColor);
-    /* Erase the background */
-    //FillRect(hdc, &ps.rcPaint,  hBrush);
-    DeleteObject(hBrush);
-
-			// Создаем кисть зеленого цвета
-			hbrush = CreatePen(PS_SOLID, 1,  RGB(0,0,0));
-			SelectObject(hdc, hbrush);
-			MoveTo(hdc, 0, 0);
-			LineTo(hdc, 40,40);
-
-			// Выбираем старую кисть
-			SelectObject(hdc, hbrushOldBrush);
-SetPixel(hdc, ps.rcPaint.left, ps.rcPaint.top, RGB(0xff, 0, 0));
-
-			EndPaint(hWnd,&ps);
-			//ReleaseDC(hWnd, hdc);
-			//break;
-			return DefWindowProc(hWnd, msg, wParam, lParam);
-			} else {
-			return DefWindowProc(hWnd, msg, wParam, lParam);
-			}
-		}
 
         case WM_MOVE: {
 			RECT rect;
@@ -530,7 +509,7 @@ SetPixel(hdc, ps.rcPaint.left, ps.rcPaint.top, RGB(0xff, 0, 0));
             }
 #endif
 			CLOCK_ResetFont();
-            return DefWindowProc(hWnd, msg, wParam, lParam);
+            return 0;//DefWindowProc(hWnd, msg, wParam, lParam);
         }
 
 		case WM_SYSCOMMAND: {
@@ -576,7 +555,7 @@ BOOL CLOCK_RegisterMainWinClass(void)
 	class.cbClsExtra    = 0;
 	class.cbWndExtra    = 0;
 	class.hInstance     = Globals.hInstance;
-	class.hIcon         = LoadIcon(0, (LPCSTR)IDI_APPLICATION);
+	class.hIcon         = 0;//LoadIcon(0, (LPCSTR)IDI_APPLICATION);
 	class.hCursor       = LoadCursor(0, (LPCSTR)IDC_ARROW);
 	class.hbrBackground = 0;
 	class.lpszMenuName  = 0;
