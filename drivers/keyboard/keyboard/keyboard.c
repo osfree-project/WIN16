@@ -219,11 +219,11 @@ void WINAPI AnsiToOem( const char huge * s, char huge *  d )
       {
         if ((BYTE)*dst<=0x1f)		// Range 0x00-0x1f
         {
-           *d=tablestart[*dst+1];
+           *d=tablestart[*dst+2];
         } else 
         if ((BYTE)*dst>=0x80)		// Range 0x80-0xff
         {
-           *d=tablestart[*dst+1+0x20-0x80];
+           *d=tablestart[*dst+2+0x20-0x80];
         } else {			// Range 0x20-0x7f
           *d=*dst;
         }
@@ -247,11 +247,11 @@ void WINAPI OemToAnsi( const char huge *  s, char huge *  d )
       {
         if ((BYTE)*dst<=0x1f)		// Range 0x00-0x1f
         {
-           *d=tablestart[*dst+1+0x20+128];
+           *d=tablestart[*dst+2+0x20+128];
         } else 
         if ((BYTE)*dst>=0x80)		// Range 0x80-0xff
         {
-           *d=tablestart[*dst+1+0x20+128+0x20-0x80];
+           *d=tablestart[*dst+2+0x20+128+0x20-0x80];
         } else {			// Range 0x20-0x7f
           *d=*dst;
         }
@@ -475,11 +475,11 @@ void WINAPI AnsiToOemBuff( LPCSTR s, LPSTR d, UINT len )
       {
         if ((BYTE)*dst<=0x1f)		// Range 0x00-0x1f
         {
-           *d=tablestart[*dst+1];
+           *d=tablestart[*dst+2];
         } else 
         if ((BYTE)*dst>=0x80)		// Range 0x80-0xff
         {
-           *d=tablestart[*dst+1+0x20-0x80];
+           *d=tablestart[*dst+2+0x20-0x80];
         } else {			// Range 0x20-0x7f
           *d=*dst;
         }
@@ -500,11 +500,11 @@ void WINAPI OemToAnsiBuff( LPCSTR s, LPSTR d, UINT len )
       {
         if ((BYTE)*dst<=0x1f)		// Range 0x00-0x1f
         {
-           *d=tablestart[*dst+1+0x20+128];
+           *d=tablestart[*dst+2+0x20+128];
         } else 
         if ((BYTE)*dst>=0x80)		// Range 0x80-0xff
         {
-           *d=tablestart[*dst+1+0x20+128+0x20-0x80];
+           *d=tablestart[*dst+2+0x20+128+0x20-0x80];
         } else {			// Range 0x20-0x7f
           *d=*dst;
         }
