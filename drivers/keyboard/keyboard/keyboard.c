@@ -198,23 +198,58 @@ int WINAPI ToAscii(UINT virtKey,UINT scanCode, LPBYTE lpKeyState,
 /***********************************************************************
  *           AnsiToOem   (KEYBOARD.5)
  */
+// @todo Must be int for return
 void WINAPI AnsiToOem( const char huge * s, char huge *  d )
 {
-        if(s != d)
-                lstrcpy(d,s);
-//    CharToOemA( s, d );
-    //return -1;
+    char huge * dst;
+
+      dst = (char huge *)s;
+      while( *dst )
+      {
+        d++;
+        dst++;
+        if ((BYTE)*dst<=0x1f)		// Range 0x00-0x1f
+        {
+           *d=tablestart[*dst+1];
+        } else 
+        if ((BYTE)*dst>=0x80)		// Range 0x80-0xff
+        {
+           *d=tablestart[*dst+1+0x20-0x80];
+        } else {			// Range 0x20-0x7f
+          *d=*dst;
+        }
+      }
+
+// @todo always return -1
+//    return -1;
 }
 
 /***********************************************************************
  *           OemToAnsi   (KEYBOARD.6)
  */
+// @todo Must be int for return
 void WINAPI OemToAnsi( const char huge *  s, char huge *  d )
 {
-    if (s != d)
-        lstrcpy(d,s);
-//    OemToCharA( s, d );
-    //return -1;
+    char huge * dst;
+      dst = (char huge *)s;
+      while( *dst )
+      {
+        d++;
+        dst++;
+        if ((BYTE)*dst<=0x1f)		// Range 0x00-0x1f
+        {
+           *d=tablestart[*dst+1+0x20+128];
+        } else 
+        if ((BYTE)*dst>=0x80)		// Range 0x80-0xff
+        {
+           *d=tablestart[*dst+1+0x20+128+0x20-0x80];
+        } else {			// Range 0x20-0x7f
+          *d=*dst;
+        }
+      }
+
+// @todo always return -1
+//    return -1;
 }
 
 /**********************************************************************
@@ -399,9 +434,25 @@ int WINAPI GetKeyNameText(LONG lParam, LPSTR lpBuffer, int nSize)
  */
 void WINAPI AnsiToOemBuff( LPCSTR s, LPSTR d, UINT len )
 {
-    if (len != 0) //CharToOemBuffA( s, d, len );
-        if(s != d)
-                lstrcpyn(d,s,len);
+    char huge * dst;
+
+      dst = (char huge *)s;
+      while( len )
+      {
+        len--;
+	d++;
+        dst++;
+        if ((BYTE)*dst<=0x1f)		// Range 0x00-0x1f
+        {
+           *d=tablestart[*dst+1];
+        } else 
+        if ((BYTE)*dst>=0x80)		// Range 0x80-0xff
+        {
+           *d=tablestart[*dst+1+0x20-0x80];
+        } else {			// Range 0x20-0x7f
+          *d=*dst;
+        }
+      }
 }
 
 /***********************************************************************
@@ -409,9 +460,24 @@ void WINAPI AnsiToOemBuff( LPCSTR s, LPSTR d, UINT len )
  */
 void WINAPI OemToAnsiBuff( LPCSTR s, LPSTR d, UINT len )
 {
-    if (len != 0) //OemToCharBuffA( s, d, len );
-        if(s != d)
-                lstrcpyn(d,s,len);
+    char huge * dst;
+      dst = (char huge *)s;
+      while( len )
+      {
+        len--;
+        d++;
+        dst++;
+        if ((BYTE)*dst<=0x1f)		// Range 0x00-0x1f
+        {
+           *d=tablestart[*dst+1+0x20+128];
+        } else 
+        if ((BYTE)*dst>=0x80)		// Range 0x80-0xff
+        {
+           *d=tablestart[*dst+1+0x20+128+0x20-0x80];
+        } else {			// Range 0x20-0x7f
+          *d=*dst;
+        }
+      }
 }
 
 /***********************************************************************
