@@ -1,6 +1,6 @@
 ; 866 <> 1251
 
-CODEPAGE	DW	866	; Russia
+CODEPAGE	DW	866	; DOS Cyrillic Russian
 
 ;https://en.wikipedia.org/wiki/Windows-1251
 ;https://en.wikipedia.org/wiki/Code_page_866
