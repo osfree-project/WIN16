@@ -8,9 +8,11 @@ PROJ     = keyboard1
 PROJ1    = keyboard
 TRGT     = $(PROJ1).drv
 DESC     = Windows keyboard driver
-srcfiles = $(p)keyboard$(e) $(p)xlatus$(e)
-ADD_COPT = -dCARDSTYLE_DEFAULT
+srcfiles = $(p)keyboard$(e) $(p)xlatus$(e) $(p)libentry$(e) 
+ADD_COPT = -s
 ADD_ASMOPT = -i=..$(SEP)tables$(SEP)xlat
+NOLIBS   = 1
+ADD_LINKOPT = OPTION NOD
 
 # linking dll file
 DLL     = 1
@@ -36,7 +38,7 @@ EXPORTS = &
 	EnableKBSysReq	.136, &
 	GetBIOSKeyProc	.137
 
-OPTIONS = heapsize=32K libfile libentry.obj
+#OPTIONS = heapsize=0
 DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 
 !include $(%ROOT)tools/mk/appsw16.mk

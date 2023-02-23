@@ -44,11 +44,12 @@ typedef struct _KBINFO
 } KBINFO, far *LPKBINFO;
 #pragma pack(pop)
 
-static FARPROC DefKeybEventProc;
-static LPBYTE pKeyStateTable;
+static FARPROC DefKeybEventProc=NULL;
+static LPBYTE pKeyStateTable=NULL;
 static WORD wScreenSwitchEnable=1;	// Screen switch enabled by default
 static FARPROC lpOldInt09=NULL;		// Old INT 09H handler
 static BYTE fSysReq=0;			// Enables CTRL-ALT-SysReq if NZ
+
 extern BYTE near * PASCAL tablestart;	// OEM<>ANSI XLAT tables
 
 // This table used by keyboard interrupt handler to produce virtual key
@@ -166,6 +167,16 @@ WORD WINAPI Inquire(LPKBINFO kbInfo)
   return sizeof(KBINFO);
 }
 
+void far * mymemset (void far *start, int c, int len)
+{
+  char far *p = start;
+
+  while (len -- > 0)
+    *p ++ = c;
+
+  return start;
+}
+
 /***********************************************************************
  *		Enable (KEYBOARD.2)
  */
@@ -174,7 +185,7 @@ VOID WINAPI Enable( FARPROC proc, LPBYTE lpKeyState )
     DefKeybEventProc = proc;
     pKeyStateTable = lpKeyState;
 
-    _fmemset( lpKeyState, 0, 256 ); /* all states to false */
+    mymemset( lpKeyState, 0, 256 ); /* all states to false */
 }
 
 /***********************************************************************
@@ -258,6 +269,29 @@ void WINAPI OemToAnsi( const char huge *  s, char huge *  d )
 WORD WINAPI SetSpeed(WORD unused)
 {
 //    FIXME("(%04x): stub\n", unused);
+/*
+INT 16,3 - Set Keyboard Typematic Rate (AT+)
+
+	AH = 03
+	AL = 00  set typematic rate to default
+	     01  increase initial delay
+	     02  slow typematic rate by 1/2
+	     04  turn off typematic chars
+	     05  set typematic rate/delay
+
+	BH = repeat delay (AL=5)
+	     0 = 250ms	   2 = 750ms
+	     1 = 500ms	   3 = 1000ms
+	BL = typematic rate, one of the following  (AL=5)
+
+	     00 - 30.0	    01 - 26.7	   02 - 24.0	  03 - 21.8
+	     04 - 20.0	    05 - 18.5	   06 - 17.1	  07 - 16.0
+	     08 - 15.0	    09 - 13.3	   0A - 12.0	  0B - 10.9
+	     0C - 10.0	    0D - 9.2	   0E - 8.6	  0F - 8.0
+	     10 - 7.5	    11 - 6.7	   12 - 6.0	  13 - 5.5
+	     14 - 5.0	    15 - 4.6	   16 - 4.3	  17 - 4.0
+	     18 - 3.7	    19 - 3.3	   1A - 3.0	  1B - 2.7
+*/
     return 0xffff;
 }
 

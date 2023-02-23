@@ -1,4 +1,4 @@
-code	segment
+_TEXT	segment word public 'CODE'
 	org	0h
 
 tablesize	dw	tableend - tablestart
@@ -13,6 +13,6 @@ tableend:
 ; This is seems to be optional
 	include	copyright.inc
 
-code	ends
+_TEXT	ends
 
 end
