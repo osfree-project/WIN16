@@ -206,8 +206,6 @@ void WINAPI AnsiToOem( const char huge * s, char huge *  d )
       dst = (char huge *)s;
       while( *dst )
       {
-        d++;
-        dst++;
         if ((BYTE)*dst<=0x1f)		// Range 0x00-0x1f
         {
            *d=tablestart[*dst+1];
@@ -218,6 +216,8 @@ void WINAPI AnsiToOem( const char huge * s, char huge *  d )
         } else {			// Range 0x20-0x7f
           *d=*dst;
         }
+        d++;
+        dst++;
       }
 
 // @todo always return -1
@@ -234,8 +234,6 @@ void WINAPI OemToAnsi( const char huge *  s, char huge *  d )
       dst = (char huge *)s;
       while( *dst )
       {
-        d++;
-        dst++;
         if ((BYTE)*dst<=0x1f)		// Range 0x00-0x1f
         {
            *d=tablestart[*dst+1+0x20+128];
@@ -246,6 +244,8 @@ void WINAPI OemToAnsi( const char huge *  s, char huge *  d )
         } else {			// Range 0x20-0x7f
           *d=*dst;
         }
+        d++;
+        dst++;
       }
 
 // @todo always return -1
@@ -439,9 +439,6 @@ void WINAPI AnsiToOemBuff( LPCSTR s, LPSTR d, UINT len )
       dst = (char huge *)s;
       while( len )
       {
-        len--;
-	d++;
-        dst++;
         if ((BYTE)*dst<=0x1f)		// Range 0x00-0x1f
         {
            *d=tablestart[*dst+1];
@@ -452,6 +449,9 @@ void WINAPI AnsiToOemBuff( LPCSTR s, LPSTR d, UINT len )
         } else {			// Range 0x20-0x7f
           *d=*dst;
         }
+        len--;
+	d++;
+        dst++;
       }
 }
 
@@ -464,9 +464,6 @@ void WINAPI OemToAnsiBuff( LPCSTR s, LPSTR d, UINT len )
       dst = (char huge *)s;
       while( len )
       {
-        len--;
-        d++;
-        dst++;
         if ((BYTE)*dst<=0x1f)		// Range 0x00-0x1f
         {
            *d=tablestart[*dst+1+0x20+128];
@@ -477,6 +474,9 @@ void WINAPI OemToAnsiBuff( LPCSTR s, LPSTR d, UINT len )
         } else {			// Range 0x20-0x7f
           *d=*dst;
         }
+        len--;
+        d++;
+        dst++;
       }
 }
 
