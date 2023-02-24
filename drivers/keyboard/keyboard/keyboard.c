@@ -49,6 +49,8 @@ static LPBYTE pKeyStateTable=NULL;
 static WORD wScreenSwitchEnable=1;	// Screen switch enabled by default
 static FARPROC lpOldInt09=NULL;		// Old INT 09H handler
 static BYTE fSysReq=0;			// Enables CTRL-ALT-SysReq if NZ
+static UINT KeyboardType=4;		// Keyboard type, detected by driver or from system.ini
+static UINT KeyboardSubType=0;		// Keyboard sub type, detected by driver or from system.ini
 
 extern BYTE near * PASCAL tablestart;	// OEM<>ANSI XLAT tables
 
@@ -347,6 +349,11 @@ WORD WINAPI GetTableSeg(VOID)
  */
 VOID WINAPI NewTable(VOID)
 {
+    if (!KeyboardType)
+    {
+      KeyboardType=GetPrivateProfileInt("keyboard", "type", 4, "SYSTEM.INI");
+      KeyboardSubType=GetPrivateProfileInt("keyboard", "type", 0, "SYSTEM.INI");
+    }
 }
 
 /**********************************************************************
@@ -414,9 +421,21 @@ UINT WINAPI VkKeyScan(UINT cChar)
 /******************************************************************************
  *		GetKeyboardType (KEYBOARD.130)
  */
+// @todo This is not correct way to detect keyboard. Normal keyboard detection
+// must be in NewTable function.
 int WINAPI GetKeyboardType(int nTypeFlag)
 {
-//    return GetKeyboardType( nTypeFlag );
+    switch(nTypeFlag)
+    {
+    case 0:      /* Keyboard type */
+        return KeyboardType;
+    case 1:      /* Keyboard Subtype */
+        return KeyboardSubType;
+    case 2:      /* Number of F-keys */
+        return 12;   /* We're doing an 101 for now, so return 12 F-keys */
+    }
+
+    return 0;    /* The book says 0 here, so 0 */
 }
 
 /******************************************************************************
@@ -452,7 +471,7 @@ UINT WINAPI MapVirtualKey(UINT wCode, UINT wMapType)
  */
 int WINAPI GetKBCodePage(void)
 {
-	return *tablestart;
+	return (WORD)*tablestart;
 }
 
 /****************************************************************************
