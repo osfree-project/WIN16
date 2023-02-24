@@ -39,11 +39,11 @@ To send email to the maintainer of the Willows Twin Libraries.
 #include "sys/types.h"
 #include "sys/stat.h"
 #include "dos.h"
-#include "mfs_config.h"
+//#include "mfs_config.h"
 #include "System.h"
 #include "CommdlgRC.h"
 #include "WinConfig.h"
-#include "Log.h"
+//#include "Log.h"
 #include "porting.h"
 
 #define WGOFNERR_NULLPOINTER            -1
@@ -170,7 +170,9 @@ static UINT                     WGOFNWM_ShareViolation      = ( UINT )NULL;
 #define WGOFNGetInstance        GetInstance
 #define WGOFNSetExtendedError   WCDSetExtendedError
 
-//int WINAPI GetFileTitle(LPCSTR , LPSTR , UINT );
+
+
+
 HINSTANCE GetInstance();
 DWORD WCDSetExtendedError ( DWORD );
 
@@ -191,6 +193,39 @@ LPSTR WINAPI strpbrkr (
 	
 }
 //#endif
+
+//int WINAPI GetFileTitle(LPCSTR , LPSTR , UINT );
+//short WINAPI    GetFileTitle( LPCSTR, LPSTR, UINT );
+short WINAPI GetFileTitle(LPCSTR lpszFile, LPSTR lpszTitle, UINT cnBuf)
+{
+	int     nLen, i;
+	LPSTR	lpszFileTitle;
+
+        /* Note: a space IS a valid on unix and the mac. */
+	if ( !lpszFile  ||  !(nLen = lstrlen(lpszFile))  ||
+		_fstrpbrk(lpszFile, "*[]")  ||  *(lpszFile+nLen-1) == ':'  ||
+		*(lpszFile+nLen-1) == '\\'  ||  *(lpszFile+nLen-1) == '/' )
+
+		return -1;		/* Not valid file name */
+
+	for ( i = 0; i < nLen; i++ ) {
+		if ( !isprint(*(lpszFile+i)) )
+			return -1;	/* Not valid file name */
+	}	/* Don't remove {}: won't work on SGI */
+
+	if ((lpszFileTitle = (LPSTR) strpbrkr(lpszFile, "/\\") ))
+		nLen -= (++lpszFileTitle - lpszFile);
+	else
+		lpszFileTitle = (LPSTR)lpszFile;
+
+	/* At this point nLen=strlen(lpszTitle) */
+	if ( cnBuf < (UINT)nLen + 1 )
+		return nLen;		/* Specified buffer is too small */
+
+	lstrcpy(lpszTitle, lpszFileTitle);
+	return 0;
+}
+
 /*============================================================================*/
 short WINAPI WGOFNIsADirectory ( 
 	LPSTR                   lpPath ) 
@@ -790,15 +825,15 @@ short WINAPI WGOFNGetBitmap (
 				Bitmap.bmWidth, Bitmap.bmHeight,
 				hMemDC, 0, 0, SRCCOPY ))
 			{
-				ERRSTR((LF_ERROR, "WGOFNGetBitmap:"
-					" BitBlt SRCCOPY failure!\n"));
+//				ERRSTR((LF_ERROR, "WGOFNGetBitmap:"
+//					" BitBlt SRCCOPY failure!\n"));
 			}
 			if (!BitBlt ( hMaskDC, 0, 0,
 				Bitmap.bmWidth, Bitmap.bmHeight,
 				(HDC) 0, 0, 0, DSTINVERT ))
 			{
-				ERRSTR((LF_ERROR, "WGOFNGetBitmap:"
-					" BitBlt DSTINVERT failure!\n"));
+//				ERRSTR((LF_ERROR, "WGOFNGetBitmap:"
+//					" BitBlt DSTINVERT failure!\n"));
 			}
 #if 1
 			/* initialize background image bitmap
@@ -824,8 +859,8 @@ short WINAPI WGOFNGetBitmap (
 				Bitmap.bmWidth, Bitmap.bmHeight,
 				hMaskDC, 0, 0, 0x00b8074aL ))
 			{
-				ERRSTR((LF_ERROR, "WGOFNGetBitmap:"
-					" BitBlt init bg failure!\n"));
+//				ERRSTR((LF_ERROR, "WGOFNGetBitmap:"
+//					" BitBlt init bg failure!\n"));
 			}
 			SelectObject(hMemDC, hOldMemBrush);
 			DeleteObject(hMemBrush);
@@ -852,8 +887,8 @@ short WINAPI WGOFNGetBitmap (
 				Bitmap.bmWidth, Bitmap.bmHeight,
 				hMaskDC, 0, 0, 0x00b8074aL ))
 			{
-				ERRSTR((LF_ERROR, "WGOFNGetBitmap:"
-					" BitBlt init hi failure!\n"));
+//				ERRSTR((LF_ERROR, "WGOFNGetBitmap:"
+//					" BitBlt init hi failure!\n"));
 			}
 			SelectObject(hHighDC, hOldHighBrush);
 			DeleteObject(hHighBrush);
@@ -2325,7 +2360,7 @@ BOOL WINAPI WGOFNGetFileName (
 	FARPROC                 lpfnDialogProc  = ( FARPROC )NULL;
 	HRSRC                   hResource       = ( HRSRC )NULL;
 	HGLOBAL                 hStandardDialog = ( HGLOBAL )NULL;
-	LPDLGTEMPLATE		lpTmp		= ( LPDLGTEMPLATE )NULL;
+//	LPDLGTEMPLATE		lpTmp		= ( LPDLGTEMPLATE )NULL;
 	HGLOBAL                 hUseDialogBox = 0;
 
 	short                   ErrorCode   = 0;
@@ -2352,12 +2387,12 @@ BOOL WINAPI WGOFNGetFileName (
 									  hResource ) ) )
 			ErrorCode = WGOFNERR_LOADRESOURCE;
 		else
-			lpTmp = ( LPDLGTEMPLATE )LockResource ( hUseDialogBox );
+			{};//lpTmp = ( LPDLGTEMPLATE )LockResource ( hUseDialogBox );
 		
 		if ( ! ( lpfnDialogProc = MakeProcInstance ( ( FARPROC )WGOFNDialogProc, WGOFNGetInstance () ) ) )
 			ErrorCode = WGOFNERR_MAKEPROCINSTANCE;
 			
-		if ( ( ! ErrorCode ) && ( lpTmp ) )
+		if ( ( ! ErrorCode ) /*&& ( lpTmp )*/ )
 #ifdef TWIN32
 			ReturnValue = DialogBoxIndirectParam ( WGOFNGetInstance (), 
 							       lpTmp, 

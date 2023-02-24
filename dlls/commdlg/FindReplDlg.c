@@ -33,7 +33,7 @@ To send email to the maintainer of the Willows Twin Libraries.
 #include "commdlg.h"
 #include "dlgs.h"
 #include "cderr.h"
-#include "Log.h"
+//#include "Log.h"
 #include "Dialog.h"
 
 #include <ctype.h>
@@ -44,8 +44,8 @@ To send email to the maintainer of the Willows Twin Libraries.
 
 
 /* Dialog procedures for CommDlg, these are NOT exported */
-static LRESULT FAR PASCAL ReplaceDlgProc    (HWND, UINT, WPARAM, LPARAM);
-static LRESULT FAR PASCAL FindDlgProc       (HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK ReplaceDlgProc    (HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK FindDlgProc       (HWND, UINT, WPARAM, LPARAM);
 
 static HWND MakeModelessDialogBox(HINSTANCE, HWND, LPCSTR, BOOL, BOOL, LPCSTR, 
 			void *, DLGPROC);
@@ -71,7 +71,7 @@ WINAPI FindText(FINDREPLACE FAR*lpfr)
 }
 
 
-static LRESULT FAR PASCAL 
+LRESULT CALLBACK
 FindDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	HWND		hWnd;
@@ -243,7 +243,7 @@ WINAPI ReplaceText(FINDREPLACE FAR*lpfr)
 }
 
 
-static LRESULT FAR PASCAL 
+LRESULT CALLBACK
 ReplaceDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	HWND		hWnd;
