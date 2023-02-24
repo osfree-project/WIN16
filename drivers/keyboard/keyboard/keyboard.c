@@ -27,6 +27,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#include <dos.h>
+
 #include <windows.h>
 
 #include "vkeys.h"
@@ -47,7 +49,7 @@ typedef struct _KBINFO
 static FARPROC DefKeybEventProc=NULL;
 static LPBYTE pKeyStateTable=NULL;
 static WORD wScreenSwitchEnable=1;	// Screen switch enabled by default
-static FARPROC lpOldInt09=NULL;		// Old INT 09H handler
+static void far * lpOldInt09=NULL;		// Old INT 09H handler
 static BYTE fSysReq=0;			// Enables CTRL-ALT-SysReq if NZ
 static UINT KeyboardType=4;		// Keyboard type, detected by driver or from system.ini
 static UINT KeyboardSubType=0;		// Keyboard sub type, detected by driver or from system.ini
@@ -568,6 +570,35 @@ BYTE WINAPI EnableKBSysReq(WORD fSys)
 FARPROC WINAPI GetBIOSKeyProc(VOID)
 {
 	return lpOldInt09;
+}
+
+void interrupt far interrupt_09_handler(void)
+{
+    /* do something */
+    _asm {
+      call lpOldInt09
+    }
+}
+
+extern  void (interrupt far *_dos_getvect( int ax ))();
+#pragma aux  _dos_getvect = \
+    "mov ah,35h"        \
+    "int 21h"           \
+    parm [ax] value [es bx];
+
+extern  void _dos_setvect( int, void (interrupt far *)());
+#pragma aux  _dos_setvect = \
+    "push ds"           \
+    "mov ds,cx"         \
+    "mov ah,25h"        \
+    "int 21h"           \
+    "pop ds"            \
+    parm caller [ax] [cx dx];
+
+void KbdInit(void)
+{
+    lpOldInt09 = _dos_getvect(9);
+    _dos_setvect(9, interrupt_09_handler);
 }
 
 BOOL WINAPI LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
