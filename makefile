@@ -4,7 +4,7 @@
 # author
 #
 
-DIRS = win dosx kernel drivers samples programs
+DIRS = dlls dosx drivers kernel programs win samples 
 
 !include $(%ROOT)tools/mk/all.mk
 

@@ -44,7 +44,6 @@ EXPORTS = &
   
 # WEP.8 Need this?
 
-OPTIONS = heapsize=32K libfile libentry.obj
 DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 #ADD_COPT=-pl
 

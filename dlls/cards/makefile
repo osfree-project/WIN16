@@ -21,7 +21,6 @@ EXPORTS = &
 	cdtInit.5, &
 	cdtTerm.6
 
-OPTIONS = heapsize=32K libfile libentry.obj
 DEST = os2$(SEP)mdos$(SEP)winos2
 
 !include $(%ROOT)tools/mk/appsw16.mk
