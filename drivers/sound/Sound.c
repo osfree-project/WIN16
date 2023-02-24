@@ -27,64 +27,69 @@ To send email to the maintainer of the Willows Twin Libraries.
 	mailto:twin@willows.com 
 
  */
-#include "windows.h"
+#include <windows.h>
 
-#include "Log.h"
+//#include "Log.h"
 
 int WINAPI
 OpenSound(void)
 {
-    APISTR((LF_APISTUB,"OpenSound: \n"));
+//    APISTR((LF_APISTUB,"OpenSound: \n"));
 	return TRUE;
 }
 
 void WINAPI
 CloseSound(void)
 {
-    APISTR((LF_APISTUB,"CloseSound()\n"));
+//    APISTR((LF_APISTUB,"CloseSound()\n"));
 }
 
 int WINAPI
 SetVoiceAccent(int nVoice, int nTempo, int nVolume, int fnMode, int nPitch)
 {
-    APISTR((LF_APISTUB,"SetVoiceAccent(int=%d,int=%d,int=%d,int=%d,int=%d)\n", 
-	nVoice, nTempo, nVolume, fnMode, nPitch));
+//    APISTR((LF_APISTUB,"SetVoiceAccent(int=%d,int=%d,int=%d,int=%d,int=%d)\n", 
+//	nVoice, nTempo, nVolume, fnMode, nPitch));
     return TRUE;
 }
 
 int WINAPI
 SetVoiceNote(int voice, int value, int length, int cdots)
 {
-    APISTR((LF_APISTUB,"SetVoiceNote(int=%d,int=%d,int=%d,int=%d)\n",
-	voice, value, length, cdots));
+//    APISTR((LF_APISTUB,"SetVoiceNote(int=%d,int=%d,int=%d,int=%d)\n",
+//	voice, value, length, cdots));
     return TRUE;
 }
 
 int WINAPI
 SetVoiceQueueSize(int nVoice, int cbQueue)
 {
-    APISTR((LF_APISTUB,"SetVoiceQueueSize(int=%d,int=%d)\n",
-	nVoice, cbQueue));
+//    APISTR((LF_APISTUB,"SetVoiceQueueSize(int=%d,int=%d)\n",
+//	nVoice, cbQueue));
     return TRUE;
 }
 
 int WINAPI
 StartSound(void)
 {
-    APISTR((LF_APISTUB,"StartSound()\n"));
+//    APISTR((LF_APISTUB,"StartSound()\n"));
     return TRUE;
 }
 
 int WINAPI
 StopSound(void)
 {
-    APISTR((LF_APISTUB,"StopSound()\n"));
+//    APISTR((LF_APISTUB,"StopSound()\n"));
     return TRUE;
 }
 
 int WINAPI
 WaitSoundState(int fnState)
 {
-    APISTR((LF_APISTUB,"WaitSoundState(int=%d)\n",fnState));
+//    APISTR((LF_APISTUB,"WaitSoundState(int=%d)\n",fnState));
     return TRUE;
+}
+
+BOOL WINAPI LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+	return TRUE;
 }
