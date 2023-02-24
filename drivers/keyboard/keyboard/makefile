@@ -9,34 +9,38 @@ PROJ1    = keyboard
 TRGT     = $(PROJ1).drv
 DESC     = Windows keyboard driver
 srcfiles = $(p)keyboard$(e) $(p)xlatus$(e) $(p)libentry$(e) 
-ADD_COPT = -s
+ADD_COPT = -zc -s
 ADD_ASMOPT = -i=..$(SEP)tables$(SEP)xlat
 NOLIBS   = 1
+NODEFAULTLIBS = 1
 ADD_LINKOPT = OPTION NOD
+STACKSIZE = 1k
 
 # linking dll file
 DLL     = 1
 EXPORTS = &
-	Inquire     	.1, &
-	Enable      	.2, &
-	Disable     	.3, &
-	ToAscii 	.4, &
-	AnsiToOem 	.5, &
-	OemToAnsi 	.6, &
-	SetSpeed    	.7, &
-	ScreenSwitchEnable.100, &
-	GetTableSeg     .126, &
-	NewTable	.127, &
-	OemKeyScan 	.128, &
-	VkKeyScan 	.129, &
-	GetKeyboardType .130, &
-	MapVirtualKey 	.131, &
-	GetKBCodePage 	.132, &
-	GetKeyNameText 	.133, &
-	AnsiToOemBuff 	.134, &
-	OemToAnsiBuff 	.135, &
-	EnableKBSysReq	.136, &
-	GetBIOSKeyProc	.137
+	INQUIRE     	.1, &
+	ENABLE      	.2, &
+	DISABLE     	.3, &
+	TOASCII 	.4, &
+	ANSITOOEM 	.5, &
+	OEMTOANSI 	.6, &
+	SETSPEED    	.7, &
+	SCREENSWITCHENABLE.100, &
+	GETTABLESEG     .126, &
+	NEWTABLE	.127, &
+	OEMKEYSCAN 	.128, &
+	VKKEYSCAN 	.129, &
+	GETKEYBOARDTYPE .130, &
+	MAPVIRTUALKEY 	.131, &
+	GETKBCODEPAGE 	.132, &
+	GETKEYNAMETEXT 	.133, &
+	ANSITOOEMBUFF 	.134, &
+	OEMTOANSIBUFF 	.135, &
+	ENABLEKBSYSREQ	.136, &
+	GETBIOSKEYPROC	.137
+IMPORTS = GETPRIVATEPROFILEINT KERNEL.127, &
+          __AHSHIFT KERNEL.113
 
 #OPTIONS = heapsize=0
 DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system

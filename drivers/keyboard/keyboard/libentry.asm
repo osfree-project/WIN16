@@ -38,7 +38,7 @@ assume ds:dgroup
 assume cs:_TEXT
 
         extrn   __AHSHIFT                   : word
-        public  "C",_HShift
+;        public  "C",_HShift
 _HShift    db 0                 ; Huge Shift value
 
 _DATA ends

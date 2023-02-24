@@ -352,7 +352,7 @@ VOID WINAPI NewTable(VOID)
     if (!KeyboardType)
     {
       KeyboardType=GetPrivateProfileInt("keyboard", "type", 4, "SYSTEM.INI");
-      KeyboardSubType=GetPrivateProfileInt("keyboard", "type", 0, "SYSTEM.INI");
+      KeyboardSubType=GetPrivateProfileInt("keyboard", "subtype", 0, "SYSTEM.INI");
     }
 }
 
