@@ -232,14 +232,14 @@ typedef struct tagDDEMLCONV
 {
     CONVINFO	ConvInfo;
     struct tagDDEMLCONV	*lpNextConv;
-    UINT	uMagic;
+    DWORD	uMagic;
     DWORD	idInst;
     HWND	hWndConv;
 } DDEMLCONV;
 
 typedef DDEMLCONV *LPDDEMLCONV;
 
-#ifdef 0
+#if 0
 static DWORD DdeTransactionFailMasks[] =
   {
 	0,				/* XTYP_ERROR		*/
