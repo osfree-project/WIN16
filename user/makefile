@@ -30,6 +30,8 @@ EXPORTS = &
 	IntersectRect .79, &
 	UnionRect .80, &
 	FillRect .81, &
+	InvertRect .82, &
+	FrameRect .83, &
 	LoadMenu .150, &
 	ChangeMenu .153, &
 	LoadString .176, &

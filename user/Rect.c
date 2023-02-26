@@ -277,8 +277,55 @@ int WINAPI FillRect( HDC hdc, const RECT far *rect, HBRUSH hbrush )
 /***********************************************************************
  *		InvertRect (USER.82)
  */
-void WINAPI InvertRect16( HDC hdc, const RECT far *rect )
+void WINAPI InvertRect( HDC hdc, const RECT far *rect )
 {
     PatBlt( hdc, rect->left, rect->top,
               rect->right - rect->left, rect->bottom - rect->top, DSTINVERT );
+}
+
+/***********************************************************************
+ *		FrameRect (USER.83)
+ */
+BOOL WINAPI
+FrameRect(HDC hDC, const RECT far *lpRect, HBRUSH hBrush)
+{
+    HBRUSH hBrushOld;
+    BOOL bRet;
+
+    if (!lpRect)
+	return FALSE;
+
+//    APISTR((LF_API,"FrameRect: hDC=%x, rect %d,%d %d,%d, hBrush %x\n",
+//	hDC,
+//	lpRect->left,lpRect->top,lpRect->right,lpRect->bottom,
+//	hBrush));
+
+    if (!(hBrushOld = SelectObject(hDC,hBrush)))
+	return FALSE;
+
+    /* do the top bar */	
+    bRet = PatBlt(hDC, lpRect->left, lpRect->top, 
+		lpRect->right - lpRect->left,
+		1, PATCOPY);
+
+    if (bRet) {
+	/* do the bottom bar */	
+	PatBlt(hDC, lpRect->left, lpRect->bottom-1, 
+		lpRect->right - lpRect->left,
+		1, PATCOPY);
+
+	/* do the left bar */	
+	PatBlt(hDC, lpRect->left, lpRect->top, 
+		1,
+		lpRect->bottom-lpRect->top, PATCOPY);
+
+	/* do the right bar */	
+	PatBlt(hDC, lpRect->right-1, lpRect->top, 
+		1,
+		lpRect->bottom-lpRect->top, PATCOPY);
+    }
+
+    SelectObject(hDC,hBrushOld);
+
+    return bRet;
 }
