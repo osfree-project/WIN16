@@ -1,3 +1,24 @@
+/*
+ * Misc 16-bit USER functions
+ *
+ * Copyright 1993, 1996 Alexandre Julliard
+ * Copyright 2002 Patrik Stridvall
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
 /*    
 	Rect.c	2.5
     	Copyright 1997 Willows Software, Inc. 
@@ -29,12 +50,16 @@ To send email to the maintainer of the Willows Twin Libraries.
  */
 
 #include <string.h>
-#include "windows.h"
-#include "windowsx.h"
-#include "Log.h"
 
+#include <windows.h>
+//#include "windowsx.h"
+//#include "Log.h"
+
+/***********************************************************************
+ *		EqualRect (USER.244)
+ */
 BOOL WINAPI
-EqualRect(const RECT *r1, const RECT *r2)
+EqualRect(const RECT far *r1, const RECT far *r2)
 {
 	return ((r1->left   == r2->left) &&
 		(r1->top    == r2->top)  &&
@@ -43,16 +68,22 @@ EqualRect(const RECT *r1, const RECT *r2)
 
 }
 
+/***********************************************************************
+ *		CopyRect (USER.74)
+ */
 void WINAPI
-CopyRect(LPRECT d, const RECT *s)
+CopyRect(LPRECT d, const RECT far *s)
 {
 	d->left 	= s->left;
 	d->top 		= s->top;
 	d->right 	= s->right;
 	d->bottom 	= s->bottom;
-	return;
+	return;  // @todo seems returns TRUE
 }
 
+/***********************************************************************
+ *		InflateRect (USER.78)
+ */
 void WINAPI
 InflateRect(LPRECT r, int x, int y)
 {
@@ -62,6 +93,9 @@ InflateRect(LPRECT r, int x, int y)
 	r->bottom += y;
 }
 
+/***********************************************************************
+ *		OffsetRect (USER.77)
+ */
 void WINAPI
 OffsetRect(LPRECT r, int x, int y)
 {
@@ -71,8 +105,11 @@ OffsetRect(LPRECT r, int x, int y)
 	r->bottom += y;
 }
 
+/***********************************************************************
+ *		PtInRect (USER.76)
+ */
 BOOL WINAPI
-PtInRect(const RECT *lpr,POINT pt)
+PtInRect(const RECT far *lpr,POINT pt)
 {
     BOOL rc;
 
@@ -82,9 +119,12 @@ PtInRect(const RECT *lpr,POINT pt)
     return rc;
 }
 
+/***********************************************************************
+ *		IntersectRect (USER.79)
+ */
 BOOL WINAPI
-IntersectRect(LPRECT lpDestRect, const RECT *lpSrc1Rect,
-	      const RECT *lpSrc2Rect)
+IntersectRect(LPRECT lpDestRect, const RECT far *lpSrc1Rect,
+	      const RECT far *lpSrc2Rect)
 {
     lpDestRect->left = max(lpSrc1Rect->left, lpSrc2Rect->left);
     lpDestRect->top = max(lpSrc1Rect->top, lpSrc2Rect->top);
@@ -100,6 +140,9 @@ IntersectRect(LPRECT lpDestRect, const RECT *lpSrc1Rect,
 	return TRUE;
 }
  
+/***********************************************************************
+ *		SubtractRect (USER.373)
+ */
 BOOL    WINAPI 
 SubtractRect(RECT FAR* lpDestRect, const RECT FAR*lprc1, const RECT FAR*lprc2)
 {
@@ -146,14 +189,22 @@ SubtractRect(RECT FAR* lpDestRect, const RECT FAR*lprc1, const RECT FAR*lprc2)
 	return FALSE;
 }
 
+/***********************************************************************
+ *		IsRectEmpty (USER.75)
+ *
+ * Bug compat: Windows checks for 0 or negative width/height.
+ */
 BOOL WINAPI
-IsRectEmpty(const RECT *lprcRect)
+IsRectEmpty(const RECT far *lprcRect)
 {
     if (!lprcRect) return(TRUE);
     return ((lprcRect->right <= lprcRect->left) ||
         (lprcRect->bottom <= lprcRect->top));
 }
  
+/***********************************************************************
+ *		SetRect (USER.72)
+ */
 void WINAPI
 SetRect(LPRECT r, int left, int top, int right, int bottom)
 {
@@ -163,15 +214,21 @@ SetRect(LPRECT r, int left, int top, int right, int bottom)
     r->bottom   = bottom;
 }
  
+/***********************************************************************
+ *		SetRectEmpty (USER.73)
+ */
 void WINAPI
 SetRectEmpty(LPRECT lpRect)
 {
     lpRect->left = lpRect->top = lpRect->right = lpRect->bottom = 0;
 }
  
+/***********************************************************************
+ *		UnionRect (USER.80)
+ */
 int WINAPI
-UnionRect(LPRECT lpDestRect, const RECT *lpSrc1Rect,
-	  const RECT *lpSrc2Rect)
+UnionRect(LPRECT lpDestRect, const RECT far *lpSrc1Rect,
+	  const RECT far *lpSrc2Rect)
 {
     BOOL bSrc1Empty, bSrc2Empty;
  
@@ -181,11 +238,11 @@ UnionRect(LPRECT lpDestRect, const RECT *lpSrc1Rect,
     if (bSrc1Empty && bSrc2Empty)
         return(0);
     if (bSrc1Empty) {
-        memcpy((LPSTR)lpDestRect, (LPSTR)lpSrc2Rect, sizeof(RECT));
+        _fmemcpy((LPSTR)lpDestRect, (LPSTR)lpSrc2Rect, sizeof(RECT));
         return(1);
     }
     if (bSrc2Empty) {
-        memcpy((LPSTR)lpDestRect, (LPSTR)lpSrc1Rect, sizeof(RECT));
+        _fmemcpy((LPSTR)lpDestRect, (LPSTR)lpSrc1Rect, sizeof(RECT));
         return(1);
     }
     lpDestRect->top = min(lpSrc1Rect->top, lpSrc2Rect->top);
@@ -193,4 +250,35 @@ UnionRect(LPRECT lpDestRect, const RECT *lpSrc1Rect,
     lpDestRect->right = max(lpSrc1Rect->right, lpSrc2Rect->right);
     lpDestRect->bottom = max(lpSrc1Rect->bottom, lpSrc2Rect->bottom);
     return(1);
+}
+
+/***********************************************************************
+ *		FillRect (USER.81)
+ * NOTE
+ *   The Win16 variant doesn't support special color brushes like
+ *   the Win32 one, despite the fact that Win16, as well as Win32,
+ *   supports special background brushes for a window class.
+ */
+int WINAPI FillRect( HDC hdc, const RECT far *rect, HBRUSH hbrush )
+{
+    HBRUSH prevBrush;
+
+    /* coordinates are logical so we cannot fast-check 'rect',
+     * it will be done later in the PatBlt().
+     */
+
+    if (!(prevBrush = SelectObject( hdc, hbrush ))) return 0;
+    PatBlt( hdc, rect->left, rect->top,
+              rect->right - rect->left, rect->bottom - rect->top, PATCOPY );
+    SelectObject( hdc, prevBrush );
+    return 1;
+}
+
+/***********************************************************************
+ *		InvertRect (USER.82)
+ */
+void WINAPI InvertRect16( HDC hdc, const RECT far *rect )
+{
+    PatBlt( hdc, rect->left, rect->top,
+              rect->right - rect->left, rect->bottom - rect->top, DSTINVERT );
 }

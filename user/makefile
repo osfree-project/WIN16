@@ -8,7 +8,7 @@ PROJ     = user1
 PROJ1    = user
 TRGT     = $(PROJ1).exe
 DESC     = Windows USER.EXE
-srcfiles = $(p)Rect$(e)
+srcfiles = $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)libmain$(e)
 ADD_COPT = -zc -s
 ADD_ASMOPT = -i=..$(SEP)tables$(SEP)xlat
 #NOLIBS   = 1
@@ -19,26 +19,21 @@ STACKSIZE = 1k
 # linking dll file
 DLL     = 1
 EXPORTS = &
-	INQUIRE     	.1, &
-	ENABLE      	.2, &
-	DISABLE     	.3, &
-	TOASCII 	.4, &
-	ANSITOOEM 	.5, &
-	OEMTOANSI 	.6, &
-	SETSPEED    	.7, &
-	SCREENSWITCHENABLE.100, &
-	GETTABLESEG     .126, &
-	NEWTABLE	.127, &
-	OEMKEYSCAN 	.128, &
-	VKKEYSCAN 	.129, &
-	GETKEYBOARDTYPE .130, &
-	MAPVIRTUALKEY 	.131, &
-	GETKBCODEPAGE 	.132, &
-	GETKEYNAMETEXT 	.133, &
-	ANSITOOEMBUFF 	.134, &
-	OEMTOANSIBUFF 	.135, &
-	ENABLEKBSYSREQ	.136, &
-	GETBIOSKEYPROC	.137
+	OldExitWindows .2, &
+	SetRect .72, &
+	SetRectEmpty .73, &
+	CopyRect .74, &
+	IsRectEmpty .75, &
+	PtInRect .76, &
+	OffsetRect .77, &
+	InflateRect .78, &
+	IntersectRect .79, &
+	UnionRect .80, &
+	FillRect .81, &
+	LoadMenu .150, &
+	EqualRect.244, &
+	SubtractRect .373
+
 #IMPORTS = GETPRIVATEPROFILEINT KERNEL.127, &
 #          __AHSHIFT KERNEL.113
 
