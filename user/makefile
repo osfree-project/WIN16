@@ -35,7 +35,12 @@ EXPORTS = &
 	LoadString .176, &
 	LoadAccelerators .177, &
 	EqualRect.244, &
-	SubtractRect .373
+	SubtractRect .373, &
+	lstrcmp .430, &
+	AnsiUpper .431, &
+	AnsiLower .432, &
+	AnsiNext .472, &
+	AnsiPrev .473
 
 #IMPORTS = GETPRIVATEPROFILEINT KERNEL.127, &
 #          __AHSHIFT KERNEL.113
