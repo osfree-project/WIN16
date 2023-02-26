@@ -66,3 +66,23 @@ HMENU WINAPI LoadMenu( HINSTANCE instance, LPCSTR name )
     FreeResource( handle );
     return hMenu;
 }
+
+/*******************************************************************
+ *         ChangeMenu    (USER.153)
+ */
+BOOL WINAPI ChangeMenu( HMENU hMenu, UINT pos, const char far * data,
+                            UINT id, UINT flags )
+{
+    if (flags & MF_APPEND) return AppendMenu( hMenu, flags & ~MF_APPEND, id, data );
+
+    /* FIXME: Word passes the item id in 'pos' and 0 or 0xffff as id */
+    /* for MF_DELETE. We should check the parameters for all others */
+    /* MF_* actions also (anybody got a doc on ChangeMenu?). */
+
+    if (flags & MF_DELETE) return DeleteMenu(hMenu, pos, flags & ~MF_DELETE);
+    if (flags & MF_CHANGE) return ModifyMenu(hMenu, pos, flags & ~MF_CHANGE, id, data );
+    if (flags & MF_REMOVE) return RemoveMenu(hMenu, flags & MF_BYPOSITION ? pos : id,
+                                               flags & ~MF_REMOVE );
+    /* Default: MF_INSERT */
+    return InsertMenu( hMenu, pos, flags, id, data );
+}

@@ -8,7 +8,7 @@ PROJ     = user1
 PROJ1    = user
 TRGT     = $(PROJ1).exe
 DESC     = Windows USER.EXE
-srcfiles = $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)libmain$(e)
+srcfiles = $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)libmain$(e)
 ADD_COPT = -zc -s
 ADD_ASMOPT = -i=..$(SEP)tables$(SEP)xlat
 #NOLIBS   = 1
@@ -31,6 +31,9 @@ EXPORTS = &
 	UnionRect .80, &
 	FillRect .81, &
 	LoadMenu .150, &
+	ChangeMenu .153, &
+	LoadString .176, &
+	LoadAccelerators .177, &
 	EqualRect.244, &
 	SubtractRect .373
 
