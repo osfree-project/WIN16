@@ -37,6 +37,8 @@ EXPORTS = &
 	LoadString .176, &
 	LoadAccelerators .177, &
 	EqualRect.244, &
+	CopyIcon .368, &
+	CopyCursor .369, &
 	SubtractRect .373, &
 	lstrcmp .430, &
 	AnsiUpper .431, &
