@@ -365,7 +365,7 @@ static VOID CLOCK_Paint(HWND hWnd)
     PAINTSTRUCT ps;
     HDC dcMem, dc;
     HBITMAP bmMem, bmOld;
-    HBRUSH hBrush;
+    HBRUSH hBrush, oldhBrush;
     HPEN oldhPen, hBlackPen, hRedPen;
 	RECT rc;
 
@@ -384,22 +384,27 @@ static VOID CLOCK_Paint(HWND hWnd)
 		if(Globals.bAnalog)
 		{
 			hBrush=CreateSolidBrush(BackgroundColor);
-			SelectObject(dc, hBrush);
+			oldhBrush=SelectObject(dc, hBrush);
+			
 			hBlackPen=CreatePen(PS_SOLID, 1, RGB(0x0,0,0x0));
 			hRedPen=CreatePen(PS_SOLID, 1, RGB(0xff,0,0x11));
+			
 			oldhPen=SelectObject(dc, hBlackPen);
 			Rectangle(dc, rc.left, rc.top, rc.right, rc.bottom);
 			SelectObject(dc, hRedPen);
 			Rectangle(dc, rc.left+1, rc.top+1, rc.right-1, rc.bottom-1);
 			SelectObject(dc, hBlackPen);
 			Rectangle(dc, rc.left+2, rc.top+2, rc.right-2, rc.bottom-2);
-			SelectObject(dc, oldhPen);
 			SetPixel(dc, rc.left, rc.top, BackgroundColor);
 			SetPixel(dc, rc.right-1, rc.top, BackgroundColor);
 			SetPixel(dc, rc.left, rc.bottom-1, BackgroundColor);
 			SetPixel(dc, rc.right-1, rc.bottom-1, BackgroundColor);
+			
+			SelectObject(dc, oldhPen);
 			DeleteObject(hBlackPen);
 			DeleteObject(hRedPen);
+			
+			SelectObject(dc, oldhBrush);
 			DeleteObject(hBrush);
 			IconAnalogClock(dc, rc.right-rc.left, rc.bottom-rc.top, Globals.bSeconds, Globals.bWithoutTitle);
 		}
