@@ -164,14 +164,14 @@ static void PositionHands(const POINT* centre, int radius, BOOL bSeconds)
     struct dostime_t t;
 
     _dos_gettime (&t);
-    hour = t.hour%2;
+    hour = t.hour%12;
 	minute = t.minute;
 	second = t.second;
 
     /* 0 <= hour,minute,second < 2pi */
 
 
-    PositionHand(centre, radius * 0.5,  hour/12 * 2*M_PI, &HourHand);
+    PositionHand(centre, radius * 0.5,  ((hour*5+minute/12)/(12*5)) * 2*M_PI, &HourHand);
     PositionHand(centre, radius * 0.65, minute/60 * 2*M_PI, &MinuteHand);
     if (bSeconds)
         PositionHand(centre, radius * 0.79, second/60 * 2*M_PI, &SecondHand);  
