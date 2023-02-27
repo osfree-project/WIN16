@@ -88,8 +88,8 @@ DWORD WINAPI CommDlgExtendedError ( void )
 
 }
 
-extern BOOL  WGetOpenFileName (LPOPENFILENAME);
-extern BOOL  WGetSaveFileName (LPOPENFILENAME);
+extern BOOL  WINAPI WGetOpenFileName (LPOPENFILENAME);
+extern BOOL  WINAPI WGetSaveFileName (LPOPENFILENAME);
 extern short WGOFNInitDialog ();
 extern short WGOFNTerminateDialog ();
 

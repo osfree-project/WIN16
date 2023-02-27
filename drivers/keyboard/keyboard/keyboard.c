@@ -27,6 +27,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#include <dos.h>
+
 #include <windows.h>
 
 #include "vkeys.h"
@@ -44,11 +46,14 @@ typedef struct _KBINFO
 } KBINFO, far *LPKBINFO;
 #pragma pack(pop)
 
-static FARPROC DefKeybEventProc;
-static LPBYTE pKeyStateTable;
+static FARPROC DefKeybEventProc=NULL;
+static LPBYTE pKeyStateTable=NULL;
 static WORD wScreenSwitchEnable=1;	// Screen switch enabled by default
-static FARPROC lpOldInt09=NULL;		// Old INT 09H handler
+static void far * lpOldInt09=NULL;		// Old INT 09H handler
 static BYTE fSysReq=0;			// Enables CTRL-ALT-SysReq if NZ
+static UINT KeyboardType=4;		// Keyboard type, detected by driver or from system.ini
+static UINT KeyboardSubType=0;		// Keyboard sub type, detected by driver or from system.ini
+
 extern BYTE near * PASCAL tablestart;	// OEM<>ANSI XLAT tables
 
 // This table used by keyboard interrupt handler to produce virtual key
@@ -166,6 +171,16 @@ WORD WINAPI Inquire(LPKBINFO kbInfo)
   return sizeof(KBINFO);
 }
 
+void far * mymemset (void far *start, int c, int len)
+{
+  char far *p = start;
+
+  while (len -- > 0)
+    *p ++ = c;
+
+  return start;
+}
+
 /***********************************************************************
  *		Enable (KEYBOARD.2)
  */
@@ -174,7 +189,7 @@ VOID WINAPI Enable( FARPROC proc, LPBYTE lpKeyState )
     DefKeybEventProc = proc;
     pKeyStateTable = lpKeyState;
 
-    _fmemset( lpKeyState, 0, 256 ); /* all states to false */
+    mymemset( lpKeyState, 0, 256 ); /* all states to false */
 }
 
 /***********************************************************************
@@ -198,23 +213,58 @@ int WINAPI ToAscii(UINT virtKey,UINT scanCode, LPBYTE lpKeyState,
 /***********************************************************************
  *           AnsiToOem   (KEYBOARD.5)
  */
+// @todo Must be int for return
 void WINAPI AnsiToOem( const char huge * s, char huge *  d )
 {
-        if(s != d)
-                lstrcpy(d,s);
-//    CharToOemA( s, d );
-    //return -1;
+    char huge * dst;
+
+      dst = (char huge *)s;
+      while( *dst )
+      {
+        if ((BYTE)*dst<=0x1f)		// Range 0x00-0x1f
+        {
+           *d=tablestart[*dst+2];
+        } else 
+        if ((BYTE)*dst>=0x80)		// Range 0x80-0xff
+        {
+           *d=tablestart[*dst+2+0x20-0x80];
+        } else {			// Range 0x20-0x7f
+          *d=*dst;
+        }
+        d++;
+        dst++;
+      }
+
+// @todo always return -1
+//    return -1;
 }
 
 /***********************************************************************
  *           OemToAnsi   (KEYBOARD.6)
  */
+// @todo Must be int for return
 void WINAPI OemToAnsi( const char huge *  s, char huge *  d )
 {
-    if (s != d)
-        lstrcpy(d,s);
-//    OemToCharA( s, d );
-    //return -1;
+    char huge * dst;
+      dst = (char huge *)s;
+      while( *dst )
+      {
+        if ((BYTE)*dst<=0x1f)		// Range 0x00-0x1f
+        {
+           *d=tablestart[*dst+2+0x20+128];
+        } else 
+        if ((BYTE)*dst>=0x80)		// Range 0x80-0xff
+        {
+           *d=tablestart[*dst+2+0x20+128+0x20-0x80];
+        } else {			// Range 0x20-0x7f
+          *d=*dst;
+        }
+        d++;
+        dst++;
+      }
+
+// @todo always return -1
+//    return -1;
 }
 
 /**********************************************************************
@@ -223,6 +273,29 @@ void WINAPI OemToAnsi( const char huge *  s, char huge *  d )
 WORD WINAPI SetSpeed(WORD unused)
 {
 //    FIXME("(%04x): stub\n", unused);
+/*
+INT 16,3 - Set Keyboard Typematic Rate (AT+)
+
+	AH = 03
+	AL = 00  set typematic rate to default
+	     01  increase initial delay
+	     02  slow typematic rate by 1/2
+	     04  turn off typematic chars
+	     05  set typematic rate/delay
+
+	BH = repeat delay (AL=5)
+	     0 = 250ms	   2 = 750ms
+	     1 = 500ms	   3 = 1000ms
+	BL = typematic rate, one of the following  (AL=5)
+
+	     00 - 30.0	    01 - 26.7	   02 - 24.0	  03 - 21.8
+	     04 - 20.0	    05 - 18.5	   06 - 17.1	  07 - 16.0
+	     08 - 15.0	    09 - 13.3	   0A - 12.0	  0B - 10.9
+	     0C - 10.0	    0D - 9.2	   0E - 8.6	  0F - 8.0
+	     10 - 7.5	    11 - 6.7	   12 - 6.0	  13 - 5.5
+	     14 - 5.0	    15 - 4.6	   16 - 4.3	  17 - 4.0
+	     18 - 3.7	    19 - 3.3	   1A - 3.0	  1B - 2.7
+*/
     return 0xffff;
 }
 
@@ -278,6 +351,11 @@ WORD WINAPI GetTableSeg(VOID)
  */
 VOID WINAPI NewTable(VOID)
 {
+    if (!KeyboardType)
+    {
+      KeyboardType=GetPrivateProfileInt("keyboard", "type", 4, "SYSTEM.INI");
+      KeyboardSubType=GetPrivateProfileInt("keyboard", "subtype", 0, "SYSTEM.INI");
+    }
 }
 
 /**********************************************************************
@@ -345,9 +423,21 @@ UINT WINAPI VkKeyScan(UINT cChar)
 /******************************************************************************
  *		GetKeyboardType (KEYBOARD.130)
  */
+// @todo This is not correct way to detect keyboard. Normal keyboard detection
+// must be in NewTable function.
 int WINAPI GetKeyboardType(int nTypeFlag)
 {
-//    return GetKeyboardType( nTypeFlag );
+    switch(nTypeFlag)
+    {
+    case 0:      /* Keyboard type */
+        return KeyboardType;
+    case 1:      /* Keyboard Subtype */
+        return KeyboardSubType;
+    case 2:      /* Number of F-keys */
+        return 12;   /* We're doing an 101 for now, so return 12 F-keys */
+    }
+
+    return 0;    /* The book says 0 here, so 0 */
 }
 
 /******************************************************************************
@@ -383,7 +473,7 @@ UINT WINAPI MapVirtualKey(UINT wCode, UINT wMapType)
  */
 int WINAPI GetKBCodePage(void)
 {
-	return *tablestart;
+	return (WORD)*tablestart;
 }
 
 /****************************************************************************
@@ -399,9 +489,25 @@ int WINAPI GetKeyNameText(LONG lParam, LPSTR lpBuffer, int nSize)
  */
 void WINAPI AnsiToOemBuff( LPCSTR s, LPSTR d, UINT len )
 {
-    if (len != 0) //CharToOemBuffA( s, d, len );
-        if(s != d)
-                lstrcpyn(d,s,len);
+    char huge * dst;
+
+      dst = (char huge *)s;
+      while( len )
+      {
+        if ((BYTE)*dst<=0x1f)		// Range 0x00-0x1f
+        {
+           *d=tablestart[*dst+2];
+        } else 
+        if ((BYTE)*dst>=0x80)		// Range 0x80-0xff
+        {
+           *d=tablestart[*dst+2+0x20-0x80];
+        } else {			// Range 0x20-0x7f
+          *d=*dst;
+        }
+        len--;
+	d++;
+        dst++;
+      }
 }
 
 /***********************************************************************
@@ -409,9 +515,24 @@ void WINAPI AnsiToOemBuff( LPCSTR s, LPSTR d, UINT len )
  */
 void WINAPI OemToAnsiBuff( LPCSTR s, LPSTR d, UINT len )
 {
-    if (len != 0) //OemToCharBuffA( s, d, len );
-        if(s != d)
-                lstrcpyn(d,s,len);
+    char huge * dst;
+      dst = (char huge *)s;
+      while( len )
+      {
+        if ((BYTE)*dst<=0x1f)		// Range 0x00-0x1f
+        {
+           *d=tablestart[*dst+2+0x20+128];
+        } else 
+        if ((BYTE)*dst>=0x80)		// Range 0x80-0xff
+        {
+           *d=tablestart[*dst+2+0x20+128+0x20-0x80];
+        } else {			// Range 0x20-0x7f
+          *d=*dst;
+        }
+        len--;
+        d++;
+        dst++;
+      }
 }
 
 /***********************************************************************
@@ -449,6 +570,35 @@ BYTE WINAPI EnableKBSysReq(WORD fSys)
 FARPROC WINAPI GetBIOSKeyProc(VOID)
 {
 	return lpOldInt09;
+}
+
+void interrupt far interrupt_09_handler(void)
+{
+    /* do something */
+    _asm {
+      call lpOldInt09
+    }
+}
+
+extern  void (interrupt far *_dos_getvect( int ax ))();
+#pragma aux  _dos_getvect = \
+    "mov ah,35h"        \
+    "int 21h"           \
+    parm [ax] value [es bx];
+
+extern  void _dos_setvect( int, void (interrupt far *)());
+#pragma aux  _dos_setvect = \
+    "push ds"           \
+    "mov ds,cx"         \
+    "mov ah,25h"        \
+    "int 21h"           \
+    "pop ds"            \
+    parm caller [ax] [cx dx];
+
+void KbdInit(void)
+{
+    lpOldInt09 = _dos_getvect(9);
+    _dos_setvect(9, interrupt_09_handler);
 }
 
 BOOL WINAPI LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)

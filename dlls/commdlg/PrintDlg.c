@@ -28,18 +28,18 @@ To send email to the maintainer of the Willows Twin Libraries.
 
  */
 
-#include "windows.h"
-#include "drivinit.h"
+#include <windows.h>
+#include <drivinit.h>
 //#include "windowsx.h"
-#include "dlgs.h"
+#include <dlgs.h>
 #include "print.h"
-#include "cderr.h"
-#include "commdlg.h"
+#include <cderr.h>
+#include <commdlg.h>
 
-#include "Log.h"
+//#include "Log.h"
 #include "Dialog.h"
-#include "GdiDDK.h"
-#include "PrinterDC.h"
+//#include "GdiDDK.h"
+//#include "PrinterDC.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -53,8 +53,8 @@ To send email to the maintainer of the Willows Twin Libraries.
 #define	NO_DEFAULT_PRN_MSG	1114
 
 /* Dialog procedures for CommDlg, these are NOT exported */
-static LRESULT FAR PASCAL PrintDlgProc     (HWND, UINT, WPARAM, LPARAM);
-static LRESULT FAR PASCAL PrintSetupDlgProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK PrintDlgProc     (HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK PrintSetupDlgProc(HWND, UINT, WPARAM, LPARAM);
 
 BOOL MakeDialogBox(HINSTANCE, HWND, LPCSTR, BOOL, BOOL, LPCSTR, 
 			void *, DLGPROC);
@@ -178,7 +178,7 @@ WINAPI PrintDlg(PRINTDLG FAR *lppd)
 }
 
 
-static LRESULT FAR PASCAL 
+LRESULT CALLBACK
 PrintDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static UINT		uiHelpMsg;
@@ -451,7 +451,7 @@ PrintDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 
-static LRESULT FAR PASCAL 
+LRESULT CALLBACK
 PrintSetupDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static UINT		uiHelpMsg;

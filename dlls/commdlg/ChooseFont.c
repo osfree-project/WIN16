@@ -41,7 +41,7 @@ To send email to the maintainer of the Willows Twin Libraries.
 #include "cderr.h"
 #include "dlgs.h"
 #include "CommdlgRC.h"
-#include "Log.h"
+//#include "Log.h"
 #include "porting.h"
 
 /*===== External Platform specific defines =====*/

@@ -32,18 +32,30 @@ To send email to the maintainer of the Willows Twin Libraries.
 #include <stdio.h>
 #include <string.h>
 
-#include "windows.h"
-#include "windowsx.h"
+#include <windows.h>
+//#include "windowsx.h"
 #include "dde.h"
 #include "ddeml.h"
 
-#include "kerndef.h"
+//#include "kerndef.h"
 #include "DdeMLDefs.h"
-#include "DPMI.h"
-#include "Endian.h"
-#include "KrnAtoms.h"
-#include "Log.h"
+//#include "DPMI.h"
+//#include "Endian.h"
+//#include "KrnAtoms.h"
+//#include "Log.h"
 
+
+#define GlobalPtrHandle(lp) \
+  ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))
+
+#define     GlobalUnlockPtr(lp)      \
+                GlobalUnlock(GlobalPtrHandle(lp))
+
+#define GlobalFreePtr(lp) \
+  (GlobalUnlockPtr(lp),(BOOL)GlobalFree(GlobalPtrHandle(lp)))
+
+#define GlobalAllocPtr(flags, cb) \
+  (GlobalLock(GlobalAlloc((flags), (cb))))
 
 
 static BOOL RegisterDdeMLClasses(void);
@@ -54,7 +66,7 @@ static LRESULT DdeMLConvListHandleCreate(HWND,CREATESTRUCT *);
 static LRESULT DdeMLClientHandleCreate(HWND,CREATESTRUCT *);
 static LRESULT DdeMLServerHandleCreate(HWND,CREATESTRUCT *);
 static void DdeSetLastError(LPDDEMLINSTANCE, UINT);
-static HWND DdeEstablishConversation(LPDDEMLINSTANCE,HSZ,HSZ,CONVCONTEXT *);
+static HWND DdeEstablishConversation(LPDDEMLINSTANCE,HSZ,HSZ,CONVCONTEXT far *);
 static LPDDEMLCONV DdeMakeNewConv(HWND,CONVCONTEXT *);
 static BOOL ConnectEnumProc(HWND,LPARAM);
 static UINT DdeMLClientHandleInitACK(HWND,LPDDEMLCONV,WPARAM,LPARAM);
@@ -176,7 +188,7 @@ DdeUninitialize(DWORD idInst)
     return TRUE;
 }
 
-#ifdef 0
+#if 0
 static HDDEDATA
 DdeDoCallback(LPDDEMLINSTANCE lpInst, LPDDEMLCONV lpConv,
 		UINT uType, UINT uFmt, HSZ hsz1, HSZ hsz2,
@@ -197,7 +209,7 @@ DdeDoCallback(LPDDEMLINSTANCE lpInst, LPDDEMLCONV lpConv,
 
 HCONVLIST WINAPI
 DdeConnectList(DWORD idInst, HSZ hszService, HSZ hszTopic,
-		HCONVLIST hConvList, CONVCONTEXT *lpCC)
+		HCONVLIST hConvList, CONVCONTEXT far *lpCC)
 {
     return (HCONVLIST)0;
 }
@@ -246,7 +258,7 @@ DdeDisconnectList(HCONVLIST hConvList)
 /* **** conversation control group **** */
 
 HCONV WINAPI
-DdeConnect(DWORD idInst, HSZ hszService, HSZ hszTopic, CONVCONTEXT *lpCC)
+DdeConnect(DWORD idInst, HSZ hszService, HSZ hszTopic, CONVCONTEXT far *lpCC)
 {
     LPDDEMLINSTANCE lpInst;
     HWND hWndConv;
@@ -276,7 +288,7 @@ DdeConnect(DWORD idInst, HSZ hszService, HSZ hszTopic, CONVCONTEXT *lpCC)
 
 static HWND
 DdeEstablishConversation(LPDDEMLINSTANCE lpInst,
-		HSZ hszService, HSZ hszTopic, CONVCONTEXT *lpCC)
+		HSZ hszService, HSZ hszTopic, CONVCONTEXT far *lpCC)
 {
     HWND hWndConv;
     LPDDEMLCONV lpConv;
@@ -313,10 +325,10 @@ DdeMakeNewConv(HWND hWndConv, CONVCONTEXT *lpCC)
 {
     LPDDEMLCONV lpConv;
 
-    if (!(lpConv = (LPDDEMLCONV)WinMalloc(sizeof(DDEMLCONV))))
+    if (!(lpConv = (LPDDEMLCONV)GlobalAllocPtr(GPTR,sizeof(DDEMLCONV))))
 	return (LPDDEMLCONV)0;
 
-    memset((LPSTR)lpConv,'\0',sizeof(DDEMLCONV));
+    _fmemset((LPSTR)lpConv,'\0',sizeof(DDEMLCONV));
     lpConv->ConvInfo.ConvCtxt = *lpCC;
     lpConv->uMagic = DDEML_HCONV_MAGIC;
     lpConv->hWndConv = hWndConv;
@@ -351,7 +363,7 @@ DdeReconnect(HCONV hConv)
 }
 
 UINT WINAPI
-DdeQueryConvInfo(HCONV hConv, DWORD idTransaction, CONVINFO *lpConvInfo)
+DdeQueryConvInfo(HCONV hConv, DWORD idTransaction, CONVINFO far *lpConvInfo)
 {
     return (UINT)0;
 }
@@ -418,7 +430,7 @@ DdeNameService(DWORD idInst, HSZ hszService, HSZ hszReserved, UINT afCmd)
     }
 
     if (afCmd & DNS_REGISTER) {
-	lpNewService = (LPDDEMLSERVICE)WinMalloc(sizeof(DDEMLSERVICE));
+	lpNewService = (LPDDEMLSERVICE)GlobalAllocPtr(GPTR, sizeof(DDEMLSERVICE));
 	lpNewService->lpNextService = (LPDDEMLSERVICE)0;
 	lpNewService->hszService = hszService;
 	if (lpService)
@@ -440,9 +452,9 @@ DdeNameService(DWORD idInst, HSZ hszService, HSZ hszReserved, UINT afCmd)
 /* **** app client interface group **** */
 
 HDDEDATA WINAPI
-DdeClientTransaction(void *lpData, DWORD cbData, HCONV hConv,
+DdeClientTransaction(void far *lpData, DWORD cbData, HCONV hConv,
 		HSZ hszItem, UINT uFmt, UINT uType, DWORD uTimeOut,
-		DWORD *lpdwResult)
+		DWORD far *lpdwResult)
 {
     return (HDDEDATA)0;
 }
@@ -452,26 +464,29 @@ DdeClientTransaction(void *lpData, DWORD cbData, HCONV hConv,
 /* **** data transfer group **** */
 
 HDDEDATA WINAPI
-DdeCreateDataHandle(DWORD idInst, void *lpSrcBuf, DWORD cbInitData,
+DdeCreateDataHandle(DWORD idInst, void far *lpSrcBuf, DWORD cbInitData,
 		DWORD offSrcBuf, HSZ hszItem, UINT uFmt, UINT afCmd)
 {
     return (HDDEDATA)0;
 }
 
 HDDEDATA WINAPI
-DdeAddData(HDDEDATA hData, void *lpSrcBuf, DWORD cbAddData, DWORD offObj)
+DdeAddData(HDDEDATA hData, void far *lpSrcBuf, DWORD cbAddData, DWORD offObj)
 {
     return (HDDEDATA)0;
 }
 
 DWORD WINAPI
-DdeGetData(HDDEDATA hData, void *lpDest, DWORD cbMax, DWORD offSrc)
+DdeGetData(HDDEDATA hData, void far *lpDest, DWORD cbMax, DWORD offSrc)
 {
     return (DWORD)0;
 }
 
+// Watcom has incorrect return type (near pointer instead of far), so name is differ...
+// Don't forget to correctly export this
+
 LPBYTE WINAPI
-DdeAccessData(HDDEDATA hData, LPDWORD lpcbData)
+CorrectDdeAccessData(HDDEDATA hData, LPDWORD lpcbData)
 {
     LPDDEMLINSTANCE lpInst;
     LPDDEMLDATA lpDDEMLData;
@@ -533,7 +548,7 @@ DdeFreeDataHandle(HDDEDATA hData)
     while (GlobalUnlock(lpDDEMLData->hGlobal));
 
     GlobalFree(lpDDEMLData->hGlobal);
-    WinFree((LPSTR)lpDDEMLData);
+    GlobalFreePtr((LPSTR)lpDDEMLData);
     return TRUE;
 }
 
@@ -557,7 +572,7 @@ DdeGetLastError(DWORD idInst)
 }
 
 HSZ WINAPI
-DdeCreateStringHandle(DWORD idInst, LPCSTR lpszString, int codepage)
+DdeCreateStringHandle(DWORD idInst, LPSTR lpszString, int codepage)
 {
     LPDDEMLINSTANCE lpInst;
     ATOM atmString;
@@ -569,7 +584,7 @@ DdeCreateStringHandle(DWORD idInst, LPCSTR lpszString, int codepage)
     lpInst = &DdeMLInstances[index];
     lpInst->LastError = DMLERR_NO_ERROR;
 
-    if (!lpszString || strlen(lpszString) == 0)
+    if (!lpszString || lstrlen(lpszString) == 0)
 	return (HSZ)0;
 
     if (codepage != 0 && codepage != CP_WINANSI &&
@@ -591,7 +606,7 @@ DdeCreateStringHandle(DWORD idInst, LPCSTR lpszString, int codepage)
 }
 
 DWORD WINAPI
-DdeQueryString(DWORD idInst, HSZ hsz, LPSTR lpsz, DWORD cchMax, int codepage)
+DdeQueryString(DWORD idInst, HSZ hsz, LPCSTR lpsz, DWORD cchMax, int codepage)
 {
     LPDDEMLINSTANCE lpInst;
     WORD index;
@@ -611,18 +626,18 @@ DdeQueryString(DWORD idInst, HSZ hsz, LPSTR lpsz, DWORD cchMax, int codepage)
     }
 
     if (!hsz) {
-	if (lpsz) *lpsz = 0;
+	if (lpsz) *(LPSTR)lpsz = 0;
 	return 0L;
     }
     else {
 	buf[0] = 0;
 	GlobalGetAtomName((ATOM)LOWORD(hsz),buf,255);
 	if (lpsz) {
-	    strncpy(lpsz,buf,min(cchMax-1,255));
-	    return (UINT)strlen(lpsz);
+	    lstrcpyn(lpsz,buf,min(cchMax-1,255));
+	    return (UINT)lstrlen(lpsz);
 	}
 	else
-	    return strlen(buf);
+	    return lstrlen(buf);
     }
 }
 
@@ -851,11 +866,11 @@ DdeMLServerHandleCreate(HWND hWnd, CREATESTRUCT *lpCreateStruct)
 
     if (IsValidInstanceID(idInst = (DWORD)lpCreateStruct->lpCreateParams)) {
 	lpInst = &DdeMLInstances[LOWORD(idInst)];
-	if (!(lpConv = (LPDDEMLCONV)WinMalloc(sizeof(DDEMLCONV)))) {
+	if (!(lpConv = (LPDDEMLCONV)GlobalAllocPtr(GPTR, sizeof(DDEMLCONV)))) {
 	    DdeSetLastError(lpInst,DMLERR_MEMORY_ERROR);
 	    return (LRESULT)-1;
 	}
-	memset((LPSTR)lpConv,'\0',sizeof(DDEMLCONV));
+	_fmemset((LPSTR)lpConv,'\0',sizeof(DDEMLCONV));
 	lpConv->uMagic = DDEML_HCONV_MAGIC;
 	lpConv->idInst = idInst;
 	lpConv->hWndConv = hWnd;
@@ -991,6 +1006,7 @@ DdeMLSubFrameHandleInit(LPDDEMLINSTANCE lpInst, HWND hWnd, HWND hWndPosting,
    return (LRESULT) 0; /* satisfies the compiler while breathlessly waiting for the sequel */
 }
 
+#if 0
 void
 IT_DDEINIT (ENV *envp, LONGPROC f)
 {
@@ -1011,3 +1027,11 @@ IT_DDEINIT (ENV *envp, LONGPROC f)
     envp->reg.dx = HIWORD(retcode);
 }
 
+#endif
+
+BOOL FAR PASCAL LibMain( HINSTANCE hInstance, WORD wDataSegment,
+                         WORD wHeapSize, LPSTR lpszCmdLine )
+{
+
+  return( 1 );
+}

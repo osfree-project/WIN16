@@ -22,21 +22,21 @@
 
 #define NONAMELESSUNION
 
-#include "windef.h"
-#include "winbase.h"
-#include "wine/winbase16.h"
-#include "wine/winuser16.h"
-#include "wownt32.h"
-#include "winternl.h"
-#include "wine/debug.h"
+#include <windows.h>
+//#include "winbase.h"
+//#include "wine/winbase16.h"
+//#include "wine/winuser16.h"
+//#include "wownt32.h"
+//#include "winternl.h"
+//#include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(system);
+//WINE_DEFAULT_DEBUG_CHANNEL(system);
 
 typedef struct
 {
-    FARPROC16       callback16;
-    INT             rate;
-    INT             ticks;
+    FARPROC         callback;
+    int             rate;
+    int             ticks;
 } SYSTEM_TIMER;
 
 #define NB_SYS_TIMERS   8
@@ -48,7 +48,7 @@ static HANDLE SYS_timer;
 static HANDLE SYS_thread;
 static BOOL SYS_timers_disabled;
 
-
+#if 0
 /***********************************************************************
  *           SYSTEM_TimerTick
  */
@@ -59,21 +59,21 @@ static void CALLBACK SYSTEM_TimerTick( LPVOID arg, DWORD low, DWORD high )
     if (SYS_timers_disabled) return;
     for (i = 0; i < NB_SYS_TIMERS; i++)
     {
-        if (!SYS_Timers[i].callback16) continue;
+        if (!SYS_Timers[i].callback) continue;
         if ((SYS_Timers[i].ticks -= SYS_TIMER_RATE) <= 0)
         {
-            FARPROC16 proc = SYS_Timers[i].callback16;
-            CONTEXT context;
+            FARPROC proc = SYS_Timers[i].callback;
+//            CONTEXT context;
 
             SYS_Timers[i].ticks += SYS_Timers[i].rate;
 
-            memset( &context, 0, sizeof(context) );
-            context.SegCs = SELECTOROF( proc );
-            context.Eip   = OFFSETOF( proc );
-            context.Ebp   = CURRENT_SP + FIELD_OFFSET(STACK16FRAME, bp);
-            context.Eax   = i + 1;
+//            memset( &context, 0, sizeof(context) );
+//            context.SegCs = SELECTOROF( proc );
+//            context.Eip   = OFFSETOF( proc );
+//            context.Ebp   = CURRENT_SP + FIELD_OFFSET(STACK16FRAME, bp);
+//            context.Eax   = i + 1;
 
-            WOWCallback16Ex( 0, WCB16_REGS, 0, NULL, (DWORD *)&context );
+            //WOWCallback16Ex( 0, WCB16_REGS, 0, NULL, (DWORD *)&context );
         }
     }
 }
@@ -122,6 +122,7 @@ static void SYSTEM_StopTicks(void)
     }
 }
 
+#endif
 
 /***********************************************************************
  *           InquireSystem   (SYSTEM.1)
@@ -129,10 +130,10 @@ static void SYSTEM_StopTicks(void)
  * Note: the function always takes 2 WORD arguments, contrary to what
  *       "Undocumented Windows" says.
   */
-DWORD WINAPI InquireSystem16( WORD code, WORD arg )
+DWORD WINAPI InquireSystem( WORD code, WORD arg )
 {
     WORD drivetype;
-    WCHAR root[3];
+    char root[3];
 
     switch(code)
     {
@@ -143,16 +144,16 @@ DWORD WINAPI InquireSystem16( WORD code, WORD arg )
         root[0] = 'A' + arg;
         root[1] = ':';
         root[2] = 0;
-        drivetype = GetDriveTypeW( root );
-        if (drivetype == DRIVE_CDROM) drivetype = DRIVE_REMOTE;
-        else if (drivetype == DRIVE_NO_ROOT_DIR) drivetype = DRIVE_UNKNOWN;
+//        drivetype = GetDriveType( root );
+//        if (drivetype == DRIVE_CDROM) drivetype = DRIVE_REMOTE;
+//        else if (drivetype == DRIVE_NO_ROOT_DIR) drivetype = DRIVE_UNKNOWN;
         return MAKELONG( drivetype, drivetype );
 
     case 2:  /* Enable one-drive logic */
-        FIXME("Case %d: set single-drive %d not supported\n", code, arg );
+//        FIXME("Case %d: set single-drive %d not supported\n", code, arg );
         return 0;
     }
-    WARN("Unknown code %d\n", code );
+//    WARN("Unknown code %d\n", code );
     return 0;
 }
 
@@ -160,17 +161,17 @@ DWORD WINAPI InquireSystem16( WORD code, WORD arg )
 /***********************************************************************
  *           CreateSystemTimer   (SYSTEM.2)
  */
-WORD WINAPI CreateSystemTimer16( WORD rate, FARPROC16 proc )
+WORD WINAPI CreateSystemTimer( WORD rate, FARPROC proc )
 {
     int i;
     for (i = 0; i < NB_SYS_TIMERS; i++)
-        if (!SYS_Timers[i].callback16)  /* Found one */
+        if (!SYS_Timers[i].callback)  /* Found one */
         {
             SYS_Timers[i].rate = (UINT)rate * 1000;
             if (SYS_Timers[i].rate < SYS_TIMER_RATE)
                 SYS_Timers[i].rate = SYS_TIMER_RATE;
             SYS_Timers[i].ticks = SYS_Timers[i].rate;
-            SYS_Timers[i].callback16 = proc;
+            SYS_Timers[i].callback = proc;
             if (++SYS_NbTimers == 1) SYSTEM_StartTicks();
             return i + 1;  /* 0 means error */
         }
@@ -183,11 +184,11 @@ WORD WINAPI CreateSystemTimer16( WORD rate, FARPROC16 proc )
  *
  * Note: do not confuse this function with USER.182
  */
-WORD WINAPI SYSTEM_KillSystemTimer( WORD timer )
+WORD WINAPI KillSystemTimer( WORD timer )
 {
-    if ( !timer || timer > NB_SYS_TIMERS || !SYS_Timers[timer-1].callback16 )
+    if ( !timer || timer > NB_SYS_TIMERS || !SYS_Timers[timer-1].callback )
         return timer;  /* Error */
-    SYS_Timers[timer-1].callback16 = 0;
+    SYS_Timers[timer-1].callback = 0;
     if (!--SYS_NbTimers) SYSTEM_StopTicks();
     return 0;
 }
@@ -196,7 +197,7 @@ WORD WINAPI SYSTEM_KillSystemTimer( WORD timer )
 /***********************************************************************
  *           EnableSystemTimers   (SYSTEM.4)
  */
-void WINAPI EnableSystemTimers16(void)
+void WINAPI EnableSystemTimers(void)
 {
     SYS_timers_disabled = FALSE;
 }
@@ -205,7 +206,7 @@ void WINAPI EnableSystemTimers16(void)
 /***********************************************************************
  *           DisableSystemTimers   (SYSTEM.5)
  */
-void WINAPI DisableSystemTimers16(void)
+void WINAPI DisableSystemTimers(void)
 {
     SYS_timers_disabled = TRUE;
 }
@@ -214,7 +215,7 @@ void WINAPI DisableSystemTimers16(void)
 /***********************************************************************
  *           GetSystemMSecCount (SYSTEM.6)
  */
-DWORD WINAPI GetSystemMSecCount16(void)
+DWORD WINAPI GetSystemMSecCount(void)
 {
     return GetTickCount();
 }
@@ -223,7 +224,7 @@ DWORD WINAPI GetSystemMSecCount16(void)
 /***********************************************************************
  *           Get80x87SaveSize   (SYSTEM.7)
  */
-WORD WINAPI Get80x87SaveSize16(void)
+WORD WINAPI Get80x87SaveSize(void)
 {
     return 94;
 }
@@ -232,7 +233,7 @@ WORD WINAPI Get80x87SaveSize16(void)
 /***********************************************************************
  *           Save80x87State   (SYSTEM.8)
  */
-void WINAPI Save80x87State16( char *ptr )
+void WINAPI Save80x87State( char *ptr )
 {
 #ifdef __i386__
     __asm__(".byte 0x66; fsave %0; fwait" : "=m" (ptr) );
@@ -243,7 +244,7 @@ void WINAPI Save80x87State16( char *ptr )
 /***********************************************************************
  *           Restore80x87State   (SYSTEM.9)
  */
-void WINAPI Restore80x87State16( const char *ptr )
+void WINAPI Restore80x87State( const char *ptr )
 {
 #ifdef __i386__
     __asm__(".byte 0x66; frstor %0" : : "m" (ptr) );
@@ -254,7 +255,7 @@ void WINAPI Restore80x87State16( const char *ptr )
 /***********************************************************************
  *           A20_Proc  (SYSTEM.20)
  */
-void WINAPI A20_Proc16( WORD unused )
+void WINAPI A20_Proc( WORD unused )
 {
     /* this is also a NOP in Windows */
 }

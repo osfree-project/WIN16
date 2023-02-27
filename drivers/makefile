@@ -4,7 +4,7 @@
 # author
 #
 
-DIRS = display keyboard
+DIRS = display keyboard sound
 
 !include $(%ROOT)tools/mk/all.mk
 

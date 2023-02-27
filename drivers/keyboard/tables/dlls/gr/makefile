@@ -16,7 +16,6 @@ EXPORTS = &
 
 # WEP Need this?
 
-OPTIONS = heapsize=32K libfile libentry.obj
 DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 
 !include $(%ROOT)tools/mk/appsw16.mk

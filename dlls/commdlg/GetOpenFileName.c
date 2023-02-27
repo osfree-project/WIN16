@@ -39,11 +39,13 @@ To send email to the maintainer of the Willows Twin Libraries.
 #include "sys/types.h"
 #include "sys/stat.h"
 #include "dos.h"
-#include "mfs_config.h"
+#include "direct.h"
+
+//#include "mfs_config.h"
 #include "System.h"
 #include "CommdlgRC.h"
 #include "WinConfig.h"
-#include "Log.h"
+//#include "Log.h"
 #include "porting.h"
 
 #define WGOFNERR_NULLPOINTER            -1
@@ -170,7 +172,9 @@ static UINT                     WGOFNWM_ShareViolation      = ( UINT )NULL;
 #define WGOFNGetInstance        GetInstance
 #define WGOFNSetExtendedError   WCDSetExtendedError
 
-//int WINAPI GetFileTitle(LPCSTR , LPSTR , UINT );
+
+
+
 HINSTANCE GetInstance();
 DWORD WCDSetExtendedError ( DWORD );
 
@@ -191,6 +195,39 @@ LPSTR WINAPI strpbrkr (
 	
 }
 //#endif
+
+//int WINAPI GetFileTitle(LPCSTR , LPSTR , UINT );
+//short WINAPI    GetFileTitle( LPCSTR, LPSTR, UINT );
+short WINAPI GetFileTitle(LPCSTR lpszFile, LPSTR lpszTitle, UINT cnBuf)
+{
+	int     nLen, i;
+	LPSTR	lpszFileTitle;
+
+        /* Note: a space IS a valid on unix and the mac. */
+	if ( !lpszFile  ||  !(nLen = lstrlen(lpszFile))  ||
+		_fstrpbrk(lpszFile, "*[]")  ||  *(lpszFile+nLen-1) == ':'  ||
+		*(lpszFile+nLen-1) == '\\'  ||  *(lpszFile+nLen-1) == '/' )
+
+		return -1;		/* Not valid file name */
+
+	for ( i = 0; i < nLen; i++ ) {
+		if ( !isprint(*(lpszFile+i)) )
+			return -1;	/* Not valid file name */
+	}	/* Don't remove {}: won't work on SGI */
+
+	if ((lpszFileTitle = (LPSTR) strpbrkr(lpszFile, "/\\") ))
+		nLen -= (++lpszFileTitle - lpszFile);
+	else
+		lpszFileTitle = (LPSTR)lpszFile;
+
+	/* At this point nLen=strlen(lpszTitle) */
+	if ( cnBuf < (UINT)nLen + 1 )
+		return nLen;		/* Specified buffer is too small */
+
+	lstrcpy(lpszTitle, lpszFileTitle);
+	return 0;
+}
+
 /*============================================================================*/
 short WINAPI WGOFNIsADirectory ( 
 	LPSTR                   lpPath ) 
@@ -200,7 +237,7 @@ short WINAPI WGOFNIsADirectory (
 	struct stat             Status;
 	
 	
-	if ( MFS_STAT ( lpPath, &Status ) == -1 )
+	if ( stat ( lpPath, &Status ) == -1 )
 		return ( FALSE );
 	else
 		return ( Status.st_mode & S_IFDIR );
@@ -321,7 +358,7 @@ short WINAPI WGOFNGetFileStatus (
 	struct stat*            lpFileStatus )
 {
 
-	return ( MFS_STAT ( lpPathAndFileName, lpFileStatus ) );
+	return ( stat ( lpPathAndFileName, lpFileStatus ) );
 	
 }
 /*============================================================================*/
@@ -444,7 +481,7 @@ short WINAPI WGOFNSetTextDirectory (
 	memset ( DisplayPath, 0, sizeof ( DisplayPath ) );
 	memset ( WorkingPath, 0, sizeof ( WorkingPath ) );
 	memset ( DrivePath, 0, sizeof ( DrivePath ) );
-	DriveSelection = MFS_GETDRIVE ();
+	DriveSelection = _getdrive ();
 	if ( ( ReturnValue = SendMessage ( hDriveComboWnd, CB_GETCURSEL, 
 	                                   0, 0 ) ) == (DWORD)CB_ERR )
 		ErrorCode = WGOFNERR_GETCURSEL;
@@ -460,7 +497,7 @@ short WINAPI WGOFNSetTextDirectory (
 		                                     DriveSelection, 0 ) ) == CB_ERR )
 			ErrorCode = WGOFNERR_GETITEMDATA;
 	}
-	MFS_GETCWD ( 0, DisplayPath, sizeof ( DisplayPath ) );
+	getcwd ( DisplayPath, sizeof ( DisplayPath ) );
 	if ( lpPath )
 	{
 		if ((lpDrivePath = _fstrpbrk ( lpPath, WGOFNCharSet_DriveSeparator ) ) )
@@ -473,8 +510,8 @@ short WINAPI WGOFNSetTextDirectory (
 			                                        0, ( LPARAM ) DisplayPath );
 			SendMessage ( hDriveComboWnd, CB_SETCURSEL, DriveSelection, 0 );
 		}
-		MFS_CHDIR ( lpPath );
-		MFS_GETCWD ( 0, DisplayPath, sizeof ( DisplayPath ) );
+		chdir ( lpPath );
+		getcwd ( DisplayPath, sizeof ( DisplayPath ) );
 	}
 	DlgDirList ( hWnd, DisplayPath, WGOFNListDirectories, ( int ) NULL,
 	             DDL_DIRECTORY | DDL_EXCLUSIVE );
@@ -790,15 +827,15 @@ short WINAPI WGOFNGetBitmap (
 				Bitmap.bmWidth, Bitmap.bmHeight,
 				hMemDC, 0, 0, SRCCOPY ))
 			{
-				ERRSTR((LF_ERROR, "WGOFNGetBitmap:"
-					" BitBlt SRCCOPY failure!\n"));
+//				ERRSTR((LF_ERROR, "WGOFNGetBitmap:"
+//					" BitBlt SRCCOPY failure!\n"));
 			}
 			if (!BitBlt ( hMaskDC, 0, 0,
 				Bitmap.bmWidth, Bitmap.bmHeight,
 				(HDC) 0, 0, 0, DSTINVERT ))
 			{
-				ERRSTR((LF_ERROR, "WGOFNGetBitmap:"
-					" BitBlt DSTINVERT failure!\n"));
+//				ERRSTR((LF_ERROR, "WGOFNGetBitmap:"
+//					" BitBlt DSTINVERT failure!\n"));
 			}
 #if 1
 			/* initialize background image bitmap
@@ -824,8 +861,8 @@ short WINAPI WGOFNGetBitmap (
 				Bitmap.bmWidth, Bitmap.bmHeight,
 				hMaskDC, 0, 0, 0x00b8074aL ))
 			{
-				ERRSTR((LF_ERROR, "WGOFNGetBitmap:"
-					" BitBlt init bg failure!\n"));
+//				ERRSTR((LF_ERROR, "WGOFNGetBitmap:"
+//					" BitBlt init bg failure!\n"));
 			}
 			SelectObject(hMemDC, hOldMemBrush);
 			DeleteObject(hMemBrush);
@@ -852,8 +889,8 @@ short WINAPI WGOFNGetBitmap (
 				Bitmap.bmWidth, Bitmap.bmHeight,
 				hMaskDC, 0, 0, 0x00b8074aL ))
 			{
-				ERRSTR((LF_ERROR, "WGOFNGetBitmap:"
-					" BitBlt init hi failure!\n"));
+//				ERRSTR((LF_ERROR, "WGOFNGetBitmap:"
+//					" BitBlt init hi failure!\n"));
 			}
 			SelectObject(hHighDC, hOldHighBrush);
 			DeleteObject(hHighBrush);
@@ -898,7 +935,7 @@ short WINAPI WGOFNInitControls (
 	char                     TwinString [ 64 ];
 	char                     Path [ MAX_FILELENGTH ];
 
-	MFS_GETCWD ( 0, Path, sizeof ( Path ) );
+	getcwd ( Path, sizeof ( Path ) );
 	DlgDirListComboBox ( hWnd, Path, WGOFNComboDrives, ( int )NULL, 
 	                     DDL_DRIVES | DDL_EXCLUSIVE );
 	GetTwinString ( WCP_PATHSASDRIVES, TwinString, sizeof ( TwinString ) );
@@ -962,7 +999,7 @@ short WINAPI WGFONInitDialog (
 			CheckDlgButton ( hWnd, WGOFNCheckReadOnly, TRUE );
 		ShowWindow ( GetDlgItem ( hWnd, WGOFNButtonHelp ), 
 		             lpOpenFileName->Flags & OFN_SHOWHELP ? SW_SHOW : SW_HIDE );
-		MFS_GETCWD ( 0, Path, sizeof ( Path ) );
+		getcwd ( Path, sizeof ( Path ) );
 		WGOFNInitControls ( hWnd, lpOpenFileName );
 		if ((lpFilter = ( LPSTR )lpOpenFileName->lpstrFilter ))
 		{
@@ -1050,7 +1087,7 @@ short WINAPI WGFONEndDialog (
 			ErrorCode = WGOFNERR_GLOBALLOCK;
 		else
 		{
-			MFS_CHDIR ( lpInitDir );
+			chdir ( lpInitDir );
 			GlobalUnlock ( hProp );
 		}
 		GlobalFree ( hProp );
@@ -1136,7 +1173,7 @@ short WINAPI WGOFNCheckOK (
 			                         OFN_EXTENSIONDIFFERENT : 0 );
 	}
  
-	MFS_GETCWD ( 0, Path, sizeof ( Path ) );
+	getcwd ( Path, sizeof ( Path ) );
 	PathLength = lstrlen ( Path );
 	FileLength = lstrlen ( FileName );
 	if ( ( ( PathLength ) && 
@@ -1413,7 +1450,7 @@ short WINAPI WGOFNComboDrivesSelectionChange (
 	if ((ReturnCode = SendMessage(hControlWnd, CB_GETCURSEL, (WPARAM)NULL, 
 	                                  ( LPARAM )NULL ) ) == CB_ERR )
 	{
-		if ( ! ( CurrentDrive = MFS_GETDRIVE () ) )
+		if ( ! ( CurrentDrive = _getdrive () ) )
 			CurrentDrive = MFS_GETROOTDRIVE ();
 		if ( ( ReturnCode = SendMessage ( hControlWnd, CB_GETCOUNT, 0, 0 ) ) == CB_ERR )
 			ErrorCode = WGOFNERR_GETCOUNT;
@@ -1436,12 +1473,12 @@ short WINAPI WGOFNComboDrivesSelectionChange (
 	else
 	if ( ReturnCode )
 	{
-		MFS_SETDRIVE ( ReturnCode );
-		MFS_GETCWD ( 0, CurrentDirectory, sizeof ( CurrentDirectory ) );
+		_chdrive ( ReturnCode );
+		getcwd ( CurrentDirectory, sizeof ( CurrentDirectory ) );
 		wsprintf ( NewDirectory, "%c:%s", 
 		           ( char )( ReturnCode - 1 ) + 'A', 
 		           CurrentDirectory );
-		MFS_CHDIR ( NewDirectory );
+		chdir ( NewDirectory );
 #ifdef TWIN32
 		switch ( GetDriveType16 ( ReturnCode - 1 ) )
 #else
@@ -1462,7 +1499,7 @@ short WINAPI WGOFNComboDrivesSelectionChange (
 	{
 		SendMessage ( hControlWnd, CB_GETLBTEXT, CurrentSelection,
 	              	( LPARAM )CurrentDirectory );
-		MFS_CHDIR ( CurrentDirectory );
+		chdir ( CurrentDirectory );
 		WGOFNSetTextDirectory ( hWnd, CurrentDirectory );
 		WGOFNSetEditFileName ( hWnd, ( LPSTR ) NULL, TRUE );
 	}
@@ -1535,8 +1572,8 @@ short WINAPI WGOFNListDirectoriesDoubleClick (
 		}
 		CurrentDirectory [ lstrlen ( CurrentDirectory ) ] = WChar_PathSeparator;
 		lstrcat ( CurrentDirectory, DirectoryName );
-		MFS_CHDIR ( CurrentDirectory );
-		MFS_GETCWD ( 0, DirectoryName, sizeof ( DirectoryName ) );
+		chdir ( CurrentDirectory );
+		getcwd (  DirectoryName, sizeof ( DirectoryName ) );
 		if ( ( ( DriveItemData ) && 
 		       ( strncmp ( DrivePath + 3, DirectoryName, strlen ( DrivePath ) - 3 ) ) ) ||
 		     ( ( !DriveItemData ) &&
@@ -1545,12 +1582,12 @@ short WINAPI WGOFNListDirectoriesDoubleClick (
 			if ((lpDir = ( LPSTR ) strpbrkr ( CurrentDirectory, 
 			                                  WCharSet_PathSeparators ) ))
 				lpDir [ 1 ] = '\0';
-			MFS_CHDIR ( CurrentDirectory );
+			chdir ( CurrentDirectory );
 			RootDrive = MFS_GETROOTDRIVE();
 			wsprintf ( CurrentDirectory, "%c%c%s", 
 			           ( char )( RootDrive - 1 ) + 'A', 
 			           *WCharSet_DriveSeparator, DirectoryName );
-			MFS_SETDRIVE ( RootDrive );
+			_chdrive ( RootDrive );
 			if ( ( ReturnCode = SendMessage ( hDriveWnd, CB_GETCOUNT, 0, 0 ) ) != CB_ERR )
 			{
 				for ( Level = 0, Drives = ( WORD ) ReturnCode, ReturnCode = 0; 
@@ -1565,7 +1602,7 @@ short WINAPI WGOFNListDirectoriesDoubleClick (
 					}
 				}
 			}
-			MFS_CHDIR ( CurrentDirectory );
+			chdir ( CurrentDirectory );
 		}
 		WGOFNSetTextDirectory ( hWnd, ( LPSTR ) NULL );
 		WGOFNSetEditFileName ( hWnd, ( LPSTR ) NULL, TRUE );
@@ -2325,7 +2362,7 @@ BOOL WINAPI WGOFNGetFileName (
 	FARPROC                 lpfnDialogProc  = ( FARPROC )NULL;
 	HRSRC                   hResource       = ( HRSRC )NULL;
 	HGLOBAL                 hStandardDialog = ( HGLOBAL )NULL;
-	LPDLGTEMPLATE		lpTmp		= ( LPDLGTEMPLATE )NULL;
+//	LPDLGTEMPLATE		lpTmp		= ( LPDLGTEMPLATE )NULL;
 	HGLOBAL                 hUseDialogBox = 0;
 
 	short                   ErrorCode   = 0;
@@ -2352,12 +2389,12 @@ BOOL WINAPI WGOFNGetFileName (
 									  hResource ) ) )
 			ErrorCode = WGOFNERR_LOADRESOURCE;
 		else
-			lpTmp = ( LPDLGTEMPLATE )LockResource ( hUseDialogBox );
+			{};//lpTmp = ( LPDLGTEMPLATE )LockResource ( hUseDialogBox );
 		
 		if ( ! ( lpfnDialogProc = MakeProcInstance ( ( FARPROC )WGOFNDialogProc, WGOFNGetInstance () ) ) )
 			ErrorCode = WGOFNERR_MAKEPROCINSTANCE;
 			
-		if ( ( ! ErrorCode ) && ( lpTmp ) )
+		if ( ( ! ErrorCode ) /*&& ( lpTmp )*/ )
 #ifdef TWIN32
 			ReturnValue = DialogBoxIndirectParam ( WGOFNGetInstance (), 
 							       lpTmp, 

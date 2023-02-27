@@ -51,7 +51,6 @@ EXPORTS = &
 
 # 83 is last for 3.10
 
-OPTIONS = heapsize=32K libfile libentry.obj
 DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 #ADD_COPT=-pl
 

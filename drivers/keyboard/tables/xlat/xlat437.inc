@@ -7,8 +7,8 @@ CODEPAGE	DW	437	; IBM PC OEM
 ; =============================
 ;                      OEM	; ANSI
 
-;https://en.wikipedia.org/wiki/Windows-1252
-;https://en.wikipedia.org/wiki/Code_page_437
+;ANSI https://en.wikipedia.org/wiki/Windows-1252
+;OEM https://en.wikipedia.org/wiki/Code_page_437
 
 ; 0x00-0x1f Control codes translation ANSI to OEM
 
