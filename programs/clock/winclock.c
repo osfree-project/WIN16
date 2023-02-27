@@ -214,12 +214,12 @@ static void IconDrawFace(HDC dc, const POINT* centre, int radius, int border)
 
     for(t=0; t<12; t++) {
         MoveToEx(dc,
-                 centre->x + sin(t*M_PI/6)*0.9*radius,
-                 centre->y - cos(t*M_PI/6)*0.9*radius,
+                 centre->x + sin(t*M_PI/6)*0.87*radius,
+                 centre->y - cos(t*M_PI/6)*0.87*radius,
                  NULL);
         LineTo(dc,
-               centre->x + sin(t*M_PI/6)*0.89*radius,
-               centre->y - cos(t*M_PI/6)*0.89*radius);
+               centre->x + sin(t*M_PI/6)*0.865*radius,
+               centre->y - cos(t*M_PI/6)*0.865*radius);
     }
     SelectObject(dc, oldhPen);
     DeleteObject(hPen);

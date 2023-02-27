@@ -386,7 +386,11 @@ static VOID CLOCK_Paint(HWND hWnd)
 			hPen=CreatePen(PS_SOLID, 1, HandColor);
 			oldhPen=SelectObject(dc, hPen);
 			Rectangle(dc, rc.left, rc.top, rc.right, rc.bottom);
+			hPen=CreatePen(PS_SOLID, 1, RGB(0xff,0,0x11));
+			SelectObject(dc, hPen);
 			Rectangle(dc, rc.left+1, rc.top+1, rc.right-1, rc.bottom-1);
+			hPen=CreatePen(PS_SOLID, 1, HandColor);
+			SelectObject(dc, hPen);
 			Rectangle(dc, rc.left+2, rc.top+2, rc.right-2, rc.bottom-2);
 			SelectObject(dc, oldhPen);
 			DeleteObject(hPen);
