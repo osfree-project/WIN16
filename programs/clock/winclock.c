@@ -38,7 +38,7 @@
 #include "winclock.h"
 #include "main.h"
 
-#define M_PI 3.14
+#define M_PI 3.1415926535 
 
 static const int SHADOW_DEPTH = 2;
  
@@ -164,14 +164,14 @@ static void PositionHands(const POINT* centre, int radius, BOOL bSeconds)
     struct dostime_t t;
 
     _dos_gettime (&t);
-    hour = t.hour;
+    hour = t.hour%2;
 	minute = t.minute;
 	second = t.second;
 
     /* 0 <= hour,minute,second < 2pi */
 
 
-    PositionHand(centre, radius * 0.5,  hour/12   * 2*M_PI, &HourHand);
+    PositionHand(centre, radius * 0.5,  hour/12 * 2*M_PI, &HourHand);
     PositionHand(centre, radius * 0.65, minute/60 * 2*M_PI, &MinuteHand);
     if (bSeconds)
         PositionHand(centre, radius * 0.79, second/60 * 2*M_PI, &SecondHand);  
@@ -193,6 +193,55 @@ void AnalogClock(HDC dc, int x, int y, BOOL bSeconds, BOOL border)
 
     PositionHands(&centre, radius, bSeconds);
     DrawHands(dc, bSeconds);
+}
+
+static void IconDrawHands(HDC dc, BOOL bSeconds)
+{
+    SelectObject(dc, CreatePen(PS_SOLID, 1, HandColor));
+    DrawHand(dc, &MinuteHand);
+    DrawHand(dc, &HourHand);
+    DeleteObject(SelectObject(dc, GetStockObject(NULL_PEN)));
+}
+
+static void IconDrawFace(HDC dc, const POINT* centre, int radius, int border)
+{
+    int t;
+    HPEN oldhPen, hPen;
+
+    /* Hour divisions */
+    hPen=CreatePen(PS_SOLID, 2, HandColor);
+    oldhPen=SelectObject(dc, hPen);
+
+    for(t=0; t<12; t++) {
+        MoveToEx(dc,
+                 centre->x + sin(t*M_PI/6)*0.9*radius,
+                 centre->y - cos(t*M_PI/6)*0.9*radius,
+                 NULL);
+        LineTo(dc,
+               centre->x + sin(t*M_PI/6)*0.89*radius,
+               centre->y - cos(t*M_PI/6)*0.89*radius);
+    }
+    SelectObject(dc, oldhPen);
+    DeleteObject(hPen);
+}
+
+
+void IconAnalogClock(HDC dc, int x, int y, BOOL bSeconds, BOOL border)
+{
+    POINT centre;
+    int radius;
+    
+    radius = min(x, y)/2 - SHADOW_DEPTH;
+    if (radius < 0)
+	return;
+
+    centre.x = x/2;
+    centre.y = y/2;
+
+    IconDrawFace(dc, &centre, radius, border);
+
+    PositionHands(&centre, radius, bSeconds);
+    IconDrawHands(dc, bSeconds);
 }
 
 void FormatDate(char * szDate)

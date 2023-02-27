@@ -366,6 +366,7 @@ static VOID CLOCK_Paint(HWND hWnd)
     HDC dcMem, dc;
     HBITMAP bmMem, bmOld;
     HBRUSH hBrush;
+    HPEN oldhPen, hPen;
 	RECT rc;
 
     dc = BeginPaint(hWnd, &ps);
@@ -381,7 +382,16 @@ static VOID CLOCK_Paint(HWND hWnd)
 		FillRect(dc, &rc,  hBrush);
 		DeleteObject(hBrush);
 		if(Globals.bAnalog)
-			AnalogClock(dc, rc.right-rc.left, rc.bottom-rc.top, Globals.bSeconds, Globals.bWithoutTitle);
+		{
+			hPen=CreatePen(PS_SOLID, 1, HandColor);
+			oldhPen=SelectObject(dc, hPen);
+			Rectangle(dc, rc.left, rc.top, rc.right, rc.bottom);
+			Rectangle(dc, rc.left+1, rc.top+1, rc.right-1, rc.bottom-1);
+			Rectangle(dc, rc.left+2, rc.top+2, rc.right-2, rc.bottom-2);
+			SelectObject(dc, oldhPen);
+			DeleteObject(hPen);
+			IconAnalogClock(dc, rc.right-rc.left, rc.bottom-rc.top, Globals.bSeconds, Globals.bWithoutTitle);
+		}
 		else
 			DigitalClock(dc, rc.right-rc.left, rc.bottom-rc.top, Globals.bSeconds, Globals.hFont);
     } 
