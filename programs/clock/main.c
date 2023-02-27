@@ -383,7 +383,7 @@ static VOID CLOCK_Paint(HWND hWnd)
 		DeleteObject(hBrush);
 		if(Globals.bAnalog)
 		{
-			hBlackPen=CreatePen(PS_SOLID, 1, HandColor);
+			hBlackPen=CreatePen(PS_SOLID, 1, RGB(0x0,0,0x0));
 			hRedPen=CreatePen(PS_SOLID, 1, RGB(0xff,0,0x11));
 			oldhPen=SelectObject(dc, hBlackPen);
 			Rectangle(dc, rc.left, rc.top, rc.right, rc.bottom);
