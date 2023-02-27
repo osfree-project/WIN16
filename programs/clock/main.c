@@ -400,8 +400,9 @@ static VOID CLOCK_Paint(HWND hWnd)
 			SetPixel(dc, rc.right-1, rc.bottom-1, BackgroundColor);
 			IconAnalogClock(dc, rc.right-rc.left, rc.bottom-rc.top, Globals.bSeconds, Globals.bWithoutTitle);
 		}
-		else
+		else {
 			DigitalClock(dc, rc.right-rc.left, rc.bottom-rc.top, Globals.bSeconds, Globals.hFont);
+		}
     } 
     else 
 	{	
