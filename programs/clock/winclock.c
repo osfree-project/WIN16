@@ -206,23 +206,27 @@ static void IconDrawHands(HDC dc, BOOL bSeconds)
 static void IconDrawFace(HDC dc, const POINT* centre, int radius, int border)
 {
     int t;
-    HPEN oldhPen, hPen;
+//    HPEN oldhPen, hPen;
 
     /* Hour divisions */
-    hPen=CreatePen(PS_SOLID, 2, HandColor);
-    oldhPen=SelectObject(dc, hPen);
+//    hPen=CreatePen(PS_SOLID, 2, HandColor);
+//    oldhPen=SelectObject(dc, hPen);
 
     for(t=0; t<12; t++) {
-        MoveToEx(dc,
-                 centre->x + sin(t*M_PI/6)*0.87*radius,
-                 centre->y - cos(t*M_PI/6)*0.87*radius,
-                 NULL);
-        LineTo(dc,
-               centre->x + sin(t*M_PI/6)*0.865*radius,
-               centre->y - cos(t*M_PI/6)*0.865*radius);
+		SetPixel(dc, centre->x + sin(t*M_PI/6)*0.88*radius, centre->y - cos(t*M_PI/6)*0.88*radius, RGB(255,255,255));
+		SetPixel(dc, centre->x + sin(t*M_PI/6)*0.88*radius+1, centre->y - cos(t*M_PI/6)*0.88*radius, RGB(0,0,0));
+		SetPixel(dc, centre->x + sin(t*M_PI/6)*0.88*radius+1, centre->y - cos(t*M_PI/6)*0.88*radius+1, RGB(0,0,0));
+		SetPixel(dc, centre->x + sin(t*M_PI/6)*0.88*radius, centre->y - cos(t*M_PI/6)*0.88*radius+1, RGB(0,0,0));
+//        MoveToEx(dc,
+//                 centre->x + sin(t*M_PI/6)*0.87*radius,
+//                 centre->y - cos(t*M_PI/6)*0.87*radius,
+//                 NULL);
+//        LineTo(dc,
+//               centre->x + sin(t*M_PI/6)*0.865*radius,
+//               centre->y - cos(t*M_PI/6)*0.865*radius);
     }
-    SelectObject(dc, oldhPen);
-    DeleteObject(hPen);
+//    SelectObject(dc, oldhPen);
+//    DeleteObject(hPen);
 }
 
 
