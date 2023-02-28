@@ -374,42 +374,38 @@ static VOID CLOCK_Paint(HWND hWnd)
 	if (IsIconic(hWnd)) 
     { 
         GetClientRect(hWnd, &rc); 
-        //SetMapMode(dc, MM_ANISOTROPIC); 
         SetWindowExt(dc, 100, 100); 
         SetViewportExt(dc, rc.right, rc.bottom); 
-		hBrush=CreateSolidBrush(BackgroundColor);
-		/* Erase the background */
-		FillRect(dc, &rc,  hBrush);
+		
+		hBrush=CreateSolidBrush(RGB(0xC0,0xC0,0xC0));
+		oldhBrush=SelectObject(dc, hBrush);
+		
+		hBlackPen=CreatePen(PS_SOLID, 1, RGB(0x0,0,0x0));
+		hRedPen=CreatePen(PS_SOLID, 1, RGB(0xff,0,0x11));
+		
+		oldhPen=SelectObject(dc, hBlackPen);
+		Rectangle(dc, rc.left, rc.top, rc.right, rc.bottom);
+		SelectObject(dc, hRedPen);
+		Rectangle(dc, rc.left+1, rc.top+1, rc.right-1, rc.bottom-1);
+		SelectObject(dc, hBlackPen);
+		Rectangle(dc, rc.left+2, rc.top+2, rc.right-2, rc.bottom-2);
+		SetPixel(dc, rc.left, rc.top, RGB(0xC0,0xC0,0xC0));
+		SetPixel(dc, rc.right-1, rc.top, RGB(0xC0,0xC0,0xC0));
+		SetPixel(dc, rc.left, rc.bottom-1, RGB(0xC0,0xC0,0xC0));
+		SetPixel(dc, rc.right-1, rc.bottom-1, RGB(0xC0,0xC0,0xC0));
+		
+		SelectObject(dc, oldhPen);
+		DeleteObject(hBlackPen);
+		DeleteObject(hRedPen);
+		
+		SelectObject(dc, oldhBrush);
 		DeleteObject(hBrush);
 		if(Globals.bAnalog)
 		{
-			hBrush=CreateSolidBrush(RGB(0xC0,0xC0,0xC0));
-			oldhBrush=SelectObject(dc, hBrush);
-			
-			hBlackPen=CreatePen(PS_SOLID, 1, RGB(0x0,0,0x0));
-			hRedPen=CreatePen(PS_SOLID, 1, RGB(0xff,0,0x11));
-			
-			oldhPen=SelectObject(dc, hBlackPen);
-			Rectangle(dc, rc.left, rc.top, rc.right, rc.bottom);
-			SelectObject(dc, hRedPen);
-			Rectangle(dc, rc.left+1, rc.top+1, rc.right-1, rc.bottom-1);
-			SelectObject(dc, hBlackPen);
-			Rectangle(dc, rc.left+2, rc.top+2, rc.right-2, rc.bottom-2);
-			SetPixel(dc, rc.left, rc.top, RGB(0xC0,0xC0,0xC0));
-			SetPixel(dc, rc.right-1, rc.top, RGB(0xC0,0xC0,0xC0));
-			SetPixel(dc, rc.left, rc.bottom-1, RGB(0xC0,0xC0,0xC0));
-			SetPixel(dc, rc.right-1, rc.bottom-1, RGB(0xC0,0xC0,0xC0));
-			
-			SelectObject(dc, oldhPen);
-			DeleteObject(hBlackPen);
-			DeleteObject(hRedPen);
-			
-			SelectObject(dc, oldhBrush);
-			DeleteObject(hBrush);
-			IconAnalogClock(dc, rc.right-rc.left, rc.bottom-rc.top, Globals.bSeconds, Globals.bWithoutTitle);
+			IconAnalogClock(dc, rc.right-rc.left, rc.bottom-rc.top);
 		}
 		else {
-			DigitalClock(dc, rc.right-rc.left, rc.bottom-rc.top, Globals.bSeconds, Globals.hFont);
+			IconDigitalClock(dc, rc.right-rc.left, rc.bottom-rc.top);
 		}
     } 
     else 

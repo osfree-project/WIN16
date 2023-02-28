@@ -195,45 +195,12 @@ void AnalogClock(HDC dc, int x, int y, BOOL bSeconds, BOOL border)
     DrawHands(dc, bSeconds);
 }
 
-static void IconDrawHands(HDC dc, BOOL bSeconds)
-{
-    SelectObject(dc, CreatePen(PS_SOLID, 1, HandColor));
-    DrawHand(dc, &MinuteHand);
-    DrawHand(dc, &HourHand);
-    DeleteObject(SelectObject(dc, GetStockObject(NULL_PEN)));
-}
 
-static void IconDrawFace(HDC dc, const POINT* centre, int radius, int border)
-{
-    int t;
-//    HPEN oldhPen, hPen;
-
-    /* Hour divisions */
-//    hPen=CreatePen(PS_SOLID, 2, HandColor);
-//    oldhPen=SelectObject(dc, hPen);
-
-    for(t=0; t<12; t++) {
-		SetPixel(dc, centre->x + sin(t*M_PI/6)*0.88*radius, centre->y - cos(t*M_PI/6)*0.88*radius, RGB(255,255,255));
-		SetPixel(dc, centre->x + sin(t*M_PI/6)*0.88*radius+1, centre->y - cos(t*M_PI/6)*0.88*radius, RGB(0,0,0));
-		SetPixel(dc, centre->x + sin(t*M_PI/6)*0.88*radius+1, centre->y - cos(t*M_PI/6)*0.88*radius+1, RGB(0,0,0));
-		SetPixel(dc, centre->x + sin(t*M_PI/6)*0.88*radius, centre->y - cos(t*M_PI/6)*0.88*radius+1, RGB(0,0,0));
-//        MoveToEx(dc,
-//                 centre->x + sin(t*M_PI/6)*0.87*radius,
-//                 centre->y - cos(t*M_PI/6)*0.87*radius,
-//                 NULL);
-//        LineTo(dc,
-//               centre->x + sin(t*M_PI/6)*0.865*radius,
-//               centre->y - cos(t*M_PI/6)*0.865*radius);
-    }
-//    SelectObject(dc, oldhPen);
-//    DeleteObject(hPen);
-}
-
-
-void IconAnalogClock(HDC dc, int x, int y, BOOL bSeconds, BOOL border)
+void IconAnalogClock(HDC dc, int x, int y)
 {
     POINT centre;
     int radius;
+    int t;
     
     radius = min(x, y)/2 - SHADOW_DEPTH;
     if (radius < 0)
@@ -242,10 +209,19 @@ void IconAnalogClock(HDC dc, int x, int y, BOOL bSeconds, BOOL border)
     centre.x = x/2;
     centre.y = y/2;
 
-    IconDrawFace(dc, &centre, radius, border);
+    for(t=0; t<12; t++) {
+		SetPixel(dc, centre.x + sin(t*M_PI/6)*0.88*radius, centre.y - cos(t*M_PI/6)*0.88*radius, RGB(255,255,255));
+		SetPixel(dc, centre.x + sin(t*M_PI/6)*0.88*radius+1, centre.y - cos(t*M_PI/6)*0.88*radius, RGB(0,0,0));
+		SetPixel(dc, centre.x + sin(t*M_PI/6)*0.88*radius+1, centre.y - cos(t*M_PI/6)*0.88*radius+1, RGB(0,0,0));
+		SetPixel(dc, centre.x + sin(t*M_PI/6)*0.88*radius, centre.y - cos(t*M_PI/6)*0.88*radius+1, RGB(0,0,0));
+    }
 
-    PositionHands(&centre, radius, bSeconds);
-    IconDrawHands(dc, bSeconds);
+    PositionHands(&centre, radius, FALSE);
+
+    SelectObject(dc, CreatePen(PS_SOLID, 1, HandColor));
+    DrawHand(dc, &MinuteHand);
+    DrawHand(dc, &HourHand);
+    DeleteObject(SelectObject(dc, GetStockObject(NULL_PEN)));
 }
 
 void FormatDate(char * szDate)
@@ -299,7 +275,7 @@ void FormatDate(char * szDate)
 	}
 }
  
-void FormatTime(char * szTime)
+void FormatTime(char * szTime, BOOL bSeconds)
 {
 	char tFormat[20]="";
     struct dostime_t t;
@@ -314,22 +290,22 @@ void FormatTime(char * szTime)
 	}
 	strcat(tFormat, Globals.sTime);
 	strcat(tFormat, "%02d");
-	if (Globals.bSeconds)
+	if (Globals.bSeconds && bSeconds)
 	{
 		strcat(tFormat, Globals.sTime);
 		strcat(tFormat, "%02d");
 	}
 	if (!Globals.iTime) // 12h
 	{
-		strcat(tFormat, " %s");
-		if (Globals.bSeconds) 
+		if (bSeconds) strcat(tFormat, " %s");
+		if (Globals.bSeconds && bSeconds) 
 		{
 			sprintf(szTime, tFormat, (t.hour % 12)?(t.hour % 12):12, t.minute, t.second, (t.hour<12)?Globals.s1159:Globals.s2359);
 		} else {
 			sprintf(szTime, tFormat, (t.hour % 12)?(t.hour % 12):12, t.minute, (t.hour<12)?Globals.s1159:Globals.s2359);
 		}
 	} else { // 24h
-		if (Globals.bSeconds) 
+		if (Globals.bSeconds && bSeconds) 
 		{
 			sprintf(szTime, tFormat, t.hour, t.minute, t.second);
 		} else {
@@ -349,7 +325,7 @@ HFONT SizeFont(HDC dc, int x, int y, BOOL bSeconds, const LOGFONT* font)
     char szTime[255];
     int chars;
 
-    FormatTime(szTime);
+    FormatTime(szTime, TRUE);
     chars=lstrlen(szTime);
 
     lf = *font;
@@ -384,7 +360,7 @@ void DigitalClock(HDC dc, int x, int y, BOOL bSeconds, HFONT font)
     dchars=lstrlen(szDate);
 
 
-	FormatTime(szTime);
+	FormatTime(szTime, TRUE);
     tchars=lstrlen(szTime);
 
 
@@ -404,4 +380,35 @@ void DigitalClock(HDC dc, int x, int y, BOOL bSeconds, HFONT font)
 //    TextOut(dc, (x - extent.cx)/2, (y - extent.cy)/2, szDate, dchars);
 
     SelectObject(dc, oldFont);
+}
+
+void IconDigitalClock(HDC dc, int x, int y)
+{
+    SIZE extent;
+    HFONT oldFont, font;
+	LOGFONT logfont;
+    char szTime[255]="";
+    int tchars;
+
+	FormatTime(szTime, FALSE);
+    tchars=lstrlen(szTime);
+
+    memset(&logfont, 0, sizeof(logfont));
+    logfont.lfHeight = 16;
+	logfont.lfWidth = 7;
+	lstrcpy(logfont.lfFaceName, "Symbol");
+    font = CreateFontIndirect(&logfont);
+
+    oldFont = SelectObject(dc, font);
+    GetTextExtentPoint(dc, szTime, tchars, &extent);
+
+    SetBkColor(dc, BackgroundColor);
+    SetBkMode(dc, TRANSPARENT);
+
+    SetTextColor(dc, RGB(0,0,0));
+    TextOut(dc, 10, (y - extent.cy)/2, szTime, tchars);
+
+    SelectObject(dc, oldFont);
+	DeleteObject(font);
+
 }
