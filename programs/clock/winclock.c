@@ -57,7 +57,7 @@ static void DrawTicks(HDC dc, const POINT* centre, int radius)
     int t;
     HPEN oldhPen, hPen;
 	HBRUSH oldhBrush, hBrush;
-	int hourWidth=0.09*radius;
+	int hourWidth=0.08*radius;
 
     /* Minute divisions */
     if (radius>64)

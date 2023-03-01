@@ -371,9 +371,9 @@ static VOID CLOCK_Paint(HWND hWnd)
 
     dc = BeginPaint(hWnd, &ps);
 
+    GetClientRect(hWnd, &rc); 
 	if (IsIconic(hWnd)) 
     { 
-        GetClientRect(hWnd, &rc); 
         SetWindowExt(dc, 100, 100); 
         SetViewportExt(dc, rc.right, rc.bottom); 
 		
@@ -412,29 +412,29 @@ static VOID CLOCK_Paint(HWND hWnd)
 	{	
     /* Use an offscreen dc to avoid flicker */
     dcMem = CreateCompatibleDC(dc);
-    bmMem = CreateCompatibleBitmap(dc, ps.rcPaint.right - ps.rcPaint.left,
-				    ps.rcPaint.bottom - ps.rcPaint.top);
+    bmMem = CreateCompatibleBitmap(dc, rc.right - rc.left,
+				    rc.bottom - rc.top);
 
     bmOld = SelectObject(dcMem, bmMem);
 
-    SetViewportOrgEx(dcMem, -ps.rcPaint.left, -ps.rcPaint.top, NULL);
+    SetViewportOrgEx(dcMem, -rc.left, -rc.top, NULL);
 
     hBrush=CreateSolidBrush(BackgroundColor);
     /* Erase the background */
-    FillRect(dcMem, &ps.rcPaint,  hBrush);
+    FillRect(dcMem, &rc,  hBrush);
     DeleteObject(hBrush);
 
     if(Globals.bAnalog)
-		AnalogClock(dcMem, ps.rcPaint.right-ps.rcPaint.left, ps.rcPaint.bottom-ps.rcPaint.top, Globals.bSeconds);
+		AnalogClock(dcMem, rc.right-rc.left, rc.bottom-rc.top, Globals.bSeconds);
     else
 		DigitalClock(dcMem, Globals.MaxX, Globals.MaxY, Globals.bSeconds, Globals.hFont);
 
     /* Blit the changes to the screen */
     BitBlt(dc, 
-	   ps.rcPaint.left, ps.rcPaint.top,
-	   ps.rcPaint.right - ps.rcPaint.left, ps.rcPaint.bottom - ps.rcPaint.top,
+	   rc.left, rc.top,
+	   rc.right - rc.left, rc.bottom - rc.top,
            dcMem,
-	   ps.rcPaint.left, ps.rcPaint.top,
+	   rc.left, rc.top,
            SRCCOPY);
 
     SelectObject(dcMem, bmOld);
