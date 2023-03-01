@@ -23,7 +23,7 @@
 
 #include "colors.h"
 
-void AnalogClock(HDC dc, int X, int Y, BOOL bSeconds, BOOL border);
+void AnalogClock(HDC dc, int X, int Y, BOOL bSeconds);
 HFONT SizeFont(HDC dc, int x, int y, BOOL bSeconds, const LOGFONT* font);
 void DigitalClock(HDC dc, int X, int Y, BOOL bSeconds, HFONT font);
 void FormatDate(char * szDate);

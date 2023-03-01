@@ -40,12 +40,14 @@
 
 #define M_PI 3.1415926535 
 
-static const int SHADOW_DEPTH = 2;
- 
+
 typedef struct
 {
     POINT Start;
     POINT End;
+    POINT p2;
+    POINT p3;
+    POINT p4;
 } HandData;
 
 static HandData HourHand, MinuteHand, SecondHand;
@@ -54,6 +56,8 @@ static void DrawTicks(HDC dc, const POINT* centre, int radius)
 {
     int t;
     HPEN oldhPen, hPen;
+	HBRUSH oldhBrush, hBrush;
+	int hourWidth=0.09*radius;
 
     /* Minute divisions */
     if (radius>64)
@@ -62,89 +66,69 @@ static void DrawTicks(HDC dc, const POINT* centre, int radius)
         oldhPen=SelectObject(dc, hPen);
         for(t=0; t<60; t++) {
             MoveToEx(dc,
-                     centre->x + sin(t*M_PI/30)*0.9*radius,
-                     centre->y - cos(t*M_PI/30)*0.9*radius,
+                     centre->x + sin(t*M_PI/30)*0.95*radius,
+                     centre->y - cos(t*M_PI/30)*0.95*radius,
                      NULL);
 	    LineTo(dc,
-		   centre->x + sin(t*M_PI/30)*0.89*radius,
-		   centre->y - cos(t*M_PI/30)*0.89*radius);
+		   centre->x + sin(t*M_PI/30)*0.94*radius,
+		   centre->y - cos(t*M_PI/30)*0.94*radius);
 	}
         SelectObject(dc, oldhPen);
         DeleteObject(hPen);
     }
-    /* Hour divisions */
-    hPen=CreatePen(PS_SOLID, 5, HandColor);
-    oldhPen=SelectObject(dc, hPen);
-    for(t=0; t<12; t++) {
 
+	hBrush=CreateSolidBrush(RGB(00, 128,128));
+	oldhBrush=SelectObject(dc, hBrush);
+    /* Hour divisions */
+    for(t=0; t<12; t++) {
+		hPen=CreatePen(PS_SOLID, 1, RGB(0,0,0));
+		oldhPen=SelectObject(dc, hPen);
+		Rectangle(dc, 
+			centre->x + sin(t*M_PI/6)*0.95*radius-hourWidth/2,
+			centre->y - cos(t*M_PI/6)*0.95*radius-hourWidth/2,
+			centre->x + sin(t*M_PI/6)*0.95*radius+hourWidth/2,
+			centre->y - cos(t*M_PI/6)*0.95*radius+hourWidth/2);
+		SelectObject(dc, oldhPen);
+		DeleteObject(hPen);
+		hPen=CreatePen(PS_SOLID, 1, RGB(0,255,255));
+		oldhPen=SelectObject(dc, hPen);
         MoveToEx(dc,
-                 centre->x + sin(t*M_PI/6)*0.9*radius,
-                 centre->y - cos(t*M_PI/6)*0.9*radius,
+                 centre->x + sin(t*M_PI/6)*0.95*radius-hourWidth/2,
+                 centre->y - cos(t*M_PI/6)*0.95*radius+hourWidth/2,
                  NULL);
         LineTo(dc,
-               centre->x + sin(t*M_PI/6)*0.89*radius,
-               centre->y - cos(t*M_PI/6)*0.89*radius);
+               centre->x + sin(t*M_PI/6)*0.95*radius-hourWidth/2,
+               centre->y - cos(t*M_PI/6)*0.95*radius-hourWidth/2);
+        LineTo(dc,
+               centre->x + sin(t*M_PI/6)*0.95*radius+hourWidth/2,
+               centre->y - cos(t*M_PI/6)*0.95*radius-hourWidth/2);
+		SelectObject(dc, oldhPen);
+		DeleteObject(hPen);
     }
-    SelectObject(dc, oldhPen);
-    DeleteObject(hPen);
+    SelectObject(dc, oldhBrush);
+    DeleteObject(hBrush);
 }
 
-static void DrawFace(HDC dc, const POINT* centre, int radius, int border)
-{
-    /* Ticks */
-#if 0
-// Windows 3.x doesn't  draw shadow for ticks
-    SelectObject(dc, CreatePen(PS_SOLID, 2, ShadowColor));
-    OffsetWindowOrgEx(dc, -SHADOW_DEPTH, -SHADOW_DEPTH, NULL);
-    DrawTicks(dc, centre, radius);
-    DeleteObject(SelectObject(dc, CreatePen(PS_SOLID, 2, TickColor)));
-    OffsetWindowOrgEx(dc, SHADOW_DEPTH, SHADOW_DEPTH, NULL);
-#endif
-    DrawTicks(dc, centre, radius);
-#if 0
-// Windows 3.x doesn't  draw circle arout a clock
-    if (border)
-    {
-        SelectObject(dc, GetStockObject(NULL_BRUSH));
-        DeleteObject(SelectObject(dc, CreatePen(PS_SOLID, 5, ShadowColor)));
-        Ellipse(dc, centre->x - radius, centre->y - radius, centre->x + radius, centre->y + radius);
-    }
-#endif
-}
 
 static void DrawHand(HDC dc,HandData* hand)
 {
-    MoveToEx(dc, hand->Start.x, hand->Start.y, NULL);
-    LineTo(dc, hand->End.x, hand->End.y);
+	MoveToEx(dc, hand->End.x, hand->End.y, NULL);
+	LineTo(dc, hand->p2.x, hand->p2.y);
+	LineTo(dc, hand->p3.x, hand->p3.y);
+	LineTo(dc, hand->p4.x, hand->p4.y);
+	LineTo(dc, hand->End.x, hand->End.y);
 }
 
 static void DrawHands(HDC dc, BOOL bSeconds)
 {
     if (bSeconds) {
-#if 0
-      	SelectObject(dc, CreatePen(PS_SOLID, 1, ShadowColor));
-	OffsetWindowOrgEx(dc, -SHADOW_DEPTH, -SHADOW_DEPTH, NULL);
-        DrawHand(dc, &SecondHand);
-	DeleteObject(SelectObject(dc, CreatePen(PS_SOLID, 1, HandColor)));
-	OffsetWindowOrgEx(dc, SHADOW_DEPTH, SHADOW_DEPTH, NULL);
-#else
-	SelectObject(dc, CreatePen(PS_SOLID, 1, HandColor));
-#endif
-        DrawHand(dc, &SecondHand);
-	DeleteObject(SelectObject(dc, GetStockObject(NULL_PEN)));
+		SelectObject(dc, CreatePen(PS_SOLID, 1, HandColor));
+		MoveToEx(dc, SecondHand.Start.x, SecondHand.Start.y, NULL);
+		LineTo(dc, SecondHand.End.x, SecondHand.End.y);
+		DeleteObject(SelectObject(dc, GetStockObject(NULL_PEN)));
     }
 
-#if 0
-// Original Windows 3.x clock doesn't draw shadow for hands
-    SelectObject(dc, CreatePen(PS_SOLID, 4, ShadowColor));
-
-    OffsetWindowOrg(dc, -SHADOW_DEPTH, -SHADOW_DEPTH);
-    DrawHand(dc, &MinuteHand);
-    DrawHand(dc, &HourHand);
-    OffsetWindowOrg(dc, SHADOW_DEPTH, SHADOW_DEPTH);
-
-#endif
-    SelectObject(dc, CreatePen(PS_SOLID, 4, HandColor));
+    SelectObject(dc, CreatePen(PS_SOLID, 1, HandColor));
     DrawHand(dc, &MinuteHand);
     DrawHand(dc, &HourHand);
     DeleteObject(SelectObject(dc, GetStockObject(NULL_PEN)));
@@ -155,6 +139,12 @@ static void PositionHand(const POINT* centre, double length, double angle, HandD
     hand->Start = *centre;
     hand->End.x = centre->x + sin(angle)*length;
     hand->End.y = centre->y - cos(angle)*length;
+	hand->p2.x=centre->x + sin(angle+M_PI/2)*length*0.07;
+	hand->p2.y=centre->y - cos(angle+M_PI/2)*length*0.07;
+	hand->p3.x=centre->x + sin(angle+M_PI)*length*0.2;
+	hand->p3.y=centre->y - cos(angle+M_PI)*length*0.2;
+	hand->p4.x=centre->x + sin(angle-M_PI/2)*length*0.07;
+	hand->p4.y=centre->y - cos(angle-M_PI/2)*length*0.07;
 }
 
 static void PositionHands(const POINT* centre, int radius, BOOL bSeconds)
@@ -171,26 +161,25 @@ static void PositionHands(const POINT* centre, int radius, BOOL bSeconds)
     /* 0 <= hour,minute,second < 2pi */
 
 
-    PositionHand(centre, radius * 0.5,  ((hour*5+minute/12)/(12*5)) * 2*M_PI, &HourHand);
-    PositionHand(centre, radius * 0.65, minute/60 * 2*M_PI, &MinuteHand);
+    PositionHand(centre, radius * 0.6,  ((hour*5+minute/12)/(12*5)) * 2*M_PI, &HourHand);
+    PositionHand(centre, radius * 0.79, minute/60 * 2*M_PI, &MinuteHand);
     if (bSeconds)
         PositionHand(centre, radius * 0.79, second/60 * 2*M_PI, &SecondHand);  
 }
 
-void AnalogClock(HDC dc, int x, int y, BOOL bSeconds, BOOL border)
+void AnalogClock(HDC dc, int x, int y, BOOL bSeconds)
 {
     POINT centre;
     int radius;
     
-    radius = min(x, y)/2 - SHADOW_DEPTH;
+    radius = min(x, y)/2;
     if (radius < 0)
 	return;
 
     centre.x = x/2;
     centre.y = y/2;
 
-    DrawFace(dc, &centre, radius, border);
-
+    DrawTicks(dc, &centre, radius);
     PositionHands(&centre, radius, bSeconds);
     DrawHands(dc, bSeconds);
 }
@@ -202,7 +191,7 @@ void IconAnalogClock(HDC dc, int x, int y)
     int radius;
     int t;
     
-    radius = min(x, y)/2 - SHADOW_DEPTH;
+    radius = min(x, y)/2;
     if (radius < 0)
 	return;
 
@@ -275,44 +264,45 @@ void FormatDate(char * szDate)
 	}
 }
  
-void FormatTime(char * szTime, BOOL bSeconds)
+void FormatTime(char * szTime, BOOL bFull)
 {
 	char tFormat[20]="";
-    struct dostime_t t;
+	struct dostime_t t;
+	int hour;
+	char buf[3]="";
 
-    _dos_gettime (&t);
+	_dos_gettime (&t);
+
+	if (Globals.iTime) // 24h
+	{
+		hour=t.hour;
+	} else {  // 12h
+		hour=(t.hour % 12)?(t.hour % 12):12;
+	}
 
 	if (Globals.iTLZero) 
 	{
-		strcpy(tFormat, "%02d");
+		sprintf(tFormat, "%02d%s%02d%s", hour, Globals.sTime, t.minute, (Globals.bSeconds && bFull)?Globals.sTime:"");
 	} else {
-		strcpy(tFormat, "%d");
-	}
-	strcat(tFormat, Globals.sTime);
-	strcat(tFormat, "%02d");
-	if (Globals.bSeconds && bSeconds)
-	{
-		strcat(tFormat, Globals.sTime);
-		strcat(tFormat, "%02d");
-	}
-	if (!Globals.iTime) // 12h
-	{
-		if (bSeconds) strcat(tFormat, " %s");
-		if (Globals.bSeconds && bSeconds) 
+		if (hour<10)
 		{
-			sprintf(szTime, tFormat, (t.hour % 12)?(t.hour % 12):12, t.minute, t.second, (t.hour<12)?Globals.s1159:Globals.s2359);
+			sprintf(tFormat, "  %d%s%02d%s", hour, Globals.sTime, t.minute, (Globals.bSeconds && bFull)?Globals.sTime:"");
 		} else {
-			sprintf(szTime, tFormat, (t.hour % 12)?(t.hour % 12):12, t.minute, (t.hour<12)?Globals.s1159:Globals.s2359);
-		}
-	} else { // 24h
-		if (Globals.bSeconds && bSeconds) 
-		{
-			sprintf(szTime, tFormat, t.hour, t.minute, t.second);
-		} else {
-			sprintf(szTime, tFormat, t.hour, t.minute);
+			sprintf(tFormat, "%d%s%02d%s", hour, Globals.sTime, t.minute, (Globals.bSeconds && bFull)?Globals.sTime:"");
 		}
 	}
 
+	if (bFull)
+	{
+		if (Globals.bSeconds) strcat(tFormat, "%02d");
+		if (!Globals.iTime)
+		{
+			strcat(tFormat, " ");
+			strcat(tFormat, (t.hour<12)?Globals.s1159:Globals.s2359);
+		}
+	}
+
+	sprintf(szTime, tFormat, t.second);
 }
 
 
@@ -330,9 +320,6 @@ HFONT SizeFont(HDC dc, int x, int y, BOOL bSeconds, const LOGFONT* font)
 
     lf = *font;
     lf.lfHeight = -20;
-
-    x -= 2 * SHADOW_DEPTH;
-    y -= 2 * SHADOW_DEPTH;
 
     oldFont = SelectObject(dc, CreateFontIndirect(&lf));
     GetTextExtentPoint(dc, szTime, chars, &extent);
@@ -370,7 +357,7 @@ void DigitalClock(HDC dc, int x, int y, BOOL bSeconds, HFONT font)
 
     SetBkColor(dc, BackgroundColor);
     SetTextColor(dc, ShadowColor);
-    TextOut(dc, (x - extent.cx)/2 + SHADOW_DEPTH, (y - extent.cy)/2 + SHADOW_DEPTH, szTime, tchars);
+    TextOut(dc, (x - extent.cx)/2 , (y - extent.cy)/2 , szTime, tchars);
     SetBkMode(dc, TRANSPARENT);
 
     SetTextColor(dc, HandColor);
@@ -406,7 +393,7 @@ void IconDigitalClock(HDC dc, int x, int y)
     SetBkMode(dc, TRANSPARENT);
 
     SetTextColor(dc, RGB(0,0,0));
-    TextOut(dc, 10, (y - extent.cy)/2, szTime, tchars);
+    TextOut(dc, 4, (y - extent.cy)/2, szTime, tchars);
 
     SelectObject(dc, oldFont);
 	DeleteObject(font);

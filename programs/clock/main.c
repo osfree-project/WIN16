@@ -425,7 +425,7 @@ static VOID CLOCK_Paint(HWND hWnd)
     DeleteObject(hBrush);
 
     if(Globals.bAnalog)
-		AnalogClock(dcMem, Globals.MaxX, ps.rcPaint.bottom-ps.rcPaint.top, Globals.bSeconds, Globals.bWithoutTitle);
+		AnalogClock(dcMem, ps.rcPaint.right-ps.rcPaint.left, ps.rcPaint.bottom-ps.rcPaint.top, Globals.bSeconds);
     else
 		DigitalClock(dcMem, Globals.MaxX, Globals.MaxY, Globals.bSeconds, Globals.hFont);
 
