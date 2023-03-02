@@ -210,10 +210,16 @@ static VOID CLOCK_ResetFont(VOID)
     HDC dc = GetDC(Globals.hMainWnd);
     newfont = SizeFont(dc, Globals.MaxX*0.85, Globals.MaxY*0.6, Globals.bSeconds, &Globals.logfont);
     if (newfont) {
-	DeleteObject(Globals.hFont);
-	Globals.hFont = newfont;
+		DeleteObject(Globals.hFont);
+		Globals.hFont = newfont;
     }
-	
+
+	newfont = SizeFont(dc, Globals.MaxX*0.85*0.8, Globals.MaxY*0.6*0.8, Globals.bSeconds, &Globals.logfont);
+    if (newfont) {
+		DeleteObject(Globals.hDateFont);
+		Globals.hDateFont = newfont;
+    }
+
     ReleaseDC(Globals.hMainWnd, dc);
 }
 
@@ -316,6 +322,7 @@ static int CLOCK_MenuCommand (WPARAM wParam)
             /* change font */
         case IDM_FONT: {
             CLOCK_ChooseFont();
+			InvalidateRect(Globals.hMainWnd, NULL, FALSE);
             break;
         }
             /* hide title bar */
@@ -343,6 +350,7 @@ static int CLOCK_MenuCommand (WPARAM wParam)
             Globals.bDate = !Globals.bDate;
             CLOCK_UpdateMenuCheckmarks();
             CLOCK_UpdateWindowCaption();
+			InvalidateRect(Globals.hMainWnd, NULL, FALSE);
             break;
         }
             /* show "about" box */
@@ -427,7 +435,7 @@ static VOID CLOCK_Paint(HWND hWnd)
     if(Globals.bAnalog)
 		AnalogClock(dcMem, rc.right-rc.left, rc.bottom-rc.top, Globals.bSeconds);
     else
-		DigitalClock(dcMem, rc.right-rc.left, rc.bottom-rc.top, Globals.bSeconds, Globals.hFont);
+		DigitalClock(dcMem, rc.right-rc.left, rc.bottom-rc.top, Globals.bSeconds);
 
     /* Blit the changes to the screen */
     BitBlt(dc, 

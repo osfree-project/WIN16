@@ -334,7 +334,7 @@ HFONT SizeFont(HDC dc, int x, int y, BOOL bSeconds, const LOGFONT* font)
 }
 
 
-void DigitalClock(HDC dc, int x, int y, BOOL bSeconds, HFONT font)
+void DigitalClock(HDC dc, int x, int y, BOOL bSeconds)
 {
     SIZE extent;
     HFONT oldFont;
@@ -352,7 +352,7 @@ void DigitalClock(HDC dc, int x, int y, BOOL bSeconds, HFONT font)
     tchars=lstrlen(szTime);
 
 
-    oldFont = SelectObject(dc, font);
+    oldFont = SelectObject(dc, Globals.hFont);
 
     GetTextExtentPoint(dc, szTime, tchars, &extent);
     if (extent.cy>63) {
@@ -382,9 +382,10 @@ void DigitalClock(HDC dc, int x, int y, BOOL bSeconds, HFONT font)
 
 	if (Globals.bDate)
 	{
+		SelectObject(dc, Globals.hDateFont);
 		SetTextColor(dc, HandColor);
 		GetTextExtentPoint(dc, szDate, dchars, &extent);
-		TextOut(dc, x, y, szDate, dchars);
+		TextOut(dc, (x - extent.cx)/2, y/2, szDate, dchars);
 	}
 
     SelectObject(dc, oldFont);
