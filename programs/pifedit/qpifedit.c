@@ -1421,9 +1421,9 @@ BOOL CALLBACK _export PaneMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 
 	case WM_SIZE:
 	    if (wParam == SIZE_MINIMIZED) {
-		SetWindowText(hWnd, APPNAME);
+			//SetWindowText(hWnd, APPNAME);
 	    } else if (wParam == SIZE_MAXIMIZED || wParam == SIZE_RESTORED) {
-		SetWindowText(hWnd, szWindowTitle);
+			//SetWindowText(hWnd, szWindowTitle);
 	    }
 
 	    return (FALSE);		// Requires default processing

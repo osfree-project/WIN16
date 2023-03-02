@@ -47,22 +47,22 @@ BEGIN
     END
 END
 
-IDD_FRAME DIALOG 0, 0, 270, 290
-STYLE /*DS_LOCALEDIT |*/ WS_OVERLAPPED | WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX
+; @todo DS_LOCALEDIT doesn't work yet
+IDD_FRAME DIALOG 0, 0, 260, 290
+STYLE /*DS_LOCALEDIT |*/ WS_OVERLAPPED | WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_SIZEBOX 
 MENU MenuApp
 FONT 8, "MS Sans Serif"
 BEGIN
-	PUSHBUTTON "General",   IDB_GENERAL, 0, 0, 45, 20
-	PUSHBUTTON "Advanced",  IDB_TASK, 45, 0, 45, 20
+;	PUSHBUTTON "General",   IDB_GENERAL, 0, 0, 45, 20
 
 	CONTROL    "", IDD_HELP, "EDIT", ES_LEFT| ES_MULTILINE | ES_AUTOVSCROLL | WS_VSCROLL , 5, 100, 260, 95 
 
-; New scheme that include all panes in the main dialog
+; New scheme that include all panes in the main dialog (subject to change)
 
 ; General
-    LTEXT	    "&Program Filename:", IDT_FILENAME, 12, 29, 61, 8,
+    LTEXT	    "&Program Filename:", IDT_FILENAME, 6, 4, 61, 8,
 			NOT WS_GROUP
-    EDITTEXT	    IDE_FILENAME, 88, 29, 166, 12, ES_AUTOHSCROLL
+    EDITTEXT	    IDE_FILENAME, 88, 2, 156, 12, ES_AUTOHSCROLL
 
     LTEXT	    "Window &Title:", IDT_TITLE, 12, 49, 46, 8, NOT WS_GROUP
     EDITTEXT	    IDE_TITLE, 88, 49, 135, 12, ES_AUTOHSCROLL
@@ -101,9 +101,10 @@ BEGIN
     CONTROL	    "&Close Window on exit", IDB_CLOSEEXIT, "Button",
 		    BS_AUTOCHECKBOX | WS_TABSTOP, 12, 167, 83, 10
 
+	PUSHBUTTON "Advanced",  IDB_TASK, 170, 167, 45, 20
 
 
-; Multitask
+; Advanced
 
     GROUPBOX	    "Multitasking Options", IDG_PRIORITY, 5, 24, 260, 47, NOT WS_TABSTOP
 
@@ -312,41 +313,13 @@ BEGIN
     IDE_FOREPRIO,	"Foreground Priority"
 #endif				/* IFDEF LANG_GR */
 
-#ifdef LANG_GR
-    IDS_FILEMASK,	"PIF Dateien(*.PIF)\n*.pif\n"
-
-    IDS_REGISTER_CLASS, "Klassen-Registrierung fehlgeschlagen"
-    IDS_REALMODE,	"QPIFEDIT erfordert Windows 3.x im Standard- oder erweiterten Modus für 386-PC"
-    IDS_MODE286,	"QPIFEDIT unterstützt nicht die Bearbeitung von Standardmodus .PIF-Dateien"
-    IDS_SAVECHANGES,	"Änderung speichern unter %s?"
-    IDS_UNTITLED,	"<OhneName>"
-
-    IDS_CANTOPEN,	"Kann %s nicht öffnen"
-    IDS_NOTVALIDPIF,	"%s ist keine gültige .PIF Datei"
-    IDS_TOOBIG, 	"Die Datei ist zu groß für eine gültige .PIF Datei"
-    IDS_OLDPIF, 	"Dies ist eine alte Windows PIF Datei"
-    IDS_BADCHECKSUM,	"Die interne .PIF Struktur ist wahrscheinlich zerstört"
-    IDS_NOTVALIDQPE,	"Die Qualitas PIF Erweiterungs-Datei, %s, zugehörig zu %s ist ungültig"
-
-    IDS_BADNUM, 	"'%s' Wert muß zwischen %d und %d liegen"
-    IDS_BADNUM2,	"'%s' Wert muß -1 sein oder zwischen %d und %d liegen"
-
-    IDS_FILENAMEREQ,	"Der benötigte Programm-Dateiname muß angegeben werden."
-    IDS_BADFILENAME,	"Ungültiger Dateiname. \n\r\rStellen Sie sicher, daß der Dateiname maximal 8 Zeichen lang ist und daß nach einem Punkt die 3-Zeichen Dateinamenerweiterung folgt. Wählen Sie OK zum Übergehen dieser Warnung."
-
-    IDS_COMMDLGERR,	"Problem bei Anwendung der COMMDLG.DLL für ÖFFNEN oder SPEICHERN"
-    IDS_OUTOFMEMORY,	"Nicht genügend Speicher"
-    IDS_OUTOFMEMORY2,	"Nicht genügend Speicher"
-    IDS_OUTOFMEMORY3,	"Nicht genügend Speicher"
-    IDS_NOWIN95,	"QPIFEDIT ist mit Windows 95 nicht kompatibel. In Win95 klicken Sie mit der rechten Maustaste auf das Symbol und bearbeiten dann die Registerkarte Einstellungen."
-#else
     IDS_FILEMASK,	"PIF Files(*.PIF)\n*.pif\n"
 
     IDS_REGISTER_CLASS, "Register class failed"
     IDS_REALMODE,	"QPIFEDIT requires Windows 3.x running in Standard or 386 Enhanced mode"
     IDS_MODE286,	"QPIFEDIT doesn't support the editting of Standard mode .PIFs"
     IDS_SAVECHANGES,	"Save changes to %s?"
-    IDS_UNTITLED,	"<Untitled>"
+    IDS_UNTITLED,	"(Untitled)"
 
     IDS_CANTOPEN,	"Can't open %s"
     IDS_NOTVALIDPIF,	"%s is not a valid .PIF file"
@@ -366,6 +339,5 @@ BEGIN
     IDS_OUTOFMEMORY2,	"Out of memory"
     IDS_OUTOFMEMORY3,	"Out of memory"
     IDS_NOWIN95,	"QPIFEDIT is not compatible with Windows 95.  To edit PIF values in Win95, right click on the icon and edit the Property sheets."
-#endif				/* IFDEF LANG_GR */
 END
 

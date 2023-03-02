@@ -10,7 +10,7 @@
 #define PROFILE 	"QPIFEDIT.INI"
 
 #define APPTITLE	"PIF Editor"
-#define APPTITLETHE	"The PIF Editor"
+#define APPTITLETHE	"PIF Editor"
 
 #define COMMDLGFAIL_STR "COMMDLG.DLL failure"
 #define NONE_STR	"None"
