@@ -13,7 +13,7 @@
  *									      *
  ******************************************************************************/
 
-#define STRICT			// Enable strict type checking
+//#define STRICT			// Enable strict type checking
 #define NOCOMM			// Avoid inclusion of bulky COMM driver stuff
 #include <windows.h>
 //#include <windowsx.h>
@@ -312,6 +312,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
     LoadString(hInst, IDS_APPTITLE, szAppTitle, sizeof(szAppTitle));
     LoadString(hInst, IDS_APPTITLETHE, szAppTitleThe, sizeof(szAppTitleThe));
     LoadString(hInst, IDS_UNTITLED, szUntitled, sizeof(szUntitled));
+
 #if 0
     // only use QPIFEDIT for Win 3.x; Win95 has it built-in
     dwVersion = GetVersion();
@@ -323,9 +324,11 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	return 1;
     }
 #endif
+
     // set .INI name
     GetWindowsDirectory( szIniName, 80 );
     MakePathName( szIniName, "QMAX.INI" );
+
 
     // get name of .HLP file
     GetPrivateProfileString( "CONFIG", "Qualitas MAX Path", "c:\\qmax", szMaxPath, 80, szIniName );
@@ -335,14 +338,16 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 
     LoadString(hInst, IDS_FILEMASK, szFilter, sizeof(szFilter));
 
-    {
-	register PSTR	p = szFilter;
 
-	while (*p) {
-	    if (*p == '\n') *p = '\0';
-	    p++;
-	}
+    {
+		PSTR	p = szFilter;
+
+		while (*p) {
+			if (*p == '\n') *p = '\0';
+			p++;
+		}
     }
+
 
     if (! (GetWinFlags() & WF_PMODE)) { // Real mode
 	char	szBuf[128];
@@ -367,13 +372,16 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
     memset(&qpeModel, 0, sizeof(QPE));
     memset(&qpeBackup, 0, sizeof(QPE));
 
+
     hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_QIF));
 
     // initialize 3-D support
 //    Ctl3dRegister(hInstance);
 //    Ctl3dAutoSubclass(hInstance);
 
+
     lpfn = MakeProcInstance((FARPROC) PaneMsgProc, hInst);
+    //rc = DialogBox(hInst, MAKEINTRESOURCE(IDD_FRAME), NULL, (DLGPROC) lpfn);
     rc = DialogBox(hInst, MAKEINTRESOURCE(IDD_FRAME), NULL, (DLGPROC) lpfn);
     FreeProcInstance(lpfn);
 
@@ -503,7 +511,7 @@ VOID SnapPif(VOID)
 
 VOID MenuFileOpen(VOID)
 {
-    register int	rc;
+    int	rc;
 
     PPIF	pPIF = NULL;
     PQPE	pQPE = NULL;
@@ -515,7 +523,7 @@ VOID MenuFileOpen(VOID)
     if (OpenPIF()) {	// Open didn't work
 
     } else {
-	pPIF = LocalLock(hPIF);
+	pPIF = (PPIF)LocalLock(hPIF);
 
 	if (!pPIF) {
 	    char	szBuf[80];
@@ -526,7 +534,7 @@ VOID MenuFileOpen(VOID)
 	}
 
 	if (hQPE) {		// Read a .QPE
-	    pQPE = LocalLock(hQPE);
+	    pQPE = (PQPE)LocalLock(hQPE);
 
 	    if (!pQPE) {
 		char	szBuf[80];
@@ -847,7 +855,7 @@ UINT CALLBACK _export GetOpenFileNameHookProc(HWND hWnd, UINT msg, WPARAM wParam
 
 int OpenPIF(VOID)
 {
-    register int	rc;
+    int	rc;
     OFSTRUCT	OpenBuff;
 
     UINT	msgFileOK = RegisterWindowMessage(FILEOKSTRING);
@@ -968,7 +976,7 @@ int OpenPIF(VOID)
 	rc = IDABORT;  goto OPENPIF_EXIT;
     }
 
-    pPIF = LocalLock(hPIF);
+    pPIF = (PPIF)LocalLock(hPIF);
     if (!pPIF) {
 	char	szBuf[80];
 
@@ -1020,7 +1028,7 @@ int OpenPIF(VOID)
 
 	wQPELen = (WORD) dwQPELen;
 	hQPE = LocalAlloc(LMEM_MOVEABLE, wQPELen);
-	pQPE = LocalLock(hQPE);
+	pQPE = (PQPE)LocalLock(hQPE);
 
 	rc = _lread(hFileQPE, (LPBYTE) pQPE, wQPELen);
     }
@@ -1632,11 +1640,13 @@ BOOL Pane_OnInitDialog(HWND hWnd, HWND hWndFocus, LPARAM lParam)
     int 	cxFrame = GetSystemMetrics(SM_CXFRAME);
     int 	cyCaption = GetSystemMetrics(SM_CYCAPTION);
 
-    WNDPROC	lpfnNumEdit = (WNDPROC) MakeProcInstance((FARPROC) NumEdit_SubClassProc, hInst);
+	WNDPROC	lpfnNumEdit = (WNDPROC) MakeProcInstance((FARPROC) NumEdit_SubClassProc, hInst);
 
     WNDPROC	lpfnKeyEdit = (WNDPROC) MakeProcInstance((FARPROC) KeyEdit_SubClassProc, hInst);
 
     WNDPROC	lpfnButtonEdit = (WNDPROC) MakeProcInstance((FARPROC) Button_SubClassProc, hInst);
+
+//ExitWindows(0,0);
 
     hWndDlg = hWnd;
 
@@ -1661,7 +1671,6 @@ BOOL Pane_OnInitDialog(HWND hWnd, HWND hWndFocus, LPARAM lParam)
 
 	MoveWindow(hWnd, left, top, (rect.right - rect.left), (rect.bottom - rect.top), TRUE);
     }
-
 // Build the font for the help text
     memset(&lf, 0, sizeof(LOGFONT));
 
@@ -1825,7 +1834,7 @@ VOID Pane_OnPaint(HWND hWnd)
     rect.bottom--;		// Leave room for the black line
 
 // Fill it with that ugly green
-    FillRect(hDC, &rect, hbrButton);
+    //FillRect(hDC, &rect, hbrButton);
 
     DeleteBrush(hbrButton);
 

@@ -9,36 +9,18 @@
 #define APPNAME 	"QPIFEDIT"
 #define PROFILE 	"QPIFEDIT.INI"
 
-#ifdef LANG_GR
-#define APPTITLE	"Qualitas PIF Editor"
-#define APPTITLETHE	"Der Qualitas PIF Editor"
-#else
-#define APPTITLE	"Qualitas PIF Editor"
-#define APPTITLETHE	"The Qualitas PIF Editor"
-#endif				/* IFDEF LANG_GR */
+#define APPTITLE	"PIF Editor"
+#define APPTITLETHE	"The PIF Editor"
 
-#ifdef LANG_GR
-#define COMMDLGFAIL_STR "COMMDLG.DLL Fehler"
-#define NONE_STR	"Ohne"
-#define HOTKEY_STR	"Hotkey"
-#define BADHOTKEY_STR	"Hotkey Kombination ist ungültig"
-#define CANTREAD_STR	"Kann .PIF nicht lesen\r\n"
-#else
 #define COMMDLGFAIL_STR "COMMDLG.DLL failure"
 #define NONE_STR	"None"
 #define HOTKEY_STR	"Hotkey"
 #define BADHOTKEY_STR	"Hotkey combination is invalid"
 #define CANTREAD_STR	"Can't read .PIF\r\n"
-#endif				/* #IFDEF LANG_GR */
 
     // help keys. These must match topics in Help file.
-#ifdef LANG_GR
-#define HK_OVERVIEW	"Qualitas PIF-Editor - Überblick"
-#define HK_TECHS	"Kundendienst in Deutschland"
-#else
 #define HK_OVERVIEW	"Qualitas PIF editor overview"
 #define HK_TECHS	"Technical support"
-#endif				/* #IFDEF LANG_GR */
 
 VOID	FAR cdecl DebugPrintf(LPSTR szFormat, ...);
 VOID	FAR cdecl MessageBoxPrintf(LPSTR szFormat, ...);

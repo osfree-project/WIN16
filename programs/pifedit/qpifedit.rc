@@ -20,17 +20,6 @@ IDI_DOSMAX	ICON	dosmax.ico
 
 MenuApp MENU PRELOAD MOVEABLE DISCARDABLE
 BEGIN
-#ifdef LANG_GR
-    POPUP "&Datei"
-    BEGIN
-	MENUITEM "&Neu",        IDM_F_NEW
-	MENUITEM "Ö&ffnen...",    IDM_F_OPEN
-	MENUITEM "&Speichern",       IDM_F_SAVE
-	MENUITEM "Speichern &unter...", IDM_F_SAVEAS
-	MENUITEM SEPARATOR
-	MENUITEM "&Beenden",       IDM_F_EXIT
-    END
-#else
     POPUP "&File"
     BEGIN
 	MENUITEM "&New",        IDM_F_NEW
@@ -40,43 +29,13 @@ BEGIN
 	MENUITEM SEPARATOR
 	MENUITEM "E&xit",       IDM_F_EXIT
     END
-#endif				/* IFDEF LANG_GR */
 
-#ifdef LANG_GR
-    POPUP "&Einstellungen"
-    BEGIN
-	MENUITEM "&Generell",    IDB_GENERAL
-	MENUITEM "&Speicher",    IDB_MEMORY
-	MENUITEM "&Video",       IDB_VIDEO
-	MENUITEM "&Multitask",   IDB_TASK
-	MENUITEM "S&onstiges",   IDB_OTHER
-	MENUITEM SEPARATOR
-	MENUITEM "PIF-&Test",    IDB_RUNPIF
-    END
-#else
     POPUP "Sett&ings"
     BEGIN
 	MENUITEM "&General",    IDB_GENERAL
-//	MENUITEM "&Memory",     IDB_MEMORY
-//	MENUITEM "&Video",      IDB_VIDEO
 	MENUITEM "&Advanced",  IDB_TASK
-//	MENUITEM "&Other",      IDB_OTHER
-//	MENUITEM SEPARATOR
-//	MENUITEM "&Run PIF",    IDB_RUNPIF
     END
-#endif				/* IFDEF LANG_GR */
 
-#ifdef LANG_GR
-    POPUP "&Hilfe"
-    BEGIN
-	MENUITEM "Üb&erblick", IDM_H_OVERVIEW
-	MENUITEM "&Hilfethema suchen...", IDM_H_SEARCH
-	MENUITEM SEPARATOR
-	MENUITEM "&Technischer Kundendienst", IDM_H_TECHSUP
-	MENUITEM SEPARATOR
-	MENUITEM "Inf&o über Qualitas PIF-Editor...", IDM_H_ABOUT
-    END
-#else
     POPUP "&Help"
     BEGIN
 	MENUITEM "&Overview", IDM_H_OVERVIEW
@@ -86,50 +45,21 @@ BEGIN
 	MENUITEM SEPARATOR
 	MENUITEM "&About Qualitas PIF Editor...", IDM_H_ABOUT
     END
-#endif				/* IFDEF LANG_GR */
 END
 
 IDD_FRAME DIALOG 0, 0, 270, 290
-STYLE DS_LOCALEDIT | WS_OVERLAPPED | WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX
+STYLE /*DS_LOCALEDIT |*/ WS_OVERLAPPED | WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX
 MENU MenuApp
 FONT 8, "MS Sans Serif"
 BEGIN
-#ifdef LANG_GR
-	PUSHBUTTON "Generell",  IDB_GENERAL, 0, 0, 45, 20
-	PUSHBUTTON "Speicher",  IDB_MEMORY, 45, 0, 45, 20
-	PUSHBUTTON "Video",     IDB_VIDEO, 90, 0, 45, 20
-	PUSHBUTTON "Multitask", IDB_TASK, 135, 0, 45, 20
-	PUSHBUTTON "Sonstiges", IDB_OTHER, 180, 0, 45, 20
-	PUSHBUTTON "PIF-Test",  IDB_RUNPIF, 228, 3, 40, 14
-#else
 	PUSHBUTTON "General",   IDB_GENERAL, 0, 0, 45, 20
-//	PUSHBUTTON "Memory",    IDB_MEMORY, 45, 0, 45, 20
-//	PUSHBUTTON "Video",     IDB_VIDEO, 90, 0, 45, 20
 	PUSHBUTTON "Advanced",  IDB_TASK, 45, 0, 45, 20
-//	PUSHBUTTON "Other",     IDB_OTHER, 180, 0, 45, 20
-//	PUSHBUTTON "Run PIF",   IDB_RUNPIF, 228, 3, 40, 14
-#endif				/* IFDEF LANG_GR */
-	CONTROL    "", IDD_HELP, "EDIT", ES_LEFT | ES_MULTILINE | ES_AUTOVSCROLL | WS_VSCROLL, 5, 100, 260, 95
+
+	CONTROL    "", IDD_HELP, "EDIT", ES_LEFT| ES_MULTILINE | ES_AUTOVSCROLL | WS_VSCROLL , 5, 100, 260, 95 
 
 ; New scheme that include all panes in the main dialog
 
 ; General
-#ifdef LANG_GR
-    LTEXT	    "&Programmdateiname:", IDT_FILENAME, 12, 29, 69, 8,
-			NOT WS_GROUP
-    EDITTEXT	    IDE_FILENAME, 88, 29, 166, 12, ES_AUTOHSCROLL
-
-    LTEXT	    "Programm&titel:", IDT_TITLE, 12, 49, 46, 8, NOT WS_GROUP
-    EDITTEXT	    IDE_TITLE, 88, 49, 135, 12, ES_AUTOHSCROLL
-
-    LTEXT	    "P&rogrammparameter:", IDT_PARAMS, 12, 69, 69, 8,
-			NOT WS_GROUP
-    EDITTEXT	    IDE_PARAMS, 88, 69, 166, 12, ES_AUTOHSCROLL
-
-    LTEXT	    "&Anfangsverzeichnis:", IDT_DIRECTORY, 12, 89, 69, 8,
-			NOT WS_GROUP
-    EDITTEXT	    IDE_DIRECTORY, 88, 89, 166, 12, ES_AUTOHSCROLL
-#else
     LTEXT	    "&Program Filename:", IDT_FILENAME, 12, 29, 61, 8,
 			NOT WS_GROUP
     EDITTEXT	    IDE_FILENAME, 88, 29, 166, 12, ES_AUTOHSCROLL
@@ -171,137 +101,10 @@ BEGIN
     CONTROL	    "&Close Window on exit", IDB_CLOSEEXIT, "Button",
 		    BS_AUTOCHECKBOX | WS_TABSTOP, 12, 167, 83, 10
 
-#endif				/* IFDEF LANG_GR */
 
-; Memory
-#ifdef LANG_GR
-    GROUPBOX	"&Qualitas DOSMAX für Windows", IDG_SUPERDOS, 5, 24, 260, 25,
-		NOT WS_TABSTOP
-
-    CONTROL	"Voreinstellung", IDB_SUPERVM_DEF, "BUTTON",
-		BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP, 61, 33, 59, 12
-    CONTROL	"EIN", IDB_SUPERVM_ON, "BUTTON",
-		BS_AUTORADIOBUTTON | WS_TABSTOP, 132, 33, 25, 12
-    CONTROL	"AUS", IDB_SUPERVM_OFF, "BUTTON",
-		BS_AUTORADIOBUTTON | WS_TABSTOP, 174, 33, 27, 12
-
-    GROUPBOX	"Speicher-Optionen (Größe in KB)", IDG_MEMOPTS,
-		5, 53, 260, 70, NOT WS_TABSTOP
-
-    LTEXT	"&DOS:", IDT_DOSMEM, 15, 69, 19, 8, NOT WS_GROUP
-
-    LTEXT	"Min", IDT_DOSMIN, 46, 69, 13, 8, NOT WS_GROUP
-    EDITTEXT	IDE_DOSMIN, 75, 67, 19, 12, ES_AUTOHSCROLL | WS_GROUP
-
-    LTEXT	"Er&wünscht", IDT_DOSMAX, 101, 69, 36, 8, NOT WS_GROUP
-    EDITTEXT	IDE_DOSMAX, 140, 67, 19, 12, ES_AUTOHSCROLL | WS_GROUP
-
-    CONTROL	"&Sperren", IDB_DOSLOCK, "Button",
-		BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP, 167, 68, 40, 10
-
-    LTEXT	"&EMS:", IDT_EMSMEM, 15, 87, 19, 8, NOT WS_GROUP
-
-    LTEXT	"Min", IDT_EMSMIN, 46, 87, 13, 8, NOT WS_GROUP
-    EDITTEXT	IDE_EMSMIN, 68, 85, 26, 12, ES_AUTOHSCROLL | WS_GROUP
-
-    LTEXT	"&Max", IDT_EMSMAX, 103, 87, 16, 8, NOT WS_GROUP
-    EDITTEXT	IDE_EMSMAX, 130, 85, 29, 12, ES_AUTOHSCROLL | WS_GROUP
-
-    CONTROL	"S&perren", IDB_EMSLOCK, "Button",
-		BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP, 167, 86, 40, 10
-
-    LTEXT	"&XMS:", IDT_XMSMEM, 15, 105, 19, 8, NOT WS_GROUP
-
-    LTEXT	"Min", IDT_XMSMIN, 46, 105, 13, 8, NOT WS_GROUP
-    EDITTEXT	IDE_XMSMIN, 68, 103, 26, 12,
-		ES_AUTOHSCROLL | WS_GROUP | WS_TABSTOP
-
-    LTEXT	"M&ax", IDT_XMSMAX, 103, 105, 16, 8, NOT WS_GROUP
-    EDITTEXT	IDE_XMSMAX, 130, 103, 29, 12,
-		ES_AUTOHSCROLL | WS_GROUP | WS_TABSTOP
-
-    CONTROL	"Spe&rren", IDB_XMSLOCK, "Button",
-		BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP, 167, 104, 40, 10
-
-    CONTROL	"&Nutzt HMA", IDB_XMSHMA, "Button",
-		BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP, 213, 104, 47, 10
-#else
-#if 0
-    GROUPBOX	"&Qualitas DOSMAX for Windows", IDG_SUPERDOS, 5, 24, 260, 25,
-		NOT WS_TABSTOP
-
-    CONTROL	"Use Default", IDB_SUPERVM_DEF, "BUTTON",
-		BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP, 61, 33, 55, 12
-    CONTROL	"ON", IDB_SUPERVM_ON, "BUTTON",
-		BS_AUTORADIOBUTTON | WS_TABSTOP, 132, 33, 25, 12
-    CONTROL	"OFF", IDB_SUPERVM_OFF, "BUTTON",
-		BS_AUTORADIOBUTTON | WS_TABSTOP, 174, 33, 27, 12
-#endif
-
-#endif				/* IFDEF LANG_GR */
-
-; Video
-#ifdef LANG_GR
-    GROUPBOX	    "&Anzeige", IDG_DISPLAY, 10, 25, 83, 37,
-			NOT WS_TABSTOP
-
-    CONTROL	    "Vollbild", IDB_FULLSCREEN, "Button",
-		    BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP, 18, 37, 50, 10
-    CONTROL	    "Fenster", IDB_WINDOWED, "Button",
-		    BS_AUTORADIOBUTTON | WS_TABSTOP, 18, 47, 47, 10
-
-    GROUPBOX	    "Bildschirm&speicher", IDG_VIDEOMEM, 10, 65, 83, 46,
-			NOT WS_TABSTOP
-
-    CONTROL	    "Text", IDB_TEXT, "Button",
-		    BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP, 19, 78, 27, 10
-    CONTROL	    "Niedrige Auflösung", IDB_LOW, "Button",
-		    BS_AUTORADIOBUTTON | WS_TABSTOP, 19, 88, 72, 10
-    CONTROL	    "Hohe Auflösung", IDB_HIGH, "Button",
-		    BS_AUTORADIOBUTTON | WS_TABSTOP, 19, 98, 63, 10
-
-    GROUPBOX	    "Bildschirm-Anschlüsse", IDG_MONITOR, 112, 25, 147, 45,
-			NOT WS_TABSTOP
-
-    CONTROL	    "Te&xt", IDB_MONTEXT, "Button", BS_AUTOCHECKBOX |
-		    WS_GROUP | WS_TABSTOP, 134, 35, 27, 10
-    CONTROL	    "&Niedrige Auflösung", IDB_MONLOW, "Button",
-		    BS_AUTOCHECKBOX | WS_TABSTOP, 134, 45, 85, 10
-    CONTROL	    "&Hohe Auflösung", IDB_MONHIGH, "Button",
-		    BS_AUTOCHECKBOX | WS_TABSTOP, 134, 55, 65, 10
-
-    GROUPBOX	    "Sonstiges", IDG_OTHER, 112, 75, 147, 36, NOT WS_TABSTOP
-
-    CONTROL	    "&Textmodus emulieren", IDB_EMULATE, "Button",
-		    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP, 134, 85, 108, 10
-    CONTROL	    "&Bildschirmspeicher erhalten", IDB_RETAIN, "Button",
-		    BS_AUTOCHECKBOX | WS_TABSTOP, 134, 95, 108, 10
-#else
-
-#endif				/* IFDEF LANG_GR */
 
 ; Multitask
-#ifdef LANG_GR
-    GROUPBOX	    "Priorität", IDG_PRIORITY, 5, 24, 260, 47, NOT WS_TABSTOP
 
-    LTEXT	    "&Hintergrund-Priorität:", IDT_BACKPRIO, 11, 36, 70, 8,
-			NOT WS_GROUP
-    EDITTEXT	    IDE_BACKPRIO, 86, 34, 29, 12, ES_AUTOHSCROLL | WS_GROUP
-
-    LTEXT	    "&Vordergrund-Priorität:", IDT_FOREPRIO, 133, 36, 90, 8,
-			NOT WS_GROUP
-    EDITTEXT	    IDE_FOREPRIO, 210, 34, 29, 12, ES_AUTOHSCROLL | WS_GROUP
-
-    CONTROL	    "&Leerlaufzeit entdecken", IDB_DETECTIDLE, "Button",
-		    BS_AUTOCHECKBOX | WS_TABSTOP, 102, 53, 95, 10
-
-    GROUPBOX	    "Ausführung", IDG_EXEC, 5, 77, 260, 28, NOT WS_TABSTOP
-
-    CONTROL	    "H&intergrund", IDB_BACKEXEC, "Button",
-		    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP, 24, 89, 52, 10
-    CONTROL	    "&Exklusiv", IDB_EXCLEXEC, "Button",
-		    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP, 138, 88, 44, 10
-#else
     GROUPBOX	    "Multitasking Options", IDG_PRIORITY, 5, 24, 260, 47, NOT WS_TABSTOP
 
     LTEXT	    "&Background Priority:", IDT_BACKPRIO, 11, 36, 67, 8,
@@ -361,8 +164,6 @@ BEGIN
 		    BS_AUTORADIOBUTTON | WS_TABSTOP, 189, 145, 59, 10
 
     LTEXT	    "Monitor Por&ts:", IDT_MONITOR, 11, 155, 89, 8, NOT WS_GROUP
-//    GROUPBOX	    "Monitor Ports", IDG_MONITOR, 112, 25, 147, 45,
-//			NOT WS_TABSTOP
 
     CONTROL	    "Text", IDB_MONTEXT, "Button", BS_AUTOCHECKBOX |
 		    WS_GROUP | WS_TABSTOP, 91, 155, 27, 10
@@ -385,8 +186,6 @@ BEGIN
 
     LTEXT	    "Reserve &Shortcut Keys:", IDT_RESERVE, 11, 202, 89, 8, NOT WS_GROUP
 
-//    GROUPBOX	    "Reserve Shortcut Keys", IDG_RESERVE, 167, 24, 94, 86,
-//			NOT WS_TABSTOP
 
     CONTROL	    "Alt-Tab", IDB_ALTTAB, "Button", BS_AUTOCHECKBOX |
 		    WS_TABSTOP, 93, 202, 36, 10
@@ -403,8 +202,6 @@ BEGIN
     CONTROL	    "Alt-PrtSc", IDB_ALTPRTSC, "Button", BS_AUTOCHECKBOX |
 		    WS_TABSTOP, 173, 212, 42, 10
 
-//    GROUPBOX	    "Application Shortcut Key", IDG_SHORTCUT, 5, 232, 156, 33,
-//			NOT WS_TABSTOP
     LTEXT	    "&Application Shortcut Key:", IDT_SHORTCUT, 11, 234, 89, 8, NOT WS_GROUP
 
     CONTROL	    "Alt", IDB_ALT, "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
@@ -415,56 +212,6 @@ BEGIN
 		    WS_TABSTOP, 149, 234, 28, 10
     LTEXT	    "Key:", IDT_KEY, 173, 234, 16, 8, NOT WS_GROUP
     EDITTEXT	    IDE_KEY, 200, 234, 36, 12, ES_AUTOHSCROLL
-
-#endif				/* IFDEF LANG_GR */
-
-; Other
-#ifdef LANG_GR
-    GROUPBOX	    "Tastenkombination für Anwendung", IDG_SHORTCUT, 5, 24, 156, 33,
-			NOT WS_TABSTOP
-
-    CONTROL	    "&Alt", IDB_ALT, "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
-		    11, 38, 22, 10
-    CONTROL	    "&Strg", IDB_CTRL, "Button", BS_AUTOCHECKBOX | WS_TABSTOP,
-		    39, 38, 24, 10
-    CONTROL	    "&Umsch.", IDB_SHIFT, "Button", BS_AUTOCHECKBOX |
-		    WS_TABSTOP, 69, 38, 34, 10
-    LTEXT	    "&Taste:", IDT_KEY, 106, 39, 22, 8, NOT WS_GROUP
-    EDITTEXT	    IDE_KEY, 128, 37, 30, 13, ES_AUTOHSCROLL
-
-    GROUPBOX	    "Optionen", IDG_OPTIONS, 5, 63, 156, 47, NOT WS_TABSTOP
-
-    CONTROL	    "Schnelles &Einfügen", IDB_FASTPASTE, "Button",
-		    BS_AUTOCHECKBOX | WS_TABSTOP, 21, 73, 72, 10
-    CONTROL	    "Schließen bei &Beenden von Windows", IDB_ALLOWCLOSE, "Button",
-		    BS_AUTOCHECKBOX | WS_TABSTOP, 21, 83, 129, 10
-    CONTROL	    "&Fenster schließen bei Beenden", IDB_CLOSEEXIT, "Button",
-		    BS_AUTOCHECKBOX | WS_TABSTOP, 21, 93, 111, 10
-
-    GROUPBOX	    "Tasten reservieren", IDG_RESERVE, 167, 24, 94, 86,
-			NOT WS_TABSTOP
-
-    CONTROL	    "Alt+Tabu&latortaste", IDB_ALTTAB, "Button", BS_AUTOCHECKBOX |
-		    WS_TABSTOP, 183, 36, 73, 10
-    CONTROL	    "&Druck", IDB_PRTSC, "Button", BS_AUTOCHECKBOX |
-		    WS_TABSTOP, 183, 46, 31, 10
-    CONTROL	    "Alt+E&ingabetaste", IDB_ALTENTER, "Button", BS_AUTOCHECKBOX |
-		    WS_TABSTOP, 183, 56, 68, 10
-    CONTROL	    "Alt+Es&c", IDB_ALTESC, "Button", BS_AUTOCHECKBOX |
-		    WS_TABSTOP, 183, 66, 36, 10
-    CONTROL	    "Str&g+Esc", IDB_CTRLESC, "Button", BS_AUTOCHECKBOX |
-		    WS_TABSTOP, 183, 76, 39, 10
-    CONTROL	    "Alt+Lee&rtaste", IDB_ALTSPACE, "Button", BS_AUTOCHECKBOX |
-		    WS_TABSTOP, 183, 86, 56, 10
-    CONTROL	    "Alt+Druc&k", IDB_ALTPRTSC, "Button", BS_AUTOCHECKBOX |
-		    WS_TABSTOP, 183, 96, 42, 10
-#else
-
-//    GROUPBOX	    "Options", IDG_OPTIONS, 5, 63, 156, 47, NOT WS_TABSTOP
-
-
-#endif				/* IFDEF LANG_GR */
-
 END
 
 
