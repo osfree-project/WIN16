@@ -208,7 +208,7 @@ static VOID CLOCK_ResetFont(VOID)
 {
     HFONT newfont;
     HDC dc = GetDC(Globals.hMainWnd);
-    newfont = SizeFont(dc, Globals.MaxX, Globals.MaxY, Globals.bSeconds, &Globals.logfont);
+    newfont = SizeFont(dc, Globals.MaxX*0.85, Globals.MaxY*0.6, Globals.bSeconds, &Globals.logfont);
     if (newfont) {
 	DeleteObject(Globals.hFont);
 	Globals.hFont = newfont;
@@ -427,7 +427,7 @@ static VOID CLOCK_Paint(HWND hWnd)
     if(Globals.bAnalog)
 		AnalogClock(dcMem, rc.right-rc.left, rc.bottom-rc.top, Globals.bSeconds);
     else
-		DigitalClock(dcMem, Globals.MaxX, Globals.MaxY, Globals.bSeconds, Globals.hFont);
+		DigitalClock(dcMem, rc.right-rc.left, rc.bottom-rc.top, Globals.bSeconds, Globals.hFont);
 
     /* Blit the changes to the screen */
     BitBlt(dc, 

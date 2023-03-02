@@ -342,10 +342,11 @@ void DigitalClock(HDC dc, int x, int y, BOOL bSeconds, HFONT font)
     char szDate[255]="";
     int tchars;
     int dchars;
+	int upshift = 0;
+	BOOL shift = FALSE;
 
 	FormatDate(szDate);
     dchars=lstrlen(szDate);
-
 
 	FormatTime(szTime, TRUE);
     tchars=lstrlen(szTime);
@@ -354,17 +355,37 @@ void DigitalClock(HDC dc, int x, int y, BOOL bSeconds, HFONT font)
     oldFont = SelectObject(dc, font);
 
     GetTextExtentPoint(dc, szTime, tchars, &extent);
-
-    SetBkColor(dc, BackgroundColor);
-    SetTextColor(dc, ShadowColor);
-    TextOut(dc, (x - extent.cx)/2 , (y - extent.cy)/2 , szTime, tchars);
+    if (extent.cy>63) {
+		shift=TRUE;
+	}
+	
+	if (Globals.bDate) upshift=extent.cy/2;
+	
+	SetBkColor(dc, BackgroundColor);
     SetBkMode(dc, TRANSPARENT);
 
-    SetTextColor(dc, HandColor);
-    TextOut(dc, (x - extent.cx)/2, (y - extent.cy)/2, szTime, tchars);
+	if (shift) {
+		SetTextColor(dc, RGB(255,255,255));
+		TextOut(dc, (x - extent.cx)/2-2 , (y - extent.cy)/2-2 - upshift , szTime, tchars);
+		SetTextColor(dc, ShadowColor);
+		TextOut(dc, (x - extent.cx)/2+2 , (y - extent.cy)/2+2 - upshift , szTime, tchars);
+	}
 
-//    GetTextExtentPoint(dc, szDate, dchars, &extent);
-//    TextOut(dc, (x - extent.cx)/2, (y - extent.cy)/2, szDate, dchars);
+	if (shift)
+	{
+		SetTextColor(dc, FaceColor);
+	} else {
+		SetTextColor(dc, HandColor);
+	}
+	
+    TextOut(dc, (x - extent.cx)/2, (y - extent.cy)/2 - upshift, szTime, tchars);
+
+	if (Globals.bDate)
+	{
+		SetTextColor(dc, HandColor);
+		GetTextExtentPoint(dc, szDate, dchars, &extent);
+		TextOut(dc, x, y, szDate, dchars);
+	}
 
     SelectObject(dc, oldFont);
 }
