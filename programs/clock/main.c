@@ -152,24 +152,19 @@ static VOID CLOCK_UpdateMenuCheckmarks(VOID)
 static VOID CLOCK_UpdateWindowCaption(VOID)
 {
     char szCaption[MAX_STRING_LEN]="";
-    int chars = 0;
+    char szTmp[MAX_STRING_LEN]="";
+
+    LoadString(Globals.hInstance, IDS_CLOCK, szCaption, MAX_STRING_LEN);
 
     /* Set frame caption */
     if (Globals.bDate && Globals.bAnalog) {
 /*	chars = GetDateFormat(LOCALE_USER_DEFAULT, DATE_LONGDATE, NULL, NULL,
                                szCaption, ARRAY_SIZE(szCaption));*/
-		FormatDate(szCaption);
-		chars=strlen(szCaption);
-        if (chars) {
-	    //--chars;
-	    szCaption[chars++] = ' ';
-	    szCaption[chars++] = '-';
-	    szCaption[chars++] = ' ';
-	    szCaption[chars] = '\0';
+		strcat(szCaption, " - ");
+		FormatDate(szTmp, !IsIconic(Globals.hMainWnd));
+		strcat(szCaption, szTmp);
 	}
-    }
 
-    LoadString(Globals.hInstance, IDS_CLOCK, szCaption + chars, MAX_STRING_LEN - chars);
     SetWindowText(Globals.hMainWnd, szCaption);
 }
 
@@ -523,23 +518,8 @@ static LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
 				Globals.bMinimized=FALSE;
 			}
 			
-#if 0
-// Windows 3.x doesn't support window regions
-            if (Globals.bAnalog && Globals.bWithoutTitle)
-            {
-                RECT rect;
-                int diameter = min( Globals.MaxX, Globals.MaxY );
-                HRGN hrgn = CreateEllipticRgn( (Globals.MaxX - diameter) / 2,
-                                               (Globals.MaxY - diameter) / 2,
-                                               (Globals.MaxX + diameter) / 2,
-                                               (Globals.MaxY + diameter) / 2 );
-                GetWindowRect( hWnd, &rect );
-                MapWindowPoints( 0, hWnd, (LPPOINT)&rect, 2 );
-                OffsetRgn( hrgn, -rect.left, -rect.top );
-                //SetWindowRgn( Globals.hMainWnd, hrgn, TRUE );
-            }
-#endif
 			CLOCK_ResetFont();
+			CLOCK_UpdateWindowCaption();
             return 0;//DefWindowProc(hWnd, msg, wParam, lParam);
         }
 

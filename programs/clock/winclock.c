@@ -208,12 +208,16 @@ void IconAnalogClock(HDC dc, int x, int y)
     PositionHands(&centre, radius, FALSE);
 
     SelectObject(dc, CreatePen(PS_SOLID, 1, HandColor));
-    DrawHand(dc, &MinuteHand);
-    DrawHand(dc, &HourHand);
+	MoveToEx(dc, MinuteHand.Start.x, MinuteHand.Start.y, NULL);
+	LineTo(dc, MinuteHand.End.x, MinuteHand.End.y);
+//    DrawHand(dc, &MinuteHand);
+	MoveToEx(dc, HourHand.Start.x, HourHand.Start.y, NULL);
+	LineTo(dc, HourHand.End.x, HourHand.End.y);
+    //DrawHand(dc, &HourHand);
     DeleteObject(SelectObject(dc, GetStockObject(NULL_PEN)));
 }
 
-void FormatDate(char * szDate)
+void FormatDate(char * szDate, BOOL bFull)
 {
     struct dosdate_t d;
     char f[3][5]={"","",""};
@@ -249,17 +253,17 @@ void FormatDate(char * szDate)
 				sprintf(buf, "%02d", d.month);
 				strcat(szDate, buf);
 			}
-			else if (!strcmp("yy", f[i])) {
+			else if (!strcmp("yy", f[i]) && bFull) {
 				sprintf(buf, "%02d", d.year % 100);
 				strcat(szDate, buf);
 			}
-			else if (!strcmp("yyyy", f[i])) {
+			else if (!strcmp("yyyy", f[i]) && bFull) {
 				sprintf(buf, "%04d", d.year);
 				strcat(szDate, buf);
 			} else {
-				strcat(szDate, "error");
+				//strcat(szDate, "error");
 			};
-			if (i<2) strcat(szDate, Globals.sDate);
+			if ((i<2 && bFull) || (i<1 && !bFull)) strcat(szDate, Globals.sDate);
 		}
 	}
 }
@@ -345,7 +349,7 @@ void DigitalClock(HDC dc, int x, int y, BOOL bSeconds)
 	int upshift = 0;
 	BOOL shift = FALSE;
 
-	FormatDate(szDate);
+	FormatDate(szDate, TRUE);
     dchars=lstrlen(szDate);
 
 	FormatTime(szTime, TRUE);
