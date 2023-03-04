@@ -1,8 +1,25 @@
 #include <string.h>
+
 #include <windows.h>
+
+#include "list.h"
 
 VOID WINAPI FarSetOwner(HANDLE hMem, WORD wOwnerPDB);
 WORD WINAPI GetExePtr(HANDLE h);
+
+/**********************************************************************
+ * Management of the 16-bit cursors and icons
+ */
+
+struct cache_entry
+{
+    struct list entry;
+    HINSTANCE   inst;
+    HRSRC       rsrc;
+    HRSRC       group;
+    HICON       icon;
+    int         count;
+};
 
 /* Cursors / Icons */
 
@@ -18,6 +35,8 @@ typedef struct tagCURSORICONINFO
 
 static const WORD ICON_HOTSPOT = 0x4242;
 
+static struct list icon_cache = LIST_INIT( icon_cache );
+
 static HICON alloc_icon_handle( unsigned int size )
 {
     HGLOBAL handle = GlobalAlloc( GMEM_MOVEABLE, size + sizeof(DWORD) );
@@ -26,6 +45,11 @@ static HICON alloc_icon_handle( unsigned int size )
     GlobalUnlock( handle );
     FarSetOwner( handle, 0 );
     return handle;
+}
+
+static int free_icon_handle( HICON handle )
+{
+    return GlobalFree( handle );
 }
 
 static int get_bitmap_width_bytes( int width, int bpp )
@@ -60,6 +84,19 @@ static CURSORICONINFO far *get_icon_ptr( HICON handle )
 static void release_icon_ptr( HICON handle, CURSORICONINFO far *ptr )
 {
     GlobalUnlock( handle );
+}
+
+static int release_shared_icon( HICON icon )
+{
+    struct cache_entry *cache;
+
+    LIST_FOR_EACH_ENTRY( cache, &icon_cache, struct cache_entry, entry )
+    {
+        if (cache->icon != icon) continue;
+        if (!cache->count) return 0;
+        return --cache->count;
+    }
+    return -1;
 }
 
 /***********************************************************************
@@ -172,4 +209,28 @@ HICON WINAPI CreateIcon( HINSTANCE hInstance, int nWidth,
     info.bBitsPerPixel = bBitsPixel;
 
     return CreateCursorIconIndirect( hInstance, &info, lpANDbits, lpXORbits );
+}
+
+/***********************************************************************
+ *		DestroyIcon (USER.457)
+ */
+BOOL WINAPI DestroyIcon(HICON hIcon)
+{
+    int count;
+
+//    TRACE("%04x\n", hIcon );
+
+    count = release_shared_icon( hIcon );
+    if (count != -1) return !count;
+    /* assume non-shared */
+    free_icon_handle( hIcon );
+    return TRUE;
+}
+
+/***********************************************************************
+ *		DestroyCursor (USER.458)
+ */
+BOOL WINAPI DestroyCursor(HCURSOR hCursor)
+{
+    return DestroyIcon( hCursor );
 }

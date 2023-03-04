@@ -62,6 +62,8 @@ EXPORTS = &
 	IsCharLower .436, &
 	ANSIUPPERBUFF .437, &
 	ANSILOWERBUFF .438, &
+	DestroyIcon .457, &
+	DestroyCursor .458, &
 	LSTRCMPI .471, &
 	AnsiNext .472, &
 	AnsiPrev .473
