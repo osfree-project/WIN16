@@ -365,3 +365,61 @@ int WINAPI lstrcmpi(LPCSTR lpszString1,LPCSTR lpszString2)
 
     return _fstricmp(lpszString1,lpszString2);
 }
+
+BOOL    WINAPI 
+IsCharUpper(char ch)
+{
+//	APISTR((LF_API,"IsCharUpper(char %c)\n",ch));
+	return (BOOL) isupper((int) ch);	
+}
+
+BOOL    WINAPI 
+IsCharLower(char ch)
+{
+//	APISTR((LF_API,"IsCharLower(char %c)\n",ch));
+	return (BOOL) islower((int) ch);	
+}
+
+BOOL    WINAPI 
+IsCharAlpha(char ch)
+{
+//	APISTR((LF_API,"IsCharAlpha(char=%c)\n",ch));
+	return (BOOL) isalpha((int) ch);
+}
+
+BOOL    WINAPI 
+IsCharAlphaNumeric(char ch)
+{
+//	APISTR((LF_API,"IsCharAlphaNumeric(char=%c)\n",ch));
+	return (BOOL) isalnum((int) ch);
+}
+
+UINT    WINAPI 
+AnsiUpperBuff(LPSTR lpstr, UINT n)
+{
+	unsigned long count = n;
+	
+	if(count == 0)
+		count = 65536;	
+	while(count) {
+		*lpstr = toupper(*lpstr);	
+		lpstr++;
+		count--;
+	}
+	return n;
+}
+
+UINT    WINAPI 
+AnsiLowerBuff(LPSTR lpstr, UINT n) 
+{
+	unsigned long count = n;
+	
+	if(count == 0)
+		count = 65536;	
+	while(count) {
+		*lpstr = tolower(*lpstr);	
+		lpstr++;
+		count--;
+	}
+	return n;
+}

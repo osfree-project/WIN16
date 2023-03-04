@@ -56,6 +56,12 @@ EXPORTS = &
 	lstrcmp .430, &
 	AnsiUpper .431, &
 	AnsiLower .432, &
+	ISCHARALPHA .433, &
+	ISCHARALPHANUMERIC .434, &
+	IsCharUpper .435, &
+	IsCharLower .436, &
+	ANSIUPPERBUFF .437, &
+	ANSILOWERBUFF .438, &
 	LSTRCMPI .471, &
 	AnsiNext .472, &
 	AnsiPrev .473
