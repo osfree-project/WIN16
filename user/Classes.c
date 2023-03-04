@@ -583,3 +583,130 @@ UnregisterClass(LPCSTR lpClassName, HINSTANCE hInstance)
     return rc;
 }
 
+
+void
+InternalGetClassInfo(LPCLASSINFO hClass32, LPWNDCLASS lpwc)
+{
+	LPCLASSINFO lpClassInfo = hClass32;
+
+	if (!lpClassInfo)
+		return;
+	lpwc->style = lpClassInfo->style;
+	lpwc->lpfnWndProc = lpClassInfo->lpfnWndProc;
+	lpwc->cbClsExtra = lpClassInfo->cbClsExtra;
+	lpwc->cbWndExtra = lpClassInfo->cbWndExtra;
+//@todo Not seems to be correct. Check Pitrek book
+	lpwc->hInstance = (lpClassInfo->hModule);//?
+//		GetInstanceFromModule(lpClassInfo->hModule):0;
+	lpwc->hIcon = lpClassInfo->hIcon;
+	lpwc->hCursor = lpClassInfo->hCursor;
+	lpwc->hbrBackground = lpClassInfo->hbrBackground;
+	lpwc->lpszMenuName = (LPSTR)NULL;
+	lpwc->lpszClassName = (LPSTR)NULL;
+}
+
+
+void
+InternalGetClassInfoEx(LPCLASSINFO hClass32, LPWNDCLASSEX lpwcx)
+{
+	LPCLASSINFO lpClassInfo = hClass32;
+
+	if (!lpClassInfo)
+		return;
+	lpwcx->cbSize = sizeof(WNDCLASSEX);
+	lpwcx->style = lpClassInfo->style;
+	lpwcx->lpfnWndProc = lpClassInfo->lpfnWndProc;
+	lpwcx->cbClsExtra = lpClassInfo->cbClsExtra;
+	lpwcx->cbWndExtra = lpClassInfo->cbWndExtra;
+//@todo Not seems to be correct. Check Pitrek book
+	lpwcx->hInstance = (lpClassInfo->hModule);//?
+//		GetInstanceFromModule(lpClassInfo->hModule):0;
+	lpwcx->hIcon = lpClassInfo->hIcon;
+	lpwcx->hCursor = lpClassInfo->hCursor;
+	lpwcx->hbrBackground = lpClassInfo->hbrBackground;
+	lpwcx->lpszMenuName = (LPSTR)NULL;
+	lpwcx->lpszClassName = (LPSTR)NULL;
+	lpwcx->hIconSm = lpClassInfo->hIconSm;
+
+}
+
+/***********************************************************************
+ *		GetClassInfoEx (USER.398)
+ *
+ * FIXME: this is just a guess, I have no idea if GetClassInfoEx() is the
+ * same in Win16 as in Win32. --AJ
+ */
+BOOL WINAPI
+GetClassInfoEx(HINSTANCE hInstance, LPCSTR lpszClassName, LPWNDCLASSEX lpwcx)
+{
+    LPCLASSINFO ClassFound;
+    HMODULE hModule;
+
+//    APISTR((LF_APICALL, 
+//	"GetClassInfoEx(HINSTANCE=%x,LPCTSTR=%s,LPWNDCLASSEX=%x)\n",
+//		hInstance, 
+//		HIWORD(lpszClassName) ? lpszClassName : "ATOM",
+//		lpwcx));
+
+    if (!hInstance) {
+	if (!(ClassFound =
+		SearchClass(lpClasses[SYSGLOBAL],lpszClassName,(HMODULE)0)))
+	    if (!(ClassFound =
+		SearchClass(lpClasses[APPGLOBAL],lpszClassName,(HMODULE)0))) {
+//    		APISTR((LF_APIFAIL, "GetClassInfoEx: returns BOOL FALSE\n"));
+	        return FALSE;
+	    }
+    }
+    else {
+//	hModule = GetModuleFromInstance(hInstance);
+        hModule = LOWORD(GetModuleHandle(MAKELP(0, hInstance)));
+	if (!(ClassFound =
+		SearchClass(lpClasses[APPLOCAL],lpszClassName,hModule)))
+	    if (!(ClassFound =
+		SearchClass(lpClasses[APPGLOBAL], lpszClassName, hModule))) {
+//    		APISTR((LF_APIFAIL, "GetClassInfoEx: returns BOOL FALSE\n"));
+		    return FALSE;
+	    }
+    }
+    InternalGetClassInfoEx(ClassFound, lpwcx);
+    lpwcx->lpszClassName = (LPSTR)lpszClassName;
+    lpwcx->style &= ~CS_SYSTEMGLOBAL;
+
+//    APISTR((LF_APIRET, "GetClassInfoEx: returns BOOL TRUE\n"));
+    return TRUE;
+}
+
+/***********************************************************************
+ *		GetClassInfo (USER.404)
+ */
+BOOL WINAPI
+GetClassInfo(HINSTANCE hInstance, LPCSTR lpszClassName, LPWNDCLASS lpwc)
+{
+    WNDCLASSEX wcx;
+
+//    APISTR((LF_APICALL, "GetClassInfo(HINSTANCE=%x,LPCSTR=%s,LPWNDCLASS=%x)\n",
+//	hInstance, 
+//	HIWORD(lpszClassName) ? lpszClassName : "ATOM",
+//	lpwc));
+
+    if (!GetClassInfoEx(hInstance, lpszClassName, &wcx)) {
+//    	APISTR((LF_APIFAIL, "GetClassInfo: returns BOOL FALSE\n"));
+	return (FALSE);
+    }
+
+    lpwc->style = wcx.style;
+    lpwc->lpfnWndProc = wcx.lpfnWndProc;
+    lpwc->cbClsExtra = wcx.cbClsExtra;
+    lpwc->cbWndExtra = wcx.cbWndExtra;
+    lpwc->hInstance = wcx.hInstance;
+    lpwc->hIcon = wcx.hIcon;
+    lpwc->hCursor = wcx.hCursor;
+    lpwc->hbrBackground = wcx.hbrBackground;
+    lpwc->lpszMenuName = wcx.lpszMenuName;
+    lpwc->lpszClassName = wcx.lpszClassName;
+
+//    APISTR((LF_APIRET, "GetClassInfo: returns BOOL TRUE\n"));
+    return (TRUE);
+
+}
+

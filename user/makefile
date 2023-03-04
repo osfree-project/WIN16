@@ -60,7 +60,9 @@ EXPORTS = &
 	SubtractRect .373, &
 	DllEntryPoint .374, &
 	RegisterClassEx .397, &
+	GetClassInfoEx .398, &
 	UnregisterClass .403, &
+	GetClassInfo .404, &
 	CreateCursor .406, &
 	CreateIcon .407, &
 	CreateCursorIconIndirect .408, &
