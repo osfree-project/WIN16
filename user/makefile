@@ -20,6 +20,7 @@ STACKSIZE = 1k
 DLL     = 1
 EXPORTS = &
 	OldExitWindows .2, &
+	CreateWindow .41, &
 	RegisterClass .57, &
 	SetRect .72, &
 	SetRectEmpty .73, &
