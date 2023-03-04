@@ -113,7 +113,7 @@ WORD WINAPI WNetSetJobCopies( LPSTR szQueue, WORD wJobId, WORD nCopies )
 /**************************************************************************
  *              WNetWatchQueue       [USER.508]
  */
-WORD WINAPI WNetWatchQueue16( HWND hWnd, LPSTR szLocal, LPSTR szUser, WORD nQueue )
+WORD WINAPI WNetWatchQueue( HWND hWnd, LPSTR szLocal, LPSTR szUser, WORD nQueue )
 {
 //    FIXME( "(%04x, %s, %s, %d): stub\n",
 //           hWnd, debugstr_a(szLocal), debugstr_a(szUser), nQueue );
@@ -408,7 +408,7 @@ WORD WINAPI WNetGetDirectoryType( LPSTR lpName, LPINT lpType )
 /**************************************************************************
  *              WNetDirectoryNotify       [USER.531]
  */
-WORD WINAPI WNetDirectoryNotify16( HWND hwndOwner, LPSTR lpDir, WORD wOper )
+WORD WINAPI WNetDirectoryNotify( HWND hwndOwner, LPSTR lpDir, WORD wOper )
 {
 //    FIXME( "(%04x, %s, %s): stub\n", hwndOwner, debugstr_a(lpDir),
 //           (wOper == WNDN_MKDIR)? "WNDN_MKDIR" :

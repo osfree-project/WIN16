@@ -77,7 +77,35 @@ EXPORTS = &
 	DrawFocusRect .466, &
 	LSTRCMPI .471, &
 	AnsiNext .472, &
-	AnsiPrev .473
+	AnsiPrev .473, &
+	WNetErrorText .499, &
+	WNetOpenJob .501, &
+	WNetCloseJob .502, &
+	WNetAbortJob .503, &
+	WNetHoldJob .504, &
+	WNetReleaseJob .505, &
+	WNetCancelJob .506, &
+	WNetSetJobCopies .507, &
+	WNetWatchQueue .508, &
+	WNetUnwatchQueue .509, &
+	WNetLockQueueData .510, &
+	WNetUnlockQueueData .511, &
+	WNetGetCaps .513, &
+	WNetDeviceMode .514, &
+	WNetBrowseDialog .515, &
+	WNetAddConnection .517, &
+	WNetCancelConnection .518, &
+	WNetGetError .519, &
+	WNetGetErrorText .520, &
+	WNetRestoreConnection .523, &
+	WNetWriteJob .524, &
+	WNetConnectDialog .525, &
+	WNetDisconnectDialog .526, &
+	WNetConnectionDialog .527, &
+	WNetViewQueueDialog .528, &
+	WNetPropertyDialog .529, &
+	WNetDirectoryNotify .531, &
+	WNetGetPropertyText .532
 
 #	RegisterClass .57, &
 
