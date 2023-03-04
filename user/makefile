@@ -8,7 +8,7 @@ PROJ     = user1
 PROJ1    = user
 TRGT     = $(PROJ1).exe
 DESC     = Windows USER.EXE
-srcfiles = $(p)network$(e) $(p)Listbox$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Misc$(e) $(p)libmain$(e)
+srcfiles = $(p)network$(e) $(p)Listbox$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)libmain$(e)
 ADD_COPT = -zc -s
 ADD_ASMOPT = -i=..$(SEP)tables$(SEP)xlat
 #NOLIBS   = 1
@@ -20,6 +20,7 @@ STACKSIZE = 1k
 DLL     = 1
 EXPORTS = &
 	OldExitWindows .2, &
+	RegisterClass .57, &
 	SetRect .72, &
 	SetRectEmpty .73, &
 	CopyRect .74, &
@@ -58,6 +59,8 @@ EXPORTS = &
 	CopyCursor .369, &
 	SubtractRect .373, &
 	DllEntryPoint .374, &
+	RegisterClassEx .397, &
+	UnregisterClass .403, &
 	CreateCursor .406, &
 	CreateIcon .407, &
 	CreateCursorIconIndirect .408, &
@@ -107,7 +110,6 @@ EXPORTS = &
 	WNetDirectoryNotify .531, &
 	WNetGetPropertyText .532
 
-#	RegisterClass .57, &
 
 IMPORTS = GETEXEVERSION KERNEL.105, &
 	GETEXEPTR KERNEL.133, &
