@@ -329,3 +329,43 @@ FrameRect(HDC hDC, const RECT far *lpRect, HBRUSH hBrush)
 
     return bRet;
 }
+
+void WINAPI
+DrawFocusRect(HDC hDC, const RECT far *lprc)
+{
+    static HPEN	hPen = (HPEN)NULL;
+    int nOldROP,nOldBkMode;
+    HPEN hOldPen;
+//    HDC32 hDC32;
+
+    if (!lprc)
+	return;
+
+//    APISTR((LF_APICALL,"DrawFocusRect(HDC=%x,RECT *%x)\n",
+//	hDC,lprc));
+
+//    if (!(hDC32 = GETDCINFO(hDC))) {
+//	APISTR((LF_APIFAIL,"DrawFocusRect: returns void\n"));
+//	return;
+//    }
+
+    if (!hPen)
+	hPen = CreatePen(PS_DOT,1,RGB(255,255,255));
+
+    nOldROP = SetROP2(hDC, R2_NOTMASKPEN);
+    nOldBkMode = SetBkMode(hDC,TRANSPARENT);
+    hOldPen = SelectObject(hDC,hPen);
+
+    MoveTo(hDC,lprc->left,lprc->top);
+    LineTo(hDC,lprc->right-1,lprc->top);
+    LineTo(hDC,lprc->right-1,lprc->bottom-1);
+    LineTo(hDC,lprc->left,lprc->bottom-1);
+    LineTo(hDC,lprc->left,lprc->top);
+
+    SetROP2(hDC, nOldROP);
+    if (nOldBkMode != TRANSPARENT)
+	SetBkMode(hDC,nOldBkMode);
+    SelectObject(hDC, hOldPen);
+
+//    APISTR((LF_APIRET,"DrawFocusRect: returns void\n"));
+}

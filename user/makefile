@@ -8,7 +8,7 @@ PROJ     = user1
 PROJ1    = user
 TRGT     = $(PROJ1).exe
 DESC     = Windows USER.EXE
-srcfiles = $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)libmain$(e)
+srcfiles = $(p)Listbox$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Misc$(e) $(p)libmain$(e)
 ADD_COPT = -zc -s
 ADD_ASMOPT = -i=..$(SEP)tables$(SEP)xlat
 #NOLIBS   = 1
@@ -37,12 +37,14 @@ EXPORTS = &
 	ChangeMenu .153, &
 	LoadString .176, &
 	LoadAccelerators .177, &
+	GrayString .185, &
 	UserSeeUserDo .216, &
 	LoadMenuIndirect .220, &
 	EqualRect.244, &
 	OldSetDeskPattern .279, &
 	GetFreeSystemResources .284, &
 	mouse_event .299, &
+	GetControlBrush .326, &
 	IsUserIdle .333, &
 	GetMouseEventProc .337, &
 	CopyIcon .368, &
@@ -65,6 +67,7 @@ EXPORTS = &
 	ANSILOWERBUFF .438, &
 	DestroyIcon .457, &
 	DestroyCursor .458, &
+	DrawFocusRect .466, &
 	LSTRCMPI .471, &
 	AnsiNext .472, &
 	AnsiPrev .473
