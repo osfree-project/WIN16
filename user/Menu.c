@@ -86,3 +86,91 @@ BOOL WINAPI ChangeMenu( HMENU hMenu, UINT pos, const char far * data,
     /* Default: MF_INSERT */
     return InsertMenu( hMenu, pos, flags, id, data );
 }
+
+#define GET_BYTE(ptr)  (*(const BYTE *)(ptr))
+#define GET_WORD(ptr)  (*(const WORD *)(ptr))
+
+static LPCSTR parse_menu_resource( LPCSTR res, HMENU hMenu, BOOL oldFormat )
+{
+    WORD flags, id = 0;
+    LPCSTR str;
+    BOOL end_flag;
+
+    do
+    {
+        /* Windows 3.00 and later use a WORD for the flags, whereas 1.x and 2.x use a BYTE. */
+        if (oldFormat)
+        {
+            flags = GET_BYTE(res);
+            res += sizeof(BYTE);
+        }
+        else
+        {
+            flags = GET_WORD(res);
+            res += sizeof(WORD);
+        }
+
+        end_flag = flags & MF_END;
+        /* Remove MF_END because it has the same value as MF_HILITE */
+        flags &= ~MF_END;
+        if (!(flags & MF_POPUP))
+        {
+            id = GET_WORD(res);
+            res += sizeof(WORD);
+        }
+        str = res;
+        res += lstrlen(str) + 1;
+        if (flags & MF_POPUP)
+        {
+            HMENU hSubMenu = CreatePopupMenu();
+            if (!hSubMenu) return NULL;
+            if (!(res = parse_menu_resource( res, hSubMenu, oldFormat ))) return NULL;
+            AppendMenu( hMenu, flags, hSubMenu, str );
+        }
+        else  /* Not a popup */
+        {
+            AppendMenu( hMenu, flags, id, *str ? str : NULL );
+        }
+    } while (!end_flag);
+    return res;
+}
+
+WORD WINAPI GetExeVersion();
+
+/**********************************************************************
+ *	    LoadMenuIndirect    (USER.220)
+ */
+HMENU WINAPI LoadMenuIndirect( VOID const far * template )
+{
+    BOOL oldFormat;
+    HMENU hMenu;
+    WORD version, offset;
+    LPCSTR p = template;
+
+//    TRACE("(%p)\n", template );
+
+    /* Windows 1.x and 2.x menus have a slightly different menu format from 3.x menus */
+    oldFormat = (GetExeVersion() < 0x0300);
+
+    /* Windows 3.00 and later menu items are preceded by a MENUITEMTEMPLATEHEADER structure */
+    if (!oldFormat)
+    {
+        version = GET_WORD(p);
+        p += sizeof(WORD);
+        if (version)
+        {
+//            WARN("version must be 0 for Win16 >= 3.00 applications\n" );
+            return 0;
+        }
+        offset = GET_WORD(p);
+        p += sizeof(WORD) + offset;
+    }
+
+    if (!(hMenu = CreateMenu())) return 0;
+    if (!parse_menu_resource( p, hMenu, oldFormat ))
+    {
+        DestroyMenu( hMenu );
+        return 0;
+    }
+    return hMenu;
+}

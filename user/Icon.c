@@ -1,4 +1,8 @@
+#include <string.h>
 #include <windows.h>
+
+VOID WINAPI FarSetOwner(HANDLE hMem, WORD wOwnerPDB);
+WORD WINAPI GetExePtr(HANDLE h);
 
 /* Cursors / Icons */
 
@@ -12,16 +16,17 @@ typedef struct tagCURSORICONINFO
     BYTE    bBitsPerPixel;
 } CURSORICONINFO;
 
-/***********************************************************************
- *		IconSize (USER.86)
- *
- * See "Undocumented Windows". Used by W2.0 paint.exe.
- */
-DWORD WINAPI IconSize(void)
-{
-  return MAKELONG(GetSystemMetrics(SM_CYICON), GetSystemMetrics(SM_CXICON));
-}
+static const WORD ICON_HOTSPOT = 0x4242;
 
+static HICON alloc_icon_handle( unsigned int size )
+{
+    HGLOBAL handle = GlobalAlloc( GMEM_MOVEABLE, size + sizeof(DWORD) );
+    char far *ptr = GlobalLock( handle );
+    _fmemset( ptr + size, 0, sizeof(DWORD) );
+    GlobalUnlock( handle );
+    FarSetOwner( handle, 0 );
+    return handle;
+}
 
 static int get_bitmap_width_bytes( int width, int bpp )
 {
@@ -58,6 +63,18 @@ static void release_icon_ptr( HICON handle, CURSORICONINFO far *ptr )
 }
 
 /***********************************************************************
+ *		IconSize (USER.86)
+ *
+ * See "Undocumented Windows". Used by W2.0 paint.exe.
+ */
+DWORD WINAPI IconSize(void)
+{
+  return MAKELONG(GetSystemMetrics(SM_CYICON), GetSystemMetrics(SM_CXICON));
+}
+
+
+
+/***********************************************************************
  *		CopyIcon (USER.368)
  */
 HICON WINAPI CopyIcon( HINSTANCE hInstance, HICON hIcon )
@@ -84,4 +101,75 @@ HCURSOR WINAPI CopyCursor( HINSTANCE hInstance, HCURSOR hCursor )
     HGLOBAL ret = CreateCursor(hInstance, info->ptHotSpot.x, info->ptHotSpot.y, info->nWidth, info->nHeight, and_bits, xor_bits);
     release_icon_ptr( hCursor, info );
     return ret;
+}
+
+
+/***********************************************************************
+ *		CreateCursorIconIndirect (USER.408)
+ */
+HGLOBAL WINAPI CreateCursorIconIndirect( HINSTANCE hInstance,
+                                           CURSORICONINFO far *info,
+                                           VOID const far * lpANDbits,
+                                           VOID const far * lpXORbits )
+{
+    HICON handle;
+    CURSORICONINFO far *ptr;
+    int sizeAnd, sizeXor;
+
+    hInstance = GetExePtr( hInstance );  /* Make it a module handle */
+    if (!lpXORbits || !lpANDbits || info->bPlanes != 1) return 0;
+    info->nWidthBytes = get_bitmap_width_bytes(info->nWidth,info->bBitsPerPixel);
+    sizeXor = info->nHeight * info->nWidthBytes;
+    sizeAnd = info->nHeight * get_bitmap_width_bytes( info->nWidth, 1 );
+    if (!(handle = alloc_icon_handle( sizeof(CURSORICONINFO) + sizeXor + sizeAnd )))
+        return 0;
+    FarSetOwner( handle, hInstance );
+    ptr = get_icon_ptr( handle );
+    _fmemcpy( ptr, info, sizeof(*info) );
+    _fmemcpy( ptr + 1, lpANDbits, sizeAnd );
+    _fmemcpy( (char far *)(ptr + 1) + sizeAnd, lpXORbits, sizeXor );
+    release_icon_ptr( handle, ptr );
+    return handle;
+}
+
+/***********************************************************************
+ *		CreateCursor (USER.406)
+ */
+HCURSOR WINAPI CreateCursor(HINSTANCE hInstance,
+				int xHotSpot, int yHotSpot,
+				int nWidth, int nHeight,
+				VOID const far * lpANDbits, VOID const far * lpXORbits)
+{
+  CURSORICONINFO info;
+
+  info.ptHotSpot.x = xHotSpot;
+  info.ptHotSpot.y = yHotSpot;
+  info.nWidth = nWidth;
+  info.nHeight = nHeight;
+  info.nWidthBytes = 0;
+  info.bPlanes = 1;
+  info.bBitsPerPixel = 1;
+
+  return CreateCursorIconIndirect(hInstance, &info, lpANDbits, lpXORbits);
+}
+
+
+/***********************************************************************
+ *		CreateIcon (USER.407)
+ */
+HICON WINAPI CreateIcon( HINSTANCE hInstance, int nWidth,
+                             int nHeight, BYTE bPlanes, BYTE bBitsPixel,
+                             VOID const far * lpANDbits, VOID const far * lpXORbits )
+{
+    CURSORICONINFO info;
+
+    info.ptHotSpot.x = ICON_HOTSPOT;
+    info.ptHotSpot.y = ICON_HOTSPOT;
+    info.nWidth = nWidth;
+    info.nHeight = nHeight;
+    info.nWidthBytes = 0;
+    info.bPlanes = bPlanes;
+    info.bBitsPerPixel = bBitsPixel;
+
+    return CreateCursorIconIndirect( hInstance, &info, lpANDbits, lpXORbits );
 }

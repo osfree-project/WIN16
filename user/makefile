@@ -8,7 +8,7 @@ PROJ     = user1
 PROJ1    = user
 TRGT     = $(PROJ1).exe
 DESC     = Windows USER.EXE
-srcfiles = $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)libmain$(e)
+srcfiles = $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)libmain$(e)
 ADD_COPT = -zc -s
 ADD_ASMOPT = -i=..$(SEP)tables$(SEP)xlat
 #NOLIBS   = 1
@@ -36,17 +36,39 @@ EXPORTS = &
 	ChangeMenu .153, &
 	LoadString .176, &
 	LoadAccelerators .177, &
+	UserSeeUserDo .216, &
+	LoadMenuIndirect .220, &
 	EqualRect.244, &
+	OldSetDeskPattern .279, &
+	GetFreeSystemResources .284, &
+	mouse_event .299, &
+	IsUserIdle .333, &
+	GetMouseEventProc .337, &
 	CopyIcon .368, &
 	CopyCursor .369, &
 	SubtractRect .373, &
+	DllEntryPoint .374, &
+	CreateCursor .406, &
+	CreateIcon .407, &
+	CreateCursorIconIndirect .408, &
+	_wsprintf .420, &
+	wvsprintf .421, &
 	lstrcmp .430, &
 	AnsiUpper .431, &
 	AnsiLower .432, &
+	LSTRCMPI .471, &
 	AnsiNext .472, &
 	AnsiPrev .473
 
-#IMPORTS = GETPRIVATEPROFILEINT KERNEL.127, &
+#	RegisterClass .57, &
+
+IMPORTS = GETEXEVERSION KERNEL.105, &
+	GETEXEPTR KERNEL.133, &
+	LOCALCOUNTFREE KERNEL.161, &
+	LOCALHEAPSIZE KERNEL.162, &
+	FARSETOWNER KERNEL.403
+
+# GETPRIVATEPROFILEINT KERNEL.127, &
 #          __AHSHIFT KERNEL.113
 
 #OPTIONS = heapsize=0
