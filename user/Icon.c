@@ -112,36 +112,6 @@ DWORD WINAPI IconSize(void)
 
 
 /***********************************************************************
- *		CopyIcon (USER.368)
- */
-HICON WINAPI CopyIcon( HINSTANCE hInstance, HICON hIcon )
-{
-    CURSORICONINFO far *info = get_icon_ptr( hIcon );
-    void far *and_bits = info + 1;
-    void far *xor_bits = (BYTE far *)and_bits + info->nHeight * get_bitmap_width_bytes( info->nWidth, 1 );
-//    HGLOBAL ret = CreateCursorIconIndirect( hInstance, info, and_bits, xor_bits );
-    HGLOBAL ret = CreateIcon(hInstance, info->nWidth, info->nHeight, info->bPlanes, info->bBitsPerPixel, and_bits, xor_bits);
-
-    release_icon_ptr( hIcon, info );
-    return ret;
-}
-
-/***********************************************************************
- *		CopyCursor (USER.369)
- */
-HCURSOR WINAPI CopyCursor( HINSTANCE hInstance, HCURSOR hCursor )
-{
-    CURSORICONINFO far *info = get_icon_ptr( hCursor );
-    void far *and_bits = info + 1;
-    void far *xor_bits = (BYTE far *)and_bits + info->nHeight * get_bitmap_width_bytes( info->nWidth, 1 );
-//    HGLOBAL16 ret = CreateCursorIconIndirect16( hInstance, info, and_bits, xor_bits );
-    HGLOBAL ret = CreateCursor(hInstance, info->ptHotSpot.x, info->ptHotSpot.y, info->nWidth, info->nHeight, and_bits, xor_bits);
-    release_icon_ptr( hCursor, info );
-    return ret;
-}
-
-
-/***********************************************************************
  *		CreateCursorIconIndirect (USER.408)
  */
 HGLOBAL WINAPI CreateCursorIconIndirect( HINSTANCE hInstance,
@@ -233,4 +203,84 @@ BOOL WINAPI DestroyIcon(HICON hIcon)
 BOOL WINAPI DestroyCursor(HCURSOR hCursor)
 {
     return DestroyIcon( hCursor );
+}
+
+/***********************************************************************
+ *		CopyIcon (USER.368)
+ */
+HICON WINAPI CopyIcon( HINSTANCE hInstance, HICON hIcon )
+{
+    CURSORICONINFO far *info = get_icon_ptr( hIcon );
+    void far *and_bits = info + 1;
+    void far *xor_bits = (BYTE far *)and_bits + info->nHeight * get_bitmap_width_bytes( info->nWidth, 1 );
+    HGLOBAL ret = CreateCursorIconIndirect( hInstance, info, and_bits, xor_bits );
+//    HGLOBAL ret = CreateIcon(hInstance, info->nWidth, info->nHeight, info->bPlanes, info->bBitsPerPixel, and_bits, xor_bits);
+
+    release_icon_ptr( hIcon, info );
+    return ret;
+}
+
+/***********************************************************************
+ *		CopyCursor (USER.369)
+ */
+HCURSOR WINAPI CopyCursor( HINSTANCE hInstance, HCURSOR hCursor )
+{
+    CURSORICONINFO far *info = get_icon_ptr( hCursor );
+    void far *and_bits = info + 1;
+    void far *xor_bits = (BYTE far *)and_bits + info->nHeight * get_bitmap_width_bytes( info->nWidth, 1 );
+    HGLOBAL ret = CreateCursorIconIndirect( hInstance, info, and_bits, xor_bits );
+//    HGLOBAL ret = CreateCursor(hInstance, info->ptHotSpot.x, info->ptHotSpot.y, info->nWidth, info->nHeight, and_bits, xor_bits);
+    release_icon_ptr( hCursor, info );
+    return ret;
+}
+
+BOOL  WINAPI
+DrawIcon(HDC hDC, int x, int y, HICON hIcon)
+{
+//    LPTWIN_ICONINFO lpIconInfo;
+    CURSORICONINFO far *info = get_icon_ptr( hIcon );
+    HDC hCompatDC;
+    int cxIcon,cyIcon;
+    HBITMAP hOldBitmap, hANDMask, hXORImage;
+    COLORREF bg,fg;
+    BOOL bRet;
+    void far *and_bits = info + 1;
+    void far *xor_bits = (BYTE far *)and_bits + info->nHeight * get_bitmap_width_bytes( info->nWidth, 1 );
+
+
+//    APISTR((LF_API,"DrawIcon: hDC=%x %d,%d hIcon %x\n",hDC,x,y,hIcon));
+
+    if (!hIcon || !(info))
+	return (DWORD)FALSE;
+
+//    if (!lpIconInfo->hXORImage || !lpIconInfo->hANDMask)
+//	return (DWORD)FALSE;
+
+    if (!(hCompatDC = CreateCompatibleDC(hDC)))
+	return (DWORD)FALSE;
+
+    cxIcon = GetSystemMetrics(SM_CXICON);
+    cyIcon = GetSystemMetrics(SM_CYICON);
+
+    bg = SetBkColor(hDC,RGB(255,255,255));
+    fg = SetTextColor(hDC,RGB(0,0,0));
+
+    hANDMask = CreateBitmap(info->nWidth, info->nHeight, 1, 1, and_bits);
+    hOldBitmap = SelectObject(hCompatDC, hANDMask);
+    bRet = BitBlt(hDC,x,y,cxIcon,cyIcon,hCompatDC,0,0,SRCAND);
+    DeleteObject(hANDMask);
+    if (bRet) {
+        hXORImage = CreateBitmap(info->nWidth, info->nHeight, info->bPlanes, info->bBitsPerPixel, xor_bits);
+	SelectObject(hCompatDC,hXORImage);
+	bRet = BitBlt(hDC,x,y,cxIcon,cyIcon,hCompatDC,0,0,SRCINVERT);
+        DeleteObject(hXORImage);
+    }
+
+    SelectObject(hCompatDC,hOldBitmap);
+    DeleteDC(hCompatDC);
+
+    SetBkColor(hDC,bg);
+    SetTextColor(hDC,fg);
+
+    return bRet;
 }

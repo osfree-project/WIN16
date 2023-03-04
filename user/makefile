@@ -32,6 +32,7 @@ EXPORTS = &
 	FillRect .81, &
 	InvertRect .82, &
 	FrameRect .83, &
+	DrawIcon .84, &
 	LoadMenu .150, &
 	ChangeMenu .153, &
 	LoadString .176, &
