@@ -148,6 +148,18 @@ typedef LISTBOXINFO far *LPLBOXINFO;
 #define	LAF_APPEND	0x0000
 #define	LAF_INSERT	0x0001
 
+#define	LB_GETINDENTS		(WM_USER+40)
+#define	LB_SETINDENTS		(WM_USER+41)
+#define	LB_GETITEMINDENTS	(WM_USER+42)
+#define	LB_SETITEMINDENTS	(WM_USER+43)
+#define	LB_GETITEMBITMAPS	(WM_USER+44)
+#define	LB_SETITEMBITMAPS	(WM_USER+45)
+#define	LB_ADDITEM		(WM_USER+46)
+
+/* Private listbox style bit */
+#define	LBS_COMBOLBOX	0x8000
+#define	LBS_PRELOADED	0x4000
+
 #define	LBS_OWNERDRAWMASK (LBS_OWNERDRAWFIXED | LBS_OWNERDRAWVARIABLE)
 
 #define	BOWNDATA(l) (((l)->wLBoxStyle & LBS_OWNERDRAWMASK)\
@@ -161,5 +173,7 @@ typedef LISTBOXINFO far *LPLBOXINFO;
 #define	LBoxSetState(lpLBInfo,wMask) lpLBInfo->wState |= (wMask)
 #define	LBoxClearState(lpLBInfo,wMask) lpLBInfo->wState &= ~(wMask)
 #define	LBoxTestState(lpLBInfo,wMask) (lpLBInfo->wState & (wMask))
+
+/* Additional messages to the LISTBOX system class */
 
 #endif /* Listbox__h */

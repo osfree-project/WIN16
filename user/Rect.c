@@ -369,3 +369,21 @@ DrawFocusRect(HDC hDC, const RECT far *lprc)
 
 //    APISTR((LF_APIRET,"DrawFocusRect: returns void\n"));
 }
+
+#define WM_CTLCOLORMSGBOX       0x0132
+
+/**************************************************************************
+ *              PaintRect   (USER.325)
+ */
+void WINAPI PaintRect( HWND hwndParent, HWND hwnd, HDC hdc,
+                         HBRUSH hbrush, const RECT far *rect)
+{
+    if (hbrush <= CTLCOLOR_STATIC)
+    {
+        if (!hwndParent) return;
+        hbrush = SendMessage( hwndParent, WM_CTLCOLORMSGBOX + hbrush, hdc, hwnd );
+        if (!hbrush) hbrush = DefWindowProc( hwndParent, WM_CTLCOLORMSGBOX + hbrush,
+                                              hdc, (LPARAM)hwnd );
+    }
+    if (hbrush) FillRect( hdc, rect, hbrush );
+}

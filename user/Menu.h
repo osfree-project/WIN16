@@ -23,6 +23,24 @@ typedef struct tagMENUCREATESTRUCT
 
 typedef MENUCREATESTRUCT far *LPMENUCREATESTRUCT;
 
+typedef struct tagTRACKPOPUPSTRUCT
+{
+    HMENU	hMenu;
+    UINT	uiFlags;
+    int		x;
+    int		y;
+    BOOL	bSystemMenu;
+    HWND	hWndOwner;
+    RECT    far *lprc;
+    HWND	hPopups[5];	/* this should be a linked list */
+    WORD	wPopupFlags[5];
+    int		nPopups;	/* number of popups */
+} TRACKPOPUPSTRUCT;
+
+typedef TRACKPOPUPSTRUCT far *LPTRACKPOPUPSTRUCT;
+
+#define TP_MENUBAR	0x2000
+
 /* ChangeItem action bits */
 #define	LCA_GET		0x0000
 #define	LCA_SET		0x8000

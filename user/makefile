@@ -8,7 +8,7 @@ PROJ     = user1
 PROJ1    = user
 TRGT     = $(PROJ1).exe
 DESC     = Windows USER.EXE
-srcfiles = $(p)Listbox$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Misc$(e) $(p)libmain$(e)
+srcfiles = $(p)network$(e) $(p)Listbox$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Misc$(e) $(p)libmain$(e)
 ADD_COPT = -zc -s
 ADD_ASMOPT = -i=..$(SEP)tables$(SEP)xlat
 #NOLIBS   = 1
@@ -35,6 +35,11 @@ EXPORTS = &
 	DrawIcon .84, &
 	LoadMenu .150, &
 	ChangeMenu .153, &
+	GetSystemMenu .156, &
+	GetMenu .157, &
+	SetMenu .158, &
+	GetSubMenu .159, &
+	DrawMenuBar .160, &
 	LoadString .176, &
 	LoadAccelerators .177, &
 	GrayString .185, &
@@ -44,6 +49,8 @@ EXPORTS = &
 	OldSetDeskPattern .279, &
 	GetFreeSystemResources .284, &
 	mouse_event .299, &
+	FillWindow .324, &
+	PaintRect .325, &
 	GetControlBrush .326, &
 	IsUserIdle .333, &
 	GetMouseEventProc .337, &

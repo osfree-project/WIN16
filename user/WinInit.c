@@ -73,7 +73,7 @@ DWORD WINAPI UserSeeUserDo(WORD wReqType, WORD wParam1, WORD wParam2, WORD wPara
         ret = LocalCompact(wParam3);
         break;
     case USUD_LOCALHEAP:
-//        ret = USER_HeapSel;
+        ret = USER_HeapSel;
         break;
     case USUD_FIRSTCLASS:
 //        FIXME("return a pointer to the first window class.\n");
