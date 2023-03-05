@@ -39,7 +39,11 @@ typedef struct tagTRACKPOPUPSTRUCT
 
 typedef TRACKPOPUPSTRUCT far *LPTRACKPOPUPSTRUCT;
 
+#define	TP_STATUS	0
+
 #define TP_MENUBAR	0x2000
+
+#define     GetWindowInstance(hwnd) ((HINSTANCE)GetWindowWord(hwnd, GWW_HINSTANCE))
 
 /* ChangeItem action bits */
 #define	LCA_GET		0x0000

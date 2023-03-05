@@ -55,6 +55,9 @@ EXPORTS = &
 	UserSeeUserDo .216, &
 	LoadMenuIndirect .220, &
 	EqualRect.244, &
+	GetMenuState .250, &
+	GetMenuItemCount .263, &
+	GetMenuItemID .264, &
 	OldSetDeskPattern .279, &
 	GetFreeSystemResources .284, &
 	mouse_event .299, &
@@ -79,6 +82,10 @@ EXPORTS = &
 	RemoveMenu .412, &
 	DeleteMenu .413, &
 	ModifyMenu .414, &
+	CreatePopupMenu .415, &
+	TrackPopupMenu .416, &
+	GetMenuCheckMarkDimensions .417, &
+	SetMenuItemBitmaps .418, &
 	_wsprintf .420, &
 	wvsprintf .421, &
 	lstrcmp .430, &

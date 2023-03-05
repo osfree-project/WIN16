@@ -1085,3 +1085,279 @@ GetMenuString(HMENU hMenu, UINT uiIDItem, LPSTR lpString,
 //    RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
     return GetMenuString(hMenu,uiIDItem,lpString,nMaxCount,uiFlags);
 }
+
+/**********************************************************************
+ *         GetMenuState    (USER.250)
+ */
+UINT WINAPI
+GetMenuState(HMENU hMenu, UINT uiID, UINT uiFlags)
+{
+    MENUITEMSTRUCT mis;
+    LONG lFlags;
+
+    memset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
+    mis.wAction = LCA_GET | LCA_FLAGS;
+    mis.wPosition = (WORD)uiID;
+    mis.wItemFlags = (WORD)uiFlags;
+    if ((lFlags = LBoxAPI(hMenu,LBA_MODIFYITEM,(LPARAM)&mis)) < 0) {
+        HMENU hMenuorig = hMenu;
+	if (uiFlags & MF_BYPOSITION) {
+//	    RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
+	    return (UINT)-1;
+	}
+	hMenu = TWIN_FindMenuItem(hMenu,uiID);
+	if (!hMenu) {
+//	    RELEASELBOXINFO((LPLISTBOXINFO)hMenu32orig);
+	    return (UINT)-1;
+	}
+	hMenu = ((LPOBJHEAD)hMenu)->hObj;
+	if (hMenu != hMenuorig)
+	  {};//RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
+//	RELEASELBOXINFO((LPLISTBOXINFO)hMenu32orig);
+	return GetMenuState(hMenu,uiID,uiFlags);
+    }
+//    RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
+    return (UINT)(lFlags & ~MF_BYPOSITION);
+}
+
+/**********************************************************************
+ *         GetMenuItemCount    (USER.263)
+ */
+int WINAPI 
+GetMenuItemCount(HMENU hMenu)
+{
+//    HMENU32 hMenu32;
+    MENUITEMSTRUCT mis;
+    int nCount;
+
+//    if (!(hMenu32 = GetMenuHandle32(hMenu)))
+//	return (int)-1;
+    memset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
+    mis.wAction = LCA_ITEMCOUNT;
+    mis.wPosition = (WORD)-1;
+    nCount = (int)LBoxAPI(hMenu,LBA_GETDATA,(LPARAM)&mis);
+//    RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
+    return nCount;
+}
+
+/**********************************************************************
+ *         GetMenuItemID    (USER.264)
+ */
+UINT WINAPI
+GetMenuItemID(HMENU hMenu, int nPos)
+{
+//    HMENU32 hMenu32;
+    MENUITEMSTRUCT mis;
+    LONG lFlags;
+    UINT rc;
+
+//    if (!(hMenu32 = GetMenuHandle32(hMenu)))
+//	return (UINT)-1;
+    memset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
+    mis.wItemFlags = MF_BYPOSITION;
+    mis.wPosition = (WORD)nPos;
+    mis.wAction = LCA_GET | LCA_FLAGS;
+    lFlags = LBoxAPI(hMenu,LBA_MODIFYITEM,(LPARAM)&mis);
+    if (lFlags & MF_POPUP)
+	return (UINT)-1;
+    mis.wAction = LCA_GET | LCA_ITEMID;
+    rc = (UINT)LBoxAPI(hMenu,LBA_MODIFYITEM,(LPARAM)&mis);
+//    RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
+    return rc;
+}
+
+
+/**********************************************************************
+ *         CreatePopupMenu    (USER.415)
+ */
+HMENU WINAPI		/* API */
+CreatePopupMenu()
+{
+    return CreateMenu();
+}
+
+void
+ClearWF(HWND hWnd, DWORD dwClearMask)
+{
+//    HWND32 hWnd32;
+
+//    if (hWnd && (hWnd32 = GETHWND32(hWnd)))
+//@todo Map hwnd to WND struct =MAKELP(hWnd, 0)
+//	hWnd->dwWinFlags &= ~dwClearMask;
+
+//    RELEASEWININFO(hWnd32);
+}
+
+#define GET_WM_MENUSELECT_MPS(cmd, f, hmenu)  \
+        (WPARAM)(cmd), MAKELONG(f, hmenu)
+
+#define WFTRACKPOPUPACTIVE	0x80000000L
+
+BOOL
+IsMouseOrKeyboardMsg(UINT uiMsg)
+{
+    if (uiMsg >= WM_MOUSEFIRST && uiMsg <= WM_MOUSELAST)
+	return (BOOL)WM_MOUSEFIRST;
+
+    if (uiMsg >= WM_KEYFIRST && uiMsg <= WM_KEYLAST)
+	return (BOOL)WM_KEYFIRST;
+
+    return FALSE;
+}
+
+/**************************************************************************
+ *              TrackPopupMenu   (USER.416)
+ */
+BOOL WINAPI		/* API */
+TrackPopupMenu(HMENU hMenu, UINT uiFlags, int x, int y,
+		int nSystemMenu, HWND hWnd, const RECT far *lpReserved)
+{
+    HWND hWndTrackPopup,hWndOldFocus;
+    TRACKPOPUPSTRUCT tps;
+    MSG msg,msgHook;
+    POINT pt;
+    int ret, nState;
+
+    _fmemset((LPVOID)&tps,'\0',sizeof(TRACKPOPUPSTRUCT));
+    tps.hMenu = hMenu;
+    tps.uiFlags = uiFlags;
+    tps.x = x;
+    tps.y = y;
+    tps.bSystemMenu = (BOOL)nSystemMenu;
+    tps.hWndOwner = hWnd;
+    tps.lprc = (RECT far *)lpReserved;
+
+    if (!(hWndTrackPopup = CreateWindowEx(WS_EX_TRANSPARENT,
+	"TRACKPOPUP",NULL,
+	WS_POPUP,
+	x,y,10,10,
+	0, 0, GetWindowInstance(hWnd),
+	(LPVOID)&tps))) {
+	ClearWF(hWnd,WFTRACKPOPUPACTIVE);
+	return FALSE;
+    }
+
+    hWndOldFocus = SetFocus ( hWndTrackPopup );
+    nState = (uiFlags & TPM_RIGHTBUTTON) ? GetKeyState(VK_RBUTTON) :
+			GetKeyState(VK_LBUTTON);
+    if (nState & 0x8000)
+	SendMessage(hWndTrackPopup,
+		(uiFlags & TPM_RIGHTBUTTON) ? WM_RBUTTONDOWN : WM_LBUTTONDOWN,
+		0, 0L);
+    
+    SetWindowWord(hWndTrackPopup,TP_STATUS,0);
+    
+    while (GetWindowWord(hWndTrackPopup,TP_STATUS) == 0) {
+	if (GetMessage(&msg, 0, 0, 0)) {
+	    TranslateMessage (&msg) ;
+
+	    if ((ret = IsMouseOrKeyboardMsg(msg.message))) {
+		msgHook = msg;
+		if (ret == WM_MOUSEFIRST) {
+		    msgHook.hwnd = hWnd;
+		    pt.x = LOWORD(msg.lParam);
+		    pt.y = HIWORD(msg.lParam);
+		    MapWindowPoints(msg.hwnd,msgHook.hwnd,&pt,1);
+		    msgHook.lParam = MAKELPARAM(pt.x,pt.y);
+		}
+		else 
+		    msgHook.hwnd = hWndOldFocus;
+		if (CallMsgFilter(&msgHook,MSGF_MENU))
+		    continue;
+	    }
+
+	    DispatchMessage (&msg) ;
+	}
+	if (!PeekMessage(&msg,hWnd,0,0,PM_NOYIELD|PM_NOREMOVE))
+	    SendMessage(tps.hWndOwner,WM_ENTERIDLE,MSGF_MENU,
+			(LPARAM)tps.hWndOwner);
+    }
+    SendMessage(hWnd,WM_MENUSELECT,GET_WM_MENUSELECT_MPS(0,-1,0));
+    ReleaseCapture();
+    if (hWndOldFocus) 
+	SetFocus(hWndOldFocus);
+    DestroyWindow(hWndTrackPopup);
+    return TRUE;
+}
+
+/**************************************************************************
+ *              GetMenuCheckMarkDimensions   (USER.417)
+ */
+DWORD WINAPI
+GetMenuCheckMarkDimensions()
+{
+    static DWORD dwCheckmarkDim = 0;
+    HDC hDC;
+    int nWidth, nHeight;
+
+//    APISTR((LF_APICALL, "GetMenuCheckMarkDimensions()\n"));
+
+    if (dwCheckmarkDim == 0) {
+	hDC = GetDC(0);
+	dwCheckmarkDim = GetTextExtent(hDC,"12345",5);
+	ReleaseDC(0,hDC);
+	nWidth = HIWORD(dwCheckmarkDim);
+	nHeight = nWidth*7/4 - 2;
+	dwCheckmarkDim = MAKELONG(nWidth,nHeight);
+    }
+
+//    APISTR((LF_APIRET, "GetMenuCheckMarkDimensions: returns DWORD %x\n",
+//			dwCheckmarkDim));
+    return dwCheckmarkDim;
+}
+
+
+/**********************************************************************
+ *         SetMenuItemBitmaps    (USER.418)
+ */
+BOOL WINAPI
+SetMenuItemBitmaps(HMENU hMenu, UINT uiItem, UINT uiFlags,
+			HBITMAP hBitmapUnchecked, HBITMAP hBitmapChecked)
+{
+//    HMENU32 hMenu32;
+    HMENU hMenuorig;
+    MENUITEMSTRUCT mis;
+    LONG lFlags;
+
+//    if (!(hMenu32 = GetMenuHandle32(hMenu)))
+//	return FALSE;
+    hMenuorig = hMenu;
+    memset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
+    mis.wPosition = (WORD)uiItem;
+    mis.wAction = LCA_GET | LCA_FLAGS;
+    mis.wItemFlags = uiFlags;
+    lFlags = LBoxAPI(hMenu,LBA_MODIFYITEM,(LPARAM)&mis);
+    if (lFlags < 0) { 
+	if (uiFlags & MF_BYPOSITION)  {
+//	    RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
+	    return FALSE;
+	}
+	hMenu = TWIN_FindMenuItem(hMenu,uiItem);
+	if (!hMenu) {
+//	    RELEASELBOXINFO((LPLISTBOXINFO)hMenu32orig);
+	    return FALSE;
+	}
+	mis.wAction = LCA_GET|LCA_FLAGS;
+	lFlags = LBoxAPI(hMenu,LBA_MODIFYITEM,(LPARAM)&mis);
+	if (lFlags < 0) {
+	    if (hMenu != hMenuorig)
+	      {};//RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
+//	    RELEASELBOXINFO((LPLISTBOXINFO)hMenu32orig);
+	    return FALSE;
+	}
+	mis.wItemFlags = MF_BYPOSITION;
+    }
+    mis.hCheckedBmp = hBitmapChecked;
+    mis.hUncheckedBmp = hBitmapUnchecked;
+    mis.wAction = LCA_SET | LCA_BITMAPS;
+    if (LBoxAPI(hMenu,LBA_MODIFYITEM,(LPARAM)&mis) < 0) {
+        if (hMenu != hMenuorig)
+	  {};//RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
+//        RELEASELBOXINFO((LPLISTBOXINFO)hMenu32orig);
+	return FALSE;
+    }
+    if (hMenu != hMenuorig)
+      {};//RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
+//    RELEASELBOXINFO((LPLISTBOXINFO)hMenu32orig);
+    return TRUE;
+}
