@@ -1,7 +1,11 @@
 #include <ctype.h>
 #include <string.h>
 
+#ifndef OEMRESOURCE
+#define OEMRESOURCE	/* for OBM_CLOSE */
+#endif
 #include <windows.h>
+#undef OEMRESOURCE
 
 #include "menu.h"
 #include "Listbox.h"
@@ -50,6 +54,8 @@ static HBITMAP SystemBitmaps[8];
 #define SB_OBM_RESTORED 5
 #define SB_OBM_REDUCED	6
 #define SB_OBM_ZOOMD	7
+
+#define	OM_MASK		0x4000
 
 int latoi(char far *h)
 {
@@ -684,3 +690,398 @@ GetSubMenu(HMENU hMenu, int nPos)
 }
 
 
+/*  WARNING:  This has a reference-counting problem:  If the item is in a
+    POPUP menu, that popup's LBOXINFO will be ref-counted when gotten
+    and must be "del-ref'd" when the caller is done with it. */
+HMENU
+TWIN_FindMenuItem(HMENU hMenu, UINT uiIDItem)
+{
+    UINT uiItem;
+    LONG lFlags;
+    MENUITEMSTRUCT mnis;
+    int nCount,i;
+    HMENU hMenuRet;
+
+    if (!hMenu)
+	return 0L;
+    memset((char *)&mnis, '\0', sizeof(MENUITEMSTRUCT));
+    mnis.wPosition = (WORD)-1;
+    mnis.wAction = LCA_ITEMCOUNT;
+    nCount = (int)LBoxAPI(hMenu,LBA_GETDATA,(LPARAM)&mnis);
+    mnis.wItemFlags = MF_BYPOSITION;
+    for (i=0; i<nCount; i++) {
+	mnis.wPosition = (WORD)i;
+	mnis.wAction = LCA_GET|LCA_ITEMID;
+	uiItem = (UINT)LBoxAPI(hMenu,LBA_MODIFYITEM,(LPARAM)&mnis);
+	if (uiItem == uiIDItem)
+	    return hMenu;
+	mnis.wAction = LCA_GET|LCA_FLAGS;
+	lFlags = LBoxAPI(hMenu,LBA_MODIFYITEM,(LPARAM)&mnis);
+	if (LOWORD(lFlags) & MF_POPUP) {
+	    if ((hMenuRet = TWIN_FindMenuItem
+			((HMENU)uiItem,uiIDItem)))
+		return hMenuRet;
+	}
+    }
+    return (HMENU)0;
+}
+
+static HBITMAP
+LoadSysMenuBitmap(void)
+{
+	HBITMAP hSysMenuBitmap,hBitmap,hOldBitmap;
+	HDC hDCDest,hDCSrc;
+	BITMAP bm;
+
+	if (SystemBitmaps[SB_OBM_SYSMENU])
+	    return SystemBitmaps[SB_OBM_SYSMENU];
+
+	hDCDest = CreateCompatibleDC(0);
+	hDCSrc = CreateCompatibleDC(0);
+
+	hBitmap = LoadBitmap(0,(LPSTR)OBM_CLOSE);
+	GetObject(hBitmap,sizeof(BITMAP),(LPVOID)&bm);
+	hOldBitmap = SelectObject(hDCSrc,hBitmap);
+	hSysMenuBitmap = CreateCompatibleBitmap(hDCSrc,
+				bm.bmWidth/2,bm.bmHeight);
+	SelectObject(hDCDest,hSysMenuBitmap);
+	BitBlt(hDCDest,0,0,bm.bmWidth/2,bm.bmHeight,
+			hDCSrc,bm.bmWidth/2,0,
+			SRCCOPY);
+
+	/* The bitmaps will be unselected by GDI */
+	DeleteDC(hDCDest);
+	DeleteDC(hDCSrc);
+	DeleteObject(hBitmap);
+
+	SystemBitmaps[SB_OBM_SYSMENU] = hSysMenuBitmap;
+	return hSysMenuBitmap;
+}
+
+static BOOL
+ModifyMenuEx(HMENU hMenu, UINT uiPosition, UINT uiFlags,
+			UINT uiIDNewItem, LPCSTR lpNewItem, UINT uiAction)
+{
+    MENUITEMSTRUCT mis;
+    DWORD dwIndents;
+    LONG lFlags = 0;
+    WORD wIndex;
+    BOOL rc;
+    LPSTR lpItem = (LPSTR)lpNewItem;
+    HMENU hMenuorig = hMenu;
+
+    if (!hMenu)
+	return FALSE;
+    memset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
+    mis.wItemFlags = uiFlags;
+    if (uiAction == LBA_MODIFYITEM) {
+	mis.wPosition = (WORD)uiPosition;
+	mis.wIDNewItem = (WORD)uiPosition;
+    }
+    else {
+	if (uiFlags & MF_BYPOSITION)
+	    mis.wPosition = (WORD)uiPosition;
+	else 
+	    mis.wPosition = (WORD)uiIDNewItem;
+	mis.wIDNewItem = (WORD)uiIDNewItem;
+    }
+    if ((uiAction != LBA_APPENDITEM) && (!((uiAction == LBA_INSERTITEM) &&
+		(uiFlags & MF_BYPOSITION)))) {
+	mis.wAction = LCA_GET|LCA_FLAGS;
+	lFlags = LBoxAPI(hMenu,LBA_MODIFYITEM,(LPARAM)&mis);
+	if (lFlags == (LONG)-1) {
+	    if (((uiAction == LBA_INSERTITEM) || (uiAction == LBA_MODIFYITEM))
+			 && (!(uiFlags & MF_BYPOSITION))) 
+		hMenu = TWIN_FindMenuItem(hMenu,uiPosition);
+	    else
+		hMenu = TWIN_FindMenuItem(hMenu,uiIDNewItem);
+	    if (!hMenu) {
+		return FALSE;
+	    }
+	    mis.wItemFlags &= ~MF_BYPOSITION;
+	    mis.wAction = LCA_GET|LCA_FLAGS;
+	    lFlags = LBoxAPI(hMenu,LBA_MODIFYITEM,(LPARAM)&mis);
+	    if (lFlags == (LONG)-1) {
+	        if (hMenu != hMenuorig)
+		  {};//RELEASELBOXINFO((LPLISTBOXINFO)hMenu32); 
+		return FALSE;
+	    }
+	}
+    }
+    uiFlags |= MF_BYPOSITION;
+    if (uiAction == LBA_MODIFYITEM) {
+	wIndex = mis.wPosition;
+	mis.wPosition = (WORD)-1;
+	mis.wAction = LCA_INDENTS;
+	dwIndents = (DWORD)LBoxAPI(hMenu,LBA_GETDATA,(LPARAM)&mis); 
+	mis.wLeftIndent = LOWORD(dwIndents);
+	mis.wRightIndent = HIWORD(dwIndents);
+	mis.wIDNewItem = (WORD)uiIDNewItem;
+	mis.wPosition = wIndex;
+	mis.wAction = LCA_SET|LCA_ALL;
+    }
+    else if (uiAction == LBA_DELETEITEM) {
+	if (lFlags & MF_POPUP) {
+	    mis.wItemFlags = MF_BYPOSITION;
+	    mis.wAction = LCA_GET | LCA_ITEMID;
+	    DestroyMenu(LOWORD(LBoxAPI(hMenu,LBA_MODIFYITEM,(LPARAM)&mis)));
+	}
+    }
+    if (uiFlags & MF_BITMAP) {
+	if (!((DWORD)lpNewItem & OM_MASK)) {
+	/* special case -- pre-defined system bitmap (undocumented) */
+	    switch (LOWORD((DWORD)lpNewItem)) {
+		case SB_OBM_CLOSE_L:
+		case SB_OBM_REDUCE:
+		case SB_OBM_ZOOM:
+		    break;
+		case SB_OBM_SYSMENU:
+		/* Here we can substitute the bitmap right away */
+		    if (!SystemBitmaps[SB_OBM_SYSMENU])
+			LoadSysMenuBitmap();
+		    lpItem = (LPSTR)(DWORD)SystemBitmaps[SB_OBM_SYSMENU];
+		    break;
+		case SB_OBM_RESTORE:
+		/* This one we leave as special because it uses */
+		/* different bitmaps when pressed/unpressed */
+		    if (!SystemBitmaps[SB_OBM_RESTORE]) {
+			SystemBitmaps[SB_OBM_RESTORE] =
+				LoadBitmap(0,(LPSTR)OBM_RESTORE);
+			SystemBitmaps[SB_OBM_RESTORED] =
+				LoadBitmap(0,(LPSTR)OBM_RESTORED);
+		    }
+		    break;
+		default:
+		    break; /* error */
+	    }
+	}
+    }
+    mis.wItemFlags = (WORD)uiFlags;
+    mis.lpItemData = lpItem;
+    rc = (BOOL)LBoxAPI(hMenu,uiAction,(LPARAM)&mis);
+    if (hMenu != hMenuorig)
+      {};//RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
+    return rc;
+}
+
+/*******************************************************************
+ *         InsertMenu    (USER.410)
+ */
+BOOL WINAPI		/* API */
+InsertMenu(HMENU hMenu, UINT uiPosition, UINT uiFlags,
+			UINT uiIDNewItem, LPCSTR lpNewItem)
+{
+    BOOL bResult;
+//    HMENU32 hMenu32;
+    bResult = ModifyMenuEx(hMenu,
+			uiPosition,uiFlags,uiIDNewItem,lpNewItem,
+			LBA_INSERTITEM);
+    return bResult;
+}
+
+/*******************************************************************
+ *         AppendMenu    (USER.411)
+ */
+BOOL WINAPI		/* API */
+AppendMenu(HMENU hMenu, UINT uiFlags, UINT uiIDNewItem, LPCSTR lpNewItem)
+{
+    BOOL bResult;
+    bResult = ModifyMenuEx(hMenu,
+			(UINT)-1,uiFlags,uiIDNewItem,lpNewItem,
+			LBA_APPENDITEM);
+    return bResult;
+}
+
+/**********************************************************************
+ *         RemoveMenu   (USER.412)
+ */
+BOOL WINAPI		/* API */
+RemoveMenu(HMENU hMenu, UINT idItem, UINT uiFlags)
+{
+    BOOL bResult;
+    if (uiFlags & MF_BYPOSITION) {
+	bResult = ModifyMenuEx(hMenu,idItem,uiFlags,
+			       0,NULL,LBA_REMOVEITEM);
+    } else
+    {
+	bResult = ModifyMenuEx(hMenu,0,uiFlags,
+			       idItem,NULL,LBA_REMOVEITEM);
+    }
+    return bResult;
+}
+
+/**********************************************************************
+ *         DeleteMenu    (USER.413)
+ */
+BOOL WINAPI		/* API */
+DeleteMenu(HMENU hMenu, UINT idItem, UINT uiFlags)
+{
+    BOOL bResult;
+    if (uiFlags & MF_BYPOSITION) {
+	bResult =  ModifyMenuEx(hMenu,idItem,
+				uiFlags,0,NULL,LBA_DELETEITEM);
+    }
+    else {
+        bResult =  ModifyMenuEx(hMenu,0,
+				uiFlags,idItem,NULL, LBA_DELETEITEM);
+    }
+    return bResult;
+}
+
+/*******************************************************************
+ *         ModifyMenu    (USER.414)
+ */
+BOOL WINAPI 		/* API */
+ModifyMenu(HMENU hMenu, UINT uiPosition, UINT uiFlags,
+			UINT uiIDNewItem, LPCSTR lpNewItem)
+{
+    BOOL bResult;
+    bResult =  ModifyMenuEx(hMenu,
+			uiPosition,uiFlags,uiIDNewItem,lpNewItem,
+			LBA_MODIFYITEM);
+    return bResult;
+}
+
+
+
+static BOOL
+ChangeMIFlags(HMENU hMenu, UINT uiItem, UINT uiFlags, UINT uiMask)
+{
+    MENUITEMSTRUCT mis;
+    LONG lFlags;
+    HMENU hMenuorig = hMenu;
+
+    if (!hMenu)
+	return -1;
+    memset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
+    mis.wPosition = (WORD)uiItem;
+    mis.wAction = LCA_GET | LCA_FLAGS;
+    mis.wItemFlags = uiFlags;
+    lFlags = LBoxAPI(hMenu,LBA_MODIFYITEM,(LPARAM)&mis);
+    if (lFlags < 0) { 
+	if (uiFlags & MF_BYPOSITION) 
+	    return -1;
+	hMenu = TWIN_FindMenuItem(hMenu,uiItem);
+	if (!hMenu)
+	    return -1;
+	mis.wAction = LCA_GET|LCA_FLAGS;
+	lFlags = LBoxAPI(hMenu,LBA_MODIFYITEM,(LPARAM)&mis);
+	if (lFlags < 0) {
+	    if (hMenu != hMenuorig)
+	      {};//RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
+	    return -1;
+	}
+    }
+    mis.wItemFlags = LOWORD(lFlags) | MF_BYPOSITION;
+    if (uiFlags & uiMask)
+	mis.wItemFlags |= uiMask;
+    else
+	mis.wItemFlags &= ~uiMask;
+    if (uiMask == MF_DISABLED) 
+	if (uiFlags & MF_GRAYED)
+	    mis.wItemFlags |= MF_GRAYED;
+	else
+	    mis.wItemFlags &= ~MF_GRAYED;
+    mis.wAction = LCA_SET | LCA_FLAGS;
+    if (LBoxAPI(hMenu,LBA_MODIFYITEM,(LPARAM)&mis) < 0) {
+        if (hMenu != hMenuorig)
+	    {};//RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
+	return -1;
+    }
+    if (hMenu != hMenuorig)
+      {};//RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
+    return (LOWORD(lFlags) & uiMask);
+}
+	
+
+/*******************************************************************
+ *         CheckMenuItem    (USER.154)
+ */
+
+BOOL WINAPI		/* API */
+CheckMenuItem(HMENU hMenu, UINT uiIDCheckItem, UINT uiCheck)
+{
+    BOOL rc;
+
+    rc = (BOOL)ChangeMIFlags(hMenu,
+			     uiIDCheckItem,uiCheck,MF_CHECKED);
+//    RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
+    return rc;
+}
+
+/**********************************************************************
+ *         EnableMenuItem    (USER.155)
+ */
+BOOL WINAPI		/* API */
+EnableMenuItem(HMENU hMenu, UINT uiIDEnableItem, UINT uiEnable)
+{
+    LONG retcode;
+//    HMENU32 hMenu32;
+
+    retcode = ChangeMIFlags(hMenu,
+			    uiIDEnableItem, uiEnable,MF_DISABLED);
+//    RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
+    if (retcode < 0)
+	return -1;
+    return ((retcode)?0:1);
+}
+
+/**************************************************************************
+ *              HiliteMenuItem   (USER.162)
+ */
+BOOL WINAPI		/* API */
+HiliteMenuItem(HWND hWnd, HMENU hMenu, UINT uiIDHiliteItem, UINT uiHilite)
+{
+    BOOL bResult;
+//    HMENU32 hMenu32;
+    bResult =  ((ChangeMIFlags(hMenu,
+			       uiIDHiliteItem,uiHilite,MF_HILITE)
+		 <0)?
+	      FALSE:TRUE);
+//    RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
+    return bResult;
+}
+
+/*******************************************************************
+ *         GetMenuString    (USER.161)
+ */
+int WINAPI
+GetMenuString(HMENU hMenu, UINT uiIDItem, LPSTR lpString,
+			int nMaxCount, UINT uiFlags)
+{
+//    HMENU32 hMenu32;
+    HMENU hMenua;
+    MENUITEMSTRUCT mis;
+    LPSTR lpItemString;
+
+//    if (!(hMenu32 = GetMenuHandle32(hMenu)))
+//	return (UINT)-1;
+    memset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
+    mis.wAction = LCA_GET | LCA_CONTENTS;
+    mis.wItemFlags = uiFlags;
+    mis.wPosition = (WORD)uiIDItem;
+    lpItemString = (LPSTR)LBoxAPI(hMenu,LBA_MODIFYITEM,(LPARAM)&mis);
+    if (((LONG)lpItemString != (LONG)-1) && HIWORD(lpItemString)) {
+	lstrcpyn(lpString,lpItemString,nMaxCount);
+//	RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
+	return lstrlen(lpString);
+    }
+    if (lpItemString == NULL || !HIWORD(lpItemString)) {
+//        RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
+	return 0;
+    }
+    if (uiFlags & MF_BYPOSITION) {
+//        RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
+	return 0;
+    }
+    hMenua = TWIN_FindMenuItem(hMenu,uiIDItem);
+    if (!hMenua) {
+//        RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
+        return 0;
+    }
+    hMenu = ((LPOBJHEAD)hMenua)->hObj;
+    if (hMenua != hMenu)
+      {};//RELEASELBOXINFO((LPLISTBOXINFO)hMenu32a);
+//    RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
+    return GetMenuString(hMenu,uiIDItem,lpString,nMaxCount,uiFlags);
+}

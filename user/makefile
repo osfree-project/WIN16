@@ -8,7 +8,7 @@ PROJ     = user1
 PROJ1    = user
 TRGT     = $(PROJ1).exe
 DESC     = Windows USER.EXE
-srcfiles = $(p)network$(e) $(p)Listbox$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)libmain$(e)
+srcfiles = $(p)network$(e) $(p)SysMetrics$(e) $(p)Listbox$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)libmain$(e)
 ADD_COPT = -zc -s
 ADD_ASMOPT = -i=..$(SEP)tables$(SEP)xlat
 #NOLIBS   = 1
@@ -37,13 +37,19 @@ EXPORTS = &
 	DrawIcon .84, &
 	LoadMenu .150, &
 	ChangeMenu .153, &
+	CheckMenuItem .154, &
+	EnableMenuItem .155, &
 	GetSystemMenu .156, &
 	GetMenu .157, &
 	SetMenu .158, &
 	GetSubMenu .159, &
 	DrawMenuBar .160, &
+	GetMenuString .161, &
+	HiliteMenuItem .162, &
 	LoadString .176, &
 	LoadAccelerators .177, &
+	GetSystemMetrics .179, &
+	GetSysColor .180, &
 	GrayString .185, &
 	UserSeeUserDo .216, &
 	LoadMenuIndirect .220, &
@@ -67,6 +73,11 @@ EXPORTS = &
 	CreateCursor .406, &
 	CreateIcon .407, &
 	CreateCursorIconIndirect .408, &
+	InsertMenu .410, &
+	AppendMenu .411, &
+	RemoveMenu .412, &
+	DeleteMenu .413, &
+	ModifyMenu .414, &
 	_wsprintf .420, &
 	wvsprintf .421, &
 	lstrcmp .430, &
