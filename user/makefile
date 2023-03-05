@@ -96,6 +96,7 @@ EXPORTS = &
 	LSTRCMPI .471, &
 	AnsiNext .472, &
 	AnsiPrev .473, &
+	SystemParametersInfo .483, &
 	WNetErrorText .499, &
 	WNetOpenJob .501, &
 	WNetCloseJob .502, &

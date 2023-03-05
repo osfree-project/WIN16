@@ -172,6 +172,53 @@ static COLORREF SysColors[] =
 	RGB(255,255,0),		/* (24) COLOR_INFOBK */
   };
 
+static BOOL bWarningBeep = FALSE;
+static BOOL bFastTaskSwitch = FALSE;
+static BOOL bIconTitleWrap = FALSE;
+static BOOL bScreenSaveActive = FALSE;
+static int nScreenSaveTimeOut = 0;
+static int nGridGranularity = 0;
+static int nKeyboardDelay = 0;
+static int nKeyboardSpeed = 0;
+static int nDoubleClickTime = 0;
+static const LOGFONT lgfDefaultIconTitleFont =
+  {	12,
+	0,
+	0,
+	0,
+	300,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	DEFAULT_QUALITY,
+	DEFAULT_PITCH,
+	"Helv"
+  };
+
+static LOGFONT lgfIconTitleFont = 
+  {	12,
+	0,
+	0,
+	0,
+	300,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	DEFAULT_QUALITY,
+	DEFAULT_PITCH,
+	"Helv"
+  };
+
+
+#define SPI_SETWORKAREA             47
+#define SPI_GETWORKAREA             48
+
 /***********************************************************************
  *		GetSystemMetrics (USER.179)
  */
@@ -275,4 +322,288 @@ SetSysColors(int nChanges, const int far *lpSysColor,
 	/* then tell top level windows of change */
 	SendMessage(HWND_BROADCAST,WM_SYSCOLORCHANGE,0,0);
 //	APISTR((LF_APIRET,"SetSysColors: returns void\n"));
+}
+
+/***********************************************************************
+ *		SystemParametersInfo (USER.483)
+ */
+BOOL WINAPI
+SystemParametersInfo(UINT uAction, UINT uParam, LPVOID lpvParam,
+			UINT fuWinIni)
+{
+    BOOL bSendWinIniChange = FALSE;
+    char szBuffer[80];
+    char lpszSection[80];
+    LPRECT lpRect;
+
+//    APISTR((LF_APICALL,
+//	"SystemParametersInfo(UINT=%x,UINT=%x,LPVOID=%x,UINT=%x)\n",
+//	uAction, uParam, lpvParam,fuWinIni));
+
+    switch (uAction) {
+	case SPI_GETBEEP:
+	    *((BOOL *)lpvParam) = bWarningBeep;
+//    	    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL TRUE\n"));
+	    return TRUE;
+	case SPI_SETBEEP:
+	    bWarningBeep = (BOOL)uParam;
+	    if (fuWinIni & SPIF_UPDATEINIFILE) {
+		lstrcpy(lpszSection,"windows");
+		WriteProfileString(lpszSection,"Beep",(BOOL)uParam?"yes":"no");
+		if (fuWinIni & SPIF_SENDWININICHANGE)
+		    bSendWinIniChange = TRUE;
+	    }
+	    break;
+
+	case SPI_GETBORDER:
+	case SPI_SETBORDER:
+//    	    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL FALSE\n"));
+	    return FALSE;
+
+	case SPI_GETFASTTASKSWITCH:
+	    *((BOOL *)lpvParam) = bFastTaskSwitch;
+//    	    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL TRUE\n"));
+	    return TRUE;
+	case SPI_SETFASTTASKSWITCH:
+	    bFastTaskSwitch = (BOOL)uParam;
+	    if (fuWinIni & SPIF_UPDATEINIFILE) {
+		lstrcpy(lpszSection,"windows");
+		WriteProfileString(lpszSection,"CoolSwitch",
+				(BOOL)uParam?"1":"0");
+		if (fuWinIni & SPIF_SENDWININICHANGE)
+		    bSendWinIniChange = TRUE;
+	    }
+	    break;
+
+	case SPI_GETGRIDGRANULARITY:
+	    *((LPINT)lpvParam) = nGridGranularity;
+//    	    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL TRUE\n"));
+	    return TRUE;
+
+	case SPI_SETGRIDGRANULARITY:
+	    nGridGranularity = (int)uParam;
+	    if (fuWinIni & SPIF_UPDATEINIFILE) {
+		lstrcpy(lpszSection,"desktop");
+		sprintf(szBuffer,"%d",(int)uParam);
+		WriteProfileString(lpszSection,"GridGranularity",szBuffer);
+		if (fuWinIni & SPIF_SENDWININICHANGE)
+		    bSendWinIniChange = TRUE;
+	    }
+	    break;
+
+	case SPI_GETICONTITLELOGFONT:
+	    _fmemcpy(lpvParam,(LPVOID)&lgfIconTitleFont,
+			min(uParam,sizeof(LOGFONT)));
+//    	    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL TRUE\n"));
+	    return TRUE;
+
+	case SPI_SETICONTITLELOGFONT:
+	    if (!lpvParam) {
+		if (!uParam) {
+		    _fmemcpy((LPVOID)&lgfIconTitleFont,
+			   (LPVOID)&lgfDefaultIconTitleFont,
+			   sizeof(LOGFONT));
+//    	    	    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL TRUE\n"));
+		    return TRUE;
+		}
+		else {
+//    	    	    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL FALSE\n"));
+		    return FALSE;
+		}
+	    }
+	    _fmemcpy((LPVOID)&lgfIconTitleFont,lpvParam,sizeof(LOGFONT));
+//    	    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL TRUE\n"));
+	    return TRUE;
+
+	case SPI_GETICONTITLEWRAP:
+	    *((BOOL *)lpvParam) = bIconTitleWrap;
+//    	    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL TRUE\n"));
+	    return TRUE;
+
+	case SPI_SETICONTITLEWRAP:
+	    bIconTitleWrap = (BOOL)uParam;
+	    if (fuWinIni & SPIF_UPDATEINIFILE) {
+		lstrcpy(lpszSection,"desktop");
+		WriteProfileString(lpszSection,"IconTitleWrap",
+			(BOOL)uParam?"1":"0");
+		if (fuWinIni & SPIF_SENDWININICHANGE)
+		    bSendWinIniChange = TRUE;
+	    }
+	    break;
+
+	case SPI_GETKEYBOARDDELAY:
+	    *((LPINT)lpvParam) = nKeyboardDelay;
+//    	    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL TRUE\n"));
+	    return TRUE;
+
+	case SPI_SETKEYBOARDDELAY:
+	    nKeyboardDelay = (int)uParam;
+	    if (fuWinIni & SPIF_UPDATEINIFILE) {
+		lstrcpy(lpszSection,"windows");
+		sprintf(szBuffer,"%d",(int)uParam);
+		WriteProfileString(lpszSection,"KeyboardDelay",szBuffer);
+		if (fuWinIni & SPIF_SENDWININICHANGE)
+		    bSendWinIniChange = TRUE;
+	    }
+	    break;
+
+	case SPI_GETKEYBOARDSPEED:
+	    *((LPINT)lpvParam) = nKeyboardSpeed;
+//    	    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL TRUE\n"));
+	    return TRUE;
+
+	case SPI_SETKEYBOARDSPEED:
+	    nKeyboardSpeed = (int)uParam;
+	    if (fuWinIni & SPIF_UPDATEINIFILE) {
+		lstrcpy(lpszSection,"windows");
+		sprintf(szBuffer,"%d",(int)uParam);
+		WriteProfileString(lpszSection,"KeyboardSpeed",szBuffer);
+		if (fuWinIni & SPIF_SENDWININICHANGE)
+		    bSendWinIniChange = TRUE;
+	    }
+	    break;
+
+	case SPI_GETMENUDROPALIGNMENT:
+	    *((LPINT)lpvParam) = SysMetricsDef[SM_MENUDROPALIGNMENT];
+//    	    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL TRUE\n"));
+	    return TRUE;
+
+	case SPI_SETMENUDROPALIGNMENT:
+	    SysMetricsDef[SM_MENUDROPALIGNMENT] = (int)uParam;
+//    	    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL TRUE\n"));
+	    return TRUE;
+
+	case SPI_GETMOUSE:
+	case SPI_SETMOUSE:
+//    	    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL FALSE\n"));
+	    return FALSE;
+
+	case SPI_GETSCREENSAVEACTIVE:
+	    *((BOOL *)lpvParam) = bScreenSaveActive;
+//    	    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL TRUE\n"));
+	    return TRUE;
+
+	case SPI_SETSCREENSAVEACTIVE:
+	    bScreenSaveActive = (BOOL)uParam;
+	    if (fuWinIni & SPIF_UPDATEINIFILE) {
+		lstrcpy(lpszSection,"windows");
+		WriteProfileString(lpszSection,"ScreenSaveActive",
+			(BOOL)uParam?"1":"0");
+		if (fuWinIni & SPIF_SENDWININICHANGE)
+		    bSendWinIniChange = TRUE;
+	    }
+	    break;
+
+	case SPI_GETSCREENSAVETIMEOUT:
+	    *((BOOL *)lpvParam) = nScreenSaveTimeOut;
+//    	    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL TRUE\n"));
+	    return TRUE;
+
+	case SPI_SETSCREENSAVETIMEOUT:
+	    nScreenSaveTimeOut = (int)uParam;
+	    if (fuWinIni & SPIF_UPDATEINIFILE) {
+		lstrcpy(lpszSection,"windows");
+		sprintf(szBuffer,"%d",nScreenSaveTimeOut);
+		WriteProfileString(lpszSection,"ScreenSaveTimeOut",szBuffer);
+		if (fuWinIni & SPIF_SENDWININICHANGE)
+		    bSendWinIniChange = TRUE;
+	    }
+	    break;
+
+	case SPI_ICONHORIZONTALSPACING:
+	    if (lpvParam) {
+		*((LPINT)lpvParam) = SysMetricsDef[SM_CXICONSPACING];
+//    	    	APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL TRUE\n"));
+		return TRUE;
+	    }
+	    SysMetricsDef[SM_CXICONSPACING] = (int)uParam;
+	    if (fuWinIni & SPIF_UPDATEINIFILE) {
+		lstrcpy(lpszSection,"desktop");
+		sprintf(szBuffer,"%d",SysMetricsDef[SM_CXICONSPACING]);
+		WriteProfileString(lpszSection,"IconSpacing",szBuffer);
+		if (fuWinIni & SPIF_SENDWININICHANGE)
+		    bSendWinIniChange = TRUE;
+	    }
+	    break;
+
+	case SPI_ICONVERTICALSPACING:
+	    if (lpvParam) {
+		*((LPINT)lpvParam) = SysMetricsDef[SM_CYICONSPACING];
+//    	    	APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL TRUE\n"));
+		return TRUE;
+	    }
+
+	    SysMetricsDef[SM_CYICONSPACING] = (int)uParam;
+	    if (fuWinIni & SPIF_UPDATEINIFILE) {
+		lstrcpy(lpszSection,"windows");
+		sprintf(szBuffer,"%d",SysMetricsDef[SM_CYICONSPACING]);
+		WriteProfileString(lpszSection,"IconSpacing",szBuffer);
+		if (fuWinIni & SPIF_SENDWININICHANGE)
+		    bSendWinIniChange = TRUE;
+	    }
+	    break;
+
+	case SPI_LANGDRIVER:
+//    	    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL FALSE\n"));
+	    return FALSE;
+
+	case SPI_SETDESKPATTERN:
+//    	    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL FALSE\n"));
+	    return FALSE;
+
+	case SPI_SETDESKWALLPAPER:
+//    	    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL FALSE\n"));
+	    return FALSE;
+
+	case SPI_SETDOUBLECLICKTIME:
+	    nDoubleClickTime = (int)uParam;
+	    if (fuWinIni & SPIF_UPDATEINIFILE) {
+		lstrcpy(lpszSection,"windows");
+		sprintf(szBuffer,"%d",nDoubleClickTime);
+		WriteProfileString(lpszSection,"DoubleClickSpeed",szBuffer);
+		if (fuWinIni & SPIF_SENDWININICHANGE)
+		    bSendWinIniChange = TRUE;
+	    }
+	    break;
+
+	case SPI_SETDOUBLECLKWIDTH:
+	    SysMetricsDef[SM_CXDOUBLECLK] = (int)uParam;
+//    	    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL TRUE\n"));
+	    return TRUE;
+
+	case SPI_SETDOUBLECLKHEIGHT:
+	    SysMetricsDef[SM_CYDOUBLECLK] = (int)uParam;
+//    	    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL TRUE\n"));
+	    return TRUE;
+
+	case SPI_SETMOUSEBUTTONSWAP:
+	    SysMetricsDef[SM_SWAPBUTTON] = (int)uParam;
+//    	    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL TRUE\n"));
+	    return TRUE;
+
+	case SPI_GETWORKAREA:
+	    lpRect = (LPRECT) lpvParam;
+	    if (!lpRect)
+		return FALSE;
+	    lpRect->left = 0;
+	    lpRect->top = 0;
+	    lpRect->right = GetSystemMetrics(SM_CXSCREEN);
+	    lpRect->bottom = GetSystemMetrics(SM_CYSCREEN);
+	    break;
+
+	case SPI_SETWORKAREA:
+//    	    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL FALSE\n"));
+	    return FALSE;
+
+	default:
+//    	    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL FALSE\n"));
+	    return FALSE;
+    }
+
+    if (bSendWinIniChange)
+	SendMessage(HWND_BROADCAST,WM_WININICHANGE,(WPARAM)0,
+		(LPARAM)lpszSection);
+
+//    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL TRUE\n"));
+    return TRUE;
 }
