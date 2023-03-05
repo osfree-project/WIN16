@@ -50,6 +50,7 @@ EXPORTS = &
 	LoadAccelerators .177, &
 	GetSystemMetrics .179, &
 	GetSysColor .180, &
+	SetSysColors .181, &
 	GrayString .185, &
 	UserSeeUserDo .216, &
 	LoadMenuIndirect .220, &
