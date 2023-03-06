@@ -54,6 +54,7 @@ BOOL	CALLBACK _export SMMsgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lP
 #define IDB_RUNPIF	119	// Run PIF to test settings
 #define IDD_HELP	120	// Help window
 #define IDD_FRAME	101	// Main frame dialog resource
+#define IDD_ADVFRAME	102	// Advanced frame dialog resource
 
 #define IDB_GENERAL		102
 #define IDB_MEMORY		103
