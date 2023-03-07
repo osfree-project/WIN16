@@ -8,7 +8,7 @@ PROJ     = user1
 PROJ1    = user
 TRGT     = $(PROJ1).exe
 DESC     = Windows USER.EXE
-srcfiles = $(p)DrawText$(e) $(p)network$(e) $(p)SysMetrics$(e) $(p)Listbox$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)libmain$(e)
+srcfiles = $(p)Caret$(e) $(p)DrawText$(e) $(p)network$(e) $(p)SysMetrics$(e) $(p)Listbox$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)libmain$(e)
 ADD_COPT = -zc -s
 ADD_ASMOPT = -i=..$(SEP)tables$(SEP)xlat
 #NOLIBS   = 1
@@ -46,11 +46,19 @@ EXPORTS = &
 	DrawMenuBar .160, &
 	GetMenuString .161, &
 	HiliteMenuItem .162, &
+        CreateCaret .163, &
+	DestroyCaret .164, &
+	SetCaretPos .165, &
+        HideCaret .166, &
+        ShowCaret .167, &
+	SetCaretBlinkTime .168, &
+	GetCaretBlinkTime .169, &
 	LoadString .176, &
 	LoadAccelerators .177, &
 	GetSystemMetrics .179, &
 	GetSysColor .180, &
 	SetSysColors .181, &
+	GetCaretPos .183, &
 	GrayString .185, &
 	UserSeeUserDo .216, &
 	LoadMenuIndirect .220, &
