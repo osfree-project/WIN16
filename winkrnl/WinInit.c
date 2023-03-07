@@ -193,11 +193,6 @@ FatalExit(int Code)
         ExitWindows(Code,0);
 }
 
-void
-OldExitWindows(void)
-{
-        ExitWindows(0,0);
-}
 
 BOOL WINAPI
 ExitWindows(DWORD dwreturn,UINT reserved)

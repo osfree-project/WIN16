@@ -91,19 +91,6 @@ IsMenu(HMENU hMenu)
     return CheckMenuHandle32(hMenu);
 }
 
-HMENU WINAPI		/* API */
-CreateMenu()
-{
-    MENUCREATESTRUCT mc;
-    DWORD dwRet;
-
-    mc.hFont = GetStockObject(SYSTEM_FONT);
-    mc.dwStyle = LBS_PRELOADED|LBS_OWNERDRAWVARIABLE|
-		 LBS_HASSTRINGS|LBS_NOTIFY;
-    dwRet = GetMenuCheckMarkDimensions();
-    mc.dwIndents = MAKELONG(LOWORD(dwRet)+2,LOWORD(dwRet));
-    return (HMENU)LBoxAPI((HMENU32)NULL,LBA_CREATE,(LPARAM)&mc);
-}
 
 HMENU WINAPI		/* API */
 CreatePopupMenu()
@@ -111,18 +98,6 @@ CreatePopupMenu()
     return CreateMenu();
 }
 
-BOOL WINAPI		/* API */
-DestroyMenu(HMENU hMenu)
-{
-    HMENU32 hMenu32;
-    BOOL bResult;
-
-    if (!(hMenu32 = GetMenuHandle32(hMenu)))
-	return FALSE;
-    bResult = LBoxAPI(hMenu32,LBA_DESTROY,0);
-    RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
-    return bResult;
-}
 
 static BOOL
 ModifyMenuEx(HMENU32 hMenu32, UINT uiPosition, UINT uiFlags,
@@ -268,60 +243,7 @@ TWIN_FindMenuItem(HMENU32 hMenu32, UINT uiIDItem)
 }
 
 
-BOOL WINAPI		/* API */
-InsertMenu(HMENU hMenu, UINT uiPosition, UINT uiFlags,
-			UINT uiIDNewItem, LPCSTR lpNewItem)
-{
-    BOOL bResult;
-    HMENU32 hMenu32;
-    bResult = ModifyMenuEx(hMenu32 = GetMenuHandle32(hMenu),
-			uiPosition,uiFlags,uiIDNewItem,lpNewItem,
-			LBA_INSERTITEM);
-    RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
-    return bResult;
-}
 
-BOOL WINAPI		/* API */
-AppendMenu(HMENU hMenu, UINT uiFlags, UINT uiIDNewItem, LPCSTR lpNewItem)
-{
-    BOOL bResult;
-    HMENU32 hMenu32;
-    bResult = ModifyMenuEx(hMenu32 = GetMenuHandle32(hMenu),
-			(UINT)-1,uiFlags,uiIDNewItem,lpNewItem,
-			LBA_APPENDITEM);
-    RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
-    return bResult;
-}
-
-BOOL WINAPI 		/* API */
-ModifyMenu(HMENU hMenu, UINT uiPosition, UINT uiFlags,
-			UINT uiIDNewItem, LPCSTR lpNewItem)
-{
-    BOOL bResult;
-    HMENU32 hMenu32;
-    bResult =  ModifyMenuEx(hMenu32 = GetMenuHandle32(hMenu),
-			uiPosition,uiFlags,uiIDNewItem,lpNewItem,
-			LBA_MODIFYITEM);
-    RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
-    return bResult;
-}
-
-BOOL WINAPI		/* API */
-RemoveMenu(HMENU hMenu, UINT idItem, UINT uiFlags)
-{
-    BOOL bResult;
-    HMENU32 hMenu32;
-    if (uiFlags & MF_BYPOSITION) {
-	bResult = ModifyMenuEx(hMenu32 = GetMenuHandle32(hMenu),idItem,uiFlags,
-			       0,NULL,LBA_REMOVEITEM);
-    } else
-    {
-	bResult = ModifyMenuEx(hMenu32 = GetMenuHandle32(hMenu),0,uiFlags,
-			       idItem,NULL,LBA_REMOVEITEM);
-    }
-    RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
-    return bResult;
-}
 
 BOOL WINAPI		/* API */
 DeleteMenu(HMENU hMenu, UINT idItem, UINT uiFlags)
@@ -792,47 +714,6 @@ TrackPopupMenu(HMENU hMenu, UINT uiFlags, int x, int y,
     return TRUE;
 }
 
-void  WINAPI
-DrawMenuBar(HWND hWnd)
-{
-    HMENU hMenu;
-    HMENU32 hMenu32;
-    HWND hWndMenu;
-    MENUITEMSTRUCT mnis;
-    RECT rcWnd,rc;
-    HDC hDC;
-    int nCount,i;
-    WORD wMenuHeight;
-
-    if (!(hMenu = GetWindowMenu(hWnd)))
-	return;
-    if (!(hMenu32 = GetMenuHandle32(hMenu)))
-	return;
-
-    hWndMenu = GetWindowFrame(hWnd);
-    GetClientRect(hWndMenu, &rcWnd);
-    wMenuHeight = MeasureWindowMenu(hWnd,hWndMenu);
-    if (wMenuHeight < (WORD)rcWnd.bottom) {
-	SetWindowMenuHeight(hWnd,wMenuHeight);
-	GetClientRect(hWndMenu, &rcWnd);
-    }
-    hDC = GetDC(hWndMenu);
-    SetRect(&rc,rcWnd.left,rcWnd.top,rcWnd.right,rcWnd.bottom-1);
-    FillRect(hDC, &rc, GetSysColorBrush(COLOR_MENU));
-    mnis.wAction = LCA_ITEMCOUNT;
-    mnis.wPosition = (WORD)-1;
-    nCount = LBoxAPI(hMenu32,LBA_GETDATA,(LPARAM)&mnis);
-    for (i=0; i<nCount; i++) 
-	MenuDrawItem(hDC,hMenu32,hWnd,(WORD)i,ODA_DRAWENTIRE);
-
-    SelectObject(hDC, GetStockObject(BLACK_PEN));
-    SelectObject(hDC, GetStockObject(NULL_BRUSH));
-    MoveTo(hDC,rcWnd.left,rcWnd.bottom-1);
-    LineTo(hDC,rcWnd.right,rcWnd.bottom-1);
-
-    ReleaseDC(hWndMenu,hDC);
-    RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
-}
 
 #ifdef LATER
 /* jco: support for Mac MenuBar */
@@ -998,107 +879,6 @@ MeasureWindowMenu(HWND hWnd, HWND hWndMenu)
     return ((wLine+1)*wItemHeight + 1);
 }
 
-void
-MenuDrawItem(HDC hDC, HMENU32 hMenu32, HWND hWndOwner, WORD wPos, WORD wAction)
-{
-    HFONT hLast,hFont;
-    MENUITEMSTRUCT mnis;
-    LONG lFlags;
-    RECT rcItemRect;
-    LPSTR lpItemData;
-    DRAWITEMSTRUCT dis;
-    HDC hdcMemory;
-    HBITMAP hBitmap,hBmpOld;
-    BITMAP bm;
-    BOOL bInvert;
-
-    mnis.wPosition = (WORD)-1;
-    mnis.wAction = LCA_FONT;
-    if ((hFont = (HFONT)LBoxAPI(hMenu32,LBA_GETDATA,(LPARAM)&mnis)))
-	hLast = SelectObject(hDC, hFont);
-    else 
-	hLast = 0;
-
-    mnis.wPosition = wPos;
-    mnis.wItemFlags = MF_BYPOSITION;
-    mnis.wAction = LCA_GET | LCA_FLAGS;
-    lFlags = LBoxAPI(hMenu32,LBA_MODIFYITEM,(LPARAM)&mnis);
-    if (lFlags & MF_OWNERDRAW) {
-	dis.CtlType = ODT_MENU;
-	dis.CtlID = 0;
-	mnis.wAction = LCA_GET | LCA_ITEMID;
-	dis.itemID = (UINT)((int)((short)LOWORD(LBoxAPI
-			(hMenu32,LBA_MODIFYITEM,(LPARAM)&mnis))));
-	dis.itemAction = wAction;
-	dis.itemState = (lFlags & MF_CHECKED)?ODS_CHECKED:0;
-	dis.itemState |= (lFlags & MF_DISABLED)?ODS_DISABLED:0;
-	dis.itemState |= (lFlags & MF_GRAYED)?ODS_GRAYED:0;
-	dis.itemState |= (lFlags & MF_HILITE)?ODS_SELECTED:0;
-	dis.hwndItem = ((LPOBJHEAD)hMenu32)->hObj;
-	dis.hDC = hDC;
-	mnis.wAction = LCA_GET | LCA_RECT;
-	mnis.lpItemData = (LPSTR)&dis.rcItem;
-	LBoxAPI(hMenu32,LBA_MODIFYITEM,(LPARAM)&mnis);
-	mnis.wAction = LCA_GET | LCA_CONTENTS;
-	dis.itemData = (DWORD)LBoxAPI
-			(hMenu32,LBA_MODIFYITEM,(LPARAM)&mnis);
-	SendMessage(hWndOwner,WM_DRAWITEM,0,(LPARAM)&dis);
-    }
-    else {
-	mnis.wAction = LCA_GET | LCA_RECT;
-	mnis.lpItemData = (LPSTR)&rcItemRect;
-	LBoxAPI(hMenu32,LBA_MODIFYITEM,(LPARAM)&mnis);
-	mnis.wAction = LCA_GET | LCA_CONTENTS;
-	lpItemData = (LPSTR)LBoxAPI(hMenu32,LBA_MODIFYITEM,(LPARAM)&mnis);
-	SetBkMode(hDC, TRANSPARENT);
-	if (lFlags & MF_BITMAP) {
-	    if ((DWORD)lpItemData == SB_OBM_RESTORE) {
-		hBitmap = (lFlags & MF_HILITE)?SystemBitmaps[SB_OBM_RESTORED]:
-						SystemBitmaps[SB_OBM_RESTORE];
-		bInvert = FALSE;
-	    }
-	    else {
-		hBitmap = (HBITMAP)(DWORD)lpItemData;
-		bInvert = (lFlags & MF_HILITE) ? TRUE : FALSE;
-	    }
-
-	    hdcMemory = CreateCompatibleDC(hDC);
-	    GetObject(hBitmap,sizeof(BITMAP),&bm);
-	    hBmpOld = SelectObject(hdcMemory,hBitmap);
-	    BitBlt(hDC,
-			rcItemRect.left,
-			rcItemRect.top,
-			rcItemRect.right-rcItemRect.left,
-			rcItemRect.bottom-rcItemRect.top,
-			hdcMemory,0,0,
-			SRCCOPY);
-	    SelectObject(hdcMemory,hBmpOld);
-	    DeleteDC(hdcMemory);
-	    if (bInvert) 
-		InvertRect(hDC,&rcItemRect);
-	}
-	else {
-	    if (!(lFlags & MF_HILITE)) {
-		FillRect(hDC,&rcItemRect,GetSysColorBrush(COLOR_MENU));
-		SetTextColor(hDC,
-		    (lFlags & MF_GRAYED)?
-			GetSysColor(COLOR_GRAYTEXT):
-			GetSysColor(COLOR_MENUTEXT));
-	    }
-	    else {
-		FillRect(hDC,&rcItemRect,GetSysColorBrush(COLOR_HIGHLIGHT));
-		SetTextColor(hDC,
-		    (lFlags & MF_GRAYED)?
-			GetSysColor(COLOR_GRAYTEXT):
-			GetSysColor(COLOR_HIGHLIGHTTEXT));
-	    }
-	    DrawText(hDC,lpItemData,strlen(lpItemData),&rcItemRect,
-			DT_CENTER|DT_VCENTER|DT_SINGLELINE|DT_EXPANDTABS);
-	}
-    }
-    if(hLast)
-	SelectObject(hDC, hLast);
-}
 
 HMENU WINAPI
 GetMenu(HWND hWnd)

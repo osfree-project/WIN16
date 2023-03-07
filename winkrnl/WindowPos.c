@@ -3825,21 +3825,6 @@ GetClassBackgroundBrush(HWND hWnd)
     return GetSysColorBrush((int)hBrTemp - 1);
 }
 
-HBRUSH
-GetControlBrush(HWND hWnd, HDC hDC, WORD wType)
-{
-    HWND hWndParent;
-    HBRUSH hBrush;
-
-    hWndParent = GetParent(hWnd);
-    if (!hWndParent)
-	hWndParent = hWnd;
-    hBrush =  (HBRUSH)SendMessage(hWndParent,GET_WM_CTLCOLOR_MSG(wType),
-		GET_WM_CTLCOLOR_MPS(hDC,hWnd,wType));
-    if (hBrush == 0)
-	hBrush = GetStockObject(LTGRAY_BRUSH);
-    return hBrush;
-}
 
 void WINAPI
 MapWindowPoints(HWND hWndFrom, HWND hWndTo,LPPOINT lpptClient, UINT cPoints)
