@@ -1,4 +1,120 @@
+/*    
+	DrawText.c	2.17
+    	Copyright 1997 Willows Software, Inc. 
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Library General Public License as
+published by the Free Software Foundation; either version 2 of the
+License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Library General Public License for more details.
+
+You should have received a copy of the GNU Library General Public
+License along with this library; see the file COPYING.LIB.  If
+not, write to the Free Software Foundation, Inc., 675 Mass Ave,
+Cambridge, MA 02139, USA.
+
+
+For more information about the Willows Twin Libraries.
+
+	http://www.willows.com	
+
+To send email to the maintainer of the Willows Twin Libraries.
+
+	mailto:twin@willows.com 
+
+ */
+
+#include <string.h>
+
 #include <windows.h>
+
+/************************************************************************
+ * 	DrawText
+ *	options supported:
+ *		DT_BOTTOM		yes
+ *		DT_CALCRECT		yes
+ *		DT_CENTER		yes
+ *		DT_EXTERNALLEADING	yes
+ *		DT_LEFT			yes
+ *		DT_RIGHT		yes
+ *		DT_SINGLELINE		yes
+ *		DT_TOP			yes (default)
+ *		DT_VCENTER		yes
+ *		DT_WORDBREAK		yes
+ *		DT_NOCLIP		default, CLIP partially supported
+ *		DT_NOPREFIX		yes
+ *		DT_EXPANDTABS		yes
+ *		DT_TABSTOP		no
+ *
+ ************************************************************************/
+
+
+//#include "windows.h"
+//#include "windowsx.h"
+
+//#include "Log.h"
+
+//extern LPSTR GdiDumpString(LPSTR,int);
+
+/*
+ * drawtext support routines
+ *	given a position, a string and length, 
+ *	output the text with textout, and underline 
+ *	any ampersands...
+ */
+static void
+DrawTextOut(HDC hDC,int x,int y,char far *lpstr,int len,UINT uFormat)
+{
+	int i,j,k,dx,dy,x1;
+	long extent;
+
+	for(i=0, j=0, k=0, x1=0; i<len; i++) {
+		if(lpstr[i] == '&') {
+		  if(i) {
+			if(uFormat & DT_EXPANDTABS) {
+				TabbedTextOut(hDC,x,y, &lpstr[j],i,0,0,x);
+				extent = GetTabbedTextExtent(hDC, 
+					&lpstr[j],i,0,0);
+			} else {
+				TextOut(hDC,x,y,&lpstr[j], i-j);
+				extent = GetTextExtent(hDC,
+					&lpstr[j], i-j);
+			}
+			x += LOWORD(extent); 
+		  }
+		  if (lpstr[i+1] == '&') {
+			TextOut(hDC,x,y,"&",1);
+			x += LOWORD(GetTextExtent(hDC, "&",1));
+			i++;
+		  }
+		  else {
+			x1 = x;
+			k = i + 1;
+		  }
+		  j = i + 1;
+		}
+	}	
+
+	if(i > j) {
+		if(uFormat & DT_EXPANDTABS)
+			TabbedTextOut(hDC,x,y,&lpstr[j],i - j,0,0,x);
+		else
+			TextOut(hDC,x,y,&lpstr[j], i - j);
+		if (k && lpstr[k] != ' ') {
+			extent = GetTextExtent(hDC, &lpstr[k], 1);
+			dx = LOWORD(extent); 
+			dy = HIWORD(extent);	
+			dy -= dy/18 + 1; /* we use the same formula for underline in DrvText */
+			MoveTo(hDC,x1,y+dy);
+			LineTo(hDC,x1+dx,y+dy);
+		}
+	}
+}
+
 
 int   WINAPI
 DrawText(HDC hDC, LPCSTR lpsz, int cb, LPRECT lprc, UINT uFormat)
