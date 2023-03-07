@@ -224,12 +224,14 @@ void FormatDate(char * szDate, BOOL bFull)
 	int i;
 	char dFormat[20]="";
 	char buf[20]="";
-	
+/*	
 	strcpy(dFormat,"%[dMy]");
 	strcat(dFormat, Globals.sDate);
 	strcat(dFormat, "%[dMy]");
 	strcat(dFormat, Globals.sDate);
 	strcat(dFormat, "%[dMy]");
+*/
+	strcpy(dFormat,"%[dMy]/%[dMy]/%[dMy]");
 
     _dos_getdate (&d);
 
