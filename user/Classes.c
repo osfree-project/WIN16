@@ -345,18 +345,18 @@ SearchClass(LPCLASSINFO lpClassType, LPCSTR lpClassStr,
 	if (!HIWORD((DWORD)lpClassName)) {
 	    if (lpClass->atmClassName ==
 		(ATOM)(LOWORD((DWORD)lpClassName)) &&
-		(!hModule || (lpClass->hModule == hModule)))
+		(!hModule || (lpClass->wndClass.hInstance == hModule)))
 		return lpClass;
 	}
 	else {
-	    if (lpClass->style & CS_GLOBALCLASS)
+	    if (lpClass->wndClass.style & CS_GLOBALCLASS)
 		GLOBALGetAtomNameEx(&ClassTable,
 			lpClass->atmClassName,lpAtomString,80);
 	    else
 		GetAtomNameEx(&ClassTable,
 			lpClass->atmClassName,lpAtomString,80);
 	    if((!_fstricmp(lpAtomString,lpClassName)) &&
-		(!hModule || (lpClass->hModule == hModule)))
+		(!hModule || (lpClass->wndClass.hInstance == hModule)))
 		return lpClass;
 	}
     }
@@ -439,14 +439,14 @@ InternalRegisterClassEx(const WNDCLASSEX far *lpwcx)
 	lpNewC->lpClsExtra = NULL;
 
     lpNewC->wClassType = Type;
-    lpNewC->style = lpwcx->style;
-    lpNewC->lpfnWndProc = lpwcx->lpfnWndProc;
-    lpNewC->cbClsExtra = lpwcx->cbClsExtra;
-    lpNewC->cbWndExtra = lpwcx->cbWndExtra;
-    lpNewC->hModule = hModule;
-    lpNewC->hIcon = lpwcx->hIcon;
-    lpNewC->hCursor = lpwcx->hCursor;
-    lpNewC->hbrBackground = lpwcx->hbrBackground;
+    lpNewC->wndClass.style = lpwcx->style;
+    lpNewC->wndClass.lpfnWndProc = lpwcx->lpfnWndProc;
+    lpNewC->wndClass.cbClsExtra = lpwcx->cbClsExtra;
+    lpNewC->wndClass.cbWndExtra = lpwcx->cbWndExtra;
+    lpNewC->wndClass.hInstance = hModule;
+    lpNewC->wndClass.hIcon = lpwcx->hIcon;
+    lpNewC->wndClass.hCursor = lpwcx->hCursor;
+    lpNewC->wndClass.hbrBackground = lpwcx->hbrBackground;
     lpNewC->nUseCount = 0;
     lpNewC->hIconSm = lpwcx->hIconSm;
     if (!(lpwcx->style & CS_SYSTEMGLOBAL)) {
@@ -455,10 +455,10 @@ InternalRegisterClassEx(const WNDCLASSEX far *lpwcx)
     }
     if (HIWORD((DWORD)(lpwcx->lpszMenuName))) {
 	size = lstrlen(lpwcx->lpszMenuName)+1;
-	lpNewC->lpMenuName = GlobalAllocPtr(GPTR, size);
-	lstrcpy(lpNewC->lpMenuName, lpwcx->lpszMenuName);
+	lpNewC->wndClass.lpszMenuName = GlobalAllocPtr(GPTR, size);
+	lstrcpy((LPSTR)lpNewC->wndClass.lpszMenuName, lpwcx->lpszMenuName);
     } else
-	lpNewC->lpMenuName = (LPSTR)lpwcx->lpszMenuName;
+	lpNewC->wndClass.lpszMenuName = (LPSTR)lpwcx->lpszMenuName;
 
     if (!HIWORD((DWORD)(lpwcx->lpszClassName)))
 	lpNewC->atmClassName =
@@ -468,8 +468,8 @@ InternalRegisterClassEx(const WNDCLASSEX far *lpwcx)
 	    GLOBALAddAtomEx(&ClassTable,lpwcx->lpszClassName):
 	    AddAtomEx(&ClassTable,lpwcx->lpszClassName);
 
-    if (lpNewC->cbClsExtra)
-	_fmemset(lpNewC->lpClsExtra, 0, lpNewC->cbClsExtra);
+    if (lpNewC->wndClass.cbClsExtra)
+	_fmemset(lpNewC->lpClsExtra, 0, lpNewC->wndClass.cbClsExtra);
 
     /* link in the new class */
     lpNewC->lpClassNext = *lpClassType;
@@ -532,10 +532,10 @@ BOOL TWIN_InternalUnregisterClass(LPCLASSINFO lpClassFound)
     if (lpClassFound->lpClsExtra)
 	GlobalFreePtr(lpClassFound->lpClsExtra);
 
-    if (HIWORD((DWORD)(lpClassFound->lpMenuName)))
-	GlobalFreePtr(lpClassFound->lpMenuName);
+    if (HIWORD((DWORD)(lpClassFound->wndClass.lpszMenuName)))
+	GlobalFreePtr(lpClassFound->wndClass.lpszMenuName);
 
-    if (lpClassFound->style & CS_GLOBALCLASS)
+    if (lpClassFound->wndClass.style & CS_GLOBALCLASS)
 	GLOBALDeleteAtomEx(&ClassTable,lpClassFound->atmClassName);
     else
 	DeleteAtomEx(&ClassTable,lpClassFound->atmClassName);
@@ -591,16 +591,16 @@ InternalGetClassInfo(LPCLASSINFO hClass32, LPWNDCLASS lpwc)
 
 	if (!lpClassInfo)
 		return;
-	lpwc->style = lpClassInfo->style;
-	lpwc->lpfnWndProc = lpClassInfo->lpfnWndProc;
-	lpwc->cbClsExtra = lpClassInfo->cbClsExtra;
-	lpwc->cbWndExtra = lpClassInfo->cbWndExtra;
+	lpwc->style = lpClassInfo->wndClass.style;
+	lpwc->lpfnWndProc = lpClassInfo->wndClass.lpfnWndProc;
+	lpwc->cbClsExtra = lpClassInfo->wndClass.cbClsExtra;
+	lpwc->cbWndExtra = lpClassInfo->wndClass.cbWndExtra;
 //@todo Not seems to be correct. Check Pitrek book
-	lpwc->hInstance = (lpClassInfo->hModule);//?
+	lpwc->hInstance = (lpClassInfo->wndClass.hInstance);//?
 //		GetInstanceFromModule(lpClassInfo->hModule):0;
-	lpwc->hIcon = lpClassInfo->hIcon;
-	lpwc->hCursor = lpClassInfo->hCursor;
-	lpwc->hbrBackground = lpClassInfo->hbrBackground;
+	lpwc->hIcon = lpClassInfo->wndClass.hIcon;
+	lpwc->hCursor = lpClassInfo->wndClass.hCursor;
+	lpwc->hbrBackground = lpClassInfo->wndClass.hbrBackground;
 	lpwc->lpszMenuName = (LPSTR)NULL;
 	lpwc->lpszClassName = (LPSTR)NULL;
 }
@@ -614,16 +614,16 @@ InternalGetClassInfoEx(LPCLASSINFO hClass32, LPWNDCLASSEX lpwcx)
 	if (!lpClassInfo)
 		return;
 	lpwcx->cbSize = sizeof(WNDCLASSEX);
-	lpwcx->style = lpClassInfo->style;
-	lpwcx->lpfnWndProc = lpClassInfo->lpfnWndProc;
-	lpwcx->cbClsExtra = lpClassInfo->cbClsExtra;
-	lpwcx->cbWndExtra = lpClassInfo->cbWndExtra;
+	lpwcx->style = lpClassInfo->wndClass.style;
+	lpwcx->lpfnWndProc = lpClassInfo->wndClass.lpfnWndProc;
+	lpwcx->cbClsExtra = lpClassInfo->wndClass.cbClsExtra;
+	lpwcx->cbWndExtra = lpClassInfo->wndClass.cbWndExtra;
 //@todo Not seems to be correct. Check Pitrek book
-	lpwcx->hInstance = (lpClassInfo->hModule);//?
+	lpwcx->hInstance = (lpClassInfo->wndClass.hInstance);//?
 //		GetInstanceFromModule(lpClassInfo->hModule):0;
-	lpwcx->hIcon = lpClassInfo->hIcon;
-	lpwcx->hCursor = lpClassInfo->hCursor;
-	lpwcx->hbrBackground = lpClassInfo->hbrBackground;
+	lpwcx->hIcon = lpClassInfo->wndClass.hIcon;
+	lpwcx->hCursor = lpClassInfo->wndClass.hCursor;
+	lpwcx->hbrBackground = lpClassInfo->wndClass.hbrBackground;
 	lpwcx->lpszMenuName = (LPSTR)NULL;
 	lpwcx->lpszClassName = (LPSTR)NULL;
 	lpwcx->hIconSm = lpClassInfo->hIconSm;

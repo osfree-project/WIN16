@@ -37,24 +37,67 @@ typedef struct tagINTWNDCLASS {
 #define	APPLOCAL	2
 #define	APPGLOBAL	3
 
+/*
+struct CLASS{
+                HANDLE hNext;
+                WORD wSign;
+                ATOM atomClass;
+                HANDLE hDCE;
+                WORD wNumWin;
+                WNDCLASS wndClass;
+                WORD wData[1];
+};
+Поля:
+hNext   Адрес следующей структуры CLASS в сегменте данных USER.
+wSign   Сигнатура 'NK'.
+atomCls Атом в сегменте данных USER, содержащий имя класса.
+hDCE    Если для окон класса установлено CS_CLASSDC, то это дескриптор соответствующей структуры DCE, иначе NULL.
+wNumWin Текущее количество окон этого класса.
+wndClass        Копия соответствующей структуры WNDCLASS с обнуленными полями lpszMenuName и lpszClassName.
+wData   Дополнительные данные экземпляра окна.
+
+typedef struct tagWNDCLASS {
+    UINT        style;
+    WNDPROC     lpfnWndProc;
+    int         cbClsExtra;
+    int         cbWndExtra;
+    HINSTANCE   hInstance;
+    HICON       hIcon;
+    HCURSOR     hCursor;
+    HBRUSH      hbrBackground;
+    LPCSTR      lpszMenuName;
+    LPCSTR      lpszClassName;
+} WNDCLASS;
+typedef WNDCLASS        *PWNDCLASS;
+typedef WNDCLASS NEAR   *NPWNDCLASS;
+typedef WNDCLASS FAR    *LPWNDCLASS;
+
+*/
+
+
 typedef	struct	tagCLASSINFO {
     struct tagCLASSINFO	far * lpClassNext;	/* ptr to next class */
-    struct tagCLASSINFO	far *lpClassPrev;	/* ptr to prev class */
+    struct tagCLASSINFO	far * lpClassPrev;	/* ptr to prev class */
+    WORD wSign;	/* 'NK' */
+    ATOM	atmClassName;		/* class name atom */
+    HDC		hDC;			/* class DC handle */
+    int		nUseCount;		/* Usage count  - private */
+    WNDCLASS	wndClass;
+
     UINT	wClassType;		/* class type */
-    UINT	style;			/* class style */
-    WNDPROC	lpfnWndProc;		/* class procedure */
+
+//    UINT	style;			/* class style */
+//    WNDPROC	lpfnWndProc;		/* class procedure */
     WNDPROC	lpfnBinToNat;		/* BINTONAT conversion procedure */
     WNDPROC	lpfnNatToBin;		/* NATTOBIN conversion procedure */
-    int		cbClsExtra;		/* class extra bytes */
-    int		cbWndExtra;		/* window extra bytes */
-    HANDLE	hModule;		/* class module instance handle */
-    HICON	hIcon;			/* class icon resource handle */
-    HCURSOR	hCursor;		/* class cursor resource handle */
-    HBRUSH	hbrBackground;		/* class backgr. brush handle */
-    HDC		hDC;			/* class DC handle */
-    ATOM	atmClassName;		/* class name atom */
-    int		nUseCount;		/* Usage count  - private */
-    LPSTR	lpMenuName;		/* menu name string */
+//    int		cbClsExtra;		/* class extra bytes */
+//    int		cbWndExtra;		/* window extra bytes */
+//    HANDLE	hModule;		/* class module instance handle */
+//    HICON	hIcon;			/* class icon resource handle */
+//    HCURSOR	hCursor;		/* class cursor resource handle */
+//    HBRUSH	hbrBackground;		/* class backgr. brush handle */
+//    LPSTR	lpMenuName;		/* menu name string */
+
     LPSTR	lpClsExtra;		/* ptr to class extra bytes */
     HICON	hIconSm;		/* (WIN32) small class icon */
 } CLASSINFO;
