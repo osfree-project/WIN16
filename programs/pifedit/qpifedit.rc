@@ -220,19 +220,6 @@ END
 
 IDD_ABOUT DIALOG DISCARDABLE  4, 4, 184, 119
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-#ifdef LANG_GR
-CAPTION "Info - Qualitas PIF Editor"
-FONT 8, "MS Sans Serif"
-BEGIN
-    DEFPUSHBUTTON   "OK",1,129,6,50,14
-    ICON	    IDI_QIF,-1,144,56,18,20
-    LTEXT	    "Qualitas PIF Editor\nVersion " VER_PRODUCTVERSION_STR,-1, 12,7,112,17
-    LTEXT	    VER_LEGALCOPYRIGHT2_STR,
-		    -1,12,36,125,18
-    LTEXT	    "Dieses Exemplar ist lizenziert für: ",101,12,68,112,8
-    LTEXT	    "",102,12,84,168,24
-END
-#else
 CAPTION "About Qualitas PIF Editor"
 FONT 8, "MS Sans Serif"
 BEGIN
@@ -244,27 +231,11 @@ BEGIN
     LTEXT	    "This product is licensed to: ",101,12,68,112,8
     LTEXT	    "",102,12,84,168,24
 END
-#endif				/* IFDEF LANG_GR */
 
 
 IDD_STANDARD DIALOG 20, 20, 183, 139
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 FONT 8, "Helv"
-#ifdef LANG_GR
-CAPTION "Qualitas PIF Editor"
-BEGIN
-	CONTROL "Der Qualitas PIF Editor bearbeitet nur", -1, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 43, 17, 128, 8
-	CONTROL "PIF Funktionen zum erweiterten Modus", -1, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 43, 26, 121, 8
-	CONTROL "für 386-PCs. Sie können eine PIF Datei", -1, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 43, 35, 129, 8
-	ICON 32515, 971, 13, 19, 18, 20
-	CONTROL "bearbeiten, aber die Funktionen für", -1, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 43, 44, 127, 8
-	CONTROL "den erweiterten Modus werden im", -1, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 43, 53, 127, 8
-	CONTROL "Standardmodus nicht verfügbar sein.", -1, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 43, 62, 127, 8
-
-	PUSHBUTTON "OK", IDOK, 76, 115, 32, 14, WS_TABSTOP
-	CONTROL "Meldung in Zukunft &nicht mehr anzeigen.", IDB_EXPERT, "BUTTON", BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 20, 83, 143, 14
-END
-#else
 CAPTION "Qualitas PIF Editor"
 BEGIN
 	CONTROL "The Qualitas PIF Editor will only edit", -1, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 43, 17, 128, 8
@@ -278,7 +249,6 @@ BEGIN
 	PUSHBUTTON "OK", IDOK, 76, 115, 32, 14, WS_TABSTOP
 	CONTROL "&Don't display this message in the future.", IDB_EXPERT, "BUTTON", BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 20, 83, 143, 14
 END
-#endif				/* IFDEF LANG_GR */
 
 
 STRINGTABLE PRELOAD MOVEABLE DISCARDABLE
@@ -287,23 +257,8 @@ BEGIN
     IDS_APPTITLE, APPTITLE
     IDS_APPTITLETHE, APPTITLETHE
 
-#ifdef LANG_GR
-    1, "Für diese Steuerung ist keine Hilfe verfügbar\0"
-#else
     1, "No help available for this control\0"
-#endif				/* IFDEF LANG_GR */
 
-#ifdef LANG_GR
-    IDE_DOSMIN, "KB Minimum"
-    IDE_DOSMAX, "KB Erwünscht"
-    IDE_EMSMIN, "EMS Minimum"
-    IDE_EMSMAX, "EMS Maximum"
-    IDE_XMSMIN, "XMS Minimum"
-    IDE_XMSMAX, "XMS Maximum"
-
-    IDE_BACKPRIO,	"Hintergrund-Priorität"
-    IDE_FOREPRIO,	"Vordergrund-Priorität"
-#else
     IDE_DOSMIN, "KB Minimum"
     IDE_DOSMAX, "KB Desired"
     IDE_EMSMIN, "EMS Minimum"
@@ -313,7 +268,6 @@ BEGIN
 
     IDE_BACKPRIO,	"Background Priority"
     IDE_FOREPRIO,	"Foreground Priority"
-#endif				/* IFDEF LANG_GR */
 
     IDS_FILEMASK,	"PIF Files(*.PIF)\n*.pif\n"
 

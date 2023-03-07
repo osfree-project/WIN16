@@ -20,7 +20,8 @@ IMPORTS  = GETOPENFILENAME     COMMDLG.1, &
 #           GETCURRENTDIRECTORY WINSMSG.20
 #RESOURCE = $(PATH)rsrc.res
 CLEAN_ADD = *.mbr
-
+HEAPSIZE = 4k
+STACKSIZE = 8k
 !include $(%ROOT)tools/mk/appsw16.mk
 
 TARGETS = $(PATH)$(PROJ1).exe # subdirs

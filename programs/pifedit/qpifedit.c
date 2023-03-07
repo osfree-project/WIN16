@@ -35,7 +35,6 @@
 
 typedef UINT (CALLBACK * COMMDLGHOOKPROC)(HWND, UINT, WPARAM, LPARAM);
 
-// BOOL CALLBACK _export PaneMsgProc_Old(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 BOOL	CALLBACK _export PaneMsgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 VOID	Pane_OnCommand(HWND hWnd, UINT id, HWND hWndCtl, WORD codeNotify);
 BOOL	Pane_OnInitDialog(HWND hWnd, HWND hWndFocus, LPARAM lParam);
@@ -312,18 +311,6 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
     LoadString(hInst, IDS_APPTITLE, szAppTitle, sizeof(szAppTitle));
     LoadString(hInst, IDS_APPTITLETHE, szAppTitleThe, sizeof(szAppTitleThe));
     LoadString(hInst, IDS_UNTITLED, szUntitled, sizeof(szUntitled));
-
-#if 0
-    // only use QPIFEDIT for Win 3.x; Win95 has it built-in
-    dwVersion = GetVersion();
-
-    if (((dwVersion & 0xFF) >= 4) || (((dwVersion >> 8) & 0xFF) >= 50)) {
-	// it's Win95
-	LoadString(hInst, IDS_NOWIN95, szTemp, sizeof(szTemp));
-	MessageBox( 0, szTemp, szAppName, MB_OK | MB_ICONSTOP );
-	return 1;
-    }
-#endif
 
     // set .INI name
     GetWindowsDirectory( szIniName, 80 );
@@ -608,7 +595,7 @@ int MenuFileSave(VOID)
  *  ENTRY    :	VOID
  *
  *  RETURNS  :	VOID
- *
+ *                                                                  
  ****************************************************************************/
 
 int MenuFileSaveAs(VOID)
