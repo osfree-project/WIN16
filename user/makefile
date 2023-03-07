@@ -8,7 +8,7 @@ PROJ     = user1
 PROJ1    = user
 TRGT     = $(PROJ1).exe
 DESC     = Windows USER.EXE
-srcfiles = $(p)network$(e) $(p)SysMetrics$(e) $(p)Listbox$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)libmain$(e)
+srcfiles = $(p)DrawText$(e) $(p)network$(e) $(p)SysMetrics$(e) $(p)Listbox$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)libmain$(e)
 ADD_COPT = -zc -s
 ADD_ASMOPT = -i=..$(SEP)tables$(SEP)xlat
 #NOLIBS   = 1
