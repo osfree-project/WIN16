@@ -60,9 +60,26 @@ EXPORTS = &
 	SetSysColors .181, &
 	GetCaretPos .183, &
 	GrayString .185, &
+	OpenComm .200, &
+	SetCommState .201, &
+	GetCommState .202, &
+	GetCommError .203, &
+	ReadComm .204, &
+	WriteComm .205, &
+	TransmitCommChar .206, &
+	CloseComm .207, &
+	SetCommEventMask .208, &
+	GetCommEventMask .209, &
+	SetCommBreak .210, &
+	ClearCommBreak .211, &
+	UngetCommChar .212, &
+        BuildCommDCB .213, &
+	EscapeCommFunction .214, &
+	FlushComm .215, &
 	UserSeeUserDo .216, &
 	LoadMenuIndirect .220, &
 	EqualRect.244, &
+	EnableCommNotification .245, &
 	GetMenuState .250, &
 	GetMenuItemCount .263, &
 	GetMenuItemID .264, &

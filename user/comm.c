@@ -95,7 +95,7 @@ int WINAPI SetCommState(const DCB far * lpdcb)
 /*****************************************************************************
  *	GetCommState	(USER.202)
  */
-int WINAPI GetCommState16(int cid, LPDCB lpdcb)
+int WINAPI GetCommState(int cid, LPDCB lpdcb)
 {
 	return 0;
 }
