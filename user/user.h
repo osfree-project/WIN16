@@ -88,8 +88,9 @@ typedef	struct	tagCLASSINFO {
 
 //    UINT	style;			/* class style */
 //    WNDPROC	lpfnWndProc;		/* class procedure */
-    WNDPROC	lpfnBinToNat;		/* BINTONAT conversion procedure */
-    WNDPROC	lpfnNatToBin;		/* NATTOBIN conversion procedure */
+// This part is non-standard and seems to be translation  Native <> Binary layer
+//    WNDPROC	lpfnBinToNat;		/* BINTONAT conversion procedure */
+//    WNDPROC	lpfnNatToBin;		/* NATTOBIN conversion procedure */
 //    int		cbClsExtra;		/* class extra bytes */
 //    int		cbWndExtra;		/* window extra bytes */
 //    HANDLE	hModule;		/* class module instance handle */
@@ -99,7 +100,8 @@ typedef	struct	tagCLASSINFO {
 //    LPSTR	lpMenuName;		/* menu name string */
 
     LPSTR	lpClsExtra;		/* ptr to class extra bytes */
-    HICON	hIconSm;		/* (WIN32) small class icon */
+// No such in Win 3.x
+//    HICON	hIconSm;		/* (WIN32) small class icon */
 } CLASSINFO;
 typedef CLASSINFO	*PCLASSINFO;
 typedef CLASSINFO NEAR	*NPCLASSINFO;

@@ -1,3 +1,8 @@
+/*
+ * Current implementation differs from Windows original. Windows allocates class data in USER data segment,
+ * but TWIN uses global heap instead of local. Also seems original uses standard application atom table,
+ * TWIN uses its own atom table.
+ */
 #include <string.h>
 #include <ctype.h>
 
@@ -21,8 +26,8 @@
 #define	TWIN_DIALOGCLASS "#32770"
 
 //@todo It seems SYSTEMGLOBAL class not required for win16...
-WNDPROC lpfnDefaultBinToNat = NULL;
-WNDPROC lpfnDefaultNatToBin = NULL;
+//WNDPROC lpfnDefaultBinToNat = NULL;
+//WNDPROC lpfnDefaultNatToBin = NULL;
 
 typedef unsigned long ATOMID;
 
@@ -448,11 +453,11 @@ InternalRegisterClassEx(const WNDCLASSEX far *lpwcx)
     lpNewC->wndClass.hCursor = lpwcx->hCursor;
     lpNewC->wndClass.hbrBackground = lpwcx->hbrBackground;
     lpNewC->nUseCount = 0;
-    lpNewC->hIconSm = lpwcx->hIconSm;
-    if (!(lpwcx->style & CS_SYSTEMGLOBAL)) {
-	lpNewC->lpfnNatToBin = lpfnDefaultNatToBin;
-	lpNewC->lpfnBinToNat = lpfnDefaultBinToNat;
-    }
+//    lpNewC->hIconSm = lpwcx->hIconSm;
+//    if (!(lpwcx->style & CS_SYSTEMGLOBAL)) {
+//	lpNewC->lpfnNatToBin = lpfnDefaultNatToBin;
+//	lpNewC->lpfnBinToNat = lpfnDefaultBinToNat;
+//    }
     if (HIWORD((DWORD)(lpwcx->lpszMenuName))) {
 	size = lstrlen(lpwcx->lpszMenuName)+1;
 	lpNewC->wndClass.lpszMenuName = GlobalAllocPtr(GPTR, size);
@@ -626,7 +631,7 @@ InternalGetClassInfoEx(LPCLASSINFO hClass32, LPWNDCLASSEX lpwcx)
 	lpwcx->hbrBackground = lpClassInfo->wndClass.hbrBackground;
 	lpwcx->lpszMenuName = (LPSTR)NULL;
 	lpwcx->lpszClassName = (LPSTR)NULL;
-	lpwcx->hIconSm = lpClassInfo->hIconSm;
+//	lpwcx->hIconSm = lpClassInfo->hIconSm;
 
 }
 
