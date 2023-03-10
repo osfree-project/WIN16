@@ -56,10 +56,7 @@ BOOL	CALLBACK _export SMMsgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lP
 #define IDD_ADVFRAME	102	// Advanced frame dialog resource
 
 #define IDB_GENERAL		102
-#define IDB_MEMORY		103
-#define IDB_VIDEO		104
 #define IDB_TASK		105
-#define IDB_OTHER		106
 
 #define IDD_GENERAL	102		// 'General' dialog
 

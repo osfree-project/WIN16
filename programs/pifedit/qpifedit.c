@@ -1424,11 +1424,11 @@ BOOL CALLBACK _export PaneMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 	    return (Pane_OnInitDialog(hWnd, (HWND) wParam, lParam));
 
 	case WM_PAINT:
-	    if (IsIconic(hWnd)) {
-		Pane_OnPaint_Iconic(hWnd);
-	    } else {
-		Pane_OnPaint(hWnd);
-	    }
+		if (IsIconic(hWnd)) {
+			Pane_OnPaint_Iconic(hWnd);
+		} else {
+			Pane_OnPaint(hWnd);
+		}
 	    return (FALSE);
 
 	case WM_SETFONT:
@@ -1508,10 +1508,7 @@ VOID Pane_OnCommand(HWND hWnd, UINT id, HWND hWndCtl, WORD codeNotify)
 	    break;
 
 	case IDB_GENERAL:
-	case IDB_MEMORY:
-	case IDB_VIDEO:
 	case IDB_TASK:
-	case IDB_OTHER:
 	    if ((UINT) nActiveDlg != id) {
 		ShowCursor(FALSE);		// Hide the mouse cursor
 		SwitchPanes(hWnd, id);
@@ -1801,32 +1798,32 @@ VOID Pane_OnPaint(HWND hWnd)
     HPEN	hPenWhite = GetStockObject(WHITE_PEN);
     HPEN	hPenBtnShadow = CreatePen(PS_SOLID, 1, RGB(128, 128, 128));
 
-    HBRUSH	hbrButton = CreateSolidBrush(BUTTON_BKGNDCOLOR);
+//    HBRUSH	hbrButton = CreateSolidBrush(BUTTON_BKGNDCOLOR);
 
     memset(&ps, 0, sizeof(PAINTSTRUCT));
 
     hDC = BeginPaint(hWnd, &ps);
 
 // Get size of normal buttons for the background
-    GetClientRect(GetDlgItem(hWnd, IDB_OTHER), &rect);
+    //GetClientRect(GetDlgItem(hWnd, IDB_TASK), &rect);
     GetClientRect(hWnd, &rectWnd);
 
 // Move it to the right corner
-    OffsetRect(&rect, rectWnd.right - rect.right, 0);
+//    OffsetRect(&rect, rectWnd.right - rect.right, 0);
 
-    rect.bottom--;		// Leave room for the black line
+//    rect.bottom--;		// Leave room for the black line
 
 // Fill it with that ugly green
     //FillRect(hDC, &rect, hbrButton);
 
-    DeleteBrush(hbrButton);
+//    DeleteBrush(hbrButton);
 
-    hPenOld = SelectObject(hDC, hPenBlack);
+//    hPenOld = SelectObject(hDC, hPenBlack);
 
-    MoveTo(hDC, rect.left, rect.bottom);
-    LineTo(hDC, rect.right, rect.bottom);
+//    MoveTo(hDC, rect.left, rect.bottom);
+//    LineTo(hDC, rect.right, rect.bottom);
 
-    SelectObject(hDC, hPenOld);
+//    SelectObject(hDC, hPenOld);
 
 // Paint the help border
 
@@ -1891,6 +1888,7 @@ VOID Pane_OnPaint(HWND hWnd)
  *  RETURNS  :	VOID
  *
  ****************************************************************************/
+
 
 VOID Pane_OnPaint_Iconic(HWND hWnd)
 {
