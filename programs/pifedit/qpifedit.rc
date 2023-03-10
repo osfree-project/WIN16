@@ -30,10 +30,10 @@ BEGIN
 	MENUITEM "E&xit",       IDM_F_EXIT
     END
 
-    POPUP "Sett&ings"
+    POPUP "&Mode"
     BEGIN
-	MENUITEM "&General",    IDB_GENERAL
-	MENUITEM "&Advanced",  IDB_TASK
+	MENUITEM "&Standard",    IDB_GENERAL
+	MENUITEM "&386 Enhanced",  IDB_TASK
     END
 
     POPUP "&Help"
@@ -43,19 +43,16 @@ BEGIN
 	MENUITEM SEPARATOR
 	MENUITEM "&Technical Support", IDM_H_TECHSUP
 	MENUITEM SEPARATOR
-	MENUITEM "&About Qualitas PIF Editor...", IDM_H_ABOUT
+	MENUITEM "&About PIF Editor...", IDM_H_ABOUT
     END
 END
 
 ; @todo DS_LOCALEDIT doesn't work yet
-IDD_FRAME DIALOG 0, 0, 260, 290
+IDD_FRAME DIALOG 0, 0, 250, 175
 STYLE /*DS_LOCALEDIT |*/ WS_OVERLAPPED | WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_SIZEBOX 
 MENU MenuApp
 FONT 8, "MS Sans Serif"
 BEGIN
-;	PUSHBUTTON "General",   IDB_GENERAL, 0, 0, 45, 20
-
-	CONTROL    "", IDD_HELP, "EDIT", ES_LEFT /*| ES_MULTILINE | ES_AUTOVSCROLL | WS_VSCROLL */, 10, 100, 240, 8 
 
 ; New scheme that include all panes in the main dialog (subject to change)
 
@@ -69,11 +66,11 @@ BEGIN
 
     LTEXT	    "&Optional Parameters:", IDT_PARAMS, 6, 34, 69, 8,
 			NOT WS_GROUP
-    EDITTEXT	    IDE_PARAMS, 88, 32, 166, 12, ES_AUTOHSCROLL
+    EDITTEXT	    IDE_PARAMS, 88, 32, 156, 12, ES_AUTOHSCROLL
 
     LTEXT	    "&Start-up Directory:", IDT_DIRECTORY, 6, 49, 61, 8,
 			NOT WS_GROUP
-    EDITTEXT	    IDE_DIRECTORY, 88, 47, 166, 12, ES_AUTOHSCROLL
+    EDITTEXT	    IDE_DIRECTORY, 88, 47, 156, 12, ES_AUTOHSCROLL
 
     LTEXT	    "&Video Memory:", IDT_VIDMEM, 6, 66, 89, 8, NOT WS_GROUP
 
@@ -128,7 +125,9 @@ BEGIN
     CONTROL	    "&Close Window on exit", IDB_CLOSEEXIT, "Button",
 		    BS_AUTOCHECKBOX | WS_TABSTOP, 6, 145, 83, 10
 
-	PUSHBUTTON "Advanced",  IDB_TASK, 170, 145, 45, 10
+	PUSHBUTTON "Advanced",  IDB_TASK, 120, 140, 45, 15
+
+	CONTROL    "", IDD_HELP, "EDIT", 0/*ES_LEFT | ES_MULTILINE | ES_AUTOVSCROLL | WS_VSCROLL */, 10, 100, 240, 8 
 
 END
 
@@ -225,36 +224,21 @@ BEGIN
 END
 
 
-IDD_ABOUT DIALOG DISCARDABLE  4, 4, 184, 119
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "About Qualitas PIF Editor"
-FONT 8, "MS Sans Serif"
-BEGIN
-    DEFPUSHBUTTON   "OK",1,129,6,50,14
-    ICON	    IDI_QIF,-1,144,56,18,20
-//    LTEXT	    "Qualitas PIF Editor\nVersion " VER_PRODUCTVERSION_STR,-1, 12,7,112,17
-//    LTEXT	    VER_LEGALCOPYRIGHT2_STR,
-//		    -1,12,36,125,18
-    LTEXT	    "This product is licensed to: ",101,12,68,112,8
-    LTEXT	    "",102,12,84,168,24
-END
-
-
 IDD_STANDARD DIALOG 20, 20, 183, 139
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 FONT 8, "Helv"
-CAPTION "Qualitas PIF Editor"
+CAPTION "PIF Editor"
 BEGIN
-	CONTROL "The Qualitas PIF Editor will only edit", -1, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 43, 17, 128, 8
-	CONTROL "386 Enhanced mode PIF features.", -1, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 43, 26, 121, 8
-	CONTROL "You may edit a PIF file but the", -1, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 43, 35, 129, 8
+	CONTROL "Windows is not running in standard mode. The", -1, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 43, 17, 128, 8
+	CONTROL "PIF information you enter may not be", -1, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 43, 26, 121, 8
+	CONTROL "appropriate. Are you sure you want to switch to", -1, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 43, 35, 129, 8
 	ICON 32515, 971, 13, 19, 18, 20
-	CONTROL "enhanced mode features will not be", -1, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 43, 44, 127, 8
-	CONTROL "available while you remain in", -1, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 43, 53, 127, 8
-	CONTROL "Standard mode.", -1, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 43, 62, 127, 8
+	CONTROL "this mode?", -1, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 43, 44, 127, 8
+;	CONTROL "available while you remain in", -1, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 43, 53, 127, 8
+;	CONTROL "Standard mode.", -1, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 43, 62, 127, 8
 
 	PUSHBUTTON "OK", IDOK, 76, 115, 32, 14, WS_TABSTOP
-	CONTROL "&Don't display this message in the future.", IDB_EXPERT, "BUTTON", BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 20, 83, 143, 14
+;	CONTROL "&Don't display this message in the future.", IDB_EXPERT, "BUTTON", BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 20, 83, 143, 14
 END
 
 

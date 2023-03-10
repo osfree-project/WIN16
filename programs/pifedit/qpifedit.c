@@ -42,7 +42,6 @@ VOID	Pane_OnPaint(HWND hWnd);
 VOID	Pane_OnPaint_Iconic(HWND hWnd);
 VOID	Pane_OnSetFont(HWND hWndCtl, HFONT hFont, BOOL fRedraw);
 
-BOOL	CALLBACK _export ABOUTMsgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 
 VOID	SwitchPanes(HWND hWnd, int idNewDlg);
 VOID	InitHelpWindow(HWND hWnd);
@@ -65,7 +64,6 @@ VOID	MenuFileNew(BOOL fCheck);
 VOID	MenuFileOpen(VOID);
 int	MenuFileSave(VOID);
 int	MenuFileSaveAs(VOID);
-VOID	MenuHelpAbout(VOID);
 
 VOID	TestPIF(VOID);
 
@@ -145,7 +143,7 @@ HLOCAL	hQPE = NULL;	// HANDLE to LocalAlloc()'ed .QPE structure
 BOOL	fCheckOnKillFocus = TRUE;
 UINT	idHelpCur = 0;
 
-UINT	auDlgHeights[] = {20+160, 20+110, 20+160, 20+230, 20+98 };
+UINT	auDlgHeights[] = {160, 160};
 
 typedef struct tagCONTROL {
 	int	Pane;		// Pane ID
@@ -1499,9 +1497,10 @@ VOID Pane_OnCommand(HWND hWnd, UINT id, HWND hWndCtl, WORD codeNotify)
 	    WinHelp( hWnd, szHelpName, HELP_KEY, (DWORD)((char _far *)HK_TECHS) );
 	    break;
 
-	case IDM_H_ABOUT:		// Help.About
-	    MenuHelpAbout();
-	    break;
+	/* show "about" box */
+	case IDM_H_ABOUT:
+		ShellAbout(hWnd, szAppTitle, "", 0);
+		break;
 
 	case IDB_RUNPIF:
 	    TestPIF();
@@ -1633,8 +1632,6 @@ BOOL Pane_OnInitDialog(HWND hWnd, HWND hWndFocus, LPARAM lParam)
 
     WNDPROC	lpfnButtonEdit = (WNDPROC) MakeProcInstance((FARPROC) Button_SubClassProc, hInst);
 
-//ExitWindows(0,0);
-
     hWndDlg = hWnd;
 
 // Figure out the prefered window size and position
@@ -1655,8 +1652,7 @@ BOOL Pane_OnInitDialog(HWND hWnd, HWND hWndFocus, LPARAM lParam)
     sscanf(szBuf2, "%d %d", &left, &top);
 
     if (left < cxScreen - cxFrame && top < cyScreen - cyCaption/3) {
-
-	MoveWindow(hWnd, left, top, (rect.right - rect.left), (rect.bottom - rect.top), TRUE);
+		MoveWindow(hWnd, left, top, (rect.right - rect.left), (rect.bottom - rect.top), TRUE);
     }
 // Build the font for the help text
     memset(&lf, 0, sizeof(LOGFONT));
@@ -2082,7 +2078,7 @@ VOID SwitchPanes(HWND hWnd, int idNewDlg)
 
 VOID InitHelpWindow(HWND hWnd)
 {
-/*    RECT	rect;
+    RECT	rect;
 
     HWND	hWndHelp = GetDlgItem(hWnd, IDD_HELP);
 
@@ -2101,7 +2097,7 @@ VOID InitHelpWindow(HWND hWnd)
 		);
 
     SendMessage(hWndHelp, WM_SETFONT, (WPARAM) hFontHelp, 0L);
-*/
+
     SetHelpText(hWnd, nActiveDlg);
 }
 
@@ -2920,71 +2916,6 @@ BYTE ComputeQPEChecksum(PQPE pQPE)		// Checksum the QPE structure
     for (bSum = 0; pb < pbz; pb++) bSum += *pb;
 
     return ( (BYTE) -(bSum - pQPE->bCheckSum) );
-}
-
-
-/****************************************************************************
- *
- *  FUNCTION :	MenuHelpAbout(VOID)
- *
- *  PURPOSE  :	Process the Help/About menu selection
- *		Puts up the usual dialog box
- *
- *  ENTRY    :	VOID
- *
- *  RETURNS  :	VOID
- *
- ****************************************************************************/
-
-VOID MenuHelpAbout(VOID)		/* Help.About */
-{
-    FARPROC	lpfnABOUTMsgProc = MakeProcInstance((FARPROC) ABOUTMsgProc, hInst);
-
-    DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUT), hWndDlg, (DLGPROC) lpfnABOUTMsgProc);
-
-    FreeProcInstance(lpfnABOUTMsgProc);
-}
-
-
-/****************************************************************************
- *
- *  FUNCTION :	ABOUTMsgProc(HWND, UINT, WPARAM, LPARAM)
- *
- *  PURPOSE  :	Message proc for the ABOUT dialog
- *
- *  ENTRY    :	HWND	hWnd;		// Window handle
- *		UINT	msg;		// WM_xxx message
- *		WPARAM	wParam; 	// Message 16-bit parameter
- *		LPARAM	lParam; 	// Message 32-bit parameter
- *
- *  RETURNS  :	FALSE	- Message has been processed
- *		TRUE	- DefDlgProc() processing required
- *
- ****************************************************************************/
-
-BOOL CALLBACK _export ABOUTMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	char szBuffer[512], szName[64], szCompany[64], szSerial[32];
-
-	switch (msg) {
-	case WM_INITDIALOG:
-		// get name & company from QMAX.INI
-		GetPrivateProfileString( "Registration", "Name", "", szName, sizeof (szName), szIniName );
-		GetPrivateProfileString( "Registration", "Company", "", szCompany, sizeof (szCompany), szIniName );
-		GetPrivateProfileString( "Registration", "S/N", "", szSerial, sizeof (szSerial), szIniName );
-		wsprintf( szBuffer, "%s\r\n%s\r\nS/N  %s", (char _far *)szName, (char _far *)szCompany, (char _far *)szSerial );
-		SetDlgItemText( hWnd, 102, szBuffer );
-		return TRUE;
-
-	case WM_COMMAND:
-		switch (wParam) {		// id
-		case IDOK:
-		case IDCANCEL:
-		    EndDialog(hWnd, TRUE);
-		}
-	}
-
-	return (FALSE);
 }
 
 

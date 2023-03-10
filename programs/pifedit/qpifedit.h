@@ -6,8 +6,8 @@
 #include <pif.h>		// .PIF structure
 #include <qpe.h>		// .QPE structure
 
-#define APPNAME 	"QPIFEDIT"
-#define PROFILE 	"QPIFEDIT.INI"
+#define APPNAME 	"PIFEDIT"
+#define PROFILE 	"PIFEDIT.INI"
 
 #define APPTITLE	"PIF Editor"
 #define APPTITLETHE	"PIF Editor"
@@ -50,7 +50,6 @@ BOOL	CALLBACK _export SMMsgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lP
 
 // Dialog and control resource IDs
 
-#define IDD_ABOUT	100	// HELP/ABOUT dialog
 #define IDB_RUNPIF	119	// Run PIF to test settings
 #define IDD_HELP	120	// Help window
 #define IDD_FRAME	101	// Main frame dialog resource
@@ -212,3 +211,6 @@ BOOL	CALLBACK _export SMMsgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lP
 #if (WINVER >= 0x030a)
 #define Edit_SetReadOnly(hwndCtl, fReadOnly)    ((BOOL)(DWORD)SendMessage((hwndCtl), EM_SETREADONLY, (WPARAM)(BOOL)(fReadOnly), 0L))
 #endif
+
+int WINAPI ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText,
+                HICON hIcon);
