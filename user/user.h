@@ -1,5 +1,35 @@
 #include <windows.h>
 
+typedef struct tagQUEUE{
+                WORD wNext;
+                HANDLE hOwner;
+                WORD wMsgSize;
+                WORD wWaitMsgs;
+                WORD wNextMsg;
+                WORD wNextAvail;
+                WORD wQueueEnd;
+                DWORD dwTime;
+                DWORD dwPos;
+                WORD reserved;
+                DWORD dwExtra;
+                DWORD reserved2;
+                DWORD dwLParam;
+                WORD wParam;
+                WORD wMsg;
+                HANDLE hWnd;
+                BOOL bPostQMsg;
+                WORD wExitCode;
+                HANDLE hInSend;
+                HANDLE hNextReply;
+                HANDLE hNextServe;
+                WORD wQueueFlags;
+                WORD wQueueState;
+                BYTE Msgs[1];
+} QUEUE;
+typedef QUEUE * PQUEUE;
+typedef QUEUE NEAR * NPQUEUE;
+typedef QUEUE FAR * LPQUEUE;
+
 typedef struct tagWNDCLASSEX {
 	UINT	cbSize;
 	UINT	style;
