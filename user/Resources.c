@@ -12,86 +12,118 @@
 #define GlobalAllocPtr(flags, cb) \
   (GlobalLock(GlobalAlloc((flags), (cb))))
 
-typedef struct tagOBJHEAD
+/***********************************************************************
+ *		LoadImage (USER.389)
+ */
+HANDLE WINAPI LoadImage(HINSTANCE hinst, LPCSTR name, UINT type, int cx, int cy, UINT flags)
 {
-    HANDLE	hObj;			/* object handle */
-//    WORD	wObjSignature;		/* object signature */
-    WORD	wRefCount;		/* reference count */
-//    struct tagOBJHEAD far *lpObjNext;	/* pointer to next */
-} OBJHEAD;
-typedef OBJHEAD far *LPOBJHEAD;
+    HGLOBAL handle;
+    HRSRC hRsrc, hGroupRsrc;
+    DWORD size;
+/*
+    if (!hinst || (flags & LR_LOADFROMFILE))
+    {
+        if (type == IMAGE_BITMAP)
+            return HBITMAP_16( LoadImageA( 0, name, type, cx, cy, flags ));
+        else
+            return get_icon_16( LoadImageA( 0, name, type, cx, cy, flags ));
+    }
+*/
+    hinst = GetExePtr( hinst );
 
-typedef struct {
-	LPBYTE	rcsdata;	/* INTEL data */
-	WORD	wType;		/* index into conversion routines table	*/
-	HGLOBAL	hGlobal;	/* memory handle of resource	   */
-	DWORD	rcsoffset;	/* location in resource file       */
-	DWORD	rcslength;	/* length of data in resource file */
-	WORD	rcsflags;	/* pre-loaded, discardable...      */
-	HRSRC	hRsrc;		/* handle to 'found' resource      */
-	HGDIOBJ	hObject;	/* GDI object associated with resource */
-	LPSTR	rcsitemname;	/* name/ordinal of resource        */
-} NAMEINFO;
-typedef NAMEINFO far *LPNAMEINFO;
+    if (flags & LR_DEFAULTSIZE)
+    {
+        if (type == IMAGE_ICON)
+        {
+            if (!cx) cx = GetSystemMetrics(SM_CXICON);
+            if (!cy) cy = GetSystemMetrics(SM_CYICON);
+        }
+        else if (type == IMAGE_CURSOR)
+        {
+            if (!cx) cx = GetSystemMetrics(SM_CXCURSOR);
+            if (!cy) cy = GetSystemMetrics(SM_CYCURSOR);
+        }
+    }
 
-typedef struct tagMEMORYINFO
-{
-        OBJHEAD	ObjHead;	/* generic object header */
-	struct  tagMEMORYINFO *lpNext;
-	HMODULE hModule;	/* owning module */
-	HTASK	hTask;		/* owning task */
-	WORD	wFlags;		/* flags passed/set on handle */
-	WORD	wType;		/* MT_ kind */
-	DWORD	dwSize;		/* global object size */
-	LPSTR   lpCore;		/* this points to native data */
-	HANDLE	hMemory;	/* this is the memory handle  */
-	WORD	wRefCount;	/* reference count */
-	LPSTR	lpData;		/* points to resource data in 86-format */
-	DWORD	dwBinSize;	/* size of object in lpData	*/
-	WORD	wIndex;		/* resource type */
+    switch (type)
+    {
+#if 0
+// Huh... Save and load bitmap is not good idea... Better rewrite to create from memory
+    case IMAGE_BITMAP:
+    {
+        HBITMAP ret = 0;
+        char *ptr;
+        static const char prefixW[] = {'b','m','p',0};
+        BITMAPFILEHEADER header;
+        char path[MAX_PATH], filename[MAX_PATH];
+        HANDLE file;
 
-} MEMORYINFO;
-typedef MEMORYINFO far *LPMEMORYINFO;
+        filename[0] = 0;
+        if (!(hRsrc = FindResource( hinst, name, (LPCSTR)RT_BITMAP ))) return 0;
+        if (!(handle = LoadResource( hinst, hRsrc ))) return 0;
+        if (!(ptr = LockResource( handle ))) goto done;
+        size = SizeofResource( hinst, hRsrc );
 
+        header.bfType = 0x4d42; /* 'BM' */
+        header.bfReserved1 = 0;
+        header.bfReserved2 = 0;
+        header.bfSize = sizeof(header) + size;
+        header.bfOffBits = 0;  /* not used by the 32-bit loading code */
 
-HBITMAP WINAPI
-LoadBitmap(HINSTANCE hInstance, LPCSTR lpszBitmap)
-{
-	HANDLE hResNameInfo;
-	LPNAMEINFO  lpTemplate;
-	LPMEMORYINFO    lpMemory = (LPMEMORYINFO)NULL;
+        if (!GetTempPath( MAX_PATH, path )) goto done;
+        if (!GetTempFileName( path, prefixW, 0, filename )) goto done;
 
-//    	APISTR((LF_APICALL,"LoadBitmap(HINSTANCE=%x,LPCSTR=%p)\n",
-//		hInstance,lpszBitmap));
+        file = CreateFile( filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0 );
+        if (file != INVALID_HANDLE_VALUE)
+        {
+            DWORD written;
+            BOOL ok;
+            ok = WriteFile( file, &header, sizeof(header), &written, NULL ) && (written == sizeof(header));
+            if (ok) ok = WriteFile( file, ptr, size, &written, NULL ) && (written == size);
+            CloseHandle( file );
+            if (ok) ret = LoadImage( 0, filename, IMAGE_BITMAP, cx, cy, flags | LR_LOADFROMFILE );
+        }
+    done:
+        if (filename[0]) DeleteFile( filename );
+        FreeResource( handle );
+        return ret;
+    }
+#endif
+    case IMAGE_ICON:
+    case IMAGE_CURSOR:
+    {
+        HICON hIcon = 0;
+        BYTE *dir, *bits;
+        INT id = 0;
 
-	hResNameInfo = FindResource(hInstance, lpszBitmap, RT_BITMAP);
+        if (!(hRsrc = FindResource( hinst, name,
+                                      (LPCSTR)(type == IMAGE_ICON ? RT_GROUP_ICON : RT_GROUP_CURSOR ))))
+            return 0;
+        hGroupRsrc = hRsrc;
 
-	if(hResNameInfo == 0) {
-//    		APISTR((LF_APIFAIL,"LoadBitmap: returns HBITMAP %x\n",0));
-		return 0;
-	}
+        if (!(handle = LoadResource( hinst, hRsrc ))) return 0;
+        if ((dir = LockResource( handle ))) id = LookupIconIdFromDirectory( dir, type == IMAGE_ICON );
+        FreeResource( handle );
+        if (!id) return 0;
 
-	lpTemplate = (LPNAMEINFO) MAKELP(hResNameInfo,0);
+        if (!(hRsrc = FindResource( hinst, MAKEINTRESOURCEA(id),
+                                      (LPCSTR)(type == IMAGE_ICON ? RT_ICON : RT_CURSOR) ))) return 0;
 
-	if(lpTemplate == 0) {
-//    		APISTR((LF_APIFAIL,"LoadBitmap: returns HBITMAP %x\n",0));
-		return 0;
-	}
-	if (lpTemplate->hGlobal == 0) {
-//@tofo fix it
-	    lpMemory = (LPMEMORYINFO)lpTemplate->rcsdata/*,MT_RESOURCE*/);
-	    lpTemplate->hGlobal = lpMemory->hMemory;
-	}
-	if (lpTemplate->rcsdata == 0)
-	    LoadResourceEx(hInstance,lpTemplate,lpMemory);
+        if ((flags & LR_SHARED) && (hIcon = find_shared_icon( hinst, hRsrc ) ) != 0) return hIcon;
 
-	if(!lpTemplate->hObject)
-	    lpTemplate->hObject = (HGDIOBJ)CreateDIBitmapEx(
-			(LPBITMAPIMAGE)lpTemplate->rcsdata,lpTemplate);
-	else
-	    LOCKGDI(lpTemplate->hObject);
+        if (!(handle = LoadResource( hinst, hRsrc ))) return 0;
+        bits = LockResource( handle );
+        size = SizeofResource( hinst, hRsrc );
+/* @todo Here we need to parse resource and create icon
+        hIcon = CreateIconFromResourceEx( bits, size, type == IMAGE_ICON, 0x00030000, cx, cy, flags );
+*/
+        FreeResource( handle );
 
-//    	APISTR((LF_APIRET,"LoadBitmap: returns HBITMAP %x\n",lpTemplate->hObject));
-
-	return (HBITMAP)lpTemplate->hObject;
+/* @todo port shared icons code from wine */
+//        if (hIcon && (flags & LR_SHARED)) add_shared_icon( hinst, hRsrc, hGroupRsrc, hIcon );
+        return hIcon;
+    }
+    default:
+        return 0;
+    }
 }
