@@ -1,7 +1,9 @@
-#include <string.h>
-#include <ctype.h>
+//#include <string.h>
+//#include <ctype.h>
 
 #include <windows.h>
+
+#if 0
 
 #define GlobalPtrHandle(lp) \
   ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))
@@ -97,6 +99,9 @@ GetAtomPointer(ATOMTABLE far *at,int index)
 	return lp;
 }
 
+#endif
+
+#if 0
 /***********************************************************************
  *		GlobalDeleteAtom (USER.269)
  */
@@ -116,7 +121,9 @@ GlobalDeleteAtom(ATOM atom)
 	}
 	return atom;
 }
+#endif
 
+#if 0
 /***********************************************************************
  *		GlobalGetAtomName (USER.271)
  */
@@ -145,7 +152,9 @@ GlobalGetAtomName(ATOM atom,LPSTR lpszbuf,int len)
 	}
 	return 0;
 }
+#endif 
 
+#if 0
 /***********************************************************************
  *		GlobalFindAtom (USER.270)
  */
@@ -172,10 +181,12 @@ GlobalFindAtom(LPCSTR lpstr)
 	}
 	return 0;
 }
+#endif 
 
 /***********************************************************************
  *		GlobalAddAtom (USER.268)
  */
+#if 0
 ATOM WINAPI
 GlobalAddAtom(LPCSTR lpstr)
 {
@@ -260,25 +271,67 @@ GlobalAddAtom(LPCSTR lpstr)
 
 }
 
+#endif
+
 /* This function sets current DS value */
 extern  void          SetDS( unsigned short );
 #pragma aux SetDS               = \
         "mov    ds,ax"          \
         parm                   [ax];
 
-static WORD GlobalTable_Selector;
+static WORD GlobalAtomTable_Selector;
 
-#define  SetGlobalTableDS() if (GlobalTable_Selector) SetDS(GlobalTable_Selector)
+#define  SetGlobalTableDS() if (GlobalAtomTable_Selector) SetDS(GlobalAtomTable_Selector)
 
 void GlobalInitAtom(void)
 {
-  GlobalTable_Selector=GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT | GMEM_DDESHARE, 0xfa);
-  if (GlobalTable_Selector)
+  GlobalAtomTable_Selector=GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT | GMEM_DDESHARE, 0xfa);
+  if (GlobalAtomTable_Selector)
   {
-    GlobalTable_Selector=SELECTOROF(GlobalLock(GlobalTable_Selector));
+    GlobalAtomTable_Selector=SELECTOROF(GlobalLock(GlobalAtomTable_Selector));
     SetGlobalTableDS();
     LocalInit(0, 0, 0xea);
     InitAtomTable(0x25);
-    GlobalUnlock(GlobalTable_Selector);
+    GlobalUnlock(GlobalAtomTable_Selector);
   }
+}
+
+/***********************************************************************
+ *		GlobalAddAtom (USER.268)
+ */
+ATOM WINAPI
+GlobalAddAtom(LPCSTR lpstr)
+{
+  SetGlobalTableDS();
+  return AddAtom(lpstr);
+}
+
+/***********************************************************************
+ *		GlobalFindAtom (USER.270)
+ */
+ATOM WINAPI
+GlobalFindAtom(LPCSTR lpstr)
+{
+  SetGlobalTableDS();
+  return FindAtom(lpstr);
+}
+
+/***********************************************************************
+ *		GlobalGetAtomName (USER.271)
+ */
+UINT WINAPI
+GlobalGetAtomName(ATOM atom,LPSTR lpszbuf,int len)
+{
+  SetGlobalTableDS();
+  return GetAtomName(atom, lpszbuf, len);
+}
+
+/***********************************************************************
+ *		GlobalDeleteAtom (USER.269)
+ */
+ATOM WINAPI
+GlobalDeleteAtom(ATOM atom)
+{
+  SetGlobalTableDS();
+  return DeleteAtom(atom);
 }
