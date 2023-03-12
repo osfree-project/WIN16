@@ -8,7 +8,7 @@ PROJ     = user1
 PROJ1    = user
 TRGT     = $(PROJ1).exe
 DESC     = Windows USER.EXE
-srcfiles = $(p)dialog$(e) $(p)Time$(e) $(p)Atoms$(e) $(p)InitApp$(e) $(p)comm$(e) $(p)Caret$(e) $(p)DrawText$(e) $(p)network$(e) $(p)SysMetrics$(e) $(p)Listbox$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)libmain$(e)
+srcfiles = $(p)hook$(e) $(p)dialog$(e) $(p)Time$(e) $(p)Atoms$(e) $(p)InitApp$(e) $(p)comm$(e) $(p)Caret$(e) $(p)DrawText$(e) $(p)network$(e) $(p)SysMetrics$(e) $(p)Listbox$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)libmain$(e)
 ADD_COPT = -zc -s
 ADD_ASMOPT = -i=..$(SEP)tables$(SEP)xlat
 #NOLIBS   = 1
@@ -48,6 +48,7 @@ EXPORTS = &
 	IsDlgButtonChecked  .98, &
 	DlgDirSelect .99, &
 	SendDlgItemMessage .101, &
+	SetWindowsHook .121, &
 	UpdateWindow .124, &
 	InvalidateRect .125, &
 	InvalidateRgn .126, &
@@ -99,6 +100,7 @@ EXPORTS = &
 	DialogBoxIndirect .218, &
 	CreateDialogIndirect .219, &
 	LoadMenuIndirect .220, &
+	DefHookProc .235, &
 	CreateDialogParam .241, &
 	EqualRect.244, &
 	EnableCommNotification .245, &
@@ -190,6 +192,7 @@ IMPORTS = GETEXEVERSION KERNEL.105, &
 	LOCALCOUNTFREE KERNEL.161, &
 	LOCALHEAPSIZE KERNEL.162, &
 	FARSETOWNER KERNEL.403, &
+	FarGetOwner KERNEL.404, &
 	GetSystemMSecCount SYSTEM.6
 
 # GETPRIVATEPROFILEINT KERNEL.127, &
