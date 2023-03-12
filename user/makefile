@@ -20,6 +20,8 @@ STACKSIZE = 1k
 DLL     = 1
 EXPORTS = &
 	OldExitWindows .2, &
+	GetTickCount .13, &
+	GetCurrentTime . 15, &
 	GetWindowText .36, &
 	SetWindowText .37, &
 	GetWindowTextLength .38, &
