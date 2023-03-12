@@ -8,7 +8,7 @@ PROJ     = user1
 PROJ1    = user
 TRGT     = $(PROJ1).exe
 DESC     = Windows USER.EXE
-srcfiles = $(p)Time$(e) $(p)Atoms$(e) $(p)InitApp$(e) $(p)comm$(e) $(p)Caret$(e) $(p)DrawText$(e) $(p)network$(e) $(p)SysMetrics$(e) $(p)Listbox$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)libmain$(e)
+srcfiles = $(p)dialog$(e) $(p)Time$(e) $(p)Atoms$(e) $(p)InitApp$(e) $(p)comm$(e) $(p)Caret$(e) $(p)DrawText$(e) $(p)network$(e) $(p)SysMetrics$(e) $(p)Listbox$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)libmain$(e)
 ADD_COPT = -zc -s
 ADD_ASMOPT = -i=..$(SEP)tables$(SEP)xlat
 #NOLIBS   = 1
@@ -40,6 +40,14 @@ EXPORTS = &
 	InvertRect .82, &
 	FrameRect .83, &
 	DrawIcon .84, &
+	DialogBox .87, &
+	CreateDialog .89, &
+	SetDlgItemText .92, &
+	GetDlgItemText .93, &
+	CheckDlgButton .97, &
+	IsDlgButtonChecked  .98, &
+	DlgDirSelect .99, &
+	SendDlgItemMessage .101, &
 	UpdateWindow .124, &
 	InvalidateRect .125, &
 	InvalidateRgn .126, &
@@ -70,6 +78,7 @@ EXPORTS = &
 	SetSysColors .181, &
 	GetCaretPos .183, &
 	GrayString .185, &
+	DlgDirSelectComboBox .194, &
 	OpenComm .200, &
 	SetCommState .201, &
 	GetCommState .202, &
@@ -87,7 +96,10 @@ EXPORTS = &
 	EscapeCommFunction .214, &
 	FlushComm .215, &
 	UserSeeUserDo .216, &
+	DialogBoxIndirect .218, &
+	CreateDialogIndirect .219, &
 	LoadMenuIndirect .220, &
+	CreateDialogParam .241, &
 	EqualRect.244, &
 	EnableCommNotification .245, &
 	GetMenuState .250, &
