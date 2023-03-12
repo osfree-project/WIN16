@@ -20,6 +20,9 @@ STACKSIZE = 1k
 DLL     = 1
 EXPORTS = &
 	OldExitWindows .2, &
+	GetWindowText .36, &
+	SetWindowText .37, &
+	GetWindowTextLength .38, &
 	CreateWindow .41, &
 	RegisterClass .57, &
 	SetRect .72, &
@@ -35,6 +38,11 @@ EXPORTS = &
 	InvertRect .82, &
 	FrameRect .83, &
 	DrawIcon .84, &
+	UpdateWindow .124, &
+	InvalidateRect .125, &
+	InvalidateRgn .126, &
+	ValidateRect .127, &
+	ValidateRgn .128, &
 	LoadMenu .150, &
 	ChangeMenu .153, &
 	CheckMenuItem .154, &
@@ -83,6 +91,10 @@ EXPORTS = &
 	GetMenuState .250, &
 	GetMenuItemCount .263, &
 	GetMenuItemID .264, &
+	GlobalAddAtom .268, &
+	GlobalDeleteAtom .269, &
+	GlobalFindAtom .270, &
+	GlobalGetAtomName .271, &
 	OldSetDeskPattern .279, &
 	GetFreeSystemResources .284, &
 	mouse_event .299, &

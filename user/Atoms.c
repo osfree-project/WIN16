@@ -97,6 +97,9 @@ GetAtomPointer(ATOMTABLE far *at,int index)
 	return lp;
 }
 
+/***********************************************************************
+ *		GlobalDeleteAtom (USER.269)
+ */
 ATOM WINAPI
 GlobalDeleteAtom(ATOM atom)
 {
@@ -114,6 +117,9 @@ GlobalDeleteAtom(ATOM atom)
 	return atom;
 }
 
+/***********************************************************************
+ *		GlobalGetAtomName (USER.271)
+ */
 UINT WINAPI
 GlobalGetAtomName(ATOM atom,LPSTR lpszbuf,int len)
 {
@@ -140,6 +146,9 @@ GlobalGetAtomName(ATOM atom,LPSTR lpszbuf,int len)
 	return 0;
 }
 
+/***********************************************************************
+ *		GlobalFindAtom (USER.270)
+ */
 ATOM WINAPI
 GlobalFindAtom(LPCSTR lpstr)
 {
@@ -164,6 +173,9 @@ GlobalFindAtom(LPCSTR lpstr)
 	return 0;
 }
 
+/***********************************************************************
+ *		GlobalAddAtom (USER.268)
+ */
 ATOM WINAPI
 GlobalAddAtom(LPCSTR lpstr)
 {
