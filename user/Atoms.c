@@ -3,6 +3,12 @@
 // Selector of Global Atom Table
 static WORD GlobalAtomTable_Selector;
 
+extern  void PushDS( void );
+#pragma aux PushDS = "push ds";
+
+extern  void PopDS( void );
+#pragma aux PopDS = "pop ds";
+
 /* This function sets current DS value */
 extern  void          SetDS( unsigned short );
 #pragma aux SetDS               = \
@@ -12,8 +18,9 @@ extern  void          SetDS( unsigned short );
 #define  SetGlobalTableDS() if (GlobalAtomTable_Selector) SetDS(GlobalAtomTable_Selector)
 
 // This is initialization of Global Atoms. This function must be called during USER.EXE initialization.
-void __loadds GlobalInitAtom(void)
+void PASCAL GlobalInitAtom(void)
 {
+  PushDS();
   GlobalAtomTable_Selector=GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT | GMEM_DDESHARE, 0xfa);
   if (GlobalAtomTable_Selector)
   {
@@ -23,6 +30,7 @@ void __loadds GlobalInitAtom(void)
     InitAtomTable(0x25);
     GlobalUnlock(GlobalAtomTable_Selector);
   }
+  PopDS();
 }
 
 /***********************************************************************
