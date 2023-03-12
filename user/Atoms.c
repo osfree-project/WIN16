@@ -257,4 +257,28 @@ GlobalAddAtom(LPCSTR lpstr)
 	}	
 
 	return index + ATOMBASE;
+
+}
+
+/* This function sets current DS value */
+extern  void          SetDS( unsigned short );
+#pragma aux SetDS               = \
+        "mov    ds,ax"          \
+        parm                   [ax];
+
+static WORD GlobalTable_Selector;
+
+#define  SetGlobalTableDS() if (GlobalTable_Selector) SetDS(GlobalTable_Selector)
+
+void GlobalInitAtom(void)
+{
+  GlobalTable_Selector=GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT | GMEM_DDESHARE, 0xfa);
+  if (GlobalTable_Selector)
+  {
+    GlobalTable_Selector=SELECTOROF(GlobalLock(GlobalTable_Selector));
+    SetGlobalTableDS();
+    LocalInit(0, 0, 0xea);
+    InitAtomTable(0x25);
+    GlobalUnlock(GlobalTable_Selector);
+  }
 }
