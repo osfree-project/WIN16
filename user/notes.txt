@@ -1,0 +1,15 @@
+Minimal API according Pietrek book to load user.exe:
+1
+320
+7
+4
+332
+400
+110
+314
+333
+284
+470
+23
+224
+47
