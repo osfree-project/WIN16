@@ -199,10 +199,10 @@ void IconAnalogClock(HDC dc, int x, int y)
     centre.y = y/2;
 
     for(t=0; t<12; t++) {
-		SetPixel(dc, centre.x + sin(t*M_PI/6)*0.88*radius, centre.y - cos(t*M_PI/6)*0.88*radius, RGB(255,255,255));
-		SetPixel(dc, centre.x + sin(t*M_PI/6)*0.88*radius+1, centre.y - cos(t*M_PI/6)*0.88*radius, RGB(0,0,0));
-		SetPixel(dc, centre.x + sin(t*M_PI/6)*0.88*radius+1, centre.y - cos(t*M_PI/6)*0.88*radius+1, RGB(0,0,0));
-		SetPixel(dc, centre.x + sin(t*M_PI/6)*0.88*radius, centre.y - cos(t*M_PI/6)*0.88*radius+1, RGB(0,0,0));
+		SetPixel(dc, centre.x + sin(t*M_PI/6)*0.8*radius, centre.y - cos(t*M_PI/6)*0.8*radius, RGB(255,255,255));
+		SetPixel(dc, centre.x + sin(t*M_PI/6)*0.8*radius+1, centre.y - cos(t*M_PI/6)*0.8*radius, RGB(0,0,0));
+		SetPixel(dc, centre.x + sin(t*M_PI/6)*0.8*radius+1, centre.y - cos(t*M_PI/6)*0.8*radius+1, RGB(0,0,0));
+		SetPixel(dc, centre.x + sin(t*M_PI/6)*0.8*radius, centre.y - cos(t*M_PI/6)*0.8*radius+1, RGB(0,0,0));
     }
 
     PositionHands(&centre, radius, FALSE);
