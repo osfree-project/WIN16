@@ -1510,12 +1510,12 @@ VOID Pane_OnCommand(HWND hWnd, UINT id, HWND hWndCtl, WORD codeNotify)
 	case IDB_GENERAL:
 	case IDB_TASK:
 	    if ((UINT) nActiveDlg != id) {
-		ShowCursor(FALSE);		// Hide the mouse cursor
-		SwitchPanes(hWnd, id);
-		SetFocus(GetDlgItem(hWnd, (id % 10) * 100));
-		ShowCursor(TRUE);		// Show the mouse cursor
+			ShowCursor(FALSE);		// Hide the mouse cursor
+			SwitchPanes(hWnd, id);
+			SetFocus(GetDlgItem(hWnd, (id % 10) * 100));
+			ShowCursor(TRUE);		// Show the mouse cursor
 	    } else {
-		SetFocus(GetDlgItem(hWnd, (id % 10) * 100));
+			SetFocus(GetDlgItem(hWnd, (id % 10) * 100));
 	    }
 	    break;
 
@@ -1672,6 +1672,7 @@ BOOL Pane_OnInitDialog(HWND hWnd, HWND hWndFocus, LPARAM lParam)
 
 // Grab the hWnd for each child control and stuff it in aControls
 // Enable all the GENERAL controls, and disable all others
+#if 0
     hdwp = BeginDeferWindowPos(64);
 
     for (n = 0; n < sizeof(aControls)/sizeof(CONTROL); n++) {
@@ -1721,6 +1722,8 @@ BOOL Pane_OnInitDialog(HWND hWnd, HWND hWndFocus, LPARAM lParam)
 	    }
 	}
     }
+
+#endif
 
     nActiveDlg = IDD_GENERAL;
 
@@ -2295,7 +2298,7 @@ QQQ:
 	    SetHelpText(hWndDlg, id);
 
 	    if (aControls[n].Flags & EDIT_NOSEL) {
-		Edit_SetSel(hWnd, 0, 0);
+			Edit_SetSel(hWnd, 0, 0);
 	    }
 
 	    break;
@@ -2388,7 +2391,7 @@ LRESULT CALLBACK _export KeyEdit_SubClassProc(HWND hWnd, UINT msg, WPARAM wParam
 	    break;
 
 	case WM_SETFOCUS:
-	    SetHelpText(hWndDlg, id);
+			SetHelpText(hWndDlg, id);
 	    break;
 
 // If we get a character that's not a SHIFT, ALT, or CTRL, save the scancode.
@@ -2441,7 +2444,7 @@ LRESULT CALLBACK _export Button_SubClassProc(HWND hWnd, UINT msg, WPARAM wParam,
 	;
 
     if (msg == WM_SETFOCUS)
-	SetHelpText(hWndDlg, id);
+		SetHelpText(hWndDlg, id);
 
     return (CallWindowProc(aControls[n].lpfnOld, hWnd, msg, wParam, lParam) );
 }
