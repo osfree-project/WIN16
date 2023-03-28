@@ -234,13 +234,6 @@ DebugBreak()
 #endif
 }
 
-WORD
-InitApp(HINSTANCE hInstance)
-{
-    APISTR((LF_APICALL,"InitApp(HINSTANCE=%x)\n",hInstance));
-    APISTR((LF_APIRET,"InitApp: returns WORD %d\n",1));
-    return 1;
-}
 
 WORD
 WaitEvent(HANDLE taskID)

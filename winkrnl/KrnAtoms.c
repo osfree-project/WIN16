@@ -79,7 +79,6 @@ To send email to the maintainer of the Willows Twin Libraries.
 
 /* system global and local atom tables */
 static ATOMTABLE LocalTable;
-static ATOMTABLE GlobalTable;
 
 /* internal functions */
 static ATOMENTRY *GetAtomPointer(ATOMTABLE *,int);
@@ -369,19 +368,6 @@ LockAtom(ATOM atom)
 /*								*/
 /****************************************************************/
 
-ATOM
-GlobalAddAtomEx(ATOMTABLE *at,LPCSTR lpstr)
-{
-	UINT	rc;
-
-	APISTR((LF_API,"GlobalAddAtomEx: string %s table %x\n",
-		lpstr,at));
-
-	DRVCALL_IPC(IPCH_GLOBALATOMDATA,GAD_READWRITE,0,at);
-	rc = AddAtomEx(at,lpstr);	
-	DRVCALL_IPC(IPCH_GLOBALATOMDATA,GAD_UPDATE,0,at);
-	return rc;
-}
 
 ATOM
 GlobalFindAtomEx(ATOMTABLE *at,LPCSTR lpstr)
@@ -421,29 +407,6 @@ GlobalLockAtomEx(ATOMTABLE *at, ATOM atom)
 /*	global atom functions 					*/
 /****************************************************************/
 
-ATOM WINAPI
-GlobalAddAtom(LPCSTR lpstr)
-{
-	return GlobalAddAtomEx(&GlobalTable,lpstr);
-}
-
-ATOM WINAPI
-GlobalFindAtom(LPCSTR lpstr)
-{
-	return GlobalFindAtomEx(&GlobalTable,lpstr);
-}
-
-ATOM WINAPI
-GlobalDeleteAtom(ATOM atom)
-{
-	return GlobalDeleteAtomEx(&GlobalTable,atom);
-}
-
-UINT WINAPI
-GlobalGetAtomName(ATOM atom,LPSTR lpszbuf,int len)
-{
-	return GlobalGetAtomNameEx(&GlobalTable,atom,lpszbuf,len);
-}
 
 UINT
 GlobalLockAtom(ATOM atom)
