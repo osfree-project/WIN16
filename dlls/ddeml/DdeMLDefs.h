@@ -190,10 +190,10 @@ static int ShutdownRetryTimeout = SHUTDOWNRETRYTIMEOUT_DEFAULT;
 
 typedef struct tagDDEMLSERVICE
 {
-    struct tagDDEMLSERVICE *lpNextService;
+    struct tagDDEMLSERVICE far *lpNextService;
     HSZ		hszService;
 } DDEMLSERVICE;
-typedef DDEMLSERVICE *LPDDEMLSERVICE;
+typedef DDEMLSERVICE far *LPDDEMLSERVICE;
 
 /* magic value for idInst (kept in HIWORD) */
 #define	DDEML_INSTID_MAGIC	0xDDE0
@@ -211,7 +211,7 @@ typedef struct tagDDEMLINSTANCE
     HTASK	hTask;
 } DDEMLINSTANCE;
 
-typedef DDEMLINSTANCE *LPDDEMLINSTANCE;
+typedef DDEMLINSTANCE far *LPDDEMLINSTANCE;
 
 static DDEMLINSTANCE DdeMLInstances[DDEML_MAX_INSTANCES];
 
@@ -224,7 +224,7 @@ typedef struct tagDDEMLDATA
     HGLOBAL		hGlobal;
 } DDEMLDATA;
 
-typedef DDEMLDATA *LPDDEMLDATA;
+typedef DDEMLDATA far *LPDDEMLDATA;
 
 #define	DDEML_HCONV_MAGIC	0xDDECDDEC
 #define	DDEML_HCONVLIST_MAGIC	0xDDECDDED
