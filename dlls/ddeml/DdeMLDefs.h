@@ -231,13 +231,13 @@ typedef DDEMLDATA *LPDDEMLDATA;
 typedef struct tagDDEMLCONV
 {
     CONVINFO	ConvInfo;
-    struct tagDDEMLCONV	*lpNextConv;
+    struct tagDDEMLCONV far *lpNextConv;
     DWORD	uMagic;
     DWORD	idInst;
     HWND	hWndConv;
 } DDEMLCONV;
 
-typedef DDEMLCONV *LPDDEMLCONV;
+typedef DDEMLCONV far *LPDDEMLCONV;
 
 #if 0
 static DWORD DdeTransactionFailMasks[] =

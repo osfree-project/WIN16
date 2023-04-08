@@ -34,6 +34,10 @@ To send email to the maintainer of the Willows Twin Libraries.
 
 #include <windows.h>
 //#include "windowsx.h"
+
+#define HANDLE_WM_CREATE(hwnd, wParam, lParam, fn) \
+    ((fn)((hwnd), (CREATESTRUCT FAR*)(lParam)) ? 0L : (LRESULT)-1L)
+
 #include "dde.h"
 #include "ddeml.h"
 
@@ -61,13 +65,13 @@ To send email to the maintainer of the Willows Twin Libraries.
 static BOOL RegisterDdeMLClasses(void);
 static BOOL IsValidInstanceID(DWORD);
 static BOOL IsValidDdeMLHandle(DDEML_HANDLE,UINT);
-static LRESULT DdeMLHandleCreate(HWND,CREATESTRUCT *);
-static LRESULT DdeMLConvListHandleCreate(HWND,CREATESTRUCT *);
-static LRESULT DdeMLClientHandleCreate(HWND,CREATESTRUCT *);
-static LRESULT DdeMLServerHandleCreate(HWND,CREATESTRUCT *);
+static LRESULT DdeMLHandleCreate(HWND,CREATESTRUCT far *);
+static LRESULT DdeMLConvListHandleCreate(HWND,CREATESTRUCT far *);
+static LRESULT DdeMLClientHandleCreate(HWND,CREATESTRUCT far *);
+static LRESULT DdeMLServerHandleCreate(HWND,CREATESTRUCT far *);
 static void DdeSetLastError(LPDDEMLINSTANCE, UINT);
 static HWND DdeEstablishConversation(LPDDEMLINSTANCE,HSZ,HSZ,CONVCONTEXT far *);
-static LPDDEMLCONV DdeMakeNewConv(HWND,CONVCONTEXT *);
+static LPDDEMLCONV DdeMakeNewConv(HWND,CONVCONTEXT far *);
 static BOOL ConnectEnumProc(HWND,LPARAM);
 static UINT DdeMLClientHandleInitACK(HWND,LPDDEMLCONV,WPARAM,LPARAM);
 static LRESULT DdeMLSubFrameHandleInit(LPDDEMLINSTANCE, HWND, HWND, LPARAM);
@@ -321,7 +325,7 @@ DdeEstablishConversation(LPDDEMLINSTANCE lpInst,
 }
 
 static LPDDEMLCONV
-DdeMakeNewConv(HWND hWndConv, CONVCONTEXT *lpCC)
+DdeMakeNewConv(HWND hWndConv, CONVCONTEXT far *lpCC)
 {
     LPDDEMLCONV lpConv;
 
@@ -633,7 +637,7 @@ DdeQueryString(DWORD idInst, HSZ hsz, LPCSTR lpsz, DWORD cchMax, int codepage)
 	buf[0] = 0;
 	GlobalGetAtomName((ATOM)LOWORD(hsz),buf,255);
 	if (lpsz) {
-	    lstrcpyn(lpsz,buf,min(cchMax-1,255));
+	    lstrcpyn((LPSTR)lpsz,buf,min(cchMax-1,255));
 	    return (UINT)lstrlen(lpsz);
 	}
 	else
@@ -783,12 +787,12 @@ ClientWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 static LRESULT
-DdeMLClientHandleCreate(HWND hWnd, CREATESTRUCT *lpCreateStruct)
+DdeMLClientHandleCreate(HWND hWnd, CREATESTRUCT far *lpCreateStruct)
 {
-    CONVCONTEXT *lpCC;
+    CONVCONTEXT far *lpCC;
     LPDDEMLCONV lpConv;
 
-    if ((lpCC = (CONVCONTEXT *)lpCreateStruct->lpCreateParams)) {
+    if ((lpCC = (CONVCONTEXT far *)lpCreateStruct->lpCreateParams)) {
 	if ((lpConv = DdeMakeNewConv(hWnd,lpCC))) {
 	    SetWindowLong(hWnd,DDEMLHCONV_INDEX,(LONG)lpConv);
 	    return (LRESULT)1;
@@ -858,7 +862,7 @@ ServerWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 static LRESULT
-DdeMLServerHandleCreate(HWND hWnd, CREATESTRUCT *lpCreateStruct)
+DdeMLServerHandleCreate(HWND hWnd, CREATESTRUCT far *lpCreateStruct)
 {
     LPDDEMLCONV lpConv;
     LPDDEMLINSTANCE lpInst;
@@ -893,7 +897,7 @@ DdeMLWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 static LRESULT
-DdeMLHandleCreate(HWND hWnd, CREATESTRUCT *lpCreateStruct)
+DdeMLHandleCreate(HWND hWnd, CREATESTRUCT far *lpCreateStruct)
 {
     LPDDEMLINSTANCE lpInst;
 
@@ -919,7 +923,7 @@ ConvListWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 static LRESULT
-DdeMLConvListHandleCreate(HWND hWnd, CREATESTRUCT *lpCreateStruct)
+DdeMLConvListHandleCreate(HWND hWnd, CREATESTRUCT far *lpCreateStruct)
 {
     LPDDEMLCONV lpConv;
 
