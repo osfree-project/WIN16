@@ -1,13 +1,13 @@
 #
-# A Makefile for shell.dll
+# A Makefile for commdlg.dll
 # (c) osFree project,
-# author, date
+# prokushev, 2023
 #
 
-PROJ     = commdls
+PROJ     = commdlg
 TRGT     = $(PROJ).dll
 DESC     = Windows Common Dialogs Library
-srcfiles = $(p)libmain$(e) $(p)ChooseColor$(e) $(p)ChooseFont$(e) $(p)Commdlg$(e) $(p)FindReplDlg$(e) $(p)GetOpenFileName$(e) #$(p)PrintDlg$(e)
+srcfiles = $(p)libmain$(e) $(p)ChooseColor$(e) $(p)ChooseFont$(e) $(p)Commdlg$(e) $(p)FindReplDlg$(e) $(p)GetOpenFileName$(e) $(p)PrintDlg$(e)
 # linking dll file
 DLL     = 1
 EXPORTS = &

@@ -27,6 +27,10 @@ To send email to the maintainer of the Willows Twin Libraries.
 	mailto:twin@willows.com 
 
  */
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
 
 #include <windows.h>
 #include <drivinit.h>
@@ -38,13 +42,14 @@ To send email to the maintainer of the Willows Twin Libraries.
 
 //#include "Log.h"
 #include "Dialog.h"
-//#include "GdiDDK.h"
-//#include "PrinterDC.h"
+#include "GdiDDK.h"
+#include "PrinterDC.h"
 
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
+#define GET_WM_CTLCOLOR_MSG(type)		    (UINT)(WM_CTLCOLOR)
+#define GET_WM_CTLCOLOR_MPS(hdc, hwnd, type) \
+        (WPARAM)(hdc), MAKELONG(hwnd, type)
 
+#define GET_WM_COMMAND_ID(wp, lp)                   (wp)
 
 #define	ICON_PORTRAIT		0x210
 #define	ICON_LANDSCAPE		0x211
@@ -62,6 +67,21 @@ static void InitPrintSetupControls(HWND, LPSTR, LPSTR, LPSTR, PRINTDLG *);
 static int MakeDEVStruct(HWND, HWND, PRINTDLG FAR*);
 
 HINSTANCE LoadDriver(LPCSTR);
+
+HINSTANCE
+LoadDriver(LPCSTR lpszDriver)
+{
+	char buf[_MAX_PATH];
+	int i;
+ 
+	for (i=0;lpszDriver[i];i++)
+		buf[i] = tolower(lpszDriver[i]);
+
+	buf[i] = '\0';
+	strcat(buf,".drv");
+
+	return LoadLibrary(buf);
+}
 
 extern DWORD	LastCommonDialogError;
 
@@ -94,7 +114,7 @@ WINAPI PrintDlg(PRINTDLG FAR *lppd)
 				LastCommonDialogError = CDERR_MEMALLOCFAILURE;
 				return FALSE;
 			}
-			_fstrcpy(szBuf,(LPSTR)lpDevNames +
+			lstrcpy(szBuf,(LPSTR)lpDevNames +
 					lpDevNames->wDriverOffset);
 			lpszDriver = szBuf;
 			_fstrcpy(szDevice,(LPSTR)lpDevNames +
@@ -188,7 +208,7 @@ PrintDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     HINSTANCE		hDrvInst;
     void FAR		*lpMem;
     LONG		*lpLong;
-    PRINTDLG		*cf;
+    PRINTDLG	far	*cf;
     DEVMODE		*lpDevMode;
     DEVNAMES		*lpDevNames;
     UINT		uiRet = 0;
@@ -306,8 +326,8 @@ PrintDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 		if ( !(cf->Flags & PD_SHOWHELP) )
 			ShowWindow(GetDlgItem(hDlg, pshHelp), SW_HIDE);
-		else
-			uiHelpMsg = RegisterWindowMessage(HELPMSGSTRING);
+/* @todo		else
+			uiHelpMsg = RegisterWindowMessage(HELPMSGSTRING);*/
 
 		/* For WM_INITDIALOG hook is invoked after default processing */
 
@@ -398,7 +418,7 @@ PrintDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		case psh1:		/*  Setup...  */
 			/* Make sure that we don't need to call PrintDlg */
 			/* twice: first time w/Flags |= PD_RETURNDEFAULT */
-			memcpy((LPSTR)&printDlgStruct, (LPSTR)cf, cf->lStructSize);
+			_fmemcpy((LPSTR)&printDlgStruct, (LPSTR)cf, cf->lStructSize);
 			printDlgStruct.Flags |= PD_PRINTSETUP;
 			PrintDlg(&printDlgStruct);
 			SetWindowLong(hDlg, DWL_MSGRESULT, (LPARAM)0);
@@ -518,7 +538,7 @@ PrintSetupDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				sprintf(buf2, "%s on %s", lp, lpszPort);
 				SendDlgItemMessage(hDlg, cmb1, CB_INSERTSTRING,
 					 	-1, (LPARAM)buf2);
-				lp += strlen(lp) + 1;
+				lp += lstrlen(lp) + 1;
 			}
 			SendDlgItemMessage(hDlg, cmb1, CB_SETCURSEL, 0, 0);
 			if ( n )
@@ -540,8 +560,8 @@ PrintSetupDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 		if ( !(cf->Flags & PD_SHOWHELP) )
 			ShowWindow(GetDlgItem(hDlg, pshHelp), SW_HIDE);
-		else
-			uiHelpMsg = RegisterWindowMessage(HELPMSGSTRING);
+/* @todo		else
+			uiHelpMsg = RegisterWindowMessage(HELPMSGSTRING); */
 
 		/* For WM_INITDIALOG hook is invoked after default processing */
 
@@ -822,7 +842,7 @@ MakeDEVStruct( HWND hDlg, HWND hWndOwner, PRINTDLG FAR* cf )
 		cf->hDevMode = NULL;
 		return( -1 );
 	}
-	strcpy((char* )lpDevMode->devMode.dmDeviceName, "Macintosh Default Printer" );
+	lstrcpy(lpDevMode->devMode.dmDeviceName, "Macintosh Default Printer" );
 	lpDevMode->devMode.dmSpecVersion	= 0x30A;
 	lpDevMode->devMode.dmSize			= sizeof( DEVMODE );
 	lpDevMode->devMode.dmDriverExtra	= sizeof( LPVOID );
@@ -880,7 +900,7 @@ MakeDEVStruct(HWND hDlg, HWND hWndOwner, PRINTDLG FAR*cf)
 
 	if ( cf->hDevMode ) {
 		lpDevModeInit = (DEVMODE *)GlobalLock(cf->hDevMode);
-		strcpy(szDevice,(const char *)lpDevModeInit->dmDeviceName);
+		lstrcpy(szDevice,lpDevModeInit->dmDeviceName);
 		lpszDevice = szDevice;
 		GlobalUnlock(cf->hDevMode);
 		/* Get information about specified printer */
@@ -926,13 +946,13 @@ MakeDEVStruct(HWND hDlg, HWND hWndOwner, PRINTDLG FAR*cf)
 				LastCommonDialogError = PDERR_NODEVICES;
 				return -1;
 			}
-			strcpy(szBuf,(LPSTR)lpDevNames +
+			lstrcpy(szBuf,(LPSTR)lpDevNames +
 					lpDevNames->wDriverOffset);
 			lpszDriver = szBuf;
-			strcpy(szDevice,(LPSTR)lpDevNames +
+			lstrcpy(szDevice,(LPSTR)lpDevNames +
 					lpDevNames->wDeviceOffset);
 			lpszDevice = szDevice;
-			strcpy(szPort,(LPSTR)lpDevNames +
+			lstrcpy(szPort,(LPSTR)lpDevNames +
 					lpDevNames->wOutputOffset);
 			lpszPort = szPort;
 			uDefault = lpDevNames->wDefault;
@@ -999,21 +1019,21 @@ MakeDEVStruct(HWND hDlg, HWND hWndOwner, PRINTDLG FAR*cf)
 		GlobalFree(cf->hDevNames);
 
 	hDevNames = GlobalAlloc(GHND, sizeof(DEVNAMES) +
-		strlen(lpszDriver) + strlen(lpszDevice) +
-		strlen(lpszPort) + 3);
+		lstrlen(lpszDriver) + lstrlen(lpszDevice) +
+		lstrlen(lpszPort) + 3);
 	if ( hDevNames == 0 )
 		return -1;
 	lpDevNames = (DEVNAMES *)GlobalLock(hDevNames);
 
 	lpDevNames->wDeviceOffset = sizeof(DEVNAMES);
 	lpDevNames->wDriverOffset = sizeof(DEVNAMES) +
-			strlen(lpszDevice) + 1;
+			lstrlen(lpszDevice) + 1;
 	lpDevNames->wOutputOffset = lpDevNames->wDriverOffset +
-			strlen(lpszDriver) + 1;
+			lstrlen(lpszDriver) + 1;
 	lpDevNames->wDefault = DN_DEFAULTPRN;
-	strcpy(((LPSTR)lpDevNames)+lpDevNames->wDriverOffset, lpszDriver);
-	strcpy(((LPSTR)lpDevNames)+lpDevNames->wDeviceOffset, lpszDevice);
-	strcpy(((LPSTR)lpDevNames)+lpDevNames->wOutputOffset, lpszPort);
+	lstrcpy(((LPSTR)lpDevNames)+lpDevNames->wDriverOffset, lpszDriver);
+	lstrcpy(((LPSTR)lpDevNames)+lpDevNames->wDeviceOffset, lpszDevice);
+	lstrcpy(((LPSTR)lpDevNames)+lpDevNames->wOutputOffset, lpszPort);
 	GlobalUnlock(hDevNames);
 
 	FreeLibrary(hInst);
