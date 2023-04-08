@@ -509,7 +509,7 @@ short WINAPI WGOFNSetTextDirectory (
 		if ((lpDrivePath = _fstrpbrk ( lpPath, WGOFNCharSet_DriveSeparator ) ) )
 		{
 			DriveSelection = ( WORD )( *( lpDrivePath - 1 ) - 'A' ) + 1;
-			MFS_GETDRIVEMAP ( DriveSelection, WorkingPath, sizeof ( WorkingPath ) );
+// @todo			MFS_GETDRIVEMAP ( DriveSelection, WorkingPath, sizeof ( WorkingPath ) );
 			wsprintf ( DisplayPath, "%c: %s", *( lpDrivePath - 1 ), WorkingPath );
 			DriveSelection = ( WORD ) SendMessage ( hDriveComboWnd, 
 			                                        CB_FINDSTRINGEXACT,
@@ -945,6 +945,7 @@ short WINAPI WGOFNInitControls (
 	getcwd ( Path, sizeof ( Path ) );
 	DlgDirListComboBox ( hWnd, Path, WGOFNComboDrives, ( int )NULL, 
 	                     DDL_DRIVES | DDL_EXCLUSIVE );
+/* @todo
 	GetTwinString ( WCP_PATHSASDRIVES, TwinString, sizeof ( TwinString ) );
 	if ( ! stricmp ( TwinString, "no" ) )
 	{
@@ -963,6 +964,7 @@ short WINAPI WGOFNInitControls (
 		WGOFNSetTextDirectory ( hWnd, ( LPSTR )lpOpenFileName->lpstrInitialDir );
 	else
 		WGOFNSetTextDirectory ( hWnd, ( LPSTR )NULL );
+*/
 	WGOFNSetEditFileName ( hWnd, NULL, TRUE );
 
 	return ( 0 );
@@ -1459,8 +1461,8 @@ short WINAPI WGOFNComboDrivesSelectionChange (
 	if ((ReturnCode = SendMessage(hControlWnd, CB_GETCURSEL, (WPARAM)NULL, 
 	                                  ( LPARAM )NULL ) ) == CB_ERR )
 	{
-		if ( ! ( CurrentDrive = _getdrive () ) )
-			CurrentDrive = MFS_GETROOTDRIVE ();
+		/* if ( ! ( */CurrentDrive = _getdrive (); /*) ) */
+//			CurrentDrive = MFS_GETROOTDRIVE ();
 		if ( ( ReturnCode = SendMessage ( hControlWnd, CB_GETCOUNT, 0, 0 ) ) == CB_ERR )
 			ErrorCode = WGOFNERR_GETCOUNT;
 		else
@@ -1592,7 +1594,8 @@ short WINAPI WGOFNListDirectoriesDoubleClick (
 			                                  WCharSet_PathSeparators ) ))
 				lpDir [ 1 ] = '\0';
 			chdir ( CurrentDirectory );
-			RootDrive = MFS_GETROOTDRIVE();
+//			RootDrive = MFS_GETROOTDRIVE();
+			RootDrive = _getdrive();//MFS_GETROOTDRIVE();
 			wsprintf ( CurrentDirectory, "%c%c%s", 
 			           ( char )( RootDrive - 1 ) + 'A', 
 			           *WCharSet_DriveSeparator, DirectoryName );
@@ -1781,8 +1784,8 @@ short WINAPI WGFONDrawItem (
 		case WGOFNComboDrives:
 			if ( ! ShowDriveLetters )
 			{
-				GetTwinString ( WCP_DRIVELETTERS, TwinString, sizeof ( TwinString ) );
-				ShowDriveLetters = stricmp ( TwinString, "yes" ) ? 2 : 1;
+//				GetTwinString ( WCP_DRIVELETTERS, TwinString, sizeof ( TwinString ) );
+//				ShowDriveLetters = stricmp ( TwinString, "yes" ) ? 2 : 1;
 			}
 			ItemData = SendMessage ( lpDrawItem->hwndItem, CB_GETITEMDATA, 
 			                         lpDrawItem->itemID, 0 );
@@ -1962,8 +1965,8 @@ short WINAPI WGFONDrawItem (
 		case WGOFNComboDrives:
 			if ( ! ShowDriveLetters )
 			{
-				GetTwinString ( WCP_DRIVELETTERS, TwinString, sizeof ( TwinString ) );
-				ShowDriveLetters = stricmp ( TwinString, "yes" ) ? 2 : 1;
+//				GetTwinString ( WCP_DRIVELETTERS, TwinString, sizeof ( TwinString ) );
+//				ShowDriveLetters = stricmp ( TwinString, "yes" ) ? 2 : 1;
 			}
 			ItemData = SendMessage ( lpDrawItem->hwndItem, CB_GETITEMDATA, 
 			                         lpDrawItem->itemID, 0 );
