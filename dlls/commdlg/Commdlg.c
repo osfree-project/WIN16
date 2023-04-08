@@ -47,9 +47,10 @@ DWORD WCDSetExtendedError (
 
 }
 
-extern int InternalDlgIndirectParam(HINSTANCE,HGLOBAL,HWND,DLGPROC,LPARAM);
+//extern int InternalDlgIndirectParam(HINSTANCE,HGLOBAL,HWND,DLGPROC,LPARAM);
 
 /*********************************************************************/
+
 BOOL
 MakeDialogBox(HINSTANCE hInstance, HWND hwndOwner, LPCSTR lpTemplateName, 
 		BOOL bEnableTemplate, BOOL bEnableTemplateHandle, 
@@ -63,10 +64,11 @@ MakeDialogBox(HINSTANCE hInstance, HWND hwndOwner, LPCSTR lpTemplateName,
 	if ( !(hInst = GetModuleHandle("COMMDLG")) )
 		hInst = LoadLibrary("COMMDLG");
 	
-	if ( bEnableTemplateHandle )
+	if ( bEnableTemplateHandle ) ;
+/*@ todo
 		return InternalDlgIndirectParam(hInst, hInstance, hwndOwner,
 					lpfnDlgProc, (LPARAM)lpCommDlgStruct);
-
+*/
 	if ( bEnableTemplate ) {
 		lpDlg = (LPSTR)lpTemplateName;
 		hInst = hInstance;
