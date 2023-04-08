@@ -40,6 +40,8 @@ To send email to the maintainer of the Willows Twin Libraries.
 #include "sys/stat.h"
 #include "dos.h"
 #include "direct.h"
+#include "stdlib.h"
+#include "ctype.h"
 
 //#include "mfs_config.h"
 #include "System.h"
@@ -196,8 +198,6 @@ LPSTR WINAPI strpbrkr (
 }
 //#endif
 
-//int WINAPI GetFileTitle(LPCSTR , LPSTR , UINT );
-//short WINAPI    GetFileTitle( LPCSTR, LPSTR, UINT );
 short WINAPI GetFileTitle(LPCSTR lpszFile, LPSTR lpszTitle, UINT cnBuf)
 {
 	int     nLen, i;
@@ -215,7 +215,7 @@ short WINAPI GetFileTitle(LPCSTR lpszFile, LPSTR lpszTitle, UINT cnBuf)
 			return -1;	/* Not valid file name */
 	}	/* Don't remove {}: won't work on SGI */
 
-	if ((lpszFileTitle = (LPSTR) strpbrkr(lpszFile, "/\\") ))
+	if ((lpszFileTitle = (LPSTR) strpbrkr((LPSTR)lpszFile, "/\\") ))
 		nLen -= (++lpszFileTitle - lpszFile);
 	else
 		lpszFileTitle = (LPSTR)lpszFile;
@@ -235,9 +235,12 @@ short WINAPI WGOFNIsADirectory (
 {
 
 	struct stat             Status;
+	char path[_MAX_PATH];
+
+	lstrcpy(path, lpPath);
 	
 	
-	if ( stat ( lpPath, &Status ) == -1 )
+	if ( stat ( path, &Status ) == -1 )
 		return ( FALSE );
 	else
 		return ( Status.st_mode & S_IFDIR );
@@ -357,8 +360,11 @@ short WINAPI WGOFNGetFileStatus (
 	LPSTR                   lpPathAndFileName,
 	struct stat*            lpFileStatus )
 {
+	char path[_MAX_PATH];
 
-	return ( stat ( lpPathAndFileName, lpFileStatus ) );
+	lstrcpy(path, lpPathAndFileName);
+
+	return ( stat ( path, lpFileStatus ) );
 	
 }
 /*============================================================================*/
@@ -510,7 +516,8 @@ short WINAPI WGOFNSetTextDirectory (
 			                                        0, ( LPARAM ) DisplayPath );
 			SendMessage ( hDriveComboWnd, CB_SETCURSEL, DriveSelection, 0 );
 		}
-		chdir ( lpPath );
+		lstrcpy(DisplayPath, lpPath);
+		chdir ( DisplayPath );
 		getcwd ( DisplayPath, sizeof ( DisplayPath ) );
 	}
 	DlgDirList ( hWnd, DisplayPath, WGOFNListDirectories, ( int ) NULL,
@@ -1073,6 +1080,7 @@ short WINAPI WGFONEndDialog (
 	LPSTR                           lpInitDir = ( LPSTR )NULL;
   
 	short                           ErrorCode = 0;
+	char path[_MAX_PATH];
   
   
 	if ((hProp = GetProp ( hWnd, WGOFNGetPropertyName ( WGOFNPROP_OPENFILENAME ) ) ) )
@@ -1087,7 +1095,8 @@ short WINAPI WGFONEndDialog (
 			ErrorCode = WGOFNERR_GLOBALLOCK;
 		else
 		{
-			chdir ( lpInitDir );
+			lstrcpy(path, lpInitDir);
+			chdir ( path );
 			GlobalUnlock ( hProp );
 		}
 		GlobalFree ( hProp );
