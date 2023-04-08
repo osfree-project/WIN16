@@ -54,10 +54,9 @@ To send email to the maintainer of the Willows Twin Libraries.
   @todo This module uses its own global atom table. So, we need here something to replace.
 */
 
-//#include <string.h>
 #include "direct.h"
 
-#include "win16.h"
+#include "windows.h"
 
 #define GlobalPtrHandle(lp) \
   ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))
@@ -71,13 +70,7 @@ To send email to the maintainer of the Willows Twin Libraries.
 #define GlobalAllocPtr(flags, cb) \
   (GlobalLock(GlobalAlloc((flags), (cb))))
 
-//#include "windowsx.h"
 #include "shellapi.h"
-//#include "Willows.h"
-
-//#include "Log.h"
-//#include "kerndef.h"
-//#include "KrnAtoms.h"
 
 #include "atomex.h"
 
