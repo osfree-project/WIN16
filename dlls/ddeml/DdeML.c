@@ -48,6 +48,8 @@ To send email to the maintainer of the Willows Twin Libraries.
 //#include "KrnAtoms.h"
 //#include "Log.h"
 
+//@todo need to implement
+#define GlobalLockAtom(n) (n)
 
 #define GlobalPtrHandle(lp) \
   ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))

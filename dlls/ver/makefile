@@ -7,7 +7,7 @@
 PROJ     = ver
 TRGT     = $(PROJ).dll
 DESC     = Windows ver API Library
-srcfiles = $(p)version$(e) $(p)movefile$(e)
+srcfiles = $(p)version$(e) #$(p)movefile$(e)
 # linking dll file
 DLL     = 1
 EXPORTS = &
@@ -39,7 +39,7 @@ EXPORTS = &
   
 # WEP.8 Need this?
 
-OPTIONS = heapsize=32K lib lzexpand.lib libfile libentry.obj
+OPTIONS = heapsize=32K lib lzexpand.lib 
 DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 #ADD_COPT=-pl
 
