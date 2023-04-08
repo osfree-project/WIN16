@@ -22,6 +22,9 @@ EXPORTS = &
 	FINDTEXTDLGPROC.13=FindDlgProc, &
 	REPLACETEXTDLGPROC.14=ReplaceDlgProc, &
 	ChooseFont	.15, &
+	PrintDlg	.20, &
+	PRINTDLGPROC.21=PrintDlgProc, &
+	PRINTSETUPDLGPROC.22=PrintSetupDlgProc, &
 	CommDlgExtendedError .26, &
 	GetFileTitle	.27
 
@@ -29,9 +32,6 @@ EXPORTS = &
 #	FORMATCHARDLGPROC.16, &
 #	FONTSTYLEENUMPROC.18, &
 #	FONTFAMILYENUMPROC.19, &
-#	PrintDlg	.20, &
-#	PRINTDLGPROC.21=PrintDlgProc, &
-#	PRINTSETUPDLGPROC.22=PrintSetupDlgProc, &
 #	EDITINTEGERONLY.23, &
 #	WANTARROWS.25, &
 #	DWLBSUBCLASS.29, &
