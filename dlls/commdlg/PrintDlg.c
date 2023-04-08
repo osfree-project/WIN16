@@ -45,6 +45,18 @@ To send email to the maintainer of the Willows Twin Libraries.
 #include "GdiDDK.h"
 #include "PrinterDC.h"
 
+#define GlobalPtrHandle(lp) \
+  ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))
+
+#define     GlobalUnlockPtr(lp)      \
+                GlobalUnlock(GlobalPtrHandle(lp))
+
+#define GlobalFreePtr(lp) \
+  (GlobalUnlockPtr(lp),(BOOL)GlobalFree(GlobalPtrHandle(lp)))
+
+#define GlobalAllocPtr(flags, cb) \
+  (GlobalLock(GlobalAlloc((flags), (cb))))
+
 #define GET_WM_CTLCOLOR_MSG(type)		    (UINT)(WM_CTLCOLOR)
 #define GET_WM_CTLCOLOR_MPS(hdc, hwnd, type) \
         (WPARAM)(hdc), MAKELONG(hwnd, type)
@@ -207,7 +219,7 @@ PrintDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     HBRUSH 		hBrush;
     HINSTANCE		hDrvInst;
     void FAR		*lpMem;
-    LONG		*lpLong;
+    LONG	far	*lpLong;
     PRINTDLG	far	*cf;
     DEVMODE		*lpDevMode;
     DEVNAMES		*lpDevNames;
@@ -309,7 +321,7 @@ PrintDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 					ORD_DEVICECAPS);
 		n = lpfnDeviceCapabilities(lpszDevice, lpszPort,
 					DC_ENUMRESOLUTIONS, 0, 0);
-		lpLong = (LONG *)WinMalloc(n * ( 2 * sizeof(LONG) ));
+		lpLong = (LONG far *)GlobalAllocPtr(GPTR, n * ( 2 * sizeof(LONG) ));
 		lpfnDeviceCapabilities(lpszDevice, lpszPort, DC_ENUMRESOLUTIONS,
 				(LPVOID)lpLong, 0);
 		FreeLibrary(hDrvInst);
@@ -322,7 +334,7 @@ PrintDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				MAKELONG(LOWORD(lpLong[i]),LOWORD(lpLong[i+1])));
 		}
 		SendDlgItemMessage(hDlg, cmb1, CB_SETCURSEL, 0, 0);
-		WinFree((void *)lpLong);
+		GlobalFreePtr(lpLong);
 
 		if ( !(cf->Flags & PD_SHOWHELP) )
 			ShowWindow(GetDlgItem(hDlg, pshHelp), SW_HIDE);
@@ -747,7 +759,7 @@ InitPrintSetupControls(HWND hDlg, LPSTR lpszDriver, LPSTR lpszDevice,
 	HICON		hIcon;
 	PDEVCAPSPROC	lpfnDeviceCapabilities;
 	DEVMODE		*lpDevMode;
-	WORD		*lpWord;
+	WORD	far	*lpWord;
 	LPSTR		lpszBinNames;
 	int		i, n;	
 	char		buf[80];
@@ -765,7 +777,7 @@ InitPrintSetupControls(HWND hDlg, LPSTR lpszDriver, LPSTR lpszDevice,
 	n = lpfnDeviceCapabilities(lpszDevice, lpszPort, DC_PAPERS, 0,
 				lpDevMode);
 	/* !!!!!!!!!!! n == 0 ??????????? */
-	lpWord = (WORD *)WinMalloc(n * sizeof(WORD));
+	lpWord = (WORD far *)GlobalAllocPtr(GPTR,n * sizeof(WORD));
 	lpfnDeviceCapabilities(lpszDevice,lpszPort,DC_PAPERS,(LPVOID)lpWord,
 				lpDevMode);
 	for ( i = 0; i < n; i++ ) {
@@ -777,13 +789,13 @@ InitPrintSetupControls(HWND hDlg, LPSTR lpszDriver, LPSTR lpszDevice,
 				(LPARAM)lpWord[i]);
 	}
 	SendDlgItemMessage(hDlg, cmb2, CB_SETCURSEL, 0, 0);
-	WinFree((LPSTR)lpWord);
+	GlobalFreePtr(lpWord);
 
 	/* Initialize cmb3 */
 	n = lpfnDeviceCapabilities(lpszDevice, lpszPort, DC_BINNAMES, 0,
 				lpDevMode);
-	lpszBinNames = (LPSTR)WinMalloc(n * BINNAME_LEN);
-	lpWord       = (WORD *)WinMalloc(n * sizeof(WORD));
+	lpszBinNames = GlobalAllocPtr(GPTR,n * BINNAME_LEN);
+	lpWord       = (WORD  far *)GlobalAllocPtr(GPTR,n * sizeof(WORD));
 	lpfnDeviceCapabilities(lpszDevice, lpszPort, DC_BINS, (LPVOID)lpWord,
 				lpDevMode);
 	lpfnDeviceCapabilities(lpszDevice, lpszPort, DC_BINNAMES, 
@@ -796,8 +808,8 @@ InitPrintSetupControls(HWND hDlg, LPSTR lpszDriver, LPSTR lpszDevice,
 				(LPARAM)lpWord[i]);
 	}
 	SendDlgItemMessage(hDlg, cmb3, CB_SETCURSEL, 0, 0);
-	WinFree(lpszBinNames);
-	WinFree((LPSTR)lpWord);
+	GlobalFreePtr(lpszBinNames);
+	GlobalFreePtr(lpWord);
 
 	/* Initialize rad1, rad2, grp1 */
 	n = lpfnDeviceCapabilities(lpszDevice, lpszPort, DC_ORIENTATION,
