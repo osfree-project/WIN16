@@ -18,79 +18,73 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
+//#include <stdarg.h>
 
-#define NONAMELESSUNION
+//#define NONAMELESSUNION
 
 #include <windows.h>
-//#include "winbase.h"
-//#include "wine/winbase16.h"
-//#include "wine/winuser16.h"
-//#include "wownt32.h"
-//#include "winternl.h"
-//#include "wine/debug.h"
-
-//WINE_DEFAULT_DEBUG_CHANNEL(system);
 
 typedef struct
 {
     FARPROC         callback;
-    int             rate;
-    int             ticks;
+    long             rate;
+    long             ticks;
 } SYSTEM_TIMER;
 
 #define NB_SYS_TIMERS   8
 #define SYS_TIMER_RATE  54925
 
+static DWORD clockTick = 0;
 static SYSTEM_TIMER SYS_Timers[NB_SYS_TIMERS];
 static int SYS_NbTimers = 0;
 static HANDLE SYS_timer;
 static HANDLE SYS_thread;
 static BOOL SYS_timers_disabled;
+void interrupt (*PrevTimerIntHandler)(void);
 
-#if 0
-/***********************************************************************
- *           SYSTEM_TimerTick
- */
-static void CALLBACK SYSTEM_TimerTick( LPVOID arg, DWORD low, DWORD high )
+extern  void    disable( void );
+#pragma aux     disable = 0xfa;
+
+extern  void    enable( void );
+#pragma aux     enable = 0xfb;
+
+extern  void (__interrupt far *getvect( int ax ))();
+#pragma aux getvect = \
+            "mov ah,35h"    \
+            "int 21h"       \
+        __parm      [__ax] \
+        __value     [__es __bx]
+
+extern  void setvect( int, void (__interrupt far *)());
+#pragma aux setvect = \
+            "push ds"           \
+            "mov ds,cx"         \
+            "mov ah,25h"        \
+            "int 21h"           \
+            "pop ds"            \
+        __parm __caller [__ax] [__cx __dx]
+
+static void interrupt SYSTEM_TimerTick(void)
 {
     int i;
 
-    if (SYS_timers_disabled) return;
-    for (i = 0; i < NB_SYS_TIMERS; i++)
+
+    if (!SYS_timers_disabled) 
     {
-        if (!SYS_Timers[i].callback) continue;
-        if ((SYS_Timers[i].ticks -= SYS_TIMER_RATE) <= 0)
-        {
-            FARPROC proc = SYS_Timers[i].callback;
-//            CONTEXT context;
-
-            SYS_Timers[i].ticks += SYS_Timers[i].rate;
-
-//            memset( &context, 0, sizeof(context) );
-//            context.SegCs = SELECTOROF( proc );
-//            context.Eip   = OFFSETOF( proc );
-//            context.Ebp   = CURRENT_SP + FIELD_OFFSET(STACK16FRAME, bp);
-//            context.Eax   = i + 1;
-
-            //WOWCallback16Ex( 0, WCB16_REGS, 0, NULL, (DWORD *)&context );
-        }
+      clockTick=clockTick+SYS_TIMER_RATE/1000;
+      for (i = 0; i < NB_SYS_TIMERS; i++)
+      {
+          if (!SYS_Timers[i].callback) continue;
+          if ((SYS_Timers[i].ticks -= SYS_TIMER_RATE) <= 0)
+          {
+              FARPROC proc = SYS_Timers[i].callback;
+  
+              SYS_Timers[i].ticks += SYS_Timers[i].rate;
+  
+          }
+      }
     }
-}
-
-
-/***********************************************************************
- *           SYSTEM_TimerThread
- */
-static DWORD CALLBACK SYSTEM_TimerThread( void *dummy )
-{
-    LARGE_INTEGER when;
-
-    if (!(SYS_timer = CreateWaitableTimerA( NULL, FALSE, NULL ))) return 0;
-
-    when.u.LowPart = when.u.HighPart = 0;
-    SetWaitableTimer( SYS_timer, &when, (SYS_TIMER_RATE+500)/1000, SYSTEM_TimerTick, 0, FALSE );
-    for (;;) SleepEx( INFINITE, TRUE );
+    (*PrevTimerIntHandler)(); /* Call the call the original interrupt handler */
 }
 
 
@@ -101,7 +95,10 @@ static DWORD CALLBACK SYSTEM_TimerThread( void *dummy )
  */
 static void SYSTEM_StartTicks(void)
 {
-    if (!SYS_thread) SYS_thread = CreateThread( NULL, 0, SYSTEM_TimerThread, NULL, 0, NULL );
+    disable();
+    PrevTimerIntHandler = getvect(8);
+    setvect(8, SYSTEM_TimerTick);
+    enable();
 }
 
 
@@ -112,17 +109,10 @@ static void SYSTEM_StartTicks(void)
  */
 static void SYSTEM_StopTicks(void)
 {
-    if (SYS_thread)
-    {
-        CancelWaitableTimer( SYS_timer );
-        TerminateThread( SYS_thread, 0 );
-        CloseHandle( SYS_thread );
-        CloseHandle( SYS_timer );
-        SYS_thread = 0;
-    }
+    disable();
+    setvect(8, PrevTimerIntHandler);
+    enable();
 }
-
-#endif
 
 /***********************************************************************
  *           InquireSystem   (SYSTEM.1)
@@ -217,7 +207,7 @@ void WINAPI DisableSystemTimers(void)
  */
 DWORD WINAPI GetSystemMSecCount(void)
 {
-    return GetTickCount();
+    return clockTick;
 }
 
 
@@ -233,22 +223,24 @@ WORD WINAPI Get80x87SaveSize(void)
 /***********************************************************************
  *           Save80x87State   (SYSTEM.8)
  */
-void WINAPI Save80x87State( char *ptr )
+void WINAPI Save80x87State( LPSTR pptr )
 {
-#ifdef __i386__
-    __asm__(".byte 0x66; fsave %0; fwait" : "=m" (ptr) );
-#endif
+  _asm {
+	les	bx,pptr
+	fsave	es:[bx]
+  }
 }
 
 
 /***********************************************************************
  *           Restore80x87State   (SYSTEM.9)
  */
-void WINAPI Restore80x87State( const char *ptr )
+void WINAPI Restore80x87State( LPCSTR pptr )
 {
-#ifdef __i386__
-    __asm__(".byte 0x66; frstor %0" : : "m" (ptr) );
-#endif
+   _asm {
+	les	bx,pptr
+	frstor	es:[bx]
+   }
 }
 
 
@@ -258,4 +250,9 @@ void WINAPI Restore80x87State( const char *ptr )
 void WINAPI A20_Proc( WORD unused )
 {
     /* this is also a NOP in Windows */
+}
+
+BOOL WINAPI LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+	return TRUE;
 }
