@@ -25,25 +25,23 @@
 #include "winbase.h"
 #include "wine/winuser16.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(cursor);
-
 #include "pshpack1.h"
-typedef struct tagCURSORINFO16
+typedef struct tagCURSORINFO
 {
     WORD wXMickeys;
     WORD wYMickeys;
-} CURSORINFO16, *PCURSORINFO16, *LPCURSORINFO16;
+} CURSORINFO, *PCURSORINFO, far *LPCURSORINFO;
 #include "poppack.h"
 
 /***********************************************************************
  *           Inquire			(DISPLAY.101)
  */
-WORD WINAPI Inquire16(LPCURSORINFO16 lpCursorInfo)
+WORD WINAPI Inquire(LPCURSORINFO16 lpCursorInfo)
 {
     lpCursorInfo->wXMickeys = 1;
     lpCursorInfo->wYMickeys = 1;
 
-    return sizeof(CURSORINFO16);
+    return sizeof(CURSORINFO);
 }
 
 /***********************************************************************
@@ -57,9 +55,9 @@ VOID WINAPI DISPLAY_SetCursor( struct tagCURSORICONINFO *lpCursor )
 /***********************************************************************
  *           MoveCursor			(DISPLAY.103)
  */
-VOID WINAPI MoveCursor16( WORD wAbsX, WORD wAbsY )
+VOID WINAPI MoveCursor( WORD wAbsX, WORD wAbsY )
 {
-    SetCursorPos( wAbsX, wAbsY );
+//    SetCursorPos( wAbsX, wAbsY );
 }
 
 /***********************************************************************
@@ -78,7 +76,7 @@ VOID WINAPI CheckCursor16( void )
  * wQueriedResID is the ID USER asks about.
  * lpsResName does often contain "OEMBIN".
  */
-DWORD WINAPI GetDriverResourceID16( WORD wQueriedResID, LPSTR lpsResName )
+DWORD WINAPI GetDriverResourceID( WORD wQueriedResID, LPSTR lpsResName )
 {
 	if (wQueriedResID == 3)
 		return (DWORD)1;
@@ -89,7 +87,7 @@ DWORD WINAPI GetDriverResourceID16( WORD wQueriedResID, LPSTR lpsResName )
 /***********************************************************************
  *           UserRepaintDisable			(DISPLAY.500)
  */
-VOID WINAPI UserRepaintDisable16( BOOL16 disable )
+VOID WINAPI UserRepaintDisable( BOOL disable )
 {
     FIXME("stub\n");
 }
