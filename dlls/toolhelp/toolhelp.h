@@ -20,7 +20,6 @@
 #define __WINE_TOOLHELP_H
 
 #include <windows.h>
-//#include <wine/windef16.h>
 
 #define MAX_DATA	11
 #define MAX_MODULE_NAME	9
@@ -31,15 +30,16 @@
 
 /* Global heap */
 
-typedef struct
+typedef struct tagGLOBALINFO
 {
     DWORD dwSize;
     WORD  wcItems;
     WORD  wcItemsFree;
     WORD  wcItemsLRU;
 } GLOBALINFO;
+typedef GLOBALINFO FAR  *LPGLOBALINFO;
 
-typedef struct
+typedef struct tagGLOBALENTRY
 {
     DWORD     dwSize;
     DWORD     dwAddress;
@@ -55,6 +55,7 @@ typedef struct
     DWORD     dwNext;
     DWORD     dwNextAlt;
 } GLOBALENTRY;
+typedef GLOBALENTRY FAR *LPGLOBALENTRY;
 
   /* GlobalFirst()/GlobalNext() flags */
 #define GLOBAL_ALL      0
@@ -95,22 +96,23 @@ typedef struct
 /* wFlags values */
 #define GF_PDB_OWNER        0x0100      /* Low byte is KERNEL flags */
 
-BOOL WINAPI GlobalInfo( GLOBALINFO *pInfo );
-BOOL WINAPI GlobalFirst( GLOBALENTRY *pGlobal, WORD wFlags );
-BOOL WINAPI GlobalNext( GLOBALENTRY *pGlobal, WORD wFlags) ;
-BOOL WINAPI GlobalEntryHandle( GLOBALENTRY *pGlobal, HGLOBAL hItem );
-BOOL WINAPI GlobalEntryModule( GLOBALENTRY *pGlobal, HMODULE hModule,
+BOOL WINAPI GlobalInfo( LPGLOBALINFO lpInfo );
+BOOL WINAPI GlobalFirst( LPGLOBALENTRY lpGlobal, WORD wFlags );
+BOOL WINAPI GlobalNext( LPGLOBALENTRY lpGlobal, WORD wFlags) ;
+BOOL WINAPI GlobalEntryHandle( LPGLOBALENTRY lpGlobal, HGLOBAL hItem );
+BOOL WINAPI GlobalEntryModule( LPGLOBALENTRY lpGlobal, HMODULE hModule,
                                  WORD wSeg );
 
 /* Local heap */
 
-typedef struct
+typedef struct tagLOCALINFO
 {
     DWORD   dwSize;
     WORD    wcItems;
 } LOCALINFO;
+typedef LOCALINFO FAR   *LPLOCALINFO;
 
-typedef struct
+typedef struct tagLOCALENTRY
 {
     DWORD   dwSize;
     HLOCAL  hHandle;
@@ -123,6 +125,7 @@ typedef struct
     WORD    wHeapType;
     WORD    wNext;
 } LOCALENTRY;
+typedef LOCALENTRY FAR  *LPLOCALENTRY;
 
 /* wHeapType values */
 #define NORMAL_HEAP     0
@@ -174,9 +177,9 @@ typedef struct
 #define LT_USER_HANDLETABLE         32
 #define LT_USER_MAX                 LT_USER_HANDLETABLE
 
-BOOL WINAPI LocalInfo( LOCALINFO *pLocalInfo, HGLOBAL handle );
-BOOL WINAPI LocalFirst( LOCALENTRY *pLocalEntry, HGLOBAL handle );
-BOOL WINAPI LocalNext( LOCALENTRY *pLocalEntry );
+BOOL WINAPI LocalInfo( LPLOCALINFO lpLocalInfo, HGLOBAL handle );
+BOOL WINAPI LocalFirst( LPLOCALENTRY lpLocalEntry, HGLOBAL handle );
+BOOL WINAPI LocalNext( LPLOCALENTRY lpLocalEntry );
 
 /* Local 32-bit heap */
 
@@ -215,7 +218,7 @@ BOOL WINAPI Local32Next( LOCAL32ENTRY *pLocal32Entry );
 
 /* modules */
 
-typedef struct
+typedef struct tagMODULEENTRY
 {
     DWORD      dwSize;
     char       szModule[MAX_MODULE_NAME + 1];
@@ -223,16 +226,17 @@ typedef struct
     WORD       wcUsage;
     char       szExePath[MAX_PATH + 1];
     HANDLE   wNext;
-} MODULEENTRY, *LPMODULEENTRY;
+} MODULEENTRY;
+typedef MODULEENTRY FAR *LPMODULEENTRY;
 
-BOOL WINAPI ModuleFirst(MODULEENTRY *lpModule);
-BOOL WINAPI ModuleNext(MODULEENTRY *lpModule);
-BOOL WINAPI ModuleFindName(MODULEENTRY *lpModule, LPCSTR lpstrName);
-BOOL WINAPI ModuleFindHandle(MODULEENTRY *lpModule, HMODULE hModule);
+BOOL WINAPI ModuleFirst(LPMODULEENTRY lpModule);
+BOOL WINAPI ModuleNext(LPMODULEENTRY lpModule);
+BOOL WINAPI ModuleFindName(LPMODULEENTRY lpModule, LPCSTR lpstrName);
+BOOL WINAPI ModuleFindHandle(LPMODULEENTRY lpModule, HMODULE hModule);
 
 /* tasks */
 
-typedef struct
+typedef struct tagTASKENTRY
 {
     DWORD        dwSize;
     HTASK        hTask;
@@ -249,7 +253,8 @@ typedef struct
     char         szModule[MAX_MODULE_NAME + 1];
     WORD         wPSPOffset;
     HANDLE       hNext;
-} TASKENTRY, *LPTASKENTRY;
+} TASKENTRY;
+typedef TASKENTRY FAR   *LPTASKENTRY;
 
 BOOL WINAPI TaskFirst(LPTASKENTRY lpTask);
 BOOL WINAPI TaskNext(LPTASKENTRY lpTask);
@@ -258,7 +263,7 @@ DWORD  WINAPI TaskSetCSIP(HTASK hTask, WORD wCS, WORD wIP);
 DWORD  WINAPI TaskGetCSIP(HTASK hTask);
 BOOL WINAPI TaskSwitch(HTASK hTask, DWORD dwNewCSIP);
 
-/* flag for TerminateApp16() */
+/* flag for TerminateApp() */
 #define NO_UAE_BOX     1
 
 /* mem info */
@@ -276,9 +281,9 @@ typedef struct tagMEMMANINFO {
 	DWORD dwSwapFilePages;
 	WORD wPageSize;
 } MEMMANINFO;
-typedef MEMMANINFO *LPMEMMANINFO;
+typedef MEMMANINFO FAR *LPMEMMANINFO;
 
-typedef struct
+typedef struct tagSYSHEAPINFO
 {
     DWORD     dwSize;
     WORD      wUserFreePercent;
@@ -286,9 +291,10 @@ typedef struct
     HGLOBAL   hUserSegment;
     HGLOBAL   hGDISegment;
 } SYSHEAPINFO;
+typedef SYSHEAPINFO FAR *LPSYSHEAPINFO;
 
 BOOL WINAPI MemManInfo(LPMEMMANINFO lpEnhMode);
-BOOL WINAPI SystemHeapInfo( SYSHEAPINFO *pHeapInfo );
+BOOL WINAPI SystemHeapInfo( LPSYSHEAPINFO pHeapInfo );
 
 /* timer info */
 
@@ -297,27 +303,29 @@ typedef struct tagTIMERINFO {
 	DWORD dwmsSinceStart;
 	DWORD dwmsThisVM;
 } TIMERINFO;
+typedef TIMERINFO FAR   *LPTIMERINFO;
 
-BOOL WINAPI TimerCount( TIMERINFO *pTimerInfo );
+BOOL WINAPI TimerCount( LPTIMERINFO pTimerInfo );
 
 /* Window classes */
 
-typedef struct
+typedef struct tagCLASSENTRY
 {
     DWORD     dwSize;
     HMODULE   hInst;              /* This is really an hModule */
     char      szClassName[MAX_CLASSNAME + 1];
     HANDLE    wNext;
 } CLASSENTRY;
+typedef CLASSENTRY FAR  *LPCLASSENTRY;
 
-BOOL WINAPI ClassFirst( CLASSENTRY *pClassEntry );
-BOOL WINAPI ClassNext( CLASSENTRY *pClassEntry );
+BOOL WINAPI ClassFirst( LPCLASSENTRY lpClassEntry );
+BOOL WINAPI ClassNext( LPCLASSENTRY lpClassEntry );
 
 
 /* Memory read/write */
 
-DWORD WINAPI MemoryRead16( WORD sel, DWORD offset, void *buffer, DWORD count );
-DWORD WINAPI MemoryWrite16( WORD sel, DWORD offset, void *buffer, DWORD count );
+DWORD WINAPI MemoryRead( WORD sel, DWORD offset, void FAR *buffer, DWORD count );
+DWORD WINAPI MemoryWrite( WORD sel, DWORD offset, void FAR *buffer, DWORD count );
 
 /* flags to NotifyRegister() */
 #define NF_NORMAL	0	/* everything except taskswitches, debugerrors,
@@ -403,7 +411,7 @@ typedef struct {
     void      **lpBadParam;
 } NFYLOGPARAMERROR;
 
-typedef struct {
+typedef struct tagSTACKTRACEENTRY {
     DWORD dwSize;
     HTASK hTask;
     WORD wSS;
@@ -414,6 +422,11 @@ typedef struct {
     WORD wSegment;
     WORD wFlags;
 } STACKTRACEENTRY;
+typedef STACKTRACEENTRY FAR *LPSTACKTRACEENTRY;
+
+BOOL WINAPI StackTraceCSIPFirst(LPSTACKTRACEENTRY ste, WORD wSS, WORD wCS, WORD wIP, WORD wBP);
+BOOL WINAPI StackTraceFirst(LPSTACKTRACEENTRY ste, HTASK Task);
+BOOL WINAPI StackTraceNext(LPSTACKTRACEENTRY ste);
 
 #define HQUEUE HANDLE
 

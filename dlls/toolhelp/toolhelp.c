@@ -27,7 +27,7 @@
 
 #include <dos.h>
 
-#include "windows.h"
+#include <windows.h>
 
 #define GlobalPtrHandle(lp) \
   ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))
@@ -41,11 +41,7 @@
 #define GlobalAllocPtr(flags, cb) \
   (GlobalLock(GlobalAlloc((flags), (cb))))
 
-//#include "wine/winbase16.h"
 #include "toolhelp.h"
-//#include "wine/debug.h"
-
-//WINE_DEFAULT_DEBUG_CHANNEL(toolhelp);
 
 #pragma pack(push,1)
 
@@ -242,44 +238,44 @@ WORD WINAPI GlobalHandleToSel( HGLOBAL handle )
 /***********************************************************************
  *           GlobalFirst   (TOOLHELP.51)
  */
-BOOL WINAPI GlobalFirst( GLOBALENTRY *pGlobal, WORD wFlags )
+BOOL WINAPI GlobalFirst( LPGLOBALENTRY lpGlobal, WORD wFlags )
 {
     if (wFlags == GLOBAL_LRU) return FALSE;
-    pGlobal->dwNext = 0;
-    return GlobalNext( pGlobal, wFlags );
+    lpGlobal->dwNext = 0;
+    return GlobalNext( lpGlobal, wFlags );
 }
 
 
 /***********************************************************************
  *           GlobalNext   (TOOLHELP.52)
  */
-BOOL WINAPI GlobalNext( GLOBALENTRY *pGlobal, WORD wFlags)
+BOOL WINAPI GlobalNext( LPGLOBALENTRY lpGlobal, WORD wFlags)
 {
     GLOBALARENA far *pGlobalArena = get_global_arena();
     GLOBALARENA far *pArena;
 
-    if (pGlobal->dwNext >= GLOBAL_MAX_COUNT) return FALSE;
-    pArena = pGlobalArena + pGlobal->dwNext;
+    if (lpGlobal->dwNext >= GLOBAL_MAX_COUNT) return FALSE;
+    pArena = pGlobalArena + lpGlobal->dwNext;
     if (wFlags == GLOBAL_FREE)  /* only free blocks */
     {
         int i;
-        for (i = pGlobal->dwNext; i < GLOBAL_MAX_COUNT; i++, pArena++)
+        for (i = lpGlobal->dwNext; i < GLOBAL_MAX_COUNT; i++, pArena++)
             if (pArena->size == 0) break;  /* block is free */
         if (i >= GLOBAL_MAX_COUNT) return FALSE;
-        pGlobal->dwNext = i;
+        lpGlobal->dwNext = i;
     }
 
-    pGlobal->dwAddress    = (DWORD)pArena->base;
-    pGlobal->dwBlockSize  = pArena->size;
-    pGlobal->hBlock       = pArena->handle;
-    pGlobal->wcLock       = pArena->lockCount;
-    pGlobal->wcPageLock   = pArena->pageLockCount;
-    pGlobal->wFlags       = (GetCurrentPDB() == pArena->hOwner);
-    pGlobal->wHeapPresent = FALSE;
-    pGlobal->hOwner       = pArena->hOwner;
-    pGlobal->wType        = GT_UNKNOWN;
-    pGlobal->wData        = 0;
-    pGlobal->dwNext++;
+    lpGlobal->dwAddress    = (DWORD)pArena->base;
+    lpGlobal->dwBlockSize  = pArena->size;
+    lpGlobal->hBlock       = pArena->handle;
+    lpGlobal->wcLock       = pArena->lockCount;
+    lpGlobal->wcPageLock   = pArena->pageLockCount;
+    lpGlobal->wFlags       = (GetCurrentPDB() == pArena->hOwner);
+    lpGlobal->wHeapPresent = FALSE;
+    lpGlobal->hOwner       = pArena->hOwner;
+    lpGlobal->wType        = GT_UNKNOWN;
+    lpGlobal->wData        = 0;
+    lpGlobal->dwNext++;
     return TRUE;
 }
 
@@ -287,17 +283,17 @@ BOOL WINAPI GlobalNext( GLOBALENTRY *pGlobal, WORD wFlags)
 /***********************************************************************
  *           GlobalInfo   (TOOLHELP.53)
  */
-BOOL WINAPI GlobalInfo( GLOBALINFO *pInfo )
+BOOL WINAPI GlobalInfo( LPGLOBALINFO lpInfo )
 {
     GLOBALARENA far *pGlobalArena = get_global_arena();
     GLOBALARENA far *pArena;
     int i;
 
-    pInfo->wcItems = GLOBAL_MAX_COUNT;
-    pInfo->wcItemsFree = 0;
-    pInfo->wcItemsLRU = 0;
+    lpInfo->wcItems = GLOBAL_MAX_COUNT;
+    lpInfo->wcItemsFree = 0;
+    lpInfo->wcItemsLRU = 0;
     for (i = 0, pArena = pGlobalArena; i < GLOBAL_MAX_COUNT; i++, pArena++)
-        if (pArena->size == 0) pInfo->wcItemsFree++;
+        if (pArena->size == 0) lpInfo->wcItemsFree++;
     return TRUE;
 }
 
@@ -307,22 +303,22 @@ BOOL WINAPI GlobalInfo( GLOBALINFO *pInfo )
 /***********************************************************************
  *           GlobalEntryHandle   (TOOLHELP.54)
  */
-BOOL WINAPI GlobalEntryHandle( GLOBALENTRY *pGlobal, HGLOBAL hItem )
+BOOL WINAPI GlobalEntryHandle( LPGLOBALENTRY lpGlobal, HGLOBAL hItem )
 {
     GLOBALARENA far *pGlobalArena = get_global_arena();
     GLOBALARENA far *pArena = pGlobalArena + (hItem >> __AHSHIFT);
 
-    pGlobal->dwAddress    = (DWORD)pArena->base;
-    pGlobal->dwBlockSize  = pArena->size;
-    pGlobal->hBlock       = pArena->handle;
-    pGlobal->wcLock       = pArena->lockCount;
-    pGlobal->wcPageLock   = pArena->pageLockCount;
-    pGlobal->wFlags       = (GetCurrentPDB() == pArena->hOwner);
-    pGlobal->wHeapPresent = FALSE;
-    pGlobal->hOwner       = pArena->hOwner;
-    pGlobal->wType        = GT_UNKNOWN;
-    pGlobal->wData        = 0;
-    pGlobal->dwNext++;
+    lpGlobal->dwAddress    = (DWORD)pArena->base;
+    lpGlobal->dwBlockSize  = pArena->size;
+    lpGlobal->hBlock       = pArena->handle;
+    lpGlobal->wcLock       = pArena->lockCount;
+    lpGlobal->wcPageLock   = pArena->pageLockCount;
+    lpGlobal->wFlags       = (GetCurrentPDB() == pArena->hOwner);
+    lpGlobal->wHeapPresent = FALSE;
+    lpGlobal->hOwner       = pArena->hOwner;
+    lpGlobal->wType        = GT_UNKNOWN;
+    lpGlobal->wData        = 0;
+    lpGlobal->dwNext++;
     return TRUE;
 }
 
@@ -330,7 +326,7 @@ BOOL WINAPI GlobalEntryHandle( GLOBALENTRY *pGlobal, HGLOBAL hItem )
 /***********************************************************************
  *           GlobalEntryModule   (TOOLHELP.55)
  */
-BOOL WINAPI GlobalEntryModule( GLOBALENTRY *pGlobal, HMODULE hModule,
+BOOL WINAPI GlobalEntryModule( LPGLOBALENTRY lpGlobal, HMODULE hModule,
                                  WORD wSeg )
 {
 //    FIXME("(%p, 0x%04x, 0x%04x), stub.\n", pGlobal, hModule, wSeg);
@@ -341,11 +337,11 @@ BOOL WINAPI GlobalEntryModule( GLOBALENTRY *pGlobal, HMODULE hModule,
 /***********************************************************************
  *           LocalInfo   (TOOLHELP.56)
  */
-BOOL WINAPI LocalInfo( LOCALINFO *pLocalInfo, HGLOBAL handle )
+BOOL WINAPI LocalInfo( LPLOCALINFO lpLocalInfo, HGLOBAL handle )
 {
     LOCALHEAPINFO far *pInfo = get_local_heap( SELECTOROF(GlobalLock(handle)) );
     if (!pInfo) return FALSE;
-    pLocalInfo->wcItems = pInfo->items;
+    lpLocalInfo->wcItems = pInfo->items;
     return TRUE;
 }
 
@@ -353,22 +349,22 @@ BOOL WINAPI LocalInfo( LOCALINFO *pLocalInfo, HGLOBAL handle )
 /***********************************************************************
  *           LocalFirst   (TOOLHELP.57)
  */
-BOOL WINAPI LocalFirst( LOCALENTRY *pLocalEntry, HGLOBAL handle )
+BOOL WINAPI LocalFirst( LPLOCALENTRY lpLocalEntry, HGLOBAL handle )
 {
     WORD ds = GlobalHandleToSel( handle );
     char far *ptr = MAKELP( ds, 0 );
     LOCALHEAPINFO far *pInfo = get_local_heap( ds );
     if (!pInfo) return FALSE;
 
-    pLocalEntry->hHandle   = pInfo->first + LOCAL_ARENA_HEADER_SIZE;
-    pLocalEntry->wAddress  = pLocalEntry->hHandle;
-    pLocalEntry->wFlags    = LF_FIXED;
-    pLocalEntry->wcLock    = 0;
-    pLocalEntry->wType     = LT_NORMAL;
-    pLocalEntry->hHeap     = handle;
-    pLocalEntry->wHeapType = NORMAL_HEAP;
-    pLocalEntry->wNext     = LOCAL_ARENA_PTR(ptr,pInfo->first)->next;
-    pLocalEntry->wSize     = pLocalEntry->wNext - pLocalEntry->hHandle;
+    lpLocalEntry->hHandle   = pInfo->first + LOCAL_ARENA_HEADER_SIZE;
+    lpLocalEntry->wAddress  = lpLocalEntry->hHandle;
+    lpLocalEntry->wFlags    = LF_FIXED;
+    lpLocalEntry->wcLock    = 0;
+    lpLocalEntry->wType     = LT_NORMAL;
+    lpLocalEntry->hHeap     = handle;
+    lpLocalEntry->wHeapType = NORMAL_HEAP;
+    lpLocalEntry->wNext     = LOCAL_ARENA_PTR(ptr,pInfo->first)->next;
+    lpLocalEntry->wSize     = lpLocalEntry->wNext - lpLocalEntry->hHandle;
     return TRUE;
 }
 
@@ -376,23 +372,23 @@ BOOL WINAPI LocalFirst( LOCALENTRY *pLocalEntry, HGLOBAL handle )
 /***********************************************************************
  *           LocalNext   (TOOLHELP.58)
  */
-BOOL WINAPI LocalNext( LOCALENTRY *pLocalEntry )
+BOOL WINAPI LocalNext( LPLOCALENTRY lpLocalEntry )
 {
-    WORD ds = GlobalHandleToSel( pLocalEntry->hHeap );
-    char far *ptr = MAKELP( ds, 0 );
+    WORD ds = GlobalHandleToSel( lpLocalEntry->hHeap );
+    LPSTR ptr = MAKELP( ds, 0 );
     LOCALARENA *pArena;
     WORD table, lhandle;
     LOCALHEAPINFO far *pInfo = get_local_heap( ds );
 
     if (!pInfo) return FALSE;
-    if (!pLocalEntry->wNext) return FALSE;
+    if (!lpLocalEntry->wNext) return FALSE;
     table = pInfo->htable;
-    pArena = LOCAL_ARENA_PTR( ptr, pLocalEntry->wNext );
-    pLocalEntry->wAddress  = pLocalEntry->wNext + LOCAL_ARENA_HEADER_SIZE;
-    pLocalEntry->wFlags    = (pArena->prev & 3) + 1;
-    pLocalEntry->wcLock    = 0;
+    pArena = LOCAL_ARENA_PTR( ptr, lpLocalEntry->wNext );
+    lpLocalEntry->wAddress  = lpLocalEntry->wNext + LOCAL_ARENA_HEADER_SIZE;
+    lpLocalEntry->wFlags    = (pArena->prev & 3) + 1;
+    lpLocalEntry->wcLock    = 0;
     /* Find the address in the entry tables */
-    lhandle = pLocalEntry->wAddress;
+    lhandle = lpLocalEntry->wAddress;
     while (table)
     {
         WORD count = *(WORD *)(ptr + table);
@@ -402,20 +398,20 @@ BOOL WINAPI LocalNext( LOCALENTRY *pLocalEntry )
             {
                 lhandle = (HLOCAL)((char *)pEntry - ptr);
                 table = 0;
-                pLocalEntry->wAddress  = pEntry->addr;
-                pLocalEntry->wFlags    = pEntry->flags;
-                pLocalEntry->wcLock    = pEntry->lock;
+                lpLocalEntry->wAddress  = pEntry->addr;
+                lpLocalEntry->wFlags    = pEntry->flags;
+                lpLocalEntry->wcLock    = pEntry->lock;
                 break;
             }
         if (table) table = *(WORD *)pEntry;
     }
-    pLocalEntry->hHandle   = lhandle;
-    pLocalEntry->wType     = LT_NORMAL;
-    if (pArena->next != pLocalEntry->wNext)  /* last one? */
-        pLocalEntry->wNext = pArena->next;
+    lpLocalEntry->hHandle   = lhandle;
+    lpLocalEntry->wType     = LT_NORMAL;
+    if (pArena->next != lpLocalEntry->wNext)  /* last one? */
+        lpLocalEntry->wNext = pArena->next;
     else
-        pLocalEntry->wNext = 0;
-    pLocalEntry->wSize     = pLocalEntry->wNext - pLocalEntry->hHandle;
+        lpLocalEntry->wNext = 0;
+    lpLocalEntry->wSize     = lpLocalEntry->wNext - lpLocalEntry->hHandle;
     return TRUE;
 }
 
@@ -423,7 +419,7 @@ BOOL WINAPI LocalNext( LOCALENTRY *pLocalEntry )
 /**********************************************************************
  *	    ModuleFirst    (TOOLHELP.59)
  */
-BOOL WINAPI ModuleFirst( MODULEENTRY *lpme )
+BOOL WINAPI ModuleFirst( LPMODULEENTRY lpme )
 {
     lpme->wNext = get_thhook()->hExeHead;
     return ModuleNext( lpme );
@@ -433,7 +429,7 @@ BOOL WINAPI ModuleFirst( MODULEENTRY *lpme )
 /**********************************************************************
  *	    ModuleNext    (TOOLHELP.60)
  */
-BOOL WINAPI ModuleNext( MODULEENTRY *lpme )
+BOOL WINAPI ModuleNext( LPMODULEENTRY lpme )
 {
     NE_MODULE far *pModule;
     char far *name;
@@ -455,7 +451,7 @@ BOOL WINAPI ModuleNext( MODULEENTRY *lpme )
 /**********************************************************************
  *	    ModuleFindName    (TOOLHELP.61)
  */
-BOOL WINAPI ModuleFindName( MODULEENTRY *lpme, LPCSTR name )
+BOOL WINAPI ModuleFindName( LPMODULEENTRY lpme, LPCSTR name )
 {
     lpme->wNext = GetModuleHandle( name );
     return ModuleNext( lpme );
@@ -465,7 +461,7 @@ BOOL WINAPI ModuleFindName( MODULEENTRY *lpme, LPCSTR name )
 /**********************************************************************
  *	    ModuleFindHandle    (TOOLHELP.62)
  */
-BOOL WINAPI ModuleFindHandle( MODULEENTRY *lpme, HMODULE hModule )
+BOOL WINAPI ModuleFindHandle( LPMODULEENTRY lpme, HMODULE hModule )
 {
     hModule = GetExePtr( hModule );
     lpme->wNext = hModule;
@@ -476,7 +472,7 @@ BOOL WINAPI ModuleFindHandle( MODULEENTRY *lpme, HMODULE hModule )
 /***********************************************************************
  *           TaskFirst   (TOOLHELP.63)
  */
-BOOL WINAPI TaskFirst( TASKENTRY *lpte )
+BOOL WINAPI TaskFirst( LPTASKENTRY lpte )
 {
     lpte->hNext = get_thhook()->HeadTDB;
     return TaskNext( lpte );
@@ -486,7 +482,7 @@ BOOL WINAPI TaskFirst( TASKENTRY *lpte )
 /***********************************************************************
  *           TaskNext   (TOOLHELP.64)
  */
-BOOL WINAPI TaskNext( TASKENTRY *lpte )
+BOOL WINAPI TaskNext( LPTASKENTRY lpte )
 {
     TDB far *pTask;
     INSTANCEDATA far *pInstData;
@@ -525,7 +521,7 @@ BOOL WINAPI TaskNext( TASKENTRY *lpte )
 /***********************************************************************
  *           TaskFindHandle   (TOOLHELP.65)
  */
-BOOL WINAPI TaskFindHandle( TASKENTRY *lpte, HTASK hTask )
+BOOL WINAPI TaskFindHandle( LPTASKENTRY lpte, HTASK hTask )
 {
     lpte->hNext = hTask;
     return TaskNext( lpte );
@@ -535,7 +531,7 @@ BOOL WINAPI TaskFindHandle( TASKENTRY *lpte, HTASK hTask )
 /***********************************************************************
  *           MemManInfo   (TOOLHELP.72)
  */
-BOOL WINAPI MemManInfo( MEMMANINFO *info )
+BOOL WINAPI MemManInfo( LPMEMMANINFO info )
 {
 //    SYSTEM_BASIC_INFORMATION sbi;
 //    MEMORYSTATUS status;
@@ -614,7 +610,7 @@ BOOL WINAPI NotifyUnregister( HTASK htask )
 /***********************************************************************
  *		StackTraceCSIPFirst (TOOLHELP.67)
  */
-BOOL WINAPI StackTraceCSIPFirst(STACKTRACEENTRY *ste, WORD wSS, WORD wCS, WORD wIP, WORD wBP)
+BOOL WINAPI StackTraceCSIPFirst(LPSTACKTRACEENTRY ste, WORD wSS, WORD wCS, WORD wIP, WORD wBP)
 {
 //    FIXME("(%p, ss %04x, cs %04x, ip %04x, bp %04x): stub.\n", ste, wSS, wCS, wIP, wBP);
     return TRUE;
@@ -623,7 +619,7 @@ BOOL WINAPI StackTraceCSIPFirst(STACKTRACEENTRY *ste, WORD wSS, WORD wCS, WORD w
 /***********************************************************************
  *		StackTraceFirst (TOOLHELP.66)
  */
-BOOL WINAPI StackTraceFirst(STACKTRACEENTRY *ste, HTASK Task)
+BOOL WINAPI StackTraceFirst(LPSTACKTRACEENTRY ste, HTASK Task)
 {
 //    FIXME("(%p, %04x), stub.\n", ste, Task);
     return TRUE;
@@ -632,7 +628,7 @@ BOOL WINAPI StackTraceFirst(STACKTRACEENTRY *ste, HTASK Task)
 /***********************************************************************
  *		StackTraceNext (TOOLHELP.68)
  */
-BOOL WINAPI StackTraceNext(STACKTRACEENTRY *ste)
+BOOL WINAPI StackTraceNext(LPSTACKTRACEENTRY ste)
 {
 //    FIXME("(%p), stub.\n", ste);
     return TRUE;
@@ -688,14 +684,14 @@ void WINAPI TerminateApp(HTASK hTask, WORD wFlags)
 /***********************************************************************
  *           MemoryRead   (TOOLHELP.78)
  */
-DWORD WINAPI MemoryRead( WORD sel, DWORD offset, void *buffer, DWORD count )
+DWORD WINAPI MemoryRead( WORD sel, DWORD offset, void FAR *buffer, DWORD count )
 {
-    char *base = (char *)GetSelectorBase( sel );
+    char FAR *base = (char FAR *)GetSelectorBase( sel );
     DWORD limit = GetSelectorLimit( sel );
 
     if (offset > limit) return 0;
     if (offset + count > limit + 1) count = limit + 1 - offset;
-    memcpy( buffer, base + offset, count );
+    _fmemcpy( buffer, base + offset, count );
     return count;
 }
 
@@ -703,21 +699,21 @@ DWORD WINAPI MemoryRead( WORD sel, DWORD offset, void *buffer, DWORD count )
 /***********************************************************************
  *           MemoryWrite   (TOOLHELP.79)
  */
-DWORD WINAPI MemoryWrite( WORD sel, DWORD offset, void *buffer, DWORD count )
+DWORD WINAPI MemoryWrite( WORD sel, DWORD offset, void FAR *buffer, DWORD count )
 {
-    char *base = (char *)GetSelectorBase( sel );
+    char FAR *base = (char FAR *)GetSelectorBase( sel );
     DWORD limit = GetSelectorLimit( sel );
 
     if (offset > limit) return 0;
     if (offset + count > limit) count = limit + 1 - offset;
-    memcpy( base + offset, buffer, count );
+    _fmemcpy( base + offset, buffer, count );
     return count;
 }
 
 /***********************************************************************
  *           TimerCount   (TOOLHELP.80)
  */
-BOOL WINAPI TimerCount( TIMERINFO *pTimerInfo )
+BOOL WINAPI TimerCount( LPTIMERINFO lpTimerInfo )
 {
     /* FIXME
      * In standard mode, dwmsSinceStart = dwmsThisVM
@@ -730,26 +726,26 @@ BOOL WINAPI TimerCount( TIMERINFO *pTimerInfo )
      * to reduce the amount of error to ~1ms.
      * I can't be bothered, can you?
      */
-    pTimerInfo->dwmsSinceStart = pTimerInfo->dwmsThisVM = GetTickCount();
+    lpTimerInfo->dwmsSinceStart = lpTimerInfo->dwmsThisVM = GetTickCount();
     return TRUE;
 }
 
 /***********************************************************************
  *           SystemHeapInfo   (TOOLHELP.71)
  */
-BOOL WINAPI SystemHeapInfo( SYSHEAPINFO *pHeapInfo )
+BOOL WINAPI SystemHeapInfo( LPSYSHEAPINFO lpHeapInfo )
 {
     HANDLE oldDS = GetDS();
     WORD user = LoadLibrary( "USER.EXE" );
     WORD gdi = LoadLibrary( "GDI.EXE" );
 
     SetDS(user);
-    pHeapInfo->wUserFreePercent = (int)LocalCountFree() * 100 / LocalHeapSize();
+    lpHeapInfo->wUserFreePercent = (int)LocalCountFree() * 100 / LocalHeapSize();
     SetDS(gdi);
-    pHeapInfo->wGDIFreePercent  = (int)LocalCountFree() * 100 / LocalHeapSize();
+    lpHeapInfo->wGDIFreePercent  = (int)LocalCountFree() * 100 / LocalHeapSize();
     SetDS(oldDS);
-    pHeapInfo->hUserSegment = user;
-    pHeapInfo->hGDISegment  = gdi;
+    lpHeapInfo->hUserSegment = user;
+    lpHeapInfo->hGDISegment  = gdi;
     FreeLibrary( user );
     FreeLibrary( gdi );
     return TRUE;
@@ -803,12 +799,12 @@ BOOL WINAPI TaskSwitch(HTASK hTask, DWORD dwNewCSIP)
   return 0;
 }
 
-BOOL WINAPI ClassFirst( CLASSENTRY *pClassEntry )
+BOOL WINAPI ClassFirst( LPCLASSENTRY lpClassEntry )
 {
   return FALSE;
 }
 
-BOOL WINAPI ClassNext( CLASSENTRY *pClassEntry )
+BOOL WINAPI ClassNext( LPCLASSENTRY lpClassEntry )
 {
   return FALSE;
 }
