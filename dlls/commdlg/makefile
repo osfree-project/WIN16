@@ -45,8 +45,12 @@ DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 
 TARGETS = $(PATH)$(PROJ1).dll
 
-#.ico: $(MYDIR)res
+.ico: $(MYDIR)res
+
+#.cur: $(MYDIR)res
+
+#.bmp: $(MYDIR)res
 
 $(PATH)$(PROJ1).dll: $(PATH)$(PROJ).dll $(MYDIR)Commdlg.rc
  @$(SAY) RESCMP   $^. $(LOG)
- @wrc -dCARDSTYLE_DEFAULT -q -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win
+ @wrc -q -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win
