@@ -21,8 +21,8 @@
 //
 ============================================================================*/
 
-IDC_COLORCROSSHAIR			CURSOR         "bmp/colorcrosshair.cur"
-IDC_LUMINOSITY					CURSOR         "bmp/luminosity.cur"
+IDC_COLORCROSSHAIR			CURSOR         "res/colorcrosshair.cur"
+IDC_LUMINOSITY					CURSOR         "res/luminosity.cur"
 
 /*============================================================================
 //
@@ -30,11 +30,11 @@ IDC_LUMINOSITY					CURSOR         "bmp/luminosity.cur"
 //
 ============================================================================*/
 
-IDI_PORTRAIT            ICON         "bmp/portrait.ico"
-IDI_LANDSCAPE           ICON         "bmp/landscape.ico"
-IDI_WILLOWS							ICON				 "bmp/willows.ico"
-IDI_COLORCROSSHAIR			ICON         "bmp/colorcrosshair.ico"
-IDI_LUMINOSITY					ICON         "bmp/luminosity.ico"
+IDI_PORTRAIT            ICON         "res/portrait.ico"
+IDI_LANDSCAPE           ICON         "res/landscape.ico"
+IDI_WILLOWS							ICON				 "res/willows.ico"
+IDI_COLORCROSSHAIR			ICON         "res/colorcrosshair.ico"
+IDI_LUMINOSITY					ICON         "res/luminosity.ico"
 
 /*============================================================================
 //
@@ -42,28 +42,28 @@ IDI_LUMINOSITY					ICON         "bmp/luminosity.ico"
 //
 ============================================================================*/
 
-IDB_FOLDERSDRIVES       BITMAP    "bmp/foldersdrives.bmp"
-IDB_CROSSLED            BITMAP    "bmp/crossled.bmp"
-IDB_RAISEDLEFT          BITMAP      "bmp/raisedleft.bmp"
-IDB_RECESSLEFT          BITMAP      "bmp/recessleft.bmp"
-IDB_RAISEDRIGHT         BITMAP      "bmp/raisedright.bmp"
-IDB_RECESSRIGHT         BITMAP      "bmp/recessright.bmp"
-IDB_RAISEDUP            BITMAP      "bmp/raisedup.bmp"
-IDB_RECESSUP            BITMAP      "bmp/recessup.bmp"
-IDB_RAISEDDOWN          BITMAP      "bmp/raiseddown.bmp"
-IDB_RECESSDOWN          BITMAP      "bmp/recessdown.bmp"
-IDB_TRUETYPEPRINTER     BITMAP      "bmp/truetypeprinter.bmp"
-IDB_FLOPPYDRIVE         BITMAP      "bmp/floppy.bmp"
-IDB_HARDDRIVE           BITMAP      "bmp/harddrive.bmp"
-IDB_NETWORKDRIVE        BITMAP      "bmp/networkdrive.bmp"
-IDB_MAPPEDDRIVE         BITMAP      "bmp/mappeddrive.bmp"
-IDB_RAMDRIVE            BITMAP      "bmp/ramdrive.bmp"
-IDB_CDROMDRIVE          BITMAP      "bmp/cdrom.bmp"
-IDB_DIR                 BITMAP      "bmp/dir.bmp"
-IDB_OPENDIR             BITMAP      "bmp/opendir.bmp"
-IDB_OPENCURRDIR         BITMAP      "bmp/opencurrdir.bmp"
-WCF_IDB_TRUETYPE        BITMAP      "bmp/truetype.bmp"
-WCF_IDB_PRINTER         BITMAP      "bmp/printer.bmp"
+IDB_FOLDERSDRIVES       BITMAP    "res/foldersdrives.bmp"
+IDB_CROSSLED            BITMAP    "res/crossled.bmp"
+IDB_RAISEDLEFT          BITMAP      "res/raisedleft.bmp"
+IDB_RECESSLEFT          BITMAP      "res/recessleft.bmp"
+IDB_RAISEDRIGHT         BITMAP      "res/raisedright.bmp"
+IDB_RECESSRIGHT         BITMAP      "res/recessright.bmp"
+IDB_RAISEDUP            BITMAP      "res/raisedup.bmp"
+IDB_RECESSUP            BITMAP      "res/recessup.bmp"
+IDB_RAISEDDOWN          BITMAP      "res/raiseddown.bmp"
+IDB_RECESSDOWN          BITMAP      "res/recessdown.bmp"
+IDB_TRUETYPEPRINTER     BITMAP      "res/truetypeprinter.bmp"
+IDB_FLOPPYDRIVE         BITMAP      "res/floppy.bmp"
+IDB_HARDDRIVE           BITMAP      "res/harddrive.bmp"
+IDB_NETWORKDRIVE        BITMAP      "res/networkdrive.bmp"
+IDB_MAPPEDDRIVE         BITMAP      "res/mappeddrive.bmp"
+IDB_RAMDRIVE            BITMAP      "res/ramdrive.bmp"
+IDB_CDROMDRIVE          BITMAP      "res/cdrom.bmp"
+IDB_DIR                 BITMAP      "res/dir.bmp"
+IDB_OPENDIR             BITMAP      "res/opendir.bmp"
+IDB_OPENCURRDIR         BITMAP      "res/opencurrdir.bmp"
+WCF_IDB_TRUETYPE        BITMAP      "res/truetype.bmp"
+WCF_IDB_PRINTER         BITMAP      "res/printer.bmp"
 
 /*============================================================================
 //

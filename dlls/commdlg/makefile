@@ -5,6 +5,7 @@
 #
 
 PROJ     = commdlg
+PROJ1     = commdlg1
 TRGT     = $(PROJ).dll
 DESC     = Windows Common Dialogs Library
 srcfiles = $(p)libmain$(e) $(p)ChooseColor$(e) $(p)ChooseFont$(e) $(p)Commdlg$(e) $(p)FindReplDlg$(e) $(p)GetOpenFileName$(e) $(p)PrintDlg$(e)
@@ -39,6 +40,13 @@ EXPORTS = &
 #	DWOKSUBCLASS.31
 
 DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
-#ADD_COPT=-pl
 
 !include $(%ROOT)tools/mk/appsw16.mk
+
+TARGETS = $(PATH)$(PROJ1).dll
+
+#.ico: $(MYDIR)res
+
+$(PATH)$(PROJ1).dll: $(PATH)$(PROJ).dll $(MYDIR)Commdlg.rc
+ @$(SAY) RESCMP   $^. $(LOG)
+ @wrc -dCARDSTYLE_DEFAULT -q -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win
