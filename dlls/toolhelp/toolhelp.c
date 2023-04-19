@@ -62,6 +62,7 @@ typedef struct tagGLOBALARENA
     BYTE      flags;         /* Allocation flags */
     BYTE      selCount;      /* Number of selectors allocated for this block */
 } GLOBALARENA;
+typedef GLOBALARENA FAR * LPGLOBALARENA;
 
 typedef struct tagGLOBALARENA_KRNL286
 {
@@ -75,6 +76,7 @@ typedef struct tagGLOBALARENA_KRNL286
     WORD nwLRUPrev;
     WORD nwLRUNext;
 } GLOBALARENA_KRNL286;
+typedef GLOBALARENA_KRNL286 FAR * LPGLOBALARENA_KRNL286;
 
 typedef struct tagGLOBALARENA_KRNL386
 {
@@ -91,6 +93,7 @@ typedef struct tagGLOBALARENA_KRNL386
     DWORD nwLRUPrev;
     DWORD nwLRUNext;
 } GLOBALARENA_KRNL386;
+typedef GLOBALARENA_KRNL386 FAR * LPGLOBALARENA_KRNL386;
 
 #define GLOBAL_MAX_COUNT  8192        /* Max number of allocated blocks */
 
@@ -145,7 +148,7 @@ typedef struct tagBURGERMASTER_KRNL386
 } BURGERMASTER_KRNL386;
 typedef BURGERMASTER_KRNL386 FAR * LPBURGERMASTER_KRNL386;
 
-typedef struct
+typedef struct tagLOCALHEAPINFO
 {
     WORD check;                 /* 00 Heap checking flag */
     WORD freeze;                /* 02 Heap frozen flag */
@@ -170,7 +173,7 @@ typedef struct
 } LOCALHEAPINFO;
 typedef LOCALHEAPINFO FAR * LPLOCALHEAPINFO;
 
-typedef struct
+typedef struct tagLOCALARENA
 {
 /* Arena header */
     WORD prev;          /* Previous arena | arena type */
@@ -184,7 +187,7 @@ typedef LOCALARENA FAR * LPLOCALARENA;
 
 #define LOCAL_ARENA_HEADER_SIZE      4
 #define LOCAL_ARENA_HEADER( handle) ((handle) - LOCAL_ARENA_HEADER_SIZE)
-#define LOCAL_ARENA_PTR(ptr,arena)  ((LPLOCALARENA)((char far *)(ptr)+(arena)))
+#define LOCAL_ARENA_PTR(ptr,arena)  ((LPLOCALARENA)((LPSTR)(ptr)+(arena)))
 
 #define MOVEABLE_PREFIX sizeof(HLOCAL)
 
@@ -194,7 +197,7 @@ typedef LOCALARENA FAR * LPLOCALARENA;
  * LOCALHANDLEENTRY[count]  entries
  * WORD                     near ptr to next table
  */
-typedef struct
+typedef struct tagLOCALHANDLEENTRY
 {
     WORD addr;                /* Address of the MOVEABLE block */
     BYTE flags;               /* Flags for this block */
@@ -203,7 +206,7 @@ typedef struct
 typedef LOCALHANDLEENTRY FAR * LPLOCALHANDLEENTRY;
 
 
-typedef struct
+typedef struct tagINSTANCEDATA
 {
     WORD null;        /* Always 0 */
     DWORD old_ss_sp;  /* Stack pointer; used by SwitchTaskTo() */
@@ -213,6 +216,7 @@ typedef struct
     WORD stackmin;    /* Lowest stack address used so far */
     WORD stackbottom; /* Bottom of the stack */
 } INSTANCEDATA;
+typedef INSTANCEDATA FAR * LPINSTANCEDATA;
 
 typedef struct _THHOOK
 {
@@ -327,10 +331,10 @@ static GLOBALARENA far *get_global_arena(void)
 
 static LPLOCALHEAPINFO get_local_heap( HANDLE ds )
 {
-    INSTANCEDATA far *ptr = MAKELP(ds, 0);
+    LPINSTANCEDATA ptr = MAKELP(ds, 0);
 
     if (!ptr || !ptr->heap) return NULL;
-    return (LPLOCALHEAPINFO)((char far *)ptr + ptr->heap);
+    return (LPLOCALHEAPINFO)((LPSTR)ptr + ptr->heap);
 }
 
 
@@ -462,7 +466,7 @@ BOOL WINAPI LocalInfo( LPLOCALINFO lpLocalInfo, HGLOBAL handle )
 BOOL WINAPI LocalFirst( LPLOCALENTRY lpLocalEntry, HGLOBAL handle )
 {
     WORD ds = GlobalHandleToSel( handle );
-    char far *ptr = MAKELP( ds, 0 );
+    LPSTR ptr = MAKELP( ds, 0 );
     LPLOCALHEAPINFO lpInfo = get_local_heap( ds );
     
 	if (!lpInfo) return FALSE;
@@ -507,7 +511,7 @@ BOOL WINAPI LocalNext( LPLOCALENTRY lpLocalEntry )
         for (; count > 0; count--, lpEntry++)
             if (lpEntry->addr == lhandle + MOVEABLE_PREFIX)
             {
-                lhandle = (HLOCAL)((char far *)lpEntry - ptr);
+                lhandle = (HLOCAL)((LPSTR)lpEntry - ptr);
                 table = 0;
                 lpLocalEntry->wAddress  = lpEntry->addr;
                 lpLocalEntry->wFlags    = lpEntry->flags;
@@ -543,16 +547,16 @@ BOOL WINAPI ModuleFirst( LPMODULEENTRY lpme )
 BOOL WINAPI ModuleNext( LPMODULEENTRY lpme )
 {
     NE_MODULE far *pModule;
-    char far *name;
+    LPSTR name;
 
     if (!lpme->wNext) return FALSE;
     if (!(pModule = (NE_MODULE far *)GlobalLock( GetExePtr(lpme->wNext) ))) return FALSE;
-    name = (char far *)pModule + pModule->ne_restab;
+    name = (LPSTR)pModule + pModule->ne_restab;
     _fmemcpy( lpme->szModule, name + 1, min(*name, MAX_MODULE_NAME) );
     lpme->szModule[min(*name, MAX_MODULE_NAME)] = '\0';
     lpme->hModule = lpme->wNext;
     lpme->wcUsage = pModule->count;
-    name = ((OFSTRUCT far *)((char far *)pModule + pModule->fileinfo))->szPathName;
+    name = ((OFSTRUCT far *)((LPSTR)pModule + pModule->fileinfo))->szPathName;
     lstrcpyn( lpme->szExePath, name, sizeof(lpme->szExePath) );
     lpme->wNext = pModule->next;
     return TRUE;
@@ -596,7 +600,7 @@ BOOL WINAPI TaskFirst( LPTASKENTRY lpte )
 BOOL WINAPI TaskNext( LPTASKENTRY lpte )
 {
     TDB far *pTask;
-    INSTANCEDATA far *pInstData;
+    LPINSTANCEDATA lpInstData;
 
 //    TRACE_(toolhelp)("(%p): task=%04x\n", lpte, lpte->hNext );
     if (!lpte->hNext) return FALSE;
@@ -609,7 +613,7 @@ BOOL WINAPI TaskNext( LPTASKENTRY lpte )
             break;
         lpte->hNext = pTask->hNext;
     }
-    pInstData = MAKELP( GlobalHandleToSel(pTask->hInstance), 0 );
+    lpInstData = MAKELP( GlobalHandleToSel(pTask->hInstance), 0 );
     lpte->hTask         = lpte->hNext;
     lpte->hTaskParent   = pTask->hParent;
     lpte->hInst         = pTask->hInstance;
@@ -617,9 +621,9 @@ BOOL WINAPI TaskNext( LPTASKENTRY lpte )
 // @todo fix SS:SP for win16
     lpte->wSS           = 0;//SELECTOROF( pTask->teb->SystemReserved1[0] );
     lpte->wSP           = 0;//OFFSETOF( pTask->teb->SystemReserved1[0] );
-    lpte->wStackTop     = pInstData->stacktop;
-    lpte->wStackMinimum = pInstData->stackmin;
-    lpte->wStackBottom  = pInstData->stackbottom;
+    lpte->wStackTop     = lpInstData->stacktop;
+    lpte->wStackMinimum = lpInstData->stackmin;
+    lpte->wStackBottom  = lpInstData->stackbottom;
     lpte->wcEvents      = pTask->nEvents;
     lpte->hQueue        = pTask->hQueue;
     lstrcpyn( lpte->szModule, pTask->module_name, sizeof(lpte->szModule) );
@@ -797,7 +801,7 @@ void WINAPI TerminateApp(HTASK hTask, WORD wFlags)
  */
 DWORD WINAPI MemoryRead( WORD sel, DWORD offset, void FAR *buffer, DWORD count )
 {
-    char FAR *base = (char FAR *)GetSelectorBase( sel );
+    LPSTR base = (LPSTR)GetSelectorBase( sel );
     DWORD limit = GetSelectorLimit( sel );
 
     if (offset > limit) return 0;
@@ -812,7 +816,7 @@ DWORD WINAPI MemoryRead( WORD sel, DWORD offset, void FAR *buffer, DWORD count )
  */
 DWORD WINAPI MemoryWrite( WORD sel, DWORD offset, void FAR *buffer, DWORD count )
 {
-    char FAR *base = (char FAR *)GetSelectorBase( sel );
+    LPSTR base = (LPSTR)GetSelectorBase( sel );
     DWORD limit = GetSelectorLimit( sel );
 
     if (offset > limit) return 0;
