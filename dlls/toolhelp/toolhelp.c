@@ -853,12 +853,12 @@ BOOL WINAPI Local32Next( LOCAL32ENTRY *pLocal32Entry )
 BOOL FAR PASCAL LibMain( HINSTANCE hInstance, WORD wDataSegment,
                          WORD wHeapSize, LPSTR lpszCmdLine )
 {
-    const char * (CDECL *pwine_get_version)(void);
+    FARPROC pwine_get_version;
     
     HMODULE hntdll = GetModuleHandle("ntdll.dll");
 
 	if (hntdll) {
-		pwine_get_version = (void *)GetProcAddress(hntdll, "wine_get_version");
+		pwine_get_version = GetProcAddress(hntdll, "wine_get_version");
     
 		if (pwine_get_version) {
 			KernelType=KT_WINE;
