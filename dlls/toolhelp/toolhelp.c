@@ -49,7 +49,9 @@
 
 #pragma pack(push,1)
 
-typedef struct
+/* GLOBALARENA structure differs under different kernels */
+
+typedef struct tagGLOBALARENA
 {//@todo far here???
     void     *base;          /* Base address (0 if discarded) */
     DWORD     size;          /* Size in bytes (0 indicates a free block) */
@@ -60,6 +62,35 @@ typedef struct
     BYTE      flags;         /* Allocation flags */
     BYTE      selCount;      /* Number of selectors allocated for this block */
 } GLOBALARENA;
+
+typedef struct tagGLOBALARENA_KRNL286
+{
+    BYTE byLocks;
+    HANDLE hOwner;
+    WORD wSize;
+    BYTE byFlags;
+    WORD nwPrev;
+    WORD nwNext;
+    HANDLE hThis;
+    WORD nwLRUPrev;
+    WORD nwLRUNext;
+} GLOBALARENA_KRNL286;
+
+typedef struct tagGLOBALARENA_KRNL386
+{
+    DWORD nwPrev;
+    DWORD nwNext;
+    DWORD dwBase;
+    DWORD dwSize;
+    HANDLE hThis;
+    HANDLE hOwner;
+    BYTE byLocks;
+    BYTE byPageLocks;
+    BYTE byFlags;
+    BYTE byReqSels;
+    DWORD nwLRUPrev;
+    DWORD nwLRUNext;
+} GLOBALARENA_KRNL386;
 
 #define GLOBAL_MAX_COUNT  8192        /* Max number of allocated blocks */
 
@@ -277,7 +308,7 @@ static BYTE KernelType;
 static GLOBALARENA far *get_global_arena(void)
 {
 	THHOOK far * lpTH=get_thhook();
-	
+
 	if (KernelType==KT_WINE) 
 	{
 		return *(GLOBALARENA far **)lpTH;
