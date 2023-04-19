@@ -59,6 +59,57 @@ typedef struct
 
 #define GLOBAL_MAX_COUNT  8192        /* Max number of allocated blocks */
 
+/*
+   Wine doesn't support BURGERMASTER and uses GLOBALARENA as BURGERMASTER.
+   THHOOK hGlobalHeap and pGlobalHeap contains pointer to first GLOBALARENA
+   structure intead of handle and selector to BURGERMASTER.
+   
+*/
+
+typedef struct tagBURGERMASTER_KRNL286
+{
+    BOOL bCheck;
+    BOOL bFreeze;
+    WORD wEntries;
+    WORD nwFirst;
+    WORD nwLast;
+    BYTE byComp;
+    BYTE byDestrLev;
+    WORD nwDestrBytes;
+    HANDLE hTable;
+    HANDLE hFree;
+    WORD wDelta;
+    WORD pExpand;
+    WORD pStats;
+    WORD wLRUAcess;
+    WORD wLRUChain;
+    WORD wLRUCount;
+    WORD nwDestrPara;
+    WORD nwDestrChain;
+    WORD wFree;
+} BURGERMASTER_KRNL286;
+typedef BURGERMASTER_KRNL286 FAR * LPBURGERMASTER_KRNL286;
+
+typedef struct tagBURGERMASTER_KRNL386
+{
+    BOOL bCheck;
+    BOOL bFreeze;
+    WORD wEntries;
+    DWORD nwFirst;
+    DWORD nwLast;
+    BYTE byComp;
+    BYTE byDestrLev;
+    DWORD nwDestrBytes;
+    WORD reserved[5];
+    WORD wLRUAcess;
+    DWORD dwLRUChain;
+    WORD wLRUCount;
+    DWORD nwDestrPara;
+    DWORD nwDestrChain;
+    WORD wFree;
+} BURGERMASTER_KRNL386;
+typedef BURGERMASTER_KRNL386 FAR * LPBURGERMASTER_KRNL386;
+
 typedef struct
 {
     WORD check;                 /* 00 Heap checking flag */
@@ -210,14 +261,35 @@ static THHOOK far *get_thhook(void)
     return thhook;
 }
 
+static BYTE KernelType;
+#define KT_KERNEL 1
+#define KT_KRNL286 2
+#define KT_KRNL386 3
+#define KT_WINE 4
+
 static GLOBALARENA far *get_global_arena(void)
 {
-    return *(GLOBALARENA far **)get_thhook();
+	THHOOK far * lpTH=get_thhook();
+	
+	if (KernelType==KT_WINE) 
+	{
+		return *(GLOBALARENA far **)lpTH;
+	}
+	if (KernelType==KT_KRNL286) 
+	{
+		LPBURGERMASTER_KRNL286 lpBM = MAKELP(lpTH->pGlobalHeap, 0);
+		return (MAKELP(lpBM->nwFirst, 0));
+	}
+	if (KernelType==KT_KRNL386) 
+	{
+		LPBURGERMASTER_KRNL386 lpBM = MAKELP(lpTH->pGlobalHeap, 0);
+		return (MAKELP(lpTH->pGlobalHeap, lpBM->nwFirst));
+	}
 }
 
 static LOCALHEAPINFO far *get_local_heap( HANDLE ds )
 {
-    INSTANCEDATA far *ptr = MAKELP( ds, 0 );
+    INSTANCEDATA far *ptr = MAKELP(ds, 0);
 
     if (!ptr || !ptr->heap) return NULL;
     return (LOCALHEAPINFO far *)((char far *)ptr + ptr->heap);
@@ -781,7 +853,32 @@ BOOL WINAPI Local32Next( LOCAL32ENTRY *pLocal32Entry )
 BOOL FAR PASCAL LibMain( HINSTANCE hInstance, WORD wDataSegment,
                          WORD wHeapSize, LPSTR lpszCmdLine )
 {
-  return( 1 );
+    const char * (CDECL *pwine_get_version)(void);
+    
+    HMODULE hntdll = GetModuleHandle("ntdll.dll");
+
+	if (hntdll) {
+		pwine_get_version = (void *)GetProcAddress(hntdll, "wine_get_version");
+    
+		if (pwine_get_version) {
+			KernelType=KT_WINE;
+		} else {
+			// NT kernel here @todo
+		}
+	} else {
+		LONG lFlags = GetWinFlags();
+		// Detect krnl286/krnl386
+		if (GetVersion() == 0x0003) // Windows 3.0: mode-dependent
+		{
+			if (lFlags & WF_STANDARD)       KernelType=KT_KRNL286;
+			else if (lFlags & WF_ENHANCED)  KernelType=KT_KRNL386;
+			else /* yuk! real mode! */      KernelType=KT_KERNEL;
+		}
+		else    // Windows 3.1+: processor-dependent
+			KernelType= (lFlags & WF_CPU286) ? KT_KRNL286 : KT_KRNL386;
+	}
+	
+	return( 1 );
 }
 
 DWORD  WINAPI TaskSetCSIP(HTASK hTask, WORD wCS, WORD wIP)
