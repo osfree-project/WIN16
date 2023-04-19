@@ -17,6 +17,10 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ *
+ * @todo rework Global* functions to support real Windows 3.x kernel data structures
+ * @todo check and rework (if needed) Local* functions to support real Windows 3.x kernel data structures
+ *
  */
 
 #include <stdarg.h>
@@ -46,7 +50,7 @@
 #pragma pack(push,1)
 
 typedef struct
-{
+{//@todo far here???
     void     *base;          /* Base address (0 if discarded) */
     DWORD     size;          /* Size in bytes (0 indicates a free block) */
     HGLOBAL   handle;        /* Handle for this block */
@@ -133,6 +137,7 @@ typedef struct
     WORD minsize;               /* 26 Minimum size of the heap */
     WORD magic;                 /* 28 Magic number */
 } LOCALHEAPINFO;
+typedef LOCALHEAPINFO FAR * LPLOCALHEAPINFO;
 
 typedef struct
 {
@@ -144,10 +149,11 @@ typedef struct
     WORD free_prev;     /* Previous free block */
     WORD free_next;     /* Next free block */
 } LOCALARENA;
+typedef LOCALARENA FAR * LPLOCALARENA;
 
 #define LOCAL_ARENA_HEADER_SIZE      4
 #define LOCAL_ARENA_HEADER( handle) ((handle) - LOCAL_ARENA_HEADER_SIZE)
-#define LOCAL_ARENA_PTR(ptr,arena)  ((LOCALARENA *)((char *)(ptr)+(arena)))
+#define LOCAL_ARENA_PTR(ptr,arena)  ((LPLOCALARENA)((char far *)(ptr)+(arena)))
 
 #define MOVEABLE_PREFIX sizeof(HLOCAL)
 
@@ -163,6 +169,7 @@ typedef struct
     BYTE flags;               /* Flags for this block */
     BYTE lock;                /* Lock count */
 } LOCALHANDLEENTRY;
+typedef LOCALHANDLEENTRY FAR * LPLOCALHANDLEENTRY;
 
 
 typedef struct
@@ -287,12 +294,12 @@ static GLOBALARENA far *get_global_arena(void)
 	}
 }
 
-static LOCALHEAPINFO far *get_local_heap( HANDLE ds )
+static LPLOCALHEAPINFO get_local_heap( HANDLE ds )
 {
     INSTANCEDATA far *ptr = MAKELP(ds, 0);
 
     if (!ptr || !ptr->heap) return NULL;
-    return (LOCALHEAPINFO far *)((char far *)ptr + ptr->heap);
+    return (LPLOCALHEAPINFO)((char far *)ptr + ptr->heap);
 }
 
 
@@ -411,9 +418,9 @@ BOOL WINAPI GlobalEntryModule( LPGLOBALENTRY lpGlobal, HMODULE hModule,
  */
 BOOL WINAPI LocalInfo( LPLOCALINFO lpLocalInfo, HGLOBAL handle )
 {
-    LOCALHEAPINFO far *pInfo = get_local_heap( SELECTOROF(GlobalLock(handle)) );
-    if (!pInfo) return FALSE;
-    lpLocalInfo->wcItems = pInfo->items;
+    LPLOCALHEAPINFO lpInfo = get_local_heap( SELECTOROF(GlobalLock(handle)) );
+    if (!lpInfo) return FALSE;
+    lpLocalInfo->wcItems = lpInfo->items;
     return TRUE;
 }
 
@@ -425,17 +432,18 @@ BOOL WINAPI LocalFirst( LPLOCALENTRY lpLocalEntry, HGLOBAL handle )
 {
     WORD ds = GlobalHandleToSel( handle );
     char far *ptr = MAKELP( ds, 0 );
-    LOCALHEAPINFO far *pInfo = get_local_heap( ds );
-    if (!pInfo) return FALSE;
+    LPLOCALHEAPINFO lpInfo = get_local_heap( ds );
+    
+	if (!lpInfo) return FALSE;
 
-    lpLocalEntry->hHandle   = pInfo->first + LOCAL_ARENA_HEADER_SIZE;
+    lpLocalEntry->hHandle   = lpInfo->first + LOCAL_ARENA_HEADER_SIZE;
     lpLocalEntry->wAddress  = lpLocalEntry->hHandle;
     lpLocalEntry->wFlags    = LF_FIXED;
     lpLocalEntry->wcLock    = 0;
     lpLocalEntry->wType     = LT_NORMAL;
     lpLocalEntry->hHeap     = handle;
     lpLocalEntry->wHeapType = NORMAL_HEAP;
-    lpLocalEntry->wNext     = LOCAL_ARENA_PTR(ptr,pInfo->first)->next;
+    lpLocalEntry->wNext     = LOCAL_ARENA_PTR(ptr,lpInfo->first)->next;
     lpLocalEntry->wSize     = lpLocalEntry->wNext - lpLocalEntry->hHandle;
     return TRUE;
 }
@@ -448,39 +456,39 @@ BOOL WINAPI LocalNext( LPLOCALENTRY lpLocalEntry )
 {
     WORD ds = GlobalHandleToSel( lpLocalEntry->hHeap );
     LPSTR ptr = MAKELP( ds, 0 );
-    LOCALARENA *pArena;
+    LPLOCALARENA lpArena;
     WORD table, lhandle;
-    LOCALHEAPINFO far *pInfo = get_local_heap( ds );
+    LPLOCALHEAPINFO lpInfo = get_local_heap( ds );
 
-    if (!pInfo) return FALSE;
+    if (!lpInfo) return FALSE;
     if (!lpLocalEntry->wNext) return FALSE;
-    table = pInfo->htable;
-    pArena = LOCAL_ARENA_PTR( ptr, lpLocalEntry->wNext );
+    table = lpInfo->htable;
+    lpArena = LOCAL_ARENA_PTR( ptr, lpLocalEntry->wNext );
     lpLocalEntry->wAddress  = lpLocalEntry->wNext + LOCAL_ARENA_HEADER_SIZE;
-    lpLocalEntry->wFlags    = (pArena->prev & 3) + 1;
+    lpLocalEntry->wFlags    = (lpArena->prev & 3) + 1;
     lpLocalEntry->wcLock    = 0;
     /* Find the address in the entry tables */
     lhandle = lpLocalEntry->wAddress;
     while (table)
     {
         WORD count = *(WORD *)(ptr + table);
-        LOCALHANDLEENTRY *pEntry = (LOCALHANDLEENTRY*)(ptr+table+sizeof(WORD));
-        for (; count > 0; count--, pEntry++)
-            if (pEntry->addr == lhandle + MOVEABLE_PREFIX)
+        LPLOCALHANDLEENTRY lpEntry = (LPLOCALHANDLEENTRY)(ptr+table+sizeof(WORD));
+        for (; count > 0; count--, lpEntry++)
+            if (lpEntry->addr == lhandle + MOVEABLE_PREFIX)
             {
-                lhandle = (HLOCAL)((char *)pEntry - ptr);
+                lhandle = (HLOCAL)((char far *)lpEntry - ptr);
                 table = 0;
-                lpLocalEntry->wAddress  = pEntry->addr;
-                lpLocalEntry->wFlags    = pEntry->flags;
-                lpLocalEntry->wcLock    = pEntry->lock;
+                lpLocalEntry->wAddress  = lpEntry->addr;
+                lpLocalEntry->wFlags    = lpEntry->flags;
+                lpLocalEntry->wcLock    = lpEntry->lock;
                 break;
             }
-        if (table) table = *(WORD *)pEntry;
+        if (table) table = *(WORD FAR *)lpEntry;
     }
     lpLocalEntry->hHandle   = lhandle;
     lpLocalEntry->wType     = LT_NORMAL;
-    if (pArena->next != lpLocalEntry->wNext)  /* last one? */
-        lpLocalEntry->wNext = pArena->next;
+    if (lpArena->next != lpLocalEntry->wNext)  /* last one? */
+        lpLocalEntry->wNext = lpArena->next;
     else
         lpLocalEntry->wNext = 0;
     lpLocalEntry->wSize     = lpLocalEntry->wNext - lpLocalEntry->hHandle;
