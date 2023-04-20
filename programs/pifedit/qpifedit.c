@@ -16,10 +16,8 @@
 //#define STRICT			// Enable strict type checking
 #define NOCOMM			// Avoid inclusion of bulky COMM driver stuff
 #include <windows.h>
-//#include <windowsx.h>
 
 #include <commdlg.h>
-//#include <ctl3d.h>
 
 #include <ctype.h>		// For isdigit()
 #include <stdio.h>		// For sprintf()
@@ -58,7 +56,7 @@ int	SaveAsPIF(VOID);
 
 int	CheckSave(HWND hWnd);
 int	CheckPIFValidity(BOOL fMustBeValid);
-int	WritePIF(LPSTR lpszPIFName, LPSTR lpszQIFName);
+int	WritePIF(LPSTR lpszPIFName/*, LPSTR lpszQIFName*/);
 
 VOID	MenuFileNew(BOOL fCheck);
 VOID	MenuFileOpen(VOID);
@@ -68,8 +66,8 @@ int	MenuFileSaveAs(VOID);
 VOID	TestPIF(VOID);
 
 VOID	DefaultPIF(VOID);
-VOID	DefaultQPE(VOID);
-int	ControlsFromPIF(PPIF pPIF, PQPE pQPE, HWND hWnd);
+//VOID	DefaultQPE(VOID);
+int	ControlsFromPIF(PPIF pPIF, /*PQPE pQPE,*/ HWND hWnd);
 VOID	ControlsToPIF(HWND hWnd);
 
 BOOL	IsPifFile(LPCSTR lpszFileSpec);
@@ -77,7 +75,7 @@ UINT	CALLBACK _export GetOpenFileNameHookProc(HWND hWnd, UINT msg, WPARAM wParam
 
 VOID	SnapPif(VOID);			// Copy pifModel to pifBackup
 BYTE	ComputePIFChecksum(PPIF pPIF);	// Checksum the PIFHDR
-BYTE	ComputeQPEChecksum(PQPE pQPE);	// Checksum the QPE structure
+//BYTE	ComputeQPEChecksum(PQPE pQPE);	// Checksum the QPE structure
 
 BOOL	ValidateHotKey(BOOL fComplain);
 
@@ -120,8 +118,8 @@ BOOL	fUntitled = TRUE;	// No .PIF loaded yet
 PIF	pifModel;	// Complete 545-byte .PIF image
 PIF	pifBackup;	// Complete 545-byte .PIF image before editing
 
-QPE	qpeModel;	// .QPE image
-QPE	qpeBackup;	// .QPE image before editting
+//QPE	qpeModel;	// .QPE image
+//QPE	qpeBackup;	// .QPE image before editting
 
 static BOOL fDefDlgEx = FALSE;
 
@@ -132,13 +130,13 @@ char	szDirName[256] = { '\0' };
 char	szFile[_MAX_PATH];
 char	szExtension[5];
 char	szFileTitle[16];
-char	szFileQPE[_MAX_PATH];
+//char	szFileQPE[_MAX_PATH];
 
 WORD	wHotkeyScancode = 0;	// 0 indicates 'None'
 BYTE	bHotkeyBits = 0;	//  Bits 24-31 of WM_KEYDOWN
 
 HLOCAL	hPIF = NULL;	// HANDLE to LocalAlloc()'ed .PIF structure
-HLOCAL	hQPE = NULL;	// HANDLE to LocalAlloc()'ed .QPE structure
+//HLOCAL	hQPE = NULL;	// HANDLE to LocalAlloc()'ed .QPE structure
 
 BOOL	fCheckOnKillFocus = TRUE;
 UINT	idHelpCur = 0;
@@ -354,8 +352,8 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 
     memset(&pifModel, 0, sizeof(PIF));
     memset(&pifBackup, 0, sizeof(PIF));
-    memset(&qpeModel, 0, sizeof(QPE));
-    memset(&qpeBackup, 0, sizeof(QPE));
+//    memset(&qpeModel, 0, sizeof(QPE));
+//    memset(&qpeBackup, 0, sizeof(QPE));
 
 
     hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_QIF));
@@ -401,8 +399,8 @@ int CheckSave(HWND hWnd)
 
     ControlsToPIF(hWnd);
 
-    if (memcmp(&pifModel, &pifBackup, sizeof(PIF)) ||
-	memcmp(&qpeModel, &qpeBackup, sizeof(QPE)) ) {	// It's changed
+    if (memcmp(&pifModel, &pifBackup, sizeof(PIF)) /*||
+	memcmp(&qpeModel, &qpeBackup, sizeof(QPE)) */) {	// It's changed
 	char	szFmt[128];
 
 	LoadString(hInst, IDS_SAVECHANGES, szFmt, sizeof(szFmt));
@@ -454,7 +452,7 @@ void MenuFileNew(BOOL fCheck)
 
     DefaultPIF();
 
-    ControlsFromPIF(&pifModel, &qpeModel, hWndDlg);
+    ControlsFromPIF(&pifModel, /*&qpeModel,*/ hWndDlg);
 // We don't check the return code from ControlFromPIF() because we just
 // created the default PIF models and we should be able to count on something
 
@@ -478,7 +476,6 @@ void MenuFileNew(BOOL fCheck)
 VOID SnapPif(VOID)
 {
     memcpy(&pifBackup, &pifModel, sizeof(PIF));
-    memcpy(&qpeBackup, &qpeModel, sizeof(QPE));
 }
 
 
@@ -498,60 +495,41 @@ VOID MenuFileOpen(VOID)
 {
     int	rc;
 
-    PPIF	pPIF = NULL;
-    PQPE	pQPE = NULL;
+	PPIF	pPIF = NULL;
 
     rc = CheckSave(hWndDlg);
     if (rc == IDCANCEL)
 	goto MENUFILEOPEN_EXIT;
 
-    if (OpenPIF()) {	// Open didn't work
+	if (OpenPIF()) {	// Open didn't work
 
-    } else {
-	pPIF = (PPIF)LocalLock(hPIF);
+	} else {
+		pPIF = (PPIF)LocalLock(hPIF);
 
-	if (!pPIF) {
-	    char	szBuf[80];
+		if (!pPIF) {
+			char	szBuf[80];
 
-	    LoadString(hInst, IDS_OUTOFMEMORY2 , szBuf, sizeof(szBuf));
-	    MessageBox(hWndDlg, szBuf, szAppTitle, MB_OK);
-	    goto MENUFILEOPEN_EXIT;
+			LoadString(hInst, IDS_OUTOFMEMORY2 , szBuf, sizeof(szBuf));
+			MessageBox(hWndDlg, szBuf, szAppTitle, MB_OK);
+			goto MENUFILEOPEN_EXIT;
+		}
+
+		rc = ControlsFromPIF(pPIF, /*&qpeModel, */hWndDlg);
+
+		if (rc) {			// Couldn't set the controls
+			MenuFileNew(FALSE); 	// Don't check old contents
+			goto MENUFILEOPEN_EXIT;
+		}
+
+		ControlsToPIF(hWndDlg);
+		SnapPif();
 	}
-
-	if (hQPE) {		// Read a .QPE
-	    pQPE = (PQPE)LocalLock(hQPE);
-
-	    if (!pQPE) {
-		char	szBuf[80];
-
-		LoadString(hInst, IDS_OUTOFMEMORY3 , szBuf, sizeof(szBuf));
-		MessageBox(hWndDlg, szBuf, szAppTitle, MB_OK);
-		goto MENUFILEOPEN_EXIT;
-	    }
-
-	    rc = ControlsFromPIF(pPIF, pQPE, hWndDlg);
-	} else {		// No .QPE yet
-	    DefaultQPE();
-	    rc = ControlsFromPIF(pPIF, &qpeModel, hWndDlg);
-	}
-
-	if (rc) {			// Couldn't set the controls
-	    MenuFileNew(FALSE); 	// Don't check old contents
-	    goto MENUFILEOPEN_EXIT;
-	}
-
-	ControlsToPIF(hWndDlg);
-	SnapPif();
-    }
 
 MENUFILEOPEN_EXIT:
-    if (pPIF) { LocalUnlock(hPIF);  pPIF = NULL; }
-    if (pQPE) { LocalUnlock(hQPE);  pQPE = NULL; }
+	if (pPIF) { LocalUnlock(hPIF);  pPIF = NULL; }
+	if (hPIF) { LocalFree(hPIF);  hPIF = NULL; }
 
-    if (hPIF) { LocalFree(hPIF);  hPIF = NULL; }
-    if (hQPE) { LocalFree(hQPE);  hQPE = NULL; }
-
-    return;
+	return;
 }
 
 
@@ -825,16 +803,16 @@ UINT CALLBACK _export GetOpenFileNameHookProc(HWND hWnd, UINT msg, WPARAM wParam
 
 /****************************************************************************
  *
- *  FUNCTION :	OpenPif(VOID)
+ *	FUNCTION :	OpenPif(VOID)
  *
- *  PURPOSE  :	Helper function for MenuFileOpen()
+ *	PURPOSE  :	Helper function for MenuFileOpen()
  *		Does the dirty work of the COMMDLG GetOpenFileName()
  *		Reads the .PIF and .QPE files in local memory
  *
- *  ENTRY    :	VOID
+ *	ENTRY	:	VOID
  *
- *  RETURNS  :	0	- Normal return
- *		IDABORT - File system error
+ *	RETURNS	:	0		- Normal return
+ *				IDABORT	- File system error
  *
  ****************************************************************************/
 
@@ -846,17 +824,13 @@ int OpenPIF(VOID)
     UINT	msgFileOK = RegisterWindowMessage(FILEOKSTRING);
 
     WORD	wPifLen;
-    WORD	wQPELen;
 
     DWORD	dwPIFLen;
-    DWORD	dwQPELen;
 
     HCURSOR	hCursorOld = NULL;
     HFILE	hFilePIF = 0;
-    HFILE	hFileQPE = 0;
 
     PPIF	pPIF = NULL;
-    PQPE	pQPE = NULL;
 
     szFile[0] = '\0';
 
@@ -882,16 +856,16 @@ int OpenPIF(VOID)
 
     FreeProcInstance((FARPROC) ofn.lpfnHook);
 
-    if (!rc) {
-	if (CommDlgExtendedError()) {
-	    CommDlgError(hWndDlg, CommDlgExtendedError());
-	    rc = IDABORT;
-	} else {
-	    rc = IDCANCEL;
-	}
+	if (!rc) {
+		if (CommDlgExtendedError()) {
+			CommDlgError(hWndDlg, CommDlgExtendedError());
+			rc = IDABORT;
+		} else {
+			rc = IDCANCEL;
+		}
 
-	goto OPENPIF_EXIT;
-    }
+		goto OPENPIF_EXIT;
+	}
 
     lstrcpy(szWindowTitle, szAppTitleThe);
     lstrcat(szWindowTitle, " - ");
@@ -903,63 +877,55 @@ int OpenPIF(VOID)
     strncpy(szDirName, szFile, ofn.nFileOffset-1);
     lstrcpy(szExtension, szFile + ofn.nFileExtension);
 
-// Prepare name for the .QPE
-
-// We could double check the extension to make sure it's .PIF,
-// but since the internals looked like a .PIF, we won't bother.
-
-    lstrcpy(szFileQPE, szFile);
-    lstrcpy(&szFileQPE[ofn.nFileExtension], "QPE");
-
 /* Switch to the hour glass cursor */
     SetCapture(hWndDlg);
     hCursorOld = SetCursor(LoadCursor(NULL, IDC_WAIT));
 
 /* Open and read the file */
-    DebugPrintf("OpenPIF(): _Lopen(%s, OF_READ)\r\n", (LPSTR) szFile);
+    DebugPrintf("OpenPIF(): _lopen(%s, OF_READ)\r\n", (LPSTR) szFile);
 
     hFilePIF = _lopen(szFile, OF_READ);
 
-    if ((int) hFilePIF == HFILE_ERROR) {	// Can't open the .PIF
-	char	szFmt[80];
+	if ((int) hFilePIF == HFILE_ERROR) {	// Can't open the .PIF
+		char	szFmt[80];
 
-	DebugPrintf("OpenPIF() _lopen(%s, OF_READ) failed\r\n", (LPSTR) szFile);
+		DebugPrintf("OpenPIF() _lopen(%s, OF_READ) failed\r\n", (LPSTR) szFile);
 
-	LoadString(hInst, IDS_CANTOPEN , szFmt, sizeof(szFmt));
-	MessageBoxPrintf(szFmt, (LPSTR) szFile);
-	rc = IDABORT;  goto OPENPIF_EXIT;
-    }
+		LoadString(hInst, IDS_CANTOPEN , szFmt, sizeof(szFmt));
+		MessageBoxPrintf(szFmt, (LPSTR) szFile);
+		rc = IDABORT;  goto OPENPIF_EXIT;
+	}
 
     dwPIFLen = _llseek(hFilePIF, 0L, SEEK_END);
     _llseek(hFilePIF, 0L, SEEK_SET);
 
     DebugPrintf("%s filesize is %6ld\r\n", (LPSTR) szFile, dwPIFLen);
 
-    if (dwPIFLen >= 65520L) {
-	char	szFmt[80];
+	if (dwPIFLen >= 65520L) {
+		char	szFmt[80];
 
-	LoadString(hInst, IDS_TOOBIG , szFmt, sizeof(szFmt));
-	MessageBox(hWndDlg, szFmt, szAppTitle, MB_OK);
-	rc = IDABORT;  goto OPENPIF_EXIT;
-    } else {
-	wPifLen = (WORD) dwPIFLen;
-	if (wPifLen <= sizeof(PIFHDR)) {	// Old-style .PIF
-	    char	szFmt[80];
+		LoadString(hInst, IDS_TOOBIG , szFmt, sizeof(szFmt));
+		MessageBox(hWndDlg, szFmt, szAppTitle, MB_OK);
+		rc = IDABORT;  goto OPENPIF_EXIT;
+	} else {
+		wPifLen = (WORD) dwPIFLen;
+		if (wPifLen <= sizeof(PIFHDR)) {	// Old-style .PIF
+			char	szFmt[80];
 
-	    LoadString(hInst, IDS_OLDPIF , szFmt, sizeof(szFmt));
-	    MessageBox(hWndDlg, szFmt, szAppTitle, MB_OK);
-	    rc = IDABORT;  goto OPENPIF_EXIT;
+			LoadString(hInst, IDS_OLDPIF , szFmt, sizeof(szFmt));
+			MessageBox(hWndDlg, szFmt, szAppTitle, MB_OK);
+			rc = IDABORT;  goto OPENPIF_EXIT;
+		}
 	}
-    }
 
-    hPIF = LocalAlloc(LMEM_MOVEABLE, wPifLen);
-    if (!hPIF) {
-	char	szBuf[80];
+	hPIF = LocalAlloc(LMEM_MOVEABLE, wPifLen);
+	if (!hPIF) {
+		char	szBuf[80];
 
-	LoadString(hInst, IDS_OUTOFMEMORY , szBuf, sizeof(szBuf));
-	MessageBox(hWndDlg, szBuf, szAppTitle, MB_OK);
-	rc = IDABORT;  goto OPENPIF_EXIT;
-    }
+		LoadString(hInst, IDS_OUTOFMEMORY , szBuf, sizeof(szBuf));
+		MessageBox(hWndDlg, szBuf, szAppTitle, MB_OK);
+		rc = IDABORT;  goto OPENPIF_EXIT;
+	}
 
     pPIF = (PPIF)LocalLock(hPIF);
     if (!pPIF) {
@@ -985,54 +951,17 @@ int OpenPIF(VOID)
 
     if (pPIF) { LocalUnlock(hPIF); pPIF = NULL; }
 
-// .QPE processing
-    hQPE = NULL;
-
-// Check for an associated .QPE
-    hFileQPE = OpenFile(szFileQPE, &OpenBuff, OF_EXIST);
-
-    if ((int) hFileQPE == HFILE_ERROR) {	// No .QPE exists
-	rc = 0; goto OPENPIF_EXIT;
-    }
-
-    hFileQPE = _lopen(szFileQPE, OF_READ);
-
-    if ((int) hFileQPE != HFILE_ERROR) {
-
-	dwQPELen = _llseek(hFileQPE, 0L, SEEK_END);
-	_llseek(hFileQPE, 0L, SEEK_SET);
-
-	if (dwQPELen < sizeof(QPE)) {	// File is too short
-	    char	szBuf[128], szFmt[128];
-
-	    LoadString(hInst, IDS_NOTVALIDQPE , szFmt, sizeof(szFmt));
-	    wsprintf(szBuf, szFmt, (LPSTR) szFile, (LPSTR) szFileQPE);
-	    MessageBox(hWndDlg, szBuf, szAppTitle, MB_OK);
-	    rc = IDABORT;  goto OPENPIF_EXIT;
+OPENPIF_EXIT:
+	if (hCursorOld) {
+		SetCursor(hCursorOld);
+		ReleaseCapture();
 	}
 
-	wQPELen = (WORD) dwQPELen;
-	hQPE = LocalAlloc(LMEM_MOVEABLE, wQPELen);
-	pQPE = (PQPE)LocalLock(hQPE);
+	if (pPIF) { LocalUnlock(hPIF); pPIF = NULL; }
 
-	rc = _lread(hFileQPE, (LPBYTE) pQPE, wQPELen);
-    }
+	if (hFilePIF > 0) _lclose(hFilePIF);
 
-    rc = 0;
-
-OPENPIF_EXIT:
-    if (hCursorOld) {
-	SetCursor(hCursorOld);
-	ReleaseCapture();
-    }
-
-    if (pPIF) { LocalUnlock(hPIF); pPIF = NULL; }
-    if (pQPE) { LocalUnlock(hQPE); pQPE = NULL; }
-
-    if (hFilePIF > 0) _lclose(hFilePIF);
-    if (hFileQPE > 0) _lclose(hFileQPE);
-
-    return (rc);
+	return (rc);
 }
 
 
@@ -1052,14 +981,14 @@ OPENPIF_EXIT:
  *
  ****************************************************************************/
 
-int WritePIF(LPSTR lpszPIFName, LPSTR lpszQPEName)
+int WritePIF(LPSTR lpszPIFName/*, LPSTR lpszQPEName*/)
 {
     register int	rc;
     HCURSOR	hCursorOld;
     OFSTRUCT	OpenBuff;
 
     HFILE	hFilePIF = 0;
-    HFILE	hFileQPE = 0;
+//    HFILE	hFileQPE = 0;
 
 /* Switch to the hour glass cursor */
 
@@ -1087,8 +1016,8 @@ int WritePIF(LPSTR lpszPIFName, LPSTR lpszQPEName)
 
     }
 
-    DebugPrintf("SavePIF(): OpenFile(%s, OF_READ)\r\n", lpszQPEName);
-
+//    DebugPrintf("SavePIF(): OpenFile(%s, OF_READ)\r\n", lpszQPEName);
+/*
     hFileQPE = OpenFile(lpszQPEName, &OpenBuff, OF_CREATE | OF_WRITE);
 
     if ((int) hFileQPE != HFILE_ERROR) {
@@ -1099,11 +1028,11 @@ int WritePIF(LPSTR lpszPIFName, LPSTR lpszQPEName)
 	    DebugPrintf("SavePIF() _lwrite(hFileQPE, (LPVOID) &qpeModel, sizeof(QPE)) failed %d\r\n", rc);
 	    rc = IDABORT;  goto WRITEPIF_EXIT;
 	}
-    } else {	/* Couldn't save the file */
+    } else {	// Couldn't save the file 
 	DebugPrintf("SavePIF() OpenFile(%s, &OpenBuff, OF_CREATE | OF_WRITE) failed\r\n", lpszQPEName);
 	rc = IDABORT;  goto WRITEPIF_EXIT;
     }
-
+*/
     rc = 0;
 
 WRITEPIF_EXIT:
@@ -1111,7 +1040,7 @@ WRITEPIF_EXIT:
     ReleaseCapture();
 
     if (hFilePIF > 0) _lclose(hFilePIF);
-    if (hFileQPE > 0) _lclose(hFileQPE);
+//    if (hFileQPE > 0) _lclose(hFileQPE);
 
     return (rc);
 }
@@ -1196,7 +1125,7 @@ int SavePIF(VOID)
     rc = CheckPIFValidity(FALSE);
     if (rc) return (rc);
 
-    return (WritePIF(szFile, szFileQPE));
+    return (WritePIF(szFile/*, szFileQPE*/));
 }
 
 
@@ -1248,15 +1177,15 @@ int SaveAsPIF(VOID)
     lstrcpy(szExtension, szFile + ofn.nFileExtension);
 
 // Prepare name for the .QPE
-    lstrcpy(szFileQPE, szFile);
+//    lstrcpy(szFileQPE, szFile);
 
-    if (szFileQPE[ofn.nFileExtension] != 'P') { // Oops!
+//    if (szFileQPE[ofn.nFileExtension] != 'P') { // Oops!
 
 // FIXME Bitch
 
-    }
+//    }
 
-    lstrcpy(&szFileQPE[ofn.nFileExtension], "QPE");
+//    lstrcpy(&szFileQPE[ofn.nFileExtension], "QPE");
 
     fUntitled = FALSE;
 
@@ -1544,7 +1473,7 @@ VOID TestPIF(VOID)		// Write out a temporary .PIF and test run it
 {
     int 	rc;
     char	szPIFName[_MAX_PATH];	// Buffer to hold filename
-    char	szQPEName[_MAX_PATH];	// Buffer to hold filename
+//    char	szQPEName[_MAX_PATH];	// Buffer to hold filename
     char	szDrive[_MAX_DRIVE];	// Drive letter and colon
     char	szDir[_MAX_DIR];	// Directory
     char	szFname[_MAX_FNAME];	// Filename w/o extension
@@ -1567,16 +1496,16 @@ VOID TestPIF(VOID)		// Write out a temporary .PIF and test run it
 
     _splitpath(szPIFName, szDrive, szDir, szFname, szExt);
     _makepath(szPIFName, szDrive, szDir, "~QIFEDIT", ".PIF");
-    _makepath(szQPEName, szDrive, szDir, "~QIFEDIT", ".QPE");
+//    _makepath(szQPEName, szDrive, szDir, "~QIFEDIT", ".QPE");
 
 /* Switch to the hour glass cursor */
     SetCapture(hWndDlg);
     hCursorOld = SetCursor(LoadCursor(NULL, IDC_WAIT));
 
     OpenFile(szPIFName, &OpenBuff, OF_DELETE);
-    OpenFile(szQPEName, &OpenBuff, OF_DELETE);
+//    OpenFile(szQPEName, &OpenBuff, OF_DELETE);
 
-    rc = WritePIF(szPIFName, szQPEName);
+    rc = WritePIF(szPIFName/*, szQPEName*/);
 
     WinExec(szPIFName, SW_SHOWNORMAL);
 
@@ -2525,7 +2454,7 @@ VOID DefaultPIF(VOID)
     pifModel.pifHdr.CheckSum = ComputePIFChecksum(&pifModel);
 
 
-    DefaultQPE();
+//    DefaultQPE();
 }
 
 
@@ -2540,7 +2469,7 @@ VOID DefaultPIF(VOID)
  *  RETURNS  :	VOID
  *
  ****************************************************************************/
-
+/*
 VOID DefaultQPE(VOID)
 {
     memset(&qpeModel, 0, sizeof(QPE));
@@ -2562,7 +2491,7 @@ VOID DefaultQPE(VOID)
     qpeModel.bCheckSum = ComputeQPEChecksum(&qpeModel);
 }
 
-
+*/
 /****************************************************************************
  *
  *  FUNCTION :	ControlsFromPIF(PPIF, PQPE, HWND)
@@ -2582,7 +2511,7 @@ VOID DefaultQPE(VOID)
 
 // Copy the data to the dialog controls from our .PIF model
 
-int ControlsFromPIF(PPIF pPIF, PQPE pQPE, HWND hWnd)
+int ControlsFromPIF(PPIF pPIF/*, PQPE pQPE*/, HWND hWnd)
 {
     char szNumBuf[32];
     int 	n;
@@ -2720,6 +2649,7 @@ int ControlsFromPIF(PPIF pPIF, PQPE pQPE, HWND hWnd)
 
     }
 
+/*
     if (pQPE->Flags1 & QPE_OFF) {
 	CheckDlgButton(hWnd, IDB_SUPERVM_DEF, FALSE);
 	CheckDlgButton(hWnd, IDB_SUPERVM_ON, FALSE);
@@ -2728,17 +2658,17 @@ int ControlsFromPIF(PPIF pPIF, PQPE pQPE, HWND hWnd)
 	CheckDlgButton(hWnd, IDB_SUPERVM_DEF, FALSE);
 	CheckDlgButton(hWnd, IDB_SUPERVM_ON, TRUE);
 	CheckDlgButton(hWnd, IDB_SUPERVM_OFF, FALSE);
-    } else {
+    } else */ {
 	CheckDlgButton(hWnd, IDB_SUPERVM_DEF, TRUE);
 	CheckDlgButton(hWnd, IDB_SUPERVM_ON, FALSE);
 	CheckDlgButton(hWnd, IDB_SUPERVM_OFF, FALSE);
     }
-
+/*
     if (!(pQPE->Flags1 & QPE_OFF)) {	// Super VM is in effect
 	wsprintf(szNumBuf,"%d",pQPE->DosMax);
 	SetDlgItemText(hWnd, IDE_DOSMAX, szNumBuf);
     }
-
+*/
     return (0);
 }
 
@@ -2761,7 +2691,7 @@ VOID ControlsToPIF(HWND hWnd)
     char	szNumBuf[32];
 
     PPIF	pPIF = &pifModel;
-    PQPE	pQPE = &qpeModel;
+//    PQPE	pQPE = &qpeModel;
 
     DefaultPIF();
 
@@ -2860,13 +2790,13 @@ VOID ControlsToPIF(HWND hWnd)
 // Calculate the checksum for the old-style header
     pPIF->pifHdr.CheckSum = ComputePIFChecksum(pPIF);
 
-    pQPE->Flags1 |= IsDlgButtonChecked(hWnd, IDB_SUPERVM_OFF) ? QPE_OFF : 0;
-    pQPE->Flags1 |= IsDlgButtonChecked(hWnd, IDB_SUPERVM_ON) ? QPE_ON : 0;
+//    pQPE->Flags1 |= IsDlgButtonChecked(hWnd, IDB_SUPERVM_OFF) ? QPE_OFF : 0;
+//    pQPE->Flags1 |= IsDlgButtonChecked(hWnd, IDB_SUPERVM_ON) ? QPE_ON : 0;
 
     GetDlgItemText(hWnd, IDE_DOSMAX, szNumBuf, sizeof(szNumBuf));
-    pQPE->DosMax = atoi(szNumBuf);
+//    pQPE->DosMax = atoi(szNumBuf);
 
-    qpeModel.bCheckSum = ComputeQPEChecksum(&qpeModel);
+//    qpeModel.bCheckSum = ComputeQPEChecksum(&qpeModel);
 }
 
 
@@ -2907,7 +2837,7 @@ BYTE ComputePIFChecksum(PPIF pPIF)		// Checksum the PIFHDR
  *  RETURNS  :	Checksum as a BYTE
  *
  ****************************************************************************/
-
+/*
 BYTE ComputeQPEChecksum(PQPE pQPE)		// Checksum the QPE structure
 {
     PBYTE	pb = (PBYTE) pQPE;
@@ -2919,6 +2849,7 @@ BYTE ComputeQPEChecksum(PQPE pQPE)		// Checksum the QPE structure
     return ( (BYTE) -(bSum - pQPE->bCheckSum) );
 }
 
+*/
 
 /****************************************************************************
  *

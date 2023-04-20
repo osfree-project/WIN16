@@ -4,7 +4,6 @@
 #include <cderr.h>
 
 #include <pif.h>		// .PIF structure
-#include <qpe.h>		// .QPE structure
 
 #define APPNAME 	"PIFEDIT"
 #define PROFILE 	"PIFEDIT.INI"
