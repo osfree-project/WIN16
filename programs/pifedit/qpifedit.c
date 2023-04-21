@@ -17,12 +17,10 @@
 #define NOCOMM			// Avoid inclusion of bulky COMM driver stuff
 #include <windows.h>
 
-#include <commdlg.h>
-
 #include <ctype.h>		// For isdigit()
-#include <stdio.h>		// For sprintf()
-#include <stdlib.h>		// For _MAX_DIR
-#include <string.h>
+#include <stdio.h>		// For sscanf()
+#include <stdlib.h>		// For _MAX_DIR, _MAX_DRIVE, _MAX_FNAME, _MAX_EXT, _MAX_PATH, _fullpath, _splitpath, _makepath
+#include <string.h>		// For memset, memcmp, memcpy, strncpy, strchr
 
 #include "qpifedit.h"
 
