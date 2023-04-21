@@ -56,7 +56,7 @@ int	SaveAsPIF(VOID);
 
 int	CheckSave(HWND hWnd);
 int	CheckPIFValidity(BOOL fMustBeValid);
-int	WritePIF(LPSTR lpszPIFName/*, LPSTR lpszQIFName*/);
+int	WritePIF(LPSTR lpszPIFName);
 
 VOID	MenuFileNew(BOOL fCheck);
 VOID	MenuFileOpen(VOID);
@@ -66,8 +66,7 @@ int	MenuFileSaveAs(VOID);
 VOID	TestPIF(VOID);
 
 VOID	DefaultPIF(VOID);
-//VOID	DefaultQPE(VOID);
-int	ControlsFromPIF(PPIF pPIF, /*PQPE pQPE,*/ HWND hWnd);
+int	ControlsFromPIF(PPIF pPIF,  HWND hWnd);
 VOID	ControlsToPIF(HWND hWnd);
 
 BOOL	IsPifFile(LPCSTR lpszFileSpec);
@@ -75,7 +74,6 @@ UINT	CALLBACK _export GetOpenFileNameHookProc(HWND hWnd, UINT msg, WPARAM wParam
 
 VOID	SnapPif(VOID);			// Copy pifModel to pifBackup
 BYTE	ComputePIFChecksum(PPIF pPIF);	// Checksum the PIFHDR
-//BYTE	ComputeQPEChecksum(PQPE pQPE);	// Checksum the QPE structure
 
 BOOL	ValidateHotKey(BOOL fComplain);
 
@@ -118,9 +116,6 @@ BOOL	fUntitled = TRUE;	// No .PIF loaded yet
 PIF	pifModel;	// Complete 545-byte .PIF image
 PIF	pifBackup;	// Complete 545-byte .PIF image before editing
 
-//QPE	qpeModel;	// .QPE image
-//QPE	qpeBackup;	// .QPE image before editting
-
 static BOOL fDefDlgEx = FALSE;
 
 OPENFILENAME	ofn;		// For GetOpenFileName() and GetSaveFileName
@@ -130,13 +125,11 @@ char	szDirName[256] = { '\0' };
 char	szFile[_MAX_PATH];
 char	szExtension[5];
 char	szFileTitle[16];
-//char	szFileQPE[_MAX_PATH];
 
 WORD	wHotkeyScancode = 0;	// 0 indicates 'None'
 BYTE	bHotkeyBits = 0;	//  Bits 24-31 of WM_KEYDOWN
 
 HLOCAL	hPIF = NULL;	// HANDLE to LocalAlloc()'ed .PIF structure
-//HLOCAL	hQPE = NULL;	// HANDLE to LocalAlloc()'ed .QPE structure
 
 BOOL	fCheckOnKillFocus = TRUE;
 UINT	idHelpCur = 0;
@@ -233,7 +226,6 @@ CONTROL aControls[] = {
     { IDD_MEMORY,	IDE_DOSMAX,	EDIT,	EDIT_OPTVAL,  640,     0,   736 },
 #endif
 
-//{ 0,	IDB_VIDEO,	BUTTON },
 
 { 0,	IDB_TASK,	BUTTON },
     { IDD_TASK, IDG_PRIORITY,	GROUP },
@@ -271,9 +263,6 @@ CONTROL aControls[] = {
     { IDD_TASK,	IDB_ALTSPACE,	BUTTON },
     { IDD_TASK,	IDB_ALTENTER,	BUTTON },
     { IDD_TASK,	IDB_ALTPRTSC,	BUTTON },
-
-//{ 0,	IDB_OTHER,	BUTTON },
-//    { IDD_OTHER,	IDG_OPTIONS,	GROUP },
 
 { 0,	LASTCONTROL, LASTCONTROL}		// End of table marker
 };
@@ -348,27 +337,19 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
     ofn.lpstrFilter = szFilter;
     ofn.nFilterIndex = 1;
 
-// Initialize the model PIF and QPE
+// Initialize the model PIF
 
     memset(&pifModel, 0, sizeof(PIF));
     memset(&pifBackup, 0, sizeof(PIF));
-//    memset(&qpeModel, 0, sizeof(QPE));
-//    memset(&qpeBackup, 0, sizeof(QPE));
 
 
     hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_QIF));
 
-    // initialize 3-D support
-//    Ctl3dRegister(hInstance);
-//    Ctl3dAutoSubclass(hInstance);
 
 
     lpfn = MakeProcInstance((FARPROC) PaneMsgProc, hInst);
-    //rc = DialogBox(hInst, MAKEINTRESOURCE(IDD_FRAME), NULL, (DLGPROC) lpfn);
     rc = DialogBox(hInst, MAKEINTRESOURCE(IDD_FRAME), NULL, (DLGPROC) lpfn);
     FreeProcInstance(lpfn);
-
-//    Ctl3dUnregister(hInstance);
 
     if (hFontHelp)
 	DeleteFont(hFontHelp);
@@ -399,8 +380,7 @@ int CheckSave(HWND hWnd)
 
     ControlsToPIF(hWnd);
 
-    if (memcmp(&pifModel, &pifBackup, sizeof(PIF)) /*||
-	memcmp(&qpeModel, &qpeBackup, sizeof(QPE)) */) {	// It's changed
+    if (memcmp(&pifModel, &pifBackup, sizeof(PIF))) {	// It's changed
 	char	szFmt[128];
 
 	LoadString(hInst, IDS_SAVECHANGES, szFmt, sizeof(szFmt));
@@ -452,7 +432,7 @@ void MenuFileNew(BOOL fCheck)
 
     DefaultPIF();
 
-    ControlsFromPIF(&pifModel, /*&qpeModel,*/ hWndDlg);
+    ControlsFromPIF(&pifModel, hWndDlg);
 // We don't check the return code from ControlFromPIF() because we just
 // created the default PIF models and we should be able to count on something
 
@@ -464,7 +444,7 @@ void MenuFileNew(BOOL fCheck)
  *
  *  FUNCTION :	SnapPif(VOID)
  *
- *  PURPOSE  :	Copy the .PIF and .QPE models to a backup for CheckSave()
+ *  PURPOSE  :	Copy the .PIF model to a backup for CheckSave()
  *		inspection later
  *
  *  ENTRY    :	VOID
@@ -514,7 +494,7 @@ VOID MenuFileOpen(VOID)
 			goto MENUFILEOPEN_EXIT;
 		}
 
-		rc = ControlsFromPIF(pPIF, /*&qpeModel, */hWndDlg);
+		rc = ControlsFromPIF(pPIF, hWndDlg);
 
 		if (rc) {			// Couldn't set the controls
 			MenuFileNew(FALSE); 	// Don't check old contents
@@ -807,7 +787,7 @@ UINT CALLBACK _export GetOpenFileNameHookProc(HWND hWnd, UINT msg, WPARAM wParam
  *
  *	PURPOSE  :	Helper function for MenuFileOpen()
  *		Does the dirty work of the COMMDLG GetOpenFileName()
- *		Reads the .PIF and .QPE files in local memory
+ *		Reads the .PIF file in local memory
  *
  *	ENTRY	:	VOID
  *
@@ -971,24 +951,22 @@ OPENPIF_EXIT:
  *
  *  PURPOSE  :	Helper function for MenuFileSave(), etc.
  *		Does the dirty work of the COMMDLG GetSaveileName()
- *		Writes the .PIF and .QPE files from local memory
+ *		Writes the .PIF file from local memory
  *
  *  ENTRY    :	LPSTR	lpszPIFName;	// ==> .PIF filespec
- *		LPSTR	lpszQPEName;	// ==> .QPE filespec
  *
  *  RETURNS  :	0	- Normal return
  *		IDABORT - File system error
  *
  ****************************************************************************/
 
-int WritePIF(LPSTR lpszPIFName/*, LPSTR lpszQPEName*/)
+int WritePIF(LPSTR lpszPIFName)
 {
     register int	rc;
     HCURSOR	hCursorOld;
     OFSTRUCT	OpenBuff;
 
     HFILE	hFilePIF = 0;
-//    HFILE	hFileQPE = 0;
 
 /* Switch to the hour glass cursor */
 
@@ -1011,28 +989,11 @@ int WritePIF(LPSTR lpszPIFName/*, LPSTR lpszQPEName*/)
 	    rc = IDABORT;  goto WRITEPIF_EXIT;
 	}
     } else {	/* Couldn't save the file */
-	DebugPrintf("SavePIF() OpenFile(%s, &OpenBuff, OF_CREATE | OF_WRITE) failed\r\n", lpszPIFName);
-	rc = IDABORT;  goto WRITEPIF_EXIT;
+		DebugPrintf("SavePIF() OpenFile(%s, &OpenBuff, OF_CREATE | OF_WRITE) failed\r\n", lpszPIFName);
+		rc = IDABORT;  goto WRITEPIF_EXIT;
 
     }
 
-//    DebugPrintf("SavePIF(): OpenFile(%s, OF_READ)\r\n", lpszQPEName);
-/*
-    hFileQPE = OpenFile(lpszQPEName, &OpenBuff, OF_CREATE | OF_WRITE);
-
-    if ((int) hFileQPE != HFILE_ERROR) {
-
-	rc = _lwrite(hFileQPE, (LPVOID) &qpeModel, sizeof(QPE));
-
-	if (rc != sizeof(QPE)) {
-	    DebugPrintf("SavePIF() _lwrite(hFileQPE, (LPVOID) &qpeModel, sizeof(QPE)) failed %d\r\n", rc);
-	    rc = IDABORT;  goto WRITEPIF_EXIT;
-	}
-    } else {	// Couldn't save the file 
-	DebugPrintf("SavePIF() OpenFile(%s, &OpenBuff, OF_CREATE | OF_WRITE) failed\r\n", lpszQPEName);
-	rc = IDABORT;  goto WRITEPIF_EXIT;
-    }
-*/
     rc = 0;
 
 WRITEPIF_EXIT:
@@ -1040,7 +1001,6 @@ WRITEPIF_EXIT:
     ReleaseCapture();
 
     if (hFilePIF > 0) _lclose(hFilePIF);
-//    if (hFileQPE > 0) _lclose(hFileQPE);
 
     return (rc);
 }
@@ -1050,7 +1010,7 @@ WRITEPIF_EXIT:
  *
  *  FUNCTION :	CheckPIFValidity(BOOL fMustBeValid)
  *
- *  PURPOSE  :	Checks .PIF and .QPE models for consistent data
+ *  PURPOSE  :	Checks .PIF model for consistent data
  *		Presents a message box to the user if the data is invalid
  *
  *  ENTRY    :	BOOL	fMustBeValid;	// Don't return 0 unless PIF is OK
@@ -1125,7 +1085,7 @@ int SavePIF(VOID)
     rc = CheckPIFValidity(FALSE);
     if (rc) return (rc);
 
-    return (WritePIF(szFile/*, szFileQPE*/));
+    return (WritePIF(szFile));
 }
 
 
@@ -1135,7 +1095,7 @@ int SavePIF(VOID)
  *
  *  PURPOSE  :	Helper function for MenuFileSave() and MenuFileSaveAs()
  *		Does the dirty work of GetSaveFileName()
- *		Write out the .PIF and .QPE
+ *		Write out the .PIF
  *
  *  ENTRY    :	VOID
  *
@@ -1175,17 +1135,6 @@ int SaveAsPIF(VOID)
 
     strncpy(szDirName, szFile, ofn.nFileOffset-1);
     lstrcpy(szExtension, szFile + ofn.nFileExtension);
-
-// Prepare name for the .QPE
-//    lstrcpy(szFileQPE, szFile);
-
-//    if (szFileQPE[ofn.nFileExtension] != 'P') { // Oops!
-
-// FIXME Bitch
-
-//    }
-
-//    lstrcpy(&szFileQPE[ofn.nFileExtension], "QPE");
 
     fUntitled = FALSE;
 
@@ -1459,8 +1408,8 @@ VOID Pane_OnCommand(HWND hWnd, UINT id, HWND hWndCtl, WORD codeNotify)
  *
  *  FUNCTION :	TestPIF(VOID)
  *
- *  PURPOSE  :	Move controls to .PIF and .QPE structures
- *		Write out a temporary .PIF and .QPE files
+ *  PURPOSE  :	Move controls to .PIF structure
+ *		Write out a temporary .PIF file
  *		Use WinExec() to test it with WinOldAp
  *
  *  ENTRY    :	VOID
@@ -1473,7 +1422,6 @@ VOID TestPIF(VOID)		// Write out a temporary .PIF and test run it
 {
     int 	rc;
     char	szPIFName[_MAX_PATH];	// Buffer to hold filename
-//    char	szQPEName[_MAX_PATH];	// Buffer to hold filename
     char	szDrive[_MAX_DRIVE];	// Drive letter and colon
     char	szDir[_MAX_DIR];	// Directory
     char	szFname[_MAX_FNAME];	// Filename w/o extension
@@ -1496,16 +1444,14 @@ VOID TestPIF(VOID)		// Write out a temporary .PIF and test run it
 
     _splitpath(szPIFName, szDrive, szDir, szFname, szExt);
     _makepath(szPIFName, szDrive, szDir, "~QIFEDIT", ".PIF");
-//    _makepath(szQPEName, szDrive, szDir, "~QIFEDIT", ".QPE");
 
 /* Switch to the hour glass cursor */
     SetCapture(hWndDlg);
     hCursorOld = SetCursor(LoadCursor(NULL, IDC_WAIT));
 
     OpenFile(szPIFName, &OpenBuff, OF_DELETE);
-//    OpenFile(szQPEName, &OpenBuff, OF_DELETE);
 
-    rc = WritePIF(szPIFName/*, szQPEName*/);
+    rc = WritePIF(szPIFName);
 
     WinExec(szPIFName, SW_SHOWNORMAL);
 
@@ -2453,55 +2399,18 @@ VOID DefaultPIF(VOID)
 
     pifModel.pifHdr.CheckSum = ComputePIFChecksum(&pifModel);
 
-
-//    DefaultQPE();
 }
 
 
 /****************************************************************************
  *
- *  FUNCTION :	DefaultQPE(VOID)
+ *  FUNCTION :	ControlsFromPIF(PPIF, HWND)
  *
- *  PURPOSE  :	Fill in the .QPE structure with our default values
- *
- *  ENTRY    :	VOID
- *
- *  RETURNS  :	VOID
- *
- ****************************************************************************/
-/*
-VOID DefaultQPE(VOID)
-{
-    memset(&qpeModel, 0, sizeof(QPE));
-
-    qpeModel.cSig[0] = 'Q';
-    qpeModel.cSig[1] = 'P';
-    qpeModel.cSig[2] = 'I';
-    qpeModel.cSig[3] = 'F';
-
-    qpeModel.bVersion = 0x01;
-    qpeModel.cbQPIF = sizeof(QPE);
-//  qpeModel.Flags1 = 0;
-//  qpeModel.Reserved1 = 0;
-    qpeModel.DosMax = 640;	// 736K is the whole point of this pig
-//  (DWORD) qpeModel.Reserved2 = 0;
-
-//  qpeModel.szPIF[80] = '\0';
-
-    qpeModel.bCheckSum = ComputeQPEChecksum(&qpeModel);
-}
-
-*/
-/****************************************************************************
- *
- *  FUNCTION :	ControlsFromPIF(PPIF, PQPE, HWND)
- *
- *  PURPOSE  :	Given a .PIF and .QPE structure, extract the data and send
+ *  PURPOSE  :	Given a .PIF structure, extract the data and send
  *		it to the dialog controls
  *		Displays a message box if an error occurs
  *
  *  ENTRY    :	PPIF	pPIF;		// ==> .PIF structure
- *		PQPE	pQPE;		// ==> .QPE structure
  *		HWND	hWnd;		// Parent window handle
  *
  *  RETURNS  :	0	- Normal return
@@ -2511,7 +2420,7 @@ VOID DefaultQPE(VOID)
 
 // Copy the data to the dialog controls from our .PIF model
 
-int ControlsFromPIF(PPIF pPIF/*, PQPE pQPE*/, HWND hWnd)
+int ControlsFromPIF(PPIF pPIF, HWND hWnd)
 {
     char szNumBuf[32];
     int 	n;
@@ -2649,26 +2558,10 @@ int ControlsFromPIF(PPIF pPIF/*, PQPE pQPE*/, HWND hWnd)
 
     }
 
-/*
-    if (pQPE->Flags1 & QPE_OFF) {
-	CheckDlgButton(hWnd, IDB_SUPERVM_DEF, FALSE);
-	CheckDlgButton(hWnd, IDB_SUPERVM_ON, FALSE);
-	CheckDlgButton(hWnd, IDB_SUPERVM_OFF, TRUE);
-    } else if (pQPE->Flags1 & QPE_ON) {
-	CheckDlgButton(hWnd, IDB_SUPERVM_DEF, FALSE);
-	CheckDlgButton(hWnd, IDB_SUPERVM_ON, TRUE);
-	CheckDlgButton(hWnd, IDB_SUPERVM_OFF, FALSE);
-    } else */ {
-	CheckDlgButton(hWnd, IDB_SUPERVM_DEF, TRUE);
-	CheckDlgButton(hWnd, IDB_SUPERVM_ON, FALSE);
-	CheckDlgButton(hWnd, IDB_SUPERVM_OFF, FALSE);
-    }
-/*
-    if (!(pQPE->Flags1 & QPE_OFF)) {	// Super VM is in effect
-	wsprintf(szNumBuf,"%d",pQPE->DosMax);
-	SetDlgItemText(hWnd, IDE_DOSMAX, szNumBuf);
-    }
-*/
+//	CheckDlgButton(hWnd, IDB_SUPERVM_DEF, TRUE);
+//	CheckDlgButton(hWnd, IDB_SUPERVM_ON, FALSE);
+//	CheckDlgButton(hWnd, IDB_SUPERVM_OFF, FALSE);
+
     return (0);
 }
 
@@ -2678,7 +2571,7 @@ int ControlsFromPIF(PPIF pPIF/*, PQPE pQPE*/, HWND hWnd)
  *  FUNCTION :	ControlToPIF(HWND)
  *
  *  PURPOSE  :	Extract the data from the dialog controls and fills the
- *		model .PIF and .QPE structures
+ *		model .PIF structure
  *
  *  ENTRY    :	HWND	hWnd;		// Parent window handle
  *
@@ -2691,7 +2584,6 @@ VOID ControlsToPIF(HWND hWnd)
     char	szNumBuf[32];
 
     PPIF	pPIF = &pifModel;
-//    PQPE	pQPE = &qpeModel;
 
     DefaultPIF();
 
@@ -2790,13 +2682,9 @@ VOID ControlsToPIF(HWND hWnd)
 // Calculate the checksum for the old-style header
     pPIF->pifHdr.CheckSum = ComputePIFChecksum(pPIF);
 
-//    pQPE->Flags1 |= IsDlgButtonChecked(hWnd, IDB_SUPERVM_OFF) ? QPE_OFF : 0;
-//    pQPE->Flags1 |= IsDlgButtonChecked(hWnd, IDB_SUPERVM_ON) ? QPE_ON : 0;
 
     GetDlgItemText(hWnd, IDE_DOSMAX, szNumBuf, sizeof(szNumBuf));
-//    pQPE->DosMax = atoi(szNumBuf);
 
-//    qpeModel.bCheckSum = ComputeQPEChecksum(&qpeModel);
 }
 
 
@@ -2824,32 +2712,6 @@ BYTE ComputePIFChecksum(PPIF pPIF)		// Checksum the PIFHDR
 
     return (bSum);
 }
-
-
-/****************************************************************************
- *
- *  FUNCTION :	ComputeQPEChecksum(PQPE)
- *
- *  PURPOSE  :	Calculate the checksum of the .QPE structure
- *
- *  ENTRY    :	PQPE	pQPE;		// ==> .QPE structure
- *
- *  RETURNS  :	Checksum as a BYTE
- *
- ****************************************************************************/
-/*
-BYTE ComputeQPEChecksum(PQPE pQPE)		// Checksum the QPE structure
-{
-    PBYTE	pb = (PBYTE) pQPE;
-    PBYTE	pbz = pb + sizeof(QPE);
-    BYTE	bSum;
-
-    for (bSum = 0; pb < pbz; pb++) bSum += *pb;
-
-    return ( (BYTE) -(bSum - pQPE->bCheckSum) );
-}
-
-*/
 
 /****************************************************************************
  *
