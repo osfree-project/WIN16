@@ -29,10 +29,7 @@ To send email to the maintainer of the Willows Twin Libraries.
  */
 
 #include "windows.h"
-//#include "windowsx.h"
 #include "commdlg.h"
-//#include "Log.h"
-//#include "Dialog.h"
 #include "About.h"
 
 #include <ctype.h>
@@ -50,7 +47,7 @@ typedef struct {
 
 
 
-static BOOL FAR PASCAL ShellAboutHandler(HWND, unsigned, WPARAM, LPARAM);
+LRESULT CALLBACK ShellAboutHandler(HWND, unsigned, WPARAM, LPARAM);
 
 void WINAPI
 ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText,
@@ -63,7 +60,6 @@ ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText,
 	
 
 	if(hWnd)
-//		hInst = GetWindowInstance(hWnd);
 		hInst = ((HMODULE)GetWindowWord(hWnd,GWW_HINSTANCE));
 	else    hInst = 0;
 
@@ -83,8 +79,7 @@ ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText,
 	FreeProcInstance(lpProc); 
 }
 
-static BOOL FAR PASCAL
-ShellAboutHandler(HWND hDlg, unsigned msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK ShellAboutHandler(HWND hDlg, unsigned msg, WPARAM wParam, LPARAM lParam)
 {
 	SHELLABOUTDATA *sad;
 	HWND	        hWnd;
