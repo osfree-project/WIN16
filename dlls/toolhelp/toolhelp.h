@@ -125,7 +125,7 @@ typedef struct tagLOCALENTRY
     WORD    wHeapType;
     WORD    wNext;
 } LOCALENTRY;
-typedef LOCALENTRY FAR  *LPLOCALENTRY;
+typedef LOCALENTRY FAR * LPLOCALENTRY;
 
 /* wHeapType values */
 #define NORMAL_HEAP     0

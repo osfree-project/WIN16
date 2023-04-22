@@ -17,6 +17,10 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ *
+ * @todo rework Global* functions to support real Windows 3.x kernel data structures
+ * @todo check and rework (if needed) Local* functions to support real Windows 3.x kernel data structures
+ *
  */
 
 #include <stdarg.h>
@@ -45,8 +49,10 @@
 
 #pragma pack(push,1)
 
-typedef struct
-{
+/* GLOBALARENA structure differs under different kernels */
+
+typedef struct tagGLOBALARENA
+{//@todo far here???
     void     *base;          /* Base address (0 if discarded) */
     DWORD     size;          /* Size in bytes (0 indicates a free block) */
     HGLOBAL   handle;        /* Handle for this block */
@@ -56,10 +62,93 @@ typedef struct
     BYTE      flags;         /* Allocation flags */
     BYTE      selCount;      /* Number of selectors allocated for this block */
 } GLOBALARENA;
+typedef GLOBALARENA FAR * LPGLOBALARENA;
+
+typedef struct tagGLOBALARENA_KRNL286
+{
+    BYTE byLocks;
+    HANDLE hOwner;
+    WORD wSize;
+    BYTE byFlags;
+    WORD nwPrev;
+    WORD nwNext;
+    HANDLE hThis;
+    WORD nwLRUPrev;
+    WORD nwLRUNext;
+} GLOBALARENA_KRNL286;
+typedef GLOBALARENA_KRNL286 FAR * LPGLOBALARENA_KRNL286;
+
+typedef struct tagGLOBALARENA_KRNL386
+{
+    DWORD nwPrev;
+    DWORD nwNext;
+    DWORD dwBase;
+    DWORD dwSize;
+    HANDLE hThis;
+    HANDLE hOwner;
+    BYTE byLocks;
+    BYTE byPageLocks;
+    BYTE byFlags;
+    BYTE byReqSels;
+    DWORD nwLRUPrev;
+    DWORD nwLRUNext;
+} GLOBALARENA_KRNL386;
+typedef GLOBALARENA_KRNL386 FAR * LPGLOBALARENA_KRNL386;
 
 #define GLOBAL_MAX_COUNT  8192        /* Max number of allocated blocks */
 
-typedef struct
+/*
+   Wine doesn't support BURGERMASTER and uses GLOBALARENA as BURGERMASTER.
+   THHOOK hGlobalHeap and pGlobalHeap contains pointer to first GLOBALARENA
+   structure intead of handle and selector to BURGERMASTER.
+   
+*/
+
+typedef struct tagBURGERMASTER_KRNL286
+{
+    BOOL bCheck;
+    BOOL bFreeze;
+    WORD wEntries;
+    WORD nwFirst;
+    WORD nwLast;
+    BYTE byComp;
+    BYTE byDestrLev;
+    WORD nwDestrBytes;
+    HANDLE hTable;
+    HANDLE hFree;
+    WORD wDelta;
+    WORD pExpand;
+    WORD pStats;
+    WORD wLRUAcess;
+    WORD wLRUChain;
+    WORD wLRUCount;
+    WORD nwDestrPara;
+    WORD nwDestrChain;
+    WORD wFree;
+} BURGERMASTER_KRNL286;
+typedef BURGERMASTER_KRNL286 FAR * LPBURGERMASTER_KRNL286;
+
+typedef struct tagBURGERMASTER_KRNL386
+{
+    BOOL bCheck;
+    BOOL bFreeze;
+    WORD wEntries;
+    DWORD nwFirst;
+    DWORD nwLast;
+    BYTE byComp;
+    BYTE byDestrLev;
+    DWORD nwDestrBytes;
+    WORD reserved[5];
+    WORD wLRUAcess;
+    DWORD dwLRUChain;
+    WORD wLRUCount;
+    DWORD nwDestrPara;
+    DWORD nwDestrChain;
+    WORD wFree;
+} BURGERMASTER_KRNL386;
+typedef BURGERMASTER_KRNL386 FAR * LPBURGERMASTER_KRNL386;
+
+typedef struct tagLOCALHEAPINFO
 {
     WORD check;                 /* 00 Heap checking flag */
     WORD freeze;                /* 02 Heap frozen flag */
@@ -82,8 +171,9 @@ typedef struct
     WORD minsize;               /* 26 Minimum size of the heap */
     WORD magic;                 /* 28 Magic number */
 } LOCALHEAPINFO;
+typedef LOCALHEAPINFO FAR * LPLOCALHEAPINFO;
 
-typedef struct
+typedef struct tagLOCALARENA
 {
 /* Arena header */
     WORD prev;          /* Previous arena | arena type */
@@ -93,10 +183,11 @@ typedef struct
     WORD free_prev;     /* Previous free block */
     WORD free_next;     /* Next free block */
 } LOCALARENA;
+typedef LOCALARENA FAR * LPLOCALARENA;
 
 #define LOCAL_ARENA_HEADER_SIZE      4
 #define LOCAL_ARENA_HEADER( handle) ((handle) - LOCAL_ARENA_HEADER_SIZE)
-#define LOCAL_ARENA_PTR(ptr,arena)  ((LOCALARENA *)((char *)(ptr)+(arena)))
+#define LOCAL_ARENA_PTR(ptr,arena)  ((LPLOCALARENA)((LPSTR)(ptr)+(arena)))
 
 #define MOVEABLE_PREFIX sizeof(HLOCAL)
 
@@ -106,15 +197,16 @@ typedef struct
  * LOCALHANDLEENTRY[count]  entries
  * WORD                     near ptr to next table
  */
-typedef struct
+typedef struct tagLOCALHANDLEENTRY
 {
     WORD addr;                /* Address of the MOVEABLE block */
     BYTE flags;               /* Flags for this block */
     BYTE lock;                /* Lock count */
 } LOCALHANDLEENTRY;
+typedef LOCALHANDLEENTRY FAR * LPLOCALHANDLEENTRY;
 
 
-typedef struct
+typedef struct tagINSTANCEDATA
 {
     WORD null;        /* Always 0 */
     DWORD old_ss_sp;  /* Stack pointer; used by SwitchTaskTo() */
@@ -124,6 +216,7 @@ typedef struct
     WORD stackmin;    /* Lowest stack address used so far */
     WORD stackbottom; /* Bottom of the stack */
 } INSTANCEDATA;
+typedef INSTANCEDATA FAR * LPINSTANCEDATA;
 
 typedef struct _THHOOK
 {
@@ -210,17 +303,38 @@ static THHOOK far *get_thhook(void)
     return thhook;
 }
 
+static BYTE KernelType;
+#define KT_KERNEL 1
+#define KT_KRNL286 2
+#define KT_KRNL386 3
+#define KT_WINE 4
+
 static GLOBALARENA far *get_global_arena(void)
 {
-    return *(GLOBALARENA far **)get_thhook();
+	THHOOK far * lpTH=get_thhook();
+
+	if (KernelType==KT_WINE) 
+	{
+		return *(GLOBALARENA far **)lpTH;
+	}
+	if (KernelType==KT_KRNL286) 
+	{
+		LPBURGERMASTER_KRNL286 lpBM = MAKELP(lpTH->pGlobalHeap, 0);
+		return (MAKELP(lpBM->nwFirst, 0));
+	}
+	if (KernelType==KT_KRNL386) 
+	{
+		LPBURGERMASTER_KRNL386 lpBM = MAKELP(lpTH->pGlobalHeap, 0);
+		return (MAKELP(lpTH->pGlobalHeap, lpBM->nwFirst));
+	}
 }
 
-static LOCALHEAPINFO far *get_local_heap( HANDLE ds )
+static LPLOCALHEAPINFO get_local_heap( HANDLE ds )
 {
-    INSTANCEDATA far *ptr = MAKELP( ds, 0 );
+    LPINSTANCEDATA ptr = MAKELP(ds, 0);
 
     if (!ptr || !ptr->heap) return NULL;
-    return (LOCALHEAPINFO far *)((char far *)ptr + ptr->heap);
+    return (LPLOCALHEAPINFO)((LPSTR)ptr + ptr->heap);
 }
 
 
@@ -339,9 +453,9 @@ BOOL WINAPI GlobalEntryModule( LPGLOBALENTRY lpGlobal, HMODULE hModule,
  */
 BOOL WINAPI LocalInfo( LPLOCALINFO lpLocalInfo, HGLOBAL handle )
 {
-    LOCALHEAPINFO far *pInfo = get_local_heap( SELECTOROF(GlobalLock(handle)) );
-    if (!pInfo) return FALSE;
-    lpLocalInfo->wcItems = pInfo->items;
+    LPLOCALHEAPINFO lpInfo = get_local_heap( SELECTOROF(GlobalLock(handle)) );
+    if (!lpInfo) return FALSE;
+    lpLocalInfo->wcItems = lpInfo->items;
     return TRUE;
 }
 
@@ -352,18 +466,19 @@ BOOL WINAPI LocalInfo( LPLOCALINFO lpLocalInfo, HGLOBAL handle )
 BOOL WINAPI LocalFirst( LPLOCALENTRY lpLocalEntry, HGLOBAL handle )
 {
     WORD ds = GlobalHandleToSel( handle );
-    char far *ptr = MAKELP( ds, 0 );
-    LOCALHEAPINFO far *pInfo = get_local_heap( ds );
-    if (!pInfo) return FALSE;
+    LPSTR ptr = MAKELP( ds, 0 );
+    LPLOCALHEAPINFO lpInfo = get_local_heap( ds );
+    
+	if (!lpInfo) return FALSE;
 
-    lpLocalEntry->hHandle   = pInfo->first + LOCAL_ARENA_HEADER_SIZE;
+    lpLocalEntry->hHandle   = lpInfo->first + LOCAL_ARENA_HEADER_SIZE;
     lpLocalEntry->wAddress  = lpLocalEntry->hHandle;
     lpLocalEntry->wFlags    = LF_FIXED;
     lpLocalEntry->wcLock    = 0;
     lpLocalEntry->wType     = LT_NORMAL;
     lpLocalEntry->hHeap     = handle;
     lpLocalEntry->wHeapType = NORMAL_HEAP;
-    lpLocalEntry->wNext     = LOCAL_ARENA_PTR(ptr,pInfo->first)->next;
+    lpLocalEntry->wNext     = LOCAL_ARENA_PTR(ptr,lpInfo->first)->next;
     lpLocalEntry->wSize     = lpLocalEntry->wNext - lpLocalEntry->hHandle;
     return TRUE;
 }
@@ -376,39 +491,39 @@ BOOL WINAPI LocalNext( LPLOCALENTRY lpLocalEntry )
 {
     WORD ds = GlobalHandleToSel( lpLocalEntry->hHeap );
     LPSTR ptr = MAKELP( ds, 0 );
-    LOCALARENA *pArena;
+    LPLOCALARENA lpArena;
     WORD table, lhandle;
-    LOCALHEAPINFO far *pInfo = get_local_heap( ds );
+    LPLOCALHEAPINFO lpInfo = get_local_heap( ds );
 
-    if (!pInfo) return FALSE;
+    if (!lpInfo) return FALSE;
     if (!lpLocalEntry->wNext) return FALSE;
-    table = pInfo->htable;
-    pArena = LOCAL_ARENA_PTR( ptr, lpLocalEntry->wNext );
+    table = lpInfo->htable;
+    lpArena = LOCAL_ARENA_PTR( ptr, lpLocalEntry->wNext );
     lpLocalEntry->wAddress  = lpLocalEntry->wNext + LOCAL_ARENA_HEADER_SIZE;
-    lpLocalEntry->wFlags    = (pArena->prev & 3) + 1;
+    lpLocalEntry->wFlags    = (lpArena->prev & 3) + 1;
     lpLocalEntry->wcLock    = 0;
     /* Find the address in the entry tables */
     lhandle = lpLocalEntry->wAddress;
     while (table)
     {
         WORD count = *(WORD *)(ptr + table);
-        LOCALHANDLEENTRY *pEntry = (LOCALHANDLEENTRY*)(ptr+table+sizeof(WORD));
-        for (; count > 0; count--, pEntry++)
-            if (pEntry->addr == lhandle + MOVEABLE_PREFIX)
+        LPLOCALHANDLEENTRY lpEntry = (LPLOCALHANDLEENTRY)(ptr+table+sizeof(WORD));
+        for (; count > 0; count--, lpEntry++)
+            if (lpEntry->addr == lhandle + MOVEABLE_PREFIX)
             {
-                lhandle = (HLOCAL)((char *)pEntry - ptr);
+                lhandle = (HLOCAL)((LPSTR)lpEntry - ptr);
                 table = 0;
-                lpLocalEntry->wAddress  = pEntry->addr;
-                lpLocalEntry->wFlags    = pEntry->flags;
-                lpLocalEntry->wcLock    = pEntry->lock;
+                lpLocalEntry->wAddress  = lpEntry->addr;
+                lpLocalEntry->wFlags    = lpEntry->flags;
+                lpLocalEntry->wcLock    = lpEntry->lock;
                 break;
             }
-        if (table) table = *(WORD *)pEntry;
+        if (table) table = *(WORD FAR *)lpEntry;
     }
     lpLocalEntry->hHandle   = lhandle;
     lpLocalEntry->wType     = LT_NORMAL;
-    if (pArena->next != lpLocalEntry->wNext)  /* last one? */
-        lpLocalEntry->wNext = pArena->next;
+    if (lpArena->next != lpLocalEntry->wNext)  /* last one? */
+        lpLocalEntry->wNext = lpArena->next;
     else
         lpLocalEntry->wNext = 0;
     lpLocalEntry->wSize     = lpLocalEntry->wNext - lpLocalEntry->hHandle;
@@ -432,16 +547,16 @@ BOOL WINAPI ModuleFirst( LPMODULEENTRY lpme )
 BOOL WINAPI ModuleNext( LPMODULEENTRY lpme )
 {
     NE_MODULE far *pModule;
-    char far *name;
+    LPSTR name;
 
     if (!lpme->wNext) return FALSE;
     if (!(pModule = (NE_MODULE far *)GlobalLock( GetExePtr(lpme->wNext) ))) return FALSE;
-    name = (char far *)pModule + pModule->ne_restab;
+    name = (LPSTR)pModule + pModule->ne_restab;
     _fmemcpy( lpme->szModule, name + 1, min(*name, MAX_MODULE_NAME) );
     lpme->szModule[min(*name, MAX_MODULE_NAME)] = '\0';
     lpme->hModule = lpme->wNext;
     lpme->wcUsage = pModule->count;
-    name = ((OFSTRUCT far *)((char far *)pModule + pModule->fileinfo))->szPathName;
+    name = ((OFSTRUCT far *)((LPSTR)pModule + pModule->fileinfo))->szPathName;
     lstrcpyn( lpme->szExePath, name, sizeof(lpme->szExePath) );
     lpme->wNext = pModule->next;
     return TRUE;
@@ -485,7 +600,7 @@ BOOL WINAPI TaskFirst( LPTASKENTRY lpte )
 BOOL WINAPI TaskNext( LPTASKENTRY lpte )
 {
     TDB far *pTask;
-    INSTANCEDATA far *pInstData;
+    LPINSTANCEDATA lpInstData;
 
 //    TRACE_(toolhelp)("(%p): task=%04x\n", lpte, lpte->hNext );
     if (!lpte->hNext) return FALSE;
@@ -498,7 +613,7 @@ BOOL WINAPI TaskNext( LPTASKENTRY lpte )
             break;
         lpte->hNext = pTask->hNext;
     }
-    pInstData = MAKELP( GlobalHandleToSel(pTask->hInstance), 0 );
+    lpInstData = MAKELP( GlobalHandleToSel(pTask->hInstance), 0 );
     lpte->hTask         = lpte->hNext;
     lpte->hTaskParent   = pTask->hParent;
     lpte->hInst         = pTask->hInstance;
@@ -506,9 +621,9 @@ BOOL WINAPI TaskNext( LPTASKENTRY lpte )
 // @todo fix SS:SP for win16
     lpte->wSS           = 0;//SELECTOROF( pTask->teb->SystemReserved1[0] );
     lpte->wSP           = 0;//OFFSETOF( pTask->teb->SystemReserved1[0] );
-    lpte->wStackTop     = pInstData->stacktop;
-    lpte->wStackMinimum = pInstData->stackmin;
-    lpte->wStackBottom  = pInstData->stackbottom;
+    lpte->wStackTop     = lpInstData->stacktop;
+    lpte->wStackMinimum = lpInstData->stackmin;
+    lpte->wStackBottom  = lpInstData->stackbottom;
     lpte->wcEvents      = pTask->nEvents;
     lpte->hQueue        = pTask->hQueue;
     lstrcpyn( lpte->szModule, pTask->module_name, sizeof(lpte->szModule) );
@@ -686,7 +801,7 @@ void WINAPI TerminateApp(HTASK hTask, WORD wFlags)
  */
 DWORD WINAPI MemoryRead( WORD sel, DWORD offset, void FAR *buffer, DWORD count )
 {
-    char FAR *base = (char FAR *)GetSelectorBase( sel );
+    LPSTR base = (LPSTR)GetSelectorBase( sel );
     DWORD limit = GetSelectorLimit( sel );
 
     if (offset > limit) return 0;
@@ -701,7 +816,7 @@ DWORD WINAPI MemoryRead( WORD sel, DWORD offset, void FAR *buffer, DWORD count )
  */
 DWORD WINAPI MemoryWrite( WORD sel, DWORD offset, void FAR *buffer, DWORD count )
 {
-    char FAR *base = (char FAR *)GetSelectorBase( sel );
+    LPSTR base = (LPSTR)GetSelectorBase( sel );
     DWORD limit = GetSelectorLimit( sel );
 
     if (offset > limit) return 0;
@@ -781,7 +896,32 @@ BOOL WINAPI Local32Next( LOCAL32ENTRY *pLocal32Entry )
 BOOL FAR PASCAL LibMain( HINSTANCE hInstance, WORD wDataSegment,
                          WORD wHeapSize, LPSTR lpszCmdLine )
 {
-  return( 1 );
+    FARPROC pwine_get_version;
+    
+    HMODULE hntdll = GetModuleHandle("ntdll.dll");
+
+	if (hntdll) {
+		pwine_get_version = GetProcAddress(hntdll, "wine_get_version");
+    
+		if (pwine_get_version) {
+			KernelType=KT_WINE;
+		} else {
+			// NT kernel here @todo
+		}
+	} else {
+		LONG lFlags = GetWinFlags();
+		// Detect krnl286/krnl386
+		if (GetVersion() == 0x0003) // Windows 3.0: mode-dependent
+		{
+			if (lFlags & WF_STANDARD)       KernelType=KT_KRNL286;
+			else if (lFlags & WF_ENHANCED)  KernelType=KT_KRNL386;
+			else /* yuk! real mode! */      KernelType=KT_KERNEL;
+		}
+		else    // Windows 3.1+: processor-dependent
+			KernelType= (lFlags & WF_CPU286) ? KT_KRNL286 : KT_KRNL386;
+	}
+	
+	return( 1 );
 }
 
 DWORD  WINAPI TaskSetCSIP(HTASK hTask, WORD wCS, WORD wIP)
