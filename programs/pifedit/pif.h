@@ -9,6 +9,13 @@
  *									      *
  ******************************************************************************/
 
+/*
+
+https://web.archive.org/web/20220214185118/http://www.smsoft.ru/en/pifdoc.htm
+https://drdobbs.com/architecture-and-design/undocumented-corner/184409042
+
+*/
+
 #ifndef _INC_WINDOWS
 #define STRICT			// Enable strict type checking
 #define NOCOMM			// Avoid inclusion of comm driver stuff
@@ -51,6 +58,15 @@ typedef struct _PIFHDR {	// Windows 2.x section taken from TopView
     BYTE	SystemFlags;	// 170: TopView behavior bits
 				// 171:
 } PIFHDR, * PPIFHDR, FAR * LPPIFHDR;
+
+//MICROSOFT PIFEX	0171h	The basic section, all OS
+//WINDOWS 286 3.0	0006h	Windows 3.X in standard mode
+//WINDOWS 386 3.0	0068h	Windows 3.X in enhanced mode, 95, 98, NT, 2000
+//WINDOWS NT  3.1	008Eh	Windows NT, 2000
+//WINDOWS NT  4.0	068Ch	Windows NT 4.0, 2000
+//WINDOWS VMM 4.0	01ACh	Windows 95, 98, NT 4.0, 2000
+//CONFIG  SYS 4.0	Variable	Windows 95, 98
+//AUTOEXECBAT 4.0	Variable	Windows 95, 98
 
 typedef struct _PIFSIG {
     char	Signature[16];	// 00: "MICROSOFT PIFEX", 0
@@ -168,6 +184,7 @@ typedef struct _PIF386 {
 				// 68:
 } PIF386, * PPIF386, FAR * LPPIF386;
 
+// Hey!!! According docs extra block can be in any order!!!
 typedef struct _PIF {
 	PIFHDR	pifHdr; 	// Old-style .PIF and header
 	PIFSIG	pifSigEX;	// "MICROSOFT PIFEX" signature
