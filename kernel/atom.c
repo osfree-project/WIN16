@@ -30,12 +30,19 @@
 
 int strnicmp(char far *s1, const char far *s2, int n);
 void memcpy(void far * s1, void far * s2, unsigned length);
-void far * memset (void far *start, int c, int len);
+void far * memset(void far *start, int c, int len);
+int toupper(int c);
 
 extern  unsigned short          GetDS( void );
 #pragma aux GetDS               = \
         "mov    ax,ds"          \
         value                   [ax];
+
+/* This function sets current CX value */
+extern  void          SetCX( unsigned short );
+#pragma aux SetCX               = \
+        "mov    cx,ax"          \
+        parm                   [ax];
 
 //WINE_DEFAULT_DEBUG_CHANNEL(atom);
 
@@ -47,19 +54,19 @@ extern  unsigned short          GetDS( void );
 #define HANDLETOATOM(handle)      ((ATOM)(0xc000 | ((handle) >> 2)))
 
 
-typedef struct
+typedef struct tagATOMENTRY
 {
     HANDLE	next;
     WORD        refCount;
     BYTE        length;
     char        str[1];
-} ATOMENTRY;
+} ATOMENTRY, * PATOMENTRY, FAR * LPATOMENTRY;
 
-typedef struct
+typedef struct tagATOMTABLE
 {
     WORD        size;
     HANDLE	entries[1];
-} ATOMTABLE;
+} ATOMTABLE, * PATOMTABLE, FAR * LPATOMTABLE;
 
 
 /***********************************************************************
@@ -72,9 +79,9 @@ typedef struct
  *	Pointer to table: Success
  *	NULL: Failure
  */
-static ATOMTABLE *ATOM_GetTable( BOOL create  /* [in] Create */ )
+static ATOMTABLE * ATOM_GetTable( BOOL create  /* [in] Create */ )
 {
-    INSTANCEDATA far *ptr;
+    LPINSTANCEDATA ptr;
 
     ptr=MAKELP(GetDS(), 0);
 
@@ -150,25 +157,42 @@ ATOMENTRY far *ATOM_MakePtr( HANDLE handle /* [in] Handle */ )
 
 /***********************************************************************
  *           InitAtomTable   (KERNEL.68)
+ *
+ * BRIEF:
+ *  Initialize atom hash table and set its size
+ *
+ * ENTRY:
+ *  entries - number of entries in atom table
+ *
+ * RETURNS:
+ *  TRUE  - success (near address of atom table)
+ *  FALSE - failure
+ *
  */
-BOOL WINAPI InitAtomTable( int entries )
+BOOL WINAPI InitAtomTable(int nSize)
 {
     int i;
-    HANDLE handle;
-    ATOMTABLE far *table;
+    HANDLE handle = ((LPINSTANCEDATA) MAKELP(GetDS(), 0))->atomtable;
 
-      /* Allocate the table */
+    /* sanity check */
+    if (!nSize) nSize = DEFAULT_ATOMTABLE_SIZE;  
 
-    if (!entries) entries = DEFAULT_ATOMTABLE_SIZE;  /* sanity check */
-    handle = LocalAlloc( LMEM_FIXED, FIELDOFFSET( ATOMTABLE, entries[entries] ));
-    if (!handle) return 0;
-    table = MAKELP( GetDS(), handle );
-    table->size = entries;
-    for (i = 0; i < entries; i++) table->entries[i] = 0;
+    /* Don't init twice */
+    if (!handle)
+    {
+        /* Allocate the table */
+        handle = LocalAlloc(LPTR, FIELDOFFSET(ATOMTABLE, entries[nSize]));
+        if (!handle)
+        {
+          ((PATOMTABLE)handle)->size = nSize;
 
-      /* Store a pointer to the table in the instance data */
+          /* Store a pointer to the table in the instance data */
+          ((LPINSTANCEDATA) MAKELP(GetDS(), 0))->atomtable = handle;
+        }
+    }
 
-    ((INSTANCEDATA far *) MAKELP(GetDS(), 0 ))->atomtable = handle;
+    /* return result in AX and CX */
+    SetCX(handle);
     return handle;
 }
 

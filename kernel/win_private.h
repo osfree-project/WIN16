@@ -177,7 +177,7 @@ typedef struct _THHOOK
 } THHOOK;
 
 /* this structure is always located at offset 0 of the DGROUP segment */
-typedef struct
+typedef struct tagINSTANCEDATA
 {
     WORD null;        /* Always 0 */
     WORD old_sp;      /* Stack pointer; used by SwitchTaskTo() */
@@ -187,7 +187,7 @@ typedef struct
     WORD stacktop;    /* Top of the stack */
     WORD stackmin;    /* Lowest stack address used so far */
     WORD stackbottom; /* Bottom of the stack */
-} INSTANCEDATA;
+} INSTANCEDATA, * PINSTANCEDATA, FAR * LPINSTANCEDATA;
 
 /* In-memory module structure. See 'Windows Internals' p. 219 */
 typedef struct _NE_MODULE

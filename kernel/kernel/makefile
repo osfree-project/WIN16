@@ -11,7 +11,7 @@ DESC = Windows Real Mode Kernel
 
 srcfiles = $(p)ldboot$(e) $(p)hmemset$(e) $(p)profstrg$(e) $(p)kernel16$(e) $(p)global$(e) &
 $(p)smallcode$(e) $(p)atom$(e) $(p)memset$(e) $(p)memcpy$(e) $(p)resource$(e) &
-$(p)profile$(e) $(p)strings$(e) $(p)rom$(e) $(p)file$(e) $(p)main$(e) $(p)localc$(e) &
+$(p)profile$(e) $(p)strings$(e) $(p)rom$(e) $(p)file$(e) $(p)main$(e) $(p)local$(e) &
 $(p)ginterf$(e) $(p)catch$(e) $(p)nls$(e) $(p)taskc$(e) $(p)protectc$(e) & 
 $(p)mthread$(e) $(p)selectorc$(e) $(p)ld$(e) $(p)task$(e) $(p)enablec$(e) #$(p)enable$(e) 
 

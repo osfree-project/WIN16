@@ -35,9 +35,9 @@ typedef struct
     WORD extra;                 /* 24 1c Extra bytes to allocate when expanding */
     WORD minsize;               /* 26 1e Minimum size of the heap */
     WORD magic;                 /* 28 1f Magic number */
-} LOCALHEAPINFO;
+} LOCALHEAPINFO, * PLOCALHEAPINFO, FAR * LPLOCALHEAPINFO;
 
-typedef struct
+typedef struct tagLOCALARENA
 {
 /* Arena header */
     WORD prev;          /* Previous arena | arena type */
@@ -46,8 +46,7 @@ typedef struct
     WORD size;          /* Size of the free block */
     WORD free_prev;     /* Previous free block */
     WORD free_next;     /* Next free block */
-} LOCALARENA;
-
+} LOCALARENA, * PLOCALARENA, FAR * LPLOCALARENA;
 
 /* determine whether the handle belongs to a fixed or a moveable block */
 #define HANDLE_FIXED(handle) (((handle) & 3) == 0)
