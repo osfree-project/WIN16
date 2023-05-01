@@ -277,9 +277,9 @@ typedef struct
  * LOCALHANDLEENTRY[count]  entries
  * WORD                     near ptr to next table
  */
-typedef struct
+typedef struct tagLOCALHANDLEENTRY
 {
     WORD addr;                /* Address of the MOVEABLE block */
     BYTE flags;               /* Flags for this block */
     BYTE lock;                /* Lock count */
-} LOCALHANDLEENTRY;
+} LOCALHANDLEENTRY, * PLOCALHANDLEENTRY, FAR * LPLOCALHANDLEENTRY;
