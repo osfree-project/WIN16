@@ -5,7 +5,7 @@ void far * memset (void far *start, int c, int len);
 void memcpy(void far * s1, void far * s2, unsigned length);
 
 /* LocalHeap main structure. Differs for KRNL286 and KRNL386. First column - 386 offsets, second one is 286 offsets */
-typedef struct
+typedef struct tagLOCALHEAPINFO
 {
     WORD check;                 /* 00 00 Heap checking flag */
     WORD freeze;                /* 02 02 Heap frozen flag */
@@ -83,6 +83,18 @@ typedef struct tagLOCALARENA
 #define LN_OUTOFMEM	0
 #define LN_MOVE		1
 #define LN_DISCARD	2
+
+#define GlobalPtrHandle(lp) \
+  ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))
+
+#define     GlobalUnlockPtr(lp)      \
+                GlobalUnlock(GlobalPtrHandle(lp))
+
+#define GlobalFreePtr(lp) \
+  (GlobalUnlockPtr(lp),(BOOL)GlobalFree(GlobalPtrHandle(lp)))
+
+#define GlobalAllocPtr(flags, cb) \
+  (GlobalLock(GlobalAlloc((flags), (cb))))
 
 /* This function returns current DS value */
 extern  unsigned short          GetDS( void );
@@ -1287,10 +1299,8 @@ HLOCAL WINAPI LocalReAlloc( HLOCAL handle, UINT size, UINT flags )
     }
     if (!hmem)
     {
-// @todo We have no Heap* functions. Use Global Heap for temporary buffer?
-#if 0
         /* Remove the block from the heap and try again */
-        LPSTR buffer = HeapAlloc( GetProcessHeap(), 0, oldsize );
+        LPSTR buffer = GlobalAllocPtr(GPTR, oldsize);
         if (!buffer) return 0;
         memcpy( buffer, ptr + arena + ARENA_HEADER_SIZE, oldsize );
         LOCAL_FreeArena( ds, arena );
@@ -1299,15 +1309,14 @@ HLOCAL WINAPI LocalReAlloc( HLOCAL handle, UINT size, UINT flags )
             if (!(hmem = LOCAL_GetBlock( ds, oldsize, flags )))
             {
 //                ERR("Can't restore saved block\n" );
-                HeapFree( GetProcessHeap(), 0, buffer );
+                GlobalFreePtr(buffer);
                 return 0;
             }
             size = oldsize;
         }
         ptr = MAKELP( ds, 0 );  /* Reload ptr */
         memcpy( ptr + hmem, buffer, oldsize );
-        HeapFree( GetProcessHeap(), 0, buffer );
-#endif
+        GlobalFreePtr(buffer );
     }
     else
     {
