@@ -543,7 +543,7 @@ ife ?REAL
 
 	CTRL_C_CK 6
 
-	mov bEnvFlgs, ENVFL_DONTUSEDPMI1
+	mov bEnvFlgs, 0
 @@:
 endif	; not ?REAL
 
@@ -6990,27 +6990,6 @@ _mycrout proc public
 	ret
 _mycrout endp
 
-getnum proc
-	xor dx,dx
-next:
-	mov al, es:[di]
-	inc di
-	sub al, '0'
-	jc exit
-	cmp al, 9
-	ja exit
-	add dx, dx
-	mov cx, dx
-	shl dx, 1
-	shl dx, 1
-	add dx, cx
-	mov ah, 0
-	add dx, ax
-	jmp next
-exit:
-	mov ax, dx
-	ret
-getnum endp
 
 _TEXT ends
 
@@ -7199,8 +7178,6 @@ GetPgmParms proc uses ds
 	mov fCmdLOpt,0
 	mov ds,[TH_TOPPDB]
 	mov si,0080h
-;	test cs:[fMode],FMODE_OVERLAY	;loaded as overlay?
-;	jnz gpp_1						;then PSP is ok
 	mov di,offset szPgmName
 	sub cx,cx
 	mov cl,[si] 		;get parameter line
@@ -7225,17 +7202,6 @@ error:
 	stc
 	ret
 parmfound:
-  if ?32BIT
-	and ah,ah
-	jz nooption
-	or al,20h
-	cmp al,'g'
-	jnz error
-	or es:[fCmdLOpt], FO_GUI
-	mov ah,0
-	jmp skipcharx
-nooption:
-  endif
 	dec si
 	mov dl,0
 nextchar:

@@ -49,10 +49,8 @@ endif
 if ?32BIT                        
 ?DOS4G			= 1		;1, 1=support DOS4G                        
 ?DOS4GMEM		= 0		;0, 1=support DOS4G data segment in GS
-?LOCALHEAP	 	= 1		;0, 1=implement local heap as in windows
 else
 ?DOS4G			= 0
-?LOCALHEAP	 	= 1		;1, 1=implement local heap as in windows
 endif
 
 
@@ -79,31 +77,17 @@ ENVFL_BREAKATENTRY  equ 01h	;debug break at program entry
 ENVFL_DONTLOADHIGH  equ 02h	;dont move in extended memory
 ENVFL_DISABLENE32   equ 04h	;disable support for loading NE32 apps
 ENVFL_LOAD1APPONLY  equ 08h	;disable loader after first pm app has started
-ENVFL_DONTPROTECT   equ 10h	;16   dont protect r/o sections
-ENVFL_DONTUSEDPMI1  equ 20h	;32   dont use any DPMI 1.0 functions
 ENVFL_IGNNOOPENERR	equ 40h	;64   ignore SEM_NOOPENFILEERRORBOX flag
-ENVFL_IGNUNRESIMP	equ 80h	;128  ignore unresolved imports (PE only)
 ENVFL2_LOADDBGOUT	equ 01h	;256  try to load debugout.dll /debugo32.dll
-;ENVFL2_IGN214B92	equ 02h	;512  ignore int 21h, ax=4b92h requests (module list)
-ENVFL2_EXPANDDOWN   equ 08h	;2048 alloc flat DS as expand down
-ENVFL2_128KBSTACK	equ 10h	;4096 restrict stack to 128 kB
-ENVFL2_ALLOWGUI  	equ 20h	;8192 allow GUI apps to be loaded in win dos boxes
-ENVFL2_EARLYGUIHLP  equ 40h	;16384 load hxguihlp before dll initialisation
 
 ;--- fMode flags
 
-FMODE_OVERLAY	equ 01h	;bit 0: 1=loader loaded as overlay
 FMODE_DISABLED	equ 02h	;bit 1: 1=loader is disabled
 FMODE_DOSEMU	equ 04h	;bit 2: 1=running on DOSEMU
 FMODE_NOERRDISP	equ 20h	;bit 5: 1=temporarily suppress dpmi error messages
 if ?LFN
 FMODE_LFN       equ 40h ;bit 6: 1=LFN supported
 endif
-;FMODE_DEBUGGER equ 80h	;bit 7: 1=debugger is present
-
-;--- fCmdLOpt flags
-
-FO_GUI    		equ 1	;-g cmdline switch
 
 ;*** exits:
 ;*** 4CFB: error in loader Init (real mode)

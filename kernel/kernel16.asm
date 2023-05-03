@@ -442,19 +442,6 @@ _TEXT ends
 
 _ITEXT segment
 
-if 0
-SetProcAddress:
-	push bx				 ;offset of procedure
-	call GetProcAddr16	 ;search entry AX in module ES
-	mov bx,cx
-	pop ax
-	jc @F
-	mov es:[bx].ENTRY.wOfs,ax
-	clc
-@@:
-	ret
-endif
-
 segments label word
 ife ?32BIT
 	dw eA000, 0A000h
