@@ -23,11 +23,12 @@ else
 ?LARGEALLOC	equ 1	;1=allow more than 1 MB with GlobalAlloc/Realloc/Free
 endif
 
-public eWinFlags
+public pascal eWinFlags
 public GetExePtr
 public GetProcAddress
 public GetModuleHandle
 public Dos3Call
+externdef pascal SetWinFlags: far
 ;public __AHINCR
 ;public __AHSHIFT
 
@@ -440,23 +441,6 @@ GetProcAddress endp
 _TEXT ends
 
 _ITEXT segment
-
-SetWinFlags proc
-	@DPMI_GETVERSION			;get CPU
-	mov ah,byte ptr [wEquip]
-	and ah,2				;FPU?
-	shl ah,1
-	mov al,1
-	dec cl
-	cmp cl,3
-	jbe @F
-	mov cl,3
-@@:
-	shl al,cl				;processor (2=286,4=386,8=486)
-	or al,WF_PMODE or WF_STANDARD		;@todo depends on compilation mode
-	mov [eWinFlags.wOfs],ax
-	ret
-SetWinFlags endp
 
 if 0
 SetProcAddress:

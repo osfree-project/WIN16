@@ -109,7 +109,7 @@ endif
 		option proc:private
 
 
-extern eWinFlags: ENTRY
+extern pascal eWinFlags: ENTRY
 
 extern szTerm: near
 extern szErr31: near
@@ -340,7 +340,7 @@ CCONST ends
 
 _TEXT segment
 
-externdef pascal kernelmain:far
+externdef pascal KernelMain:far
 
 ; In original loader here is overlay support. In osFree Windows Kernel
 ; here is a data segment start. Segment structure (offsets in hex:
@@ -609,7 +609,7 @@ main_1:
 	mov szPath,0
 ;moved to kernelmain
 ;	call InitKernel	   ;init MD for KERNEL
-	call kernelmain		; C-part initialization
+	call KernelMain		; C-part initialization
 
 	call GetPgmParms	   ;program name -> szPgmName, exec parm init
 	pushf
