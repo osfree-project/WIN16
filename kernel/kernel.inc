@@ -150,7 +150,6 @@ externdef	fMode:byte
 externdef	TH_TOPPDB:word
 externdef	wCurPSP:word
 externdef	fLoadMod:byte
-externdef	wEquip:word
 if ?32BIT
 externdef	dStktop:dword
 else

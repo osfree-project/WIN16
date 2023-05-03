@@ -262,7 +262,6 @@ _BSS segment
 
 ;*** global constants, initialized during start
 
-wEquip		dw ?			;Int 11h Equipment flags (only bit 1 used)
 wCSlim		dw ?			;limit CS (=CSSIZE-1), size of loader segment incl. stack
 wVersion	dw ?			;DOS version major+minor
 if ?EXTLOAD
@@ -576,29 +575,11 @@ endif	; not ?REAL
 	call InitProtMode	;init vectors, alloc internal selectors
 	jc main_err6		;--->
 
-	@Equipment 			; get equipment flags (MPC)
-	mov [wEquip],ax
-
-    	test al,2
-	jz @F			
-	or eWinFlags.wOfs, WF_80x87
-no_8087:
-
 	mov ax,1600h
 	int 2Fh
 	and al,al
 	jz @F
 	or fMode, FMODE_ISWIN9X
-@@:
-	cmp al, 3
-	je @F
-	or KernelFlags[2], 0020h
-	or eWinFlags.wOfs, WF_PMODE or WF_STANDARD
-	jmp skip_2
-@@:
-	or KernelFlags[1], 0100h
-	or eWinFlags.wOfs, WF_PMODE or WF_ENHANCED
-skip_2:
 
 	; Here we must prepare WOAname string
 
@@ -5417,8 +5398,7 @@ if _WIN87EMWAIT_
 	cmp bx,6
 	jz @F
 endif
-;	test [eWinFlags.wOfs],0400h  ;does FPU exist?
-	test byte ptr [wEquip],2     ;does FPU exist?
+	test [eWinFlags.wOfs],WF_80x87  ;does FPU exist?
 	jz @F
 	clc
 	ret

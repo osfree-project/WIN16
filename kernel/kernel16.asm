@@ -477,8 +477,6 @@ InitKernel_ proc public
 	mov KernelNE.ne_restab, KernelNames - KernelNE
 	mov KernelSeg.wSel, cs
 
-	call SetWinFlags
-
 if SIZESEGS
 	mov si,offset segments
 	mov cx,SIZESEGS

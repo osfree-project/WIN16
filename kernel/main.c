@@ -4,7 +4,6 @@
 extern void InitKernel();
 
 extern char IsVMM();
-// 486 by default
 #pragma aux IsVMM        = \
         "mov    ax,01600h"       \
 	"int    31h"\
@@ -17,7 +16,7 @@ extern char IsVMM();
 extern char DPMI_GetCPU();
 // 486 by default
 #pragma aux DPMI_GetCPU        = \
-        "mov    ax,0300h"          \
+        "mov    ax,0400h"          \
 	"int    31h"\
 	"jnc	exit"\
 	"mov	cl,4"\	
@@ -44,13 +43,17 @@ void WINAPI SetWinFlags()
 {
   //@todo WF_PMODE set for non 8086 cpu kernel version
   eWinFlags.wOfs= (
-			  GetFPU()?WF_80x87:0) 
+			  (GetFPU()?WF_80x87:0) 
 			| (1<<(DPMI_GetCPU()-1)) 
-			| (IsVMM()?(WF_PMODE | WF_ENHANCED):(WF_PMODE | WF_STANDARD)
+			| WF_PMODE
+			| (IsVMM()?WF_ENHANCED:WF_STANDARD)
 		) ;
 }
 
 void WINAPI KernelMain(void)
 {
-  InitKernel();
+	// Initialize WinFlags
+	SetWinFlags();
+	// Initialize Kernel Module
+	InitKernel();
 }
