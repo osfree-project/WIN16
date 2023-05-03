@@ -5,7 +5,7 @@ extern void _cdecl printf (const char *format,...);
 void WINAPI Copyright()
 {
 	printf("\n\rosFree Windows Kernel version 0.1\n\r" 
-		   "Copyright (C) 2022-23 osFreen\r"
+		   "Copyright (C) 2022-23 osFree\n\r"
 		   "Based on HX DPMI loader, Wine and TWIN\n\r"
 		   "Copyright (C) 1993-2022 Japheth\n\r"
 		   "Copyright (C) 1993-2022 the Wine project authors\n\r"

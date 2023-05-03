@@ -1,5 +1,8 @@
 
-#include <win16.h>
+#include <windows.h>
+
+#include <dpmi.h>
+
 
 extern void InitKernel();
 
@@ -12,16 +15,6 @@ extern char IsVMM();
 	"xor	al, al"\
 	"exit:"\
         value [al];
-
-extern char DPMI_GetCPU();
-// 486 by default
-#pragma aux DPMI_GetCPU        = \
-        "mov    ax,0400h"          \
-	"int    31h"\
-	"jnc	exit"\
-	"mov	cl,4"\	
-	"exit:"\
-        value [cl];
 
 extern char GetFPU();
 // 486 by default

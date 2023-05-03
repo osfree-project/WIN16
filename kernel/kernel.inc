@@ -28,12 +28,8 @@ DGROUP	group _TEXT,CCONST,_DATA,_ITEXT,_BSS,STACK
 
 ?MULTPSP		= 1		;1, create a PSP for every task
 
-?LFNNT			= 0
 ifndef ?LFN
 ?LFN            = 1     ;1, 1=support LFN
-  if ?32BIT
-?LFNNT          = 0
-  endif
 endif
 
 ifndef _FILEHANDLES_
@@ -42,7 +38,6 @@ endif
 ?INT24RES		= 1		;1, restore int 24 when task exits
 ?INT23RES		= 1		;1, restore int 23
 ?INT41SUPPORT	= 1		;1, support Int 41h debugging messages
-?SUPAPPTITLE	= 1		;1, support for "application title" (win9x only, in rm!)
 ?SETDTA			= 1		;1, 1=for ?MULTPSP: init DTA to PSP:80 on start
 ?ZEROHIWORDEBP  = 1		;1, 1=if ?32BIT clear hiword(ebp) before 16-bit proc is called.
                         ;   this is essentially for ENTER/LEAVE instructions!
@@ -90,7 +85,6 @@ ENVFL_IGNNOOPENERR	equ 40h	;64   ignore SEM_NOOPENFILEERRORBOX flag
 ENVFL_IGNUNRESIMP	equ 80h	;128  ignore unresolved imports (PE only)
 ENVFL2_LOADDBGOUT	equ 01h	;256  try to load debugout.dll /debugo32.dll
 ;ENVFL2_IGN214B92	equ 02h	;512  ignore int 21h, ax=4b92h requests (module list)
-ENVFL2_USEPREFADDR  equ 04h	;1024 load PE dlls at their prefered load address
 ENVFL2_EXPANDDOWN   equ 08h	;2048 alloc flat DS as expand down
 ENVFL2_128KBSTACK	equ 10h	;4096 restrict stack to 128 kB
 ENVFL2_ALLOWGUI  	equ 20h	;8192 allow GUI apps to be loaded in win dos boxes
@@ -101,8 +95,6 @@ ENVFL2_EARLYGUIHLP  equ 40h	;16384 load hxguihlp before dll initialisation
 FMODE_OVERLAY	equ 01h	;bit 0: 1=loader loaded as overlay
 FMODE_DISABLED	equ 02h	;bit 1: 1=loader is disabled
 FMODE_DOSEMU	equ 04h	;bit 2: 1=running on DOSEMU
-FMODE_ISNT		equ 08h	;bit 3: 1=running on NT/2K/XP
-FMODE_ISWIN9X	equ 10h	;bit 4: 1=running on WIN9X
 FMODE_NOERRDISP	equ 20h	;bit 5: 1=temporarily suppress dpmi error messages
 if ?LFN
 FMODE_LFN       equ 40h ;bit 6: 1=LFN supported
@@ -170,7 +162,6 @@ Segment2Module	proto near
 SearchModule16	proto near
 ;GetModuleHandle proto far pascal :far ptr byte
 GetModuleHandle16 proto near
-SetAppTitle		proto near
 _SetErrorMode	proto near
 SetCmdLine		proto near
 _mycrout		proto near

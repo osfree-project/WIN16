@@ -92,7 +92,6 @@ PARPSP	equ 16h
 
 if ?32BIT
 		.386
-?PESUPP = 1
 
 @use16	textequ <use16>
 
@@ -103,7 +102,6 @@ else
 		.286
 endif
 		
-?PESUPP = 0
 endif
 		option casemap:none
 		option proc:private
@@ -179,11 +177,6 @@ endif
 		include debug.inc
 		include debuger.inc
 		include version.inc
-if ?PESUPP
-		include peload.inc
-		include winnt.inc
-		include mzhdr32.inc
-endif
 
 
 ife ?EXTLOAD
@@ -548,38 +541,15 @@ ife ?REAL
 
 @@:
 
-
-;	mov dx,offset szLoader	;find env variable "DPMILDR="
-;	call GetLdrEnvironmentVariable
-;	jc @F
-;	call getnum
-;	mov wEnvFlgs,ax
-@@:
 	CTRL_C_CK 6
 
-;	cmp bx,3205h				;NT, 2k, XP?
-;	jnz @F
-;	or fMode, FMODE_ISNT
-if ?LFN
-ife ?LFNNT
-	and fMode, not FMODE_LFN
-endif
-endif
-	or bEnvFlgs, ENVFL_DONTUSEDPMI1
+	mov bEnvFlgs, ENVFL_DONTUSEDPMI1
 @@:
 endif	; not ?REAL
 
 
-;	call DebugInit
-;	call InitDosVarP
 	call InitProtMode	;init vectors, alloc internal selectors
 	jc main_err6		;--->
-
-	mov ax,1600h
-	int 2Fh
-	and al,al
-	jz @F
-	or fMode, FMODE_ISWIN9X
 
 	; Here we must prepare WOAname string
 
@@ -588,8 +558,7 @@ endif	; not ?REAL
 
 main_1:
 	mov szPath,0
-;moved to kernelmain
-;	call InitKernel	   ;init MD for KERNEL
+
 	call KernelMain		; C-part initialization
 
 	call GetPgmParms	   ;program name -> szPgmName, exec parm init
@@ -1284,22 +1253,6 @@ if ?32BIT
 	mov eax,[si].TASK.dwModul
 	@trace_d eax
 	@trace_s <lf>
-  if ?PESUPP
-	test eax,0FFFF0000h
-	jz @F
-	call FreeModule32
-	push ds					;FreeLibrary may free the stack mem block
-	pop ss					;so set the loader stack here
-	mov esp,[dStktop]
-	push si
-	push eax
-	pop di
-	pop si
-	@DPMI_FREEMEM				;free stack handle
-	pop si
-	jmp i214c_2
-@@:
-  endif
 else
 	mov ax,[si.TASK.wModul]
 endif
@@ -1318,11 +1271,6 @@ if ?MULTPSP
 	jz i214c_1
 
 	mov es,bx
-if 0							;win31, 9x, NT, XP work with selector
-	mov ax,[wRMPSP]				;use loader psp segment
-	test fMode, FMODE_ISNT
-	jz @F
-endif
 	mov ax,[TH_TOPPDB]			;use loader psp selector for NT!!!
 @@:
 	mov es:[PARPSP],ax
@@ -1426,9 +1374,6 @@ if ?32BIT
 else
 	mov sp,[si.TASK.wSP]
 endif
-if ?SUPAPPTITLE
-	call setapptitle2
-endif
 	@trace_s <"dpmildr: psp killed, switched to parent psp and stack",lf>
 	@restoreregs_exec
 if ?32BIT
@@ -1529,31 +1474,6 @@ else
 endif
 	jnz retf2ex 		  ;if no, return with error
 	mov ax,cx			  ;restore AX
-if ?PESUPP
-;	cmp byte ptr cs:[bEnabled],0  ;is peloader enabled?
-;	jz int214b_1
-	cmp word ptr cs:[NE_Hdr],'EP'
-	jz @F
-if ?PHARLABTNT
-	cmp word ptr cs:[NE_Hdr],'LP'
-	jz @F
-endif
-	cmp word ptr cs:[NE_Hdr],'XP'
-	jnz int214b_1			;is not a PE executable 
-@@:
-	@saveregs_exec
-	@SetKernelDS		  ;call with full path so we dont need
-	mov edx,offset szModName  ;to search PATH again
-	call LoadModule32
-	mov [esp+1Ch],eax
-	@restoreregs_exec
-	jnc retf2ex 		  ;done
-	and ax,ax
-	stc
-	jnz retf2ex
-	mov ax, 4b00h
-int214b_1:
-endif
 	xor cx,cx
 if ?32BIT
 if ?DOSEMUSUPP
@@ -1586,9 +1506,6 @@ if _LASTRC_
 	mov [wLastRC],ax
 	pop ds
 @@:
-endif
-if ?SUPAPPTITLE
-	call setapptitle2	  ;restore app title
 endif
 	@int3 _INT03RETEXEC_
 	@trace_s <"dpmildr: returning to previous app",lf>
@@ -1710,10 +1627,6 @@ if ?32BIT
 	mov esp,edx
 else
 	mov sp,dx
-endif
-if ?SUPAPPTITLE
-	mov al,00
-	call SetAppTitle
 endif
 	@trace_s "will launch app now, CS:IP="
 	@trace_w <word ptr es:[NEHDR.ne_csip+2]>
@@ -1884,153 +1797,6 @@ endif
 endif
 
 
-
-
-if ?SUPAPPTITLE
-
-;*** prepare call of SetAppTitle
-
-setapptitle2 proc uses ds es si ax
-
-	@SetKernelDS
-	mov si,[wTDStk]
-	cmp si, offset starttaskstk
-	jz exit
-if ?32BIT
-	cmp word ptr [si.TASK.dwModul+2 - sizeof TASK],0
-	mov al,01
-	jnz @F
-endif
-	mov es,[si.TASK.wModul - sizeof TASK]
-	mov al,00
-@@:
-	call SetAppTitle
-exit:
-	ret
-setapptitle2 endp
-
-
-;*** int 2f,168e only works for win9x and no translation is supplied!
-;*** since a pointer is used, dos memory has to be allocated!
-;*** Input: AL=00 + ES=MD or AL=01 + FS=MZHDR
-;*** DS=dataseg
-
-SetAppTitle proc public
-if ?32BIT
-	pushad
-	sub esp,sizeof RMCS+2
-	mov ebp,esp
-else
-	@push_a
-	sub sp,sizeof RMCS+2
-	mov bp,sp
-endif
-	test fMode, FMODE_ISWIN9X
-	jz exit
-	or fMode, FMODE_NOERRDISP	;dont display dpmi errors
-	push es
-	push ds
-if ?PESUPP
-	test al,01
-	jz isNE
-	mov es,cs:[wFlatDS]
-	movzx esi, cs:[wTDStk]
-	mov esi, cs:[esi-sizeof TASK].TASK.dwModul
-	add esi, es:[esi].MZHDR.pExeNam
-	push esi
-	mov cl,-1
-@@:
-	mov al,es:[esi]
-	inc esi
-	inc cl
-	and al,al
-	jnz @B
-	pop esi
-	push es
-	pop ds
-	jmp sat_2
-isNE:
-	movzx esi,si
-endif
-	push es
-	pop ds
-	mov si,ds:[NEHDR.ne_restab]
-	lodsb
-	mov cl,al
-sat_2:							;copy name to real mode memory
-	mov ch,00
-	push cx
-	mov bx,8
-	mov ax,0100h
-	call dpmicall
-	pop cx
-	jc error
-if ?32BIT
-	xor edi,edi
-else
-	xor di,di
-endif
-	mov es,dx
-if ?32BIT
-	mov [ebp.RMCS.rES],ax
-else
-	mov [bp.RMCS.rES],ax
-endif
-	and cl,7Fh
-if ?32BIT
-	movzx ecx,cx
-	rep movs byte ptr [edi], [esi]
-	xor al,al
-	stos byte ptr [edi]
-else
-	rep movsb
-	xor al,al
-	stosb
-endif
-
-if ?32BIT
-	xor eax,eax
-	mov [ebp.RMCS.rDI],ax
-	mov [ebp.RMCS.rDX],ax
-	mov [ebp.RMCS.rSSSP],eax
-	mov [ebp.RMCS.rAX],168Eh
-	mov edi,ebp
-else
-	xor ax,ax
-	mov [bp.RMCS.rDI],ax
-	mov [bp.RMCS.rDX],ax ;set app title
-	mov [bp.RMCS.rSS],ax
-	mov [bp.RMCS.rSP],ax
-	mov [bp.RMCS.rAX],168Eh
-	mov di,bp
-endif
-
-;---------------------- call int 2F, AX=168Eh
-	push ss
-	pop es
-	mov bx,002Fh
-	xor cx,cx
-	mov ax,0300h
-	call dpmicall
-
-	mov ax,0101h
-	call dpmicall
-error:
-	pop ds
-	pop es
-	and fMode, not FMODE_NOERRDISP
-exit:
-if ?32BIT
-	add esp,sizeof RMCS+2
-	popad
-else
-	add sp,sizeof RMCS+2
-	@pop_a
-endif
-	ret
-SetAppTitle endp
-
-endif
 
 if ?MULTPSP
 
@@ -2426,9 +2192,6 @@ endif
 	@trace_s <" ", lf>
 	mov ax,0001				;free selector
 	call dpmicall
-if ?PESUPP
-	call DeinitPELoader
-endif
 	@trace_s <"restoring vector int 0x21",lf>
 	mov cx,word ptr ds:[PrevInt21Proc+2]
 	mov dx,word ptr ds:[PrevInt21Proc+0]
@@ -2609,9 +2372,6 @@ freemodulerest2:
 	jnz @B
 	jmp freemodulerest21
 freemodulerestex_1:
-if ?PESUPP
-	call UnloadPEModules
-endif
 	@trace_s <"*** exit auto delete mode ***",lf>
 freemodulerestex:
 	@pop_a
@@ -2814,9 +2574,7 @@ GetSSSP endp
 ;--- returns NC + offset in DI, else C
 ;--- modifies DI, AX
 
-GetLdrEnvironmentVariable proc
-	mov es,[TH_TOPPDB]
-GetEnvironmentVariable::	;<--- entry with ES=PSP 	   
+GetEnvironmentVariable proc	;<--- entry with ES=PSP 	   
 	mov es,es:[ENVIRON] 	;environment
 	SUB DI,DI				;start with es:[0]
 	CLD
@@ -2843,7 +2601,7 @@ found:
 	@trace_s <"environment variable found",lf>
 	CLC
 	RET
-GetLdrEnvironmentVariable endp
+GetEnvironmentVariable endp
 
 copyfilename proc
 	mov SI,offset szName
@@ -2868,57 +2626,6 @@ endif
 if ?LFN
 	test cs:fMode, FMODE_LFN
 	jz nolfn
-  if ?32BIT
-  if ?LFNNT
-	test cs:fMode, FMODE_ISNT
-	jz nont
-	push es
-	push esi
-	push edi
-	push ebp
-	sub esp, 32+2
-	mov ebp, esp
-	mov [ebp].RMCS.rAX,716Ch
-	mov [ebp].RMCS.rBX,0
-	mov [ebp].RMCS.rCX,0
-	mov [ebp].RMCS.rDX,1
-	mov cx,80h
-	mov [ebp].RMCS.rSI,cx
-	mov di, 80h
-	mov es, cs:[TH_TOPPDB]
-	mov esi, edx
-@@:
-if ?32BIT
-	lods byte ptr [esi]
-else
-	lodsb
-endif
-	stosb
-	and al,al
-	loopnz @B
-	mov ax,cs:[wRMPSP]
-	mov [ebp].RMCS.rDS,ax
-	mov [ebp].RMCS.rFlags,1
-	mov [ebp].RMCS.rSSSP,0
-	mov edi, ebp
-	push ss
-	pop es
-	@DPMI_SimRMInt 21h, 0
-	mov ax,[ebp].RMCS.rAX
-	test [ebp].RMCS.rFlags, 1
-	lea esp, [esp+32+2]
-	pop ebp
-	pop edi
-	pop esi
-	pop es
-	jz done
-	cmp ax,7100h
-	jz nolfn
-	stc
-	jmp done
-nont:
-  endif
-  endif
   if ?32BIT
 	push esi
 	mov esi,edx
@@ -3048,12 +2755,9 @@ if ?32BIT
 nosysdir:
 endif
 	mov dx,offset szPathConst	;variable "PATH="
-if 0
-	call GetLdrEnvironmentVariable  ;DI=^Path
-else
 	mov es,cs:[wCurPSP]
 	call GetEnvironmentVariable  ;DI=^Path
-endif
+
 	jc exit
 							;PATH variable found (ES:DI)
 	call SearchFileInPath 	;if found, in AX Handle (modifies SI)
@@ -7681,9 +7385,6 @@ if 0;?DOSEMUSUPP
 endif
 	call moveinextmem	   ;move ldr Code/Data in extended memory
 @@:
-endif
-if ?PESUPP
-	call InitPELoader
 endif
 if _TRAPEXC0D_
 	@DPMI_GetExcVec 0Dh	   ;get Exception 0D

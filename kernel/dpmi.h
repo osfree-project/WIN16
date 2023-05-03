@@ -1,5 +1,6 @@
 /* DPMI Library */
 
+#pragma pack(push,1)
 typedef struct _LDT_ENTRY {
     WORD	LimitLow;
     WORD	BaseLow;
@@ -24,6 +25,7 @@ typedef struct _LDT_ENTRY {
         } Bits;
     } HighWord;
 } LDT_ENTRY;
+#pragma pack(pop)
 
 extern int DPMI_AllocDesc(unsigned int);
 #pragma aux DPMI_AllocDesc        = \
@@ -107,12 +109,12 @@ extern int DPMI_SetDescriptor(unsigned int, LDT_ENTRY far *);
 
 #pragma pack(push,1)
 typedef struct {
-char major_version;
-char minor_version;
-int flags;
-char processor_type;
-int host_mem;
-void(far * switchentry)(void);
+	char major_version;
+	char minor_version;
+	int flags;
+	char processor_type;
+	int host_mem;
+	void(far * switchentry)(void);
 } init_info;
 #pragma pack(pop)
 
@@ -182,3 +184,13 @@ extern void far * DPMI_VendorEntry(char far * szVendorStr);
     value [cx di] \
     modify [ax cx]
 #endif
+
+extern char DPMI_GetCPU();
+// 486 by default
+#pragma aux DPMI_GetCPU        = \
+        "mov    ax,0400h"          \
+	"int    31h"\
+	"jnc	exit"\
+	"mov	cl,4"\	
+	"exit:"\
+        value [cl];

@@ -87,7 +87,7 @@ SwitchToPMode proc
 	call changememstrat
 
 	@trace_s <lf,"------------------------------------",lf>
-	@trace_s <"KERNEL now in real mode, PDB=">
+	@trace_s <"KERNEL in real mode, PDB=">
 	@trace_w es
 	@trace_s <",CS=">
 	@trace_w cs
