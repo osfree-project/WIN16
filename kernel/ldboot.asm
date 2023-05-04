@@ -231,8 +231,6 @@ wEnvFlgs  label word
 bEnvFlgs  db 0
 bEnvFlgs2 db 0
 
-fCmdLOpt  db 0			;additional option from cmdline ("-g")
-
 ;*** variables used temporarily
 
 callcs	 dw 0			;current CS for NP exceptions
@@ -519,17 +517,6 @@ endif
 @@:
 endif
 
-if ?LFN
-					;detect if lfn is installed
-	mov ax,7147h
-	mov si,offset szPath
-	mov dl,0
-	stc
-	int 21h
-	jc @F
-	or fMode, FMODE_LFN
-@@:              
-endif
 
 ; Switch and configure for protected mode kernels
 ife ?REAL
@@ -2623,35 +2610,6 @@ endif
 ;	@trace_s <"try to open: ">
 ;	@trace_sx dx
 ;	@trace_s lf
-if ?LFN
-	test cs:fMode, FMODE_LFN
-	jz nolfn
-  if ?32BIT
-	push esi
-	mov esi,edx
-  else
-	push si
-	mov si,dx
-  endif
-	MOV AX,716Ch
-	mov dx,1		;action: fail if not exists
-	xor bx,bx		;read only 
-	xor cx,cx		;
-	stc
-	int 21h			;use true DOS int (LFN for XP needs DKRNL32!)
-  if ?32BIT
-	mov edx,esi
-	pop esi
-  else
-	mov dx,si
-	pop si
-  endif
-	jnc done
-	cmp ax,7100h
-	stc
-	jnz done
-nolfn:
-endif
 	@OpenFil , _SFLAGS_	;open a file for read
 done:
 	ret
@@ -7175,7 +7133,6 @@ GetPgmParms proc uses ds
 	pop es				;es=DGROUP
 	@trace_s <"GetPgmParms enter",lf>
 
-	mov fCmdLOpt,0
 	mov ds,[TH_TOPPDB]
 	mov si,0080h
 	mov di,offset szPgmName

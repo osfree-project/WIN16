@@ -1,5 +1,10 @@
-#include <win16.h>
+#include <windows.h>
 #include <win_private.h>
+
+int atoi(const char far *h);
+int stricmp(const char far * s1, const char far * s2);
+int strlen (const char *str);
+int strnicmp(char FAR *s1, const char FAR *s2, int n);
 
 /*
  * Resource table structures.
@@ -152,7 +157,7 @@ static DWORD NE_FindNameTableId(HMODULE hModule, NE_MODULE *pModule, LPCSTR type
 //                              pTypeInfo->type_id, pNameInfo->id );
             handle = LoadResource( hModule,
                                      (HRSRC)((char *)pNameInfo - (char *)pModule) );
-            for(p = (LPWORD)LockResource(handle); p && *p; p = (WORD *)((char *)p+*p))
+            for(p = (LPWORD)LockResource(handle); p && *p; p = (WORD far *)((char far *)p+*p))
             {
 //                TRACE("  type=%04x '%s' id=%04x '%s'\n",
 //                                  p[1], (char *)(p+3), p[2],
@@ -162,7 +167,7 @@ static DWORD NE_FindNameTableId(HMODULE hModule, NE_MODULE *pModule, LPCSTR type
                 if (p[1] & 0x8000)
                 {
                     if (!HIWORD(typeId)) continue;
-                    if (stricmp( typeId, (char *)(p + 3) )) continue;
+                    if (stricmp( typeId, (char far *)(p + 3) )) continue;
                 }
                 else if (HIWORD(typeId) || (((DWORD)typeId & ~0x8000)!= p[1]))
                   continue;
@@ -172,7 +177,7 @@ static DWORD NE_FindNameTableId(HMODULE hModule, NE_MODULE *pModule, LPCSTR type
                 if (p[2] & 0x8000)
                 {
                     if (!HIWORD(resId)) continue;
-                    if (stricmp( resId, (char*)(p+3)+strlen((char*)(p+3))+1 )) continue;
+                    if (stricmp( resId, (char far *)(p+3)+lstrlen((char far *)(p+3))+1 )) continue;
 
                 }
                 else if (HIWORD(resId) || ((LOWORD(resId) & ~0x8000) != p[2]))
@@ -250,12 +255,12 @@ static NE_NAMEINFO *NE_FindResourceFromType( LPBYTE pResTab, NE_TYPEINFO *pTypeI
     if (HIWORD(resId) != 0)  /* Named resource */
     {
         LPCSTR str = resId;
-        BYTE len = strlen( str );
+        BYTE len = lstrlen( str );
         for (count = pTypeInfo->count; count > 0; count--, pNameInfo++)
         {
             if (pNameInfo->id & 0x8000) continue;
             p = pResTab + pNameInfo->id;
-            if ((*p == len) && !strnicmp( (char*)p+1, str, len ))
+            if ((*p == len) && !strnicmp( (char far *)p+1, str, len ))
                 return pNameInfo;
         }
     }
@@ -629,7 +634,6 @@ DWORD WINAPI GetHeapSpaces(HMODULE module)
     return spaces;
 }
 
-#include <win16.h>
 
 /***********************************************************************
  *           GetExeVersion   (KERNEL.105)

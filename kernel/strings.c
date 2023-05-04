@@ -106,7 +106,7 @@ int strnicmp(char far *s1, const char far *s2, int n)
     return 0;
 }
 
-int stricmp(const char* s1, const char* s2) 
+int stricmp(const char far * s1, const char far * s2) 
 {
   while (tolower((unsigned char) *s1) == tolower((unsigned char) *s2)) {
     if (*s1 == '\0')
@@ -277,9 +277,9 @@ IsDBCSLeadByte(BYTE bTestChar)
 
 }
 
-int atoi(char *h)
+int atoi(char far *h)
 {
-  char *s = h;
+  char far *s = h;
   int  i = 0;
   int  j, k, l;
   char c;
@@ -292,7 +292,7 @@ int atoi(char *h)
     base = 10;
   }
 
-  l = strlen(s) - 1;
+  l = lstrlen(s) - 1;
 
   while (*s) {
     c = tolower(*s);
@@ -318,4 +318,26 @@ int atoi(char *h)
   }
 
   return i;
+}
+
+void memcpy(void far * s1, void far * s2, unsigned length)
+{	char far * p;
+	char far * q;
+
+	if(length) {
+		p = s1;
+		q = s2;
+		do *p++ = *q++;
+		while(--length);
+	}
+}
+
+void far * memset (void far *start, int c, int len)
+{
+  char far *p = start;
+
+  while (len -- > 0)
+    *p ++ = c;
+
+  return start;
 }

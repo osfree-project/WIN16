@@ -28,9 +28,6 @@ DGROUP	group _TEXT,CCONST,_DATA,_ITEXT,_BSS,STACK
 
 ?MULTPSP		= 1		;1, create a PSP for every task
 
-ifndef ?LFN
-?LFN            = 1     ;1, 1=support LFN
-endif
 
 ifndef _FILEHANDLES_
 _FILEHANDLES_	= 20	;20 initial no of file handles for a task
@@ -55,13 +52,8 @@ endif
 
 
 
-if ?LFN
-?MAXPATH	equ 260
-?MAXNAME	equ 255
-else
 ?MAXPATH	equ 65
 ?MAXNAME	equ 13		;8+3 + dot + terminating 0
-endif
 
 if ?DEBUG
 _TRACE_ 		= 1
@@ -85,9 +77,6 @@ ENVFL2_LOADDBGOUT	equ 01h	;256  try to load debugout.dll /debugo32.dll
 FMODE_DISABLED	equ 02h	;bit 1: 1=loader is disabled
 FMODE_DOSEMU	equ 04h	;bit 2: 1=running on DOSEMU
 FMODE_NOERRDISP	equ 20h	;bit 5: 1=temporarily suppress dpmi error messages
-if ?LFN
-FMODE_LFN       equ 40h ;bit 6: 1=LFN supported
-endif
 
 ;*** exits:
 ;*** 4CFB: error in loader Init (real mode)
@@ -117,7 +106,6 @@ externdef	TH_CURTDB:word
 externdef	wLastRC:word
 externdef	bEnvFlgs:byte
 externdef	bEnvFlgs2:byte
-externdef	fCmdLOpt:byte
 externdef	wEnvFlgs:word
 externdef	wErrMode:word
 externdef	szPath:byte
