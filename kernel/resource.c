@@ -6,41 +6,16 @@ int stricmp(const char far * s1, const char far * s2);
 int strlen (const char *str);
 int strnicmp(char FAR *s1, const char FAR *s2, int n);
 
-/*
- * Resource table structures.
- */
-typedef struct
-{
-    WORD     offset;
-    WORD     length;
-    WORD     flags;
-    WORD     id;
-    HANDLE   handle;
-    WORD     usage;
-} NE_NAMEINFO;
+HMODULE WINAPI GetExePtr(HANDLE handle);
+WORD WINAPI LocalCountFree(void);
+WORD WINAPI LocalHeapSize(void);
+WORD WINAPI GlobalHandleToSel(HGLOBAL handle);
 
-typedef struct
-{
-    WORD        type_id;   /* Type identifier */
-    WORD        count;     /* Number of resources of this type */
-    FARPROC   resloader; /* SetResourceHandler() */
-    /*
-     * Name info array.
-     */
-} NE_TYPEINFO;
-
-#define NE_SEGFLAGS_LOADED      0x0004
-
-// @todo use exported variables
-#define __AHSHIFT  3  /* don't change! */
-#define __AHINCR   (1 << __AHSHIFT)
+extern __AHSHIFT;
+extern __AHINCR;
 
 #define VALID_HANDLE(handle) (((handle)>>__AHSHIFT)<globalArenaSize)
 #define GET_ARENA_PTR(handle)  (pGlobalArena + ((handle) >> __AHSHIFT))
-
-
-
-HMODULE WINAPI GetExePtr( HANDLE handle );
 
 /* This function returns current DS value */
 extern  unsigned short          GetDS( void );
@@ -84,23 +59,23 @@ HANDLE WINAPI FarGetOwner( HGLOBAL handle )
 /***********************************************************************
  *           NE_GetPtr
  */
-NE_MODULE *NE_GetPtr( HMODULE hModule )
+LPNE_MODULE NE_GetPtr( HMODULE hModule )
 {
-    return (NE_MODULE *)GlobalLock( GetExePtr(hModule) );
+    return (LPNE_MODULE)GlobalLock( GetExePtr(hModule) );
 }
 
-static inline NE_MODULE *get_module( HMODULE mod )
+static inline LPNE_MODULE get_module( HMODULE mod )
 {
-    if (!mod) mod = *((HMODULE far *)MAKELP(GetCurrentTask(), 0x1e));
+    if (!mod) mod = *((LPHMODULE)MAKELP(GetCurrentTask(), 0x1e));
     return NE_GetPtr( mod );
 }
 
 /**********************************************************************
  *          next_typeinfo
  */
-static inline NE_TYPEINFO *next_typeinfo( NE_TYPEINFO *info )
+static inline LPNE_TYPEINFO next_typeinfo(LPNE_TYPEINFO info)
 {
-    return (NE_TYPEINFO *)((char*)(info + 1) + info->count * sizeof(NE_NAMEINFO));
+    return (LPNE_TYPEINFO)((LPSTR)(info + 1) + info->count * sizeof(NE_NAMEINFO));
 }
 
 
@@ -117,8 +92,6 @@ static inline FARPROC get_default_res_handler(void)
 
 typedef unsigned long ULONG_PTR, *PULONG_PTR;
 
-#define MAKEINTRESOURCEA(i) (LPSTR)((ULONG_PTR)((WORD)(i)))
-
 /**********************************************************************
  *          get_res_name
  *
@@ -126,7 +99,7 @@ typedef unsigned long ULONG_PTR, *PULONG_PTR;
  */
 static inline LPCSTR get_res_name( LPCSTR name )
 {
-    if (HIWORD(name) && name[0] == '#') name = MAKEINTRESOURCEA( atoi( name + 1 ) );
+    if (HIWORD(name) && name[0] == '#') name = MAKEINTRESOURCE( atoi( name + 1 ) );
     return name;
 }
 
@@ -136,28 +109,28 @@ static inline LPCSTR get_res_name( LPCSTR name )
  * Find the type and resource id from their names.
  * Return value is MAKELONG( typeId, resId ), or 0 if not found.
  */
-static DWORD NE_FindNameTableId(HMODULE hModule, NE_MODULE *pModule, LPCSTR typeId, LPCSTR resId )
+static DWORD NE_FindNameTableId(HMODULE hModule, LPNE_MODULE pModule, LPCSTR typeId, LPCSTR resId )
 {
-    NE_TYPEINFO *pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->ne_rsrctab + 2);
-    NE_NAMEINFO *pNameInfo;
+    LPNE_TYPEINFO pTypeInfo = (LPNE_TYPEINFO)((LPSTR)pModule + pModule->ne_rsrctab + 2);
+    LPNE_NAMEINFO pNameInfo;
     HGLOBAL handle;
     LPWORD p;
     DWORD ret = 0;
     int count;
 
     for (; pTypeInfo->type_id != 0;
-           pTypeInfo = (NE_TYPEINFO *)((char*)(pTypeInfo+1) +
+           pTypeInfo = (LPNE_TYPEINFO)((LPSTR)(pTypeInfo+1) +
                                         pTypeInfo->count * sizeof(NE_NAMEINFO)))
     {
         if (pTypeInfo->type_id != 0x800f) continue;
-        pNameInfo = (NE_NAMEINFO *)(pTypeInfo + 1);
+        pNameInfo = (LPNE_NAMEINFO)(pTypeInfo + 1);
         for (count = pTypeInfo->count; count > 0; count--, pNameInfo++)
         {
 //            TRACE("NameTable entry: type=%04x id=%04x\n",
 //                              pTypeInfo->type_id, pNameInfo->id );
             handle = LoadResource( hModule,
-                                     (HRSRC)((char *)pNameInfo - (char *)pModule) );
-            for(p = (LPWORD)LockResource(handle); p && *p; p = (WORD far *)((char far *)p+*p))
+                                     (HRSRC)((LPSTR)pNameInfo - (LPSTR)pModule) );
+            for(p = (LPWORD)LockResource(handle); p && *p; p = (LPWORD)((LPSTR)p+*p))
             {
 //                TRACE("  type=%04x '%s' id=%04x '%s'\n",
 //                                  p[1], (char *)(p+3), p[2],
@@ -167,7 +140,7 @@ static DWORD NE_FindNameTableId(HMODULE hModule, NE_MODULE *pModule, LPCSTR type
                 if (p[1] & 0x8000)
                 {
                     if (!HIWORD(typeId)) continue;
-                    if (stricmp( typeId, (char far *)(p + 3) )) continue;
+                    if (stricmp( typeId, (LPSTR)(p + 3) )) continue;
                 }
                 else if (HIWORD(typeId) || (((DWORD)typeId & ~0x8000)!= p[1]))
                   continue;
@@ -177,7 +150,7 @@ static DWORD NE_FindNameTableId(HMODULE hModule, NE_MODULE *pModule, LPCSTR type
                 if (p[2] & 0x8000)
                 {
                     if (!HIWORD(resId)) continue;
-                    if (stricmp( resId, (char far *)(p+3)+lstrlen((char far *)(p+3))+1 )) continue;
+                    if (stricmp( resId, (LPSTR)(p+3)+lstrlen((LPSTR)(p+3))+1 )) continue;
 
                 }
                 else if (HIWORD(resId) || ((LOWORD(resId) & ~0x8000) != p[2]))
@@ -201,7 +174,7 @@ static DWORD NE_FindNameTableId(HMODULE hModule, NE_MODULE *pModule, LPCSTR type
  *
  * Find header struct for a particular resource type.
  */
-static NE_TYPEINFO *NE_FindTypeSection( LPBYTE pResTab, NE_TYPEINFO *pTypeInfo, LPCSTR typeId )
+static LPNE_TYPEINFO NE_FindTypeSection( LPBYTE pResTab, LPNE_TYPEINFO pTypeInfo, LPCSTR typeId )
 {
     /* start from pTypeInfo */
 
@@ -214,7 +187,7 @@ static NE_TYPEINFO *NE_FindTypeSection( LPBYTE pResTab, NE_TYPEINFO *pTypeInfo, 
             if (!(pTypeInfo->type_id & 0x8000))
             {
                 LPBYTE p = pResTab + pTypeInfo->type_id;
-                if ((*p == len) && !strnicmp( (char*)p+1, str, len ))
+                if ((*p == len) && !strnicmp( (LPSTR)p+1, str, len ))
                 {
 //                    TRACE("  Found type '%s'\n", str );
                     return pTypeInfo;
@@ -246,11 +219,11 @@ static NE_TYPEINFO *NE_FindTypeSection( LPBYTE pResTab, NE_TYPEINFO *pTypeInfo, 
  *
  * Find a resource once the type info structure has been found.
  */
-static NE_NAMEINFO *NE_FindResourceFromType( LPBYTE pResTab, NE_TYPEINFO *pTypeInfo, LPCSTR resId )
+static LPNE_NAMEINFO NE_FindResourceFromType( LPBYTE pResTab, LPNE_TYPEINFO pTypeInfo, LPCSTR resId )
 {
     LPBYTE p;
     int count;
-    NE_NAMEINFO *pNameInfo = (NE_NAMEINFO *)(pTypeInfo + 1);
+    LPNE_NAMEINFO pNameInfo = (LPNE_NAMEINFO)(pTypeInfo + 1);
 
     if (HIWORD(resId) != 0)  /* Named resource */
     {
@@ -260,7 +233,7 @@ static NE_NAMEINFO *NE_FindResourceFromType( LPBYTE pResTab, NE_TYPEINFO *pTypeI
         {
             if (pNameInfo->id & 0x8000) continue;
             p = pResTab + pNameInfo->id;
-            if ((*p == len) && !strnicmp( (char far *)p+1, str, len ))
+            if ((*p == len) && !strnicmp( (LPSTR)p+1, str, len ))
                 return pNameInfo;
         }
     }
@@ -278,17 +251,17 @@ static NE_NAMEINFO *NE_FindResourceFromType( LPBYTE pResTab, NE_TYPEINFO *pTypeI
  */
 HGLOBAL WINAPI AllocResource( HMODULE hModule, HRSRC hRsrc, DWORD size)
 {
-    NE_NAMEINFO *pNameInfo=NULL;
+    NE_NAMEINFO FAR *pNameInfo=NULL;
     WORD sizeShift;
     HGLOBAL ret;
 
-    NE_MODULE *pModule = NE_GetPtr( hModule );
+    LPNE_MODULE pModule = NE_GetPtr( hModule );
     if (!pModule || !pModule->ne_rsrctab || !hRsrc) return 0;
 
 //    TRACE("module=%04x res=%04x size=%ld\n", hModule, hRsrc, size );
 
-    sizeShift = *(WORD *)((char *)pModule + pModule->ne_rsrctab);
-    pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
+    sizeShift = *(LPWORD)((LPSTR)pModule + pModule->ne_rsrctab);
+    pNameInfo = (LPNE_NAMEINFO)((LPSTR)pModule + hRsrc);
     if (size < (DWORD)pNameInfo->length << sizeShift)
         size = (DWORD)pNameInfo->length << sizeShift;
     ret = GlobalAlloc( GMEM_FIXED, size );
@@ -302,14 +275,14 @@ HGLOBAL WINAPI AllocResource( HMODULE hModule, HRSRC hRsrc, DWORD size)
 FARPROC WINAPI SetResourceHandler( HMODULE hModule, LPCSTR typeId, FARPROC resourceHandler )
 {
     LPBYTE pResTab;
-    NE_TYPEINFO *pTypeInfo;
+    LPNE_TYPEINFO pTypeInfo;
     FARPROC prevHandler = NULL;
-    NE_MODULE *pModule = NE_GetPtr( hModule );
+    LPNE_MODULE pModule = NE_GetPtr( hModule );
 
     if (!pModule || !pModule->ne_rsrctab) return NULL;
 
     pResTab = (LPBYTE)pModule + pModule->ne_rsrctab;
-    pTypeInfo = (NE_TYPEINFO *)(pResTab + 2);
+    pTypeInfo = (LPNE_TYPEINFO)(pResTab + 2);
 
 //    TRACE("module=%04x type=%s\n", hModule, debugstr_a(typeId) );
 
@@ -330,7 +303,7 @@ FARPROC WINAPI SetResourceHandler( HMODULE hModule, LPCSTR typeId, FARPROC resou
  */
 DWORD WINAPI SizeofResource( HMODULE hModule, HRSRC hRsrc )
 {
-    NE_MODULE *pModule;
+    LPNE_MODULE pModule;
 
 //    TRACE("(%x, %x)\n", hModule, hRsrc );
 
@@ -338,8 +311,8 @@ DWORD WINAPI SizeofResource( HMODULE hModule, HRSRC hRsrc )
     if (!(pModule = get_module( hModule ))) return 0;
     if (pModule->ne_rsrctab)
     {
-        WORD sizeShift = *(WORD *)((char *)pModule + pModule->ne_rsrctab);
-        NE_NAMEINFO *pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
+        WORD sizeShift = *(LPWORD)((LPSTR)pModule + pModule->ne_rsrctab);
+        LPNE_NAMEINFO pNameInfo = (LPNE_NAMEINFO)((LPSTR)pModule + hRsrc);
         return (DWORD)pNameInfo->length << sizeShift;
     }
     return 0;
@@ -351,7 +324,7 @@ DWORD WINAPI SizeofResource( HMODULE hModule, HRSRC hRsrc )
 int WINAPI AccessResource( HINSTANCE hModule, HRSRC hRsrc )
 {
     HFILE fd;
-    NE_MODULE *pModule = NE_GetPtr( hModule );
+    LPNE_MODULE pModule = NE_GetPtr( hModule );
 
     if (!pModule || !pModule->ne_rsrctab || !hRsrc) return -1;
 
@@ -359,8 +332,8 @@ int WINAPI AccessResource( HINSTANCE hModule, HRSRC hRsrc )
 
     if ((fd = _lopen( NE_MODULE_NAME(pModule), OF_READ )) != HFILE_ERROR)
     {
-        WORD sizeShift = *(WORD *)((char *)pModule + pModule->ne_rsrctab);
-        NE_NAMEINFO *pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
+        WORD sizeShift = *(LPWORD)((LPSTR)pModule + pModule->ne_rsrctab);
+        LPNE_NAMEINFO pNameInfo = (LPNE_NAMEINFO)((LPSTR)pModule + hRsrc);
         _llseek( fd, (int)pNameInfo->offset << sizeShift, SEEK_SET );
     }
     return fd;
@@ -373,7 +346,7 @@ BOOL WINAPI FreeResource( HGLOBAL handle )
 {
     FARPROC proc;
     HMODULE user;
-    NE_MODULE *pModule = NE_GetPtr( FarGetOwner( handle ) );
+    LPNE_MODULE pModule = NE_GetPtr( FarGetOwner( handle ) );
 
 //    TRACE("(%04x)\n", handle );
 
@@ -381,11 +354,11 @@ BOOL WINAPI FreeResource( HGLOBAL handle )
 
     if (pModule && pModule->ne_rsrctab)
     {
-        NE_TYPEINFO *pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->ne_rsrctab + 2);
+        LPNE_TYPEINFO pTypeInfo = (LPNE_TYPEINFO)((LPSTR)pModule + pModule->ne_rsrctab + 2);
         while (pTypeInfo->type_id)
         {
             WORD count;
-            NE_NAMEINFO *pNameInfo = (NE_NAMEINFO *)(pTypeInfo + 1);
+            LPNE_NAMEINFO pNameInfo = (LPNE_NAMEINFO)(pTypeInfo + 1);
             for (count = pTypeInfo->count; count > 0; count--)
             {
                 if (pNameInfo->handle == handle)
@@ -401,7 +374,7 @@ BOOL WINAPI FreeResource( HGLOBAL handle )
                 }
                 pNameInfo++;
             }
-            pTypeInfo = (NE_TYPEINFO *)pNameInfo;
+            pTypeInfo = (LPNE_TYPEINFO)pNameInfo;
         }
     }
 
@@ -443,13 +416,13 @@ HGLOBAL WINAPI DefResourceHandler( HGLOBAL hMemObj, HMODULE hModule,
 {
     HGLOBAL handle;
     WORD sizeShift;
-    NE_NAMEINFO* pNameInfo;
-    NE_MODULE* pModule = NE_GetPtr( hModule );
+    LPNE_NAMEINFO pNameInfo;
+    LPNE_MODULE pModule = NE_GetPtr( hModule );
 
     if (!pModule) return 0;
 
-    sizeShift = *(WORD *)((char *)pModule + pModule->ne_rsrctab);
-    pNameInfo = (NE_NAMEINFO *)((char *)pModule + hRsrc);
+    sizeShift = *(LPWORD)((LPSTR)pModule + pModule->ne_rsrctab);
+    pNameInfo = (LPNE_NAMEINFO)((LPSTR)pModule + hRsrc);
 
     if ( hMemObj )
         handle = GlobalReAlloc( hMemObj, pNameInfo->length << sizeShift, 0 );
@@ -475,9 +448,9 @@ HGLOBAL WINAPI DefResourceHandler( HGLOBAL hMemObj, HMODULE hModule,
  */
 HGLOBAL WINAPI LoadResource(HINSTANCE hModule, HRSRC hRsrc)
 {
-    NE_TYPEINFO *pTypeInfo;
-    NE_NAMEINFO *pNameInfo = NULL;
-    NE_MODULE *pModule = get_module( hModule );
+    LPNE_TYPEINFO pTypeInfo;
+    LPNE_NAMEINFO pNameInfo = NULL;
+    LPNE_MODULE pModule = get_module( hModule );
     int d;
 
     if (!hRsrc || !pModule) return 0;
@@ -486,7 +459,7 @@ HGLOBAL WINAPI LoadResource(HINSTANCE hModule, HRSRC hRsrc)
     /* first, verify hRsrc (just an offset from pModule to the needed pNameInfo) */
 
     d = pModule->ne_rsrctab + 2;
-    pTypeInfo = (NE_TYPEINFO *)((char *)pModule + d);
+    pTypeInfo = (LPNE_TYPEINFO)((LPSTR)pModule + d);
     while( hRsrc > d )
     {
         if (pTypeInfo->type_id == 0) break; /* terminal entry */
@@ -495,12 +468,12 @@ HGLOBAL WINAPI LoadResource(HINSTANCE hModule, HRSRC hRsrc)
         {
             if( ((d - hRsrc)%sizeof(NE_NAMEINFO)) == 0 )
             {
-                pNameInfo = (NE_NAMEINFO *)((char *)pModule + hRsrc);
+                pNameInfo = (LPNE_NAMEINFO)((LPSTR)pModule + hRsrc);
                 break;
             }
             else break; /* NE_NAMEINFO boundary mismatch */
         }
-        pTypeInfo = (NE_TYPEINFO *)((char *)pModule + d);
+        pTypeInfo = (LPNE_TYPEINFO)((LPSTR)pModule + d);
     }
 
     if (pNameInfo)
@@ -544,10 +517,10 @@ HGLOBAL WINAPI LoadResource(HINSTANCE hModule, HRSRC hRsrc)
  */
 HRSRC WINAPI FindResource(HMODULE hModule, LPCSTR name, LPCSTR type)
 {
-    NE_TYPEINFO *pTypeInfo;
-    NE_NAMEINFO *pNameInfo;
+    LPNE_TYPEINFO pTypeInfo;
+    LPNE_NAMEINFO pNameInfo;
     LPBYTE pResTab;
-    NE_MODULE *pModule = get_module( hModule );
+    LPNE_MODULE pModule = get_module( hModule );
 
     if (!pModule) return 0;
 
@@ -568,7 +541,7 @@ HRSRC WINAPI FindResource(HMODULE hModule, LPCSTR name, LPCSTR type)
         }
     }
     pResTab = (LPBYTE)pModule + pModule->ne_rsrctab;
-    pTypeInfo = (NE_TYPEINFO *)( pResTab + 2 );
+    pTypeInfo = (LPNE_TYPEINFO)( pResTab + 2 );
 
     for (;;)
     {
@@ -576,7 +549,7 @@ HRSRC WINAPI FindResource(HMODULE hModule, LPCSTR name, LPCSTR type)
         if ((pNameInfo = NE_FindResourceFromType( pResTab, pTypeInfo, name )))
         {
 //            TRACE("    Found id %p\n", name );
-            return (HRSRC)( (char *)pNameInfo - (char *)pModule );
+            return (HRSRC)( (LPSTR)pNameInfo - (LPSTR)pModule );
         }
         pTypeInfo = next_typeinfo(pTypeInfo);
     }
@@ -588,7 +561,7 @@ HRSRC WINAPI FindResource(HMODULE hModule, LPCSTR name, LPCSTR type)
  */
 WORD WINAPI GetExpWinVer( HMODULE hModule )
 {
-    NE_MODULE *pModule = NE_GetPtr( hModule );
+    LPNE_MODULE pModule = NE_GetPtr( hModule );
     if ( !pModule ) return 0;
     return pModule->ne_expver;
 }
@@ -614,16 +587,13 @@ HGLOBAL WINAPI DirectResAlloc( HINSTANCE hInstance, WORD wType,
     return ret;
 }
 
-WORD WINAPI LocalCountFree(void);
-WORD WINAPI LocalHeapSize(void);
-WORD WINAPI GlobalHandleToSel(HGLOBAL handle);
 
 /***********************************************************************
  *           GetHeapSpaces   (KERNEL.138)
  */
 DWORD WINAPI GetHeapSpaces(HMODULE module)
 {
-    NE_MODULE *pModule;
+    LPNE_MODULE pModule;
     WORD oldDS = GetDS();
     DWORD spaces;
 
@@ -640,7 +610,7 @@ DWORD WINAPI GetHeapSpaces(HMODULE module)
  */
 WORD WINAPI GetExeVersion(void)
 {
-    return *((WORD far *)MAKELP(GetCurrentTask(), 0x1a));
+    return *((LPWORD)MAKELP(GetCurrentTask(), 0x1a));
 }
 
 /**********************************************************************
@@ -649,7 +619,7 @@ WORD WINAPI GetExeVersion(void)
 BOOL WINAPI IsSharedSelector( HANDLE selector )
 {
     /* Check whether the selector belongs to a DLL */
-    NE_MODULE *pModule = NE_GetPtr( selector );
+    LPNE_MODULE pModule = NE_GetPtr( selector );
     if (!pModule) return FALSE;
     return (pModule->ne_flags & NE_FFLAGS_LIBMODULE) != 0;
 }

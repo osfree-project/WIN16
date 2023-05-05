@@ -190,7 +190,7 @@ typedef struct tagINSTANCEDATA
 } INSTANCEDATA, * PINSTANCEDATA, FAR * LPINSTANCEDATA;
 
 /* In-memory module structure. See 'Windows Internals' p. 219 */
-typedef struct _NE_MODULE
+typedef struct tagNE_MODULE
 {
     WORD      ne_magic;         /* 00 'NE' signature */
     WORD      count;            /* 02 Usage count (ne_ver/ne_rev on disk) */
@@ -230,10 +230,12 @@ typedef struct _NE_MODULE
 //    LPVOID    rsrc32_map;       /* HRSRC 16->32 map (for 32-bit modules) */
 //    LPCVOID   mapping;          /* mapping of the binary file */
 //    SIZE_T    mapping_size;     /* size of the file mapping */
-} NE_MODULE;
+} NE_MODULE, * PNE_MODULE, FAR * LPNE_MODULE;
+
+typedef HMODULE * PHMODULE, FAR * LPHMODULE;
 
 #define NE_MODULE_NAME(pModule) \
-    (((OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo))->szPathName)
+    (((OFSTRUCT FAR *)((char FAR *)(pModule) + (pModule)->fileinfo))->szPathName)
 
   /* In-memory segment table */
 typedef struct
@@ -270,6 +272,30 @@ typedef struct
     (((offset)+(size) <= pModule->mapping_size) ? \
      (memcpy( buffer, (const char *)pModule->mapping + (offset), (size) ), TRUE) : FALSE)
 */
+/*
+ * Resource table structures.
+ */
+typedef struct tagNE_NAMEINFO
+{
+    WORD     offset;
+    WORD     length;
+    WORD     flags;
+    WORD     id;
+    HANDLE   handle;
+    WORD     usage;
+} NE_NAMEINFO, * PNE_NAMEINFO, FAR * LPNE_NAMEINFO;
+
+typedef struct tagNE_TYPEINFO
+{
+    WORD        type_id;   /* Type identifier */
+    WORD        count;     /* Number of resources of this type */
+    FARPROC   resloader; /* SetResourceHandler() */
+    /*
+     * Name info array.
+     */
+} NE_TYPEINFO, * PNE_TYPEINFO, FAR * LPNE_TYPEINFO;
+
+#define NE_SEGFLAGS_LOADED      0x0004
 
 /* Layout of a handle entry table
  *
