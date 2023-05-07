@@ -29,7 +29,6 @@ public GetProcAddress
 public GetModuleHandle
 public Dos3Call
 externdef pascal SetWinFlags: far
-;public __AHINCR
 ;public __AHSHIFT
 
 externdef pascal _lopen:far
@@ -194,6 +193,10 @@ externdef pascal MakeProcInstance: far
 externdef pascal FreeProcInstance: far
 
 externdef pascal KbdRst: far
+
+; LastError variable
+externdef pascal GetLastError: far
+externdef pascal SetLastError: far
 
 	include ascii.inc
 	include fixups.inc
@@ -478,7 +481,7 @@ endif
 
 	@DPMI_GetIncValue	   ;get AHINC value
 	jc @F
-	mov [eINCR.wOfs],ax
+	mov [__AHINCR],ax
 @@:
 
 if ?MEMFORKERNEL
@@ -656,6 +659,9 @@ KernelEntries label byte
 	db 2,-2
 eSHIFT	ENTRY <1,3>				;113 _AHSHIFT
 eINCR	ENTRY <1,8>				;114 _AHINCR
+public __AHINCR
+;__AHINCR equ 8
+__AHINCR equ eINCR.wOfs
 	db 1,1
 	ENTRY <1,OutputDebugString>	;115
 	db 1,0						;116
@@ -685,7 +691,14 @@ eINCR	ENTRY <1,8>				;114 _AHINCR
 	db 1,1
 	ENTRY <1,FatalAppExit>		;137
 	ENTRY <1,GetHeapSpaces>		;138
-	db 11,0				;139-149
+	db 8,0				;139-146
+
+	db 2,1
+	ENTRY <1, SetLastError>	;147
+	ENTRY <1, GetLastError>	;148
+
+	db 1,0				;149
+
 	db 1,1
 	ENTRY <1, DirectedYield>	;150
 	db 1,0				;151
@@ -911,6 +924,8 @@ KernelNames label byte
 	NENAME "GETSYSTEMDIRECTORY"            ,135
 	NENAME "FATALAPPEXIT"     , 137
 	NENAME "GETHEAPSPACES",138
+	NENAME "SETLASTERROR", 147
+	NENAME "GETLASTERROR", 148
 	NENAME "DIRECTEDYIELD", 150
 	NENAME "GETNUMTASKS", 152
 	NENAME "GLOBALNOTIFY", 154

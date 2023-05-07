@@ -199,8 +199,8 @@ else
 	push ax
 
 ;--- _hmemset(FAR16 dst, WORD value, DWORD cnt), requires __AHINCR
-public __AHINCR
-__AHINCR equ 8
+;public __AHINCR
+;__AHINCR equ 8
 
 	push ax		;selector
 	push 0		;offset

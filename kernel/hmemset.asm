@@ -46,7 +46,7 @@ sm1:
         and     di,di
         jnz     sm1        ;----> naechster block
         mov     ax,es
-        add     ax,offset __AHINCR
+        add     ax,__AHINCR
         mov     es,ax
         jmp     sm1
 sm2:

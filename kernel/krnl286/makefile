@@ -10,7 +10,7 @@ TRGT = $(PROJ).exe
 DESC = Windows/286 Kernel
 
 srcfiles = $(p)ldboot$(e) $(p)hmemset$(e) $(p)profstrg$(e) $(p)kernel16$(e) $(p)global$(e) &
-$(p)smallcode$(e) $(p)atom$(e) $(p)resource$(e) &
+$(p)smallcode$(e) $(p)atom$(e) $(p)resource$(e) $(p)error$(e) &
 $(p)profile$(e) $(p)strings$(e) $(p)rom$(e) $(p)file$(e) $(p)main$(e) $(p)local$(e) &
 $(p)catch$(e) $(p)nls$(e) $(p)taskc$(e) $(p)enablec$(e) $(p)div$(e) &
 $(p)mthread$(e) $(p)2protect$(e) $(p)protectc$(e) $(p)printf$(e) $(p)2ginterf$(e) $(p)selectorc$(e) $(p)task$(e)  $(p)ld$(e)
