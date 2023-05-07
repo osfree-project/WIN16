@@ -9,14 +9,12 @@ CCONST	segment word @use16 public 'CODE'
 CCONST	ends
 _DATA	segment word @use16 public 'DATA'
 _DATA	ends
-_ITEXT	segment word @use16 public 'DATA'	;use 'DATA' (OPTLINK bug)
-_ITEXT	ends
 _BSS	segment word @use16 public 'BSS'
 _BSS	ends
 STACK	segment para @use16 stack  'STACK'
 STACK	ends
 
-DGROUP	group _TEXT,CCONST,_DATA,_ITEXT,_BSS,STACK
+DGROUP	group _TEXT,CCONST,_DATA,_BSS,STACK
 
 	assume CS:DGROUP
 	assume DS:DGROUP

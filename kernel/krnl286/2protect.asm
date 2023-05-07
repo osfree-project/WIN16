@@ -29,10 +29,7 @@ externdef	TH_TOPPDB:word
 
 _DATA ends
 
-_ITEXT segment word public 'DATA'	;use 'DATA' (OPTLINK bug)
-_ITEXT ends
-
-DGROUP group _TEXT,CCONST,_DATA,_ITEXT
+DGROUP group _TEXT,CCONST,_DATA
 
 	assume CS:DGROUP
 	assume DS:DGROUP

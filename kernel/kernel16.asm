@@ -202,7 +202,7 @@ externdef pascal KbdRst: far
 	include version.inc
 	include pusha.inc
 
-DGROUP group _TEXT,CCONST,_DATA,_ITEXT
+DGROUP group _TEXT,CCONST,_DATA
 
 	assume CS:DGROUP
 	assume DS:DGROUP
@@ -438,10 +438,6 @@ GetProcAddress proc far pascal uses ds hInst:word, lpszProcName:far ptr byte
 GetProcAddress endp
 
 
-_TEXT ends
-
-_ITEXT segment
-
 segments label word
 ife ?32BIT
 	dw eA000, 0A000h
@@ -528,7 +524,7 @@ exit:
 	ret
 InitKernel_ endp
 
-_ITEXT ends
+_TEXT ends
 
 
 _DATA segment

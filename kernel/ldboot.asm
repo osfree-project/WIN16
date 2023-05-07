@@ -296,7 +296,7 @@ wRelTmp		dw ?			;buffer pointer for relocations
 
 _BSS ends
 
-_ITEXT segment
+_TEXT segment
 
 if ?LOADDBGDLL
 szDbgout   db '.\DEBUGOUT.DLL',0
@@ -312,7 +312,7 @@ if ?DOSEMUSUPP
 szDosEmuDate db "02/25/93"
 endif
 
-_ITEXT ends
+_TEXT ends
 
 CCONST segment
 
@@ -6955,7 +6955,7 @@ _TEXT ends
 ;--- initialization routines, called during startup only
 ;-------------------------------------------------------
 
-_ITEXT segment
+_TEXT segment
 
 ;--- move loader in extended memory
 
@@ -7339,7 +7339,7 @@ initprex:
 	ret
 InitProtMode endp
 
-_ITEXT ends
+_TEXT ends
 
 end  BootStrap
 
