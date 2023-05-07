@@ -50,7 +50,7 @@ externdef pascal SetResourceHandler:far
 externdef pascal DirectResAlloc:far
 
 ; Task related functions
-externdef pascal GetCurrentPDB:far
+externdef pascal GetCurrentPDBReal:far
 externdef pascal GetCurrentTask:far
 externdef pascal GetDOSEnvironment:far
 externdef pascal InitTask:far
@@ -123,6 +123,8 @@ externdef pascal GlobalUnWire: far
 externdef pascal GlobalNotify: far
 externdef pascal LimitEMSPages: far
 externdef pascal A20Proc: far
+externdef pascal UnlockSegment: far
+externdef pascal LockSegment: far
 
 externdef pascal GetFreeSpace: far
 externdef pascal GetFreeMemInfo: far
@@ -198,6 +200,8 @@ externdef pascal KbdRst: far
 externdef pascal GetLastError: far
 externdef pascal SetLastError: far
 
+externdef pascal GetWinFlags: far
+
 	include ascii.inc
 	include fixups.inc
 	include debug.inc
@@ -220,15 +224,6 @@ endif
 _TEXT segment
 
 
-UnlockSegment proc far pascal uSegment:word
-UnlockSegment endp
-
-LockSegment proc far pascal uSegment:word
-
-	mov ax,uSegment
-	ret
-
-LockSegment endp
 
 IsTaskLocked proc far pascal
 	xor ax,ax
@@ -264,11 +259,6 @@ GetVersion endp
 WaitEvent proc far pascal hTask:word
 	ret
 WaitEvent endp
-
-GetWinFlags proc far pascal
-	mov ax,cs:[eWinFlags.wOfs]
-	ret
-GetWinFlags endp
 
 GetExePtr proc far pascal
 	pop cx
@@ -579,7 +569,7 @@ KernelEntries label byte
 	ENTRY <1,SetTaskQueue>		;34
 	ENTRY <1,GetTaskQueue>		;35
 	ENTRY <1,GetCurrentTask>	;36
-	ENTRY <1,GetCurrentPDB>		;37
+	ENTRY <1,GetCurrentPDBReal>	;37
 	ENTRY <1,SetTaskSignalProc>	;38
 	db 2,0				;39-40
 	db 2,1

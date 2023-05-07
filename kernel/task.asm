@@ -19,6 +19,7 @@
 	include pdb.inc
 
 externdef pascal LocalInit: far
+GetCurrentPDBReal proto far pascal 
 
 _TEXT	segment
 
@@ -117,25 +118,11 @@ GetCurrentTask proc far pascal
 GetCurrentTask endp
 
 ;
-; GetCurrentPDB
-;
-; @todo uses PDB/PSP instead of TDB. Need to fix it. See GetCurrentTask.
-;
-
-GetCurrentPDB proc far pascal uses es
-	invoke GetCurrentTask
-;	mov es,ax		; @todo Need to use TDB instead PDB
-;	mov es,es:[TDB_PDB]	; see win_private for TDB structure
-	mov dx,cs:[TH_TOPPDB]
-	ret
-GetCurrentPDB endp
-
-;
 ; GetDOSEnvironment
 ;
 
 GetDOSEnvironment proc far pascal uses es
-	invoke GetCurrentPDB
+	invoke GetCurrentPDBReal
 	mov es,ax
 	mov dx,es:[ENVIRON]
 	xor ax,ax

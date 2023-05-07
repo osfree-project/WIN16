@@ -23,7 +23,7 @@
 // @todo not checked is correctly registers stored. Need to compare with Windows
 // Most probably ip and sp stored incorrectly
 
-#include <win16.h>
+#include <windows.h>
 
 /**********************************************************************
  *	     Catch    (KERNEL.55)

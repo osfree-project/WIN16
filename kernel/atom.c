@@ -25,48 +25,11 @@
  * have to be changed.
  */
 
-#include <win16.h>
+#include <windows.h>
 #include <win_private.h>
 
-int strnicmp(char FAR *s1, const char FAR *s2, int n);
-void memcpy(void FAR * s1, void FAR * s2, unsigned length);
-void far * memset(void FAR *start, int c, int len);
-int toupper(int c);
-
-extern  unsigned short          GetDS( void );
-#pragma aux GetDS               = \
-        "mov    ax,ds"          \
-        value                   [ax];
-
-/* This function sets current CX value */
-extern  void          SetCX( unsigned short );
-#pragma aux SetCX               = \
-        "mov    cx,ax"          \
-        parm                   [ax];
 
 //WINE_DEFAULT_DEBUG_CHANNEL(atom);
-
-#define DEFAULT_ATOMTABLE_SIZE    37
-#define MAX_ATOM_LEN              255
-#define MAXINTATOM          0xc000
-
-#define ATOMTOHANDLE(atom)        ((HANDLE)(atom) << 2)
-#define HANDLETOATOM(handle)      ((ATOM)(0xc000 | ((handle) >> 2)))
-
-
-typedef struct tagATOMENTRY
-{
-    HANDLE	next;
-    WORD        refCount;
-    BYTE        length;
-    char        str[1];
-} ATOMENTRY, * PATOMENTRY, FAR * LPATOMENTRY;
-
-typedef struct tagATOMTABLE
-{
-    WORD        size;
-    HANDLE	entries[1];
-} ATOMTABLE, * PATOMTABLE, FAR * LPATOMTABLE;
 
 
 /***********************************************************************

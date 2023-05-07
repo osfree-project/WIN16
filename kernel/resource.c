@@ -1,34 +1,6 @@
 #include <windows.h>
 #include <win_private.h>
 
-int atoi(const char far *h);
-int stricmp(const char far * s1, const char far * s2);
-int strlen (const char *str);
-int strnicmp(char FAR *s1, const char FAR *s2, int n);
-
-HMODULE WINAPI GetExePtr(HANDLE handle);
-WORD WINAPI LocalCountFree(void);
-WORD WINAPI LocalHeapSize(void);
-WORD WINAPI GlobalHandleToSel(HGLOBAL handle);
-
-extern __AHSHIFT;
-extern __AHINCR;
-
-#define VALID_HANDLE(handle) (((handle)>>__AHSHIFT)<globalArenaSize)
-#define GET_ARENA_PTR(handle)  (pGlobalArena + ((handle) >> __AHSHIFT))
-
-/* This function returns current DS value */
-extern  unsigned short          GetDS( void );
-#pragma aux GetDS               = \
-        "mov    ax,ds"          \
-        value                   [ax];
-
-/* This function sets current DS value */
-extern  void          SetDS( unsigned short );
-#pragma aux SetDS               = \
-        "mov    ds,ax"          \
-        parm                   [ax];
-
 // @todo Implement this as fast as pGlobalArena implemented
 /***********************************************************************
  *           FarSetOwner   (KERNEL.403)

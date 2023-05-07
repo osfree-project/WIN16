@@ -1,4 +1,4 @@
-#include <win16.h>
+#include <windows.h>
 
 #include <win_private.h>
 
@@ -119,4 +119,36 @@ WORD WINAPI GlobalHandleToSel(HGLOBAL handle)
         return handle - 1;
     }
     return handle | 7;
+}
+
+/***********************************************************************
+ *           LockSegment   (KERNEL.23)
+ */
+HGLOBAL WINAPI LockSegment( HGLOBAL handle )
+{
+//    TRACE("%04x\n", handle );
+    if (handle == (HGLOBAL)-1) handle = GetDS();
+//    if (!VALID_HANDLE(handle)) {
+//	WARN("Invalid handle 0x%04x passed to LockSegment16!\n",handle);
+//	return 0;
+//    }
+//    GET_ARENA_PTR(handle)->lockCount++;
+    return handle;
+}
+
+
+/***********************************************************************
+ *           UnlockSegment   (KERNEL.24)
+ */
+void WINAPI UnlockSegment( HGLOBAL handle )
+{
+//    TRACE("%04x\n", handle );
+    if (handle == (HGLOBAL)-1) handle = GetDS();
+//    if (!VALID_HANDLE(handle)) {
+//	WARN("Invalid handle 0x%04x passed to UnlockSegment16!\n",handle);
+//	return;
+//    }
+//    GET_ARENA_PTR(handle)->lockCount--;
+    /* FIXME: this ought to return the lock count in CX (go figure...) */
+//    SetCX(GET_ARENA_PTR(handle)->lockCount);
 }

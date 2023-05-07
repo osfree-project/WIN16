@@ -1,6 +1,7 @@
-#include <win16.h>
+#include <windows.h>
 #include <dpmi.h>
-extern void _cdecl printf (const char *format,...);
+
+#include "win_private.h"
 
 void WINAPI Copyright()
 {

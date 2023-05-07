@@ -30,9 +30,17 @@ typedef struct tagENTRY
 	WORD	wOfs;
 } ENTRY, * PENTRY, FAR * LPENTRY;
 
-extern ENTRY pascal eWinFlags;
+extern ENTRY pascal near eWinFlags;
 
-void WINAPI SetWinFlags()
+/***********************************************************************
+ *          GetWinFlags   (KERNEL.132)
+ */
+DWORD WINAPI __loadds GetWinFlags(void)
+{
+  return eWinFlags.wOfs;
+}
+
+void WINAPI __loadds SetWinFlags()
 {
   //@todo WF_PMODE set for non 8086 cpu kernel version
   eWinFlags.wOfs= (

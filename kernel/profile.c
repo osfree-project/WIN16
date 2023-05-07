@@ -23,7 +23,7 @@
 #include <i86.h>
 #include <windows.h>
 
-int atoi(char far *h);
+#include <win_private.h>
 
 /***********************************************************************
  *           GetProfileInt   (KERNEL.57)
