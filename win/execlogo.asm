@@ -16,11 +16,13 @@
 		include bios.inc
 		include dos.inc
 
-WINVER		equ	101		; Windows 1.01
+;WINVER		equ	101		; Windows 1.01
 ;WINVER		equ	102		; Windows 1.02
 ;WINVER		equ	103		; Windows 1.03
 ;WINVER		equ	104		; Windows 1.04
-;WINVER		equ	300		; Windows 3.00
+WINVER		equ	300		; Windows 3.00
+
+TRACE		equ	1		; Turn trace on = 1, off = 0
 
 ;----------------------------------------------------------------
 ; Memory check configuration
@@ -64,11 +66,35 @@ code segment
 
 main:
 	lea	sp, stackstart
+
+	mov	[seg1s], cs
+	mov	[seg2s], cs
+	mov	[seg3s], cs
+
 ; Show LOGO
+if	TRACE
+	xor	ax, ax			; Set Logo size to zero
+	jp	skip
+
+szTraceFreeMem db 'Free unused memory', 0dh, 0ah, '$'
+szTraceCheckMem db 'Check required free memory', 0dh, 0ah, '$'
+szTraceSearchKernel db 'Search KERNEL.EXE', 0dh, 0ah, '$'
+szTraceSearchKernel286 db 'Search KRNL286.EXE', 0dh, 0ah, '$'
+szTraceSearchDOSX db 'Search DOSX.EXE', 0dh, 0ah, '$'
+szTraceExecDOSX db 'Execute DOSX.EXE', 0dh, 0ah, '$'
+szTraceDetectCPU db 'Detect CPU', 0dh, 0ah, '$'
+szTrace286CPU db '80286 CPU detected', 0dh, 0ah, '$'
+
+skip:
+else
 	call	ShowLogo		; Returns in AX resident part of LOGO
+endif
 
 ; free unused memory
 
+if TRACE
+	@DispStr offset szTraceFreeMem
+endif
 	add	ax, LogoStart        	; End of our code (aligned to 16)
 	mov	cl, 4
 	shr	ax, cl			; number of used para
@@ -77,21 +103,76 @@ main:
 	@ModBlok ax			; Modify memory block
 
 ; check memory for Windows Kernel
+
+if TRACE
+	@DispStr offset szTraceCheckMem
+endif
 	@GetBlok 0FFFFH			; Allocate impossible value of memory
 	jnc	panic			; Something wrong, it is not possible to have so many memory
 	cmp	bx, MIN_CONV_MEM	; kb in para
 	jb	NoMem
 
+if WINVER eq 300
+
+; test for 80286 -- this CPU executes PUSH SP by first storing SP on
+; stack, then decrementing it.  earlier CPU's decrement, THEN store.
+if TRACE
+	@DispStr offset szTraceDetectCPU
+endif
+
+	push	sp			; only 286 pushes pre-push SP
+	pop	ax			; get it back
+	cmp	ax,sp			; check for same
+	jne	RealModeKernel		; they are, so it's a 286
+
+if TRACE
+	@DispStr offset szTrace286CPU
+endif
+
+; search KRNL286.EXE
+if TRACE
+	@DispStr offset szTraceSearchKernel286
+endif
+
+	@GetFirst szKernel286		; Find first file entry
+	jc	NoKernel
+
+if TRACE
+	@DispStr offset szTraceSearchDOSX
+endif
+	@GetFirst szDOSX		; Find first file entry
+	jc	NoDOSX
+
+; load and execute DOSX.EXE
+if TRACE
+	@DispStr offset szTraceExecDOSX
+endif
+	push	ds
+	pop	es
+	mov	[tmpSS], ss
+	mov	[tmpSP], sp
+	@Exec	szDOSX;, exeparams		; Execute program
+	mov	ss, [tmpSS]
+	mov	sp, [tmpSP]
+	push	cs
+	pop	ds
+	jc	ExecErr
+	jmp	Exit
+RealModeKernel:
+endif
+
 ; search KERNEL.EXE
+if TRACE
+	@DispStr offset szTraceSearchKernel
+endif
+
 	@GetFirst szKernel		; Find first file entry
 	jc	NoKernel
 
+KernelFound:
 ; load and execute KERNEL.EXE
 	push	ds
 	pop	es
-	mov	[seg1s], cs
-	mov	[seg2s], cs
-	mov	[seg3s], cs
 	mov	[tmpSS], ss
 	mov     [tmpSP], sp
 	@Exec	szKernel, exeparams		; Execute program
@@ -101,7 +182,9 @@ main:
 	pop	ds
 	jc	ExecErr
 
+;
 ; exit from windows kernel
+Exit:
 	call	HideLogo
 	@Exit	0			; die
 
@@ -133,7 +216,6 @@ CallLogo:
 	jne     LogoRet
 	cmp     word ptr [bx+2], 'OG'
 	jne     LogoRet
-	
 
 	lea	bx, LogoRet
 	push	cs			; prepare return from ShowLogo
@@ -147,6 +229,8 @@ CallLogo:
 LogoRet:
 	pop	ds			; Restore our data segment (stored in ShowLogo)
 	retn
+
+
 
 
 exeparams label byte
@@ -167,6 +251,8 @@ NoMemMsg:
 	db	'Windows requires at least 256Kb of RAM$'
 NoKernelMsg:
 	db	'Windows kernel not found$'
+NoDOSXMsg:
+	db	'DOS Extender not found$'
 ExecErrMsg:
 	db	'Can''t execute Windows kernel$'
 HelpMsg:
@@ -215,7 +301,17 @@ if WINVER eq 104
 endif
 if WINVER eq 300
 	db	'SYSTEM\KERNEL.EXE', 0
+szKernel286:
+	db	'SYSTEM\KRNL286.EXE', 0
+szKernel386:
+	db	'SYSTEM\KRNL386.EXE', 0
+szDOSX:
+	db	'SYSTEM\DOSX.EXE', 0
 endif
+
+NoDOSX:
+	lea	dx, NoDOSXMSG
+	jmp	Die
 
 Help:
 	lea	dx, HelpMsg
@@ -237,12 +333,12 @@ Panic:
 
 ; Disable logo, set standard video mode and exit to DOS
 Die:	
+if	not TRACE
 	push	dx
 	call	HideLogo
-
 	@SetMode		; Switch to video mode 3
-
 	pop	dx
+endif
 
 	@DispStr dx		; Print message
 
