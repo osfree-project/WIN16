@@ -152,10 +152,10 @@ endif
 	mov	[tmpSS], ss
 	mov	[tmpSP], sp
 	@Exec	szDOSX;, exeparams		; Execute program
-	mov	ss, [tmpSS]
-	mov	sp, [tmpSP]
 	push	cs
 	pop	ds
+	mov	ss, [tmpSS]
+	mov	sp, [tmpSP]
 	jc	ExecErr
 	jmp	Exit
 RealModeKernel:
@@ -175,17 +175,19 @@ KernelFound:
 	pop	es
 	mov	[tmpSS], ss
 	mov     [tmpSP], sp
-	@Exec	szKernel, exeparams		; Execute program
-	mov	ss, [tmpSS]
-	mov     sp, [tmpSP]
+	@Exec	szKernel;, exeparams		; Execute program
 	push	cs
 	pop	ds
+	mov	ss, [tmpSS]
+	mov     sp, [tmpSP]
 	jc	ExecErr
 
 ;
 ; exit from windows kernel
 Exit:
+if	not TRACE
 	call	HideLogo
+endif
 	@Exit	0			; die
 
 ; Call HideLogo
@@ -344,9 +346,10 @@ endif
 
 	@Exit	0		; die
 
+	align 16
 ; Stack
 stackend:
-	db	200h dup (0)
+	db	1024 dup (0)
 stackstart:
 ; LOGO will be attached here. Because it must start on para start it must be aligned to 16 bytes
 	align 16
