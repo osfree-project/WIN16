@@ -1,4 +1,30 @@
-#include <win16.h>
+/*
+ * 16-bit kernel initialization code
+ *
+ * Copyright 2000 Alexandre Julliard
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include <i86.h>
+#include <windows.h>
+
+#include <win_private.h>
+
+int tolower (int c);
+int toupper (int c);
 
 /***********************************************************************
  *		Reserved5 (KERNEL.87)
@@ -65,16 +91,6 @@ LPSTR WINAPI lstrcpy( LPSTR s, LPCSTR t )
     return( s );
 }
 
-int strlen (const char *str)
-{
-   int len = 0;
-
-  while (*str++)
-    len++;
-
-  return len;
-}
-
 int toupper (int c)
 {
   if (c >= 'a' && c <= 'z')
@@ -106,7 +122,7 @@ int strnicmp(char far *s1, const char far *s2, int n)
     return 0;
 }
 
-int stricmp(const char* s1, const char* s2) 
+int stricmp(const char far * s1, const char far * s2) 
 {
   while (tolower((unsigned char) *s1) == tolower((unsigned char) *s2)) {
     if (*s1 == '\0')
@@ -118,33 +134,6 @@ int stricmp(const char* s1, const char* s2)
     (int) tolower((unsigned char) *s2);
 }
 
-/*
- * 16-bit kernel initialization code
- *
- * Copyright 2000 Alexandre Julliard
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
- */
-
-#include <i86.h>
-#include <win16.h>
-
-#include <win_private.h>
-
-int tolower (int c);
-int toupper (int c);
 
 /***********************************************************************
  *		Reserved1 (KERNEL.77)
@@ -155,13 +144,24 @@ LPSTR WINAPI AnsiNext(LPCSTR lpchCurrentChar)
 	return (LPSTR)0;
 
     if (*lpchCurrentChar) {
-//	if ( IsDBCSLeadByte(*lpchCurrentChar) )
-//	    return (LPSTR)(lpchCurrentChar+2);
-//	else
+	if ( IsDBCSLeadByte(*lpchCurrentChar) )
+	    return (LPSTR)(lpchCurrentChar+2);
+	else
 	    return (LPSTR)(lpchCurrentChar+1);
     }
     else
 	return (LPSTR)lpchCurrentChar;
+}
+
+static UINT uCodePage = 0;
+
+/* 1252 is the default US Windows ANSI code page */
+static UINT SetCodePage(void)
+{
+    if ( !uCodePage )
+	uCodePage = GetPrivateProfileInt("boot.description", "CodePage",
+					1252, "system.ini");
+    return uCodePage != 1252;
 }
 
 /***********************************************************************
@@ -175,11 +175,11 @@ LPSTR WINAPI AnsiPrev(LPCSTR lpchStart, LPCSTR lpchCurrentChar)
     if (lpchStart == lpchCurrentChar)
 	return (LPSTR)lpchStart;
 
-//    if ( SetCodePage() ) {
-//	while ((lpNext = AnsiNext((LPCSTR)lpPrev)) != (LPSTR)lpchCurrentChar)
-//	    lpPrev = lpNext;
-//	return lpPrev;
-//    }
+    if ( SetCodePage() ) {
+	while ((lpNext = AnsiNext((LPCSTR)lpPrev)) != (LPSTR)lpchCurrentChar)
+	    lpPrev = lpNext;
+	return lpPrev;
+    }
 
     return (LPSTR)(lpchCurrentChar-1);
 }
@@ -220,17 +220,6 @@ LPSTR WINAPI AnsiLower( LPSTR strOrChar )
         return strOrChar;
     }
     else return (LPSTR)tolower((char)strOrChar);
-}
-
-static UINT uCodePage = 0;
-
-/* 1252 is the default US Windows ANSI code page */
-static UINT SetCodePage(void)
-{
-    if ( !uCodePage )
-	uCodePage = GetPrivateProfileInt("boot.description", "CodePage",
-					1252, "system.ini");
-    return uCodePage != 1252;
 }
 
 BOOL WINAPI
@@ -277,9 +266,9 @@ IsDBCSLeadByte(BYTE bTestChar)
 
 }
 
-int atoi(char *h)
+int atoi(const char far *h)
 {
-  char *s = h;
+  char far *s = (char far *)h;
   int  i = 0;
   int  j, k, l;
   char c;
@@ -292,7 +281,7 @@ int atoi(char *h)
     base = 10;
   }
 
-  l = strlen(s) - 1;
+  l = lstrlen(s) - 1;
 
   while (*s) {
     c = tolower(*s);
@@ -318,4 +307,26 @@ int atoi(char *h)
   }
 
   return i;
+}
+
+void memcpy(void far * s1, void far * s2, unsigned length)
+{	char far * p;
+	char far * q;
+
+	if(length) {
+		p = s1;
+		q = s2;
+		do *p++ = *q++;
+		while(--length);
+	}
+}
+
+void far * memset (void far *start, int c, int len)
+{
+  char far *p = start;
+
+  while (len -- > 0)
+    *p ++ = c;
+
+  return start;
 }

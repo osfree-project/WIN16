@@ -30,7 +30,7 @@
 #include "mem.h"
 #include "mthread.h"
 
-#include <win16.h>
+#include <windows.h>
 
 #define GlobalPtrHandle(lp) \
   ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))

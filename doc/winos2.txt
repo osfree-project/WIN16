@@ -426,7 +426,6 @@ System components (readonly SYSTEM directory ie for network installation)
 -------------------------------------------------------------------------
 
 Fonts:
-
  7.11.01  15:40           7 488           0  VGASYS.FEE
  7.11.01  15:40           7 872           0  VGASYS.FON
  9.09.01  12:48           7 280           0  VGASYS.FUS
@@ -679,6 +678,13 @@ Windows core parts:
 24.10.01  11:09         225 776           0  GDI.EXE
 24.10.01  11:10          80 306           0  OS2K386.EXE
 24.10.01  11:19         281 120           0  USER.EXE
+ 9.09.01  13:14          16 592           0  WINOS2.COM
+22.11.99  11:22           4 026           0  WINOS2.ICO
+ 7.11.01  15:40           8 784           0  keyboard.drv
+ 9.09.01  13:08           2 304           0  SYSTEM.DRV
+ 9.09.01  13:14          44 651           0  WIN.COM
+27.06.20  19:52           5 197           0  win.ini
+27.06.20  19:52           1 801           0  system.ini
 
 Windows core dlls:
 24.10.01  11:03          87 072           0  COMMDLG.DLL
@@ -691,7 +697,12 @@ Windows core dlls:
  9.09.01  12:22           9 008           0  VER.DLL
  7.11.01  15:40          12 801           0  WIN87EM.DLL
  9.09.01  13:01          32 576           0  SHELL.DLL
+ 7.11.01  15:40         118 864           0  MORICONS.DLL
 
+Control panel:
+ 9.09.01  13:05          15 856           0  CONTROL.EXE
+24.10.01  11:43         102 966           0  CONTROL.HLP
+ 7.11.01  15:40           4 076           0  CONTROL.INI
 
 Control panel applets:
  9.09.01  13:24          41 424           0  DRIVERS.CPL
@@ -703,7 +714,6 @@ Control panel applets:
  9.09.01  11:41          10 368           0  ATMSYS.DRV
  7.11.01  15:40           3 942           0  CHWFONTS.CMD
  9.09.01  14:14           9 552           0  COMM.DRV
-17.05.15  16:43          26 025           0  CONTROL.BAK
 17.05.15  16:46          26 025           0  control.inf
  9.09.01  13:31          18 480           0  DMCOLOR.DLL
  5.09.00  12:07          12 986           0  DRVMAP.INF
@@ -715,7 +725,6 @@ Control panel applets:
 22.03.06   9:49          94 424           0  isgdi2vm.drv
 22.03.06   9:49           7 748           0  isgdi2vm.sym
  7.11.01  15:40           8 848           0  KEYBOARD.DEE
- 7.11.01  15:40           8 784           0  keyboard.drv
  9.09.01  14:11           7 568           0  keyboard.dus
  9.09.01  13:23          13 824           0  MCICDA.DRV
  9.09.01  13:22          25 328           0  MCISEQ.DRV
@@ -734,19 +743,22 @@ Control panel applets:
 24.10.01  11:31          72 336           0  swinvga.drv
 24.10.01  11:31          30 468           0  swinvga.sym
  9.09.01  12:40          18 896           0  SYSEDIT.EXE
- 9.09.01  13:08           2 304           0  SYSTEM.DRV
  7.11.01  15:40         119 345           0  UNIDRV.DLL
  7.11.01  15:40          31 430           0  UNIDRV.HLP
 24.10.01  11:31          73 712           0  vga.drv
 24.10.01  11:31          30 628           0  vga.sym
 24.10.01  11:34          45 024           0  vgamono.drv
  9.09.01  11:41           7 680           0  vgas.scr
- 9.09.01  11:41           6 880           0  WINASPI.DLL
  7.11.01  15:40          49 248           0  WINOA386.MOD
  7.11.01  15:40          31 232           0  WINOLDAP.MOD
+
+Seamless support:
+24.10.01  11:11          22 528           0  WINSHELD.EXE
+ 9.09.01  11:41           6 880           0  WINASPI.DLL
 24.10.01  11:11          14 848           0  WINSCLIP.DLL
 24.10.01  11:11          18 432           0  WINSDDE.DLL
 24.10.01  11:11          28 441           0  WINSMSG.DLL
+
  9.09.01  11:41          57 475           0  APPS.INF
  8.11.01   6:20          63 677           0  setup.inf
  9.09.01  11:41              92           0  SETUP.INI
@@ -758,84 +770,126 @@ Control panel applets:
 24.10.01  11:43          15 727           0  APPS.HLP
 17.05.15  16:43             460           0  ATM.INI
  9.09.01  11:41         115 904           0  ATMCNTRL.EXE
+
+Calculator:
  9.09.01  12:24          43 056           0  CALC.EXE
 24.10.01  11:40          18 077           0  CALC.HLP
+
+Calendar:
  9.09.01  12:25          59 808           0  CALENDAR.EXE
 24.10.01  11:40          20 526           0  CALENDAR.HLP
+
+Sound files:
+ 7.11.01  15:40          11 598           0  DING.WAV
  7.11.01  15:40          33 883           0  CANYON.MID
- 9.09.01  12:26          93 184           0  CARDFILE.EXE
-24.10.01  11:39          24 810           0  CARDFILE.HLP
- 9.09.01  12:41          22 016           0  CHARMAP.EXE
-24.10.01  11:42          10 802           0  CHARMAP.HLP
  7.11.01  15:40          15 920           0  CHIMES.WAV
  7.11.01  15:40          24 982           0  CHORD.WAV
+ 7.11.01  15:40          27 804           0  TADA.WAV
+
+Cardfile:
+ 9.09.01  12:26          93 184           0  CARDFILE.EXE
+24.10.01  11:39          24 810           0  CARDFILE.HLP
+
+Character map:
+ 9.09.01  12:41          22 016           0  CHARMAP.EXE
+24.10.01  11:42          10 802           0  CHARMAP.HLP
+
+Clipboard viewer:
  9.09.01  12:27          18 496           0  CLIPBRD.EXE
 24.10.01  11:40          13 077           0  CLIPBRD.HLP
+
+Clock:
  9.09.01  12:28          16 400           0  CLOCK.EXE
 15.11.18  16:56              69           0  CLOCK.INI
- 9.09.01  13:05          15 856           0  CONTROL.EXE
-24.10.01  11:43         102 966           0  CONTROL.HLP
- 7.11.01  15:40           4 076           0  CONTROL.INI
- 7.11.01  15:40          11 598           0  DING.WAV
+
+Dr. Watson:
  9.09.01  13:16          26 864           0  DRWATSON.EXE
+
+Expand tool:
  9.09.01  12:15          25 432           0  EXPAND.EXE
+
  9.09.01  11:41           5 121           0  FASTLOAD.EXE
 24.10.01  11:41          46 389           0  GLOSSARY.HLP
- 7.11.01  15:40         118 864           0  MORICONS.DLL
  7.11.01  15:40              28           0  MOUSE.INI
+
  9.09.01  13:26          33 312           0  MPLAYER.EXE
 24.10.01  11:42          12 825           0  MPLAYER.HLP
+
+MS Diagnostic tool:
  9.09.01  13:15         155 538           0  MSD.EXE
  9.09.01  11:41             622           0  MSD.INI
+
  7.11.01  15:40          48 256           0  NETWORKS.WRI
+ 7.11.01  15:40          41 216           0  PRINTERS.WRI
+
+Notepad:
  9.09.01  12:28          32 736           0  NOTEPAD.EXE
 24.10.01  11:39          13 901           0  NOTEPAD.HLP
+
  9.09.01  12:29          76 464           0  PACKAGER.EXE
 24.10.01  11:41          21 156           0  PACKAGER.HLP
+
+Paintbrush:
  9.09.01  12:32           6 766           0  PBRUSH.DLL
  9.09.01  12:32         183 360           0  PBRUSH.EXE
 24.10.01  11:41          40 269           0  PBRUSH.HLP
- 7.11.01  15:40          41 216           0  PRINTERS.WRI
+
+
+Printer manager:
  9.09.01  13:05          43 248           0  PRINTMAN.EXE
 24.10.01  11:38          42 180           0  PRINTMAN.HLP
+
+Program manager:
  9.09.01  13:02         115 328           0  PROGMAN.EXE
 24.10.01  11:39          29 854           0  PROGMAN.HLP
 13.05.22   1:58             207           0  PROGMAN.INI
+13.05.22   1:58          47 330           0  WOS2ACCE.GRP
+13.05.22   1:58          30 179           0  WOS2MAIN.GRP
+13.05.22   1:58              44           0  STARTUP.GRP
+
  7.11.01  15:40          17 813           0  README.ATM
  7.11.01  15:40           2 557           0  REG.DAT
+
+Registry editor:
  7.11.01  15:40          32 336           0  REGEDIT.EXE
 24.10.01  11:40          22 682           0  REGEDIT.HLP
 24.10.01  11:43          16 859           0  REGEDITV.HLP
- 9.09.01  13:06           8 351           0  SCRNSAVE.SCR
+
+
  9.09.01  12:36         182 448           0  SETUP.EXE
 24.10.01  11:42          33 375           0  SETUP.HLP
+
  9.09.01  13:25          51 305           0  SOUNDREC.EXE
 24.10.01  11:43          18 711           0  SOUNDREC.HLP
+
+Screen savers:
+ 9.09.01  13:06           8 351           0  SCRNSAVE.SCR
  9.09.01  13:07          28 330           0  SSFLYWIN.SCR
  9.09.01  13:06          28 757           0  SSMARQUE.SCR
  9.09.01  13:06          32 935           0  SSMYST.SCR
  9.09.01  13:07          28 344           0  SSSTARS.SCR
-13.05.22   1:58              44           0  STARTUP.GRP
+
+INI documentation:
+ 7.11.01  15:40          22 400           0  WININI.WRI
  7.11.01  15:40          10 240           0  SYSINI.WRI
-27.06.20  19:52           1 801           0  system.ini
- 7.11.01  15:40          27 804           0  TADA.WAV
+
+Task manager:
  9.09.01  13:03           3 744           0  TASKMAN.EXE
- 9.09.01  13:14          44 651           0  WIN.COM
-27.06.20  19:52           5 197           0  win.ini
+
+File manager:
  9.09.01  13:03         146 960           0  WINFILE.EXE
 24.10.01  11:39          77 264           0  WINFILE.HLP
 13.05.22   1:58             104           0  WINFILE.INI
+
+WinHelp system:
  9.09.01  12:32         294 128           0  WINHELP.EXE
 24.10.01  11:42          27 948           0  WINHELP.HLP
- 7.11.01  15:40          22 400           0  WININI.WRI
- 9.09.01  13:14          16 592           0  WINOS2.COM
-22.11.99  11:22           4 026           0  WINOS2.ICO
-13.05.22   7:37               0           0  winos2.txt
-24.10.01  11:11          22 528           0  WINSHELD.EXE
+
+
+Windows version:
  9.09.01  12:39           3 904           0  WINVER.EXE
-13.05.22   1:58          47 330           0  WOS2ACCE.GRP
-13.05.22   1:58          30 179           0  WOS2MAIN.GRP
+
+Write:
  9.09.01  12:46         244 976           0  WRITE.EXE
 24.10.01  11:39          38 314           0  WRITE.HLP
-      3 376 566 bytes in 82 files and 4 dirs    3 401 216 bytes allocated
 

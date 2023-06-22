@@ -1,33 +1,7 @@
-#include <win16.h>
+#include <windows.h>
 #include <win_private.h>
 
-#define QS_SENDMESSAGE	0x0040
-#define PM_QS_SENDMESSAGE (QS_SENDMESSAGE << 16)
-
-extern HTASK pascal TH_HEADTDB;
-extern HTASK pascal TH_LOCKTDB;
-
 static int nTaskCount = 0;
-
-void memcpy(void far * s1, void far * s2, unsigned length);
-void WINAPI LongPtrAdd(DWORD dwLongPtr, DWORD dwAdd);
-
-extern  unsigned short          GetDS( void );
-#pragma aux GetDS               = \
-        "mov    ax,ds"          \
-        value                   [ax];
-
-/* This function sets current ES value */
-extern  void          SetES( unsigned short );
-#pragma aux SetES               = \
-        "mov    es,ax"          \
-        parm                   [ax];
-
-/* This function sets current ES value */
-extern  void          SetDS( unsigned short );
-#pragma aux SetDS               = \
-        "mov    ds,ax"          \
-        parm                   [ax];
 
 /***********************************************************************
  *           TASK_LinkTask
@@ -76,8 +50,6 @@ static void TASK_UnlinkTask( HTASK hTask )
 /***********************************************************************
  *           Yield  (KERNEL.29)
  */
-void WINAPI OldYield(void);
-
 void WINAPI Yield(void)
 {
     TDB far *pCurTask = MAKELP(GetCurrentTask(), 0);
@@ -89,7 +61,7 @@ void WINAPI Yield(void)
         HMODULE mod = GetModuleHandle( "user.dll" );
         if (mod)
         {
-            void (WINAPI *pUserYield)(void);
+            void (WINAPI far *pUserYield)(void);
             pUserYield = (void far *)GetProcAddress( mod, "#332" ); // UserYield()
             if (pUserYield)
             {
@@ -101,8 +73,6 @@ void WINAPI Yield(void)
     OldYield();
 }
 
-#define TD_SIGN 0x4454   /* "TD" = Task Database */
-#define OFS_TD_SIGN 0xFA /* location of "TD" signature in Task DB */
 
 BOOL WINAPI IsTask(HTASK w)
 {
@@ -156,7 +126,7 @@ int WINAPI GetInstanceData( HINSTANCE instance, BYTE NEAR * buffer, int len )
     char far *ptr = GlobalLock( instance );
     char far *ptr1;
     if (!ptr || !len) return 0;
-    if (((WORD)buffer + len) >= 0x10000) len = 0x10000 - (WORD)buffer;
+    if (((DWORD)buffer + len) >= 0x10000) len = 0x10000 - (WORD)buffer;
     LongPtrAdd((DWORD)ptr, (DWORD)buffer);
     ptr1=GlobalLock(GetDS());
     LongPtrAdd((DWORD)ptr1, (DWORD)buffer);
@@ -223,8 +193,7 @@ DWORD WINAPI GetCurPID( DWORD unused )
     return 0;
 }
 
-WORD WINAPI GlobalHandleToSel(HGLOBAL handle);
-NE_MODULE *NE_GetPtr( HMODULE hModule );
+NE_MODULE FAR *NE_GetPtr( HMODULE hModule );
 
 /**********************************************************************
  *	    TASK_GetCodeSegment
@@ -243,7 +212,7 @@ NE_MODULE *NE_GetPtr( HMODULE hModule );
  *
  */
 static BOOL TASK_GetCodeSegment( FARPROC proc, NE_MODULE far **ppModule,
-                                 SEGTABLEENTRY **ppSeg, int *pSegNr )
+                                 SEGTABLEENTRY FAR **ppSeg, int *pSegNr )
 {
     NE_MODULE far *pModule = NULL;
     SEGTABLEENTRY *pSeg = NULL;
@@ -300,7 +269,7 @@ static BOOL TASK_GetCodeSegment( FARPROC proc, NE_MODULE far **ppModule,
  */
 HGLOBAL WINAPI GetCodeHandle( FARPROC proc )
 {
-    SEGTABLEENTRY *pSeg;
+    SEGTABLEENTRY FAR *pSeg;
 
     if ( !TASK_GetCodeSegment( proc, NULL, &pSeg, NULL ) )
         return 0;
@@ -315,7 +284,7 @@ HGLOBAL WINAPI GetCodeHandle( FARPROC proc )
 void WINAPI GetCodeInfo( FARPROC proc, SEGINFO far *segInfo )
 {
     NE_MODULE far *pModule;
-    SEGTABLEENTRY *pSeg;
+    SEGTABLEENTRY FAR *pSeg;
     int segNr;
 
     if ( !TASK_GetCodeSegment( proc, &pModule, &pSeg, &segNr ) )
@@ -334,8 +303,8 @@ void WINAPI GetCodeInfo( FARPROC proc, SEGINFO far *segInfo )
         segInfo->cbAlloc += pModule->ne_heap + pModule->ne_stack;
 
     /* Return module handle in %es */
-//@todo detect handle of module
 //    SetES(GlobalHandleToSel( pModule->self ));
+    SetES(SELECTOROF(pModule));
 
 //    return TRUE;
 }
@@ -347,7 +316,7 @@ HQUEUE WINAPI GetTaskQueue( HTASK hTask );
  */
 void WINAPI GetTaskQueueDS(void)
 {
-    SetDS(GlobalHandleToSel( GetTaskQueue(0) ));
+    SetDS(GlobalHandleToSel(GetTaskQueue(0)));
 }
 
 
@@ -356,47 +325,22 @@ void WINAPI GetTaskQueueDS(void)
  */
 void WINAPI GetTaskQueueES(void)
 {
-    SetES(GlobalHandleToSel( GetTaskQueue(0) ));
+    SetES(GlobalHandleToSel(GetTaskQueue(0)));
 }
 
-#if 0
 /***********************************************************************
  *           GetCurrentPDB   (KERNEL.37)
  *
  * UNDOC: returns PSP of KERNEL in high word
  */
-DWORD WINAPI GetCurrentPDB16(void)
+DWORD WINAPI GetCurrentPDBReal(void)
 {
-    TDB *pTask;
+    TDB FAR *pTask;
 
     if (!(pTask = MAKELP(GetCurrentTask(), 0))) return 0;
-    return MAKELP(0/*TH_TOPPDB*/, pTask->hPDB); pTask->hPDB
+    return MAKELONG(pTask->hPDB, TH_TOPPDB);
 }
 
-#endif
-
-struct thunk
-{
-    BYTE      movw;
-    HANDLE  instance;
-    BYTE      ljmp;
-    FARPROC func;
-};
-
-/* Segment containing MakeProcInstance() thunks */
-typedef struct
-{
-    WORD  next;       /* Selector of next segment */
-    WORD  magic;      /* Thunks signature */
-    WORD  unused;
-    WORD  free;       /* Head of the free list */
-    struct thunk thunks[1];
-} THUNKS;
-
-#define THUNK_MAGIC  ('P' | ('T' << 8))
-
-  /* Min. number of thunks allocated when creating a new segment */
-#define MIN_THUNKS  32
 
 /***********************************************************************
  *           TASK_CreateThunks
@@ -407,15 +351,15 @@ typedef struct
 static void TASK_CreateThunks( HGLOBAL handle, WORD offset, WORD count )
 {
     int i;
-    THUNKS *pThunk;
+    THUNKS FAR *pThunk;
 
-    pThunk = (THUNKS *)((BYTE *)GlobalLock( handle ) + offset);
+    pThunk = (THUNKS FAR *)((BYTE FAR *)GlobalLock( handle ) + offset);
     pThunk->next = 0;
     pThunk->magic = THUNK_MAGIC;
     pThunk->free = FIELDOFFSET( THUNKS, thunks );
     for (i = 0; i < count-1; i++)
-        *(WORD *)&pThunk->thunks[i] = FIELDOFFSET( THUNKS, thunks[i+1] );
-    *(WORD *)&pThunk->thunks[i] = 0;  /* Last thunk */
+        *(WORD FAR *)&pThunk->thunks[i] = FIELDOFFSET( THUNKS, thunks[i+1] );
+    *(WORD FAR *)&pThunk->thunks[i] = 0;  /* Last thunk */
 }
 
 
@@ -432,8 +376,8 @@ static void far * TASK_AllocThunk(void)
 
     if (!(pTask = MAKELP(GetCurrentTask(), 0))) return 0;
     sel = pTask->hCSAlias;
-    pThunk = (THUNKS *)pTask->thunks;
-    base = (char *)pThunk - (char *)pTask;
+    pThunk = (THUNKS FAR *)pTask->thunks;
+    base = (char FAR *)pThunk - (char FAR *)pTask;
     while (!pThunk->free)
     {
         sel = pThunk->next;
@@ -449,13 +393,10 @@ static void far * TASK_AllocThunk(void)
         base = 0;
     }
     base += pThunk->free;
-    pThunk->free = *(WORD *)((BYTE *)pThunk + pThunk->free);
+    pThunk->free = *(WORD FAR *)((BYTE FAR *)pThunk + pThunk->free);
     return MAKELP( sel, base );
 }
 
-
-
-HANDLE WINAPI FarGetOwner( HGLOBAL handle );
 
 /***********************************************************************
  *           MakeProcInstance  (KERNEL.51)
@@ -531,8 +472,8 @@ void WINAPI FreeProcInstance( FARPROC func )
 
     if (!(pTask = MAKELP(GetCurrentTask(), 0))) return;
     sel = pTask->hCSAlias;
-    pThunk = (THUNKS *)pTask->thunks;
-    base = (char *)pThunk - (char *)pTask;
+    pThunk = (THUNKS FAR *)pTask->thunks;
+    base = (char FAR *)pThunk - (char FAR *)pTask;
     while (sel && (sel != HIWORD(func)))
     {
         sel = pThunk->next;
@@ -540,6 +481,6 @@ void WINAPI FreeProcInstance( FARPROC func )
         base = 0;
     }
     if (!sel) return;
-    *(WORD *)((BYTE *)pThunk + LOWORD(func) - base) = pThunk->free;
+    *(WORD FAR *)((BYTE FAR *)pThunk + LOWORD(func) - base) = pThunk->free;
     pThunk->free = LOWORD(func) - base;
 }

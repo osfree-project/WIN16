@@ -1,4 +1,4 @@
-#include <win16.h>
+#include <windows.h>
 
 #define HQUEUE HANDLE
 
@@ -177,7 +177,7 @@ typedef struct _THHOOK
 } THHOOK;
 
 /* this structure is always located at offset 0 of the DGROUP segment */
-typedef struct
+typedef struct tagINSTANCEDATA
 {
     WORD null;        /* Always 0 */
     WORD old_sp;      /* Stack pointer; used by SwitchTaskTo() */
@@ -187,15 +187,15 @@ typedef struct
     WORD stacktop;    /* Top of the stack */
     WORD stackmin;    /* Lowest stack address used so far */
     WORD stackbottom; /* Bottom of the stack */
-} INSTANCEDATA;
+} INSTANCEDATA, * PINSTANCEDATA, FAR * LPINSTANCEDATA;
 
 /* In-memory module structure. See 'Windows Internals' p. 219 */
-typedef struct _NE_MODULE
+typedef struct tagNE_MODULE
 {
     WORD      ne_magic;         /* 00 'NE' signature */
     WORD      count;            /* 02 Usage count (ne_ver/ne_rev on disk) */
     WORD      ne_enttab;        /* 04 Near ptr to entry table */
-    HMODULE next;             /* 06 Selector to next module (ne_cbenttab on disk) */
+    HMODULE   next;             /* 06 Selector to next module (ne_cbenttab on disk) */
     WORD      dgroup_entry;     /* 08 Near ptr to segment entry for DGROUP (ne_crc on disk) */
     WORD      fileinfo;         /* 0a Near ptr to file info (OFSTRUCT) (ne_crc on disk) */
     WORD      ne_flags;         /* 0c Module flags */
@@ -218,8 +218,8 @@ typedef struct _NE_MODULE
     WORD      ne_cres;          /* 34 # of resource segments */
     BYTE      ne_exetyp;        /* 36 Operating system flags */
     BYTE      ne_flagsothers;   /* 37 Misc. flags */
-    HANDLE  dlls_to_init;     /* 38 List of DLLs to initialize (ne_pretthunks on disk) */
-    HANDLE  nrname_handle;    /* 3a Handle to non-resident name table (ne_psegrefbytes on disk) */
+    HANDLE    dlls_to_init;     /* 38 List of DLLs to initialize (ne_pretthunks on disk) */
+    HANDLE    nrname_handle;    /* 3a Handle to non-resident name table (ne_psegrefbytes on disk) */
     WORD      ne_swaparea;      /* 3c Min. swap area size */
     WORD      ne_expver;        /* 3e Expected Windows version */
     /* From here, these are extra fields not present in normal Windows */
@@ -230,10 +230,12 @@ typedef struct _NE_MODULE
 //    LPVOID    rsrc32_map;       /* HRSRC 16->32 map (for 32-bit modules) */
 //    LPCVOID   mapping;          /* mapping of the binary file */
 //    SIZE_T    mapping_size;     /* size of the file mapping */
-} NE_MODULE;
+} NE_MODULE, * PNE_MODULE, FAR * LPNE_MODULE;
+
+typedef HMODULE * PHMODULE, FAR * LPHMODULE;
 
 #define NE_MODULE_NAME(pModule) \
-    (((OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo))->szPathName)
+    (((OFSTRUCT FAR *)((char FAR *)(pModule) + (pModule)->fileinfo))->szPathName)
 
   /* In-memory segment table */
 typedef struct
@@ -270,6 +272,30 @@ typedef struct
     (((offset)+(size) <= pModule->mapping_size) ? \
      (memcpy( buffer, (const char *)pModule->mapping + (offset), (size) ), TRUE) : FALSE)
 */
+/*
+ * Resource table structures.
+ */
+typedef struct tagNE_NAMEINFO
+{
+    WORD     offset;
+    WORD     length;
+    WORD     flags;
+    WORD     id;
+    HANDLE   handle;
+    WORD     usage;
+} NE_NAMEINFO, * PNE_NAMEINFO, FAR * LPNE_NAMEINFO;
+
+typedef struct tagNE_TYPEINFO
+{
+    WORD        type_id;   /* Type identifier */
+    WORD        count;     /* Number of resources of this type */
+    FARPROC   resloader; /* SetResourceHandler() */
+    /*
+     * Name info array.
+     */
+} NE_TYPEINFO, * PNE_TYPEINFO, FAR * LPNE_TYPEINFO;
+
+#define NE_SEGFLAGS_LOADED      0x0004
 
 /* Layout of a handle entry table
  *
@@ -277,9 +303,206 @@ typedef struct
  * LOCALHANDLEENTRY[count]  entries
  * WORD                     near ptr to next table
  */
-typedef struct
+typedef struct tagLOCALHANDLEENTRY
 {
     WORD addr;                /* Address of the MOVEABLE block */
     BYTE flags;               /* Flags for this block */
     BYTE lock;                /* Lock count */
-} LOCALHANDLEENTRY;
+} LOCALHANDLEENTRY, * PLOCALHANDLEENTRY, FAR * LPLOCALHANDLEENTRY;
+
+#define DEFAULT_ATOMTABLE_SIZE    37
+#define MAX_ATOM_LEN              255
+#define MAXINTATOM          0xc000
+
+#define ATOMTOHANDLE(atom)        ((HANDLE)(atom) << 2)
+#define HANDLETOATOM(handle)      ((ATOM)(0xc000 | ((handle) >> 2)))
+
+
+typedef struct tagATOMENTRY
+{
+    HANDLE	next;
+    WORD        refCount;
+    BYTE        length;
+    char        str[1];
+} ATOMENTRY, * PATOMENTRY, FAR * LPATOMENTRY;
+
+typedef struct tagATOMTABLE
+{
+    WORD        size;
+    HANDLE	entries[1];
+} ATOMTABLE, * PATOMTABLE, FAR * LPATOMTABLE;
+
+struct thunk
+{
+    BYTE      movw;
+    HANDLE  instance;
+    BYTE      ljmp;
+    FARPROC func;
+};
+
+/* Segment containing MakeProcInstance() thunks */
+typedef struct
+{
+    WORD  next;       /* Selector of next segment */
+    WORD  magic;      /* Thunks signature */
+    WORD  unused;
+    WORD  free;       /* Head of the free list */
+    struct thunk thunks[1];
+} THUNKS;
+
+#define THUNK_MAGIC  ('P' | ('T' << 8))
+
+  /* Min. number of thunks allocated when creating a new segment */
+#define MIN_THUNKS  32
+
+
+#define TD_SIGN 0x4454   /* "TD" = Task Database */
+#define OFS_TD_SIGN 0xFA /* location of "TD" signature in Task DB */
+
+#define QS_SENDMESSAGE	0x0040
+#define PM_QS_SENDMESSAGE (QS_SENDMESSAGE << 16)
+
+extern HTASK pascal TH_HEADTDB;
+extern HTASK pascal TH_LOCKTDB;
+extern HTASK pascal TH_TOPPDB;
+extern __AHSHIFT;
+extern __AHINCR;
+
+void memcpy(void far * s1, void far * s2, unsigned length);
+void far * memset (void far *start, int c, int len);
+int atoi(const char far *h);
+extern void _cdecl printf (const char *format,...);
+int stricmp(const char far * s1, const char far * s2);
+int strnicmp(char FAR *s1, const char FAR *s2, int n);
+void memcpy(void FAR * s1, void FAR * s2, unsigned length);
+int toupper(int c);
+
+
+HMODULE WINAPI GetExePtr(HANDLE handle);
+WORD WINAPI LocalCountFree(void);
+WORD WINAPI LocalHeapSize(void);
+WORD WINAPI GlobalHandleToSel(HGLOBAL handle);
+void WINAPI LongPtrAdd(DWORD dwLongPtr, DWORD dwAdd);
+void WINAPI OldYield(void);
+HANDLE WINAPI FarGetOwner( HGLOBAL handle );
+
+/* This function returns current DS value */
+extern  unsigned short          GetDS( void );
+#pragma aux GetDS               = \
+        "mov    ax,ds"          \
+        value                   [ax];
+
+/* This function sets current DS value */
+extern  void          SetDS( unsigned short );
+#pragma aux SetDS               = \
+        "mov    ds,ax"          \
+        parm                   [ax];
+
+/* This function sets current ES value */
+extern  void          SetES( unsigned short );
+#pragma aux SetES               = \
+        "mov    es,ax"          \
+        parm                   [ax];
+
+/* This function sets current CX value */
+extern  void          SetCX( unsigned short );
+#pragma aux SetCX               = \
+        "mov    cx,ax"          \
+        parm                   [ax];
+
+#define VALID_HANDLE(handle) (((handle)>>__AHSHIFT)<globalArenaSize)
+#define GET_ARENA_PTR(handle)  (pGlobalArena + ((handle) >> __AHSHIFT))
+
+/* LocalHeap main structure. Differs for KRNL286 and KRNL386. First column - 386 offsets, second one is 286 offsets */
+typedef struct tagLOCALHEAPINFO
+{
+    WORD check;                 /* 00 00 Heap checking flag */
+    WORD freeze;                /* 02 02 Heap frozen flag */
+    WORD items;                 /* 04 04 Count of items on the heap */
+    WORD first;                 /* 06 06 First item of the heap */
+#ifdef __386__
+    WORD pad1;                  /* 08    Always 0 */	// missed in KRNL286
+#endif
+    WORD last;                  /* 0a 08 Last item of the heap */
+#ifdef __386__
+    WORD pad2;                  /* 0c    Always 0 */	// missed in KRNL286
+#endif
+    BYTE ncompact;              /* 0e 0a Compactions counter */
+    BYTE dislevel;              /* 0f 0b Discard level */
+#ifdef __386__
+    DWORD distotal;             /* 10 0c Total bytes discarded */	// WORD in KRNL286, DWORD in KRNL386
+#else
+    WORD distotal;              /* 10 0c Total bytes discarded */	// WORD in KRNL286, DWORD in KRNL386
+#endif
+    WORD htable;                /* 14 0f Near Pointer to handle table */
+    WORD hfree;                 /* 16 10 Near Pointer to free handle table */
+    WORD hdelta;                /* 18 12 Delta to expand the handle table */
+    WORD expand;                /* 1a 14 Near Pointer to expand function (unused) */
+    WORD pstat;                 /* 1c 15 Near Pointer to status structure (unused) */
+    FARPROC notify;             /* 1e 18 Far Pointer to LocalNotify() function */
+    WORD lock;                  /* 22 1a Lock count for the heap */
+    WORD extra;                 /* 24 1c Extra bytes to allocate when expanding */
+    WORD minsize;               /* 26 1e Minimum size of the heap */
+    WORD magic;                 /* 28 1f Magic number */
+} LOCALHEAPINFO, * PLOCALHEAPINFO, FAR * LPLOCALHEAPINFO;
+
+typedef struct tagLOCALARENA
+{
+/* Arena header */
+    WORD prev;          /* Previous arena | arena type */
+    WORD next;          /* Next arena */
+/* Start of the memory block or free-list info */
+    WORD size;          /* Size of the free block */
+    WORD free_prev;     /* Previous free block */
+    WORD free_next;     /* Next free block */
+} LOCALARENA, * PLOCALARENA, FAR * LPLOCALARENA;
+
+/* determine whether the handle belongs to a fixed or a moveable block */
+#define HANDLE_FIXED(handle) (((handle) & 3) == 0)
+#define HANDLE_MOVEABLE(handle) (((handle) & 3) == 2)
+
+  /* All local heap allocations are aligned on 4-byte boundaries */
+#define LALIGN(word)          (((word) + 3) & ~3)
+
+#define ARENA_HEADER_SIZE      4
+#define ARENA_HEADER( handle) ((handle) - ARENA_HEADER_SIZE)
+#define ARENA_PTR(ptr,arena)       ((LPLOCALARENA)((LPSTR)(ptr)+(arena)))
+
+  /* Arena types (stored in 'prev' field of the arena) */
+#define LOCAL_ARENA_FREE       0
+#define LOCAL_ARENA_FIXED      1
+
+#define LOCAL_HEAP_MAGIC  0x484c  /* 'LH' */
+
+/*
+ * We make addr = 4n + 2 and set *((WORD *)addr - 1) = &addr like Windows does
+ * in case something actually relies on this.
+ *
+ * An unused handle has lock = flags = 0xff. In windows addr is that of next
+ * free handle, at the moment in wine we set it to 0.
+ *
+ * A discarded block's handle has lock = addr = 0 and flags = 0x40
+ * (LMEM_DISCARDED >> 8)
+ */
+
+#define MOVEABLE_PREFIX sizeof(HLOCAL)
+
+/* LocalNotify() msgs */
+
+#define LN_OUTOFMEM	0
+#define LN_MOVE		1
+#define LN_DISCARD	2
+
+#define GlobalPtrHandle(lp) \
+  ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))
+
+#define     GlobalUnlockPtr(lp)      \
+                GlobalUnlock(GlobalPtrHandle(lp))
+
+#define GlobalFreePtr(lp) \
+  (GlobalUnlockPtr(lp),(BOOL)GlobalFree(GlobalPtrHandle(lp)))
+
+#define GlobalAllocPtr(flags, cb) \
+  (GlobalLock(GlobalAlloc((flags), (cb))))
+
+

@@ -1,101 +1,6 @@
-#include <win16.h>
+#include <windows.h>
 #include <win_private.h>
 
-void far * memset (void far *start, int c, int len);
-void memcpy(void far * s1, void far * s2, unsigned length);
-
-/* LocalHeap main structure. Differs for KRNL286 and KRNL386. First column - 386 offsets, second one is 286 offsets */
-typedef struct
-{
-    WORD check;                 /* 00 00 Heap checking flag */
-    WORD freeze;                /* 02 02 Heap frozen flag */
-    WORD items;                 /* 04 04 Count of items on the heap */
-    WORD first;                 /* 06 06 First item of the heap */
-#ifdef __386__
-    WORD pad1;                  /* 08    Always 0 */	// missed in KRNL286
-#endif
-    WORD last;                  /* 0a 08 Last item of the heap */
-#ifdef __386__
-    WORD pad2;                  /* 0c    Always 0 */	// missed in KRNL286
-#endif
-    BYTE ncompact;              /* 0e 0a Compactions counter */
-    BYTE dislevel;              /* 0f 0b Discard level */
-#ifdef __386__
-    DWORD distotal;             /* 10 0c Total bytes discarded */	// WORD in KRNL286, DWORD in KRNL386
-#else
-    WORD distotal;              /* 10 0c Total bytes discarded */	// WORD in KRNL286, DWORD in KRNL386
-#endif
-    WORD htable;                /* 14 0f Near Pointer to handle table */
-    WORD hfree;                 /* 16 10 Near Pointer to free handle table */
-    WORD hdelta;                /* 18 12 Delta to expand the handle table */
-    WORD expand;                /* 1a 14 Near Pointer to expand function (unused) */
-    WORD pstat;                 /* 1c 15 Near Pointer to status structure (unused) */
-    FARPROC notify;             /* 1e 18 Far Pointer to LocalNotify() function */
-    WORD lock;                  /* 22 1a Lock count for the heap */
-    WORD extra;                 /* 24 1c Extra bytes to allocate when expanding */
-    WORD minsize;               /* 26 1e Minimum size of the heap */
-    WORD magic;                 /* 28 1f Magic number */
-} LOCALHEAPINFO;
-
-typedef struct
-{
-/* Arena header */
-    WORD prev;          /* Previous arena | arena type */
-    WORD next;          /* Next arena */
-/* Start of the memory block or free-list info */
-    WORD size;          /* Size of the free block */
-    WORD free_prev;     /* Previous free block */
-    WORD free_next;     /* Next free block */
-} LOCALARENA;
-
-
-/* determine whether the handle belongs to a fixed or a moveable block */
-#define HANDLE_FIXED(handle) (((handle) & 3) == 0)
-#define HANDLE_MOVEABLE(handle) (((handle) & 3) == 2)
-
-  /* All local heap allocations are aligned on 4-byte boundaries */
-#define LALIGN(word)          (((word) + 3) & ~3)
-
-#define ARENA_HEADER_SIZE      4
-#define ARENA_HEADER( handle) ((handle) - ARENA_HEADER_SIZE)
-#define ARENA_PTR(ptr,arena)       ((LOCALARENA *)((char *)(ptr)+(arena)))
-
-  /* Arena types (stored in 'prev' field of the arena) */
-#define LOCAL_ARENA_FREE       0
-#define LOCAL_ARENA_FIXED      1
-
-#define LOCAL_HEAP_MAGIC  0x484c  /* 'LH' */
-
-/*
- * We make addr = 4n + 2 and set *((WORD *)addr - 1) = &addr like Windows does
- * in case something actually relies on this.
- *
- * An unused handle has lock = flags = 0xff. In windows addr is that of next
- * free handle, at the moment in wine we set it to 0.
- *
- * A discarded block's handle has lock = addr = 0 and flags = 0x40
- * (LMEM_DISCARDED >> 8)
- */
-
-#define MOVEABLE_PREFIX sizeof(HLOCAL)
-
-/* LocalNotify() msgs */
-
-#define LN_OUTOFMEM	0
-#define LN_MOVE		1
-#define LN_DISCARD	2
-
-/* This function returns current DS value */
-extern  unsigned short          GetDS( void );
-#pragma aux GetDS               = \
-        "mov    ax,ds"          \
-        value                   [ax];
-
-/* This function sets current CX value */
-extern  void          SetCX( unsigned short );
-#pragma aux SetCX               = \
-        "mov    cx,ax"          \
-        parm                   [ax];
 
 static inline BOOL call_notify_func( FARPROC proc, WORD msg, HLOCAL handle, WORD arg )
 {
@@ -115,10 +20,10 @@ static inline BOOL call_notify_func( FARPROC proc, WORD msg, HLOCAL handle, WORD
  *
  * Return a pointer to the local heap, making sure it exists.
  */
-static LOCALHEAPINFO *LOCAL_GetHeap( HANDLE ds )
+static LPLOCALHEAPINFO LOCAL_GetHeap( HANDLE ds )
 {
-    INSTANCEDATA far *ptr = MAKELP( ds, 0 );
-    LOCALHEAPINFO *pInfo;
+    LPINSTANCEDATA ptr = MAKELP(ds, 0);
+    LPLOCALHEAPINFO lpInfo;
 //    TRACE("Heap at %p, %04x\n", ptr, (ptr != NULL ? ptr->heap : 0xFFFF));
     if (!ptr || !ptr->null || !ptr->heap) return NULL;
 
@@ -128,13 +33,13 @@ static LOCALHEAPINFO *LOCAL_GetHeap( HANDLE ds )
         return NULL;
     }
 
-    pInfo = (LOCALHEAPINFO*)((char*)ptr + ptr->heap);
-    if (pInfo->magic != LOCAL_HEAP_MAGIC)
+    lpInfo = (LPLOCALHEAPINFO)((LPSTR)ptr + ptr->heap);
+    if (lpInfo->magic != LOCAL_HEAP_MAGIC)
     {
 //	WARN("Bad magic\n");
 	return NULL;
     }
-    return pInfo;
+    return lpInfo;
 }
 
 /***********************************************************************
@@ -142,25 +47,25 @@ static LOCALHEAPINFO *LOCAL_GetHeap( HANDLE ds )
  */
 static HLOCAL LOCAL_FindFreeBlock( HANDLE ds, WORD size )
 {
-    char far *ptr = MAKELP( ds, 0 );
-    LOCALHEAPINFO *pInfo = LOCAL_GetHeap( ds );
-    LOCALARENA *pArena;
+    LPSTR ptr = MAKELP( ds, 0 );
+    LPLOCALHEAPINFO lpInfo = LOCAL_GetHeap( ds );
+    LPLOCALARENA lpArena;
     WORD arena;
 
-    if (!(pInfo))
+    if (!(lpInfo))
     {
 //        ERR("Local heap not found\n" );
 //	LOCAL_PrintHeap(ds);
 	return 0;
     }
 
-    arena = pInfo->first;
-    pArena = ARENA_PTR( ptr, arena );
+    arena = lpInfo->first;
+    lpArena = ARENA_PTR( ptr, arena );
     for (;;) {
-        arena = pArena->free_next;
-        pArena = ARENA_PTR( ptr, arena );
-	if (arena == pArena->free_next) break;
-        if (pArena->size >= size) return arena;
+        arena = lpArena->free_next;
+        lpArena = ARENA_PTR( ptr, arena );
+	if (arena == lpArena->free_next) break;
+        if (lpArena->size >= size) return arena;
     }
 //    TRACE("not enough space\n" );
 //    LOCAL_PrintHeap(ds);
@@ -177,34 +82,34 @@ static HLOCAL LOCAL_FindFreeBlock( HANDLE ds, WORD size )
  * 'block' is the handle of the block arena; 'baseptr' points to
  * the beginning of the data segment containing the heap.
  */
-static void LOCAL_MakeBlockFree( char far *baseptr, WORD block )
+static void LOCAL_MakeBlockFree(LPSTR baseptr, WORD block)
 {
-    LOCALARENA *pArena, *pNext;
+    LPLOCALARENA lpArena, lpNext;
     WORD next;
 
       /* Mark the block as free */
 
-    pArena = ARENA_PTR( baseptr, block );
-    pArena->prev = (pArena->prev & ~3) | LOCAL_ARENA_FREE;
-    pArena->size = pArena->next - block;
+    lpArena = ARENA_PTR( baseptr, block );
+    lpArena->prev = (lpArena->prev & ~3) | LOCAL_ARENA_FREE;
+    lpArena->size = lpArena->next - block;
 
       /* Find the next free block (last block is always free) */
 
-    next = pArena->next;
+    next = lpArena->next;
     for (;;)
     {
-        pNext = ARENA_PTR( baseptr, next );
-        if ((pNext->prev & 3) == LOCAL_ARENA_FREE) break;
-        next = pNext->next;
+        lpNext = ARENA_PTR( baseptr, next );
+        if ((lpNext->prev & 3) == LOCAL_ARENA_FREE) break;
+        next = lpNext->next;
     }
 
 //    TRACE("%04x, next %04x\n", block, next );
       /* Insert the free block in the free-list */
 
-    pArena->free_prev = pNext->free_prev;
-    pArena->free_next = next;
-    ARENA_PTR(baseptr,pNext->free_prev)->free_next = block;
-    pNext->free_prev  = block;
+    lpArena->free_prev = lpNext->free_prev;
+    lpArena->free_next = next;
+    ARENA_PTR(baseptr,lpNext->free_prev)->free_next = block;
+    lpNext->free_prev  = block;
 }
 
 /***********************************************************************
@@ -218,13 +123,13 @@ static void LOCAL_RemoveFreeBlock( char far *baseptr, WORD block )
 {
       /* Mark the block as fixed */
 
-    LOCALARENA *pArena = ARENA_PTR( baseptr, block );
-    pArena->prev = (pArena->prev & ~3) | LOCAL_ARENA_FIXED;
+    LPLOCALARENA lpArena = ARENA_PTR( baseptr, block );
+    lpArena->prev = (lpArena->prev & ~3) | LOCAL_ARENA_FIXED;
 
       /* Remove it from the list */
 
-    ARENA_PTR(baseptr,pArena->free_prev)->free_next = pArena->free_next;
-    ARENA_PTR(baseptr,pArena->free_next)->free_prev = pArena->free_prev;
+    ARENA_PTR(baseptr,lpArena->free_prev)->free_next = lpArena->free_next;
+    ARENA_PTR(baseptr,lpArena->free_next)->free_prev = lpArena->free_prev;
 }
 
 /***********************************************************************
@@ -235,16 +140,16 @@ static void LOCAL_RemoveFreeBlock( char far *baseptr, WORD block )
  * the beginning of the data segment containing the heap; 'prev' is
  * the block before the new one.
  */
-static void LOCAL_AddBlock( char far *baseptr, WORD prev, WORD new )
+static void LOCAL_AddBlock(LPSTR baseptr, WORD prev, WORD new )
 {
-    LOCALARENA *pPrev = ARENA_PTR( baseptr, prev );
-    LOCALARENA *pNew  = ARENA_PTR( baseptr, new );
+    LPLOCALARENA lpPrev = ARENA_PTR( baseptr, prev );
+    LPLOCALARENA lpNew  = ARENA_PTR( baseptr, new );
 
-    pNew->prev = (prev & ~3) | LOCAL_ARENA_FIXED;
-    pNew->next = pPrev->next;
-    ARENA_PTR(baseptr,pPrev->next)->prev &= 3;
-    ARENA_PTR(baseptr,pPrev->next)->prev |= new;
-    pPrev->next = new;
+    lpNew->prev = (prev & ~3) | LOCAL_ARENA_FIXED;
+    lpNew->next = lpPrev->next;
+    ARENA_PTR(baseptr,lpPrev->next)->prev &= 3;
+    ARENA_PTR(baseptr,lpPrev->next)->prev |= new;
+    lpPrev->next = new;
 }
 
 
@@ -253,25 +158,25 @@ static void LOCAL_AddBlock( char far *baseptr, WORD prev, WORD new )
  */
 static WORD LOCAL_GetFreeSpace(WORD ds, WORD countdiscard)
 {
-    char far *ptr = MAKELP( ds, 0 );
-    LOCALHEAPINFO *pInfo = LOCAL_GetHeap( ds );
-    LOCALARENA *pArena;
+    LPSTR ptr = MAKELP( ds, 0 );
+    LPLOCALHEAPINFO lpInfo = LOCAL_GetHeap( ds );
+    LPLOCALARENA lpArena;
     WORD arena;
     WORD freespace = 0;
 
-    if (!(pInfo))
+    if (!(lpInfo))
     {
 //        ERR("Local heap not found\n" );
 //        LOCAL_PrintHeap(ds);
         return 0;
     }
-    arena = pInfo->first;
-    pArena = ARENA_PTR( ptr, arena );
-    while (arena != pArena->free_next)
+    arena = lpInfo->first;
+    lpArena = ARENA_PTR( ptr, arena );
+    while (arena != lpArena->free_next)
     {
-        arena = pArena->free_next;
-        pArena = ARENA_PTR( ptr, arena );
-        if (pArena->size >= freespace) freespace = pArena->size;
+        arena = lpArena->free_next;
+        lpArena = ARENA_PTR( ptr, arena );
+        if (lpArena->size >= freespace) freespace = lpArena->size;
     }
     /* FIXME doesn't yet calculate space that would become free if everything
        were discarded when countdiscard == 1 */
@@ -287,28 +192,28 @@ static WORD LOCAL_GetFreeSpace(WORD ds, WORD countdiscard)
  * 'block' is the handle of the block arena; 'baseptr' points to
  * the beginning of the data segment containing the heap.
  */
-static void LOCAL_RemoveBlock( char far *baseptr, WORD block )
+static void LOCAL_RemoveBlock(LPSTR baseptr, WORD block )
 {
-    LOCALARENA *pArena, *pTmp;
+    LPLOCALARENA lpArena, lpTmp;
 
       /* Remove the block from the free-list */
 
 //    TRACE("\n");
-    pArena = ARENA_PTR( baseptr, block );
-    if ((pArena->prev & 3) == LOCAL_ARENA_FREE)
+    lpArena = ARENA_PTR( baseptr, block );
+    if ((lpArena->prev & 3) == LOCAL_ARENA_FREE)
         LOCAL_RemoveFreeBlock( baseptr, block );
 
       /* If the previous block is free, expand its size */
 
-    pTmp = ARENA_PTR( baseptr, pArena->prev & ~3 );
-    if ((pTmp->prev & 3) == LOCAL_ARENA_FREE)
-        pTmp->size += pArena->next - block;
+    lpTmp = ARENA_PTR( baseptr, lpArena->prev & ~3 );
+    if ((lpTmp->prev & 3) == LOCAL_ARENA_FREE)
+        lpTmp->size += lpArena->next - block;
 
       /* Remove the block from the linked list */
 
-    pTmp->next = pArena->next;
-    pTmp = ARENA_PTR( baseptr, pArena->next );
-    pTmp->prev = (pTmp->prev & 3) | (pArena->prev & ~3);
+    lpTmp->next = lpArena->next;
+    lpTmp = ARENA_PTR( baseptr, lpArena->next );
+    lpTmp->prev = (lpTmp->prev & 3) | (lpArena->prev & ~3);
 }
 
 
@@ -317,15 +222,15 @@ static void LOCAL_RemoveBlock( char far *baseptr, WORD block )
  */
 static HLOCAL LOCAL_FreeArena( WORD ds, WORD arena )
 {
-    char far *ptr = MAKELP( ds, 0 );
-    LOCALHEAPINFO *pInfo = LOCAL_GetHeap( ds );
-    LOCALARENA *pArena, *pPrev;
+    LPSTR ptr = MAKELP( ds, 0 );
+    LPLOCALHEAPINFO lpInfo = LOCAL_GetHeap( ds );
+    LPLOCALARENA lpArena, lpPrev;
 
 //    TRACE("%04x ds=%04x\n", arena, ds );
-    if (!(pInfo)) return arena;
+    if (!lpInfo) return arena;
 
-    pArena = ARENA_PTR( ptr, arena );
-    if ((pArena->prev & 3) == LOCAL_ARENA_FREE)
+    lpArena = ARENA_PTR( ptr, arena );
+    if ((lpArena->prev & 3) == LOCAL_ARENA_FREE)
     {
 	/* shouldn't happen */
 //        ERR("Trying to free block %04x twice!\n",
@@ -336,13 +241,13 @@ static HLOCAL LOCAL_FreeArena( WORD ds, WORD arena )
 
       /* Check if we can merge with the previous block */
 
-    pPrev = ARENA_PTR( ptr, pArena->prev & ~3 );
-    if ((pPrev->prev & 3) == LOCAL_ARENA_FREE)
+    lpPrev = ARENA_PTR( ptr, lpArena->prev & ~3 );
+    if ((lpPrev->prev & 3) == LOCAL_ARENA_FREE)
     {
-        arena  = pArena->prev & ~3;
-        pArena = pPrev;
-        LOCAL_RemoveBlock( ptr, pPrev->next );
-        pInfo->items--;
+        arena  = lpArena->prev & ~3;
+        lpArena = lpPrev;
+        LOCAL_RemoveBlock( ptr, lpPrev->next );
+        lpInfo->items--;
     }
     else  /* Make a new free block */
     {
@@ -351,11 +256,11 @@ static HLOCAL LOCAL_FreeArena( WORD ds, WORD arena )
 
       /* Check if we can merge with the next block */
 
-    if ((pArena->next == pArena->free_next) &&
-        (pArena->next != pInfo->last))
+    if ((lpArena->next == lpArena->free_next) &&
+        (lpArena->next != lpInfo->last))
     {
-        LOCAL_RemoveBlock( ptr, pArena->next );
-        pInfo->items--;
+        LOCAL_RemoveBlock( ptr, lpArena->next );
+        lpInfo->items--;
     }
     return 0;
 }
@@ -368,15 +273,15 @@ static HLOCAL LOCAL_FreeArena( WORD ds, WORD arena )
  */
 static void LOCAL_ShrinkArena( WORD ds, WORD arena, WORD size )
 {
-    char far *ptr = MAKELP( ds, 0 );
-    LOCALARENA *pArena = ARENA_PTR( ptr, arena );
+    LPSTR ptr = MAKELP( ds, 0 );
+    LPLOCALARENA lpArena = ARENA_PTR( ptr, arena );
 
-    if (arena + size + LALIGN(sizeof(LOCALARENA)) < pArena->next)
+    if (arena + size + LALIGN(sizeof(LOCALARENA)) < lpArena->next)
     {
-        LOCALHEAPINFO *pInfo = LOCAL_GetHeap( ds );
-        if (!pInfo) return;
+        LPLOCALHEAPINFO lpInfo = LOCAL_GetHeap( ds );
+        if (!lpInfo) return;
         LOCAL_AddBlock( ptr, arena, arena + size );
-        pInfo->items++;
+        lpInfo->items++;
         LOCAL_FreeArena( ds, arena + size );
     }
 }
@@ -388,21 +293,21 @@ static void LOCAL_ShrinkArena( WORD ds, WORD arena, WORD size )
  */
 static void LOCAL_GrowArenaDownward( WORD ds, WORD arena, WORD newsize )
 {
-    char far *ptr = MAKELP( ds, 0 );
-    LOCALHEAPINFO *pInfo = LOCAL_GetHeap( ds );
-    LOCALARENA *pArena = ARENA_PTR( ptr, arena );
-    WORD prevArena = pArena->prev & ~3;
-    LOCALARENA *pPrevArena = ARENA_PTR( ptr, prevArena );
+    LPSTR ptr = MAKELP( ds, 0 );
+    LPLOCALHEAPINFO lpInfo = LOCAL_GetHeap( ds );
+    LPLOCALARENA lpArena = ARENA_PTR( ptr, arena );
+    WORD prevArena = lpArena->prev & ~3;
+    LPLOCALARENA lpPrevArena = ARENA_PTR( ptr, prevArena );
     WORD offset, size;
-    char *p;
+    LPSTR p;
 
-    if (!(pInfo)) return;
-    offset = pPrevArena->size;
-    size = pArena->next - arena - ARENA_HEADER_SIZE;
+    if (!(lpInfo)) return;
+    offset = lpPrevArena->size;
+    size = lpArena->next - arena - ARENA_HEADER_SIZE;
     LOCAL_RemoveFreeBlock( ptr, prevArena );
     LOCAL_RemoveBlock( ptr, arena );
-    pInfo->items--;
-    p = (char *)pPrevArena + ARENA_HEADER_SIZE;
+    lpInfo->items--;
+    p = (LPSTR)lpPrevArena + ARENA_HEADER_SIZE;
     while (offset < size)
     {
         memcpy( p, p + offset, offset );
@@ -418,15 +323,15 @@ static void LOCAL_GrowArenaDownward( WORD ds, WORD arena, WORD newsize )
  */
 static int LOCAL_Compact( HANDLE ds, UINT minfree, UINT flags )
 {
-    char far *ptr = MAKELP( ds, 0 );
-    LOCALHEAPINFO *pInfo = LOCAL_GetHeap( ds );
-    LOCALARENA *pArena, *pMoveArena, *pFinalArena;
+    LPSTR ptr = MAKELP( ds, 0 );
+    LPLOCALHEAPINFO lpInfo = LOCAL_GetHeap( ds );
+    LPLOCALARENA lpArena, lpMoveArena, lpFinalArena;
     WORD arena, movearena, finalarena, table;
     WORD count, movesize, size;
     WORD freespace;
-    LOCALHANDLEENTRY *pEntry;
+    LPLOCALHANDLEENTRY lpEntry;
 
-    if (!(pInfo))
+    if (!lpInfo)
     {
 //        ERR("Local heap not found\n" );
 //        LOCAL_PrintHeap(ds);
@@ -441,71 +346,72 @@ static int LOCAL_Compact( HANDLE ds, UINT minfree, UINT flags )
         return freespace;
     }
 //    TRACE("Compacting heap %04x.\n", ds);
-    table = pInfo->htable;
+    table = lpInfo->htable;
     while(table)
     {
-        pEntry = (LOCALHANDLEENTRY *)(ptr + table + sizeof(WORD));
-        for(count = *(WORD *)(ptr + table); count > 0; count--, pEntry++)
+        lpEntry = (LPLOCALHANDLEENTRY)(ptr + table + sizeof(WORD));
+        for(count = *(WORD FAR *)(ptr + table); count > 0; count--, lpEntry++)
         {
-            if((pEntry->lock == 0) && (pEntry->flags != (LMEM_DISCARDED >> 8)))
+            if((lpEntry->lock == 0) && (lpEntry->flags != (LMEM_DISCARDED >> 8)))
             {
                 /* OK we can move this one if we want */
 //                TRACE("handle %04x (block %04x) can be moved.\n",
 //			     (WORD)((char *)pEntry - ptr), pEntry->addr);
-                movearena = ARENA_HEADER(pEntry->addr - MOVEABLE_PREFIX);
-                pMoveArena = ARENA_PTR(ptr, movearena);
-                movesize = pMoveArena->next - movearena;
-                arena = pInfo->first;
-                pArena = ARENA_PTR(ptr, arena);
+                movearena = ARENA_HEADER(lpEntry->addr - MOVEABLE_PREFIX);
+                lpMoveArena = ARENA_PTR(ptr, movearena);
+                movesize = lpMoveArena->next - movearena;
+                arena = lpInfo->first;
+                lpArena = ARENA_PTR(ptr, arena);
                 size = 0xffff;
                 finalarena = 0;
                 /* Try to find the smallest arena that will do, */
                 /* which is below us in memory */
                 for(;;)
                 {
-                    arena = pArena->free_next;
-                    pArena = ARENA_PTR(ptr, arena);
+                    arena = lpArena->free_next;
+                    lpArena = ARENA_PTR(ptr, arena);
                     if(arena >= movearena)
                         break;
-                    if(arena == pArena->free_next)
+                    if(arena == lpArena->free_next)
                         break;
-                    if((pArena->size >= movesize) && (pArena->size < size))
+                    if((lpArena->size >= movesize) && (lpArena->size < size))
                     {
-                        size = pArena->size;
+                        size = lpArena->size;
                         finalarena = arena;
                     }
                 }
                 if (finalarena) /* Actually got somewhere to move */
                 {
 //                    TRACE("Moving it to %04x.\n", finalarena);
-                    pFinalArena = ARENA_PTR(ptr, finalarena);
-                    size = pFinalArena->size;
+                    lpFinalArena = ARENA_PTR(ptr, finalarena);
+                    size = lpFinalArena->size;
                     LOCAL_RemoveFreeBlock(ptr, finalarena);
                     LOCAL_ShrinkArena( ds, finalarena, movesize );
                     /* Copy the arena to its new location */
-                    memcpy((char *)pFinalArena + ARENA_HEADER_SIZE,
-                           (char *)pMoveArena + ARENA_HEADER_SIZE,
+                    memcpy((char far *)lpFinalArena + ARENA_HEADER_SIZE,
+                           (char far *)lpMoveArena + ARENA_HEADER_SIZE,
                            movesize - ARENA_HEADER_SIZE );
                     /* Free the old location */
                     LOCAL_FreeArena(ds, movearena);
-                    call_notify_func(pInfo->notify, LN_MOVE,
-                                     (WORD)((char *)pEntry - ptr), pEntry->addr);
+
+                    call_notify_func(lpInfo->notify, LN_MOVE,
+                                     (WORD)((char far *)lpEntry - ptr), lpEntry->addr);
                     /* Update handle table entry */
-                    pEntry->addr = finalarena + ARENA_HEADER_SIZE + MOVEABLE_PREFIX;
+                    lpEntry->addr = finalarena + ARENA_HEADER_SIZE + MOVEABLE_PREFIX;
                 }
-                else if((ARENA_PTR(ptr, pMoveArena->prev & ~3)->prev & 3)
+                else if((ARENA_PTR(ptr, lpMoveArena->prev & ~3)->prev & 3)
 			       == LOCAL_ARENA_FREE)
                 {
                     /* Previous arena is free (but < movesize)  */
                     /* so we can 'slide' movearena down into it */
-                    finalarena = pMoveArena->prev & ~3;
+                    finalarena = lpMoveArena->prev & ~3;
                     LOCAL_GrowArenaDownward( ds, movearena, movesize );
                     /* Update handle table entry */
-                    pEntry->addr = finalarena + ARENA_HEADER_SIZE + MOVEABLE_PREFIX;
+                    lpEntry->addr = finalarena + ARENA_HEADER_SIZE + MOVEABLE_PREFIX;
                 }
             }
         }
-        table = *(WORD *)pEntry;
+        table = *(WORD FAR *)lpEntry;
     }
     freespace = LOCAL_GetFreeSpace(ds, minfree ? 0 : 1);
     if(freespace >= minfree || (flags & LMEM_NODISCARD))
@@ -514,24 +420,24 @@ static int LOCAL_Compact( HANDLE ds, UINT minfree, UINT flags )
         return freespace;
     }
 
-    table = pInfo->htable;
+    table = lpInfo->htable;
     while(table)
     {
-        pEntry = (LOCALHANDLEENTRY *)(ptr + table + sizeof(WORD));
-        for(count = *(WORD *)(ptr + table); count > 0; count--, pEntry++)
+        lpEntry = (LPLOCALHANDLEENTRY)(ptr + table + sizeof(WORD));
+        for(count = *(WORD FAR *)(ptr + table); count > 0; count--, lpEntry++)
         {
-            if(pEntry->addr && pEntry->lock == 0 &&
-	     (pEntry->flags & (LMEM_DISCARDABLE >> 8)))
+            if(lpEntry->addr && lpEntry->lock == 0 &&
+	     (lpEntry->flags & (LMEM_DISCARDABLE >> 8)))
 	    {
 //                TRACE("Discarding handle %04x (block %04x).\n",
 //                              (char *)pEntry - ptr, pEntry->addr);
-                LOCAL_FreeArena(ds, ARENA_HEADER(pEntry->addr - MOVEABLE_PREFIX));
-                call_notify_func(pInfo->notify, LN_DISCARD, (char *)pEntry - ptr, pEntry->flags);
-                pEntry->addr = 0;
-                pEntry->flags = (LMEM_DISCARDED >> 8);
+                LOCAL_FreeArena(ds, ARENA_HEADER(lpEntry->addr - MOVEABLE_PREFIX));
+                call_notify_func(lpInfo->notify, LN_DISCARD, (char far *)lpEntry - ptr, lpEntry->flags);
+                lpEntry->addr = 0;
+                lpEntry->flags = (LMEM_DISCARDED >> 8);
             }
         }
-        table = *(WORD *)pEntry;
+        table = *(WORD FAR *)lpEntry;
     }
     return LOCAL_Compact(ds, 0xffff, LMEM_NODISCARD);
 }
@@ -544,10 +450,10 @@ static BOOL LOCAL_GrowHeap( HANDLE ds )
     HANDLE hseg;
     LONG oldsize;
     LONG end;
-    LOCALHEAPINFO *pHeapInfo;
+    LPLOCALHEAPINFO lpHeapInfo;
     WORD freeArena, lastArena;
-    LOCALARENA *pArena, *pLastArena;
-    char far *ptr;
+    LPLOCALARENA lpArena, lpLastArena;
+    LPSTR ptr;
 
     hseg = GlobalHandle( ds );
     /* maybe mem allocated by Virtual*() ? */
@@ -558,8 +464,8 @@ static BOOL LOCAL_GrowHeap( HANDLE ds )
     if (oldsize > 0xfff0) return FALSE;
     hseg = GlobalReAlloc( hseg, 0x10000, GMEM_FIXED );
     ptr = MAKELP( ds, 0 ) ;
-    pHeapInfo = LOCAL_GetHeap( ds );
-    if (pHeapInfo == NULL) {
+    lpHeapInfo = LOCAL_GetHeap( ds );
+    if (lpHeapInfo == NULL) {
 //	ERR("Heap not found\n" );
 	return FALSE;
     }
@@ -567,31 +473,31 @@ static BOOL LOCAL_GrowHeap( HANDLE ds )
     lastArena = (end - sizeof(LOCALARENA)) & ~3;
 
       /* Update the HeapInfo */
-    pHeapInfo->items++;
-    freeArena = pHeapInfo->last;
-    pHeapInfo->last = lastArena;
-    pHeapInfo->minsize += end - oldsize;
+    lpHeapInfo->items++;
+    freeArena = lpHeapInfo->last;
+    lpHeapInfo->last = lastArena;
+    lpHeapInfo->minsize += end - oldsize;
 
       /* grow the old last block */
-    pArena = ARENA_PTR( ptr, freeArena );
-    pArena->size      = lastArena - freeArena;
-    pArena->next      = lastArena;
-    pArena->free_next = lastArena;
+    lpArena = ARENA_PTR( ptr, freeArena );
+    lpArena->size      = lastArena - freeArena;
+    lpArena->next      = lastArena;
+    lpArena->free_next = lastArena;
 
       /* Initialise the new last block */
 
-    pLastArena = ARENA_PTR( ptr, lastArena );
-    pLastArena->prev      = freeArena | LOCAL_ARENA_FREE;
-    pLastArena->next      = lastArena;  /* this one */
-    pLastArena->size      = LALIGN(sizeof(LOCALARENA));
-    pLastArena->free_prev = freeArena;
-    pLastArena->free_next = lastArena;  /* this one */
+    lpLastArena = ARENA_PTR( ptr, lastArena );
+    lpLastArena->prev      = freeArena | LOCAL_ARENA_FREE;
+    lpLastArena->next      = lastArena;  /* this one */
+    lpLastArena->size      = LALIGN(sizeof(LOCALARENA));
+    lpLastArena->free_prev = freeArena;
+    lpLastArena->free_next = lastArena;  /* this one */
 
     /* If block before freeArena is also free then merge them */
-    if((ARENA_PTR(ptr, (pArena->prev & ~3))->prev & 3) == LOCAL_ARENA_FREE)
+    if((ARENA_PTR(ptr, (lpArena->prev & ~3))->prev & 3) == LOCAL_ARENA_FREE)
     {
         LOCAL_RemoveBlock(ptr, freeArena);
-        pHeapInfo->items--;
+        lpHeapInfo->items--;
     }
 
 //    TRACE("Heap expanded\n" );
@@ -606,12 +512,12 @@ static BOOL LOCAL_GrowHeap( HANDLE ds )
  */
 static HLOCAL LOCAL_GetBlock(HANDLE ds, WORD size, WORD flags )
 {
-    char far *ptr = MAKELP(ds, 0);
-    LOCALHEAPINFO *pInfo;
-    LOCALARENA *pArena;
+    LPSTR ptr = MAKELP(ds, 0);
+    LPLOCALHEAPINFO lpInfo;
+    LPLOCALARENA lpArena;
     WORD arena;
 
-    if (!(pInfo = LOCAL_GetHeap(ds)))
+    if (!(lpInfo = LOCAL_GetHeap(ds)))
     {
 //        ERR("Local heap not found\n");
 //	LOCAL_PrintHeap(ds);
@@ -645,7 +551,7 @@ notify_done:
 	    return 0;
 	}
 	ptr = MAKELP( ds, 0 );
-	pInfo = LOCAL_GetHeap( ds );
+	lpInfo = LOCAL_GetHeap( ds );
 	arena = LOCAL_FindFreeBlock( ds, size );
     }
     if (arena == 0) {
@@ -659,13 +565,13 @@ notify_done:
     }
 
       /* Make a block out of the free arena */
-    pArena = ARENA_PTR( ptr, arena );
+    lpArena = ARENA_PTR( ptr, arena );
 //    TRACE("size = %04x, arena %04x size %04x\n", size, arena, pArena->size );
     LOCAL_RemoveFreeBlock( ptr, arena );
     LOCAL_ShrinkArena( ds, arena, size );
 
     if (flags & LMEM_ZEROINIT)
-	memset((char *)pArena + ARENA_HEADER_SIZE, 0, size-ARENA_HEADER_SIZE);
+	memset((char FAR *)lpArena + ARENA_HEADER_SIZE, 0, size-ARENA_HEADER_SIZE);
     return arena + ARENA_HEADER_SIZE;
 }
 
@@ -674,42 +580,42 @@ notify_done:
  */
 static BOOL LOCAL_NewHTable( HANDLE ds )
 {
-    char far *ptr;
-    LOCALHEAPINFO *pInfo;
-    LOCALHANDLEENTRY *pEntry;
+    LPSTR ptr;
+    LPLOCALHEAPINFO lpInfo;
+    LPLOCALHANDLEENTRY lpEntry;
     HLOCAL handle;
     int i;
 
 //    TRACE("\n" );
-    if (!(pInfo = LOCAL_GetHeap( ds )))
+    if (!(lpInfo = LOCAL_GetHeap( ds )))
     {
 //        ERR("Local heap not found\n");
 //        LOCAL_PrintHeap(ds);
         return FALSE;
     }
 
-    if (!(handle = LOCAL_GetBlock( ds, pInfo->hdelta * sizeof(LOCALHANDLEENTRY)
+    if (!(handle = LOCAL_GetBlock( ds, lpInfo->hdelta * sizeof(LOCALHANDLEENTRY)
                                    + 2 * sizeof(WORD), LMEM_FIXED )))
         return FALSE;
     if (!(ptr = MAKELP( ds, 0 ) ))
     {
     //    ERR("ptr == NULL after GetBlock.\n");
     }
-    if (!(pInfo = LOCAL_GetHeap( ds )))
+    if (!(lpInfo = LOCAL_GetHeap( ds )))
     {
 //        ERR("pInfo == NULL after GetBlock.\n");
     }
 
     /* Fill the entry table */
 
-    *(WORD *)(ptr + handle) = pInfo->hdelta;
-    pEntry = (LOCALHANDLEENTRY *)(ptr + handle + sizeof(WORD));
-    for (i = pInfo->hdelta; i > 0; i--, pEntry++) {
-	pEntry->lock = pEntry->flags = 0xff;
-	pEntry->addr = 0;
+    *(WORD FAR *)(ptr + handle) = lpInfo->hdelta;
+    lpEntry = (LPLOCALHANDLEENTRY)(ptr + handle + sizeof(WORD));
+    for (i = lpInfo->hdelta; i > 0; i--, lpEntry++) {
+	lpEntry->lock = lpEntry->flags = 0xff;
+	lpEntry->addr = 0;
     }
-    *(WORD *)pEntry = pInfo->htable;
-    pInfo->htable = handle;
+    *(WORD FAR *)lpEntry = lpInfo->htable;
+    lpInfo->htable = handle;
     return TRUE;
 }
 
@@ -718,12 +624,12 @@ static BOOL LOCAL_NewHTable( HANDLE ds )
  */
 static HLOCAL LOCAL_GetNewHandleEntry( HANDLE ds )
 {
-    char far *ptr = MAKELP( ds, 0 );
-    LOCALHEAPINFO *pInfo;
-    LOCALHANDLEENTRY *pEntry = NULL;
+    LPSTR ptr = MAKELP( ds, 0 );
+    LPLOCALHEAPINFO lpInfo;
+    LPLOCALHANDLEENTRY lpEntry = NULL;
     WORD table;
 
-    if (!(pInfo = LOCAL_GetHeap( ds )))
+    if (!(lpInfo = LOCAL_GetHeap( ds )))
     {
 //        ERR("Local heap not found\n");
 //	LOCAL_PrintHeap(ds);
@@ -732,31 +638,31 @@ static HLOCAL LOCAL_GetNewHandleEntry( HANDLE ds )
 
     /* Find a free slot in existing tables */
 
-    table = pInfo->htable;
+    table = lpInfo->htable;
     while (table)
     {
-        WORD count = *(WORD *)(ptr + table);
-        pEntry = (LOCALHANDLEENTRY *)(ptr + table + sizeof(WORD));
-        for (; count > 0; count--, pEntry++)
-            if (pEntry->lock == 0xff) break;
+        WORD count = *(WORD FAR *)(ptr + table);
+        lpEntry = (LPLOCALHANDLEENTRY)(ptr + table + sizeof(WORD));
+        for (; count > 0; count--, lpEntry++)
+            if (lpEntry->lock == 0xff) break;
         if (count) break;
-        table = *(WORD *)pEntry;
+        table = *(WORD FAR *)lpEntry;
     }
 
     if (!table)  /* We need to create a new table */
     {
         if (!LOCAL_NewHTable( ds )) return 0;
 	ptr = MAKELP( ds, 0 );
-	pInfo = LOCAL_GetHeap( ds );
-        pEntry = (LOCALHANDLEENTRY *)(ptr + pInfo->htable + sizeof(WORD));
+	lpInfo = LOCAL_GetHeap( ds );
+        lpEntry = (LPLOCALHANDLEENTRY)(ptr + lpInfo->htable + sizeof(WORD));
     }
 
     /* Now allocate this entry */
 
-    pEntry->lock = 0;
-    pEntry->flags = 0;
+    lpEntry->lock = 0;
+    lpEntry->flags = 0;
 //    TRACE("(%04x): %04x\n", ds, ((char *)pEntry - ptr) );
-    return (HLOCAL)((char *)pEntry - ptr);
+    return (HLOCAL)((char FAR *)lpEntry - ptr);
 }
 
 /***********************************************************************
@@ -767,14 +673,14 @@ static HLOCAL LOCAL_GetNewHandleEntry( HANDLE ds )
  */
 static void LOCAL_GrowArenaUpward( WORD ds, WORD arena, WORD newsize )
 {
-    char far *ptr = MAKELP( ds, 0 );
-    LOCALHEAPINFO *pInfo;
-    LOCALARENA *pArena = ARENA_PTR( ptr, arena );
-    WORD nextArena = pArena->next;
+    LPSTR ptr = MAKELP( ds, 0 );
+    LPLOCALHEAPINFO lpInfo;
+    LPLOCALARENA lpArena = ARENA_PTR( ptr, arena );
+    WORD nextArena = lpArena->next;
 
-    if (!(pInfo = LOCAL_GetHeap( ds ))) return;
+    if (!(lpInfo = LOCAL_GetHeap( ds ))) return;
     LOCAL_RemoveBlock( ptr, nextArena );
-    pInfo->items--;
+    lpInfo->items--;
     LOCAL_ShrinkArena( ds, arena, newsize );
 }
 
@@ -788,10 +694,10 @@ static HLOCAL LOCAL_InternalLock( LPSTR heap, HLOCAL handle )
 
     if (HANDLE_MOVEABLE(handle))
     {
-        LOCALHANDLEENTRY *pEntry = (LOCALHANDLEENTRY *)(heap + handle);
-        if (pEntry->flags == (LMEM_DISCARDED >> 8)) return 0;
-        if (pEntry->lock < 0xfe) pEntry->lock++;
-        handle = pEntry->addr;
+        LPLOCALHANDLEENTRY lpEntry = (LPLOCALHANDLEENTRY)(heap + handle);
+        if (lpEntry->flags == (LMEM_DISCARDED >> 8)) return 0;
+        if (lpEntry->lock < 0xfe) lpEntry->lock++;
+        handle = lpEntry->addr;
     }
 //    TRACE("%04x returning %04x\n", old_handle, handle );
     return handle;
@@ -804,25 +710,25 @@ static HLOCAL LOCAL_InternalLock( LPSTR heap, HLOCAL handle )
  */
 static void LOCAL_FreeHandleEntry( HANDLE ds, HLOCAL handle )
 {
-    char far *ptr = MAKELP( ds, 0 );
-    LOCALHANDLEENTRY *pEntry = (LOCALHANDLEENTRY *)(ptr + handle);
-    LOCALHEAPINFO *pInfo;
-    WORD *pTable;
+    LPSTR ptr = MAKELP( ds, 0 );
+    LPLOCALHANDLEENTRY lpEntry = (LPLOCALHANDLEENTRY)(ptr + handle);
+    LPLOCALHEAPINFO lpInfo;
+    WORD FAR * lpTable;
     WORD table, count, i;
 
-    if (!(pInfo = LOCAL_GetHeap( ds ))) return;
+    if (!(lpInfo = LOCAL_GetHeap( ds ))) return;
 
     /* Find the table where this handle comes from */
 
-    pTable = &pInfo->htable;
-    while (*pTable)
+    lpTable = &lpInfo->htable;
+    while (*lpTable)
     {
-        WORD size = (*(WORD *)(ptr + *pTable)) * sizeof(LOCALHANDLEENTRY);
-        if ((handle >= *pTable + sizeof(WORD)) &&
-            (handle < *pTable + sizeof(WORD) + size)) break;  /* Found it */
-        pTable = (WORD *)(ptr + *pTable + sizeof(WORD) + size);
+        WORD size = (*(WORD FAR *)(ptr + *lpTable)) * sizeof(LOCALHANDLEENTRY);
+        if ((handle >= *lpTable + sizeof(WORD)) &&
+            (handle < *lpTable + sizeof(WORD) + size)) break;  /* Found it */
+        lpTable = (WORD FAR *)(ptr + *lpTable + sizeof(WORD) + size);
     }
-    if (!*pTable)
+    if (!*lpTable)
     {
 //        ERR("Invalid entry %04x\n", handle);
 //        LOCAL_PrintHeap( ds );
@@ -831,20 +737,20 @@ static void LOCAL_FreeHandleEntry( HANDLE ds, HLOCAL handle )
 
     /* Make the entry free */
 
-    pEntry->addr = 0;  /* just in case */
-    pEntry->lock = 0xff;
-    pEntry->flags = 0xff;
+    lpEntry->addr = 0;  /* just in case */
+    lpEntry->lock = 0xff;
+    lpEntry->flags = 0xff;
     /* Now check if all entries in this table are free */
 
-    table = *pTable;
-    pEntry = (LOCALHANDLEENTRY *)(ptr + table + sizeof(WORD));
-    count = *(WORD *)(ptr + table);
-    for (i = count; i > 0; i--, pEntry++) if (pEntry->lock != 0xff) return;
+    table = *lpTable;
+    lpEntry = (LPLOCALHANDLEENTRY)(ptr + table + sizeof(WORD));
+    count = *(WORD FAR *)(ptr + table);
+    for (i = count; i > 0; i--, lpEntry++) if (lpEntry->lock != 0xff) return;
 
     /* Remove the table from the linked list and free it */
 
 //    TRACE("(%04x): freeing table %04x\n", ds, table);
-    *pTable = *(WORD *)pEntry;
+    *lpTable = *(WORD FAR *)lpEntry;
     LOCAL_FreeArena( ds, ARENA_HEADER( table ) );
 }
 
@@ -875,11 +781,11 @@ UINT WINAPI LocalFlags(HLOCAL handle)
  */
 HLOCAL WINAPI LocalHandle( UINT addr )
 {
-    INSTANCEDATA far * ptr = MAKELP(GetDS(), 0 );
-    LOCALHEAPINFO far * pInfo;
+    LPINSTANCEDATA ptr = MAKELP(GetDS(), 0 );
+    LPLOCALHEAPINFO lpInfo;
     WORD table;
 
-    if (!(pInfo = LOCAL_GetHeap(GetDS())))
+    if (!(lpInfo = LOCAL_GetHeap(GetDS())))
     {
 //        ERR("(%04x): Local heap not found\n", ds );
 //	LOCAL_PrintHeap( ds );
@@ -888,14 +794,14 @@ HLOCAL WINAPI LocalHandle( UINT addr )
 
     /* Find the address in the entry tables */
 
-    table = pInfo->htable;
+    table = lpInfo->htable;
     while (table)
     {
-        WORD count = *(WORD *)(ptr + table);
-        LOCALHANDLEENTRY *pEntry = (LOCALHANDLEENTRY*)(ptr+table+sizeof(WORD));
-        for (; count > 0; count--, pEntry++)
-            if (pEntry->addr == addr) return (HLOCAL)((char *)pEntry - (char *)ptr);
-        table = *(WORD *)pEntry;
+        WORD count = *(WORD FAR *)(ptr + table);
+        LPLOCALHANDLEENTRY lpEntry = (LPLOCALHANDLEENTRY)(ptr+table+sizeof(WORD));
+        for (; count > 0; count--, lpEntry++)
+            if (lpEntry->addr == addr) return (HLOCAL)((char FAR *)lpEntry - (char FAR *)ptr);
+        table = *(WORD FAR *)lpEntry;
     }
 
     return (HLOCAL)addr;  /* Fixed block handle is addr */
@@ -906,17 +812,17 @@ HLOCAL WINAPI LocalHandle( UINT addr )
  */
 WORD WINAPI LocalHandleDelta( WORD delta )
 {
-    LOCALHEAPINFO far *pInfo = LOCAL_GetHeap(GetDS());
+    LPLOCALHEAPINFO lpInfo = LOCAL_GetHeap(GetDS());
 
-    if (!pInfo)
+    if (!lpInfo)
     {
 //        ERR("Local heap not found\n");
 //	LOCAL_PrintHeap( CURRENT_DS );
 	return 0;
     }
-    if (delta) pInfo->hdelta = delta;
+    if (delta) lpInfo->hdelta = delta;
 //    TRACE("returning %04x\n", pInfo->hdelta);
-    return pInfo->hdelta;
+    return lpInfo->hdelta;
 }
 
 /***********************************************************************
@@ -924,9 +830,8 @@ WORD WINAPI LocalHandleDelta( WORD delta )
  */
 WORD WINAPI LocalHeapSize(void)
 {
-    INSTANCEDATA far * ptr = MAKELP(GetDS(), 0 );
-    LOCALHEAPINFO far * pInfo = LOCAL_GetHeap(GetDS());
-    return pInfo ? pInfo->last - pInfo->first : 0;
+    LPLOCALHEAPINFO lpInfo = LOCAL_GetHeap(GetDS());
+    return lpInfo ? lpInfo->last - lpInfo->first : 0;
 }
 
 /***********************************************************************
@@ -935,11 +840,11 @@ WORD WINAPI LocalHeapSize(void)
 WORD WINAPI LocalCountFree(void)
 {
     WORD arena, total;
-    LOCALARENA *pArena;
-    INSTANCEDATA far * ptr = MAKELP(GetDS(), 0);
-    LOCALHEAPINFO far *pInfo = LOCAL_GetHeap(GetDS());
+    LPLOCALARENA lpArena;
+    LPINSTANCEDATA ptr = MAKELP(GetDS(), 0);
+    LPLOCALHEAPINFO lpInfo = LOCAL_GetHeap(GetDS());
 
-    if (!(pInfo))
+    if (!(lpInfo))
     {
 //        ERR("(%04x): Local heap not found\n", ds );
 //	LOCAL_PrintHeap( ds );
@@ -947,14 +852,14 @@ WORD WINAPI LocalCountFree(void)
     }
 
     total = 0;
-    arena = pInfo->first;
-    pArena = ARENA_PTR( ptr, arena );
+    arena = lpInfo->first;
+    lpArena = ARENA_PTR( ptr, arena );
     for (;;)
     {
-        arena = pArena->free_next;
-        pArena = ARENA_PTR( ptr, arena );
-	if (arena == pArena->free_next) break;
-        total += pArena->size;
+        arena = lpArena->free_next;
+        lpArena = ARENA_PTR( ptr, arena );
+	if (arena == lpArena->free_next) break;
+        total += lpArena->size;
     }
 //    TRACE("(%04x): returning %d\n", ds, total);
     return total;
@@ -967,8 +872,8 @@ BOOL WINAPI LocalInit(HANDLE selector, UINT start, UINT end)
 {
     LPSTR ptr;
     WORD heapInfoArena, freeArena, lastArena;
-    LOCALHEAPINFO *pHeapInfo;
-    LOCALARENA *pArena, *pFirstArena, *pLastArena;
+    LPLOCALHEAPINFO lpHeapInfo;
+    LPLOCALARENA lpArena, lpFirstArena, lpLastArena;
     BOOL ret = FALSE;
 
       /* The initial layout of the heap is: */
@@ -1004,53 +909,53 @@ BOOL WINAPI LocalInit(HANDLE selector, UINT start, UINT end)
 
       /* Initialise the first arena */
 
-    pFirstArena = ARENA_PTR( ptr, start );
-    pFirstArena->prev      = start | LOCAL_ARENA_FIXED;
-    pFirstArena->next      = heapInfoArena;
-    pFirstArena->size      = LALIGN(sizeof(LOCALARENA));
-    pFirstArena->free_prev = start;  /* this one */
-    pFirstArena->free_next = freeArena;
+    lpFirstArena = ARENA_PTR( ptr, start );
+    lpFirstArena->prev      = start | LOCAL_ARENA_FIXED;
+    lpFirstArena->next      = heapInfoArena;
+    lpFirstArena->size      = LALIGN(sizeof(LOCALARENA));
+    lpFirstArena->free_prev = start;  /* this one */
+    lpFirstArena->free_next = freeArena;
 
       /* Initialise the arena of the heap info structure */
 
-    pArena = ARENA_PTR( ptr, heapInfoArena );
-    pArena->prev = start | LOCAL_ARENA_FIXED;
-    pArena->next = freeArena;
+    lpArena = ARENA_PTR( ptr, heapInfoArena );
+    lpArena->prev = start | LOCAL_ARENA_FIXED;
+    lpArena->next = freeArena;
 
       /* Initialise the heap info structure */
 
-    pHeapInfo = (LOCALHEAPINFO *) (ptr + heapInfoArena + ARENA_HEADER_SIZE );
-    memset( pHeapInfo, 0, sizeof(LOCALHEAPINFO) );
-    pHeapInfo->items   = 4;
-    pHeapInfo->first   = start;
-    pHeapInfo->last    = lastArena;
-    pHeapInfo->htable  = 0;
-    pHeapInfo->hdelta  = 0x20;
-    pHeapInfo->extra   = 0x200;
-    pHeapInfo->minsize = lastArena - freeArena;
-    pHeapInfo->magic   = LOCAL_HEAP_MAGIC;
+    lpHeapInfo = (LPLOCALHEAPINFO) (ptr + heapInfoArena + ARENA_HEADER_SIZE );
+    memset( lpHeapInfo, 0, sizeof(LOCALHEAPINFO) );
+    lpHeapInfo->items   = 4;
+    lpHeapInfo->first   = start;
+    lpHeapInfo->last    = lastArena;
+    lpHeapInfo->htable  = 0;
+    lpHeapInfo->hdelta  = 0x20;
+    lpHeapInfo->extra   = 0x200;
+    lpHeapInfo->minsize = lastArena - freeArena;
+    lpHeapInfo->magic   = LOCAL_HEAP_MAGIC;
 
       /* Initialise the large free block */
 
-    pArena = ARENA_PTR( ptr, freeArena );
-    pArena->prev      = heapInfoArena | LOCAL_ARENA_FREE;
-    pArena->next      = lastArena;
-    pArena->size      = lastArena - freeArena;
-    pArena->free_prev = start;
-    pArena->free_next = lastArena;
+    lpArena = ARENA_PTR( ptr, freeArena );
+    lpArena->prev      = heapInfoArena | LOCAL_ARENA_FREE;
+    lpArena->next      = lastArena;
+    lpArena->size      = lastArena - freeArena;
+    lpArena->free_prev = start;
+    lpArena->free_next = lastArena;
 
       /* Initialise the last block */
 
-    pLastArena = ARENA_PTR( ptr, lastArena );
-    pLastArena->prev      = freeArena | LOCAL_ARENA_FREE;
-    pLastArena->next      = lastArena;  /* this one */
-    pLastArena->size      = LALIGN(sizeof(LOCALARENA));
-    pLastArena->free_prev = freeArena;
-    pLastArena->free_next = lastArena;  /* this one */
+    lpLastArena = ARENA_PTR( ptr, lastArena );
+    lpLastArena->prev      = freeArena | LOCAL_ARENA_FREE;
+    lpLastArena->next      = lastArena;  /* this one */
+    lpLastArena->size      = LALIGN(sizeof(LOCALARENA));
+    lpLastArena->free_prev = freeArena;
+    lpLastArena->free_next = lastArena;  /* this one */
 
       /* Store the local heap address in the instance data */
 
-    ((INSTANCEDATA *)ptr)->heap = heapInfoArena + ARENA_HEADER_SIZE;
+    ((LPINSTANCEDATA)ptr)->heap = heapInfoArena + ARENA_HEADER_SIZE;
 //    LOCAL_PrintHeap( selector );
     ret = TRUE;
 
@@ -1066,14 +971,14 @@ HLOCAL WINAPI LocalAlloc(UINT flags, UINT size)
 {
     HANDLE ds = GetDS();
     HLOCAL handle = 0;
-    char FAR *ptr;
+    LPSTR ptr;
 
 //    TRACE("%04x %d ds=%04x\n", flags, size, ds );
 
     if(size > 0 && size <= 4) size = 5;
     if (flags & LMEM_MOVEABLE)
     {
-	LOCALHANDLEENTRY *plhe;
+	LPLOCALHANDLEENTRY lplhe;
 	HLOCAL hmem;
 
 	if(size)
@@ -1091,18 +996,18 @@ HLOCAL WINAPI LocalAlloc(UINT flags, UINT size)
 	    goto exit;
 	}
 	ptr = MAKELP(ds, 0);
-	plhe = (LOCALHANDLEENTRY *)(ptr + handle);
-	plhe->lock = 0;
+	lplhe = (LPLOCALHANDLEENTRY)(ptr + handle);
+	lplhe->lock = 0;
 	if(hmem)
 	{
-	    plhe->addr = hmem + MOVEABLE_PREFIX;
-	    plhe->flags = (BYTE)((flags & 0x0f00) >> 8);
-	    *(HLOCAL *)(ptr + hmem) = handle;
+	    lplhe->addr = hmem + MOVEABLE_PREFIX;
+	    lplhe->flags = (BYTE)((flags & 0x0f00) >> 8);
+	    *(HLOCAL FAR *)(ptr + hmem) = handle;
 	}
 	else
 	{
-	    plhe->addr = 0;
-	    plhe->flags = LMEM_DISCARDED >> 8;
+	    lplhe->addr = 0;
+	    lplhe->flags = LMEM_DISCARDED >> 8;
         }
     }
     else /* FIXED */
@@ -1121,31 +1026,31 @@ exit:
 HLOCAL WINAPI LocalReAlloc( HLOCAL handle, UINT size, UINT flags )
 {
     HANDLE ds = GetDS();
-    char far *ptr = MAKELP( ds, 0 );
-    LOCALHEAPINFO *pInfo;
-    LOCALARENA *pArena, *pNext;
-    LOCALHANDLEENTRY *pEntry = NULL;
+    LPSTR ptr = MAKELP( ds, 0 );
+    LPLOCALHEAPINFO lpInfo;
+    LPLOCALARENA lpArena, lpNext;
+    LPLOCALHANDLEENTRY lpEntry = NULL;
     WORD arena, oldsize;
     HLOCAL hmem, blockhandle;
     LONG nextarena;
 
     if (!handle) return 0;
     if(HANDLE_MOVEABLE(handle) &&
-     ((LOCALHANDLEENTRY *)(ptr + handle))->lock == 0xff) /* An unused handle */
+     ((LPLOCALHANDLEENTRY)(ptr + handle))->lock == 0xff) /* An unused handle */
 	return 0;
 
 //    TRACE("%04x %d %04x ds=%04x\n", handle, size, flags, ds );
-    if (!(pInfo = LOCAL_GetHeap( ds ))) return 0;
+    if (!(lpInfo = LOCAL_GetHeap( ds ))) return 0;
 
     if (HANDLE_FIXED( handle ))
 	blockhandle = handle;
     else
     {
-	pEntry = (LOCALHANDLEENTRY *) (ptr + handle);
-	if(pEntry->flags == (LMEM_DISCARDED >> 8))
+	lpEntry = (LPLOCALHANDLEENTRY) (ptr + handle);
+	if(lpEntry->flags == (LMEM_DISCARDED >> 8))
         {
 	    HLOCAL hl;
-	    if(pEntry->addr)
+	    if(lpEntry->addr)
             {
 //		WARN("Dicarded block has non-zero addr.\n");
             }
@@ -1154,20 +1059,20 @@ HLOCAL WINAPI LocalReAlloc( HLOCAL handle, UINT size, UINT flags )
 	    if (!(hl = LOCAL_GetBlock( ds, size + MOVEABLE_PREFIX, flags)))
 		return 0;
             ptr = MAKELP( ds, 0 );  /* Reload ptr */
-            pEntry = (LOCALHANDLEENTRY *) (ptr + handle);
-	    pEntry->addr = hl + MOVEABLE_PREFIX;
-            pEntry->flags = 0;
-            pEntry->lock = 0;
-	    *(HLOCAL *)(ptr + hl) = handle;
+            lpEntry = (LPLOCALHANDLEENTRY) (ptr + handle);
+	    lpEntry->addr = hl + MOVEABLE_PREFIX;
+            lpEntry->flags = 0;
+            lpEntry->lock = 0;
+	    *(HLOCAL FAR *)(ptr + hl) = handle;
             return handle;
 	}
-	if (((blockhandle = pEntry->addr - MOVEABLE_PREFIX) & 3) != 0)
+	if (((blockhandle = lpEntry->addr - MOVEABLE_PREFIX) & 3) != 0)
 	{
 //	    ERR("(%04x,%04x): invalid handle\n",
 //                     ds, handle );
 	    return 0;
         }
-	if (*(HLOCAL *)(ptr + blockhandle) != handle) {
+	if (*(HLOCAL FAR *)(ptr + blockhandle) != handle) {
 //	    ERR("Back ptr to handle is invalid\n");
 	    return 0;
         }
@@ -1177,8 +1082,8 @@ HLOCAL WINAPI LocalReAlloc( HLOCAL handle, UINT size, UINT flags )
     {
         if (HANDLE_MOVEABLE(handle))
 	{
-	    pEntry = (LOCALHANDLEENTRY *)(ptr + handle);
-	    pEntry->flags = (flags & 0x0f00) >> 8;
+	    lpEntry = (LPLOCALHANDLEENTRY)(ptr + handle);
+	    lpEntry->flags = (flags & 0x0f00) >> 8;
 //	    TRACE("Changing flags to %x.\n", pEntry->flags);
 	}
 	return handle;
@@ -1195,14 +1100,14 @@ HLOCAL WINAPI LocalReAlloc( HLOCAL handle, UINT size, UINT flags )
             }
 	    else /* Moveable block */
 	    {
-		pEntry = (LOCALHANDLEENTRY *)(ptr + handle);
-		if (pEntry->lock == 0)
+		lpEntry = (LPLOCALHANDLEENTRY)(ptr + handle);
+		if (lpEntry->lock == 0)
 		{
 		    /* discards moveable blocks */
 //                    TRACE("Discarding block\n");
-                    LOCAL_FreeArena(ds, ARENA_HEADER(pEntry->addr - MOVEABLE_PREFIX));
-                    pEntry->addr = 0;
-                    pEntry->flags = (LMEM_DISCARDED >> 8);
+                    LOCAL_FreeArena(ds, ARENA_HEADER(lpEntry->addr - MOVEABLE_PREFIX));
+                    lpEntry->addr = 0;
+                    lpEntry->flags = (LMEM_DISCARDED >> 8);
                     return handle;
 	        }
 	    }
@@ -1210,8 +1115,8 @@ HLOCAL WINAPI LocalReAlloc( HLOCAL handle, UINT size, UINT flags )
         }
         else if(flags == 0)
         {
-            pEntry = (LOCALHANDLEENTRY *)(ptr + handle);
-            if (pEntry->lock == 0)
+            lpEntry = (LPLOCALHANDLEENTRY)(ptr + handle);
+            if (lpEntry->lock == 0)
             {
 		/* Frees block */
 		return LocalFree( handle );
@@ -1222,16 +1127,16 @@ HLOCAL WINAPI LocalReAlloc( HLOCAL handle, UINT size, UINT flags )
 
     arena = ARENA_HEADER( blockhandle );
 //    TRACE("arena is %04x\n", arena );
-    pArena = ARENA_PTR( ptr, arena );
+    lpArena = ARENA_PTR( ptr, arena );
 
     if(size <= 4) size = 5;
     if(HANDLE_MOVEABLE(handle)) size += MOVEABLE_PREFIX;
-    oldsize = pArena->next - arena - ARENA_HEADER_SIZE;
+    oldsize = lpArena->next - arena - ARENA_HEADER_SIZE;
     nextarena = LALIGN(blockhandle + size);
 
       /* Check for size reduction */
 
-    if (nextarena <= pArena->next)
+    if (nextarena <= lpArena->next)
     {
 //	TRACE("size reduction, making new free block\n");
 	LOCAL_ShrinkArena(ds, arena, nextarena - arena);
@@ -1241,16 +1146,16 @@ HLOCAL WINAPI LocalReAlloc( HLOCAL handle, UINT size, UINT flags )
 
       /* Check if the next block is free and large enough */
 
-    pNext = ARENA_PTR( ptr, pArena->next );
-    if (((pNext->prev & 3) == LOCAL_ARENA_FREE) &&
-        (nextarena <= pNext->next))
+    lpNext = ARENA_PTR( ptr, lpArena->next );
+    if (((lpNext->prev & 3) == LOCAL_ARENA_FREE) &&
+        (nextarena <= lpNext->next))
     {
 //	TRACE("size increase, making new free block\n");
         LOCAL_GrowArenaUpward(ds, arena, nextarena - arena);
         if (flags & LMEM_ZEROINIT)
         {
-            char far *oldend = (char far *)pArena + ARENA_HEADER_SIZE + oldsize;
-            char far *newend = ptr + pArena->next;
+            LPSTR oldend = (LPSTR)lpArena + ARENA_HEADER_SIZE + oldsize;
+            LPSTR newend = ptr + lpArena->next;
 //            TRACE("Clearing memory from %p to %p (DS -> %p)\n", oldend, newend, ptr);
             memset(oldend, 0, newend - oldend);
         }
@@ -1271,7 +1176,7 @@ HLOCAL WINAPI LocalReAlloc( HLOCAL handle, UINT size, UINT flags )
         }
 	else
 	{
-	    if(((LOCALHANDLEENTRY *)(ptr + handle))->lock != 0)
+	    if(((LPLOCALHANDLEENTRY)(ptr + handle))->lock != 0)
 	    {
 //		ERR("Needed to move locked block, but LMEM_MOVEABLE not specified.\n");
 		return 0;
@@ -1283,15 +1188,13 @@ HLOCAL WINAPI LocalReAlloc( HLOCAL handle, UINT size, UINT flags )
     ptr = MAKELP( ds, 0 );  /* Reload ptr                             */
     if(HANDLE_MOVEABLE(handle))         /* LOCAL_GetBlock might have triggered    */
     {                                   /* a compaction, which might in turn have */
-      blockhandle = pEntry->addr - MOVEABLE_PREFIX; /* moved the very block we are resizing */
+      blockhandle = lpEntry->addr - MOVEABLE_PREFIX; /* moved the very block we are resizing */
       arena = ARENA_HEADER( blockhandle );   /* thus, we reload arena, too        */
     }
     if (!hmem)
     {
-// @todo We have no Heap* functions. Use Global Heap for temporary buffer?
-#if 0
         /* Remove the block from the heap and try again */
-        LPSTR buffer = HeapAlloc( GetProcessHeap(), 0, oldsize );
+        LPSTR buffer = GlobalAllocPtr(GPTR, oldsize);
         if (!buffer) return 0;
         memcpy( buffer, ptr + arena + ARENA_HEADER_SIZE, oldsize );
         LOCAL_FreeArena( ds, arena );
@@ -1300,15 +1203,14 @@ HLOCAL WINAPI LocalReAlloc( HLOCAL handle, UINT size, UINT flags )
             if (!(hmem = LOCAL_GetBlock( ds, oldsize, flags )))
             {
 //                ERR("Can't restore saved block\n" );
-                HeapFree( GetProcessHeap(), 0, buffer );
+                GlobalFreePtr(buffer);
                 return 0;
             }
             size = oldsize;
         }
         ptr = MAKELP( ds, 0 );  /* Reload ptr */
         memcpy( ptr + hmem, buffer, oldsize );
-        HeapFree( GetProcessHeap(), 0, buffer );
-#endif
+        GlobalFreePtr(buffer );
     }
     else
     {
@@ -1318,10 +1220,10 @@ HLOCAL WINAPI LocalReAlloc( HLOCAL handle, UINT size, UINT flags )
     if (HANDLE_MOVEABLE( handle ))
     {
 	//TRACE("fixing handle\n");
-        pEntry = (LOCALHANDLEENTRY *)(ptr + handle);
-        pEntry->addr = hmem + MOVEABLE_PREFIX;
+        lpEntry = (LPLOCALHANDLEENTRY)(ptr + handle);
+        lpEntry->addr = hmem + MOVEABLE_PREFIX;
 	/* Back ptr should still be correct */
-	if(*(HLOCAL *)(ptr + hmem) != handle)
+	if(*(HLOCAL FAR *)(ptr + hmem) != handle)
         {
 //	    ERR("back ptr is invalid.\n");
         }
@@ -1347,21 +1249,21 @@ UINT WINAPI LocalCompact( UINT minfree )
 UINT WINAPI LocalSize( HLOCAL handle )
 {
     LPSTR ptr = MAKELP( GetDS(), 0 );
-    LOCALARENA *pArena;
+    LPLOCALARENA lpArena;
 
 //    TRACE("%04x ds=%04x\n", handle, ds );
 
     if (!handle) return 0;
     if (HANDLE_MOVEABLE( handle ))
     {
-        handle = *(WORD *)(ptr + handle);
+        handle = *(WORD FAR *)(ptr + handle);
         if (!handle) return 0;
-        pArena = ARENA_PTR( ptr, ARENA_HEADER(handle - MOVEABLE_PREFIX) );
+        lpArena = ARENA_PTR( ptr, ARENA_HEADER(handle - MOVEABLE_PREFIX) );
     }
     else
-        pArena = ARENA_PTR( ptr, ARENA_HEADER(handle) );
+        lpArena = ARENA_PTR( ptr, ARENA_HEADER(handle) );
 
-    return pArena->next - handle;
+    return lpArena->next - handle;
 }
 
 
@@ -1382,16 +1284,16 @@ char NEAR * WINAPI LocalLock( HLOCAL handle )
 BOOL WINAPI LocalUnlock( HLOCAL handle )
 {
     HANDLE ds = GetDS();
-    char far *ptr = MAKELP( ds, 0 );
+    LPSTR ptr = MAKELP( ds, 0 );
 
 //    TRACE("%04x\n", handle );
     if (HANDLE_MOVEABLE(handle))
     {
-        LOCALHANDLEENTRY *pEntry = (LOCALHANDLEENTRY *)(ptr + handle);
-        if (!pEntry->lock || (pEntry->lock == 0xff)) return FALSE;
+        LPLOCALHANDLEENTRY lpEntry = (LPLOCALHANDLEENTRY)(ptr + handle);
+        if (!lpEntry->lock || (lpEntry->lock == 0xff)) return FALSE;
         /* For moveable block, return the new lock count */
         /* (see _Windows_Internals_ p. 197) */
-        return --pEntry->lock;
+        return --lpEntry->lock;
     }
     else return FALSE;
 }
@@ -1401,7 +1303,7 @@ BOOL WINAPI LocalUnlock( HLOCAL handle )
  *
  * Installs a callback function that is called for local memory events
  * Callback function prototype is
- * BOOL16 NotifyFunc(WORD wMsg, HLOCAL16 hMem, WORD wArg)
+ * BOOL NotifyFunc(WORD wMsg, HLOCAL hMem, WORD wArg)
  * wMsg:
  * - LN_OUTOFMEM
  *   NotifyFunc seems to be responsible for allocating some memory,
@@ -1416,11 +1318,11 @@ BOOL WINAPI LocalUnlock( HLOCAL handle )
  */
 FARPROC WINAPI LocalNotify( FARPROC func )
 {
-    LOCALHEAPINFO *pInfo;
+    LPLOCALHEAPINFO lpInfo;
     FARPROC oldNotify;
     HANDLE ds = GetDS();
 
-    if (!(pInfo = LOCAL_GetHeap( ds )))
+    if (!(lpInfo = LOCAL_GetHeap( ds )))
     {
 //        ERR("(%04x): Local heap not found\n", ds );
 //	LOCAL_PrintHeap( ds );
@@ -1428,8 +1330,8 @@ FARPROC WINAPI LocalNotify( FARPROC func )
     }
 //    TRACE("(%04x): %p\n", ds, func );
 //    FIXME("Half implemented\n");
-    oldNotify = pInfo->notify;
-    pInfo->notify = func;
+    oldNotify = lpInfo->notify;
+    lpInfo->notify = func;
     return oldNotify;
 }
 
@@ -1455,11 +1357,11 @@ HLOCAL WINAPI LocalFree( HLOCAL handle )
     }
     else
     {
-        LOCALHANDLEENTRY *pEntry = (LOCALHANDLEENTRY *)(ptr + handle);
-        if (pEntry->flags != (LMEM_DISCARDED >> 8))
+        LPLOCALHANDLEENTRY lpEntry = (LPLOCALHANDLEENTRY)(ptr + handle);
+        if (lpEntry->flags != (LMEM_DISCARDED >> 8))
         {
     //        TRACE("real block at %04x\n", pEntry->addr );
-            if (LOCAL_FreeArena( ds, ARENA_HEADER(pEntry->addr - MOVEABLE_PREFIX) ))
+            if (LOCAL_FreeArena( ds, ARENA_HEADER(lpEntry->addr - MOVEABLE_PREFIX) ))
                 return handle; /* couldn't free it */
         }
         LOCAL_FreeHandleEntry( ds, handle );

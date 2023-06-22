@@ -29,10 +29,7 @@ externdef	TH_TOPPDB:word
 
 _DATA ends
 
-_ITEXT segment word public 'DATA'	;use 'DATA' (OPTLINK bug)
-_ITEXT ends
-
-DGROUP group _TEXT,CCONST,_DATA,_ITEXT
+DGROUP group _TEXT,CCONST,_DATA
 
 	assume CS:DGROUP
 	assume DS:DGROUP
@@ -77,25 +74,10 @@ restorememstrat proc
 	ret
 restorememstrat endp
 
-;wDPMIFlg	dw ?			;DPMI init call CX flags (CL=CPU[2,3,4],CH=??)
-;wDPMIVer	dw ?			;DPMI init call DX Flags (DPMI version)
-
 ;*** SwitchToPMode
-;--- returns C on errors, bx->error msg 
 
 SwitchToPMode proc
 	call changememstrat
-
-	@trace_s <lf,"------------------------------------",lf>
-	@trace_s <"KERNEL now in real mode, PDB=">
-	@trace_w es
-	@trace_s <",CS=">
-	@trace_w cs
-	@trace_s <",SS=">
-	@trace_w ss
-	@trace_s <",DS=">
-	@trace_w ds
-	@trace_s <lf>
 
 	push cs				; Set data segment to code segment
 	pop ds
@@ -108,17 +90,6 @@ SwitchToPMode proc
 if 1;?USE1PSP
 	mov [wCurPSP],es
 endif
-	@trace_s <lf,"------------------------------------",lf>
-	@trace_s <"KERNEL now in protected mode, PDB=">
-	@trace_w es
-	@trace_s <",CS=">
-	@trace_w cs
-	@trace_s <",SS=">
-	@trace_w ss
-	@trace_s <",DS=">
-	@trace_w ds
-	@trace_s <lf>
-
 	ret
 SwitchToPMode endp
 

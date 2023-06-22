@@ -1,4 +1,4 @@
-#include <win16.h>
+#include <windows.h>
 
 void WINAPI EnableDOS(void)
 {

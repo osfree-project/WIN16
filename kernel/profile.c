@@ -21,9 +21,9 @@
  */
 
 #include <i86.h>
-#include <win16.h>
+#include <windows.h>
 
-int atoi(char *h);
+#include <win_private.h>
 
 /***********************************************************************
  *           GetProfileInt   (KERNEL.57)

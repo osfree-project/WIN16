@@ -9,14 +9,12 @@ CCONST	segment word @use16 public 'CODE'
 CCONST	ends
 _DATA	segment word @use16 public 'DATA'
 _DATA	ends
-_ITEXT	segment word @use16 public 'DATA'	;use 'DATA' (OPTLINK bug)
-_ITEXT	ends
 _BSS	segment word @use16 public 'BSS'
 _BSS	ends
 STACK	segment para @use16 stack  'STACK'
 STACK	ends
 
-DGROUP	group _TEXT,CCONST,_DATA,_ITEXT,_BSS,STACK
+DGROUP	group _TEXT,CCONST,_DATA,_BSS,STACK
 
 	assume CS:DGROUP
 	assume DS:DGROUP
@@ -28,13 +26,6 @@ DGROUP	group _TEXT,CCONST,_DATA,_ITEXT,_BSS,STACK
 
 ?MULTPSP		= 1		;1, create a PSP for every task
 
-?LFNNT			= 0
-ifndef ?LFN
-?LFN            = 1     ;1, 1=support LFN
-  if ?32BIT
-?LFNNT          = 0
-  endif
-endif
 
 ifndef _FILEHANDLES_
 _FILEHANDLES_	= 20	;20 initial no of file handles for a task
@@ -42,7 +33,6 @@ endif
 ?INT24RES		= 1		;1, restore int 24 when task exits
 ?INT23RES		= 1		;1, restore int 23
 ?INT41SUPPORT	= 1		;1, support Int 41h debugging messages
-?SUPAPPTITLE	= 1		;1, support for "application title" (win9x only, in rm!)
 ?SETDTA			= 1		;1, 1=for ?MULTPSP: init DTA to PSP:80 on start
 ?ZEROHIWORDEBP  = 1		;1, 1=if ?32BIT clear hiword(ebp) before 16-bit proc is called.
                         ;   this is essentially for ENTER/LEAVE instructions!
@@ -54,21 +44,14 @@ endif
 if ?32BIT                        
 ?DOS4G			= 1		;1, 1=support DOS4G                        
 ?DOS4GMEM		= 0		;0, 1=support DOS4G data segment in GS
-?LOCALHEAP	 	= 1		;0, 1=implement local heap as in windows
 else
 ?DOS4G			= 0
-?LOCALHEAP	 	= 1		;1, 1=implement local heap as in windows
 endif
 
 
 
-if ?LFN
-?MAXPATH	equ 260
-?MAXNAME	equ 255
-else
 ?MAXPATH	equ 65
 ?MAXNAME	equ 13		;8+3 + dot + terminating 0
-endif
 
 if ?DEBUG
 _TRACE_ 		= 1
@@ -84,34 +67,14 @@ ENVFL_BREAKATENTRY  equ 01h	;debug break at program entry
 ENVFL_DONTLOADHIGH  equ 02h	;dont move in extended memory
 ENVFL_DISABLENE32   equ 04h	;disable support for loading NE32 apps
 ENVFL_LOAD1APPONLY  equ 08h	;disable loader after first pm app has started
-ENVFL_DONTPROTECT   equ 10h	;16   dont protect r/o sections
-ENVFL_DONTUSEDPMI1  equ 20h	;32   dont use any DPMI 1.0 functions
 ENVFL_IGNNOOPENERR	equ 40h	;64   ignore SEM_NOOPENFILEERRORBOX flag
-ENVFL_IGNUNRESIMP	equ 80h	;128  ignore unresolved imports (PE only)
 ENVFL2_LOADDBGOUT	equ 01h	;256  try to load debugout.dll /debugo32.dll
-;ENVFL2_IGN214B92	equ 02h	;512  ignore int 21h, ax=4b92h requests (module list)
-ENVFL2_USEPREFADDR  equ 04h	;1024 load PE dlls at their prefered load address
-ENVFL2_EXPANDDOWN   equ 08h	;2048 alloc flat DS as expand down
-ENVFL2_128KBSTACK	equ 10h	;4096 restrict stack to 128 kB
-ENVFL2_ALLOWGUI  	equ 20h	;8192 allow GUI apps to be loaded in win dos boxes
-ENVFL2_EARLYGUIHLP  equ 40h	;16384 load hxguihlp before dll initialisation
 
 ;--- fMode flags
 
-FMODE_OVERLAY	equ 01h	;bit 0: 1=loader loaded as overlay
 FMODE_DISABLED	equ 02h	;bit 1: 1=loader is disabled
 FMODE_DOSEMU	equ 04h	;bit 2: 1=running on DOSEMU
-FMODE_ISNT		equ 08h	;bit 3: 1=running on NT/2K/XP
-FMODE_ISWIN9X	equ 10h	;bit 4: 1=running on WIN9X
 FMODE_NOERRDISP	equ 20h	;bit 5: 1=temporarily suppress dpmi error messages
-if ?LFN
-FMODE_LFN       equ 40h ;bit 6: 1=LFN supported
-endif
-;FMODE_DEBUGGER equ 80h	;bit 7: 1=debugger is present
-
-;--- fCmdLOpt flags
-
-FO_GUI    		equ 1	;-g cmdline switch
 
 ;*** exits:
 ;*** 4CFB: error in loader Init (real mode)
@@ -141,7 +104,6 @@ externdef	TH_CURTDB:word
 externdef	wLastRC:word
 externdef	bEnvFlgs:byte
 externdef	bEnvFlgs2:byte
-externdef	fCmdLOpt:byte
 externdef	wEnvFlgs:word
 externdef	wErrMode:word
 externdef	szPath:byte
@@ -150,7 +112,6 @@ externdef	fMode:byte
 externdef	TH_TOPPDB:word
 externdef	wCurPSP:word
 externdef	fLoadMod:byte
-externdef	wEquip:word
 if ?32BIT
 externdef	dStktop:dword
 else
@@ -171,7 +132,6 @@ Segment2Module	proto near
 SearchModule16	proto near
 ;GetModuleHandle proto far pascal :far ptr byte
 GetModuleHandle16 proto near
-SetAppTitle		proto near
 _SetErrorMode	proto near
 SetCmdLine		proto near
 _mycrout		proto near

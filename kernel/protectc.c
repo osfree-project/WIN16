@@ -1,12 +1,13 @@
-#include <win16.h>
+#include <windows.h>
 #include <dpmi.h>
-extern void _cdecl printf (const char *format,...);
+
+#include "win_private.h"
 
 void WINAPI Copyright()
 {
 	printf("\n\rosFree Windows Kernel version 0.1\n\r" 
-		   "Copyright (C) 2022 osFree=n\r"
-		   "Based on HX DPMI loader, WINE and TWIN\n\r"
+		   "Copyright (C) 2022-23 osFree\n\r"
+		   "Based on HX DPMI loader, Wine and TWIN\n\r"
 		   "Copyright (C) 1993-2022 Japheth\n\r"
 		   "Copyright (C) 1993-2022 the Wine project authors\n\r"
 		   "Copyright (C) 1997 Willows Software, Inc.\n\r"

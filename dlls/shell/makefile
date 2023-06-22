@@ -21,6 +21,7 @@ EXPORTS = &
 	ShellExecute	.20, &
 	FindExecutable	.21, &
 	ShellAbout	.22, &
+	ABOUTDLGPROC.33=ShellAboutHandler, &
 	ExtractIcon	.34, &
 	DOENVIRONMENTSUBST.37, &
 	FINDENVIRONMENTSTRING.38, &
@@ -31,7 +32,6 @@ EXPORTS = &
 #	DragQueryFile   .11, &
 #	DragFinish      .12, &
 #	DragQueryPoint  .13, &
-#	ABOUTDLGPROC.33, &
 #	ExtractAssociatedIcon	.36, &
 #	INTERNALEXTRACTICON.39, &
 #	EXTRACTICONEX.40, &

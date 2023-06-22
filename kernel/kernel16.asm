@@ -23,12 +23,12 @@ else
 ?LARGEALLOC	equ 1	;1=allow more than 1 MB with GlobalAlloc/Realloc/Free
 endif
 
-public eWinFlags
+public pascal eWinFlags
 public GetExePtr
 public GetProcAddress
 public GetModuleHandle
 public Dos3Call
-;public __AHINCR
+externdef pascal SetWinFlags: far
 ;public __AHSHIFT
 
 externdef pascal _lopen:far
@@ -50,7 +50,7 @@ externdef pascal SetResourceHandler:far
 externdef pascal DirectResAlloc:far
 
 ; Task related functions
-externdef pascal GetCurrentPDB:far
+externdef pascal GetCurrentPDBReal:far
 externdef pascal GetCurrentTask:far
 externdef pascal GetDOSEnvironment:far
 externdef pascal InitTask:far
@@ -123,6 +123,8 @@ externdef pascal GlobalUnWire: far
 externdef pascal GlobalNotify: far
 externdef pascal LimitEMSPages: far
 externdef pascal A20Proc: far
+externdef pascal UnlockSegment: far
+externdef pascal LockSegment: far
 
 externdef pascal GetFreeSpace: far
 externdef pascal GetFreeMemInfo: far
@@ -194,6 +196,12 @@ externdef pascal FreeProcInstance: far
 
 externdef pascal KbdRst: far
 
+; LastError variable
+externdef pascal GetLastError: far
+externdef pascal SetLastError: far
+
+externdef pascal GetWinFlags: far
+
 	include ascii.inc
 	include fixups.inc
 	include debug.inc
@@ -201,7 +209,7 @@ externdef pascal KbdRst: far
 	include version.inc
 	include pusha.inc
 
-DGROUP group _TEXT,CCONST,_DATA,_ITEXT
+DGROUP group _TEXT,CCONST,_DATA
 
 	assume CS:DGROUP
 	assume DS:DGROUP
@@ -216,15 +224,6 @@ endif
 _TEXT segment
 
 
-UnlockSegment proc far pascal uSegment:word
-UnlockSegment endp
-
-LockSegment proc far pascal uSegment:word
-
-	mov ax,uSegment
-	ret
-
-LockSegment endp
 
 IsTaskLocked proc far pascal
 	xor ax,ax
@@ -260,11 +259,6 @@ GetVersion endp
 WaitEvent proc far pascal hTask:word
 	ret
 WaitEvent endp
-
-GetWinFlags proc far pascal
-	mov ax,cs:[eWinFlags.wOfs]
-	ret
-GetWinFlags endp
 
 GetExePtr proc far pascal
 	pop cx
@@ -437,40 +431,6 @@ GetProcAddress proc far pascal uses ds hInst:word, lpszProcName:far ptr byte
 GetProcAddress endp
 
 
-_TEXT ends
-
-_ITEXT segment
-
-SetWinFlags proc
-	@DPMI_GETVERSION			;get CPU
-	mov ah,byte ptr [wEquip]
-	and ah,2				;FPU?
-	shl ah,1
-	mov al,1
-	dec cl
-	cmp cl,3
-	jbe @F
-	mov cl,3
-@@:
-	shl al,cl				;processor (2=286,4=386,8=486)
-	or al,WF_PMODE or WF_STANDARD		;@todo depends on compilation mode
-	mov [eWinFlags.wOfs],ax
-	ret
-SetWinFlags endp
-
-if 0
-SetProcAddress:
-	push bx				 ;offset of procedure
-	call GetProcAddr16	 ;search entry AX in module ES
-	mov bx,cx
-	pop ax
-	jc @F
-	mov es:[bx].ENTRY.wOfs,ax
-	clc
-@@:
-	ret
-endif
-
 segments label word
 ife ?32BIT
 	dw eA000, 0A000h
@@ -493,8 +453,6 @@ InitKernel_ proc public
 	mov KernelNE.ne_restab, KernelNames - KernelNE
 	mov KernelSeg.wSel, cs
 
-	call SetWinFlags
-
 if SIZESEGS
 	mov si,offset segments
 	mov cx,SIZESEGS
@@ -513,7 +471,7 @@ endif
 
 	@DPMI_GetIncValue	   ;get AHINC value
 	jc @F
-	mov [eINCR.wOfs],ax
+	mov [__AHINCR],ax
 @@:
 
 if ?MEMFORKERNEL
@@ -559,7 +517,7 @@ exit:
 	ret
 InitKernel_ endp
 
-_ITEXT ends
+_TEXT ends
 
 
 _DATA segment
@@ -611,7 +569,7 @@ KernelEntries label byte
 	ENTRY <1,SetTaskQueue>		;34
 	ENTRY <1,GetTaskQueue>		;35
 	ENTRY <1,GetCurrentTask>	;36
-	ENTRY <1,GetCurrentPDB>		;37
+	ENTRY <1,GetCurrentPDBReal>	;37
 	ENTRY <1,SetTaskSignalProc>	;38
 	db 2,0				;39-40
 	db 2,1
@@ -691,6 +649,9 @@ KernelEntries label byte
 	db 2,-2
 eSHIFT	ENTRY <1,3>				;113 _AHSHIFT
 eINCR	ENTRY <1,8>				;114 _AHINCR
+public __AHINCR
+;__AHINCR equ 8
+__AHINCR equ eINCR.wOfs
 	db 1,1
 	ENTRY <1,OutputDebugString>	;115
 	db 1,0						;116
@@ -720,7 +681,14 @@ eINCR	ENTRY <1,8>				;114 _AHINCR
 	db 1,1
 	ENTRY <1,FatalAppExit>		;137
 	ENTRY <1,GetHeapSpaces>		;138
-	db 11,0				;139-149
+	db 8,0				;139-146
+
+	db 2,1
+	ENTRY <1, SetLastError>	;147
+	ENTRY <1, GetLastError>	;148
+
+	db 1,0				;149
+
 	db 1,1
 	ENTRY <1, DirectedYield>	;150
 	db 1,0				;151
@@ -946,6 +914,8 @@ KernelNames label byte
 	NENAME "GETSYSTEMDIRECTORY"            ,135
 	NENAME "FATALAPPEXIT"     , 137
 	NENAME "GETHEAPSPACES",138
+	NENAME "SETLASTERROR", 147
+	NENAME "GETLASTERROR", 148
 	NENAME "DIRECTEDYIELD", 150
 	NENAME "GETNUMTASKS", 152
 	NENAME "GLOBALNOTIFY", 154

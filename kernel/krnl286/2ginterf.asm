@@ -18,7 +18,7 @@ endif
 
 externdef pascal _hmemset:far
 externdef discardmem:near
-externdef eWinFlags:near
+externdef pascal eWinFlags:near
 externdef TH_HGLOBALHEAP:word
 externdef TH_PGLOBALHEAP:word
 
@@ -199,8 +199,6 @@ else
 	push ax
 
 ;--- _hmemset(FAR16 dst, WORD value, DWORD cnt), requires __AHINCR
-public __AHINCR
-__AHINCR equ 8
 
 	push ax		;selector
 	push 0		;offset

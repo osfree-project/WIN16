@@ -136,6 +136,9 @@ EXPORTS
     DOSIGNAL                       @139
     SETSIGHANDLER                  @140
     INITTASK1                      @141
+    INITTASK1                      @141
+    SETLASTERROR                   @147 +
+    GETLASTERROR                   @148 +
     DIRECTEDYIELD                  @150	+
     WINOLDAPCALL                   @151
     GETNUMTASKS                    @152	+
