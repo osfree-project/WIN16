@@ -28,12 +28,16 @@ strt:
 ;			jmp	near ptr Done
 Done:			@SetMode [CurrentVideoMode]
 			retf
+
 CurrentVideoMode	db	?
+
 ;--------------------------------------------------------
 ; All bellow code will be deleted after return from Init
 ;--------------------------------------------------------
 DeadSpace:		
-if			not GRAPH
+if			GRAPH
+ErrorMsg		db 'Error loading LOGO.BMP', 13, 10,'$'
+else
 Hello			db	10,13,10,13
 			db	"                             ,.=:^!^!t3Z3z.,             ",10,13
 			db	"                            :tt:::tt333EE3               ",10,13
@@ -75,50 +79,36 @@ Init:			push	ds
 			push	cs
 			pop	ds
 			@GetMode
-		        mov     [CurrentVideoMode],al
+			mov	[CurrentVideoMode], al
 if			GRAPH
-			@SetMode 13h		;  13h 40x25 320x200 256 colors VGA 1
+			; Open file
 
-    ; Process BMP file
-    call OpenFile
-    call ReadHeader
-    call ReadPalette
-    call CopyPal
-    call CopyBitmap
-    call CloseFile
-    jmp skip
+			@OpenFil offset filename, 0
+			jc openerror
+			mov [filehandle], ax
+
+			; Process BMP file
+			call	ReadHeader
+			call	ReadPalette
+			@SetMode 13h		; 13h 40x25 320x200 256 colors VGA
+			call	CopyPal
+			call	CopyBitmap
+			call	CloseFile
+			jmp	skip
+
+			openerror:
+			@DispStr offset ErrorMsg
+			jmp	skip
 
 filename db 'logo.bmp',0
 filehandle dw ?
 Header db 54 dup (0)
 Palette db 256*4 dup (0)
 ScrLine db 320 dup (0)
-ErrorMsg db 'Error', 13, 10,'$'
 
 CloseFile:
-  mov  ah, 3Eh
-  mov  bx, [filehandle]
-  int  21h
+  @ClosFil [filehandle]
   ret
-
-OpenFile:
-
-    ; Open file
-
-    mov ah, 3Dh
-    xor al, al
-    mov dx, offset filename
-    int 21h
-
-    jc openerror
-    mov [filehandle], ax
-    ret
-
-    openerror:
-    mov dx, offset ErrorMsg
-    mov ah, 9h
-    int 21h
-    ret
 
 ReadHeader:
 
@@ -247,27 +237,6 @@ CopyBitmap:
 
 skip:
 
-			if 0
-                        push DS
-                        mov  ax, 0A000H ;SegA000      { Screen segment }
-			mov es,ax
-                        mov  ax,320
-			mov bx,0
-                        mul  bx;y
-                        add  ax,0;x
-                        mov  bx,ax           ;{ Address calculation, store the result in BX }
-                        cld
-                        mov  si, apple
-                        mov  dx,106;12;height
-ll0:
-                        mov  cx,118;12;width
-                        mov  di,bx           ;{ show one line from the source data }
-                        rep  movsb
-                        add  bx,320          ;{ address for the next line }
-                        dec  dx
-                        jnz  ll0             ;{ draw all lines }
-                        pop  DS
-			endif
 else
 			@SetMode 3
 			@DispStr Hello
