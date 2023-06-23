@@ -5,3 +5,5 @@ Success result of CGA.LGO (on image) and EGAMONO.LGO from Windows 1.01.
 And win100.bin executed sucessfully. On exit it freeze.
 
 ![This is an image](https://github.com/osfree-project/WIN16/blob/master/win/win100.png)
+
+![This is an image](https://github.com/osfree-project/WIN16/blob/master/win/boot.png)
