@@ -6,4 +6,14 @@ And win100.bin executed sucessfully. On exit it freeze.
 
 ![This is an image](https://github.com/osfree-project/WIN16/blob/master/win/win100.png)
 
+Boot in trace mode
+
 ![This is an image](https://github.com/osfree-project/WIN16/blob/master/win/boot.png)
+
+Boot with our LOGO.LGO
+
+![This is an image](https://github.com/osfree-project/WIN16/blob/master/win/logo.png)
+
+And krnl386.exe executed sucessfully.
+
+![This is an image](https://github.com/osfree-project/WIN16/blob/master/win/win31.png)
