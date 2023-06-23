@@ -83,11 +83,15 @@ szTraceSearchKernel286 db 'Search KRNL286.EXE', 0dh, 0ah, '$'
 szTraceSearchKernel386 db 'Search KRNL386.EXE', 0dh, 0ah, '$'
 szTraceSearchDOSX db 'Search DOSX.EXE', 0dh, 0ah, '$'
 szTraceExecDOSX db 'Execute DOSX.EXE', 0dh, 0ah, '$'
+szTraceExecKernel db 'Execute KERNEL.EXE', 0dh, 0ah, '$'
 szTraceSearchWIN386 db 'Search WIN386.EXE', 0dh, 0ah, '$'
 szTraceExecWIN386 db 'Execute WIN386.EXE', 0dh, 0ah, '$'
 szTraceDetectCPU db 'Detect CPU', 0dh, 0ah, '$'
 szTrace286CPU db '80286 or higher CPU detected', 0dh, 0ah, '$'
 szTrace386CPU db '80386 or higher CPU detected', 0dh, 0ah, '$'
+szTraceRealMode db 'Real Mode selected', 0dh, 0ah, '$'
+szTraceStandardMode db 'Standard Mode selected', 0dh, 0ah, '$'
+szTraceEnhancedMode db 'Enhanced Mode selected', 0dh, 0ah, '$'
 
 skip:
 else
@@ -160,6 +164,10 @@ endif
 	@GetFirst szWIN386		; Find first file entry
 	jc	StandardMode		; No Win386.exe, so only standard mode
 
+if TRACE
+	@DispStr offset szTraceEnhancedMode
+endif
+
 ; load and execute WIN386.EXE
 if TRACE
 	@DispStr offset szTraceExecWIN386
@@ -193,6 +201,10 @@ endif
 	@GetFirst szDOSX		; Find first file entry
 	jc	NoDOSX
 
+if TRACE
+	@DispStr offset szTraceStandardMode
+endif
+
 ; load and execute DOSX.EXE
 if TRACE
 	@DispStr offset szTraceExecDOSX
@@ -218,6 +230,15 @@ endif
 
 	@GetFirst szKernel		; Find first file entry
 	jc	NoKernel
+
+if TRACE
+	@DispStr offset szTraceEnhancedMode
+endif
+
+; load and execute KERNEL.EXE
+if TRACE
+	@DispStr offset szTraceExecKernel
+endif
 
 KernelFound:
 ; load and execute KERNEL.EXE
