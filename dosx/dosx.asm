@@ -51,12 +51,15 @@ SIZPATH equ $ - szPath
 svrname db "HDPMI16.EXE",0
 SIZSVRNAME equ $ - svrname
 prg     db "SYSTEM\KRNL286.EXE",0
+prg3     db "SYSTEM\KRNL386.EXE",0
 szErr1	db "cannot launch SYSTEM\KRNL286.EXE",13,10,'$'
+szErr13	db "cannot launch SYSTEM\KRNL286.EXE",13,10,'$'
 szErr2	db "HDPMI16.EXE not found",13,10,'$'
 
 		.data?
 
 szSvr	db 128 dup (?)
+fCPU	db ?
 
 		.CODE
 
@@ -244,6 +247,7 @@ if ?XMSHOOK
 endif
 ;--------------------- load HDPMI (is a tsr) if no dpmi server present
 		@DPMI_SwitchEntry
+		mov [fCPU], cl
 		and ax,ax
 		jz @F
 		call SearchPath
@@ -310,12 +314,27 @@ endif
 
 ;--------------------- now call KRNL386
 
+		cmp [fCPU], 3		; 3 and higher - 386+
+		jae KRNL386
+
+		; Execute KRNL286.EXE
 		mov bx,offset parmb
 		push ds
 		pop es
 		@Exec prg
 		jnc @F
 		@DispStr szErr1
+
+		jmp done
+
+KRNL386:
+		; Execute KRNL386.EXE
+		mov bx,offset parmb
+		push ds
+		pop es
+		@Exec prg3
+		jnc @F
+		@DispStr szErr13
 @@:
 done:
 if ?XMSHOOK
