@@ -68,6 +68,7 @@ SWITCHES_SUPPORT	equ 5			; Full Windows 3.11 switches support
 endif
 
 code segment
+	align 1
 	org 100h
 
 ;.COM-format executables begin running with the following register values:
@@ -82,9 +83,13 @@ main:
 	lea	sp, stackstart
 
 	; Prepare execution block
-	mov	seg1s, cs
-	mov	seg2s, cs
-	mov	seg3s, cs
+	mov	[seg1s], es
+	mov	[seg2s], es
+	mov	[seg3s], es
+
+	mov	[seg1], es
+	mov	[seg2], es
+	mov	[seg3], es
 
 	mov	ax, cs
 	mov	ds, ax
@@ -138,11 +143,11 @@ skip:
 
 if WINVER eq 300
 
-	cmp	opReal, 1
+	cmp	[opReal], 1
 	jz	RealModeKernel
-	cmp	opStandard, 1
+	cmp	[opStandard], 1
 	jz	StandardMode
-	cmp	opEnhanced, 1
+	cmp	[opEnhanced], 1
 	jz	EnhancedMode
 
 	@Trace	szTraceDetectCPU
@@ -211,6 +216,19 @@ StandardMode:
 ; load and execute DOSX.EXE
 	@Trace	szTraceExecDOSX
 
+	if 0
+	push	cs
+	pop	es
+	mov	[tmpSS], ss
+	mov	[tmpSP], sp
+	@Exec	szDSWAP, exeparams2		; Execute program
+	push	cs
+	pop	ds
+	mov	ss, [tmpSS]
+	mov	sp, [tmpSP]
+	jc	ExecErr
+	endif
+
 	push	cs
 	pop	es
 	mov	[tmpSS], ss
@@ -221,6 +239,7 @@ StandardMode:
 	mov	ss, [tmpSS]
 	mov	sp, [tmpSP]
 	jc	ExecErr
+
 	jmp	Exit
 RealModeKernel:
 endif
@@ -241,12 +260,12 @@ KernelFound:
 	push	cs
 	pop	es
 	mov	[tmpSS], ss
-	mov     [tmpSP], sp
+	mov	[tmpSP], sp
 	@Exec	szKernel, exeparams		; Execute program
 	push	cs
 	pop	ds
 	mov	ss, [tmpSS]
-	mov     sp, [tmpSP]
+	mov	sp, [tmpSP]
 	jc	ExecErr
 
 ;
@@ -266,7 +285,7 @@ ShowLogo:
 
 ; Execute LOGO entry at DX
 CallLogo:
-	push	ds                      ; Store our data segment
+	push	ds			; Store our data segment
 
 	mov	ax, cs			; calc code segment of LOGO
 	lea	bx, LogoStart
@@ -299,7 +318,7 @@ LogoRet:
 
 exeparams label byte
 	dw	0
-	dw	80h
+	dw	cmdline
 seg1s	dw	?
 	dw	5Ch
 seg2s	dw	?
@@ -308,6 +327,19 @@ seg3s	dw	?
 
 tmpSS	dw	?
 tmpSP	dw	?
+
+cmdline db 128 dup (?)
+
+exeparams2 label byte
+	dw	0
+	dw	cmdline2
+seg1	dw	?
+	dw	5Ch
+seg2	dw	?
+	dw	6Ch
+seg3	dw	?
+
+cmdline2 db     02h, ' ', 08h, 0dh, 'test', 0dh
 
 opStandard	db	0
 opReal		db	0
@@ -377,6 +409,8 @@ szKernel386:
 	db	'SYSTEM\KRNL386.EXE', 0
 szDOSX:
 	db	'SYSTEM\DOSX.EXE', 0
+szDSWAP:
+	db	'SYSTEM\DSWAP.EXE', 0
 szWIN386:
 	db	'SYSTEM\WIN386.EXE', 0
 endif
@@ -407,6 +441,7 @@ Panic:
 Die:
 	push	dx
 	call	HideLogo
+
 	@SetMode		; Switch to video mode 3
 	pop	dx
 
@@ -417,7 +452,7 @@ Die:
 ParseCmd:
 ; Equates into command line
 
-CmdLen	equ	byte ptr es:[80h] ; Command line length
+;CmdLen	equ	byte ptr es:[80h] ; Command line length
 Cmd	equ	byte ptr es:[81h] ; Command line data
 
 
@@ -425,24 +460,41 @@ Cmd	equ	byte ptr es:[81h] ; Command line data
 ; switches by space.
 
 	lea	si, Cmd		; Pointer to command line
+	mov	al,[si-1]
+	lea	di, cmdline+1	; Pointer to command line
+	mov	[cmdline],al
 	cld
 
-SkipDelimiters:
-	lodsb			; Get next character
-
-	cmp	al, 0dh		; If end of command line
-	je	ExitParseCmd	; then exit parse
-
-	call	TestDelimiter
-	je	SkipDelimiters
-
-; Determine if this is a / switch
-
-	cmp	al, "/"
-	jnz	FindNextDelimiter	; If not a switch then pass to next arg
-
-
+SkipSpaces:
 	lodsb
+	stosb
+	cmp	al, ' '
+	je	SkipSpaces
+
+; EOL?
+	cmp	al, 0dh
+	je	ExitParseCmd
+
+; Determine if this is a switch
+CheckSwitch:
+	cmp	al, "/"
+	jz	ParseSwitch
+	cmp	al, "-"
+	jz	ParseSwitch
+
+; If no, copy until space or EOL
+FindDelimiter:
+	lodsb
+	stosb
+	cmp	al, 0dh
+	je	ExitParseCmd
+	cmp	al, ' '
+	jne	FindDelimiter
+	jmp	CheckSwitch
+
+ParseSwitch:
+	lodsb
+	stosb
 
 	cmp	al, "?"
 	jz	Help
@@ -462,48 +514,39 @@ SkipDelimiters:
 	cmp	al, "b"
 	jz	SetBootlog
 
+ContinueParse:
+	dec	si
+	dec	di
 
-; Find next delimeter
-FindNextDelimiter:
-	lodsb
-	call	TestDelimiter
-	jne	FindNextDelimiter
-	jmp	SkipDelimiters
+	jmp	FindDelimiter
 
 SetBootlog:
-	lodsb			;Make sure next char is
 	call	TestDelimiter	; a delimiter
-	jnz	FindNextDelimiter ; If not end of switch then skip to next delimiter
+	jnz	ContinueParse
 	mov	opBootlog, 1
-	jmp	NextSwitch
+	jmp	ContinueParse
 
 SetReal:
-	lodsb			;Make sure next char is
 	call	TestDelimiter	; a delimiter
-	jnz	FindNextDelimiter ; If not end of switch then skip to next delimiter
+	jnz	ContinueParse
 	mov	opReal, 1
 	jmp	HideSwitch
 
 SetStandard:
-	lodsb			;Make sure next char is
 	call	TestDelimiter	; a delimiter
-	jnz	FindNextDelimiter ; If not end of switch then skip to next delimiter
+	jnz	ContinueParse
 	mov	opStandard, 1
 	jmp	HideSwitch
 
 SetEnhanced:
-	lodsb			;Make sure next char is
 	call	TestDelimiter	; a delimiter
-	jnz	FindNextDelimiter ; If not end of switch then skip to next delimiter
+	jnz	ContinueParse
 	mov	opEnhanced, 1
 
 HideSwitch:
-	mov	byte ptr es:[si-2], ' '	; Hide switch
-	mov	byte ptr es:[si-3], ' '
-	
-NextSwitch:
-	dec	si
-	jmp	SkipDelimiters	;Move on to next item.
+	mov	word ptr es:[di-4], '  '	; Hide switch
+
+	jmp	ContinueParse
 
 ;SetDisables:
 
@@ -517,11 +560,11 @@ ExitParseCmd:
 ; the JE/JNE instructions afterwards to test for a delimiter.
 
 TestDelimiter:
+	lodsb			;Make sure next char is
+	stosb
 	cmp	al, " "
 	jz	ItsOne
 	cmp	al, 0dh
-	jz	ItsOne
-	cmp	al, 09h
 ItsOne:	ret
 
 	align 16
