@@ -91,10 +91,6 @@ main:
 	mov	[seg2], es
 	mov	[seg3], es
 
-	mov	ax, cs
-	mov	ds, ax
-	mov	es, ax
-
 	; Parse command line
 	call	ParseCmd
 
@@ -142,49 +138,44 @@ skip:
 	jb	NoMem
 
 if WINVER eq 300
+	; Detect CPU
+	call	DetectCPU
 
-	cmp	[opReal], 1
-	jz	RealModeKernel
-	cmp	[opStandard], 1
-	jz	StandardMode
+	; Check kernels presense
+	call	CheckKernels
+
+	; Check extenders presense
+	call	CheckExtenders
+
+	; First, if switch predefined, then select initial mode
 	cmp	[opEnhanced], 1
 	jz	EnhancedMode
+	cmp	[opStandard], 1
+	jz	StandardMode
+	cmp	[opReal], 1
+	jz	RealModeKernel
 
-	@Trace	szTraceDetectCPU
-	; test for 80286 -- this CPU executes PUSH SP by first storing SP on
-	; stack, then decrementing it.  earlier CPU's decrement, THEN store.
-	push	sp			; only 80286 pushes pre-push SP
-	pop	ax			; get it back
-	cmp	ax,sp			; check for same
-	jne	RealModeKernel		; they are not, so it a 8086
-
-	@Trace	szTrace286CPU
-
-	;check if 386+
-	;MSW bits 15..4 should be clear
-.286
-	smsw	ax
-.8086
-	cmp	ax, 0fff0h
-	jae	StandardMode		; It is not 80386+, so only StandardMode allowed
-
-	@Trace	szTrace386CPU
-
-; search KRNL386.EXE
-	@Trace	szTraceSearchKernel386
-	@GetFirst szKernel386		; Find first file entry
-	jc	StandardMode
+	; Second, if no switch predefined, use CPU to select initial mode
+	cmp	[opCPU], 2		; if 80386, then use enhanced mode
+	jz	EnhancedMode
+	cmp	[opCPU], 1		; if 80286, then use standard mode
+	jz	StandardMode
+	jmp	RealModeKernel
 
 EnhancedMode:
+	cmp	[opCPU], 2
+	jnz	StandardMode		; If no 386 CPU, then downgrade to StandardMode
 
-	@Trace	szTraceSearchWIN386
-	@GetFirst szWIN386		; Find first file entry
-	jc	StandardMode		; No Win386.exe, so only standard mode
+	cmp	[opWIN386], 1
+	jnz	StandardMode		; If no WIN386 extender, then downgrade to StandardMode
 
+	cmp	[opKRNL386], 1
+	jnz	StandardMode		; If no KRNL386 kernel, then  downgrade to StandardMode
+
+	; All exists for Enhanced mode
 	@Trace	szTraceEnhancedMode
 
-; load and execute WIN386.EXE
-
+	; load and execute WIN386.EXE
 	@Trace	szTraceExecWIN386
 	push	cs
 	pop	es
@@ -199,21 +190,31 @@ EnhancedMode:
 	jmp	Exit
 
 StandardMode:
-; Here only Standard mode
+	cmp	[opCPU], 1
+	jb	RealModeKernel		; If no 286 or 386 CPU, then downgrade to RealModeKernel
+	je	StandardModeKrnl286	; If 286 CPU then check KRNL286
 
-; search KRNL286.EXE
-	@Trace	szTraceSearchKernel286
-	@GetFirst szKernel286		; Find first file entry
-	jc	NoKernel
+	cmp	[opKRNL386], 1
+	jnz	StandardModeKrnl286	; If no KRNL386, then try KRNL286
 
-	@Trace	szTraceSearchDOSX
+	; Here we ready to start KRNL386
+	jmp	CheckExt
 
-	@GetFirst szDOSX		; Find first file entry
-	jc	NoDOSX
+StandardModeKrnl286:
+	cmp	[opKRNL286], 1
+	jnz	RealModeKernel		; If no KRNL286, then downgrade to RealModeKernel
 
+	; Here we ready to start KRNL286
+
+CheckExt:
+	cmp	[opDOSX], 1
+	jnz	RealModeKernel		; If no DOSX extender, then downgrade to RealModeKernel
+
+
+	; All exists for Standard mode
 	@Trace	szTraceStandardMode
 
-; load and execute DOSX.EXE
+	; load and execute DOSX.EXE
 	@Trace	szTraceExecDOSX
 
 	if 0
@@ -243,12 +244,8 @@ StandardMode:
 	jmp	Exit
 RealModeKernel:
 endif
-
-; search KERNEL.EXE
-	@Trace	szTraceSearchKernel
-
-	@GetFirst szKernel		; Find first file entry
-	jc	NoKernel
+	cmp	[opKERNEL], 1
+	jnz	NoKernel
 
 	@Trace	szTraceEnhancedMode
 
@@ -316,6 +313,65 @@ LogoRet:
 	pop	ds			; Restore our data segment (stored in ShowLogo)
 	retn
 
+DetectCPU:
+	@Trace	szTraceDetectCPU
+
+	; test for 80286 -- this CPU executes PUSH SP by first storing SP on
+	; stack, then decrementing it.  earlier CPU's decrement, THEN store.
+	push	sp			; only 80286 pushes pre-push SP
+	pop	ax			; get it back
+	cmp	ax,sp			; check for same
+	jne	ExitDetectCPU		; they are not, so it a 8086
+	inc	[opCPU]			; CPU=80286
+	@Trace	szTrace286CPU
+
+	;check if 386+
+	;MSW bits 15..4 should be clear
+.286
+	smsw	ax
+.8086
+	cmp	ax, 0fff0h
+	jae	StandardMode		; It is not 80386+, so only StandardMode allowed
+	inc	[opCPU]			; CPU=80386
+	@Trace	szTrace386CPU
+
+ExitDetectCPU:
+	ret
+
+CheckKernels:
+; search KERNEL.EXE
+	@Trace	szTraceSearchKernel
+	@GetFirst szKernel		; Find first file entry
+	jc	ChkKRNL286
+	mov	[opKERNEL], 1
+; search KRNL286.EXE
+ChkKRNL286:
+	@Trace	szTraceSearchKernel286
+	@GetFirst szKernel286		; Find first file entry
+	jc	ChkKRNL386
+	mov	[opKRNL286], 1
+; search KRNL386.EXE
+ChkKRNL386:
+	@Trace	szTraceSearchKernel386
+	@GetFirst szKernel386		; Find first file entry
+	jc	ExitCheckKernels
+	mov	[opKRNL386], 1
+ExitCheckKernels:
+	ret
+
+CheckExtenders:
+	@Trace	szTraceSearchWIN386
+	@GetFirst szWIN386		; Find first file entry
+	jc	CheckDOSX		; No Win386.exe, so only standard mode
+	mov	[opWIN386], 1
+CheckDOSX:
+	@Trace	szTraceSearchDOSX
+	@GetFirst szDOSX		; Find first file entry
+	jc	ExitCheckExtenders
+	mov	[opDOSX], 1
+ExitCheckExtenders:
+	ret
+
 exeparams label byte
 	dw	0
 	dw	cmdline
@@ -341,6 +397,12 @@ seg3	dw	?
 
 cmdline2 db     02h, ' ', 08h, 0dh, 'test', 0dh
 
+opCPU		db	0	; 0-8086, 1-80286, 2-80386
+opDOSX		db	0
+opWIN386	db	0
+opKERNEL	db	0
+opKRNL286	db	0
+opKRNL386	db	0
 opStandard	db	0
 opReal		db	0
 opEnhanced	db	0
@@ -544,7 +606,7 @@ SetEnhanced:
 	mov	opEnhanced, 1
 
 HideSwitch:
-	mov	word ptr es:[di-4], '  '	; Hide switch
+	mov	word ptr es:[di-3], '  '	; Hide switch
 
 	jmp	ContinueParse
 
