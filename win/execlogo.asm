@@ -3,7 +3,7 @@
 ;
 ;   @brief Windows loader
 ;
-;   (c) osFree Project 2002-2022, <http://www.osFree.org>
+;   (c) osFree Project 2002-2023, <http://www.osFree.org>
 ;   for licence see licence.txt in root directory, or project website
 ;
 ;   @author Yuri Prokushev (yuri.prokushev@gmail.com)
@@ -11,6 +11,7 @@
 ;*/
 
 .8086
+.model tiny
 
 		; MacroLib
 		include bios.inc
@@ -24,6 +25,11 @@ WINVER		equ	300		; Windows 3.00
 
 TRACE		equ	1		; Turn trace on = 1, off = 0
 
+@Trace	MACRO szMsg
+if TRACE
+	@DispStr offset szMsg
+endif
+	ENDM
 ;----------------------------------------------------------------
 ; Memory check configuration
 ;
@@ -64,17 +70,31 @@ endif
 code segment
 	org 100h
 
+;.COM-format executables begin running with the following register values:
+;	AL = 00h if first FCB has valid drive letter, FFh if not
+;	AH = 00h if second FCB has valid drive letter, FFh if not
+;	CS,DS,ES,SS = PSP segment
+;	SP = offset of last word available in first 64K segment
+;	(note: AX is always 0000h under DESQview)
+
 main:
+	; Tune stack
 	lea	sp, stackstart
 
-	mov	[seg1s], cs
-	mov	[seg2s], cs
-	mov	[seg3s], cs
+	; Prepare execution block
+	mov	seg1s, cs
+	mov	seg2s, cs
+	mov	seg3s, cs
+
+	mov	ax, cs
+	mov	ds, ax
+	mov	es, ax
+
+	; Parse command line
+	call	ParseCmd
 
 ; Show LOGO
-if	TRACE
-	xor	ax, ax			; Set Logo size to zero
-	jp	skip
+	jmp	skip
 
 szTraceFreeMem db 'Free unused memory', 0dh, 0ah, '$'
 szTraceCheckMem db 'Check required free memory', 0dh, 0ah, '$'
@@ -92,17 +112,15 @@ szTrace386CPU db '80386 or higher CPU detected', 0dh, 0ah, '$'
 szTraceRealMode db 'Real Mode selected', 0dh, 0ah, '$'
 szTraceStandardMode db 'Standard Mode selected', 0dh, 0ah, '$'
 szTraceEnhancedMode db 'Enhanced Mode selected', 0dh, 0ah, '$'
+szTraceShowLogo db 'Show logo', 0dh, 0ah, '$'
 
 skip:
-else
+	@Trace	szTraceShowLogo
 	call	ShowLogo		; Returns in AX resident part of LOGO
-endif
 
 ; free unused memory
 
-if TRACE
-	@DispStr offset szTraceFreeMem
-endif
+	@Trace	szTraceFreeMem
 	add	ax, LogoStart        	; End of our code (aligned to 16)
 	mov	cl, 4
 	shr	ax, cl			; number of used para
@@ -112,9 +130,7 @@ endif
 
 ; check memory for Windows Kernel
 
-if TRACE
-	@DispStr offset szTraceCheckMem
-endif
+	@Trace	szTraceCheckMem
 	@GetBlok 0FFFFH			; Allocate impossible value of memory
 	jnc	panic			; Something wrong, it is not possible to have so many memory
 	cmp	bx, MIN_CONV_MEM	; kb in para
@@ -122,10 +138,14 @@ endif
 
 if WINVER eq 300
 
-if TRACE
-	@DispStr offset szTraceDetectCPU
-endif
+	cmp	opReal, 1
+	jz	RealModeKernel
+	cmp	opStandard, 1
+	jz	StandardMode
+	cmp	opEnhanced, 1
+	jz	EnhancedMode
 
+	@Trace	szTraceDetectCPU
 	; test for 80286 -- this CPU executes PUSH SP by first storing SP on
 	; stack, then decrementing it.  earlier CPU's decrement, THEN store.
 	push	sp			; only 80286 pushes pre-push SP
@@ -133,9 +153,7 @@ endif
 	cmp	ax,sp			; check for same
 	jne	RealModeKernel		; they are not, so it a 8086
 
-if TRACE
-	@DispStr offset szTrace286CPU
-endif
+	@Trace	szTrace286CPU
 
 	;check if 386+
 	;MSW bits 15..4 should be clear
@@ -143,40 +161,31 @@ endif
 	smsw	ax
 .8086
 	cmp	ax, 0fff0h
-	jae	StandardMode		; It is not 80386+, so only StandardMode allower
+	jae	StandardMode		; It is not 80386+, so only StandardMode allowed
 
-if TRACE
-	@DispStr offset szTrace386CPU
-endif
+	@Trace	szTrace386CPU
 
 ; search KRNL386.EXE
-if TRACE
-	@DispStr offset szTraceSearchKernel386
-endif
+	@Trace	szTraceSearchKernel386
 	@GetFirst szKernel386		; Find first file entry
 	jc	StandardMode
 
 EnhancedMode:
 
-if TRACE
-	@DispStr offset szTraceSearchWIN386
-endif
+	@Trace	szTraceSearchWIN386
 	@GetFirst szWIN386		; Find first file entry
 	jc	StandardMode		; No Win386.exe, so only standard mode
 
-if TRACE
-	@DispStr offset szTraceEnhancedMode
-endif
+	@Trace	szTraceEnhancedMode
 
 ; load and execute WIN386.EXE
-if TRACE
-	@DispStr offset szTraceExecWIN386
-endif
+
+	@Trace	szTraceExecWIN386
 	push	cs
 	pop	es
 	mov	[tmpSS], ss
 	mov	[tmpSP], sp
-	@Exec	szWIN386;, exeparams		; Execute program
+	@Exec	szWIN386, exeparams		; Execute program
 	push	cs
 	pop	ds
 	mov	ss, [tmpSS]
@@ -188,32 +197,25 @@ StandardMode:
 ; Here only Standard mode
 
 ; search KRNL286.EXE
-if TRACE
-	@DispStr offset szTraceSearchKernel286
-endif
-
+	@Trace	szTraceSearchKernel286
 	@GetFirst szKernel286		; Find first file entry
 	jc	NoKernel
 
-if TRACE
-	@DispStr offset szTraceSearchDOSX
-endif
+	@Trace	szTraceSearchDOSX
+
 	@GetFirst szDOSX		; Find first file entry
 	jc	NoDOSX
 
-if TRACE
-	@DispStr offset szTraceStandardMode
-endif
+	@Trace	szTraceStandardMode
 
 ; load and execute DOSX.EXE
-if TRACE
-	@DispStr offset szTraceExecDOSX
-endif
+	@Trace	szTraceExecDOSX
+
 	push	cs
 	pop	es
 	mov	[tmpSS], ss
 	mov	[tmpSP], sp
-	@Exec	szDOSX;, exeparams		; Execute program
+	@Exec	szDOSX, exeparams		; Execute program
 	push	cs
 	pop	ds
 	mov	ss, [tmpSS]
@@ -224,21 +226,15 @@ RealModeKernel:
 endif
 
 ; search KERNEL.EXE
-if TRACE
-	@DispStr offset szTraceSearchKernel
-endif
+	@Trace	szTraceSearchKernel
 
 	@GetFirst szKernel		; Find first file entry
 	jc	NoKernel
 
-if TRACE
-	@DispStr offset szTraceEnhancedMode
-endif
+	@Trace	szTraceEnhancedMode
 
 ; load and execute KERNEL.EXE
-if TRACE
-	@DispStr offset szTraceExecKernel
-endif
+	@Trace	szTraceExecKernel
 
 KernelFound:
 ; load and execute KERNEL.EXE
@@ -246,7 +242,7 @@ KernelFound:
 	pop	es
 	mov	[tmpSS], ss
 	mov     [tmpSP], sp
-	@Exec	szKernel;, exeparams		; Execute program
+	@Exec	szKernel, exeparams		; Execute program
 	push	cs
 	pop	ds
 	mov	ss, [tmpSS]
@@ -256,9 +252,7 @@ KernelFound:
 ;
 ; exit from windows kernel
 Exit:
-if	not TRACE
 	call	HideLogo
-endif
 	@Exit	0			; die
 
 ; Call HideLogo
@@ -303,9 +297,6 @@ LogoRet:
 	pop	ds			; Restore our data segment (stored in ShowLogo)
 	retn
 
-
-
-
 exeparams label byte
 	dw	0
 	dw	80h
@@ -318,6 +309,15 @@ seg3s	dw	?
 tmpSS	dw	?
 tmpSP	dw	?
 
+opStandard	db	0
+opReal		db	0
+opEnhanced	db	0
+opBootlog	db	0
+opNo32Disk	db	0
+opNoROM		db	0
+opNoVirtualHD	db	0
+opEMMExclide	db	0
+
 PanicMsg:
 	db	'Panic! Unrecoverable error!$'
 NoMemMsg:
@@ -329,23 +329,20 @@ NoDOSXMsg:
 ExecErrMsg:
 	db	'Can''t execute Windows kernel$'
 HelpMsg:
-	db	'osFree Windows loader',0dh,0ah,0dh,0ah
+	db	'osFree Windows subsystem loader',0dh,0ah
 if SWITCHES_SUPPORT eq 0
 	db	'$'
 endif
 
 if SWITCHES_SUPPORT eq 5
 	db	'WIN [/R] [/3] [/S] [/B] [/D:[F][S][V][X]]',0dh,0ah,0dh,0ah
-	db	'   /?  Prints this instruction banner.',0dh,0ah
-	db	'   /h  Synonym for the /? switch.',0dh,0ah
+	db	'   /? or /H Prints this instruction banner.',0dh,0ah
 	db	'   /3  Starts Windows in 386 enhanced mode.',0dh,0ah
-	db	'   /S  Starts Windows in standard mode.',0dh,0ah
-	db	'   /2  Synonym for the /S switch.',0dh,0ah
+	db	'   /S or /2  Starts Windows in standard mode.',0dh,0ah
 	db	'   /R  Starts Windows in real mode.',0dh,0ah
 	db	'   /B  Creates a file, BOOTLOG.TXT, that records system messages.',0dh,0ah
 	db	'       generated during system startup (boot).',0dh,0ah
-	db	'   /D  Used for troubleshooting when Windows does not start',0dh,0ah
-	db	'       correctly.',0dh,0ah
+	db	'   /D  Used for troubleshooting when Windows does not start correctly:',0dh,0ah
 	db	'     :F  Turns off 32-bit disk access. Equivalent to SYSTEM.INI [386enh]',0dh,0ah
 	db	'         setting: 32BitDiskAccess=FALSE.',0dh,0ah
 	db	'     :S  Specifies that Windows should not use ROM address space between',0dh,0ah
@@ -407,17 +404,125 @@ Panic:
 	lea	dx, PanicMsg
 
 ; Disable logo, set standard video mode and exit to DOS
-Die:	
-if	not TRACE
+Die:
 	push	dx
 	call	HideLogo
 	@SetMode		; Switch to video mode 3
 	pop	dx
-endif
 
 	@DispStr dx		; Print message
 
 	@Exit	0		; die
+
+ParseCmd:
+; Equates into command line
+
+CmdLen	equ	byte ptr es:[80h] ; Command line length
+Cmd	equ	byte ptr es:[81h] ; Command line data
+
+
+; Okay, begin scanning and parsing the command line. Replace handled
+; switches by space.
+
+	lea	si, Cmd		; Pointer to command line
+	cld
+
+SkipDelimiters:
+	lodsb			; Get next character
+
+	cmp	al, 0dh		; If end of command line
+	je	ExitParseCmd	; then exit parse
+
+	call	TestDelimiter
+	je	SkipDelimiters
+
+; Determine if this is a / switch
+
+	cmp	al, "/"
+	jnz	FindNextDelimiter	; If not a switch then pass to next arg
+
+
+	lodsb
+
+	cmp	al, "?"
+	jz	Help
+	cmp	al, "2"
+	jZ	SetStandard
+	cmp	al, "3"
+	jz	SetEnhanced
+	or	al, 020h		;Convert to lowercase
+	cmp	al, "h"
+	jz	Help
+	cmp	al, "r"
+	jz	SetReal
+	cmp	al, "s"
+	jz	SetStandard
+;	cmp	al, "d"
+;	jz	SetDisables
+	cmp	al, "b"
+	jz	SetBootlog
+
+
+; Find next delimeter
+FindNextDelimiter:
+	lodsb
+	call	TestDelimiter
+	jne	FindNextDelimiter
+	jmp	SkipDelimiters
+
+SetBootlog:
+	lodsb			;Make sure next char is
+	call	TestDelimiter	; a delimiter
+	jnz	FindNextDelimiter ; If not end of switch then skip to next delimiter
+	mov	opBootlog, 1
+	jmp	NextSwitch
+
+SetReal:
+	lodsb			;Make sure next char is
+	call	TestDelimiter	; a delimiter
+	jnz	FindNextDelimiter ; If not end of switch then skip to next delimiter
+	mov	opReal, 1
+	jmp	HideSwitch
+
+SetStandard:
+	lodsb			;Make sure next char is
+	call	TestDelimiter	; a delimiter
+	jnz	FindNextDelimiter ; If not end of switch then skip to next delimiter
+	mov	opStandard, 1
+	jmp	HideSwitch
+
+SetEnhanced:
+	lodsb			;Make sure next char is
+	call	TestDelimiter	; a delimiter
+	jnz	FindNextDelimiter ; If not end of switch then skip to next delimiter
+	mov	opEnhanced, 1
+
+HideSwitch:
+	mov	byte ptr es:[si-2], ' '	; Hide switch
+	mov	byte ptr es:[si-3], ' '
+	
+NextSwitch:
+	dec	si
+	jmp	SkipDelimiters	;Move on to next item.
+
+;SetDisables:
+
+ExitParseCmd:
+
+	ret
+
+; The following subroutine sets the zero flag if the character in 
+; the AL register is one of DOS' six delimiter characters, 
+; otherwise the zero flag is returned clear. This allows us to use 
+; the JE/JNE instructions afterwards to test for a delimiter.
+
+TestDelimiter:
+	cmp	al, " "
+	jz	ItsOne
+	cmp	al, 0dh
+	jz	ItsOne
+	cmp	al, 09h
+ItsOne:	ret
 
 	align 16
 ; Stack
