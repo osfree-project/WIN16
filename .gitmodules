@@ -1,9 +1,6 @@
 [submodule "tests"]
 	path = tests
 	url = https://github.com/osfree-project/win16test.git
-[submodule "dosx/hdpmi/contrib"]
-	path = dosx/hdpmi/contrib
-	url = https://github.com/Baron-von-Riedesel/HX
 [submodule "drivers/mouse"]
 	path = drivers/mouse
 	url = https://github.com/stsp/win31-mouse-driver
