@@ -48,13 +48,14 @@ cmdline	db 0,0Dh
 szPath	db "PATH="
 SIZPATH equ $ - szPath
 
-svrname db "HDPMI16.EXE",0
+svrname db "SYSTEM\HDPMI16.EXE",0
 SIZSVRNAME equ $ - svrname
 prg     db "SYSTEM\KRNL286.EXE",0
 prg3     db "SYSTEM\KRNL386.EXE",0
 szErr1	db "cannot launch SYSTEM\KRNL286.EXE",13,10,'$'
 szErr13	db "cannot launch SYSTEM\KRNL386.EXE",13,10,'$'
 szErr2	db "HDPMI16.EXE not found",13,10,'$'
+szHello	db "DOSX DOS Extender",13,10,'$'
 
 		.data?
 
@@ -314,9 +315,13 @@ endif
 
 ;--------------------- now call KRNL386
 
+		@GetFirst prg3		; Find first file entry for KENL386.EXE
+		jc	KRNL286		; We have only KRNL286.EXE, use it.
+
 		cmp [fCPU], 3		; 3 and higher - 386+
 		jae KRNL386
 
+KRNL286:
 		; Execute KRNL286.EXE
 		mov bx,offset parmb
 		push ds
@@ -347,6 +352,7 @@ main    endp
 start:
 		mov ax,dgroup
 		mov ds,ax
+		@DispStr szHello
 		mov cx,ss
 		sub cx,ax
 		shl cx,4

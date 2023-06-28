@@ -9,7 +9,7 @@ TRGT       = $(PROJ).exe
 DESC       = 286 MS-DOS Extender
 srcfiles   = $(p)dosx$(e)
 JWASM      = 1
-DEST       = os2$(SEP)mdos$(SEP)winos2
+DEST       = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 ADD_ASMOPT = -I=$(MYDIR)..$(SEP)..$(SEP)macrolib
 
 DIRS = hdpmi
