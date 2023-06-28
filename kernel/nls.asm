@@ -62,7 +62,7 @@ public nullstr
 public errstr41   
 public errstr42   
 public errstr43   
-
+public szNoDPMI
 CCONST segment
 
 

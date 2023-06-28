@@ -4,6 +4,6 @@
 #
 
 
-DIRS =  krnl286 # kernel krnl386
+DIRS =  krnl386 # kernel krnl286
 
 !include $(%ROOT)tools/mk/all.mk

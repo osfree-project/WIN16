@@ -18,7 +18,7 @@ endif
 
 externdef pascal _hmemset:far
 externdef discardmem:near
-externdef eWinFlags:near
+externdef pascal eWinFlags:near
 externdef TH_HGLOBALHEAP:word
 externdef TH_PGLOBALHEAP:word
 
@@ -199,8 +199,6 @@ else
 	push ax
 
 ;--- _hmemset(FAR16 dst, WORD value, DWORD cnt), requires __AHINCR
-;public __AHINCR
-;__AHINCR equ 8
 
 	push ax		;selector
 	push 0		;offset
@@ -327,8 +325,12 @@ endif
 	push es
 	@FreeBlok bx
 	pop ax
+if ?REAL
+			; no access check
+else
 	verr ax
 	jnz done
+endif
 	mov es,ax
 done:
 	xor ax,ax
@@ -520,12 +522,7 @@ resizemodulesegm endp
 ;--- todo: if block increases and GMEM_ZEROINIT is set, additional memory
 ;--- should be zeroed.
 
-if ?32BIT
-GlobalReAlloc proc far pascal uses esi hMem:WORD, dwNewsize:DWORD, uiMode:WORD 
-else
 GlobalReAlloc proc far pascal uses si hMem:WORD, dwNewsize:DWORD, uiMode:WORD 
-endif
-
 	mov si, hMem
 	mov dx, word ptr dwNewsize+2
 	mov ax, word ptr dwNewsize+0
@@ -595,7 +592,6 @@ GlobalHandle proc far pascal
 	mov dx,ax
 	@return
 GlobalHandle endp
-
 
 ;--- DWORD GlobalCompact(DWORD);
 ;--- returns the largest free memory object if dwMinFree != 0
