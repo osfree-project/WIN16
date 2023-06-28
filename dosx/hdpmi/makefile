@@ -27,7 +27,14 @@ srcfiles   = &
 	$(p)int2xapi$(e) $(p)int31api$(e) $(p)int33api$(e) $(p)int41api$(e) $(p)intxxapi$(e) $(p)movehigh$(e) $(p)pagemgr$(e) &
 $(p)putchr$(e) $(p)putchrr$(e) $(p)switch$(e) $(p)i2fhdpmi$(e)# $(p)vxd$(e)
 JWASM      = 1
-ADD_ASMOPT = -D?32BIT=0 -c -Cp -Sg 
 DEST       = os2$(SEP)mdos$(SEP)winos2
 
 !include $(%ROOT)tools/mk/appsdos.mk
+!include $(MYDIR)hdpmi.mk
+
+ADD_ASMOPT = -D?32BIT=0 -c -Cp -Sg -I=$(PORT_BASE)Include
+
+.inc: $(PORT_BASE)Include;$(PORT_BASE)Src$(SEP)HDPMI
+
+.asm: $(PORT_BASE)Src$(SEP)HDPMI
+
