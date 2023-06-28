@@ -1,8 +1,8 @@
 
 #include <windows.h>
-
 #include <dpmi.h>
 
+#include "win_private.h"
 
 extern void InitKernel();
 
@@ -24,6 +24,7 @@ extern char GetFPU();
 	"exit:"\
         value [al];
 
+#pragma pack (1)
 typedef struct tagENTRY
 {
 	BYTE	bSegm;
@@ -42,6 +43,7 @@ DWORD WINAPI __loadds GetWinFlags(void)
 
 void WINAPI __loadds SetWinFlags()
 {
+  printf("enter SetWinFlags\n\r");
   //@todo WF_PMODE set for non 8086 cpu kernel version
   eWinFlags.wOfs= (
 			  (GetFPU()?WF_80x87:0) 
@@ -49,12 +51,15 @@ void WINAPI __loadds SetWinFlags()
 			| WF_PMODE
 			| (IsVMM()?WF_ENHANCED:WF_STANDARD)
 		) ;
+  printf("exit SetWinFlags\n\r");
 }
 
 void WINAPI KernelMain(void)
 {
+	printf("enter KernelMain\n\r");
 	// Initialize WinFlags
 	SetWinFlags();
 	// Initialize Kernel Module
 	InitKernel();
+	printf("exit KernelMain\n\r");
 }

@@ -424,7 +424,7 @@ if	?DEBUG
 	jnz @F				; then skip
 	push cs 
 	pop es
-	mov si, cs:szEntryHello		; ES:SI Inform debugger
+	mov si, es:szEntryHello		; ES:SI Inform debugger
 	mov ah, 47h
 	int 68h
 @@:
@@ -7261,6 +7261,7 @@ InitProtMode proc
 
 	mov word ptr [oldint31+0],dx
 	mov word ptr [oldint31+2],cx
+
 if ?DEBUG
 	@DPMI_GetPMIntVec 41h
 	mov word ptr [oldint41+0],dx
@@ -7287,39 +7288,20 @@ endif
 	@DPMI_AllocDesc			;get a selector for ALIAS segments
 	jc initprex
 	mov [aliassel],ax
-;--- for 32bit clients: clear bits FF00h (dosemu + cwsdpmi)
-if ?DOSEMUSUPP
-if ?32BIT
-	mov bx,ax
-	lar cx,ax
-	shr cx,8
-	@DPMI_SetAccRights			;set acc rights
-endif
-endif
 
 if ?EXTLOAD
 	test bEnvFlgs,ENVFL_DONTLOADHIGH
 	jnz @F
 	cmp byte ptr wVersion,20	;not for OS/2
 	jnb @F
-if 0;?DOSEMUSUPP
-	test fMode, FMODE_DOSEMU		;not for DOSEMU
-	jnz @F
-endif
 	call moveinextmem	   ;move ldr Code/Data in extended memory
 @@:
 endif
 if _TRAPEXC0D_
 	@DPMI_GetExcVec 0Dh	   ;get Exception 0D
-  if ?32BIT		 
-	mov dword ptr PrevInt0DProc+0,edx
-	mov word ptr PrevInt0DProc+4,cx
-	mov edx, offset LEXC0D
-  else
 	mov word ptr PrevInt0DProc+0,dx
 	mov word ptr PrevInt0DProc+2,cx
 	mov dx, offset LEXC0D
-  endif
 	mov cx,cs
 	call setexc
 	jc initprex
@@ -7336,6 +7318,7 @@ if ?EXC01RESET
 endif
 
 initprex:
+	@trace_s <"exit initialize PM",lf>
 	ret
 InitProtMode endp
 

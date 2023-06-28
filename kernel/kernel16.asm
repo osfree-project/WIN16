@@ -28,7 +28,7 @@ public GetExePtr
 public GetProcAddress
 public GetModuleHandle
 public Dos3Call
-externdef pascal SetWinFlags: far
+;externdef pascal SetWinFlags: far
 ;public __AHSHIFT
 
 externdef pascal _lopen:far

@@ -1,8 +1,7 @@
 ;
 ; osFree Windows Kernel 
 ;
-; - Switching to protect mode 286 CPU version
-; - Selector functions
+; - Switching to protect mode 386 CPU version
 ;
 ; Matt Pietrek describes Enchanced mode version of Selector functions. It differs from
 ; Standard mode functions. It seems, standard mode doesn't handle own list of selectors.
@@ -10,7 +9,6 @@
 
 
 		; MacroLib
-;		include bios.inc
 		include dos.inc
 		include dpmi.inc
 
@@ -43,8 +41,6 @@ externdef	szDOSstr:near
 externdef	errstr2:near
 externdef	errstr3:near
 externdef	blksize: near
-
-externdef DumpDPMIInfo_: near
 
 changememstrat proc
 	mov ax,5802h			 ;save umb link state
@@ -81,15 +77,21 @@ SwitchToPMode proc
 
 	push cs				; Set data segment to code segment
 	pop ds
-	call DumpDPMIInfo_
+	
+	externdef pascal DumpDPMIInfo: far
+	call DumpDPMIInfo
+
+	@trace_s <lf,"------------------------------------",lf>
+	
 	mov cs:[wKernelDS],ds
+	@trace_s <lf,"------------------------------------",lf>
 
 	call restorememstrat
+	@trace_s <lf,"------------------------------------",lf>
 
 	mov [TH_TOPPDB],es			;psp
-if 1;?USE1PSP
 	mov [wCurPSP],es
-endif
+	@trace_s <lf,"------------------------------------",lf>
 	ret
 SwitchToPMode endp
 

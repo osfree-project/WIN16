@@ -194,3 +194,4 @@ extern char DPMI_GetCPU();
 	"mov	cl,4"\	
 	"exit:"\
         value [cl];
+

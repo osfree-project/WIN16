@@ -3,7 +3,7 @@
 
 #include "win_private.h"
 
-void WINAPI Copyright()
+void WINAPI __loadds Copyright()
 {
 	printf("\n\rosFree Windows Kernel version 0.1\n\r" 
 		   "Copyright (C) 2022-23 osFree\n\r"
@@ -17,19 +17,19 @@ void WINAPI Copyright()
 extern int DPMI_Switch(int m, void far * switche)
 {
 __asm
-{
-			mov bx, m
-			mov ah,48h
-			int 21h
-			mov es,ax
-			xor ax,ax
-			stc
-			call switche
-			sbb ax,ax
-};
+	{
+		mov bx, m
+		mov ah,48h
+		int 21h
+		mov es,ax
+		xor ax,ax
+		stc
+		call switche
+		sbb ax,ax
+	};
 }
 
-void DumpDPMIInfo()
+void WINAPI DumpDPMIInfo()
 {
 	init_info ii;
 	unsigned int mem;
@@ -65,5 +65,5 @@ void DumpDPMIInfo()
 		} else {
 			printf("MS-DOS API Translation not present\n\r");
 		};
-	} 
+	}
 }
