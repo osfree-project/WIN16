@@ -368,6 +368,8 @@ extern HTASK pascal TH_TOPPDB;
 extern DWORD pascal blksize;
 extern WORD pascal wKernelDS;
 extern WORD pascal wCurPSP;
+extern WORD pascal TH_PGLOBALHEAP;
+extern WORD pascal TH_HGLOBALHEAP;
 
 extern __AHSHIFT;
 extern __AHINCR;
@@ -389,6 +391,12 @@ WORD WINAPI GlobalHandleToSel(HGLOBAL handle);
 void WINAPI LongPtrAdd(DWORD dwLongPtr, DWORD dwAdd);
 void WINAPI OldYield(void);
 HANDLE WINAPI FarGetOwner( HGLOBAL handle );
+
+/* This function returns current ES value */
+extern  unsigned short          GetES( void );
+#pragma aux GetES               = \
+        "mov    ax,es"          \
+        value                   [ax];
 
 /* This function returns current DS value */
 extern  unsigned short          GetDS( void );
@@ -504,3 +512,5 @@ typedef struct tagLOCALARENA
 
 #define GlobalAllocPtr(flags, cb) \
   (GlobalLock(GlobalAlloc((flags), (cb))))
+
+#define SetKernelDS() SetDS(wKernelDS);

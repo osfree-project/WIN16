@@ -152,3 +152,18 @@ void WINAPI UnlockSegment( HGLOBAL handle )
     /* FIXME: this ought to return the lock count in CX (go figure...) */
 //    SetCX(GET_ARENA_PTR(handle)->lockCount);
 }
+
+/************************************************************************
+ *              GlobalMasterHandle (KERNEL.28)
+ *
+ * Should return selector and handle of the information structure for
+ * the global heap. selector and handle are stored in the THHOOK as
+ * pGlobalHeap and hGlobalHeap.
+ *
+ */
+
+DWORD WINAPI GlobalMasterHandle(void)
+{
+	SetKernelDS();
+    return MAKELONG(TH_HGLOBALHEAP, TH_PGLOBALHEAP);
+}

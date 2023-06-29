@@ -650,13 +650,6 @@ exit:
 	ret
 GetFreeMemInfo endp
 
-GlobalMasterHandle proc far pascal uses ds
-	@SetKernelDS
-	mov	ax,TH_HGLOBALHEAP
-	mov	dx,TH_PGLOBALHEAP
-	ret
-GlobalMasterHandle endp
-
 _TEXT ends
 
 	end

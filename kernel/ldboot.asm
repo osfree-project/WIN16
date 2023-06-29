@@ -522,12 +522,8 @@ endif
 
 ; Switch and configure for protected mode kernels
 ife ?REAL
+
 	call SwitchToPMode_			; initial switch to protected mode
-	jnc @F
-
-	jmp main_err1
-
-@@:
 
 	CTRL_C_CK 6
 
@@ -1190,21 +1186,21 @@ int2131:
 ;---------------------------------- is one started by the loader
 ;if ?MULTPSP
 ;if _LOADERPARENT_
-	@trace_s <"dpmildr: check psp now",lf>
+	@trace_s <"KERNEL: check psp now",lf>
 	call checkpsp			;keine registerveraenderung!
 	jc jmpprevint21			;jmp to previous handler
-	@trace_s <"dpmildr: check psp ok",lf>
+	@trace_s <"KERNEL: check psp ok",lf>
 ;endif
 ;endif
 	@SetKernelDS
-	@trace_s <"dpmildr: int 21h ah=4C entry, task ptr(si)=">
+	@trace_s <"KERNEL: int 21h ah=4C entry, task ptr(si)=">
 	mov si,[wTDStk]
 	sub si,size TASK
 	@trace_w si
 	@trace_s <", ldr sp=">
 	@trace_w sp
 	@trace_s lf
-	@trace_s <"dpmildr: task-modul=">
+	@trace_s <"KERNEL: task-modul=">
 if ?32BIT
 	@trace_d [si.TASK.dwModul]
 else
@@ -1236,7 +1232,7 @@ if 0;?INT24RES or ?INT23RES
 	call restoreint2x		;restore int 23h/24h,DTA
 endif
 if ?32BIT
-	@trace_s <"dpmildr: free modules/libs, handle=">
+	@trace_s <"KERNEL: free modules/libs, handle=">
 	mov eax,[si].TASK.dwModul
 	@trace_d eax
 	@trace_s <lf>
@@ -1268,7 +1264,7 @@ endif
 if ?32RTMBUG						;32RTM.EXE doesn't know int 21, ah=00
 	call KillManually
 else
-	@trace_s <"dpmildr: task ptr(si) before dos kill=">
+	@trace_s <"KERNEL: task ptr(si) before dos kill=">
 	@trace_w si
 	@trace_s lf
 
@@ -1336,7 +1332,7 @@ endif							;endif ?MULTPSP
 
 i214c_1:
 	mov ax,[si.TASK.wSS]
-	@trace_s <"dpmildr: internal task ptr(si)=">
+	@trace_s <"KERNEL: internal task ptr(si)=">
 	@trace_w si
 	@trace_s <" parent ss:sp=">
 	@trace_w ax
@@ -1361,10 +1357,10 @@ if ?32BIT
 else
 	mov sp,[si.TASK.wSP]
 endif
-	@trace_s <"dpmildr: psp killed, switched to parent psp and stack",lf>
+	@trace_s <"KERNEL: psp killed, switched to parent psp and stack",lf>
 	@restoreregs_exec
 if ?32BIT
-	@trace_s <"dpmildr: app terminated, esi=">
+	@trace_s <"KERNEL: app terminated, esi=">
 	@trace_d esi
 	@trace_s <",edi=">
 	@trace_d edi
@@ -1372,7 +1368,7 @@ if ?32BIT
 	@trace_d ebp
 else
 if _TRACE_
-	@trace_s <"dpmildr: app terminated, [sp]=">
+	@trace_s <"KERNEL: app terminated, [sp]=">
 	push bp
 	mov bp,sp
 	@trace_w <word ptr [bp+2]>
@@ -1383,7 +1379,7 @@ if _TRACE_
 	pop bp
 endif
 endif
-	@trace_s <lf,"dpmildr: ---------------------------------",lf>
+	@trace_s <lf,"KERNEL: ---------------------------------",lf>
 ;	xor ax,ax
 	mov ax,cs:[wLastRC]			;modified 29.11.2004
 	jmp retf2ex
@@ -1481,7 +1477,7 @@ endif
 loadpgmdone:
 	pushf
 	@trace_s <lf,"-------------------------------------------",lf>
-	@trace_s <"dpmildr: return from exec real mode program",lf>
+	@trace_s <"KERNEL: return from exec real mode program",lf>
 	popf
 	pushf
 if _LASTRC_
@@ -1495,7 +1491,7 @@ if _LASTRC_
 @@:
 endif
 	@int3 _INT03RETEXEC_
-	@trace_s <"dpmildr: returning to previous app",lf>
+	@trace_s <"KERNEL: returning to previous app",lf>
 	popf
 retf2ex::
 	push ax				   ;copy flags
