@@ -20,42 +20,13 @@ externdef pascal _hmemset:far
 externdef discardmem:near
 externdef pascal eWinFlags:near
 externdef pascal wKernelDS:word
+externdef pascal GetFreeSpace:far
 
 
-if ?32BIT
-?LARGEALLOC	equ 0	;always 0, not needed for 32-bit
-else
 ?LARGEALLOC	equ 1	;1=allow more than 1 MB with GlobalAlloc/Realloc/Free
-endif
 
 _TEXT segment
 
-GlobalSize proc far pascal
-	pop bx
-	pop cx
-	pop ax
-	push cx
-	push bx
-if ?32BIT
-	lsl eax,eax
-	jnz @F
-	push eax
-	pop ax
-	pop dx
-else
-	xor dx,dx
-	lsl ax,ax
-	jnz @F
-endif
-	add ax,1
-	adc dx,0
-	jmp exit
-@@:
-	xor ax,ax
-	cwd
-exit:
-	@return
-GlobalSize endp
 
 
 GlobalLock proc far pascal
@@ -537,15 +508,6 @@ exit:
 
 GlobalReAlloc endp
 
-GlobalHandle proc far pascal
-	pop cx
-	pop dx
-	pop ax
-	push dx
-	push cx
-	mov dx,ax
-	@return
-GlobalHandle endp
 
 ;--- DWORD GlobalCompact(DWORD);
 ;--- returns the largest free memory object if dwMinFree != 0
@@ -569,39 +531,7 @@ GlobalCompact proc far pascal dwMinFree:DWORD
 	ret
 GlobalCompact endp
 
-GetFreeSpace proc far pascal
-	push es
-	push di
-	sub sp,48
-	mov di,sp
-	push ss
-	pop es
-	@DPMI_GETFREEMEMINFO
-	pop ax		;get the first dword in DX:AX
-	pop dx
-	add sp,48-4
-	pop di
-	pop es
-	retf 2
-GetFreeSpace endp
 
-GetFreeMemInfo proc far pascal uses ds
-local buf[30h]: BYTE
-	@SetKernelDS
-	mov ax, -1
-	mov dx, -1
-	test word ptr eWinFlags, WF_PAGING
-	jz exit
-	lea di, buf
-	push ss
-	pop es
-	@DPMI_GETFREEMEMINFO
-	jc exit
-	mov ax, es:[di][10h]
-	mov bx, es:[di][14h]
-exit:
-	ret
-GetFreeMemInfo endp
 
 _TEXT ends
 

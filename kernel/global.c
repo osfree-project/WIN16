@@ -267,3 +267,146 @@ WORD WINAPI GlobalDOSFree(WORD sel /* [in] Selector */)
 {
 	return DPMI_FreeDOSMem(sel);
 }
+
+#if 0
+GetFreeMemInfo proc far pascal uses ds
+local buf[30h]: BYTE
+	@SetKernelDS
+	mov ax, -1
+	mov dx, -1
+	test word ptr eWinFlags, WF_PAGING
+	jz exit
+	lea di, buf
+	push ss
+	pop es
+	@DPMI_GETFREEMEMINFO
+	jc exit
+	mov ax, es:[di][10h]
+	mov bx, es:[di][14h]
+exit:
+	ret
+GetFreeMemInfo endp
+#endif
+/***********************************************************************
+ *           GetFreeMemInfo   (KERNEL.316)
+ */
+DWORD WINAPI GetFreeMemInfo(void)
+{
+//    SYSTEM_BASIC_INFORMATION info;
+//    MEMORYSTATUS status;
+//
+//    NtQuerySystemInformation( SystemBasicInformation, &info, sizeof(info), NULL );
+//    GlobalMemoryStatus( &status );
+//    return MAKELONG( status.dwTotalVirtual / info.PageSize, status.dwAvailVirtual / info.PageSize );
+}
+
+#if 0
+GetFreeSpace proc far pascal
+	push es
+	push di
+	sub sp,48
+	mov di,sp
+	push ss
+	pop es
+	@DPMI_GETFREEMEMINFO
+	pop ax		;get the first dword in DX:AX
+	pop dx
+	add sp,48-4
+	pop di
+	pop es
+	retf 2
+GetFreeSpace endp
+#endif
+
+/***********************************************************************
+ *           GetFreeSpace   (KERNEL.169)
+ */
+DWORD WINAPI GetFreeSpace( UINT wFlags )
+{
+//    MEMORYSTATUS ms;
+//    GlobalMemoryStatus( &ms );
+//    return min( ms.dwAvailVirtual, MAXLONG );
+}
+
+#if 0
+GlobalSize proc far pascal
+	pop bx
+	pop cx
+	pop ax
+	push cx
+	push bx
+if ?32BIT
+	lsl eax,eax
+	jnz @F
+	push eax
+	pop ax
+	pop dx
+else
+	xor dx,dx
+	lsl ax,ax
+	jnz @F
+endif
+	add ax,1
+	adc dx,0
+	jmp exit
+@@:
+	xor ax,ax
+	cwd
+exit:
+	@return
+GlobalSize endp
+#endif
+
+/***********************************************************************
+ *           GlobalSize     (KERNEL.20)
+ * 
+ * Get the current size of a global memory object.
+ *
+ * RETURNS
+ *	Size in bytes of object
+ *	0: Failure
+ */
+DWORD WINAPI GlobalSize(
+             HGLOBAL handle /* [in] Handle of global memory object */
+) {
+//    TRACE("%04x\n", handle );
+    if (!handle) return 0;
+//    if (!VALID_HANDLE(handle))
+//	return 0;
+//    return GET_ARENA_PTR(handle)->size;
+}
+
+#if 0
+GlobalHandle proc far pascal
+	pop cx
+	pop dx
+	pop ax
+	push dx
+	push cx
+	mov dx,ax
+	@return
+GlobalHandle endp
+#endif
+
+/***********************************************************************
+ *           GlobalHandle   (KERNEL.21)
+ *
+ * Get the handle associated with a pointer to the global memory block.
+ *
+ * NOTES
+ *	Why is GlobalHandleToSel used here with the sel as input?
+ *
+ * RETURNS
+ *	Handle: Success
+ *	NULL: Failure
+ */
+DWORD WINAPI GlobalHandle(
+             UINT sel /* [in] Address of global memory block */
+) {
+    //TRACE("%04x\n", sel );
+    //if (!VALID_HANDLE(sel)) {
+	//WARN("Invalid handle 0x%04x passed to GlobalHandle!\n",sel);
+	//return 0;
+    //}
+    //return MAKELONG( GET_ARENA_PTR(sel)->handle, GlobalHandleToSel(sel) );
+}

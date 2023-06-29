@@ -1,6 +1,5 @@
 
 ;--- implements Win16 kernel emulation
-;--- best viewed with TABSIZE 4
 
 	; MacroLib
 	include dos.inc
@@ -591,101 +590,101 @@ KernelEntries label byte
 	ENTRY <1, GetInstanceData>	;54
 	ENTRY <1, Catch>		;55
     	ENTRY <1, Throw>		;56
-	ENTRY <1, GetProfileInt>			;57
-	ENTRY <1, GetProfileString>			;58
-	ENTRY <1, WriteProfileString>			;59
-	ENTRY <1, FindResource>				;60
-	ENTRY <1, LoadResource>				;61
-	ENTRY <1, LockResource>				;62
-	ENTRY <1, FreeResource>				;63
-	ENTRY <1, AccessResource>			;64
-	ENTRY <1, SizeofResource>			;65
-	ENTRY <1, AllocResource>			;66
-	ENTRY <1, SetResourceHandler>			;67
-	ENTRY <1, InitAtomTable>			;68
-	ENTRY <1, FindAtom>				;69
-	ENTRY <1, AddAtom>				;70
-	ENTRY <1, DeleteAtom>				;71
-	ENTRY <1, GetAtomName>				;72
-	ENTRY <1, GetAtomHandle>			;73
-	db 3,0						;74-76
+	ENTRY <1, GetProfileInt>	;57
+	ENTRY <1, GetProfileString>	;58
+	ENTRY <1, WriteProfileString>	;59
+	ENTRY <1, FindResource>		;60
+	ENTRY <1, LoadResource>		;61
+	ENTRY <1, LockResource>		;62
+	ENTRY <1, FreeResource>		;63
+	ENTRY <1, AccessResource>	;64
+	ENTRY <1, SizeofResource>	;65
+	ENTRY <1, AllocResource>	;66
+	ENTRY <1, SetResourceHandler>	;67
+	ENTRY <1, InitAtomTable>	;68
+	ENTRY <1, FindAtom>		;69
+	ENTRY <1, AddAtom>		;70
+	ENTRY <1, DeleteAtom>		;71
+	ENTRY <1, GetAtomName>		;72
+	ENTRY <1, GetAtomHandle>	;73
+	db 3,0				;74-76
 	db 15,1
-	ENTRY <1,AnsiNext>			; 77
-	ENTRY <1,AnsiPrev>			; 78
-	ENTRY <1,AnsiUpper>			; 79
-	ENTRY <1,AnsiLower>			; 80
-	ENTRY <1,_lclose>			;81
-	ENTRY <1,_lread>			;82
-	ENTRY <1,_lcreat>			;83
-	ENTRY <1,_llseek>			;84
-	ENTRY <1,_lopen>			;84
-	ENTRY <1,_lwrite>			;86
-	ENTRY <1,lstrcmp>			;87
-	ENTRY <1,lstrcpy>			;88
-	ENTRY <1,lstrcat>			;88
-	ENTRY <1,lstrlen>			;90
-	ENTRY <1,InitTask>			;91
-	db 1,0					;92
+	ENTRY <1,AnsiNext>		;77
+	ENTRY <1,AnsiPrev>		;78
+	ENTRY <1,AnsiUpper>		;79
+	ENTRY <1,AnsiLower>		;80
+	ENTRY <1,_lclose>		;81
+	ENTRY <1,_lread>		;82
+	ENTRY <1,_lcreat>		;83
+	ENTRY <1,_llseek>		;84
+	ENTRY <1,_lopen>		;84
+	ENTRY <1,_lwrite>		;86
+	ENTRY <1,lstrcmp>		;87
+	ENTRY <1,lstrcpy>		;88
+	ENTRY <1,lstrcat>		;88
+	ENTRY <1,lstrlen>		;90
+	ENTRY <1,InitTask>		;91
+	db 1,0				;92
 	db 1,1
-	ENTRY <1,GetCodeHandle>			;93
-	db 1,0					;94
+	ENTRY <1,GetCodeHandle>		;93
+	db 1,0				;94
 	db 2,1
-	ENTRY <1,LoadLibrary>			;95
-	ENTRY <1,FreeLibrary>			;96
-	db 4,0					;97-100
+	ENTRY <1,LoadLibrary>		;95
+	ENTRY <1,FreeLibrary>		;96
+	db 4,0				;97-100
 	db 5,1
-	ENTRY <1,NoHookDOSCall>			;101
-	ENTRY <1,Dos3Call>			;102
-	ENTRY <1,NetBiosCall>			;103
-	ENTRY <1,GetCodeInfo>			;104
-	ENTRY <1,GetExeVersion>			;105
-	db 1,0					;106
+	ENTRY <1,NoHookDOSCall>		;101
+	ENTRY <1,Dos3Call>		;102
+	ENTRY <1,NetBiosCall>		;103
+	ENTRY <1,GetCodeInfo>		;104
+	ENTRY <1,GetExeVersion>		;105
+	db 1,0				;106
 	db 1,1
 	ENTRY <1,SetErrorMode>		;107
-	db 3,0						;108-110
+	db 3,0				;108-110
 	db 2,1
 	ENTRY <1,GlobalWire>		;111
 	ENTRY <1,GlobalUnWire>		;112
 	db 2,-2
-eSHIFT	ENTRY <1,3>				;113 _AHSHIFT
-eINCR	ENTRY <1,8>				;114 _AHINCR
+eSHIFT	ENTRY <1,3>			;113 _AHSHIFT
+eINCR	ENTRY <1,8>			;114 _AHINCR
 public __AHINCR
 ;__AHINCR equ 8
 __AHINCR equ eINCR.wOfs
 	db 1,1
 	ENTRY <1,OutputDebugString>	;115
-	db 1,0						;116
+	db 1,0				;116
 	db 4,1
 	ENTRY <1,OldYield>		;117
 	ENTRY <1,GetTaskQueueDS>	;118
 	ENTRY <1,GetTaskQueueES>	;119
 	ENTRY <1,UndefDynlink>		;120
-	db 1,0						;121
+	db 1,0				;121
 	db 3,1
 	ENTRY <1,IsTaskLocked>		;122
 	ENTRY <1,KbdRst>		;123
 	ENTRY <1,EnableKernel>		;124
-	db 3,0						;124-126
+	db 3,0				;124-126
 	db 3,1
 	ENTRY <1,GetPrivateProfileInt>	;127
 	ENTRY <1,GetPrivateProfileString>	;128
 	ENTRY <1,WritePrivateProfileString>	;129
-	db 1,0						;130
+	db 1,0				;130
 	db 3,1
 	ENTRY <1,GetDOSEnvironment>	;131
 	ENTRY <1,GetWinFlags>		;132
-	ENTRY <1,GetExePtr>			;133
-	ENTRY <1,GetWindowsDirectory>           ;134
-	ENTRY <1,GetSystemDirectory>			;135
-	db 1,0						;136
+	ENTRY <1,GetExePtr>		;133
+	ENTRY <1,GetWindowsDirectory>	;134
+	ENTRY <1,GetSystemDirectory>	;135
+	db 1,0				;136
 	db 1,1
 	ENTRY <1,FatalAppExit>		;137
 	ENTRY <1,GetHeapSpaces>		;138
 	db 8,0				;139-146
 
 	db 2,1
-	ENTRY <1, SetLastError>	;147
-	ENTRY <1, GetLastError>	;148
+	ENTRY <1, SetLastError>		;147
+	ENTRY <1, GetLastError>		;148
 
 	db 1,0				;149
 
@@ -732,9 +731,9 @@ eD000	ENTRY <1,0>			;179
 	db 1,1
 	ENTRY <1, LongPtrAdd>		;180
 	db 3,-2
-eB000	ENTRY <1,0>				;181 _B000H
-eB800	ENTRY <1,0>				;182 _B800H
-e0000	ENTRY <1,0>				;183 _0000H
+eB000	ENTRY <1,0>			;181 _B000H
+eB800	ENTRY <1,0>			;182 _B800H
+e0000	ENTRY <1,0>			;183 _0000H
 	db 6,1
 	ENTRY <1,GlobalDOSAlloc>	;184
 	ENTRY <1,GlobalDOSFree>		;185
@@ -743,37 +742,37 @@ e0000	ENTRY <1,0>				;183 _0000H
 	ENTRY <1,GetSelectorLimit>	;188
 	ENTRY <1,SetSelectorLimit>	;189
 	db 1,-2
-eE000 ENTRY <1,0>				;190 _E000H
-	db 2,0						;191-192
+eE000 ENTRY <1,0>			;190 _E000H
+	db 2,0				;191-192
 	db 3,-2
 e0040 ENTRY <1,0040h>			;193
-eF000 ENTRY <1,0>				;194 _F000H
-eC000 ENTRY <1,0>				;195 _C000H
+eF000 ENTRY <1,0>			;194 _F000H
+eC000 ENTRY <1,0>			;195 _C000H
 	db 3,1
-	ENTRY <1,SelectorAccessRights>		;196
-	ENTRY <1,GlobalFixReal>			;197
+	ENTRY <1,SelectorAccessRights>	;196
+	ENTRY <1,GlobalFixReal>		;197
 	ENTRY <1,GlobalUnfix>		;198
-	db 4,0						;199-202
+	db 4,0				;199-202
 	db 1,1
 	ENTRY <1,DebugBreak>		;203
-	db 2,0						;204-205
+	db 2,0				;204-205
 	db 2,1
 	ENTRY <1,AllocSelectorArray>	;206
 	ENTRY <1,IsDBCSLeadByte>	;207
-	db 102,0					;208-309
+	db 102,0			;208-309
 	db 2,1
 	ENTRY <1,LocalHandleDelta>	;310
 	ENTRY <1,GetSetKernelDOSProc>	;311
-	db 4,0					;312-315
+	db 4,0				;312-315
 	db 1,1
 	ENTRY <1, GetFreeMemInfo>	;316
-	db 4,0					;216-319
+	db 4,0				;216-319
 	db 1,1
 	ENTRY <1, IsTask>		; 320
-	db 2,0					;321-322
+	db 2,0				;321-322
 	db 1,1
 	ENTRY <1,IsRomModule>		; 323
-	db 2,0						;324-325
+	db 2,0				;324-325
 	db 1,1
 	ENTRY <1,IsRomFile>		; 326
 	db 7,0				;327-333

@@ -49,11 +49,6 @@ static LDT_ENTRY ldt_make_entry( const void *base, unsigned long limit, unsigned
     return entry;
 }
 
-/* get the number of selectors needed to cover up to the selector limit */
-static inline WORD get_sel_count( WORD sel )
-{
-    return (GetSelectorLimit( sel ) >> 16) + 1;
-}
 
 /***********************************************************************
  *           AllocSelectorArray   (KERNEL.206)
@@ -77,7 +72,8 @@ UINT WINAPI AllocSelector( UINT sel )
 {
     WORD newsel, count, i;
 
-    count = sel ? get_sel_count(sel) : 1;
+    /* get the number of selectors needed to cover up to the selector limit */
+    count = sel ? ((GetSelectorLimit( sel ) >> 16) + 1) : 1;
     newsel = DPMI_AllocDesc( count );
 //    TRACE("(%04x): returning %04x\n", sel, newsel );
     if (!newsel) return 0;
@@ -302,6 +298,9 @@ BOOL WINAPI IsBadFlatReadWritePtr( void far * ptr, DWORD size, BOOL bWrite )
                  : IsBadHugeReadPtr( ptr, size );
 }
 
+/***********************************************************************
+ *           LongPtrAdd   (KERNEL.180)
+ */
 void WINAPI LongPtrAdd(DWORD dwLongPtr, DWORD dwAdd)
 {
   WORD wSel = SELECTOROF(dwLongPtr);
