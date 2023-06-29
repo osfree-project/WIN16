@@ -365,6 +365,10 @@ typedef struct
 extern HTASK pascal TH_HEADTDB;
 extern HTASK pascal TH_LOCKTDB;
 extern HTASK pascal TH_TOPPDB;
+extern DWORD pascal blksize;
+extern WORD pascal wKernelDS;
+extern WORD pascal wCurPSP;
+
 extern __AHSHIFT;
 extern __AHINCR;
 
@@ -399,16 +403,12 @@ extern  void          SetDS( unsigned short );
         parm                   [ax];
 
 /* This function sets current ES value */
-extern  void          SetES( unsigned short );
-#pragma aux SetES               = \
-        "mov    es,ax"          \
-        parm                   [ax];
+extern void SetES( unsigned short );
+#pragma aux SetES = parm [es];
 
 /* This function sets current CX value */
-extern  void          SetCX( unsigned short );
-#pragma aux SetCX               = \
-        "mov    cx,ax"          \
-        parm                   [ax];
+extern void SetCX( unsigned short );
+#pragma aux SetCX = parm [cx];
 
 #define VALID_HANDLE(handle) (((handle)>>__AHSHIFT)<globalArenaSize)
 #define GET_ARENA_PTR(handle)  (pGlobalArena + ((handle) >> __AHSHIFT))
@@ -504,5 +504,3 @@ typedef struct tagLOCALARENA
 
 #define GlobalAllocPtr(flags, cb) \
   (GlobalLock(GlobalAlloc((flags), (cb))))
-
-

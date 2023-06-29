@@ -5,6 +5,7 @@
 
 
 _TEXT segment
+externdef pascal wKernelDS:word
 public LoadModule
 
 LoadModule proc far pascal uses ds lpszModuleName:far ptr byte, lpParameterBlock:far ptr

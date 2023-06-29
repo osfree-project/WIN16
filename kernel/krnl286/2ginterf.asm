@@ -30,6 +30,7 @@ else
 endif
 
 _TEXT segment
+externdef pascal wKernelDS:word
 
 GlobalSize proc far pascal
 	pop bx

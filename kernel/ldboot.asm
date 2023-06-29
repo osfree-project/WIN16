@@ -16,7 +16,7 @@
 		; Kernel defines
 		include kernel.inc
 
-public blksize
+public BLKSIZE
 
 if ?DEBUG
 ?EXTLOAD		 = 0	;0 dont move loader in extended memory
@@ -169,7 +169,7 @@ extern errstr41: near
 extern errstr42: near
 extern errstr43: near
 ife ?REAL
-extern SwitchToPMode: near
+extern SwitchToPMode_: near
 endif
 
 		include ascii.inc
@@ -261,6 +261,7 @@ endif
 wlError		dw ?			;error code (for function 4B00h)
 
 ;*** std variables, initialization ensured/not required
+public pascal wCurPSP
 ife ?MULTPSP
 wCurPSP	label word
 endif
@@ -287,7 +288,7 @@ ParmBlk		dd 6 dup (?)		;parameter block for "exec prog"
 public GDTDsc
 GDTDsc dw ?
 ;*** temp variables
-blksize		dd ?			;limit for memory allocs
+BLKSIZE		dd ?			;limit for memory allocs
 blkaddr		dd ?			;address for memory allocs
 wCnReloc	dw ?			;number of relocations for a segment
 NEHdrOfs	dw ?			;offset NE-Header
@@ -353,6 +354,7 @@ ID_STACKBOTTOM	dw	?		; 0E /* Bottom of the stack */
 public TH_HGLOBALHEAP
 public TH_PGLOBALHEAP
 public TH_LOCKTDB
+public pascal wKernelDS
 TH_HGLOBALHEAP	dw	?		;  /* 00 (handle BURGERMASTER) */
 TH_PGLOBALHEAP	dw	?		;  /* 02 (selector BURGERMASTER) */
 TH_HEXEHEAD	dw	?		;  /* 04 hFirstModule */
@@ -520,10 +522,9 @@ endif
 
 ; Switch and configure for protected mode kernels
 ife ?REAL
-	call SwitchToPMode			; initial switch to protected mode
+	call SwitchToPMode_			; initial switch to protected mode
 	jnc @F
 
-	@trace_s <lf,"------------------------------------",lf>
 	jmp main_err1
 
 @@:
@@ -538,7 +539,7 @@ endif	; not ?REAL
 	call InitProtMode	;init vectors, alloc internal selectors
 	jc main_err6		;--->
 
-	; Here we must prepare WOAname string
+	; @todo Here we must prepare WOAname string
 
 	@GetVer
 	mov [wVersion],ax		; Get dos version
@@ -551,6 +552,7 @@ main_1:
 	call GetPgmParms	   ;program name -> szPgmName, exec parm init
 	pushf
 	@strout szPgmName, 1
+	@trace_s <lf>
 	popf
 	jc main_err3	   ;---> error: no program name given
 	@trace_s <"Set INT 21H handler",lf>
@@ -610,9 +612,7 @@ endif
 endif
 
 main_err1:
-	@trace_s <lf,"------------------------------------",lf>
 	call strout_err
-	@trace_s <lf,"------------------------------------",lf>
 	@Exit RC_INITRM
 
 ;-------------------------------------------------------
@@ -3795,14 +3795,14 @@ SetAccBits endp
 ;***		AX=selector
 ;*** Output:
 ;*** on errors: C, AX=^error text
-;*** modifies blksize,blkaddr,SI,DI
+;*** modifies BLKSIZE,blkaddr,SI,DI
 
 AllocMem proc
 	push ax
 	sub bx,bx
-	mov word ptr [blksize+2],bx 	;set limit
+	mov word ptr [BLKSIZE+2],bx 	;set limit
 	dec cx
-	mov word ptr [blksize+0],cx
+	mov word ptr [BLKSIZE+0],cx
 	add cx,1
 	adc bx,bx
 	mov dh,00
@@ -3835,7 +3835,7 @@ endif
 	@trace_w bx
 	@trace_w cx
 	@trace_s <", limit=">
-	@trace_w <word ptr [blksize]>
+	@trace_w <word ptr [BLKSIZE]>
 	@trace_s lf
 
 	mov word ptr [blkaddr+2],bx 	;save lineare address
@@ -4074,7 +4074,7 @@ endif
 ;*** inp: AX= selector
 ;*** inp: ES= MD
 ;*** blkaddr: address
-;*** blksize: limit
+;*** BLKSIZE: limit
 ;*** out: C=error, then AX=^error text
 
 SetBaseLimit proc uses bx
@@ -4086,8 +4086,8 @@ SetBaseLimit proc uses bx
 	call dpmicall
 	mov ax,offset szErr34	;error 'set segment base'
 	jc error1
-	mov cx,word ptr [blksize+2]
-	mov dx,word ptr [blksize+0]
+	mov cx,word ptr [BLKSIZE+2]
+	mov dx,word ptr [BLKSIZE+0]
 	or dl,0Fh				;round up to paragraphs
 	test cx,0FFF0h			;> 1MB?
 	jz @F
@@ -4517,14 +4517,14 @@ ReallocMem proc
 if ?32BIT
 	push ecx
 	dec ecx
-	mov [blksize],ecx	 ;set limit
+	mov [BLKSIZE],ecx	 ;set limit
 	pop cx
 	pop bx
 else
 	xor bx,bx
 	dec cx
-	mov word ptr [blksize+0],cx
-	mov word ptr [blksize+2],bx
+	mov word ptr [BLKSIZE+0],cx
+	mov word ptr [BLKSIZE+2],bx
 	inc cx
 endif
 	and ax,ax						;is DOS memory used?
@@ -5879,23 +5879,23 @@ if ?RESETDEFPATH
 endif
 	mov cx,0FFFFh
 if ?32BIT
-	mov dword ptr [blksize+0],edi
+	mov dword ptr [BLKSIZE+0],edi
 	mov word ptr [blkaddr+0],es
 	movzx edi,di
 else
-	mov word ptr [blksize+0],di   ;is used as temp variable here
-	mov word ptr [blksize+2],es
+	mov word ptr [BLKSIZE+0],di   ;is used as temp variable here
+	mov word ptr [BLKSIZE+2],es
 endif
 	jmp @F
 LoadLibIntern::							;<--- entry
 	mov di,offset szModName
 if ?32BIT
 	movzx edi,di
-	mov dword ptr [blksize+0],edi
+	mov dword ptr [BLKSIZE+0],edi
 	mov word ptr [blkaddr+0],ds
 else
-	mov word ptr [blksize+0],di
-	mov word ptr [blksize+2],ds
+	mov word ptr [BLKSIZE+0],di
+	mov word ptr [BLKSIZE+2],ds
 endif
 @@:										;used by LoadLibIntern+LoadLibIntern2
 	mov ah,00					;copy name
@@ -5945,11 +5945,11 @@ endif
 	call SearchModule16			;check if module already loaded
 	jnc LoadLibIntern3  		;if yes, then just simple update
 if ?32BIT
-	mov eax,dword ptr [blksize+0]
+	mov eax,dword ptr [BLKSIZE+0]
 	mov dx,word ptr [blkaddr+0]
 else
-	mov ax,word ptr [blksize+0]
-	mov dx,word ptr [blksize+2]
+	mov ax,word ptr [BLKSIZE+0]
+	mov dx,word ptr [BLKSIZE+2]
 endif
 	call LoadModule16			;load DLL DX:(E)AX
 	jc LoadLib_Err

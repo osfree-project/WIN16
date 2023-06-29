@@ -19,6 +19,7 @@ endif
 externdef pascal _hmemset:far
 externdef discardmem:near
 externdef pascal eWinFlags:near
+externdef pascal wKernelDS:word
 externdef TH_HGLOBALHEAP:word
 externdef TH_PGLOBALHEAP:word
 

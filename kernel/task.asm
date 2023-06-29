@@ -18,6 +18,7 @@
 	include tdb.inc
 	include pdb.inc
 
+externdef pascal wKernelDS:word
 externdef pascal LocalInit: far
 GetCurrentPDBReal proto far pascal 
 

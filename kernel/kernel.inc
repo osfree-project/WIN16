@@ -95,7 +95,7 @@ RC_FATAL   equ 0FFh	;FatalExit/FatalAppExit called (16bit only)
 ;********** publics/externals **********
 
 _DATA segment
-externdef	wKernelDS:word
+externdef	pascal wKernelDS:word
 externdef	wTDStk:word
 externdef	starttaskstk:byte
 externdef	TH_HEXEHEAD:word
@@ -110,7 +110,7 @@ externdef	szPath:byte
 externdef	segtable:byte
 externdef	fMode:byte
 externdef	TH_TOPPDB:word
-externdef	wCurPSP:word
+externdef	pascal wCurPSP:word
 externdef	fLoadMod:byte
 if ?32BIT
 externdef	dStktop:dword

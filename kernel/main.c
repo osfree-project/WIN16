@@ -33,6 +33,17 @@ typedef struct tagENTRY
 
 extern ENTRY pascal near eWinFlags;
 
+void WINAPI Copyright()
+{
+	printf("\r\nosFree Windows Kernel version 0.1\r\n" 
+		   "Copyright (C) 2022-23 osFree\r\n"
+		   "Based on HX DPMI loader, Wine and TWIN\r\n"
+		   "Copyright (C) 1993-2022 Japheth\r\n"
+		   "Copyright (C) 1993-2022 the Wine project authors\r\n"
+		   "Copyright (C) 1997 Willows Software, Inc.\r\n"
+		   "\r\n");
+}
+
 /***********************************************************************
  *          GetWinFlags   (KERNEL.132)
  */
@@ -43,7 +54,7 @@ DWORD WINAPI GetWinFlags(void)
 
 void WINAPI SetWinFlags()
 {
-  printf("enter SetWinFlags\n\r");
+  printf("enter SetWinFlags\r\n");
   //@todo WF_PMODE set for non 8086 cpu kernel version
   eWinFlags.wOfs= (
 			  (GetFPU()?WF_80x87:0) 
@@ -51,15 +62,15 @@ void WINAPI SetWinFlags()
 			| WF_PMODE
 			| (IsVMM()?WF_ENHANCED:WF_STANDARD)
 		) ;
-  printf("exit SetWinFlags\n\r");
+  printf("exit SetWinFlags\r\n");
 }
 
 void WINAPI KernelMain(void)
 {
-	printf("enter KernelMain\n\r");
+	printf("enter KernelMain\r\n");
 	// Initialize WinFlags
 	SetWinFlags();
 	// Initialize Kernel Module
 	InitKernel();
-	printf("exit KernelMain\n\r");
+	printf("exit KernelMain\r\n");
 }
