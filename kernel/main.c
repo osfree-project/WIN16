@@ -36,12 +36,12 @@ extern ENTRY pascal near eWinFlags;
 /***********************************************************************
  *          GetWinFlags   (KERNEL.132)
  */
-DWORD WINAPI __loadds GetWinFlags(void)
+DWORD WINAPI GetWinFlags(void)
 {
   return eWinFlags.wOfs;
 }
 
-void WINAPI __loadds SetWinFlags()
+void WINAPI SetWinFlags()
 {
   printf("enter SetWinFlags\n\r");
   //@todo WF_PMODE set for non 8086 cpu kernel version

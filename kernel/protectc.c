@@ -3,7 +3,7 @@
 
 #include "win_private.h"
 
-void WINAPI __loadds Copyright()
+void WINAPI Copyright()
 {
 	printf("\n\rosFree Windows Kernel version 0.1\n\r" 
 		   "Copyright (C) 2022-23 osFree\n\r"
@@ -29,7 +29,7 @@ __asm
 	};
 }
 
-void WINAPI DumpDPMIInfo()
+void DumpDPMIInfo()
 {
 	init_info ii;
 	unsigned int mem;

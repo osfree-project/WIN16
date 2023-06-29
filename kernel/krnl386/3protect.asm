@@ -78,8 +78,8 @@ SwitchToPMode proc
 	push cs				; Set data segment to code segment
 	pop ds
 	
-	externdef pascal DumpDPMIInfo: far
-	call DumpDPMIInfo
+	externdef DumpDPMIInfo_: near
+	call DumpDPMIInfo_
 
 	@trace_s <lf,"------------------------------------",lf>
 	
