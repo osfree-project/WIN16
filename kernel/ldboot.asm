@@ -16,7 +16,7 @@
 		; Kernel defines
 		include kernel.inc
 
-public BLKSIZE
+;public BLKSIZE
 
 if ?DEBUG
 ?EXTLOAD		 = 0	;0 dont move loader in extended memory
@@ -477,9 +477,6 @@ endif
 	jnz @B
 	pop es				; Restore PSP segment
 step2:
-;	push cs				; Set data segment to code segment
-;	pop ds
-;	mov wKernelDS,ds		; Store for future usage
 	push cs				; Set stack segment to data segment
 	pop ss
 	mov sp,offset stacktop		; Set initial stack value
@@ -523,14 +520,12 @@ endif
 ; Switch and configure for protected mode kernels
 ife ?REAL
 
-	call SwitchToPMode_			; initial switch to protected mode
+	call SwitchToPMode_			; switch to protected mode
 
-	CTRL_C_CK 6
-
-	mov bEnvFlgs, 0
-@@:
 endif	; not ?REAL
 
+	CTRL_C_CK 6
+	mov bEnvFlgs, 0
 
 	call InitProtMode	;init vectors, alloc internal selectors
 	jc main_err6		;--->

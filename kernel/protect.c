@@ -81,7 +81,7 @@ void SwitchToPMode()
 
 	strat=_dos_getmemstrategy();
 	umblink=_dos_getumblink();
-	
+
 	_dos_setumblink(1);
 	_dos_setmemstrategy(0x81);	// set "fit best" strategy, first high, then low
 

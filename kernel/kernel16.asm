@@ -112,7 +112,7 @@ externdef pascal GlobalFree: far
 externdef pascal GlobalFlags: far
 externdef pascal GlobalLock: far
 externdef pascal GlobalUnlock: far
-externdef pascal GlobalFix: far
+externdef pascal GlobalFixReal: far
 externdef pascal GlobalUnfix: far
 externdef pascal GlobalHandle: far
 externdef pascal GlobalCompact: far
@@ -751,7 +751,7 @@ eF000 ENTRY <1,0>				;194 _F000H
 eC000 ENTRY <1,0>				;195 _C000H
 	db 3,1
 	ENTRY <1,SelectorAccessRights>		;196
-	ENTRY <1,GlobalFix>			;197
+	ENTRY <1,GlobalFixReal>			;197
 	ENTRY <1,GlobalUnfix>		;198
 	db 4,0						;199-202
 	db 1,1

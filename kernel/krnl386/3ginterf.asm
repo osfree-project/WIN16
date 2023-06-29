@@ -20,8 +20,6 @@ externdef pascal _hmemset:far
 externdef discardmem:near
 externdef pascal eWinFlags:near
 externdef pascal wKernelDS:word
-externdef TH_HGLOBALHEAP:word
-externdef TH_PGLOBALHEAP:word
 
 
 if ?32BIT
@@ -59,45 +57,6 @@ exit:
 	@return
 GlobalSize endp
 
-;--- DWORD GlobalDOSAlloc(DWORD size)
-;--- returns selector in ax, segment in dx
-
-GlobalDOSAlloc proc far pascal
-	pop bx
-	pop cx
-	pop ax			;get size into DX:AX
-	pop dx
-	push cx
-	push bx
-	mov cl,al
-	shr ax,4
-	shl dx,12		;skip bits 4-15 of DX
-	or ax,dx
-	test cl,0Fh
-	jz @F
-	inc ax
-@@:
-	@DPMI_DOSALLOC ax	;alloc dos memory
-	xchg ax,dx
-	jnc @F
-	xor ax,ax
-@@:
-	@return
-GlobalDOSAlloc endp
-
-GlobalDOSFree proc far pascal
-	pop bx
-	pop cx
-	pop dx
-	push cx
-	push bx
-	@DPMI_DOSFREE dx		;free dos memory
-	mov ax,dx
-	jc @F
-	xor ax,ax			;return 0 on success
-@@:
-	@return
-GlobalDOSFree endp
 
 GlobalLock proc far pascal
 	pop cx
@@ -577,12 +536,6 @@ exit:
 	ret
 
 GlobalReAlloc endp
-
-GlobalUnfix proc far pascal
-GlobalUnfix endp
-GlobalFix proc far pascal
-	@return 2
-GlobalFix endp
 
 GlobalHandle proc far pascal
 	pop cx

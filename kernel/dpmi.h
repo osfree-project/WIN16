@@ -195,3 +195,13 @@ extern char DPMI_GetCPU();
 	"exit:"\
         value [cl];
 
+extern WORD DPMI_FreeDOSMem(WORD sel);
+#pragma aux DPMI_FreeDOSMem = \
+	"mov	ax, 0101H" \
+	"int	31h" \
+	"mov	ax,dx" \
+	"jc		short L1" \
+	"xor	ax,ax" \
+	"L1:" \
+	parm [dx] \
+	value [ax];

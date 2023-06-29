@@ -167,3 +167,103 @@ DWORD WINAPI GlobalMasterHandle(void)
 	SetKernelDS();
     return MAKELONG(TH_HGLOBALHEAP, TH_PGLOBALHEAP);
 }
+
+/***********************************************************************
+ *           GlobalFix     (KERNEL.197)
+ */
+WORD WINAPI GlobalFixReal( HGLOBAL handle )
+{
+    //TRACE("%04x\n", handle );
+    //if (!VALID_HANDLE(handle)) {
+	//WARN("Invalid handle 0x%04x passed to GlobalFix16!\n",handle);
+	//return 0;
+    //}
+    //GET_ARENA_PTR(handle)->lockCount++;
+
+    return GlobalHandleToSel(handle);
+}
+
+
+/***********************************************************************
+ *           GlobalUnfix     (KERNEL.198)
+ */
+void WINAPI GlobalUnfix(HGLOBAL handle )
+{
+//    TRACE("%04x\n", handle );
+//    if (!VALID_HANDLE(handle)) {
+//	WARN("Invalid handle 0x%04x passed to GlobalUnfix16!\n",handle);
+//	return;
+//    }
+//    GET_ARENA_PTR(handle)->lockCount--;
+}
+
+#if 0
+;--- DWORD GlobalDOSAlloc(DWORD size)
+;--- returns selector in ax, segment in dx
+
+GlobalDOSAlloc proc far pascal
+	pop bx
+	pop cx
+	pop ax			;get size into DX:AX
+	pop dx
+	push cx
+	push bx
+	mov cl,al
+	shr ax,4
+	shl dx,12		;skip bits 4-15 of DX
+	or ax,dx
+	test cl,0Fh
+	jz @F
+	inc ax
+@@:
+	@DPMI_DOSALLOC ax	;alloc dos memory
+	xchg ax,dx
+	jnc @F
+	xor ax,ax
+@@:
+	@return
+GlobalDOSAlloc endp
+
+#endif
+/***********************************************************************
+ *           GlobalDOSAlloc   (KERNEL.184)
+ *
+ * Allocate memory in the first MB.
+ *
+ * RETURNS
+ *	Address (HW=Paragraph segment; LW=Selector)
+ */
+DWORD WINAPI GlobalDOSAlloc(
+             DWORD size /* [in] Number of bytes to be allocated */
+) {
+   UINT    uParagraph;
+   //LPVOID    lpBlock = DOSMEM_AllocBlock( size, &uParagraph );
+
+   //if( lpBlock )
+   {
+//       HMODULE hModule = GetModuleHandle("KERNEL");
+//       WORD	 wSelector;
+//       GLOBALARENA FAR *pArena;
+
+//       wSelector = GLOBAL_CreateBlock(GMEM_FIXED, lpBlock, size, hModule, LDT_FLAGS_DATA );
+//       pArena = GET_ARENA_PTR(wSelector);
+//       pArena->flags |= GA_DOSMEM;
+     //  return MAKELONG(wSelector,uParagraph);
+   }
+   return 0;
+}
+
+
+/***********************************************************************
+ *           GlobalDOSFree      (KERNEL.185)
+ *
+ * Free memory allocated with GlobalDOSAlloc
+ *
+ * RETURNS
+ *	NULL: Success
+ *	sel: Failure
+ */
+WORD WINAPI GlobalDOSFree(WORD sel /* [in] Selector */)
+{
+	return DPMI_FreeDOSMem(sel);
+}
