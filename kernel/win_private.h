@@ -370,7 +370,7 @@ extern WORD pascal wKernelDS;
 extern WORD pascal wCurPSP;
 extern WORD pascal TH_PGLOBALHEAP;
 extern WORD pascal TH_HGLOBALHEAP;
-
+extern char FAR * pascal szPgmName;
 extern __AHSHIFT;
 extern __AHINCR;
 
@@ -515,5 +515,5 @@ typedef struct tagLOCALARENA
 
 #define SetKernelDS() SetDS(wKernelDS);
 
-#define FUNCTIONSTART printf(__FUNCTION__##" starts at "##__FILE__##" %d ", __LINE__);
-#define FUNCTIONEND printf(__FUNCTION__##" ends at "##__FILE__##" %d ", __LINE__);
+#define FUNCTIONSTART printf(__FUNCTION__##" starts at "##__FILE__##" %d\r\n", __LINE__);
+#define FUNCTIONEND printf(__FUNCTION__##" ends at "##__FILE__##" %d\r\n", __LINE__);

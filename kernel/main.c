@@ -191,7 +191,7 @@ GetPgmParms endp
 
 void WINAPI GetPgmParms()
 {
-	char FAR * cmd=MAKELP(TH_TOPPDB, 0x80);
+	LPSTR cmd=MAKELP(TH_TOPPDB, 0x80);
 
 	FUNCTIONSTART;
 
@@ -203,7 +203,13 @@ void WINAPI GetPgmParms()
 
 void WINAPI StartProgman(void)
 {
+	char buffer[100];
+
 	FUNCTIONSTART;
+
+	GetPrivateProfileString("boot", "shell", "", buffer, sizeof(buffer), "SYSTEM.INI");
+	printf("shell=%s\r\n", buffer);
+
 	FUNCTIONEND;
 }
 

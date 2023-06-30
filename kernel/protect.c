@@ -78,6 +78,8 @@ void SwitchToPMode()
 	void(far * switchentry)(void);
 	unsigned umblink;
 	unsigned strat;
+	
+	FUNCTIONSTART;
 
 	strat=_dos_getmemstrategy();
 	umblink=_dos_getumblink();
@@ -128,4 +130,5 @@ void SwitchToPMode()
 
 	_dos_setumblink(strat);
 	_dos_setmemstrategy(umblink);
+	FUNCTIONEND;
 }

@@ -260,6 +260,7 @@ wlError		dw ?			;error code (for function 4B00h)
 
 ;*** std variables, initialization ensured/not required
 public pascal wCurPSP
+public pascal szPgmName
 ife ?MULTPSP
 wCurPSP	label word
 endif
@@ -538,12 +539,6 @@ main_1:
 
 	call KernelMain		; C-part initialization
 
-;	call GetPgmParms	   ;program name -> szPgmName, exec parm init
-	pushf
-	@strout szPgmName, 1
-	@trace_s <lf>
-	popf
-	jc main_err3	   ;---> error: no program name given
 	@trace_s <"Set INT 21H handler",lf>
 	call setvec21	   ;now set int 21h vector
 if ?LOADDBGDLL

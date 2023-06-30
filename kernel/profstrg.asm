@@ -1,6 +1,8 @@
         ; MacroLib
 	include dos.inc
 
+	include kernel.inc
+	include debug.inc
 
 	include pusha.inc
 if ?REAL
@@ -15,7 +17,7 @@ lf	equ 10
 O_RDONLY	equ 0
 O_RDWR		equ 2
 
-_TEXT	segment word public 'CODE'
+_TEXT	segment; word public 'CODE'
 
 check:
         push    si
@@ -90,7 +92,7 @@ searchsec_0:
         jnz     searchsec_0       ;--> falsche section
         cmp     al,0
         jnz     searchsec_0       ;--> falsche section
-;        @cstrout <"section found",cr,lf>
+        @trace_s <"section found",lf>
         clc
         ret
 searchsec_er:
@@ -134,15 +136,15 @@ local	sel:word
         mov     rc,ax
 	@GetBlok 1000h			;64k allokieren als puffer
         jc      getpps_ex               ;fehler: kein freier speicher
-;        @cstrout <"allokierung 64k ok",cr,lf>
+        @trace_s <"allokierung 64k ok",lf>
         mov     sel,ax
         lds     dx,lpszFilename
 	@OpenFil ,O_RDONLY
         jc      getpps_ex1              ;fehler: file not found
-;        @cstrout <"open ok",cr,lf>
+        @trace_s <"open ok",lf>
 	@Read	0, 0FFF0h, ax, sel
         jc      getpps_ex2             ;fehler: read error
-;        @cstrout <"read ok",cr,lf>
+        @trace_s <"read ok",lf>
         mov     cx,ax
         mov     es,sel
         lds     si,lpszSection              ;section ueberpruefen
@@ -164,14 +166,14 @@ local	sel:word
         neg     dx
         jmp     getpps_6
 @@:
-;        @cstrout <"entry found",cr,lf>
+        @trace_s <"entry found",lf>
         mov     ax,bufsize
         cmp     ax,cx
         jnc     @F
         mov     cx,ax
 @@:
         jcxz    getpps_ex2              ;puffersize = 0!
-;        @cstrout <"copy entry value",cr,lf>
+        @trace_s <"copy entry value",lf>
         push    es
         pop     ds
         mov     si,di
@@ -189,10 +191,14 @@ getpps_6:
         stosb
         mov     rc,dx
 getpps_ex2:
+	@SetKernelDS
+        @trace_s <"close file",lf>
         @ClosFil                  ;close file
 getpps_ex1:
+        @trace_s <"free buffer",lf>
 	@FreeBlok sel
 getpps_ex:
+        @trace_s <"exit",lf>
         @pop_a
         mov     ax,rc
         ret
@@ -211,15 +217,15 @@ local	lbuf:word
         mov     rc,ax
 	@GetBlok 1000h			;64k allokieren als puffer
         jc      writepps_ex             ;fehler: kein freier speicher
-;        @cstrout <"allokierung 64k ok",cr,lf>
+        @trace_s <"allokierung 64k ok",lf>
         mov     sel,ax
         lds     dx,lpszFilename
 	@OpenFil ,O_RDWR
         jc      writepps_1              ;file nicht da
-;        @cstrout <"open ok",cr,lf>
+        @trace_s <"open ok",lf>
 	@Read	0, 0FFF0h, ax, sel
         jc      writepps_ex2              ;fehler: read error
-;        @cstrout <"read ok",cr,lf>
+        @trace_s <"read ok",lf>
         mov     cx,ax
         mov     es,sel
         mov     di,ax
@@ -242,7 +248,7 @@ writepps_1:                             ;create file
 	@MakFil 
         jc      writepps_ex1
         mov     bx,ax
-;        @cstrout <"create ok",cr,lf>
+        @trace_s <"create ok",lf>
 writepps_2:                             ;section not found
         call    writeseckap
 writepps_3:                             ;entry not found
@@ -260,7 +266,7 @@ writepps_ex:
         ret
 
 writerest:
-;        @cstrout <"write rest",cr,lf>
+        @trace_s <"write rest",lf>
         mov     dx,di
         push    es
         pop     ds
@@ -272,7 +278,7 @@ writerest:
 	@Write		;write with CX=0 will truncate file
         retn
 writeseckap:
-;        @cstrout <"write section capital",cr,lf>
+        @trace_s <"write section capital",lf>
         mov     al,'['
         call    writechar
         lds     dx,lpszSection
@@ -285,7 +291,7 @@ writeseckap:
         call    writecrlf
         retn
 writeentry:
-;        @cstrout <"write entry",cr,lf>
+        @trace_s <"write entry",lf>
         lds     dx,lpszEntry
         call    getstrlen
         jcxz    @F
@@ -295,7 +301,7 @@ writeentry:
         call    writechar
         retn
 writevalue:
-;        @cstrout <"write value",cr,lf>
+        @trace_s <"write value",lf>
         lds     dx,lpszString
         call    getstrlen
 	@Write
