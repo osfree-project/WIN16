@@ -538,7 +538,7 @@ main_1:
 
 	call KernelMain		; C-part initialization
 
-	call GetPgmParms	   ;program name -> szPgmName, exec parm init
+;	call GetPgmParms	   ;program name -> szPgmName, exec parm init
 	pushf
 	@strout szPgmName, 1
 	@trace_s <lf>
@@ -7127,7 +7127,7 @@ setvec21 endp
 ;*** RC: Carry if error
 ;*** else: module name in szPgmName
 ;***	   parameter block in ParmBlk
-
+if 0
 GetPgmParms proc uses ds
 	push ds
 	pop es				;es=DGROUP
@@ -7243,7 +7243,7 @@ endif
 	clc
 	ret
 GetPgmParms endp
-
+endif
 
 
 ;*** global constructor ***

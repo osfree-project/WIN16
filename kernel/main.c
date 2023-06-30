@@ -17,7 +17,6 @@ extern char IsVMM();
         value [al];
 
 extern char GetFPU();
-// 486 by default
 #pragma aux GetFPU        = \
 	"int    11h"\
 	"and	al,2"\
@@ -54,7 +53,7 @@ DWORD WINAPI GetWinFlags(void)
 
 void WINAPI SetWinFlags()
 {
-  printf("enter SetWinFlags\r\n");
+	FUNCTIONSTART;
   //@todo WF_PMODE set for non 8086 cpu kernel version
   eWinFlags.wOfs= (
 			  (GetFPU()?WF_80x87:0) 
@@ -62,15 +61,162 @@ void WINAPI SetWinFlags()
 			| WF_PMODE
 			| (IsVMM()?WF_ENHANCED:WF_STANDARD)
 		) ;
-  printf("exit SetWinFlags\r\n");
+	FUNCTIONEND;
+}
+
+#if 0
+;*** read command line parameter
+;*** will be called for 1. task only
+;*** set exec parameter block (int 21,4b)
+;*** RC: Carry if error
+;*** else: module name in szPgmName
+;***	   parameter block in ParmBlk
+
+GetPgmParms proc uses ds
+	push ds
+	pop es				;es=DGROUP
+	@trace_s <"GetPgmParms enter",lf>
+
+	mov ds,[TH_TOPPDB]
+	mov si,0080h
+	mov di,offset szPgmName
+	sub cx,cx
+	mov cl,[si] 		;get parameter line
+	inc si
+	jcxz error
+	mov ah,0
+nextws:
+	lodsb
+  if ?32BIT
+	cmp al,'-'
+	jnz @F
+	mov ah,al
+	jmp skipcharx
+@@:
+  endif
+	cmp al,' '			;skip spaces
+	jnz parmfound
+skipcharx:
+	loop nextws
+error:
+	mov ax,offset errstr8	;"filename missing or invalid"
+	stc
+	ret
+parmfound:
+	dec si
+	mov dl,0
+nextchar:
+	lodsb
+	cmp al,'"'
+	jnz @F
+	xor ah,1
+	jmp skipchar
+@@:
+	test ah,1
+	jnz @F
+	cmp al,' '
+	jz copydone	   ;copy is done
+@@:
+	cmp al,'.'
+	jnz @F
+	inc dl
+@@:
+	stosb
+	cmp al,'/'
+	jz @F
+	cmp al,'\'
+	jnz skipchar
+@@:
+	mov dl,0
+skipchar:
+	loop nextchar
+copydone:
+	test ah,1
+	jnz error
+	and dl,dl		;file extension supplied? 
+	jnz @F
+	@trace_s <"'.EXE' added to module name",lf>
+	mov ax,'E.'
+	stosw
+	mov ax,'EX'
+	stosw
+@@:
+	mov al,00
+	stosb
+
+;------------------- copy rest of parameter line to psp cmd tail
+
+	push es
+	push ds
+	pop es
+	mov di, 80h
+	push di
+	mov al,cl
+	stosb
+	dec si
+	inc cl			; copy 0D at least
+	rep movsb
+	pop si
+	pop es
+gpp_1:
+
+	mov di,offset ParmBlk
+if ?32BIT
+	movzx eax,si
+	stosd				;cmdline
+	mov ax,ds
+	stosd
+	xor eax,eax 		;fcb1+fcb2
+	stosd
+	stosd
+	stosd
+	stosd
+else
+	xor ax,ax
+	stosw				;environment (nur bei 16 Bit)
+	mov ax,si
+	stosw				;cmdline
+	mov ax,ds
+	stosw
+	xor ax,ax			;fcb1+fcb2
+	stosw
+	stosw
+	stosw
+	stosw
+endif
+	clc
+	ret
+GetPgmParms endp
+#endif
+
+void WINAPI GetPgmParms()
+{
+	char FAR * cmd=MAKELP(TH_TOPPDB, 0x80);
+
+	FUNCTIONSTART;
+
+	if (cmd[0])
+	{
+	}
+	FUNCTIONEND;
+}
+
+void WINAPI StartProgman(void)
+{
+	FUNCTIONSTART;
+	FUNCTIONEND;
 }
 
 void WINAPI KernelMain(void)
 {
-	printf("enter KernelMain\r\n");
+	FUNCTIONSTART;
 	// Initialize WinFlags
 	SetWinFlags();
 	// Initialize Kernel Module
 	InitKernel();
-	printf("exit KernelMain\r\n");
+	// Parse command line
+	GetPgmParms();
+	// Execute shell
+	StartProgman();
+	FUNCTIONEND;
 }
