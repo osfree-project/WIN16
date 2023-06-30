@@ -10,6 +10,7 @@
  */
 void WINAPI GlobalFreeAll(HGLOBAL owner)
 {
+	FUNCTIONSTART;
 //    int i;
 //    GLOBALARENA *pArena;
 
@@ -19,6 +20,7 @@ void WINAPI GlobalFreeAll(HGLOBAL owner)
 //        if ((pArena->size != 0) && (pArena->hOwner == owner))
 //            GlobalFree( pArena->handle );
 //    }
+	FUNCTIONEND;
 }
 
 //#define VALID_HANDLE(handle) (((handle)>>__AHSHIFT)<globalArenaSize)
@@ -40,11 +42,13 @@ void WINAPI GlobalFreeAll(HGLOBAL owner)
 UINT WINAPI GlobalFlags(
               HGLOBAL handle /* [in] Handle of global memory object */
 ) {
+	FUNCTIONSTART;
 //    GLOBALARENA *pArena;
 
 //    TRACE("%04x\n", handle );
 //    if (!VALID_HANDLE(handle)) {
 //	WARN("Invalid handle 0x%04x passed to GlobalFlags16!\n",handle);
+	FUNCTIONEND;
 	return 0;
 //    }
 //    pArena = GET_ARENA_PTR(handle);
@@ -56,18 +60,29 @@ UINT WINAPI GlobalFlags(
 /***********************************************************************
  *           GlobalWire     (KERNEL.111)
  */
-char FAR * WINAPI GlobalWire( HGLOBAL handle )
+char FAR * WINAPI GlobalWire(HGLOBAL handle)
 {
-    return GlobalLock( handle );
+	char FAR * lock;
+	FUNCTIONSTART;
+	lock=GlobalLock(handle);
+	FUNCTIONEND;
+    return lock;
 }
 
 
 /***********************************************************************
  *           GlobalUnWire     (KERNEL.112)
  */
-BOOL WINAPI GlobalUnWire( HGLOBAL handle )
+BOOL WINAPI GlobalUnWire(HGLOBAL handle)
 {
-    return !GlobalUnlock( handle );
+	BOOL res;
+
+	FUNCTIONSTART;
+
+	res=!GlobalUnlock(handle);
+
+	FUNCTIONEND;
+    return res;
 }
 
 /***********************************************************************
@@ -80,8 +95,11 @@ VOID WINAPI GlobalNotify( FARPROC proc )
 {
     TDB far *pTask;
 
+	FUNCTIONSTART;
+
     if (!(pTask = MAKELP(GetCurrentTask(), 0))) return;
     pTask->discardhandler = proc;
+	FUNCTIONEND;
 }
 
 /***********************************************************************
@@ -89,6 +107,8 @@ VOID WINAPI GlobalNotify( FARPROC proc )
  */
 DWORD WINAPI LimitEMSPages( DWORD unused )
 {
+	FUNCTIONSTART;
+	FUNCTIONEND;
     return 0;
 }
 
@@ -97,6 +117,8 @@ DWORD WINAPI LimitEMSPages( DWORD unused )
  */
 void WINAPI A20Proc( WORD unused )
 {
+	FUNCTIONSTART;
+	FUNCTIONEND;
     /* this is also a NOP in Windows */
 }
 
@@ -108,6 +130,7 @@ void WINAPI A20Proc( WORD unused )
  */
 WORD WINAPI GlobalHandleToSel(HGLOBAL handle)
 {
+	FUNCTIONSTART;
     if (!handle) return 0;
 //    if (!VALID_HANDLE(handle)) {
 //	WARN("Invalid handle 0x%04x passed to GlobalHandleToSel!\n",handle);
@@ -118,6 +141,7 @@ WORD WINAPI GlobalHandleToSel(HGLOBAL handle)
 //        WARN("Program attempted invalid selector conversion\n" );
         return handle - 1;
     }
+	FUNCTIONEND;
     return handle | 7;
 }
 
@@ -126,6 +150,7 @@ WORD WINAPI GlobalHandleToSel(HGLOBAL handle)
  */
 HGLOBAL WINAPI LockSegment( HGLOBAL handle )
 {
+	FUNCTIONSTART;
 //    TRACE("%04x\n", handle );
     if (handle == (HGLOBAL)-1) handle = GetDS();
 //    if (!VALID_HANDLE(handle)) {
@@ -133,6 +158,7 @@ HGLOBAL WINAPI LockSegment( HGLOBAL handle )
 //	return 0;
 //    }
 //    GET_ARENA_PTR(handle)->lockCount++;
+	FUNCTIONEND;
     return handle;
 }
 
@@ -142,6 +168,7 @@ HGLOBAL WINAPI LockSegment( HGLOBAL handle )
  */
 void WINAPI UnlockSegment( HGLOBAL handle )
 {
+	FUNCTIONSTART;
 //    TRACE("%04x\n", handle );
     if (handle == (HGLOBAL)-1) handle = GetDS();
 //    if (!VALID_HANDLE(handle)) {
@@ -151,6 +178,7 @@ void WINAPI UnlockSegment( HGLOBAL handle )
 //    GET_ARENA_PTR(handle)->lockCount--;
     /* FIXME: this ought to return the lock count in CX (go figure...) */
 //    SetCX(GET_ARENA_PTR(handle)->lockCount);
+	FUNCTIONEND;
 }
 
 /************************************************************************
@@ -164,23 +192,29 @@ void WINAPI UnlockSegment( HGLOBAL handle )
 
 DWORD WINAPI GlobalMasterHandle(void)
 {
+	FUNCTIONSTART;
 	SetKernelDS();
+	FUNCTIONEND;
     return MAKELONG(TH_HGLOBALHEAP, TH_PGLOBALHEAP);
 }
 
 /***********************************************************************
  *           GlobalFix     (KERNEL.197)
  */
-WORD WINAPI GlobalFixReal( HGLOBAL handle )
+WORD WINAPI GlobalFixReal(HGLOBAL handle)
 {
+	WORD sel;
+	FUNCTIONSTART;
     //TRACE("%04x\n", handle );
     //if (!VALID_HANDLE(handle)) {
 	//WARN("Invalid handle 0x%04x passed to GlobalFix16!\n",handle);
 	//return 0;
     //}
     //GET_ARENA_PTR(handle)->lockCount++;
+	sel=GlobalHandleToSel(handle);
 
-    return GlobalHandleToSel(handle);
+	FUNCTIONEND;
+    return sel;
 }
 
 
@@ -189,12 +223,14 @@ WORD WINAPI GlobalFixReal( HGLOBAL handle )
  */
 void WINAPI GlobalUnfix(HGLOBAL handle )
 {
+	FUNCTIONSTART;
 //    TRACE("%04x\n", handle );
 //    if (!VALID_HANDLE(handle)) {
 //	WARN("Invalid handle 0x%04x passed to GlobalUnfix16!\n",handle);
 //	return;
 //    }
 //    GET_ARENA_PTR(handle)->lockCount--;
+	FUNCTIONEND;
 }
 
 #if 0
@@ -237,6 +273,7 @@ DWORD WINAPI GlobalDOSAlloc(
              DWORD size /* [in] Number of bytes to be allocated */
 ) {
    UINT    uParagraph;
+	FUNCTIONSTART;
    //LPVOID    lpBlock = DOSMEM_AllocBlock( size, &uParagraph );
 
    //if( lpBlock )
@@ -250,6 +287,7 @@ DWORD WINAPI GlobalDOSAlloc(
 //       pArena->flags |= GA_DOSMEM;
      //  return MAKELONG(wSelector,uParagraph);
    }
+	FUNCTIONEND;
    return 0;
 }
 
@@ -265,7 +303,12 @@ DWORD WINAPI GlobalDOSAlloc(
  */
 WORD WINAPI GlobalDOSFree(WORD sel /* [in] Selector */)
 {
-	return DPMI_FreeDOSMem(sel);
+	WORD	res;
+	
+	FUNCTIONSTART;
+	res=DPMI_FreeDOSMem(sel);
+	FUNCTIONEND;
+	return res;
 }
 
 #if 0
@@ -292,12 +335,14 @@ GetFreeMemInfo endp
  */
 DWORD WINAPI GetFreeMemInfo(void)
 {
+	FUNCTIONSTART;
 //    SYSTEM_BASIC_INFORMATION info;
 //    MEMORYSTATUS status;
 //
 //    NtQuerySystemInformation( SystemBasicInformation, &info, sizeof(info), NULL );
 //    GlobalMemoryStatus( &status );
 //    return MAKELONG( status.dwTotalVirtual / info.PageSize, status.dwAvailVirtual / info.PageSize );
+	FUNCTIONEND;
 }
 
 #if 0
@@ -323,9 +368,11 @@ GetFreeSpace endp
  */
 DWORD WINAPI GetFreeSpace( UINT wFlags )
 {
+	FUNCTIONSTART;
 //    MEMORYSTATUS ms;
 //    GlobalMemoryStatus( &ms );
 //    return min( ms.dwAvailVirtual, MAXLONG );
+	FUNCTIONEND;
 }
 
 #if 0
@@ -369,11 +416,13 @@ GlobalSize endp
 DWORD WINAPI GlobalSize(
              HGLOBAL handle /* [in] Handle of global memory object */
 ) {
+	FUNCTIONSTART;
 //    TRACE("%04x\n", handle );
     if (!handle) return 0;
 //    if (!VALID_HANDLE(handle))
 //	return 0;
 //    return GET_ARENA_PTR(handle)->size;
+	FUNCTIONEND;
 }
 
 #if 0
@@ -403,10 +452,102 @@ GlobalHandle endp
 DWORD WINAPI GlobalHandle(
              UINT sel /* [in] Address of global memory block */
 ) {
+	FUNCTIONSTART;
     //TRACE("%04x\n", sel );
     //if (!VALID_HANDLE(sel)) {
 	//WARN("Invalid handle 0x%04x passed to GlobalHandle!\n",sel);
 	//return 0;
     //}
     //return MAKELONG( GET_ARENA_PTR(sel)->handle, GlobalHandleToSel(sel) );
+	FUNCTIONEND;
+}
+
+char FAR * WINAPI K32WOWGlobalLock( HGLOBAL handle )
+{
+	FUNCTIONSTART;
+//    WORD sel = GlobalHandleToSel( handle );
+//    TRACE("(%04x) -> %08lx\n", handle, MAKELONG( 0, sel ) );
+
+    //if (handle)
+    //{
+	//if (handle == (HGLOBAL)-1) handle = GetDS();
+
+	//if (!VALID_HANDLE(handle)) {
+	    //WARN("Invalid handle 0x%04x passed to WIN16_GlobalLock16!\n",handle);
+	    //sel = 0;
+	//}
+	//else if (!GET_ARENA_PTR(handle)->base)
+            //sel = 0;
+        //else
+            //GET_ARENA_PTR(handle)->lockCount++;
+    //}
+//
+    //return MAKESEGPTR( sel, 0 );
+	FUNCTIONEND;
+}
+
+#if 0
+GlobalLock proc far pascal
+	pop cx
+	pop bx
+	pop dx
+	push bx
+	push cx
+	xor ax,ax
+	verr dx
+	jnz @F
+	retf
+@@:
+	xor dx,dx
+	retf
+GlobalLock endp
+#endif
+
+/***********************************************************************
+ *           GlobalLock   (KERNEL.18)
+ *
+ * This is the GlobalLock16() function used by 16-bit code.
+ */
+char FAR * WINAPI GlobalLock( HGLOBAL handle )
+{
+	FUNCTIONSTART;
+//    SEGPTR ret = K32WOWGlobalLock( handle );
+//    CURRENT_STACK16->ecx = SELECTOROF(ret);  /* selector must be returned in CX as well */
+//    return ret;
+	FUNCTIONEND;
+}
+
+#if 0
+GlobalUnlock proc far pascal
+	pop cx
+	pop dx
+	pop ax
+	push dx
+	push cx
+	@return
+GlobalUnlock endp
+
+#endif
+/***********************************************************************
+ *           GlobalUnlock     (KERNEL.19)
+ * NOTES
+ *	Should the return values be cast to booleans?
+ *
+ * RETURNS
+ *	TRUE: Object is still locked
+ *	FALSE: Object is unlocked
+ */
+BOOL WINAPI GlobalUnlock(
+              HGLOBAL handle /* [in] Handle of global memory object */
+) {
+	FUNCTIONSTART;
+    //GLOBALARENA *pArena = GET_ARENA_PTR(handle);
+    //if (!VALID_HANDLE(handle)) {
+	//WARN("Invalid handle 0x%04x passed to GlobalUnlock16!\n",handle);
+        //return FALSE;
+    //}
+    //TRACE("%04x\n", handle );
+    //if (pArena->lockCount) pArena->lockCount--;
+    //return pArena->lockCount;
+	FUNCTIONEND;
 }

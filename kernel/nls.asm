@@ -57,7 +57,6 @@ public szEntryCode
 public szLibName
 public szPathConst 
 public szWEP	
-public szDotDLL
 public nullstr	
 public errstr41   
 public errstr42   
@@ -144,7 +143,6 @@ if 0;e ?32BIT
 szCmdline	db 'CMDLINE=',0
 endif
 szWEP		db 'WEP'
-szDotDLL	db '.DLL'
 nullstr		db 00
 
 errstr41   db 'PMtoRMCallTHUNK: Cannot convert Selector',lf,00

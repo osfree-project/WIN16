@@ -27,29 +27,6 @@ externdef pascal GetFreeSpace:far
 _TEXT segment
 externdef pascal wKernelDS:word
 
-GlobalLock proc far pascal
-	pop cx
-	pop bx
-	pop dx
-	push bx
-	push cx
-	xor ax,ax
-	verr dx
-	jnz @F
-	retf
-@@:
-	xor dx,dx
-	retf
-GlobalLock endp
-
-GlobalUnlock proc far pascal
-	pop cx
-	pop dx
-	pop ax
-	push dx
-	push cx
-	@return
-GlobalUnlock endp
 
 ;--- GlobalAlloc(WORD flags, DWORD dwSize);
 ;--- according to win31 docs max size is 16 MB - 64 kB on a 80386

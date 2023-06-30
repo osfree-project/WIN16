@@ -106,7 +106,6 @@ endif
 		option casemap:none
 		option proc:private
 
-
 extern pascal eWinFlags: ENTRY
 
 extern szTerm: near
@@ -163,7 +162,6 @@ extern szEntryCode: near
 extern szLibName: near
 extern szPathConst: near
 extern szWEP: near
-extern szDotDLL: near
 extern nullstr: near
 extern errstr41: near
 extern errstr42: near
@@ -3003,15 +3001,15 @@ loadmod_2:
 	test byte ptr NE_Hdr.APPFLGS,AF_DLL ;is app or dll?
 	jnz @F
 	mov ax,offset szNotaNE
-if ?32BIT
-	cmp NE_Hdr.ne_exetyp, ET_DPMI32	;only load 32bit NE apps!!!
-	jnz error3
-else
-	cmp NE_Hdr.ne_exetyp, ET_DPMI32	;dont load 32bit NE apps!!!
-	jz error3
+;if ?32BIT
+;	cmp NE_Hdr.ne_exetyp, ET_DPMI32	;only load 32bit NE apps!!!
+;	jnz error3
+;else
+;	cmp NE_Hdr.ne_exetyp, ET_DPMI32	;dont load 32bit NE apps!!!
+;	jz error3
 	cmp NE_Hdr.ne_exetyp, ET_WINDOWS;dont load Win3 NE apps!!!
-	jz error3
-endif
+	jnz error3
+;endif
 	cmp [wTDStk],offset starttaskstk
 	jz @F
 if ?32BIT
@@ -5918,15 +5916,26 @@ else
 endif
 	loop nextitem
 	mov [di],cl
+	@trace_s <"szModName: ">
+	@trace_sx <offset szModName>
+	@trace_s <lf>
 lli_1:
 	push ds
 	pop es
 	and ah,ah
 	jnz @F
-	mov cx,0005
-	mov si,offset szDotDLL		;strcat ".DLL",00 
-	rep movsb
+	push ax			;strcat ".DLL",00 
+	mov ax,'D.'
+	stosw
+	mov ax,'LL'
+	stosw
+	xor al,al
+	stosb
+	pop ax
 @@:
+	@trace_s <"szModName: ">
+	@trace_sx <offset szModName>
+	@trace_s <lf>
 	mov si,offset szModName		;^ name of module
 if ?32BIT
 	movzx esi,si
@@ -7244,8 +7253,7 @@ InitProtMode proc
 	@trace_s <"enter initialize PM",lf>
 
 	@DPMI_GetPMIntVec 21h				;get int 21 PM vector
-				;get pm int
-	
+
 	mov word ptr [PrevInt21Proc+0],dx
 	mov word ptr [PrevInt21Proc+2],cx
 	@DPMI_GetPMIntVec 31h				;get int 31 PM vector

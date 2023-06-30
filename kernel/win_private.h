@@ -514,3 +514,6 @@ typedef struct tagLOCALARENA
   (GlobalLock(GlobalAlloc((flags), (cb))))
 
 #define SetKernelDS() SetDS(wKernelDS);
+
+#define FUNCTIONSTART printf(__FUNCTION__##" starts at "##__FILE__##" %d ", __LINE__);
+#define FUNCTIONEND printf(__FUNCTION__##" ends at "##__FILE__##" %d ", __LINE__);
