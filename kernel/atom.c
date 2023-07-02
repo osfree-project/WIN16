@@ -28,10 +28,6 @@
 #include <windows.h>
 #include <win_private.h>
 
-
-//WINE_DEFAULT_DEBUG_CHANNEL(atom);
-
-
 /***********************************************************************
  *           ATOM_GetTable
  *
@@ -46,6 +42,8 @@ static LPATOMTABLE ATOM_GetTable( BOOL create  /* [in] Create */ )
 {
     LPINSTANCEDATA ptr;
 
+    FUNCTIONSTART;
+
     ptr=MAKELP(GetDS(), 0);
 
     if (ptr->atomtable)
@@ -57,6 +55,9 @@ static LPATOMTABLE ATOM_GetTable( BOOL create  /* [in] Create */ )
     if (!InitAtomTable( 0 )) return NULL;
 //    /* Reload ptr in case it moved in linear memory */
     ptr=MAKELP(GetDS(), 0);
+
+    FUNCTIONEND;
+
     return (LPATOMTABLE)((LPSTR)ptr + ptr->atomtable);
 }
 
@@ -73,9 +74,13 @@ static WORD ATOM_Hash(
 ) {
     WORD i, hash = 0;
 
+    FUNCTIONSTART;
 //    TRACE("%x, %s, %x\n", entries, str, len);
 
     for (i = 0; i < len; i++) hash ^= toupper(str[i]) + i;
+
+    FUNCTIONEND;
+
     return hash % entries;
 }
 
@@ -86,6 +91,9 @@ static WORD ATOM_Hash(
 static BOOL ATOM_IsIntAtomA(LPCSTR atomstr,WORD *atomid)
 {
     UINT atom = 0;
+
+    FUNCTIONSTART;
+
     if (!HIWORD(atomstr)) atom = LOWORD(atomstr);
     else
     {
@@ -103,6 +111,9 @@ static BOOL ATOM_IsIntAtomA(LPCSTR atomstr,WORD *atomid)
         atom = 0;
     }
     *atomid = atom;
+
+    FUNCTIONEND;
+
     return TRUE;
 }
 
@@ -114,6 +125,11 @@ static BOOL ATOM_IsIntAtomA(LPCSTR atomstr,WORD *atomid)
  */
 LPATOMENTRY ATOM_MakePtr( HANDLE handle /* [in] Handle */ )
 {
+
+    FUNCTIONSTART;
+
+    FUNCTIONEND;
+
     return MAKELP(GetDS(), handle);
 }
 
@@ -137,6 +153,8 @@ BOOL WINAPI InitAtomTable(int nSize)
     int i;
     HANDLE handle = ((LPINSTANCEDATA) MAKELP(GetDS(), 0))->atomtable;
 
+    FUNCTIONSTART;
+
     /* sanity check */
     if (!nSize) nSize = DEFAULT_ATOMTABLE_SIZE;  
 
@@ -154,6 +172,8 @@ BOOL WINAPI InitAtomTable(int nSize)
         }
     }
 
+    FUNCTIONEND;
+
     /* return result in AX and CX */
     SetCX(handle);
     return handle;
@@ -168,7 +188,13 @@ BOOL WINAPI InitAtomTable(int nSize)
  */
 HLOCAL WINAPI GetAtomHandle(ATOM atom)
 {
+
+    FUNCTIONSTART;
+
     if (atom < MAXINTATOM) return 0;
+
+    FUNCTIONEND;
+
     return ATOMTOHANDLE(atom);
 }
 
@@ -194,6 +220,8 @@ ATOM WINAPI AddAtom(LPCSTR str)
     LPATOMTABLE table;
     int len, ae_len;
     WORD iatom;
+
+    FUNCTIONSTART;
 
     if (ATOM_IsIntAtomA( str, &iatom )) return iatom;
 
@@ -235,6 +263,9 @@ ATOM WINAPI AddAtom(LPCSTR str)
     memset( entryPtr->str+len, 0, ae_len - sizeof(ATOMENTRY) - (len - 1));
     table->entries[hash] = entry;
 //    TRACE("-- new 0x%x\n", entry);
+
+    FUNCTIONEND;
+
     return HANDLETOATOM( entry );
 }
 
@@ -248,6 +279,8 @@ ATOM WINAPI DeleteAtom( ATOM atom )
     LPATOMTABLE table;
     HANDLE entry, *prevEntry;
     WORD hash;
+
+    FUNCTIONSTART;
 
     if (atom < MAXINTATOM) return 0;  /* Integer atom */
 
@@ -273,6 +306,9 @@ ATOM WINAPI DeleteAtom( ATOM atom )
         *prevEntry = entryPtr->next;
         LocalFree( entry );
     }
+
+    FUNCTIONEND;
+
     return 0;
 }
 
@@ -286,6 +322,8 @@ ATOM WINAPI FindAtom( LPCSTR str )
     WORD hash,iatom;
     HANDLE entry;
     int len;
+
+    FUNCTIONSTART;
 
 //    TRACE("%s\n",debugstr_a(str));
 
@@ -305,7 +343,9 @@ ATOM WINAPI FindAtom( LPCSTR str )
         }
         entry = entryPtr->next;
     }
-//    TRACE("-- not found\n");
+
+    FUNCTIONEND;
+
     return 0;
 }
 
@@ -321,6 +361,7 @@ UINT WINAPI GetAtomName( ATOM atom, LPSTR buffer, int count )
     int len;
     char text[8];
 
+    FUNCTIONSTART;
 //    TRACE("%x\n",atom);
 
     if (!count) return 0;
@@ -342,5 +383,8 @@ UINT WINAPI GetAtomName( ATOM atom, LPSTR buffer, int count )
     if (len >= count) len = count-1;
     memcpy( (void FAR *)buffer, strPtr, len );
     buffer[len] = '\0';
+
+    FUNCTIONEND;
+
     return len;
 }

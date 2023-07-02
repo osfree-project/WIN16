@@ -29,8 +29,8 @@ typedef struct _PIFHDR {	// Windows 2.x section taken from TopView
     char	Title[30];	// 002: Program title padded with blanks
     WORD	DosMaxS;	// 020: Low DOS max /S
     WORD	DosMinS;	// 022: Low DOS min /S
-    char	PgmName[63];	// 024: Program name ASCIZ
-    BYTE	Flags1; 	// 063: Microsoft behavior bits
+    char	PgmName[63];	// 024: Program name ASCIZ // TopView uses 64 bytes
+    BYTE	Flags1; 	// 063: Microsoft behavior bits // Used by TopView as part of PgmName
 				//	0x01 Modifies memory (fResident)
 				//	0x02 Video mode graphics /S (fGraphics)
 				//	0x04 Prevent pgm switch /S (fNoSwitch)
@@ -42,20 +42,35 @@ typedef struct _PIFHDR {	// Windows 2.x section taken from TopView
     char	StartupDir[64]; // 065: Startup directory ASCIZ
     char	CmdLineS[64];	// 0A5: Optional parameters ASCIZ /S
     BYTE	ScreenType;	// 0E5: Windows doesn't use this
-    BYTE	ScreenPages;	// 0E6: Windows doesn't use this (always 1)
-    BYTE	IntVecLow;	// 0E7: Low bound of INT vectors (always 0)
-    BYTE	IntVecHigh;	// 0E8: High bound of INT vectors (always FF)
-    BYTE	ScrnRows;	// 0E9: Windows doesn't use this
-    BYTE	ScrnCols;	// 0EA: Windows doesn't use this
-    BYTE	RowOffs;	// 0EB: Windows doesn't use this
-    BYTE	ColOffs;	// 0EC: Windows doesn't use this
-    WORD	SystemMem;	// 0ED: System memory (7 - text, 23 - graphics)
-    char	SharedProg[64]; // 0EF: Windows doesn't use this
-    char	SharedData[64]; // 12F: Windows doesn't use this
+				//	0x00 Reserved
+				//	0x01 Reserved
+				//	0x02 80x25 B/W Text mode
+				//	0x03 80x25 Color Text mode
+				//	0x04 320x200 Color Graphics mode
+				//	0x05 320x200 B/W Graphics mode
+				//	0x06 640x200 B/W Graphics mode
+				//	0x07 80x25 Monochrome Text mode
+				//	0x7E default DOS program
+				//	0x7F default TopView program
+    BYTE	ScreenPages;	// 0E6: Windows doesn't use this (always 1 for Windows)
+				//	1-8 pages
+    BYTE	IntVecLow;	// 0E7: Low bound of INT vectors (always 0 for Windows)
+    BYTE	IntVecHigh;	// 0E8: High bound of INT vectors (always FF for Windows)
+    BYTE	ScrnRows;	// 0E9: 0-127 Windows doesn't use this
+    BYTE	ScrnCols;	// 0EA: 0-127 Windows doesn't use this
+    BYTE	RowOffs;	// 0EB: 0-127 Windows doesn't use this
+    BYTE	ColOffs;	// 0EC: 0-127 Windows doesn't use this
+    WORD	SystemMem;	// 0ED: System memory in Kb (7 - text, 23 - graphics) needed for buffers
+    char	SharedProg[64]; // 0EF: Name of shared program. Windows doesn't use this
+    char	SharedData[64]; // 12F: Shared program data. Windows doesn't use this
     BYTE	Flags2; 	// 16F: BehavByte
 				//	0x80 fFullScreen
+				//	0x40 Run in foreground (TopView)
+				//	0x20 Uses math co-processor (TopView)
 				//	0x10 Modify keyboard /S
     BYTE	SystemFlags;	// 170: TopView behavior bits
+				//	0x20 Swap interrupt vectors
+				//	0x40 Uses parameters
 				// 171:
 } PIFHDR, * PPIFHDR, FAR * LPPIFHDR;
 

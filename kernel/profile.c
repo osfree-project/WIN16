@@ -30,7 +30,13 @@
  */
 UINT WINAPI GetProfileInt( LPCSTR section, LPCSTR entry, int def_val )
 {
-    return GetPrivateProfileInt( section, entry, def_val, "win.ini" );
+    UINT res;
+    FUNCTIONSTART;
+
+    res=GetPrivateProfileInt( section, entry, def_val, "win.ini" );
+
+    FUNCTIONEND;
+    return res;
 }
 
 /***********************************************************************
@@ -41,20 +47,31 @@ UINT WINAPI GetPrivateProfileInt( LPCSTR section, LPCSTR entry,
 {
     char buffer[30];
 
+    FUNCTIONSTART;
+
     /* we used to have some elaborate return value limitation (<= -32768 etc.)
      * here, but Win98SE doesn't care about this at all, so I deleted it.
      * AFAIR versions prior to Win9x had these limits, though. */
 
 
-    if (GetPrivateProfileString( section, entry, "", buffer, sizeof( buffer ), filename ) == 0) return def_val;
+    if (GetPrivateProfileString( section, entry, "", buffer, sizeof( buffer ), filename ) == 0)
+    {
+        FUNCTIONEND;
+        return def_val;
+    }
 
     /* FIXME: if entry can be found but it's empty, then Win16 is
      * supposed to return 0 instead of def_val ! Difficult/problematic
      * to implement (every other failure also returns zero buffer),
      * thus wait until testing framework avail for making sure nothing
      * else gets broken that way. */
-    if (!buffer[0]) return (UINT)def_val;
+    if (!buffer[0]) 
+    {
+        FUNCTIONEND;
+        return (UINT)def_val;
+    }
 
+    FUNCTIONEND;
     return atoi(buffer);
 }
 
@@ -64,8 +81,15 @@ UINT WINAPI GetPrivateProfileInt( LPCSTR section, LPCSTR entry,
 int WINAPI GetProfileString( LPCSTR section, LPCSTR entry, LPCSTR def_val,
                                  LPSTR buffer, int len )
 {
-    return GetPrivateProfileString( section, entry, def_val,
-                                      buffer, len, "win.ini" );
+    int res;
+
+    FUNCTIONSTART;
+
+    res=GetPrivateProfileString( section, entry, def_val,
+                                      buffer, len, "win.ini");
+
+    FUNCTIONEND;
+    return res;
 }
 
 
@@ -75,5 +99,11 @@ int WINAPI GetProfileString( LPCSTR section, LPCSTR entry, LPCSTR def_val,
 BOOL WINAPI WriteProfileString( LPCSTR section, LPCSTR entry,
                                     LPCSTR string )
 {
-    return WritePrivateProfileString( section, entry, string, "win.ini" );
+    BOOL res;
+    FUNCTIONSTART;
+
+    res=WritePrivateProfileString( section, entry, string, "win.ini" );
+
+    FUNCTIONEND;
+    return res;
 }
