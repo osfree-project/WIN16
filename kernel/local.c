@@ -1,5 +1,6 @@
 #include <windows.h>
-#include <win_private.h>
+
+#include "win_private.h"
 
 
 static inline BOOL call_notify_func( FARPROC proc, WORD msg, HLOCAL handle, WORD arg )
@@ -7,11 +8,13 @@ static inline BOOL call_notify_func( FARPROC proc, WORD msg, HLOCAL handle, WORD
     DWORD ret;
     WORD args[3];
 
+    FUNCTIONSTART;
     if (!proc) return FALSE;
     args[2] = msg;
     args[1] = handle;
     args[0] = arg;
 //    WOWCallback16Ex( (DWORD)proc, WCB16_PASCAL, sizeof(args), args, &ret );
+	FUNCTIONEND;
     return LOWORD(ret);
 }
 
@@ -22,8 +25,12 @@ static inline BOOL call_notify_func( FARPROC proc, WORD msg, HLOCAL handle, WORD
  */
 static LPLOCALHEAPINFO LOCAL_GetHeap( HANDLE ds )
 {
-    LPINSTANCEDATA ptr = MAKELP(ds, 0);
+    LPINSTANCEDATA ptr;
     LPLOCALHEAPINFO lpInfo;
+
+	FUNCTIONSTART;
+
+	ptr=MAKELP(ds, 0);;
 //    TRACE("Heap at %p, %04x\n", ptr, (ptr != NULL ? ptr->heap : 0xFFFF));
     if (!ptr || !ptr->null || !ptr->heap) return NULL;
 
@@ -39,18 +46,26 @@ static LPLOCALHEAPINFO LOCAL_GetHeap( HANDLE ds )
 //	WARN("Bad magic\n");
 	return NULL;
     }
+	
+	FUNCTIONEND;
+	
     return lpInfo;
 }
 
 /***********************************************************************
  *           LOCAL_FindFreeBlock
  */
-static HLOCAL LOCAL_FindFreeBlock( HANDLE ds, WORD size )
+static HLOCAL LOCAL_FindFreeBlock(HANDLE ds, WORD size)
 {
-    LPSTR ptr = MAKELP( ds, 0 );
-    LPLOCALHEAPINFO lpInfo = LOCAL_GetHeap( ds );
+    LPSTR ptr;
+    LPLOCALHEAPINFO lpInfo;
     LPLOCALARENA lpArena;
     WORD arena;
+
+	FUNCTIONSTART;
+
+	ptr=MAKELP(ds, 0);
+	lpInfo = LOCAL_GetHeap( ds );
 
     if (!(lpInfo))
     {
@@ -69,6 +84,8 @@ static HLOCAL LOCAL_FindFreeBlock( HANDLE ds, WORD size )
     }
 //    TRACE("not enough space\n" );
 //    LOCAL_PrintHeap(ds);
+	FUNCTIONEND;
+	
     return 0;
 }
 
@@ -86,6 +103,8 @@ static void LOCAL_MakeBlockFree(LPSTR baseptr, WORD block)
 {
     LPLOCALARENA lpArena, lpNext;
     WORD next;
+
+	FUNCTIONSTART;
 
       /* Mark the block as free */
 
@@ -110,6 +129,8 @@ static void LOCAL_MakeBlockFree(LPSTR baseptr, WORD block)
     lpArena->free_next = next;
     ARENA_PTR(baseptr,lpNext->free_prev)->free_next = block;
     lpNext->free_prev  = block;
+
+	FUNCTIONEND;
 }
 
 /***********************************************************************
@@ -123,13 +144,19 @@ static void LOCAL_RemoveFreeBlock( char far *baseptr, WORD block )
 {
       /* Mark the block as fixed */
 
-    LPLOCALARENA lpArena = ARENA_PTR( baseptr, block );
+    LPLOCALARENA lpArena;
+
+	FUNCTIONSTART;
+	
+	lpArena=ARENA_PTR(baseptr, block);
     lpArena->prev = (lpArena->prev & ~3) | LOCAL_ARENA_FIXED;
 
       /* Remove it from the list */
 
     ARENA_PTR(baseptr,lpArena->free_prev)->free_next = lpArena->free_next;
     ARENA_PTR(baseptr,lpArena->free_next)->free_prev = lpArena->free_prev;
+
+	FUNCTIONEND;
 }
 
 /***********************************************************************
@@ -142,14 +169,20 @@ static void LOCAL_RemoveFreeBlock( char far *baseptr, WORD block )
  */
 static void LOCAL_AddBlock(LPSTR baseptr, WORD prev, WORD new )
 {
-    LPLOCALARENA lpPrev = ARENA_PTR( baseptr, prev );
-    LPLOCALARENA lpNew  = ARENA_PTR( baseptr, new );
+    LPLOCALARENA lpPrev;
+    LPLOCALARENA lpNew;
 
+	FUNCTIONSTART;
+
+	lpPrev=ARENA_PTR(baseptr, prev);
+	lpNew=ARENA_PTR(baseptr, new);
     lpNew->prev = (prev & ~3) | LOCAL_ARENA_FIXED;
     lpNew->next = lpPrev->next;
     ARENA_PTR(baseptr,lpPrev->next)->prev &= 3;
     ARENA_PTR(baseptr,lpPrev->next)->prev |= new;
     lpPrev->next = new;
+
+	FUNCTIONEND;
 }
 
 
@@ -158,11 +191,17 @@ static void LOCAL_AddBlock(LPSTR baseptr, WORD prev, WORD new )
  */
 static WORD LOCAL_GetFreeSpace(WORD ds, WORD countdiscard)
 {
-    LPSTR ptr = MAKELP( ds, 0 );
-    LPLOCALHEAPINFO lpInfo = LOCAL_GetHeap( ds );
+    LPSTR ptr;
+    LPLOCALHEAPINFO lpInfo;
     LPLOCALARENA lpArena;
     WORD arena;
-    WORD freespace = 0;
+    WORD freespace;
+	
+	FUNCTIONSTART;
+
+	freespace=0;
+	ptr=MAKELP(ds, 0);
+	lpInfo=LOCAL_GetHeap(ds);
 
     if (!(lpInfo))
     {
@@ -182,6 +221,9 @@ static WORD LOCAL_GetFreeSpace(WORD ds, WORD countdiscard)
        were discarded when countdiscard == 1 */
     if (freespace < ARENA_HEADER_SIZE) freespace = 0;
     else freespace -= ARENA_HEADER_SIZE;
+
+	FUNCTIONEND;
+
     return freespace;
 }
 
@@ -195,6 +237,8 @@ static WORD LOCAL_GetFreeSpace(WORD ds, WORD countdiscard)
 static void LOCAL_RemoveBlock(LPSTR baseptr, WORD block )
 {
     LPLOCALARENA lpArena, lpTmp;
+	
+	FUNCTIONSTART;
 
       /* Remove the block from the free-list */
 
@@ -214,6 +258,8 @@ static void LOCAL_RemoveBlock(LPSTR baseptr, WORD block )
     lpTmp->next = lpArena->next;
     lpTmp = ARENA_PTR( baseptr, lpArena->next );
     lpTmp->prev = (lpTmp->prev & 3) | (lpArena->prev & ~3);
+	
+	FUNCTIONEND;
 }
 
 
@@ -222,10 +268,14 @@ static void LOCAL_RemoveBlock(LPSTR baseptr, WORD block )
  */
 static HLOCAL LOCAL_FreeArena( WORD ds, WORD arena )
 {
-    LPSTR ptr = MAKELP( ds, 0 );
-    LPLOCALHEAPINFO lpInfo = LOCAL_GetHeap( ds );
+    LPSTR ptr;
+    LPLOCALHEAPINFO lpInfo;
     LPLOCALARENA lpArena, lpPrev;
 
+	FUNCTIONSTART;
+
+	ptr=MAKELP(ds, 0);
+	lpInfo=LOCAL_GetHeap(ds);
 //    TRACE("%04x ds=%04x\n", arena, ds );
     if (!lpInfo) return arena;
 
@@ -262,6 +312,9 @@ static HLOCAL LOCAL_FreeArena( WORD ds, WORD arena )
         LOCAL_RemoveBlock( ptr, lpArena->next );
         lpInfo->items--;
     }
+	
+	FUNCTIONEND;
+
     return 0;
 }
 
@@ -273,8 +326,13 @@ static HLOCAL LOCAL_FreeArena( WORD ds, WORD arena )
  */
 static void LOCAL_ShrinkArena( WORD ds, WORD arena, WORD size )
 {
-    LPSTR ptr = MAKELP( ds, 0 );
-    LPLOCALARENA lpArena = ARENA_PTR( ptr, arena );
+    LPSTR ptr;
+    LPLOCALARENA lpArena;
+
+	FUNCTIONSTART;
+
+	ptr=MAKELP(ds, 0);
+	lpArena=ARENA_PTR(ptr, arena);
 
     if (arena + size + LALIGN(sizeof(LOCALARENA)) < lpArena->next)
     {
@@ -284,6 +342,8 @@ static void LOCAL_ShrinkArena( WORD ds, WORD arena, WORD size )
         lpInfo->items++;
         LOCAL_FreeArena( ds, arena + size );
     }
+
+	FUNCTIONEND;
 }
 
 /***********************************************************************
@@ -293,14 +353,22 @@ static void LOCAL_ShrinkArena( WORD ds, WORD arena, WORD size )
  */
 static void LOCAL_GrowArenaDownward( WORD ds, WORD arena, WORD newsize )
 {
-    LPSTR ptr = MAKELP( ds, 0 );
-    LPLOCALHEAPINFO lpInfo = LOCAL_GetHeap( ds );
-    LPLOCALARENA lpArena = ARENA_PTR( ptr, arena );
-    WORD prevArena = lpArena->prev & ~3;
-    LPLOCALARENA lpPrevArena = ARENA_PTR( ptr, prevArena );
+    LPSTR ptr;
+    LPLOCALHEAPINFO lpInfo;
+    LPLOCALARENA lpArena;
+    WORD prevArena;
+    LPLOCALARENA lpPrevArena;
     WORD offset, size;
     LPSTR p;
 
+	ptr=MAKELP(ds, 0);
+	lpInfo=LOCAL_GetHeap(ds);
+	lpArena=ARENA_PTR(ptr, arena);
+	prevArena=lpArena->prev & ~3;
+	lpPrevArena=ARENA_PTR(ptr, prevArena);
+	
+	FUNCTIONSTART;
+	
     if (!(lpInfo)) return;
     offset = lpPrevArena->size;
     size = lpArena->next - arena - ARENA_HEADER_SIZE;
@@ -316,6 +384,8 @@ static void LOCAL_GrowArenaDownward( WORD ds, WORD arena, WORD newsize )
     }
     if (size) memcpy( p, p + offset, size );
     LOCAL_ShrinkArena( ds, prevArena, newsize );
+	
+	FUNCTIONEND;
 }
 
 /***********************************************************************

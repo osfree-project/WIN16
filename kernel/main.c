@@ -8,20 +8,20 @@ extern void InitKernel();
 
 extern char IsVMM();
 #pragma aux IsVMM        = \
-        "mov    ax,01600h"       \
-	"int    31h"\
-	"cmp	al, 3"\
-	"jz	exit"\	
-	"xor	al, al"\
-	"exit:"\
-        value [al];
+	"mov    ax,01600h"       \
+	"int    31h" \
+	"cmp	al, 3" \
+	"jz	exit" \
+	"xor	al, al" \
+	"exit:" \
+	value [al];
 
 extern char GetFPU();
 #pragma aux GetFPU        = \
 	"int    11h"\
 	"and	al,2"\
-	"exit:"\
-        value [al];
+	"exit:" \
+	value [al];
 
 #pragma pack (1)
 typedef struct tagENTRY
@@ -54,8 +54,8 @@ DWORD WINAPI GetWinFlags(void)
 void WINAPI SetWinFlags()
 {
 	FUNCTIONSTART;
-  //@todo WF_PMODE set for non 8086 cpu kernel version
-  eWinFlags.wOfs= (
+	//@todo WF_PMODE set for non 8086 cpu kernel version
+	eWinFlags.wOfs= (
 			  (GetFPU()?WF_80x87:0) 
 			| (1<<(DPMI_GetCPU()-1)) 
 			| WF_PMODE
@@ -197,6 +197,8 @@ void WINAPI GetPgmParms()
 
 	if (cmd[0])
 	{
+		cmd++;
+		while (*cmd==' ') cmd++;
 	}
 	FUNCTIONEND;
 }

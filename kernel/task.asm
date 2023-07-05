@@ -93,9 +93,14 @@ InitTask proc far pascal uses ds
 	mov ax,0
 	jc error
 	mov bx,0081h
-	mov dx,1	;cmdshow?
-	mov ax,es
-	xor si,si	;previous instance
+	mov dx, 2	; Magic word in FCB1
+	cmp word ptr es:[5ch], dx	; is nCmdShow in FCB1?
+	mov dx, 1	; nCmdShow=SW_NORMAL
+	jnz noCmdShow
+	mov dx, word ptr es:[5ch+2] ; nCmdShow parameter
+NoCmdShow:
+	mov ax,es	; PDB/PSP
+	xor si,si	; previous instance
 error:
 exit:
 	@trace_s <"InitTask exit",lf>

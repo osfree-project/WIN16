@@ -25,6 +25,8 @@
 
 #include <windows.h>
 
+#include "win_private.h"
+
 /**********************************************************************
  *	     Catch    (KERNEL.55)
  *
@@ -33,6 +35,7 @@
  */
 int WINAPI Catch( LPCATCHBUF lpbuf )
 {
+	FUNCTIONSTART;
     /* Note: we don't save the current ss, as the catch buffer is */
     /* only 9 words long. Hopefully no one will have the silly    */
     /* idea to change the current stack before calling Throw()... */
@@ -69,6 +72,7 @@ int WINAPI Catch( LPCATCHBUF lpbuf )
       mov ax, ss
       mov word ptr lpbuf[8], ax
     }
+	FUNCTIONEND;
     return 0;
 }
 
@@ -81,6 +85,7 @@ int WINAPI Catch( LPCATCHBUF lpbuf )
  */
 void WINAPI Throw(CATCHBUF const far *  lpbuf, int retval)
 {
+	FUNCTIONSTART;
 //    context->Eax = (context->Eax & ~0xffff) | (WORD)retval;
 
 
@@ -94,4 +99,5 @@ void WINAPI Throw(CATCHBUF const far *  lpbuf, int retval)
 
 //    if (lpbuf[8] != context->SegSs)
 //        ERR("Switching stack segment with Throw() not supported; expect crash now\n" );
+	FUNCTIONEND;
 }

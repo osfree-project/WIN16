@@ -22,13 +22,17 @@
 
 #include <windows.h>
 
+#include "win_private.h"
+
 
 /***********************************************************************
  *           GetWindowsDirectory   (KERNEL.134)
  */
 UINT WINAPI GetWindowsDirectory( LPSTR path, UINT count )
 {
+	FUNCTIONSTART;
     lstrcpyn(path, "C:\\WINDOWS", count);
+	FUNCTIONEND;
     return lstrlen(path);
 }
 
@@ -42,6 +46,8 @@ UINT WINAPI GetSystemDirectory(LPSTR path, UINT count)
     char windir[255]; //MAX_PATH
     UINT len;
 
+	FUNCTIONSTART;
+
     len = GetWindowsDirectory(windir, sizeof(windir) - sizeof(system16) + 1) + sizeof(system16);
     if (count >= len)
     {
@@ -49,6 +55,8 @@ UINT WINAPI GetSystemDirectory(LPSTR path, UINT count)
         lstrcat(path, system16);
         len--;  /* space for the terminating zero is not included on success */
     }
+
+	FUNCTIONEND;
     return len;
 }
 
@@ -79,6 +87,7 @@ void WINAPI Dos3Call();
 
 HFILE WINAPI _lopen(LPCSTR f, int a)
 {
+	FUNCTIONSTART;
 	MOV_AL(a);
 	MOV_DX(f);
 	MOV_DS(f+2);
@@ -89,6 +98,7 @@ HFILE WINAPI _lopen(LPCSTR f, int a)
 	mov ax,-1
 exit:
 	}
+	FUNCTIONEND;
 }
 
 #if 0
@@ -110,6 +120,7 @@ _lcreat endp
 
 HFILE WINAPI _lcreat(LPCSTR f, int a)
 {
+	FUNCTIONSTART;
 	MOV_AL(a);
 	MOV_DX(f);
 	MOV_DS(f+2);
@@ -120,6 +131,7 @@ HFILE WINAPI _lcreat(LPCSTR f, int a)
 	mov ax,-1
 exit:
 	}
+	FUNCTIONEND;
 }
 
 #if 0
@@ -136,6 +148,7 @@ _lclose endp
 
 HFILE WINAPI _lclose(HFILE h)
 {
+	FUNCTIONSTART;
 	MOV_BX(h);
 	MOV_AH_CONST(0);
     Dos3Call();
@@ -144,6 +157,7 @@ HFILE WINAPI _lclose(HFILE h)
 	mov ax,-1
 exit:
 	}
+	FUNCTIONEND;
 }
 
 #if 0
@@ -168,6 +182,7 @@ _lwrite endp
  */
 UINT WINAPI _lwrite(HFILE hFile, const void __huge * buffer, UINT count )
 {
+	FUNCTIONSTART;
 	MOV_CX(hFile);
 	MOV_DX(buffer);
 	MOV_DS(buffer+2);
@@ -179,6 +194,7 @@ UINT WINAPI _lwrite(HFILE hFile, const void __huge * buffer, UINT count )
 	mov ax,-1
 exit:
 	}
+	FUNCTIONEND;
 }
 
 #if 0
@@ -206,6 +222,7 @@ _llseek endp
  */
 LONG WINAPI _llseek( HFILE hFile, LONG lOffset, int nOrigin )
 {
+	FUNCTIONSTART;
 	MOV_AL(hFile);
 	MOV_DX(lOffset);
 	MOV_CX(lOffset+2);
@@ -217,6 +234,7 @@ LONG WINAPI _llseek( HFILE hFile, LONG lOffset, int nOrigin )
 	mov ax,-1
 exit:
 	}
+	FUNCTIONEND;
 }
 
 #if 0
@@ -241,6 +259,7 @@ _lread endp
  */
 UINT WINAPI _lread(HFILE hFile, void __huge * buffer, UINT count )
 {
+	FUNCTIONSTART;
 	MOV_CX(hFile);
 	MOV_DX(buffer);
 	MOV_DS(buffer+2);
@@ -252,6 +271,7 @@ UINT WINAPI _lread(HFILE hFile, void __huge * buffer, UINT count )
 	mov ax,-1
 exit:
 	}
+	FUNCTIONEND;
 }
 
 #if 0
@@ -263,6 +283,8 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetTempPathW( DWORD count, LPWSTR path )
     WCHAR tmp_path[MAX_PATH];
     UINT ret;
 
+	FUNCTIONSTART;
+	
     if (!(ret = GetEnvironmentVariableW( L"TMP", tmp_path, MAX_PATH )) &&
         !(ret = GetEnvironmentVariableW( L"TEMP", tmp_path, MAX_PATH )) &&
         !(ret = GetEnvironmentVariableW( L"USERPROFILE", tmp_path, MAX_PATH )) &&
@@ -303,7 +325,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetTempPathW( DWORD count, LPWSTR path )
         memset( path, 0, count * sizeof(WCHAR) );
     }
 
-    TRACE( "returning %u, %s\n", ret, debugstr_w( path ));
+    FUNCTIONEND;
     return ret;
 }
 
