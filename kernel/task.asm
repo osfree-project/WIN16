@@ -85,25 +85,21 @@ InitTask proc far pascal uses ds
 	push ax			;start
 	push cx			;end
 	push cs
-	call LocalInit		;preserves ES
+	call LocalInit	;preserves ES
 @@:
 
 	call InitDlls
-	pop cx			;stack limit
+	pop cx		;stack limit
 	mov ax,0
 	jc error
 	mov bx,0081h
-	mov dx, 2		; Magic word in FCB1
-	push es			; save PDB/PSP
-	les si, es:[5ch]	; Get FCB1->ES:SI
-	cmp es:[si], dx		; is nCmdShow in FCB1?
-	mov dx, 1		; nCmdShow=SW_NORMAL
+	mov dx, 1	; nCmdShow=SW_NORMAL
+	cmp word ptr es:[5ch], 2	; is nCmdShow in FCB1?
 	jnz noCmdShow
-	mov dx, word ptr es:[si+2] ; nCmdShow parameter
+	mov dx, word ptr es:[5ch+2] ; nCmdShow parameter
 NoCmdShow:
-	pop ax			; restore PDB/PSP
-	;mov ax,es		; PDB/PSP
-	xor si,si		; previous instance
+	mov ax,es	; PDB/PSP
+	xor si,si	; previous instance
 error:
 exit:
 	@trace_s <"InitTask exit",lf>
