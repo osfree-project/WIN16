@@ -122,6 +122,7 @@ externdef pascal GlobalUnWire: far
 externdef pascal GlobalNotify: far
 externdef pascal LimitEMSPages: far
 externdef pascal A20Proc: far
+externdef pascal ValidateCodeSegments: far
 externdef pascal UnlockSegment: far
 externdef pascal LockSegment: far
 
@@ -632,8 +633,9 @@ KernelEntries label byte
 	db 2,1
 	ENTRY <1,LoadLibrary>		;95
 	ENTRY <1,FreeLibrary>		;96
-	db 4,0				;97-100
-	db 5,1
+	db 3,0				;97-99
+	db 6,1
+	ENTRY <1,ValidateCodeSegments>	;100
 	ENTRY <1,NoHookDOSCall>		;101
 	ENTRY <1,Dos3Call>		;102
 	ENTRY <1,NetBiosCall>		;103
@@ -884,6 +886,7 @@ KernelNames label byte
 	NENAME "GETCODEHANDLE",93
 	NENAME "LOADLIBRARY" ,95
 	NENAME "FREELIBRARY" ,96
+	NENAME "VALIDATECODESEGMENTS" ,100
 	NENAME "NOHOOKDOSCALL" ,101
 	NENAME "DOS3CALL"    ,102
 	NENAME "NETBIOSCALL" ,103

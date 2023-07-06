@@ -94,7 +94,7 @@ EXPORTS
     GETTEMPFILENAME                @97
     GETLASTDISKCHANGE              @98
     GETLPERRMODE                   @99
-    VALIDATECODESEGMENTS           @100
+    VALIDATECODESEGMENTS           @100 +
     NOHOOKDOSCALL                  @101	+
     DOS3CALL                       @102	+
     NETBIOSCALL                    @103	+

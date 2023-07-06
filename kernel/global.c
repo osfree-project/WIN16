@@ -122,6 +122,15 @@ void WINAPI A20Proc( WORD unused )
     /* this is also a NOP in Windows */
 }
 
+/***********************************************************************
+ *		ValidateCodeSegments (KERNEL.100)
+ */
+void WINAPI ValidateCodeSegments(void)
+{
+	FUNCTIONSTART;
+	FUNCTIONEND;
+}
+
 
 //@todo implement globalArena
 /***********************************************************************
