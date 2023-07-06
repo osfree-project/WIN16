@@ -706,13 +706,12 @@ __AHINCR equ eINCR.wOfs
 	ENTRY <1,LocalCountFree>	;161
 	ENTRY <1,LocalHeapSize>		;162
 	db 2,0				;163-164
-	db 5,1
+	db 8,1
 	ENTRY <1,A20Proc>		;165
 	ENTRY <1,WinExec>		;166
 	ENTRY <1,GetExpWinVer>		;167
 	ENTRY <1,DirectResAlloc>	;168
 	ENTRY <1,GetFreeSpace>		;169
-	db 3,1
 	ENTRY <1,AllocCSToDSAlias>	;170
 	ENTRY <1,AllocDSToCSAlias>	;171
 	ENTRY <1,AllocCSToDSAlias>	;172 AllocAlias
