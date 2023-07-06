@@ -2,6 +2,9 @@ Here https://devblogs.microsoft.com/oldnewthing/20080707-00/?p=21723 was found i
 about Int 21 4b00 nCmdShow param passing. Will be usefull for WinExec implementation. Also
 same information about nCmdShow passing via first FCB founf in InitTask description in Pietrek book.
 
+Also here http://archive.retro.co.za/CDROMs/DrDobbs/CD%20Release%2012/articles/1995/9510/9510i/9510i.htm#0178_0076
+example of LoadModule call.
+
 Why is the LOADPARMS32 structure so messed up?
 
 Raymond Chen

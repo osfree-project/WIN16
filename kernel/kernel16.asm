@@ -182,6 +182,7 @@ externdef pascal GetCodeHandle: far
 externdef pascal GetCodeInfo: far
 
 externdef pascal LoadModule: far
+externdef pascal WinExec: far
 
 externdef pascal LongPtrAdd: far
 
@@ -705,10 +706,9 @@ __AHINCR equ eINCR.wOfs
 	ENTRY <1,LocalCountFree>	;161
 	ENTRY <1,LocalHeapSize>		;162
 	db 2,0				;163-164
-	db 1,1
+	db 5,1
 	ENTRY <1,A20Proc>		;165
-	db 1,0				;166
-	db 3,1
+	ENTRY <1,WinExec>		;166
 	ENTRY <1,GetExpWinVer>		;167
 	ENTRY <1,DirectResAlloc>	;168
 	ENTRY <1,GetFreeSpace>		;169
@@ -925,6 +925,7 @@ KernelNames label byte
 	NENAME "LOCALCOUNTFREE",161
 	NENAME "LOCALHEAPSIZE", 162
 	NENAME "A20PROC", 165
+	NENAME "WINEXEC", 166
 	NENAME "GETEXPWINVER",167
 	NENAME "DIRECTRESALLOC",168
 	NENAME "GETFREESPACE"     , 169

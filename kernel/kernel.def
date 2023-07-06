@@ -154,7 +154,7 @@ EXPORTS
     GLOBALLRUOLDEST                @163
     GLOBALLRUNEWEST                @164
     A20PROC                        @165	+
-    WINEXEC                        @166
+    WINEXEC                        @166 +
     GETEXPWINVER                   @167	+
     DIRECTRESALLOC                 @168	+
     GETFREESPACE                   @169	+

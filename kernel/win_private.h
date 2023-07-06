@@ -382,6 +382,7 @@ int stricmp(const char far * s1, const char far * s2);
 int strnicmp(char FAR *s1, const char FAR *s2, int n);
 void memcpy(void FAR * s1, void FAR * s2, unsigned length);
 int toupper(int c);
+char far * strchr (const char far *s, int c);
 
 
 HMODULE WINAPI GetExePtr(HANDLE handle);

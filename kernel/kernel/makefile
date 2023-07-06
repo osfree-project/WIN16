@@ -14,6 +14,7 @@ $(p)smallcode$(e) $(p)atom$(e) $(p)resource$(e) $(p)error$(e) &
 $(p)profile$(e) $(p)strings$(e) $(p)rom$(e) $(p)file$(e) $(p)main$(e) $(p)local$(e) &
 $(p)ginterf$(e) $(p)catch$(e) $(p)nls$(e) $(p)taskc$(e) $(p)protect$(e) & 
 $(p)mthread$(e) $(p)selector$(e) $(p)ld$(e) $(p)task$(e) $(p)enablec$(e) #$(p)enable$(e) 
+#$(p)winexec$(e)
 
 ADD_ASMOPT = -Zi -Zd -Fl -D?32BIT=0 -D?DEBUG=1 -D?REAL=1 -I=$(MYDIR).. -I=$(MYDIR)..$(SEP)..$(SEP)..$(SEP)macrolib
 ADD_COPT = -d3 -s -0 -I=$(%WATCOM)$(SEP)h$(SEP)win #-p

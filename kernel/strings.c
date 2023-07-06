@@ -330,3 +330,14 @@ void far * memset (void far *start, int c, int len)
 
   return start;
 }
+
+char far * strchr (const char far *s, int c)
+{
+  do {
+    if (*s == c)
+      {
+	return (char far *)s;
+      }
+  } while (*s++);
+  return (0);
+}
