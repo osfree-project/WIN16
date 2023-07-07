@@ -56,6 +56,7 @@ _TEXT	segment
 ;*** SI=0 (previous instance)
 ;*** DI=module Handle
 ;*** ES=PSP
+;*** DX=nCmdShow
 ;*** ES:BX=CmdLine
 ;
 ;
@@ -108,10 +109,9 @@ exit:
 InitTask endp
 
 ;
-; GetCurrentTaks
+; GetCurrentTask
 ;
 ; @todo Returns PDB/PSP instead of TDB. Need to fix it
-; @todo Also must return dx (undocumented)
 ;
 
 GetCurrentTask proc far pascal
@@ -122,17 +122,6 @@ GetCurrentTask proc far pascal
 	ret
 GetCurrentTask endp
 
-;
-; GetDOSEnvironment
-;
-
-GetDOSEnvironment proc far pascal uses es
-	invoke GetCurrentPDBReal
-	mov es,ax
-	mov dx,es:[ENVIRON]
-	xor ax,ax
-	ret
-GetDOSEnvironment endp
 
 GetTaskIntoES proc near pascal uses ax bx
 	mov bx, sp

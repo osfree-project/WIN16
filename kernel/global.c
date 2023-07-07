@@ -62,7 +62,7 @@ UINT WINAPI GlobalFlags(
  */
 char FAR * WINAPI GlobalWire(HGLOBAL handle)
 {
-	char FAR * lock;
+	LPSTR lock;
 	FUNCTIONSTART;
 	lock=GlobalLock(handle);
 	FUNCTIONEND;
@@ -93,7 +93,7 @@ BOOL WINAPI GlobalUnWire(HGLOBAL handle)
  */
 VOID WINAPI GlobalNotify( FARPROC proc )
 {
-    TDB far *pTask;
+    TDB FAR *pTask;
 
 	FUNCTIONSTART;
 
@@ -278,15 +278,14 @@ GlobalDOSAlloc endp
  * RETURNS
  *	Address (HW=Paragraph segment; LW=Selector)
  */
-DWORD WINAPI GlobalDOSAlloc(
-             DWORD size /* [in] Number of bytes to be allocated */
-) {
-   UINT    uParagraph;
+DWORD WINAPI GlobalDOSAlloc(DWORD size /* [in] Number of bytes to be allocated */)
+{
+	UINT    uParagraph;
 	FUNCTIONSTART;
    //LPVOID    lpBlock = DOSMEM_AllocBlock( size, &uParagraph );
 
    //if( lpBlock )
-   {
+	{
 //       HMODULE hModule = GetModuleHandle("KERNEL");
 //       WORD	 wSelector;
 //       GLOBALARENA FAR *pArena;
@@ -295,9 +294,9 @@ DWORD WINAPI GlobalDOSAlloc(
 //       pArena = GET_ARENA_PTR(wSelector);
 //       pArena->flags |= GA_DOSMEM;
      //  return MAKELONG(wSelector,uParagraph);
-   }
+	}
 	FUNCTIONEND;
-   return 0;
+	return 0;
 }
 
 

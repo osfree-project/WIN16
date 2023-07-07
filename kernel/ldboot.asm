@@ -366,6 +366,9 @@ TH_CURTDB	dw	?		;  /* 10 hCurrentTask */
 TH_LOADTDB	dw	?		;  /* 12 (unused) */
 TH_LOCKTDB	dw	?		;  /* 14 hLockedTask */
 
+SELTABLELEN	dw	?		; Длина системной структуры SELTAB.
+SELTABLESTART	dd	?		; Смещение начала структуры SELTAB внутри сегмента BURGERMASTER.
+
 ; Kernel specific data
 wKernelDS 	dw	?		; Kernel Data segment
 

@@ -335,11 +335,39 @@ void WINAPI GetTaskQueueES(void)
  */
 DWORD WINAPI GetCurrentPDBReal(void)
 {
-    TDB FAR *pTask;
+	TDB FAR *pTask;
 
-    if (!(pTask = MAKELP(GetCurrentTask(), 0))) return 0;
-    return MAKELONG(pTask->hPDB, TH_TOPPDB);
+	FUNCTIONSTART;
+
+	if (!(pTask = MAKELP(GetCurrentTask(), 0))) return 0;
+
+	FUNCTIONEND;
+
+	return MAKELONG(pTask->hPDB, TH_TOPPDB);
 }
+
+LPSTR WINAPI GetDOSEnvironment(void)
+{
+	LPSTR lpEnv;
+
+	FUNCTIONSTART;
+
+	lpEnv=MAKELP(LOWORD(GetCurrentPDBReal()), 0x0080);
+
+	FUNCTIONEND;
+
+	return MAKELP(*lpEnv,0);
+}
+
+#if 0
+GetDOSEnvironment proc far pascal uses es
+	invoke GetCurrentPDBReal
+	mov es,ax
+	mov dx,es:[ENVIRON]
+	xor ax,ax
+	ret
+GetDOSEnvironment endp
+#endif
 
 
 /***********************************************************************

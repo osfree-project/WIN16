@@ -28,7 +28,6 @@ public GetProcAddress
 public GetModuleHandle
 public Dos3Call
 ;externdef pascal SetWinFlags: far
-;public __AHSHIFT
 
 externdef pascal _lopen:far
 externdef pascal _lcreat:far
@@ -649,7 +648,9 @@ KernelEntries label byte
 	ENTRY <1,GlobalWire>		;111
 	ENTRY <1,GlobalUnWire>		;112
 	db 2,-2
+public __AHSHIFT
 eSHIFT	ENTRY <1,3>			;113 _AHSHIFT
+__AHSHIFT equ eSHIFT.wOfs
 eINCR	ENTRY <1,8>			;114 _AHINCR
 public __AHINCR
 ;__AHINCR equ 8
@@ -975,8 +976,9 @@ KernelNames label byte
 	NENAME "ISBADHUGEREADPTR",346
 	NENAME "ISBADHUGEWRITEPTR",347
 	NENAME "LSTRCPYN" ,353
-;    K403                           @403	+ FarSetOwner
-;    K404                           @404	+ FarGetOwner
+;	K403                           @403	+ FarSetOwner
+;	K404                           @404	+ FarGetOwner
+;	IsBadFlatReadWritePtr          @627	+
 	db 0
 
 EndKernelNE equ $

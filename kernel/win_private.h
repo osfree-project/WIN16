@@ -371,8 +371,8 @@ extern WORD pascal wCurPSP;
 extern WORD pascal TH_PGLOBALHEAP;
 extern WORD pascal TH_HGLOBALHEAP;
 extern char FAR * pascal szPgmName;
-extern __AHSHIFT;
-extern __AHINCR;
+extern pascal __AHSHIFT;
+extern pascal __AHINCR;
 
 void memcpy(void far * s1, void far * s2, unsigned length);
 void far * memset (void far *start, int c, int len);

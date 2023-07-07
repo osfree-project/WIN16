@@ -33,82 +33,110 @@
 
 static LDT_ENTRY ldt_make_entry( const void *base, unsigned long limit, unsigned char flags )
 {
-    LDT_ENTRY entry;
+	LDT_ENTRY entry;
 
 	FUNCTIONSTART;
 
-    entry.BaseLow                   = (WORD)(DWORD)base;
-    entry.HighWord.Bits.BaseMid     = (BYTE)((DWORD)base >> 16);
-    entry.HighWord.Bits.BaseHi      = (BYTE)((DWORD)base >> 24);
-    if ((entry.HighWord.Bits.Granularity = (limit >= 0x100000))) limit >>= 12;
-    entry.LimitLow                  = (WORD)limit;
-    entry.HighWord.Bits.LimitHi     = limit >> 16;
-    entry.HighWord.Bits.Dpl         = 3;
-    entry.HighWord.Bits.Pres        = 1;
-    entry.HighWord.Bits.Type        = flags;
-    entry.HighWord.Bits.Sys         = 0;
-    entry.HighWord.Bits.Reserved_0  = 0;
-    entry.HighWord.Bits.Default_Big = (flags & LDT_FLAGS_32BIT) != 0;
+	entry.BaseLow                   = (WORD)(DWORD)base;
+	entry.HighWord.Bits.BaseMid     = (BYTE)((DWORD)base >> 16);
+	entry.HighWord.Bits.BaseHi      = (BYTE)((DWORD)base >> 24);
+	if ((entry.HighWord.Bits.Granularity = (limit >= 0x100000))) limit >>= 12;
+	entry.LimitLow                  = (WORD)limit;
+	entry.HighWord.Bits.LimitHi     = limit >> 16;
+	entry.HighWord.Bits.Dpl         = 3;
+	entry.HighWord.Bits.Pres        = 1;
+	entry.HighWord.Bits.Type        = flags;
+	entry.HighWord.Bits.Sys         = 0;
+	entry.HighWord.Bits.Reserved_0  = 0;
+	entry.HighWord.Bits.Default_Big = (flags & LDT_FLAGS_32BIT) != 0;
 
 	FUNCTIONEND;
 
-    return entry;
+	return entry;
 }
 
 
 /***********************************************************************
  *           AllocSelectorArray   (KERNEL.206)
+ *
+ * count    Необходимое количество селекторов.
+ *
+ * Returns:
+ * Селектор первого дескриптора из таблицы последовательных дескрипторов сегментов.
+ *
+ * Функция избавляет вас от необходимости многократного вызова функции AllocSelector().
+ * Расстояние между селекторами в таблице определяется документированной константой 
+ * __AHINCR. Каждый селектор должен быть освобожден отдельным вызовом FreeSelector().
+ *
  */
-WORD WINAPI AllocSelectorArray( WORD count )
+WORD WINAPI AllocSelectorArray(WORD count)
 {
-    WORD i, sel;
+	WORD i, sel;
 
 	FUNCTIONSTART;
 
-	sel = DPMI_AllocDesc( count );
+	sel = DPMI_AllocDesc(count);
 
-    if (sel)
-    {
-        LDT_ENTRY entry = ldt_make_entry( 0, 1, LDT_FLAGS_DATA ); /* avoid 0 base and limit */
-        for (i = 0; i < count; i++) DPMI_SetDescriptor( sel + (i << 3), &entry );
-    }
+	if (sel)
+	{
+		LDT_ENTRY entry = ldt_make_entry(0, 1, LDT_FLAGS_DATA ); /* avoid 0 base and limit */
+		for (i = 0; i < count; i++) DPMI_SetDescriptor( sel + (i << __AHSHIFT), &entry );
+	}
 	FUNCTIONEND;
-    return sel;
+	return sel;
 }
 
 /***********************************************************************
  *           AllocSelector   (KERNEL.175)
+ *
+ * Паpаметpы:
+ * 
+ * Sel: Копиpуемый селектоp.
+ *
+ * Возвpащаемое значение:
+ *
+ * В случае успешного завеpшения - селектоp; в пpотивном случае, 0.
+ *
+ * Распpеделяет новый селектоp, котоpый является точной копией sel. Если
+ * sel имеет значение NULL, то выделяет память под новый, неинициализиpованный селектоp.
+ *
  */
-UINT WINAPI AllocSelector( UINT sel )
+UINT WINAPI AllocSelector(UINT sel)
 {
-    WORD newsel, count, i;
+	WORD newsel, count, i;
 
 	FUNCTIONSTART;
 
-    /* get the number of selectors needed to cover up to the selector limit */
-    count = sel ? ((GetSelectorLimit( sel ) >> 16) + 1) : 1;
-    newsel = DPMI_AllocDesc( count );
+	/* get the number of selectors needed to cover up to the selector limit */
+	count = sel ? ((GetSelectorLimit(sel) >> 16) + 1) : 1;
+	newsel = DPMI_AllocDesc(count);
 //    TRACE("(%04x): returning %04x\n", sel, newsel );
-    if (!newsel) return 0;
-    if (!sel) return newsel;  /* nothing to copy */
-    for (i = 0; i < count; i++)
-    {
-        LDT_ENTRY entry;
-        if (!DPMI_GetDescriptor( sel + (i << 3), &entry )) break;
-        DPMI_SetDescriptor( newsel + (i << 3), &entry );
-    }
+	if (!newsel) return 0;
+	if (!sel) return newsel;  /* nothing to copy */
+	for (i = 0; i < count; i++)
+	{
+		LDT_ENTRY entry;
+		if (!DPMI_GetDescriptor( sel + (i << __AHSHIFT ), &entry )) break;
+		DPMI_SetDescriptor( newsel + (i << __AHSHIFT ), &entry );
+	}
 	FUNCTIONEND;
-    return newsel;
+	return newsel;
 }
 
 /***********************************************************************
  *           FreeSelector   (KERNEL.176)
- */
+ *
+ * sel должен содержать селектор, соответствующий 
+ * удаляемому дескриптору. Если функция выполнилась без ошибок, 
+ * она возвращает нулевое значение. В случае ошибки возвращается
+ * значение параметра sel.
+ *
+*/
 UINT WINAPI FreeSelector( UINT sel )
 {
 	FUNCTIONSTART;
 
-    DPMI_FreeDesc(sel);
+	DPMI_FreeDesc(sel);
 
 	FUNCTIONEND;
 
@@ -128,7 +156,7 @@ DWORD WINAPI GetSelectorBase(UINT sel)
 
 	FUNCTIONEND;
 
-    return res;
+	return res;
 }
 
 /***********************************************************************
@@ -138,11 +166,11 @@ UINT WINAPI SetSelectorBase( UINT sel, DWORD base )
 {
 	FUNCTIONSTART;
 
-    DPMI_SetBase(sel, base);
+	DPMI_SetBase(sel, base);
 
 	FUNCTIONEND;
 
-    return sel;
+	return sel;
 }
 
 /***********************************************************************
@@ -150,15 +178,15 @@ UINT WINAPI SetSelectorBase( UINT sel, DWORD base )
  */
 DWORD WINAPI GetSelectorLimit( UINT sel )
 {
-    LDT_ENTRY entry;
+	LDT_ENTRY entry;
 
 	FUNCTIONSTART;
 
-    if (!DPMI_GetDescriptor(sel, &entry)) return 0;
+	if (!DPMI_GetDescriptor(sel, &entry)) return 0;
 
 	FUNCTIONEND;
 
-    return (entry.HighWord.Bits.LimitHi<<16+entry.LimitLow);
+	return (entry.HighWord.Bits.LimitHi<<16+entry.LimitLow);
 }
 
 
@@ -169,11 +197,11 @@ UINT WINAPI SetSelectorLimit( UINT sel, DWORD limit )
 {
 	FUNCTIONSTART;
 
-    DPMI_SetLimit(sel, limit);
+	DPMI_SetLimit(sel, limit);
 
 	FUNCTIONEND;
 
-    return sel;
+	return sel;
 }
 
 
@@ -182,24 +210,24 @@ UINT WINAPI SetSelectorLimit( UINT sel, DWORD limit )
  */
 WORD WINAPI SelectorAccessRights( WORD sel, WORD op, WORD val )
 {
-    LDT_ENTRY entry;
+	LDT_ENTRY entry;
 
 	FUNCTIONSTART;
 
-    if (!DPMI_GetDescriptor(sel, &entry)) return 0;
-    if (op == 0)  /* get */
-    {
+	if (!DPMI_GetDescriptor(sel, &entry)) return 0;
+	if (op == 0)  /* get */
+	{
 		FUNCTIONEND;
-        return entry.HighWord.Bytes.Flags1 | ((entry.HighWord.Bytes.Flags2 & 0xf0) << 8);
-    }
-    else  /* set */
-    {
-        entry.HighWord.Bytes.Flags1 = LOBYTE(val) | 0xf0;
-        entry.HighWord.Bytes.Flags2 = (entry.HighWord.Bytes.Flags2 & 0x0f) | (HIBYTE(val) & 0xf0);
-        DPMI_SetDescriptor(sel, &entry);
+		return entry.HighWord.Bytes.Flags1 | ((entry.HighWord.Bytes.Flags2 & 0xf0) << 8);
+	}
+	else  /* set */
+	{
+		entry.HighWord.Bytes.Flags1 = LOBYTE(val) | 0xf0;
+		entry.HighWord.Bytes.Flags2 = (entry.HighWord.Bytes.Flags2 & 0x0f) | (HIBYTE(val) & 0xf0);
+		DPMI_SetDescriptor(sel, &entry);
 		FUNCTIONEND;
-        return 0;
-    }
+		return 0;
+	}
 }
 
 /***********************************************************************
@@ -216,7 +244,7 @@ WORD WINAPI AllocCStoDSAlias(WORD sel)
 
 	FUNCTIONEND;
 
-    return res;
+	return res;
 }
 
 /***********************************************************************
@@ -224,21 +252,21 @@ WORD WINAPI AllocCStoDSAlias(WORD sel)
  */
 UINT WINAPI AllocDStoCSAlias( UINT sel )
 {
-    WORD newsel;
-    LDT_ENTRY entry;
+	WORD newsel;
+	LDT_ENTRY entry;
 
 	FUNCTIONSTART;
 
 //    if (!ldt_is_valid( sel )) return 0;
     newsel = AllocSelector( 0 );
 //    TRACE("(%04x): returning %04x\n", sel, newsel );
-    if (!newsel) return 0;
-    entry=ldt_make_entry((void *) GetSelectorBase(sel), GetSelectorLimit(sel), LDT_FLAGS_CODE );
-    DPMI_SetDescriptor(newsel, &entry);
+	if (!newsel) return 0;
+	entry=ldt_make_entry((void *) GetSelectorBase(sel), GetSelectorLimit(sel), LDT_FLAGS_CODE );
+	DPMI_SetDescriptor(newsel, &entry);
 
 	FUNCTIONEND;
 
-    return newsel;
+	return newsel;
 }
 
 /***********************************************************************
@@ -389,7 +417,7 @@ BOOL WINAPI IsBadFlatReadWritePtr( void far * ptr, DWORD size, BOOL bWrite )
 
 	FUNCTIONEND;
 
-    return res;
+	return res;
 }
 
 /***********************************************************************
@@ -398,7 +426,7 @@ BOOL WINAPI IsBadFlatReadWritePtr( void far * ptr, DWORD size, BOOL bWrite )
 void WINAPI LongPtrAdd(DWORD dwLongPtr, DWORD dwAdd)
 {
 	WORD wSel = SELECTOROF(dwLongPtr);
-  
+
 	FUNCTIONSTART;
 
 	SetSelectorBase(wSel, GetSelectorBase(wSel)+dwAdd);
