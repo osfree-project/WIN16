@@ -512,3 +512,34 @@ void WINAPI FreeProcInstance( FARPROC func )
     *(WORD FAR *)((BYTE FAR *)pThunk + LOWORD(func) - base) = pThunk->free;
     pThunk->free = LOWORD(func) - base;
 }
+
+#if 0
+LoadModule proc far pascal uses ds lpszModuleName:far ptr byte, lpParameterBlock:far ptr
+	@SetKernelDS
+	mov [fLoadMod],1	;use a asciiz command line
+	lds dx, lpszModuleName
+	les bx, lpParameterBlock
+	@Exec
+	@SetKernelDS
+	mov [fLoadMod],0
+	ret
+LoadModule endp
+#endif
+
+/**********************************************************************
+ *          LoadModule      (KERNEL.45)
+ *
+ * Note: HX-DOS expects in parameter block ASCIIZ cmdline. But not found (yet)
+ * any real example of such paramblock. So fLoadMod flag removed.
+ */
+HINSTANCE WINAPI LoadModule(LPCSTR lpszModuleName, LPVOID lpParameterBlock)
+{
+	_asm {
+		push ds
+		lds dx, lpszModuleName
+		les bx, lpParameterBlock
+		mov ax, 4b00h
+		int 21h
+		pop ds
+	};
+}

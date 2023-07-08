@@ -111,7 +111,6 @@ externdef	segtable:byte
 externdef	fMode:byte
 externdef	TH_TOPPDB:word
 externdef	pascal wCurPSP:word
-externdef	fLoadMod:byte
 if ?32BIT
 externdef	dStktop:dword
 else

@@ -219,7 +219,6 @@ wTDStk	 dw offset starttaskstk ;LIFO stack for tasks
 if ?LOADDBGDLL
 hModDbg  dw 0			;handle for DEBUGOUT.DLL
 endif
-fLoadMod db 0			;flag: LoadModule() called int 21h, ax=4B00h
 if ?EXTLOAD
 fHighLoad db 0			;1 if loader has been moved in extended memory
 endif
@@ -2391,8 +2390,6 @@ else
 	@push_a
 endif
 	@SetKernelDS
-	xor al,al
-	xchg [fLoadMod],al
 if ?32BIT
 	lds esi,es:[ebx+0]	;get dos command tail
 	@trace_s <"SetCmdLine enter, es:ebx=">
@@ -2422,18 +2419,11 @@ else
 	@trace_s <lf>
 endif
 	mov es,cs:[wCurPSP]
-	and al,al
-	jz @F
-	call strlen	   ;get size of DS:E/SI into CX
-	mov al,cl
-	jmp scl_2
-@@:
 if ?32BIT
 	lods byte ptr [esi]
 else
 	lodsb
 endif
-scl_2:
 	mov cl,al			;number of chars
 	mov ch,00
 	mov di,0080h
