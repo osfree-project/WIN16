@@ -18,7 +18,7 @@ $(p)winexec$(e)
 
 ADD_ASMOPT =  -D?32BIT=0 -D?DEBUG=1 -D?REAL=0 -I=$(MYDIR).. -I=$(MYDIR)..$(SEP)..$(SEP)..$(SEP)macrolib
 #            -Zi -Zd -Fl DEBUG
-ADD_COPT =  -s -2 -I=$(%WATCOM)$(SEP)h$(SEP)win
+ADD_COPT =  -s -Zc -2 -I=$(%WATCOM)$(SEP)h$(SEP)win
 #          -d3 ^^^ DEBUG
 JWASM = 1
 DEBUG = all

@@ -1,3 +1,5 @@
+	include kernel.inc
+
 	include ascii.inc
 
 public errstr2

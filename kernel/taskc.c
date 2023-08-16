@@ -3,6 +3,9 @@
 
 static int nTaskCount = 0;
 
+NE_MODULE FAR *NE_GetPtr( HMODULE hModule );
+HQUEUE WINAPI GetTaskQueue( HTASK hTask );
+
 /***********************************************************************
  *           TASK_LinkTask
  */
@@ -10,6 +13,8 @@ static void TASK_LinkTask( HTASK hTask )
 {
     HTASK *prevTask;
     TDB far *pTask;
+
+	FUNCTIONSTART;
 
     if (!(pTask = MAKELP( hTask , 0))) return;
     prevTask = &TH_HEADTDB;
@@ -32,6 +37,8 @@ static void TASK_UnlinkTask( HTASK hTask )
     HTASK *prevTask;
     TDB far *pTask;
 
+	FUNCTIONSTART;
+
     prevTask = &TH_HEADTDB;
     while (*prevTask && (*prevTask != hTask))
     {
@@ -45,6 +52,7 @@ static void TASK_UnlinkTask( HTASK hTask )
         pTask->hNext = 0;
         nTaskCount--;
     }
+	FUNCTIONEND;
 }
 
 /***********************************************************************
@@ -53,6 +61,8 @@ static void TASK_UnlinkTask( HTASK hTask )
 void WINAPI Yield(void)
 {
     TDB far *pCurTask = MAKELP(GetCurrentTask(), 0);
+
+	FUNCTIONSTART;
 
     pCurTask->hYieldTo=0;
 
@@ -71,12 +81,15 @@ void WINAPI Yield(void)
         }
     } 
     OldYield();
+	FUNCTIONEND;
 }
 
 
 BOOL WINAPI IsTask(HTASK w)
 {
   WORD far * lpwMaybeTask;
+
+	FUNCTIONSTART;
 
   if (!w)
     return FALSE;
@@ -85,6 +98,8 @@ BOOL WINAPI IsTask(HTASK w)
     return FALSE;
 
   lpwMaybeTask=(WORD far *) MAKELP(w, OFS_TD_SIGN);
+
+	FUNCTIONEND;
 
   return (*lpwMaybeTask == TD_SIGN);
 
@@ -98,6 +113,8 @@ void WINAPI SetPriority( HTASK hTask, int delta )
     TDB far *pTask;
     int newpriority;
 
+	FUNCTIONSTART;
+
     if (!hTask) hTask = GetCurrentTask();
     if (!(pTask = MAKELP( hTask,0 ))) return;
     newpriority = pTask->priority + delta;
@@ -108,6 +125,7 @@ void WINAPI SetPriority( HTASK hTask, int delta )
     TASK_UnlinkTask( pTask->hSelf );
     TASK_LinkTask( pTask->hSelf );
     pTask->priority--;
+	FUNCTIONEND;
 }
 
 /***********************************************************************
@@ -115,6 +133,8 @@ void WINAPI SetPriority( HTASK hTask, int delta )
  */
 UINT WINAPI GetNumTasks(void)
 {
+	FUNCTIONSTART;
+	FUNCTIONEND;
     return nTaskCount;
 }
 
@@ -123,14 +143,19 @@ UINT WINAPI GetNumTasks(void)
  */
 int WINAPI GetInstanceData( HINSTANCE instance, BYTE NEAR * buffer, int len )
 {
-    char far *ptr = GlobalLock( instance );
-    char far *ptr1;
+    LPSTR ptr;
+    LPSTR ptr1;
+
+	FUNCTIONSTART;
+    ptr = GlobalLock(instance);
+
     if (!ptr || !len) return 0;
     if (((DWORD)buffer + len) >= 0x10000) len = 0x10000 - (WORD)buffer;
     LongPtrAdd((DWORD)ptr, (DWORD)buffer);
     ptr1=GlobalLock(GetDS());
     LongPtrAdd((DWORD)ptr1, (DWORD)buffer);
     memcpy( ptr1, ptr, len );
+	FUNCTIONEND;
     return len;
 }
 
@@ -139,8 +164,10 @@ int WINAPI GetInstanceData( HINSTANCE instance, BYTE NEAR * buffer, int len )
  */
 HTASK WINAPI LockCurrentTask( BOOL bLock )
 {
+	FUNCTIONSTART;
     if (bLock) TH_LOCKTDB = GetCurrentTask();
     else TH_LOCKTDB = 0;
+	FUNCTIONEND;
     return TH_LOCKTDB;
 }
 
@@ -150,10 +177,14 @@ HTASK WINAPI LockCurrentTask( BOOL bLock )
 void WINAPI PostEvent( HTASK hTask )
 {
     TDB far *pTask;
+
+	FUNCTIONSTART;
+
     if (!hTask) hTask = GetCurrentTask();
     if (!(pTask = MAKELP( hTask, 0 ))) return;
 
     pTask->nEvents++;
+	FUNCTIONEND;
 }
 
 /***********************************************************************
@@ -164,10 +195,13 @@ FARPROC WINAPI SetTaskSignalProc( HTASK hTask, FARPROC proc )
     TDB far *pTask;
     FARPROC oldProc;
 
+	FUNCTIONSTART;
+
     if (!hTask) hTask = GetCurrentTask();
     if (!(pTask = MAKELP( hTask, 0 ))) return NULL;
     oldProc = pTask->userhandler;
     pTask->userhandler = proc;
+	FUNCTIONEND;
     return oldProc;
 }
 
@@ -181,7 +215,12 @@ HINSTANCE WINAPI GetTaskDS(void)
 {
     TDB far *pTask;
 
+	FUNCTIONSTART;
+
     if (!(pTask = MAKELP(GetCurrentTask(),0))) return 0;
+
+	FUNCTIONEND;
+
     return pTask->hInstance;
 }
 
@@ -190,10 +229,10 @@ HINSTANCE WINAPI GetTaskDS(void)
  */
 DWORD WINAPI GetCurPID( DWORD unused )
 {
+	FUNCTIONSTART;
+	FUNCTIONEND;
     return 0;
 }
-
-NE_MODULE FAR *NE_GetPtr( HMODULE hModule );
 
 /**********************************************************************
  *	    TASK_GetCodeSegment
@@ -217,6 +256,8 @@ static BOOL TASK_GetCodeSegment( FARPROC proc, NE_MODULE far **ppModule,
     NE_MODULE far *pModule = NULL;
     SEGTABLEENTRY *pSeg = NULL;
     int segNr=0;
+
+	FUNCTIONSTART;
 
     /* Try pair of module handle / segment number */
     pModule = (NE_MODULE far *)GlobalLock( HIWORD( proc ) );
@@ -261,6 +302,7 @@ static BOOL TASK_GetCodeSegment( FARPROC proc, NE_MODULE far **ppModule,
     if ( ppSeg    ) *ppSeg    = pSeg;
     if ( pSegNr   ) *pSegNr   = segNr;
 
+	FUNCTIONEND;
     return TRUE;
 }
 
@@ -271,8 +313,12 @@ HGLOBAL WINAPI GetCodeHandle( FARPROC proc )
 {
     SEGTABLEENTRY FAR *pSeg;
 
+	FUNCTIONSTART;
+
     if ( !TASK_GetCodeSegment( proc, NULL, &pSeg, NULL ) )
         return 0;
+
+	FUNCTIONEND;
 
     return MAKELONG( pSeg->hSeg, GlobalHandleToSel(pSeg->hSeg) );
 }
@@ -286,6 +332,8 @@ void WINAPI GetCodeInfo( FARPROC proc, SEGINFO far *segInfo )
     NE_MODULE far *pModule;
     SEGTABLEENTRY FAR *pSeg;
     int segNr;
+
+	FUNCTIONSTART;
 
     if ( !TASK_GetCodeSegment( proc, &pModule, &pSeg, &segNr ) )
         return /*FALSE*/;
@@ -306,17 +354,19 @@ void WINAPI GetCodeInfo( FARPROC proc, SEGINFO far *segInfo )
 //    SetES(GlobalHandleToSel( pModule->self ));
     SetES(SELECTOROF(pModule));
 
+	FUNCTIONEND;
 //    return TRUE;
 }
 
-HQUEUE WINAPI GetTaskQueue( HTASK hTask );
 
 /***********************************************************************
  *           GetTaskQueueDS  (KERNEL.118)
  */
 void WINAPI GetTaskQueueDS(void)
 {
+	FUNCTIONSTART;
     SetDS(GlobalHandleToSel(GetTaskQueue(0)));
+	FUNCTIONEND;
 }
 
 
@@ -325,7 +375,9 @@ void WINAPI GetTaskQueueDS(void)
  */
 void WINAPI GetTaskQueueES(void)
 {
+	FUNCTIONSTART;
     SetES(GlobalHandleToSel(GetTaskQueue(0)));
+	FUNCTIONEND;
 }
 
 /***********************************************************************
@@ -381,6 +433,8 @@ static void TASK_CreateThunks( HGLOBAL handle, WORD offset, WORD count )
     int i;
     THUNKS FAR *pThunk;
 
+	FUNCTIONSTART;
+
     pThunk = (THUNKS FAR *)((BYTE FAR *)GlobalLock( handle ) + offset);
     pThunk->next = 0;
     pThunk->magic = THUNK_MAGIC;
@@ -388,6 +442,7 @@ static void TASK_CreateThunks( HGLOBAL handle, WORD offset, WORD count )
     for (i = 0; i < count-1; i++)
         *(WORD FAR *)&pThunk->thunks[i] = FIELDOFFSET( THUNKS, thunks[i+1] );
     *(WORD FAR *)&pThunk->thunks[i] = 0;  /* Last thunk */
+	FUNCTIONEND;
 }
 
 
@@ -401,6 +456,8 @@ static void far * TASK_AllocThunk(void)
     TDB far *pTask;
     THUNKS far *pThunk;
     WORD sel, base;
+
+	FUNCTIONSTART;
 
     if (!(pTask = MAKELP(GetCurrentTask(), 0))) return 0;
     sel = pTask->hCSAlias;
@@ -422,6 +479,7 @@ static void far * TASK_AllocThunk(void)
     }
     base += pThunk->free;
     pThunk->free = *(WORD FAR *)((BYTE FAR *)pThunk + pThunk->free);
+	FUNCTIONEND;
     return MAKELP( sel, base );
 }
 
@@ -435,6 +493,8 @@ FARPROC WINAPI MakeProcInstance( FARPROC func, HANDLE hInstance )
     BYTE far *lfunc;
     void far * thunkaddr;
     WORD hInstanceSelector;
+
+	FUNCTIONSTART;
 
     hInstanceSelector = GlobalHandleToSel(hInstance);
 
@@ -482,6 +542,7 @@ FARPROC WINAPI MakeProcInstance( FARPROC func, HANDLE hInstance )
     thunk->instance = hInstanceSelector;
     thunk->ljmp     = 0xea;    /* ljmp func */
     thunk->func     = func;
+	FUNCTIONEND;
     return (FARPROC)thunkaddr;
     /* CX reg indicates if thunkaddr != NULL, implement if needed */
 }
@@ -495,6 +556,8 @@ void WINAPI FreeProcInstance( FARPROC func )
     TDB far *pTask;
     THUNKS far *pThunk;
     WORD sel, base;
+
+	FUNCTIONSTART;
 
 //    TRACE("(%p)\n", func );
 
@@ -511,6 +574,7 @@ void WINAPI FreeProcInstance( FARPROC func )
     if (!sel) return;
     *(WORD FAR *)((BYTE FAR *)pThunk + LOWORD(func) - base) = pThunk->free;
     pThunk->free = LOWORD(func) - base;
+	FUNCTIONEND;
 }
 
 #if 0
@@ -534,6 +598,7 @@ LoadModule endp
  */
 HINSTANCE WINAPI LoadModule(LPCSTR lpszModuleName, LPVOID lpParameterBlock)
 {
+	FUNCTIONSTART;
 	_asm {
 		push ds
 		lds dx, lpszModuleName
@@ -542,4 +607,5 @@ HINSTANCE WINAPI LoadModule(LPCSTR lpszModuleName, LPVOID lpParameterBlock)
 		int 21h
 		pop ds
 	};
+	FUNCTIONEND;
 }
