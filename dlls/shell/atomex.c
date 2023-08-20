@@ -114,9 +114,6 @@ ATOMENTRY far *ATOM_MakePtr( HANDLE handle /* [in] Handle */ )
 }
 
 
-
-
-
 /***********************************************************************
  *           AddAtomEx
  *

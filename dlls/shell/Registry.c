@@ -70,6 +70,8 @@ To send email to the maintainer of the Willows Twin Libraries.
 #define GlobalAllocPtr(flags, cb) \
   (GlobalLock(GlobalAlloc((flags), (cb))))
 
+char far *lstrchr(const char far *s, int c);
+
 #include "shellapi.h"
 
 #include "atomex.h"
@@ -531,15 +533,6 @@ InitReg()
     return TRUE;
 }
 
-char far *lstrchr(const char far *s, int c)
-{
-    const char ch = c;
-
-    for ( ; *s != ch; s++)
-        if (*s == '\0')
-            return 0;
-    return (char far *)s;
-}
 
 static LPKEYSTRUCT
 InternalFindKey(LPKEYSTRUCT lpKeyStruct, LPCSTR lpszSubKey, WORD wFlag)

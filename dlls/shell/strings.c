@@ -32,3 +32,13 @@ int lstrnicmp(char far *s1, const char far *s2, int n)
     } while (--n != 0);
     return 0;
 }
+
+char far *lstrchr(const char far *s, int c)
+{
+    const char ch = c;
+
+    for ( ; *s != ch; s++)
+        if (*s == '\0')
+            return 0;
+    return (char far *)s;
+}
