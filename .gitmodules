@@ -4,3 +4,6 @@
 [submodule "drivers/mouse"]
 	path = drivers/mouse
 	url = https://github.com/stsp/win31-mouse-driver
+[submodule "programs/clock"]
+	path = programs/clock
+	url = https://github.com/osfree-project/clock

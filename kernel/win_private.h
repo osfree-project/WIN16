@@ -516,5 +516,10 @@ typedef struct tagLOCALARENA
 
 #define SetKernelDS() SetDS(wKernelDS);
 
+#ifdef DEBUG
 #define FUNCTIONSTART printf(__FUNCTION__##" starts at "##__FILE__##" %d\r\n", __LINE__);
 #define FUNCTIONEND printf(__FUNCTION__##" ends at "##__FILE__##" %d\r\n", __LINE__);
+#else
+#define FUNCTIONSTART
+#define FUNCTIONEND
+#endif
