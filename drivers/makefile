@@ -4,7 +4,7 @@
 # author
 #
 
-DIRS = display keyboard sound system
+DIRS = display keyboard sound system mousec
 
 !include $(%ROOT)tools/mk/all.mk
 
