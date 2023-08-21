@@ -26,6 +26,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <direct.h>
 
 #include <windows.h>
 #include <commdlg.h>
@@ -82,7 +83,6 @@ static void UpdateWindowCaption(void)
 {
   char szCaption[MAX_STRING_LEN];
   char szNotepad[MAX_STRING_LEN];
-  static const char hyphenW[] = { ' ','-',' ',0 };
 
   if (Globals.szFileTitle[0] != '\0')
       lstrcpy(szCaption, Globals.szFileTitle);
@@ -90,7 +90,7 @@ static void UpdateWindowCaption(void)
       LoadString(Globals.hInstance, STRING_UNTITLED, szCaption, SIZEOF(szCaption));
 
   LoadString(Globals.hInstance, STRING_NOTEPAD, szNotepad, SIZEOF(szNotepad));
-  lstrcat(&szCaption, hyphenW);
+  lstrcat(&szCaption, " - ");
   lstrcat(&szCaption, &szNotepad);
 
   SetWindowText(Globals.hMainWnd, szCaption);
@@ -218,120 +218,109 @@ BOOL DoCloseFile(void)
 
 void DoOpenFile(LPCSTR szFileName)
 {
-    static const char dotlog[] = { '.','L','O','G',0 };
     HANDLE hFile;
     LPSTR pTemp;
     DWORD size;
     DWORD dwNumRead;
     char log[5];
-#if 0
+
+        MessageBox(0, szFileName, "", MB_OK);
+
     /* Close any files and prompt to save changes */
     if (!DoCloseFile())
 	return;
 
-    hFile = CreateFile(szFileName, GENERIC_READ, FILE_SHARE_READ, NULL,
-	OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if(hFile == INVALID_HANDLE_VALUE)
+    hFile = _lopen(szFileName, READ | OF_SHARE_DENY_NONE);
+
+    if(hFile == HFILE_ERROR)
     {
 	AlertFileNotFound(szFileName);
 	return;
     }
 
-    size = GetFileSize(hFile, NULL);
-    if (size == INVALID_FILE_SIZE)
-    {
-	CloseHandle(hFile);
-	ShowLastError();
-	return;
-    }
-    size++;
+	size = _llseek(hFile, 0, SEEK_END);
+	if (size == HFILE_ERROR)
+	{
+		_lclose(hFile);
+		ShowLastError();
+		return;
+	}
+	size++;
 
-    pTemp = HeapAlloc(GetProcessHeap(), 0, size);
+    pTemp = GlobalAllocPtr(GPTR, size);
     if (!pTemp)
     {
-	CloseHandle(hFile);
+	_lclose(hFile);
 	ShowLastError();
 	return;
     }
 
-    if (!ReadFile(hFile, pTemp, size, &dwNumRead, NULL))
+    if ((dwNumRead=_lread(hFile, pTemp, size))==HFILE_ERROR)
     {
-	CloseHandle(hFile);
-	HeapFree(GetProcessHeap(), 0, pTemp);
+	_lclose(hFile);
+	GlobalFreePtr(pTemp);
 	ShowLastError();
 	return;
     }
 
-    CloseHandle(hFile);
+    _lclose(hFile);
     pTemp[dwNumRead] = 0;
-
-    if (IsTextUnicode(pTemp, dwNumRead, NULL))
-    {
-	LPSTR p = (LPSTR)pTemp;
 
 	SetWindowText(Globals.hEdit, pTemp);
 
-    HeapFree(GetProcessHeap(), 0, pTemp);
+    GlobalFreePtr(pTemp);
 
     SendMessage(Globals.hEdit, EM_SETMODIFY, FALSE, 0);
     SendMessage(Globals.hEdit, EM_EMPTYUNDOBUFFER, 0, 0);
     SetFocus(Globals.hEdit);
     
     /*  If the file starts with .LOG, add a time/date at the end and set cursor after */
-    if (GetWindowTextW(Globals.hEdit, log, sizeof(log)/sizeof(log[0])) && !lstrcmp(log, dotlog))
+    if (GetWindowText(Globals.hEdit, log, sizeof(log)/sizeof(log[0])) && !lstrcmp(log, ".LOG"))
     {
-	static const WCHAR lfW[] = { '\r','\n',0 };
 	SendMessage(Globals.hEdit, EM_SETSEL, GetWindowTextLength(Globals.hEdit), -1);
-	SendMessage(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)lfW);
+	SendMessage(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)"\r\n");
 	DIALOG_EditTimeDate();
-	SendMessage(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)lfW);
+	SendMessage(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)"\r\n");
     }
 
     SetFileName(szFileName);
     UpdateWindowCaption();
-	#endif
 }
 
 VOID DIALOG_FileNew(VOID)
 {
-    static const char empty_strW[] = { 0 };
-
     /* Close any files and prompt to save changes */
     if (DoCloseFile()) {
-        SetWindowText(Globals.hEdit, empty_strW);
+        SetWindowText(Globals.hEdit, "");
         SendMessage(Globals.hEdit, EM_EMPTYUNDOBUFFER, 0, 0);
         SetFocus(Globals.hEdit);
     }
 }
 
 VOID DIALOG_FileOpen(VOID)
-{/*
-    OPENFILENAME openfilename;
-    char szPath[MAX_PATH];
-    char szDir[MAX_PATH];
-    static const char szDefaultExt[] = { 't','x','t',0 };
-    static const char txt_files[] = { '*','.','t','x','t',0 };
+{
+	OPENFILENAME openfilename;
+	char szPath[MAX_PATH];
+	char szDir[MAX_PATH];
 
-    ZeroMemory(&openfilename, sizeof(openfilename));
+	memset(&openfilename, 0, sizeof(openfilename));
 
-    GetCurrentDirectory(SIZEOF(szDir), szDir);
-    lstrcpy(szPath, txt_files);
+	getcwd(szDir, sizeof(szDir));
+	lstrcpy(szPath, "*.txt");
 
-    openfilename.lStructSize       = sizeof(openfilename);
-    openfilename.hwndOwner         = Globals.hMainWnd;
-    openfilename.hInstance         = Globals.hInstance;
-    openfilename.lpstrFilter       = Globals.szFilter;
-    openfilename.lpstrFile         = szPath;
-    openfilename.nMaxFile          = SIZEOF(szPath);
-    openfilename.lpstrInitialDir   = szDir;
-    openfilename.Flags             = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST |
-        OFN_HIDEREADONLY;
-    openfilename.lpstrDefExt       = szDefaultExt;
+	openfilename.lStructSize       = sizeof(openfilename);
+	openfilename.hwndOwner         = Globals.hMainWnd;
+	openfilename.hInstance         = Globals.hInstance;
+	openfilename.lpstrFilter       = Globals.szFilter;
+	openfilename.lpstrFile         = szPath;
+	openfilename.nMaxFile          = sizeof(szPath);
+	openfilename.lpstrInitialDir   = szDir;
+	openfilename.Flags             = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
+	openfilename.lpstrDefExt       = "txt";
 
 
-    if (GetOpenFileName(&openfilename))
-        DoOpenFile(openfilename.lpstrFile);
-	*/
+	if (GetOpenFileName(&openfilename))
+        	DoOpenFile(openfilename.lpstrFile);
 }
 
 

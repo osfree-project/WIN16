@@ -10,8 +10,11 @@ DESC = Windows Notepad
 srcfiles = $(p)main$(e) $(p)dialog$(e)
 
 ADD_COPT = -sg -DDEBUG=1
-IMPORTS  = CHOOSEFONT     COMMDLG.15, &
-           PRINTDLG       COMMDLG.20
+IMPORTS  = GETOPENFILENAME     COMMDLG.1, &
+           CHOOSEFONT     COMMDLG.15, &
+           PRINTDLG       COMMDLG.20, &
+           GETCURRENTDIRECTORY KERNEL.411
+
 CLEAN_ADD = *.mbr
 HEAPSIZE = 4k
 STACKSIZE = 8k

@@ -57,3 +57,5 @@ extern NOTEPAD_GLOBALS Globals;
 VOID SetFileName(LPCSTR szFileName);
 //void NOTEPAD_DoFind(FINDREPLACE *fr);
 DWORD get_dpi(void);
+
+DWORD WINAPI GetCurrentDirectory(DWORD cchCurDir, char * lpszCurDir);

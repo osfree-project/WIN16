@@ -314,16 +314,14 @@ static int NOTEPAD_MenuCommand(WPARAM wParam)
 static VOID NOTEPAD_InitData(VOID)
 {
     LPSTR p = Globals.szFilter;
-    static const char txt_files[] = { '*','.','t','x','t',0 };
-    static const char all_files[] = { '*','.','*',0 };
 
     LoadString(Globals.hInstance, STRING_TEXT_FILES_TXT, p, MAX_STRING_LEN);
     p += lstrlen(p) + 1;
-    lstrcpy(p, txt_files);
+    lstrcpy(p, "*.txt");
     p += lstrlen(p) + 1;
     LoadString(Globals.hInstance, STRING_ALL_FILES, p, MAX_STRING_LEN);
     p += lstrlen(p) + 1;
-    lstrcpy(p, all_files);
+    lstrcpy(p, "*.*");
     p += lstrlen(p) + 1;
     *p = '\0';
     Globals.hDevMode = NULL;
@@ -503,7 +501,7 @@ static LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
 
         //DragQueryFile(hDrop, 0, szFileName, SIZEOF(szFileName));
         //DragFinish(hDrop);
-        //DoOpenFile(szFileName);
+        DoOpenFile(szFileName);
         break;
     }
     
@@ -658,8 +656,8 @@ BOOL NOTEPAD_RegisterMainWinClass(void)
  */
 int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 {
-    MSG        msg;
-    HACCEL      hAccel;
+	MSG        msg;
+	HACCEL      hAccel;
     //HMONITOR monitor;
     //MONITORINFO info;
 	int x, y;
@@ -708,24 +706,24 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 	}
 
 
-//    NOTEPAD_InitData();
+	NOTEPAD_InitData();
 //    DIALOG_FileNew();
 
-    ShowWindow(Globals.hMainWnd, show);
-    UpdateWindow(Globals.hMainWnd);
+	ShowWindow(Globals.hMainWnd, show);
+	UpdateWindow(Globals.hMainWnd);
     //DragAcceptFiles(Globals.hMainWnd, TRUE);
 
-    HandleCommandLine(cmdline);
+	HandleCommandLine(cmdline);
 
-    hAccel = LoadAccelerators( hInstance, MAKEINTRESOURCE(ID_ACCEL) );
+	hAccel = LoadAccelerators( hInstance, MAKEINTRESOURCE(ID_ACCEL) );
 
-    while (GetMessage(&msg, 0, 0, 0))
-    {
-	if (!TranslateAccelerator(Globals.hMainWnd, hAccel, &msg) && !IsDialogMessage(Globals.hFindReplaceDlg, &msg))
+	while (GetMessage(&msg, 0, 0, 0))
 	{
-	    TranslateMessage(&msg);
-	    DispatchMessage(&msg);
+		if (!TranslateAccelerator(Globals.hMainWnd, hAccel, &msg) && !IsDialogMessage(Globals.hFindReplaceDlg, &msg))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
 	}
-    }
-    return msg.wParam;
+	return msg.wParam;
 }
