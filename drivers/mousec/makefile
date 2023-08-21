@@ -1,5 +1,5 @@
 #
-# A Makefile for ATTRIB
+# A Makefile for MOUSE.DRV
 # (c) osFree project,
 # author, date
 #

@@ -1,22 +1,14 @@
 #
-# A Makefile for WinOS/2 Program Manager
+# A main Makefile for WIN16
 # (c) osFree project,
+# author
 #
 
-PROJ  = sysdir
-TRGT      = $(PROJ).exe
-srcfiles = $(p)sysdir$(e)
+DIRS = alloc atom bitmap class clipboard combo comm16 dce &
+       dialog dosmem file filedlg listbox mapping &
+       msg printdlg profile socket16 str sys sysdir text timer
 
-# defines additional options for C compiler
-ADD_COPT = -DSTANDALONE -D_X86_ -zW -e25 -zq -od -d2 -w4 -wcd=126 -wcd=102 -wcd=112 -oaxt -bg
-#DEBUG    = watcom
-#IMPORTS  = CHOOSEFONT     COMMDLG.15
+# infosize   - missed structure. Seems to be win9x api?
 
-#           GETCURRENTDIRECTORY WINSMSG.20
-#RESOURCE = $(PATH)rsrc.res
-CLEAN_ADD = *.mbr
-STACKSIZE = 2048
-HEAPSIZE = 2048
-
-!include $(%ROOT)tools/mk/appsw16.mk
+!include $(%ROOT)tools/mk/all.mk
 

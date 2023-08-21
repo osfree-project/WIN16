@@ -1,0 +1,11 @@
+; =============================
+; Файл определения модуля
+; =============================
+NAME        OEM2ANSI
+DESCRIPTION 'Приложение OEM2ANSI, (C) 1994, Frolov A.V.'
+EXETYPE     windows
+STUB        'winstub.exe'
+STACKSIZE   5120
+HEAPSIZE    1024
+CODE        preload moveable discardable
+DATA        preload moveable multiple
