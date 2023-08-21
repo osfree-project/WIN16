@@ -22,10 +22,11 @@
  *
  */
 
-#define UNICODE
+//#define UNICODE
 
 #include <windows.h>
 //#include <shlwapi.h>
+#include <string.h>
 #include <stdio.h>
 
 #include "main.h"
@@ -414,6 +415,7 @@ void NOTEPAD_DoFind(FINDREPLACE *fr)
 }
 
 #endif
+
 /***********************************************************************
  *
  *           NOTEPAD_WndProc
@@ -421,8 +423,8 @@ void NOTEPAD_DoFind(FINDREPLACE *fr)
 static LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
                                LPARAM lParam)
 {
-    if (msg == aFINDMSGSTRING)      /* not a constant so can't be used in switch */
-    {
+//    if (msg == aFINDMSGSTRING)      /* not a constant so can't be used in switch */
+//    {
 /*        FINDREPLACE *fr = (FINDREPLACE *)lParam;
         
         if (fr->Flags & FR_DIALOGTERM)
@@ -432,25 +434,27 @@ static LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
             Globals.lastFind = *fr;
             NOTEPAD_DoFind(fr);
         }*/
-        return 0;
-    }
+//        return 0;
+//    }
     
     switch (msg) {
 
     case WM_CREATE:
     {
-        static const char editW[] = { 'e','d','i','t',0 };
         DWORD dwStyle = WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL |
                         ES_AUTOVSCROLL | ES_MULTILINE | ES_NOHIDESEL;
         RECT rc;
+
         GetClientRect(hWnd, &rc);
 
         if (!Globals.bWrapLongLines) dwStyle |= WS_HSCROLL | ES_AUTOHSCROLL;
 
-        Globals.hEdit = CreateWindow(/*WS_EX_CLIENTEDGE,*/ editW, NULL,
-                             dwStyle,
-                             0, 0, rc.right, rc.bottom, hWnd,
-                             NULL, Globals.hInstance, NULL);
+        Globals.hEdit = CreateWindow("Edit",
+				NULL,
+				dwStyle,
+				0, 0, rc.right, rc.bottom, 
+				hWnd,
+				NULL, Globals.hInstance, NULL);
 
         Globals.hFont = CreateFontIndirect(&Globals.lfFont);
         SendMessage(Globals.hEdit, WM_SETFONT, (WPARAM)Globals.hFont, (LPARAM)FALSE);
@@ -629,6 +633,25 @@ static void HandleCommandLine(LPSTR cmdline)
      }
 }
 
+
+BOOL NOTEPAD_RegisterMainWinClass(void)
+{
+	WNDCLASS class;
+	
+	class.style         = CS_HREDRAW | CS_VREDRAW;
+	class.lpfnWndProc   = NOTEPAD_WndProc;
+	class.cbClsExtra    = 0;
+	class.cbWndExtra    = 0;
+	class.hInstance     = Globals.hInstance;
+	class.hIcon         = LoadIcon(Globals.hInstance, MAKEINTRESOURCE(IDI_NOTEPAD));
+	class.hCursor       = LoadCursor(0, (LPCSTR)IDC_ARROW);
+	class.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+	class.lpszMenuName  = MAKEINTRESOURCE(MAIN_MENU);
+	class.lpszClassName = "Notepad";
+
+	return RegisterClass(&class);
+}
+
 /***********************************************************************
  *
  *           WinMain
@@ -637,30 +660,23 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 {
     MSG        msg;
     HACCEL      hAccel;
-    WNDCLASS    class;
     //HMONITOR monitor;
     //MONITORINFO info;
-    int x, y;
-    static const char className[] = {'N','o','t','e','p','a','d',0};
-    static const char winName[]   = {'N','o','t','e','p','a','d',0};
+	int x, y;
 
     //aFINDMSGSTRING = RegisterWindowMessage(FINDMSGSTRING);
 
-    //ZeroMemory(&Globals, sizeof(Globals));
-    Globals.hInstance       = hInstance;
-    //NOTEPAD_LoadSettingFromRegistry();
+	/* Setup Globals */
+	memset(&Globals, 0, sizeof (Globals));
+	Globals.hInstance       = hInstance;
 
-    //ZeroMemory(&class, sizeof(class));
-    //class.cbSize        = sizeof(class);
-    class.lpfnWndProc   = NOTEPAD_WndProc;
-    class.hInstance     = Globals.hInstance;
-    class.hIcon         = LoadIcon(Globals.hInstance, MAKEINTRESOURCE(IDI_NOTEPAD));
-    class.hCursor       = LoadCursor(0, IDC_ARROW);
-    class.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    class.lpszMenuName  = MAKEINTRESOURCE(MAIN_MENU);
-    class.lpszClassName = className;
+	/* Read application configuration */
+	//NOTEPAD_LoadSettingFromRegistry();
 
-    if (!RegisterClass(&class)) return FALSE;
+	if (!prev)
+	{
+		if (!NOTEPAD_RegisterMainWinClass()) return(FALSE);
+	}
 
     /* Setup windows */
 
@@ -674,22 +690,26 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
         //main_rect.top >= info.rcWork.bottom ||
         //main_rect.right < info.rcWork.left ||
         //main_rect.bottom < info.rcWork.top)
+
         x = y = CW_USEDEFAULT;
 
-    Globals.hMainWnd =
-        CreateWindow(className, winName, WS_OVERLAPPEDWINDOW, x, y,
-		CW_USEDEFAULT, CW_USEDEFAULT,
-                     //main_rect.right - main_rect.left, main_rect.bottom - main_rect.top,
-                     NULL, NULL, Globals.hInstance, NULL);
-    if (!Globals.hMainWnd)
-    {
-        //ShowLastError();
-        //ExitProcess(1);
-		return(1);
-    }
+	Globals.hMainWnd = CreateWindow("Notepad", "Notepad", WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
+					x, y,
+					CW_USEDEFAULT, CW_USEDEFAULT, 
+					0,
+					//main_rect.right - main_rect.left, main_rect.bottom - main_rect.top,
+					0, Globals.hInstance, 0);
 
-    NOTEPAD_InitData();
-    DIALOG_FileNew();
+	if (!Globals.hMainWnd)
+	{
+	        //ShowLastError();
+	        //ExitProcess(1);
+		return(1);
+	}
+
+
+//    NOTEPAD_InitData();
+//    DIALOG_FileNew();
 
     ShowWindow(Globals.hMainWnd, show);
     UpdateWindow(Globals.hMainWnd);

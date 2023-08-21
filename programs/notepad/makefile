@@ -9,17 +9,12 @@ TRGT = $(PROJ1).exe
 DESC = Windows Notepad
 srcfiles = $(p)main$(e) $(p)dialog$(e)
 
-# defines additional options for C compiler
-#ADD_COPT = -0 -sg -zw -bw -bg -d3 -db -hw -ml -od #-pl
 ADD_COPT = -sg -DDEBUG=1
-#DEBUG    = watcom
 IMPORTS  = CHOOSEFONT     COMMDLG.15, &
            PRINTDLG       COMMDLG.20
-#IMPORTS  = GETOPENFILENAME     COMMDLG.1, &
-#           GETCURRENTDIRECTORY KERNEL.411
-#           GETCURRENTDIRECTORY WINSMSG.20
-#RESOURCE = $(PATH)rsrc.res
 CLEAN_ADD = *.mbr
+HEAPSIZE = 4k
+STACKSIZE = 8k
 
 !include $(%ROOT)tools/mk/appsw16.mk
 

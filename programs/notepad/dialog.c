@@ -788,12 +788,12 @@ VOID DIALOG_HelpHelp(VOID)
 
 VOID DIALOG_HelpAboutNotepad(VOID)
 {
-    static const char notepadW[] = { 'W','i','n','e',' ','N','o','t','e','p','a','d',0 };
+//    static const char notepadW[] = { 'W','i','n','e',' ','N','o','t','e','p','a','d',0 };
     char szNotepad[MAX_STRING_LEN];
     HICON icon = LoadIcon( Globals.hInstance, MAKEINTRESOURCE(IDI_NOTEPAD));
 
     LoadString(Globals.hInstance, STRING_NOTEPAD, szNotepad, SIZEOF(szNotepad));
-    ShellAbout(Globals.hMainWnd, szNotepad, notepadW, icon);
+    ShellAbout(Globals.hMainWnd, szNotepad, NULL/*notepadW*/, icon);
 }
 
 
