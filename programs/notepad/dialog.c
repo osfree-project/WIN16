@@ -89,8 +89,8 @@ static void UpdateWindowCaption(void)
       LoadString(Globals.hInstance, STRING_UNTITLED, szCaption, SIZEOF(szCaption));
 
   LoadString(Globals.hInstance, STRING_NOTEPAD, szNotepad, SIZEOF(szNotepad));
-  lstrcat(&szCaption, " - ");
-  lstrcat(&szCaption, &szNotepad);
+  lstrcat(szCaption, " - ");
+  lstrcat(szCaption, szNotepad);
 
   SetWindowText(Globals.hMainWnd, szCaption);
 }
@@ -331,34 +331,25 @@ VOID DIALOG_FileSave(VOID)
 }
 
 VOID DIALOG_FileSaveAs(VOID)
-{/*
-    OPENFILENAME saveas;
-    char szPath[MAX_PATH];
-    char szDir[MAX_PATH];
-    static const WCHAR szDefaultExt[] = { 't','x','t',0 };
-    static const WCHAR txt_files[] = { '*','.','t','x','t',0 };
+{
+	OPENFILENAME saveas = {0};
+	char szPath[MAX_PATH] = {0};
 
-    memset(&saveas, 0, sizeof(saveas));
+	saveas.lStructSize       = sizeof(OPENFILENAME);
+	saveas.hwndOwner         = Globals.hMainWnd;
+	saveas.hInstance         = Globals.hInstance;
+	saveas.lpstrFilter       = Globals.szFilter;
+	saveas.lpstrFile         = szPath;
+	saveas.nMaxFile          = SIZEOF(szPath);
+	saveas.lpstrInitialDir   = NULL;
+	saveas.Flags             = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
+	saveas.lpstrDefExt       = "txt";
 
-	getcwd(szDir, sizeof(szDir));
-    lstrcpy(szPath, txt_files);
-
-    saveas.lStructSize       = sizeof(OPENFILENAME);
-    saveas.hwndOwner         = Globals.hMainWnd;
-    saveas.hInstance         = Globals.hInstance;
-    saveas.lpstrFilter       = Globals.szFilter;
-    saveas.lpstrFile         = szPath;
-    saveas.nMaxFile          = SIZEOF(szPath);
-    saveas.lpstrInitialDir   = szDir;
-    saveas.Flags             = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT |
-        OFN_HIDEREADONLY;
-    saveas.lpstrDefExt       = szDefaultExt;
-
-    if (GetSaveFileName(&saveas)) {
-        SetFileName(szPath);
-        UpdateWindowCaption();
-        DoSaveFile();
-    }*/
+	if (GetSaveFileName(&saveas)) {
+		SetFileName(szPath);
+		UpdateWindowCaption();
+		DoSaveFile();
+	}
 }
 
 typedef struct {

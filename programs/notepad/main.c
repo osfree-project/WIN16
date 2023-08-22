@@ -28,6 +28,7 @@
 //#include <shlwapi.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "main.h"
 #include "dialog.h"
@@ -72,9 +73,16 @@ static const char value_szFooter[]         = {'s','z','T','r','a','i','l','e','r
  */
 VOID SetFileName(LPCSTR szFileName)
 {
-    lstrcpy(Globals.szFileName, szFileName);
-    Globals.szFileTitle[0] = 0;
-    //GetFileTitle(szFileName, Globals.szFileTitle, sizeof(Globals.szFileTitle));
+	char ext[_MAX_EXT];
+	char fname[_MAX_FNAME];
+	char path_buffer[_MAX_PATH];
+
+	lstrcpy(Globals.szFileName, szFileName);
+	Globals.szFileTitle[0] = 0;
+	lstrcpy(path_buffer, szFileName);
+	_splitpath(path_buffer, NULL, NULL, fname, ext );
+	lstrcat(Globals.szFileTitle, fname);
+	lstrcat(Globals.szFileTitle, ext);
 }
 
 #if 0
