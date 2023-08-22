@@ -10,9 +10,6 @@ DESC = Windows Notepad
 srcfiles = $(p)main$(e) $(p)dialog$(e)
 
 ADD_COPT = -ms -sg -DDEBUG=1
-IMPORTS  = GETOPENFILENAME     COMMDLG.1, &
-           CHOOSEFONT     COMMDLG.15, &
-           PRINTDLG       COMMDLG.20
 
 CLEAN_ADD = *.mbr
 HEAPSIZE = 4k

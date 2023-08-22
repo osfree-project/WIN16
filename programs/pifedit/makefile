@@ -11,10 +11,7 @@ srcfiles = $(p)qpifedit$(e) $(p)pif$(e)
 
 # defines additional options for C compiler
 ADD_COPT = -sg -DDEBUG=1
-IMPORTS  = GETOPENFILENAME     COMMDLG.1, &
-           GETSAVEFILENAME     COMMDLG.2, &
-           COMMDLGEXTENDEDERROR COMMDLG.26, &
-           GETCURRENTDIRECTORY KERNEL.411
+ADD_LINKOPT = LIB commdlg.lib
 
 CLEAN_ADD = *.mbr
 HEAPSIZE = 4k

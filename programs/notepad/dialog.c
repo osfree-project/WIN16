@@ -302,13 +302,6 @@ VOID DIALOG_FileOpen(VOID)
 	OPENFILENAME openfilename = {0};
 	char szPath[MAX_PATH] = {0};
 	char szFile[MAX_PATH] = {0};
-//	char szDir[MAX_PATH];
-
-//	memset(&openfilename, 0, sizeof(openfilename));
-
-//	getcwd(szDir, sizeof(szDir));
-//	lstrcpy(szPath, "*.txt");
-//	szPath[0]='\0';
 
 	openfilename.lStructSize       = sizeof(openfilename);
 	openfilename.hwndOwner         = Globals.hMainWnd;
@@ -318,16 +311,12 @@ VOID DIALOG_FileOpen(VOID)
 	openfilename.nMaxFile          = sizeof(szPath);
 	openfilename.lpstrFileTitle    = szFile;
 	openfilename.nMaxFileTitle     = sizeof(szFile);
-	openfilename.lpstrInitialDir   = NULL;//szDir;
 	openfilename.Flags             = OFN_FILEMUSTEXIST;// | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
 	openfilename.lpstrDefExt       = "txt";
 
 
 	if (GetOpenFileName(&openfilename))
 	{
-	//	char buf[255];
-//		sprintf(buf, "%d %d", CommDlgExtendedError(), (WORD) openfilename.lpstrFile[0]);
-//	        MessageBox(0, openfilename.lpstrFile, buf, MB_OK);
         	DoOpenFile(openfilename.lpstrFile);
 	}
 }

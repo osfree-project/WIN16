@@ -31,7 +31,7 @@ DLL=1
 	# -zc put constants on the code segment (cs)
 	# -s to disable stack checks, since the runtime uses MessageBox() to abort (which we can't call from mouse.drv)
 
-ADD_COPT  = -mc -3 -zu -zc -d
+ADD_COPT  = -mc -3 -zu -zc -s
 
 
 !include $(%ROOT)tools/mk/appsw16.mk
