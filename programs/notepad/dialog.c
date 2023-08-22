@@ -21,7 +21,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define UNICODE
+//#define UNICODE
 
 #include <assert.h>
 #include <stdio.h>
@@ -30,7 +30,6 @@
 
 #include <windows.h>
 #include <commdlg.h>
-//#include <shlwapi.h>
 
 #define GlobalPtrHandle(lp) \
   ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))
@@ -150,37 +149,38 @@ BOOL FileExists(LPCSTR szFilename)
 
 static VOID DoSaveFile(VOID)
 {
-    HANDLE hFile;
-    DWORD dwNumWrite;
-    LPSTR pTemp;
-    DWORD size;
-/*
-    hFile = CreateFile(Globals.szFileName, GENERIC_WRITE, FILE_SHARE_WRITE,
-                       NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    if(hFile == INVALID_HANDLE_VALUE)
-    {
-        ShowLastError();
-        return;
-    }
+	HANDLE hFile;
+	DWORD dwNumWrite;
+	LPSTR pTemp;
+	DWORD size;
 
-    size = GetWindowTextLength(Globals.hEdit) + 1;
-    pTemp = GlobalAllocPtr(GPTR, size);
-    if (!pTemp)
-    {
-	CloseHandle(hFile);
-        ShowLastError();
-        return;
-    }
-    size = GetWindowText(Globals.hEdit, pTemp, size);
 
-    if (!WriteFile(hFile, pTemp, size, &dwNumWrite, NULL))
-        ShowLastError();
-    else
-        SendMessage(Globals.hEdit, EM_SETMODIFY, FALSE, 0);
+	hFile=_lcreat(Globals.szFileName, 0);
+	
+	if(hFile == HFILE_ERROR)
+	{
+		ShowLastError();
+		return;
+	}
 
-    SetEndOfFile(hFile);
-    CloseHandle(hFile);
-    GlobalFreePtr(pTemp);*/
+	size = GetWindowTextLength(Globals.hEdit) + 1;
+	pTemp = GlobalAllocPtr(GPTR, size);
+	if (!pTemp)
+	{
+		_lclose(hFile);
+			ShowLastError();
+		return;
+	}
+	size = GetWindowText(Globals.hEdit, pTemp, size);
+
+	if ((dwNumWrite=_lwrite(hFile, pTemp, size))==HFILE_ERROR)
+		ShowLastError();
+	else
+		SendMessage(Globals.hEdit, EM_SETMODIFY, FALSE, 0);
+
+	//SetEndOfFile(hFile);
+	_lclose(hFile);
+	GlobalFreePtr(pTemp);
 }
 
 /**
