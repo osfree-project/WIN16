@@ -593,18 +593,18 @@ static void HandleCommandLine(LPSTR cmdline)
         }
         else
         {
-            static const char txtW[] = { '.','t','x','t',0 };
+            static const char txt[] = ".txt";
 
             /* try to find file with ".txt" extension */
-            if (!lstrcmp(txtW, cmdline + lstrlen(cmdline) - lstrlen(txtW)))
+            if (!lstrcmp(txt, cmdline + lstrlen(cmdline) - lstrlen(txt)))
             {
                 file_exists = FALSE;
                 file_name = cmdline;
             }
             else
             {
-                lstrcpyn(buf, cmdline, MAX_PATH - lstrlen(txtW) - 1);
-                lstrcat(buf, txtW);
+                lstrcpyn(buf, cmdline, MAX_PATH - lstrlen(txt) - 1);
+                lstrcat(buf, txt);
                 file_name = buf;
                 file_exists = FileExists(buf);
             }
@@ -658,8 +658,6 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 {
 	MSG        msg;
 	HACCEL      hAccel;
-    //HMONITOR monitor;
-    //MONITORINFO info;
 	int x, y;
 
     //aFINDMSGSTRING = RegisterWindowMessage(FINDMSGSTRING);
@@ -676,26 +674,13 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 		if (!NOTEPAD_RegisterMainWinClass()) return(FALSE);
 	}
 
-    /* Setup windows */
-
-    //monitor = MonitorFromRect( &main_rect, MONITOR_DEFAULTTOPRIMARY );
-    //info.cbSize = sizeof(info);
-    //GetMonitorInfoW( monitor, &info );
-
-    //x = main_rect.left;
-    //y = main_rect.top;
-    //if (main_rect.left >= info.rcWork.right ||
-        //main_rect.top >= info.rcWork.bottom ||
-        //main_rect.right < info.rcWork.left ||
-        //main_rect.bottom < info.rcWork.top)
-
+	/* Setup windows */
         x = y = CW_USEDEFAULT;
 
 	Globals.hMainWnd = CreateWindow("Notepad", "Notepad", WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
 					x, y,
 					CW_USEDEFAULT, CW_USEDEFAULT, 
 					0,
-					//main_rect.right - main_rect.left, main_rect.bottom - main_rect.top,
 					0, Globals.hInstance, 0);
 
 	if (!Globals.hMainWnd)
@@ -707,11 +692,11 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 
 
 	NOTEPAD_InitData();
-//    DIALOG_FileNew();
+	DIALOG_FileNew();
 
 	ShowWindow(Globals.hMainWnd, show);
 	UpdateWindow(Globals.hMainWnd);
-    //DragAcceptFiles(Globals.hMainWnd, TRUE);
+	//DragAcceptFiles(Globals.hMainWnd, TRUE);
 
 	HandleCommandLine(cmdline);
 

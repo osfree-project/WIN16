@@ -9,15 +9,16 @@ TRGT = $(PROJ1).exe
 DESC = Windows Notepad
 srcfiles = $(p)main$(e) $(p)dialog$(e)
 
-ADD_COPT = -sg -DDEBUG=1
+ADD_COPT = -ms -sg -DDEBUG=1
 IMPORTS  = GETOPENFILENAME     COMMDLG.1, &
            CHOOSEFONT     COMMDLG.15, &
-           PRINTDLG       COMMDLG.20, &
-           GETCURRENTDIRECTORY KERNEL.411
+           PRINTDLG       COMMDLG.20
 
 CLEAN_ADD = *.mbr
 HEAPSIZE = 4k
 STACKSIZE = 8k
+
+ADD_LINKOPT = LIB commdlg.lib
 
 !include $(%ROOT)tools/mk/appsw16.mk
 

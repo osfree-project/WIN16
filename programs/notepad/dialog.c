@@ -218,25 +218,23 @@ BOOL DoCloseFile(void)
 
 void DoOpenFile(LPCSTR szFileName)
 {
-    HANDLE hFile;
-    LPSTR pTemp;
-    DWORD size;
-    DWORD dwNumRead;
-    char log[5];
+	HANDLE hFile;
+	LPSTR pTemp;
+	DWORD size;
+	DWORD dwNumRead;
+	char log[5];
 
-        MessageBox(0, szFileName, "", MB_OK);
+	/* Close any files and prompt to save changes */
+	if (!DoCloseFile())
+		return;
 
-    /* Close any files and prompt to save changes */
-    if (!DoCloseFile())
-	return;
+	hFile = _lopen(szFileName, READ | OF_SHARE_DENY_WRITE);
 
-    hFile = _lopen(szFileName, READ | OF_SHARE_DENY_NONE);
-
-    if(hFile == HFILE_ERROR)
-    {
-	AlertFileNotFound(szFileName);
-	return;
-    }
+	if(hFile == HFILE_ERROR)
+	{
+		AlertFileNotFound(szFileName);
+		return;
+	}
 
 	size = _llseek(hFile, 0, SEEK_END);
 	if (size == HFILE_ERROR)
@@ -247,44 +245,46 @@ void DoOpenFile(LPCSTR szFileName)
 	}
 	size++;
 
-    pTemp = GlobalAllocPtr(GPTR, size);
-    if (!pTemp)
-    {
-	_lclose(hFile);
-	ShowLastError();
-	return;
-    }
+	_llseek(hFile, 0, SEEK_SET);
 
-    if ((dwNumRead=_lread(hFile, pTemp, size))==HFILE_ERROR)
-    {
-	_lclose(hFile);
-	GlobalFreePtr(pTemp);
-	ShowLastError();
-	return;
-    }
+	pTemp = GlobalAllocPtr(GPTR, size);
+	if (!pTemp)
+	{
+		_lclose(hFile);
+		ShowLastError();
+		return;
+	}
 
-    _lclose(hFile);
-    pTemp[dwNumRead] = 0;
+	if ((dwNumRead=_lread(hFile, pTemp, size))==HFILE_ERROR)
+	{
+		_lclose(hFile);
+		GlobalFreePtr(pTemp);
+		ShowLastError();
+		return;
+	}
+
+	_lclose(hFile);
+	pTemp[dwNumRead] = 0;
 
 	SetWindowText(Globals.hEdit, pTemp);
 
-    GlobalFreePtr(pTemp);
+	GlobalFreePtr(pTemp);
 
-    SendMessage(Globals.hEdit, EM_SETMODIFY, FALSE, 0);
-    SendMessage(Globals.hEdit, EM_EMPTYUNDOBUFFER, 0, 0);
-    SetFocus(Globals.hEdit);
+	SendMessage(Globals.hEdit, EM_SETMODIFY, FALSE, 0);
+	SendMessage(Globals.hEdit, EM_EMPTYUNDOBUFFER, 0, 0);
+	SetFocus(Globals.hEdit);
     
-    /*  If the file starts with .LOG, add a time/date at the end and set cursor after */
-    if (GetWindowText(Globals.hEdit, log, sizeof(log)/sizeof(log[0])) && !lstrcmp(log, ".LOG"))
-    {
-	SendMessage(Globals.hEdit, EM_SETSEL, GetWindowTextLength(Globals.hEdit), -1);
-	SendMessage(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)"\r\n");
-	DIALOG_EditTimeDate();
-	SendMessage(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)"\r\n");
-    }
+	/*  If the file starts with .LOG, add a time/date at the end and set cursor after */
+	if (GetWindowText(Globals.hEdit, log, sizeof(log)/sizeof(log[0])) && !lstrcmp(log, ".LOG"))
+	{
+		SendMessage(Globals.hEdit, EM_SETSEL, GetWindowTextLength(Globals.hEdit), -1);
+		SendMessage(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)"\r\n");
+		DIALOG_EditTimeDate();
+		SendMessage(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)"\r\n");
+	}
 
-    SetFileName(szFileName);
-    UpdateWindowCaption();
+	SetFileName(szFileName);
+	UpdateWindowCaption();
 }
 
 VOID DIALOG_FileNew(VOID)
@@ -299,14 +299,16 @@ VOID DIALOG_FileNew(VOID)
 
 VOID DIALOG_FileOpen(VOID)
 {
-	OPENFILENAME openfilename;
-	char szPath[MAX_PATH];
-	char szDir[MAX_PATH];
+	OPENFILENAME openfilename = {0};
+	char szPath[MAX_PATH] = {0};
+	char szFile[MAX_PATH] = {0};
+//	char szDir[MAX_PATH];
 
-	memset(&openfilename, 0, sizeof(openfilename));
+//	memset(&openfilename, 0, sizeof(openfilename));
 
-	getcwd(szDir, sizeof(szDir));
-	lstrcpy(szPath, "*.txt");
+//	getcwd(szDir, sizeof(szDir));
+//	lstrcpy(szPath, "*.txt");
+//	szPath[0]='\0';
 
 	openfilename.lStructSize       = sizeof(openfilename);
 	openfilename.hwndOwner         = Globals.hMainWnd;
@@ -314,13 +316,20 @@ VOID DIALOG_FileOpen(VOID)
 	openfilename.lpstrFilter       = Globals.szFilter;
 	openfilename.lpstrFile         = szPath;
 	openfilename.nMaxFile          = sizeof(szPath);
-	openfilename.lpstrInitialDir   = szDir;
-	openfilename.Flags             = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
+	openfilename.lpstrFileTitle    = szFile;
+	openfilename.nMaxFileTitle     = sizeof(szFile);
+	openfilename.lpstrInitialDir   = NULL;//szDir;
+	openfilename.Flags             = OFN_FILEMUSTEXIST;// | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
 	openfilename.lpstrDefExt       = "txt";
 
 
 	if (GetOpenFileName(&openfilename))
+	{
+	//	char buf[255];
+//		sprintf(buf, "%d %d", CommDlgExtendedError(), (WORD) openfilename.lpstrFile[0]);
+//	        MessageBox(0, openfilename.lpstrFile, buf, MB_OK);
         	DoOpenFile(openfilename.lpstrFile);
+	}
 }
 
 
@@ -340,9 +349,9 @@ VOID DIALOG_FileSaveAs(VOID)
     static const WCHAR szDefaultExt[] = { 't','x','t',0 };
     static const WCHAR txt_files[] = { '*','.','t','x','t',0 };
 
-    ZeroMemory(&saveas, sizeof(saveas));
+    memset(&saveas, 0, sizeof(saveas));
 
-    GetCurrentDirectory(SIZEOF(szDir), szDir);
+	getcwd(szDir, sizeof(szDir));
     lstrcpy(szPath, txt_files);
 
     saveas.lStructSize       = sizeof(OPENFILENAME);
@@ -497,7 +506,7 @@ VOID DIALOG_FilePrint(VOID)
     char cTemp[PRINT_LEN_MAX];
 
     /* Get Current Settings */
-    //ZeroMemory(&printer, sizeof(printer));
+    memset(&printer, 0, sizeof(printer));
     printer.lStructSize           = sizeof(printer);
     printer.hwndOwner             = Globals.hMainWnd;
     printer.hDevMode              = Globals.hDevMode;
@@ -603,7 +612,7 @@ VOID DIALOG_FilePrinterSetup(VOID)
 {
     PRINTDLG printer;
 
-    //ZeroMemory(&printer, sizeof(printer));
+    memset(&printer, 0, sizeof(printer));
     printer.lStructSize         = sizeof(printer);
     printer.hwndOwner           = Globals.hMainWnd;
     printer.hDevMode            = Globals.hDevMode;
@@ -713,7 +722,7 @@ VOID DIALOG_SelectFont(VOID)
     CHOOSEFONT cf;
     LOGFONT lf=Globals.lfFont;
 
-    //ZeroMemory( &cf, sizeof(cf) );
+    memset(&cf, 0, sizeof(cf));
     cf.lStructSize=sizeof(cf);
     cf.hwndOwner=Globals.hMainWnd;
     cf.lpLogFont=&lf;
@@ -734,7 +743,7 @@ VOID DIALOG_SelectFont(VOID)
 VOID DIALOG_Search(VOID)
 {
 #if 0
-      //  ZeroMemory(&Globals.find, sizeof(Globals.find));
+        memset(&Globals.find, 0, sizeof(Globals.find));
         Globals.find.lStructSize      = sizeof(Globals.find);
         Globals.find.hwndOwner        = Globals.hMainWnd;
         Globals.find.hInstance        = Globals.hInstance;
@@ -777,12 +786,11 @@ VOID DIALOG_HelpHelp(VOID)
 
 VOID DIALOG_HelpAboutNotepad(VOID)
 {
-//    static const char notepadW[] = { 'W','i','n','e',' ','N','o','t','e','p','a','d',0 };
     char szNotepad[MAX_STRING_LEN];
     HICON icon = LoadIcon( Globals.hInstance, MAKEINTRESOURCE(IDI_NOTEPAD));
 
     LoadString(Globals.hInstance, STRING_NOTEPAD, szNotepad, SIZEOF(szNotepad));
-    ShellAbout(Globals.hMainWnd, szNotepad, NULL/*notepadW*/, icon);
+    ShellAbout(Globals.hMainWnd, szNotepad, NULL, icon);
 }
 
 

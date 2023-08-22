@@ -23,7 +23,7 @@
 
 #include "notepad_res.h"
 #include <dos.h>
-#define MAX_PATH NAME_MAX
+#define MAX_PATH FILENAME_MAX
 #define MAX_STRING_LEN      255
 
 typedef struct

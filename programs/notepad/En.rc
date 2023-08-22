@@ -51,8 +51,8 @@ POPUP "&Edit" {
   MENUITEM "&Font...",          CMD_FONT
  }
 POPUP "&Search" {
-  MENUITEM "&Search...\tCtrl+F",   CMD_SEARCH
-  MENUITEM "&Search next\tF3",  CMD_SEARCH_NEXT
+  MENUITEM "&Find...\tCtrl+F",   CMD_SEARCH
+  MENUITEM "Find &next\tF3",  CMD_SEARCH_NEXT
  }
 POPUP "&Help" {
   MENUITEM "&Contents",         CMD_HELP_CONTENTS
