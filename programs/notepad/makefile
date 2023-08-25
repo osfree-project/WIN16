@@ -15,7 +15,7 @@ CLEAN_ADD = *.mbr
 HEAPSIZE = 4k
 STACKSIZE = 8k
 
-ADD_LINKOPT = LIB commdlg.lib
+ADD_LINKOPT = LIB commdlg.lib, shell.lib
 
 !include $(%ROOT)tools/mk/appsw16.mk
 

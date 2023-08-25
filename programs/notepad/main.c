@@ -397,7 +397,7 @@ void NOTEPAD_DoFind(FINDREPLACE *fr)
 	switch (fr->Flags & (FR_DOWN|FR_MATCHCASE))
 	{
 		case 0:
-			found = NOTEPAD_StrRStr(_fstrupr(content), content+pos-len, _fstrupr(lpstrFindWhat));
+			found = NOTEPAD_StrRStr(_fstrupr(content), _fstrupr(content+pos-len), _fstrupr(lpstrFindWhat));
 			break;
 		case FR_DOWN:
 			found = _fstrstr(_fstrupr(content+pos), _fstrupr(lpstrFindWhat));
@@ -508,8 +508,8 @@ static LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
         char szFileName[MAX_PATH];
         HANDLE hDrop = (HANDLE) wParam;
 
-        //DragQueryFile(hDrop, 0, szFileName, SIZEOF(szFileName));
-        //DragFinish(hDrop);
+        DragQueryFile(hDrop, 0, szFileName, SIZEOF(szFileName));
+        DragFinish(hDrop);
         DoOpenFile(szFileName);
         break;
     }
@@ -705,7 +705,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 
 	ShowWindow(Globals.hMainWnd, show);
 	UpdateWindow(Globals.hMainWnd);
-	//DragAcceptFiles(Globals.hMainWnd, TRUE);
+	DragAcceptFiles(Globals.hMainWnd, TRUE);
 
 	HandleCommandLine(cmdline);
 

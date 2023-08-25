@@ -26,6 +26,7 @@
 #define MAX_PATH FILENAME_MAX
 #define MAX_STRING_LEN      255
 #include <commdlg.h>
+#include <shellapi.h>
 
 typedef struct
 {
