@@ -27,21 +27,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <direct.h>
+#include <dos.h>
 
 #include <windows.h>
 #include <commdlg.h>
-
-#define GlobalPtrHandle(lp) \
-  ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))
-
-#define     GlobalUnlockPtr(lp)      \
-                GlobalUnlock(GlobalPtrHandle(lp))
-
-#define GlobalFreePtr(lp) \
-  (GlobalUnlockPtr(lp),(BOOL)GlobalFree(GlobalPtrHandle(lp)))
-
-#define GlobalAllocPtr(flags, cb) \
-  (GlobalLock(GlobalAlloc((flags), (cb))))
 
 #include "main.h"
 #include "dialog.h"
@@ -137,13 +126,11 @@ static int AlertFileNotSaved(LPCSTR szFileName)
  */
 BOOL FileExists(LPCSTR szFilename)
 {
-   //WIN32_FIND_DATA entry;
-   //HANDLE hFile;
-//
-   //hFile = FindFirstFile(szFilename, &entry);
-   //FindClose(hFile);
+	struct find_t entry;
+	char buf[MAX_PATH];
 
-   return 1;//(hFile != INVALID_HANDLE_VALUE);
+	lstrcpy(buf, szFilename);
+	return !_dos_findfirst(buf, _A_NORMAL, &entry);
 }
 
 
@@ -664,7 +651,6 @@ VOID DIALOG_EditTimeDate(VOID)
 VOID DIALOG_EditWrap(VOID)
 {
     BOOL modify = FALSE;
-    static const char editW[] = { 'e','d','i','t',0 };
     DWORD dwStyle = WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL |
                     ES_AUTOVSCROLL | ES_MULTILINE;
     RECT rc;
@@ -683,7 +669,7 @@ VOID DIALOG_EditWrap(VOID)
     DestroyWindow(Globals.hEdit);
     GetClientRect(Globals.hMainWnd, &rc);
     if( Globals.bWrapLongLines ) dwStyle |= WS_HSCROLL | ES_AUTOHSCROLL;
-    Globals.hEdit = CreateWindow(/*WS_EX_CLIENTEDGE,*/ editW, NULL, dwStyle,
+    Globals.hEdit = CreateWindow("Edit", NULL, dwStyle,
                          0, 0, rc.right, rc.bottom, Globals.hMainWnd,
                          0, Globals.hInstance, NULL);
     SendMessage(Globals.hEdit, WM_SETFONT, (WPARAM)Globals.hFont, (LPARAM)FALSE);
@@ -722,7 +708,6 @@ VOID DIALOG_SelectFont(VOID)
 
 VOID DIALOG_Search(VOID)
 {
-#if 0
         memset(&Globals.find, 0, sizeof(Globals.find));
         Globals.find.lStructSize      = sizeof(Globals.find);
         Globals.find.hwndOwner        = Globals.hMainWnd;
@@ -736,17 +721,16 @@ VOID DIALOG_Search(VOID)
 
         Globals.hFindReplaceDlg = FindText(&Globals.find);
         assert(Globals.hFindReplaceDlg !=0);
-#endif
 }
 
 VOID DIALOG_SearchNext(VOID)
 {
-	#if 0
+	
     if (Globals.lastFind.lpstrFindWhat == NULL)
         DIALOG_Search();
     else                /* use the last find data */
         NOTEPAD_DoFind(&Globals.lastFind);
-		#endif
+		
 }
 
 VOID DIALOG_HelpContents(VOID)

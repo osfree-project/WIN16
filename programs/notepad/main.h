@@ -25,6 +25,7 @@
 #include <dos.h>
 #define MAX_PATH FILENAME_MAX
 #define MAX_STRING_LEN      255
+#include <commdlg.h>
 
 typedef struct
 {
@@ -46,8 +47,8 @@ typedef struct
   char   szHeader[MAX_PATH];
   char   szFooter[MAX_PATH];
 
-  //FINDREPLACE find;
-  //FINDREPLACE lastFind;
+  FINDREPLACE find;
+  FINDREPLACE lastFind;
   HGLOBAL hDevMode; /* printer mode */
   HGLOBAL hDevNames; /* printer names */
 } NOTEPAD_GLOBALS;
@@ -55,7 +56,17 @@ typedef struct
 extern NOTEPAD_GLOBALS Globals;
 
 VOID SetFileName(LPCSTR szFileName);
-//void NOTEPAD_DoFind(FINDREPLACE *fr);
+void NOTEPAD_DoFind(FINDREPLACE *fr);
 DWORD get_dpi(void);
 
-DWORD WINAPI GetCurrentDirectory(DWORD cchCurDir, char * lpszCurDir);
+#define GlobalPtrHandle(lp) \
+  ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))
+
+#define     GlobalUnlockPtr(lp)      \
+                GlobalUnlock(GlobalPtrHandle(lp))
+
+#define GlobalFreePtr(lp) \
+  (GlobalUnlockPtr(lp),(BOOL)GlobalFree(GlobalPtrHandle(lp)))
+
+#define GlobalAllocPtr(flags, cb) \
+  (GlobalLock(GlobalAlloc((flags), (cb))))
