@@ -19,6 +19,7 @@ EXPORTS = &
 	RegQueryValue	.6, &
 	RegEnumKey	.7, &
 	DragAcceptFiles .9, &
+	DragQueryFile   .11, &
 	DragFinish      .12, &
 	DragQueryPoint  .13, &
 	ShellExecute	.20, &
@@ -31,7 +32,6 @@ EXPORTS = &
 	DLLENTRYPOINT.101
 
 # not implemented yet
-#	DragQueryFile   .11, &
 
 #	ExtractAssociatedIcon	.36, &
 #	INTERNALEXTRACTICON.39, &

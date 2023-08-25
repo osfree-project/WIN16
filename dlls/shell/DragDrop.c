@@ -65,34 +65,62 @@ DragAcceptFiles(HWND hWnd, BOOL fAccept)
 }
 
 
-/* ToDo: Port from Wine */
-//UINT WINAPI
-//DragQueryFile(HDROP hDrop, UINT iFile, LPSTR lpszFile, UINT cb)
-//{
-//    APISTR((LF_APISTUB,"DragQueryFile(HDROP=%x,UINT=%x,LPSTR=%s,UINT=%d)\n",
-//	hDrop,iFile,lpszFile?lpszFile:"NULL",cb));
 
-//    return 0;
-//}
+/*************************************************************************
+ *				DragQueryFile		[SHELL.11]
+ */
+UINT WINAPI DragQueryFile(
+	HDROP hDrop,
+	UINT wFile,
+	LPSTR lpszFile,
+	UINT wLength)
+{
+ 	LPSTR lpDrop;
+	UINT i = 0;
+	LPDROPFILESTRUCT lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock(hDrop);
+
+//	TRACE("(%04x, %x, %p, %u)\n", hDrop,wFile,lpszFile,wLength);
+
+	if(!lpDropFileStruct) goto end;
+
+	lpDrop = (LPSTR) lpDropFileStruct + lpDropFileStruct->wSize;
+
+	while (i++ < wFile)
+	{
+	  while (*lpDrop++); /* skip filename */
+	  if (!*lpDrop)
+	  {
+	    i = (wFile == 0xFFFF) ? i : 0;
+	    goto end;
+	  }
+	}
+
+	i = lstrlen(lpDrop);
+	if (!lpszFile ) goto end;   /* needed buffer size */
+	lstrcpyn (lpszFile, lpDrop, wLength);
+end:
+	GlobalUnlock(hDrop);
+	return i;
+}
+
 
 
 BOOL WINAPI
 DragQueryPoint(HDROP hDrop, LPPOINT lppt)
 {
-//    HGLOBAL hGlobal = (HGLOBAL)hDrop;
-    LPDROPFILES lpDragInfo;
+    LPDROPFILESTRUCT lpDragInfo;
     BOOL bRet;
 
 //    APISTR((LF_APICALL,"DragQueryPoint(HDROP=%x,POINT=%x)\n",
 //	hDrop,lppt));
 
-    if (NULL == (lpDragInfo = (LPDROPFILES)GlobalLock(hDrop))) {
+    if (NULL == (lpDragInfo = (LPDROPFILESTRUCT)GlobalLock(hDrop))) {
 //        APISTR((LF_APICALL,"DragQueryPoint: returns BOOL FALSE\n"));
 	return FALSE;
     }
 
-    *lppt = lpDragInfo->pt;
-    bRet = !lpDragInfo->fNC;
+    *lppt = lpDragInfo->ptMousePos;
+    bRet = !lpDragInfo->fInNonClientArea;
 
     GlobalUnlock(hDrop);
 
@@ -103,7 +131,6 @@ DragQueryPoint(HDROP hDrop, LPPOINT lppt)
 void WINAPI
 DragFinish(HDROP hDrop)
 {
-//    HGLOBAL hGlobal = (HGLOBAL)hDrop;
 
 //    APISTR((LF_APICALL,"DragFinish(HDROP=%x)\n",hDrop));
 
