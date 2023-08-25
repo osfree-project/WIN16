@@ -7,3 +7,6 @@
 [submodule "programs/clock"]
 	path = programs/clock
 	url = https://github.com/osfree-project/clock
+[submodule "programs/notepad"]
+	path = programs/notepad
+	url = https://github.com/osfree-project/notepad
