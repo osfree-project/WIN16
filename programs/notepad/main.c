@@ -378,46 +378,49 @@ static LPSTR NOTEPAD_StrRStr(LPSTR pszSource, LPSTR pszLast, LPSTR pszSrch)
  */
 void NOTEPAD_DoFind(FINDREPLACE *fr)
 {
-    LPSTR content;
-    LPSTR found;
-    int len = lstrlen(fr->lpstrFindWhat);
-    int fileLen;
-    DWORD pos;
+	LPSTR content;
+	LPSTR found;
+	LPSTR lpstrFindWhat;
+	int len = lstrlen(fr->lpstrFindWhat);
+	int fileLen;
+	DWORD pos;
     
-    fileLen = GetWindowTextLength(Globals.hEdit) + 1;
-    content = GlobalAllocPtr(GPTR, fileLen * sizeof(char));
-    if (!content) return;
-    GetWindowText(Globals.hEdit, content, fileLen);
+	fileLen = GetWindowTextLength(Globals.hEdit) + 1;
+	content = GlobalAllocPtr(GPTR, fileLen);
+	if (!content) return;
+	GetWindowText(Globals.hEdit, content, fileLen);
 
-    pos=HIWORD(SendMessage(Globals.hEdit, EM_GETSEL, 0, 0));
+	lpstrFindWhat=GlobalAllocPtr(GPTR,len+1);
 
-    switch (fr->Flags & (FR_DOWN|FR_MATCHCASE))
-    {
-        case 0:
-            found = NOTEPAD_StrRStr(_fstrupr(content), content+pos-len, _fstrupr(fr->lpstrFindWhat));
-            break;
-        case FR_DOWN:
-            found = _fstrstr(_fstrupr(content+pos), _fstrupr(fr->lpstrFindWhat));
-            break;
-        case FR_MATCHCASE:
-            found = NOTEPAD_StrRStr(content, content+pos-len, fr->lpstrFindWhat);
-            break;
-        case FR_DOWN|FR_MATCHCASE:
-            found = _fstrstr(content+pos, fr->lpstrFindWhat);
-            break;
-        default:    /* shouldn't happen */
-            return;
-    }
-    GlobalFreePtr(content);
+	pos=HIWORD(SendMessage(Globals.hEdit, EM_GETSEL, 0, 0));
 
-    if (found == NULL)
-    {
-        DIALOG_StringMsgBox(Globals.hFindReplaceDlg, STRING_NOTFOUND, fr->lpstrFindWhat,
-            MB_ICONINFORMATION|MB_OK);
-        return;
-    }
+	switch (fr->Flags & (FR_DOWN|FR_MATCHCASE))
+	{
+		case 0:
+			found = NOTEPAD_StrRStr(_fstrupr(content), content+pos-len, _fstrupr(lpstrFindWhat));
+			break;
+		case FR_DOWN:
+			found = _fstrstr(_fstrupr(content+pos), _fstrupr(lpstrFindWhat));
+			break;
+		case FR_MATCHCASE:                 
+			found = NOTEPAD_StrRStr(content, content+pos-len, lpstrFindWhat);
+			break;
+		case FR_DOWN|FR_MATCHCASE:
+			found = _fstrstr(content+pos, lpstrFindWhat);
+			break;
+		default:    /* shouldn't happen */
+			return;
+	}
+	GlobalFreePtr(content);
+	GlobalFreePtr(lpstrFindWhat);
 
-    SendMessage(Globals.hEdit, EM_SETSEL, 1, MAKELPARAM(found - content,found - content + len));
+	if (found == NULL)
+	{
+		DIALOG_StringMsgBox(Globals.hFindReplaceDlg, STRING_NOTFOUND, fr->lpstrFindWhat, MB_ICONINFORMATION|MB_OK);
+		return;
+	}
+
+	SendMessage(Globals.hEdit, EM_SETSEL, 1, MAKELPARAM(found - content,found - content + len));
 }
 
 /***********************************************************************
