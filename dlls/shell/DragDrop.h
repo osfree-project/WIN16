@@ -54,3 +54,11 @@ typedef struct tagDROPFILESTRUCT {
     POINT	ptMousePos;
     BOOL	fInNonClientArea;
 } DROPFILESTRUCT, *LPDROPFILESTRUCT;
+
+typedef struct _DROPFILES
+{
+  DWORD pFiles;
+  POINT pt;
+  BOOL  fNC;
+  BOOL  fWide;
+} DROPFILES, FAR * LPDROPFILES;

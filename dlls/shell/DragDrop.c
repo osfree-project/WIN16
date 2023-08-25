@@ -30,14 +30,14 @@ To send email to the maintainer of the Willows Twin Libraries.
  */
 
 #include "windows.h"
-#include "windowsx.h"
-/*
-#include "shellapi.h"
-*/
-#define __SHELLAPI_H__
-#include "Willows.h"
+//#include "windowsx.h"
 
-#include "Log.h"
+#include "shellapi.h"
+
+#define __SHELLAPI_H__
+//#include "Willows.h"
+
+//#include "Log.h"
 #include "DragDrop.h"
 
 void WINAPI
@@ -45,15 +45,15 @@ DragAcceptFiles(HWND hWnd, BOOL fAccept)
 {
     DWORD dwExStyle;
 
-    APISTR((LF_APICALL,"DragAcceptFiles(HWND=%x,BOOL=%d)\n",
-	hWnd,fAccept));
+//    APISTR((LF_APICALL,"DragAcceptFiles(HWND=%x,BOOL=%d)\n",
+//	hWnd,fAccept));
 
     if (!IsWindow(hWnd)) {
-        APISTR((LF_APIRET,"DragAcceptFiles: returns void\n"));
+//        APISTR((LF_APIRET,"DragAcceptFiles: returns void\n"));
 	return;
     }
 
-    dwExStyle = GetWindowExStyle(hWnd);
+    dwExStyle = GetWindowLong(hWnd,GWL_EXSTYLE);
 
     if (fAccept)
 	dwExStyle |= WS_EX_ACCEPTFILES;
@@ -61,55 +61,53 @@ DragAcceptFiles(HWND hWnd, BOOL fAccept)
 	dwExStyle &= ~WS_EX_ACCEPTFILES;
 
     SetWindowLong(hWnd,GWL_EXSTYLE,dwExStyle);
-    APISTR((LF_APIRET,"DragAcceptFiles: returns void\n"));
+//    APISTR((LF_APIRET,"DragAcceptFiles: returns void\n"));
 }
 
-UINT WINAPI
-DragQueryFile(HDROP hDrop, UINT iFile, LPSTR lpszFile, UINT cb)
-{
-    APISTR((LF_APISTUB,"DragQueryFile(HDROP=%x,UINT=%x,LPSTR=%s,UINT=%d)\n",
-	hDrop,iFile,lpszFile?lpszFile:"NULL",cb));
 
-    return 0;
-}
+/* ToDo: Port from Wine */
+//UINT WINAPI
+//DragQueryFile(HDROP hDrop, UINT iFile, LPSTR lpszFile, UINT cb)
+//{
+//    APISTR((LF_APISTUB,"DragQueryFile(HDROP=%x,UINT=%x,LPSTR=%s,UINT=%d)\n",
+//	hDrop,iFile,lpszFile?lpszFile:"NULL",cb));
+
+//    return 0;
+//}
+
 
 BOOL WINAPI
-DragQueryPoint(HDROP hDrop, POINT *lppt)
+DragQueryPoint(HDROP hDrop, LPPOINT lppt)
 {
-#ifdef	LATER
-    HGLOBAL hGlobal = (HGLOBAL)hDrop;
-    LPDRAGINFO lpDragInfo;
+//    HGLOBAL hGlobal = (HGLOBAL)hDrop;
+    LPDROPFILES lpDragInfo;
+    BOOL bRet;
 
-    APISTR((LF_APICALL,"DragQueryPoint(HDROP=%x,POINT=%x)\n",
-	hDrop,lppt));
+//    APISTR((LF_APICALL,"DragQueryPoint(HDROP=%x,POINT=%x)\n",
+//	hDrop,lppt));
 
-    if (NULL == (lpDragInfo = (LPDRAGINFO)GlobalLock(hGlobal))) {
-        APISTR((LF_APICALL,"DragQueryPoint: returns BOOL FALSE\n"));
+    if (NULL == (lpDragInfo = (LPDROPFILES)GlobalLock(hDrop))) {
+//        APISTR((LF_APICALL,"DragQueryPoint: returns BOOL FALSE\n"));
 	return FALSE;
     }
 
-    lppt->x = lpDragInfo->x;
-    lppt->y = lpDragInfo->y;
+    *lppt = lpDragInfo->pt;
+    bRet = !lpDragInfo->fNC;
 
-    GlobalUnlock(hGlobal);
+    GlobalUnlock(hDrop);
 
-    APISTR((LF_APICALL,"DragQueryPoint: returns BOOL TRUE\n"));
-    return TRUE;
-#else
-    APISTR((LF_APISTUB,"DragQueryPoint(HDROP=%x,POINT=%x)\n",
-	hDrop,lppt));
-    return FALSE;
-#endif
+//    APISTR((LF_APICALL,"DragQueryPoint: returns BOOL TRUE\n"));
+    return bRet;
 }
 
 void WINAPI
 DragFinish(HDROP hDrop)
 {
-    HGLOBAL hGlobal = (HGLOBAL)hDrop;
+//    HGLOBAL hGlobal = (HGLOBAL)hDrop;
 
-    APISTR((LF_APICALL,"DragFinish(HDROP=%x)\n",hDrop));
+//    APISTR((LF_APICALL,"DragFinish(HDROP=%x)\n",hDrop));
 
-    GlobalFree(hGlobal);
+    GlobalFree(hDrop);
 
-    APISTR((LF_APIRET,"DragFinish: returns void\n"));
+//    APISTR((LF_APIRET,"DragFinish: returns void\n"));
 }

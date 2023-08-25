@@ -126,13 +126,13 @@ ATOMENTRY far *ATOM_MakePtr( HANDLE handle /* [in] Handle */ )
  *	Atom: Success
  *	0: Failure
  */
-ATOM WINAPI AddAtomEx(ATOMTABLE far * atomtable, LPCSTR str )
+ATOM WINAPI AddAtomEx(LPATOMTABLE atomtable, LPCSTR str )
 {
     char buffer[MAX_ATOM_LEN+1];
     WORD hash;
     HANDLE entry;
     ATOMENTRY far * entryPtr;
-    ATOMTABLE far * table;
+    LPATOMTABLE table;
     int len, ae_len;
     WORD iatom;
 
@@ -183,10 +183,10 @@ ATOM WINAPI AddAtomEx(ATOMTABLE far * atomtable, LPCSTR str )
 /***********************************************************************
  *           DeleteAtomEx
  */
-ATOM WINAPI DeleteAtomEx(ATOMTABLE far * atomtable, ATOM atom )
+ATOM WINAPI DeleteAtomEx(LPATOMTABLE atomtable, ATOM atom )
 {
     ATOMENTRY far * entryPtr;
-    ATOMTABLE far * table;
+    LPATOMTABLE table;
     HANDLE entry, *prevEntry;
     WORD hash;
 
@@ -221,9 +221,9 @@ ATOM WINAPI DeleteAtomEx(ATOMTABLE far * atomtable, ATOM atom )
 /***********************************************************************
  *           FindAtomEx
  */
-ATOM WINAPI FindAtomEx(ATOMTABLE far * atomtable, LPCSTR str )
+ATOM WINAPI FindAtomEx(LPATOMTABLE atomtable, LPCSTR str )
 {
-    ATOMTABLE far * table;
+    LPATOMTABLE table;
     WORD hash,iatom;
     HANDLE entry;
     int len;
@@ -254,11 +254,11 @@ ATOM WINAPI FindAtomEx(ATOMTABLE far * atomtable, LPCSTR str )
 /***********************************************************************
  *           GetAtomNameEx
  */
-UINT WINAPI GetAtomNameEx(ATOMTABLE far * atomtable, ATOM atom, LPSTR buffer, int count )
+UINT WINAPI GetAtomNameEx(LPATOMTABLE atomtable, ATOM atom, LPSTR buffer, int count )
 {
     ATOMENTRY far * entryPtr;
     HANDLE entry;
-    char far * strPtr;
+    LPSTR strPtr;
     int len;
     char text[8];
 
@@ -268,7 +268,7 @@ UINT WINAPI GetAtomNameEx(ATOMTABLE far * atomtable, ATOM atom, LPSTR buffer, in
     if (atom < MAXINTATOM)
     {
         lstrcpy(text, "#");
-        lstrcat(text, (char far *)atom);
+        lstrcat(text, (LPSTR)atom);
         len = lstrlen(text);
         strPtr = text;
     }
