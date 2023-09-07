@@ -25,14 +25,15 @@ static HGLOBAL ClipboardReadMemoryBlock(HANDLE hFile, DWORD dwOffset, DWORD dwLe
         return (HGLOBAL)NULL;
     }
 
-    if (SetFilePointer(hFile, dwOffset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+    //if (SetFilePointer(hFile, dwOffset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+	if (_llseek(hFile, dwOffset, SEEK_SET) == HFILE_ERROR)
     {
         GlobalUnlock(hData);
         GlobalFree(hData);
         return (HGLOBAL)NULL;
     }
 
-    if (!ReadFile(hFile, lpData, dwLength, &dwBytesRead, NULL))
+    if (_lread(hFile, lpData, dwLength)!=dwLength)
     {
         GlobalUnlock(hData);
         GlobalFree(hData);
@@ -80,7 +81,7 @@ static BOOL ClipboardReadMemory(HANDLE hFile, DWORD dwFormat, DWORD dwOffset, DW
     return TRUE;
 }
 
-static BOOL ClipboardWriteMemory(HANDLE hFile, DWORD dwFormat, DWORD dwOffset, PDWORD pdwLength)
+static BOOL ClipboardWriteMemory(HANDLE hFile, DWORD dwFormat, DWORD dwOffset, LPDWORD lpdwLength)
 {
     HGLOBAL hData;
     LPSTR lpData;
@@ -94,15 +95,15 @@ static BOOL ClipboardWriteMemory(HANDLE hFile, DWORD dwFormat, DWORD dwOffset, P
     if (!lpData)
         return FALSE;
 
-    *pdwLength = GlobalSize(hData);
+    *lpdwLength = GlobalSize(hData);
 
-    if (SetFilePointer(hFile, dwOffset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+    if (_llseek(hFile, dwOffset, SEEK_SET) == HFILE_ERROR)
     {
         GlobalUnlock(hData);
         return FALSE;
     }
 
-    if (!WriteFile(hFile, lpData, *pdwLength, &dwBytesWritten, NULL))
+    if (_lwrite(hFile, lpData, *lpdwLength)!=*lpdwLength)
     {
         GlobalUnlock(hData);
         return FALSE;
@@ -137,7 +138,7 @@ static BOOL ClipboardReadPalette(HANDLE hFile, DWORD dwOffset, DWORD dwLength)
     {
         GlobalUnlock(hData);
         GlobalFree(hData);
-        SetLastError(ERROR_OUTOFMEMORY);
+        //SetLastError(ERROR_OUTOFMEMORY);
         return FALSE;
     }
 
@@ -179,7 +180,7 @@ static BOOL ClipboardReadMetafile(HANDLE hFile, DWORD dwOffset, DWORD dwLength)
 
     if (!hMf)
     {
-        SetLastError(ERROR_OUTOFMEMORY);
+        //SetLastError(ERROR_OUTOFMEMORY);
         return FALSE;
     }
 
@@ -260,7 +261,7 @@ static BOOL ClipboardReadBitmap(HANDLE hFile, DWORD dwOffset, DWORD dwLength)
 
     if (!hBitmap)
     {
-        SetLastError(ERROR_OUTOFMEMORY);
+        //SetLastError(ERROR_OUTOFMEMORY);
         return FALSE;
     }
 
@@ -296,18 +297,17 @@ void ReadClipboardFile(LPCSTR lpFileName)
     int i;
 
     /* Open the file for read access */
-    hFile = CreateFileW(lpFileName, GENERIC_READ, FILE_SHARE_READ, NULL,
-                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (hFile == INVALID_HANDLE_VALUE)
+    hFile = _lcreat(lpFileName, 0);
+    if (hFile == HFILE_ERROR)
     {
-        ShowLastWin32Error(Globals.hMainWnd);
+        //ShowLastWin32Error(Globals.hMainWnd);
         goto done;
     }
 
     /* Just read enough bytes to get the clipboard file format ID */
-    if (!ReadFile(hFile, &wFileIdentifier, sizeof(wFileIdentifier), &dwBytesRead, NULL))
+    if (_lread(hFile, &wFileIdentifier, sizeof(wFileIdentifier))!=sizeof(wFileIdentifier))
     {
-        ShowLastWin32Error(Globals.hMainWnd);
+        //ShowLastWin32Error(Globals.hMainWnd);
         goto done;
     }
 
@@ -335,9 +335,9 @@ void ReadClipboardFile(LPCSTR lpFileName)
     }
 
     /* Completely read the header */
-    SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
-    if (!ReadFile(hFile, pClipFileHeader, SizeOfFileHeader, &dwBytesRead, NULL) ||
-        dwBytesRead != SizeOfFileHeader)
+    //SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
+	_llseek(hFile, 0, SEEK_SET);
+    if (!_lread(hFile, pClipFileHeader, SizeOfFileHeader)!=SizeOfFileHeader)
     {
         ShowLastWin32Error(Globals.hMainWnd);
         goto done;
@@ -361,15 +361,15 @@ void ReadClipboardFile(LPCSTR lpFileName)
     /* Loop through the format data array */
     for (i = 0; i < wFormatCount; i++)
     {
-        if (SetFilePointer(hFile, SizeOfFileHeader + i * SizeOfFormatHeader, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+        if (_llseek(hFile, SizeOfFileHeader + i * SizeOfFormatHeader, SEEK_SET) == HFILE_ERROR)
         {
-            ShowLastWin32Error(Globals.hMainWnd);
+            //ShowLastWin32Error(Globals.hMainWnd);
             goto done;
         }
 
-        if (!ReadFile(hFile, pClipFormatArray, SizeOfFormatHeader, &dwBytesRead, NULL))
+        if (_lread(hFile, pClipFormatArray, SizeOfFormatHeader)!=SizeOfFormatHeader)
         {
-            ShowLastWin32Error(Globals.hMainWnd);
+            //ShowLastWin32Error(Globals.hMainWnd);
             goto done;
         }
 
@@ -441,8 +441,8 @@ void ReadClipboardFile(LPCSTR lpFileName)
     }
 
 done:
-    if (hFile != INVALID_HANDLE_VALUE)
-        CloseHandle(hFile);
+    if (hFile != HFILE_ERROR)
+        _lclose(hFile);
 
     return;
 }
@@ -468,9 +468,8 @@ void WriteClipboardFile(LPCSTR lpFileName, WORD wFileIdentifier)
     int i;
 
     /* Create the file for write access */
-    hFile = CreateFileW(lpFileName, GENERIC_WRITE, 0, NULL,
-                        CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (hFile == INVALID_HANDLE_VALUE)
+    hFile = _lcreat(lpFileName, 0);
+    if (hFile == HFILE_ERROR)
     {
         //ShowLastWin32Error(Globals.hMainWnd);
         goto done;
@@ -508,9 +507,8 @@ void WriteClipboardFile(LPCSTR lpFileName, WORD wFileIdentifier)
     }
 
     /* Write the header */
-    SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
-    if (!WriteFile(hFile, pClipFileHeader, SizeOfFileHeader, &dwBytesWritten, NULL) ||
-        dwBytesWritten != SizeOfFileHeader)
+    _llseek(hFile, 0, SEEK_SET);
+    if (_lwrite(hFile, pClipFileHeader, SizeOfFileHeader)!=SizeOfFileHeader)
     {
         //ShowLastWin32Error(Globals.hMainWnd);
         goto done;
@@ -564,13 +562,13 @@ void WriteClipboardFile(LPCSTR lpFileName, WORD wFileIdentifier)
                 break;*/
         }
 
-        if (SetFilePointer(hFile, SizeOfFileHeader + i * SizeOfFormatHeader, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+        if (_llseek(hFile, SizeOfFileHeader + i * SizeOfFormatHeader, SEEK_SET) == HFILE_ERROR)
         {
             //ShowLastWin32Error(Globals.hMainWnd);
             goto done;
         }
 
-        if (!WriteFile(hFile, pClipFormatArray, SizeOfFormatHeader, &dwBytesWritten, NULL))
+        if (_lwrite(hFile, pClipFormatArray, SizeOfFormatHeader)!=SizeOfFormatHeader)
         {
             //ShowLastWin32Error(Globals.hMainWnd);
             goto done;
@@ -585,8 +583,8 @@ Cont:
     }
 
 done:
-    if (hFile != INVALID_HANDLE_VALUE)
-        CloseHandle(hFile);
+    if (hFile != HFILE_ERROR)
+        _lclose(hFile);
 
     return;
 }
