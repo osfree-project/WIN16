@@ -10,30 +10,30 @@
 
 LRESULT
 SendClipboardOwnerMessage(
-    IN BOOL bUnicode,
-    IN UINT uMsg,
-    IN WPARAM wParam,
-    IN LPARAM lParam);
+    BOOL bUnicode,
+    UINT uMsg,
+    WPARAM wParam,
+    LPARAM lParam);
 
 void
 RetrieveClipboardFormatName(HINSTANCE hInstance,
                             UINT uFormat,
                             BOOL Unicode,
-                            PVOID lpszFormat,
+                            LPSTR lpszFormat,
                             UINT cch);
 
 void DeleteClipboardContent(void);
 UINT GetAutomaticClipboardFormat(void);
 BOOL IsClipboardFormatSupported(UINT uFormat);
 
-SIZE_T
+size_t
 GetLineExtentW(
-    IN LPCWSTR lpText,
-    OUT LPCWSTR* lpNextLine);
+    LPCSTR lpText,
+    LPCSTR* lpNextLine);
 
-SIZE_T
+size_t
 GetLineExtentA(
-    IN LPCSTR lpText,
-    OUT LPCSTR* lpNextLine);
+    LPCSTR lpText,
+    LPCSTR* lpNextLine);
 
 BOOL GetClipboardDataDimensions(UINT uFormat, PRECT pRc);

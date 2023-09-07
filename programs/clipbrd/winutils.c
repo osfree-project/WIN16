@@ -8,6 +8,7 @@
 
 #include "precomp.h"
 
+/*
 void ShowLastWin32Error(HWND hwndParent)
 {
     DWORD dwError;
@@ -32,7 +33,7 @@ void ShowLastWin32Error(HWND hwndParent)
     MessageBoxW(hwndParent, lpMsgBuf, NULL, MB_OK | MB_ICONERROR);
     LocalFree(lpMsgBuf);
 }
-
+*/
 void BringWindowToFront(HWND hWnd)
 {
     if (IsIconic(hWnd))
@@ -48,37 +49,32 @@ void BringWindowToFront(HWND hWnd)
 
 int MessageBoxRes(HWND hWnd, HINSTANCE hInstance, UINT uText, UINT uCaption, UINT uType)
 {
-    MSGBOXPARAMSW mb;
+   char szMessage[MAX_STRING_LEN];
+   char szResource[MAX_STRING_LEN];
 
-    ZeroMemory(&mb, sizeof(mb));
-    mb.cbSize = sizeof(mb);
-    mb.hwndOwner = hWnd;
-    mb.hInstance = hInstance;
-    mb.lpszText = MAKEINTRESOURCEW(uText);
-    mb.lpszCaption = MAKEINTRESOURCEW(uCaption);
-    mb.dwStyle = uType;
-    mb.dwLanguageId = MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT);
+   LoadString(hInstance, uText, szMessage, sizeof(szMessage));
+   LoadString(hInstance, uCaption, szResource, sizeof(szResource));
 
-    return MessageBoxIndirectW(&mb);
+   return MessageBox(hWnd, szMessage, szResource, uType);
 }
 
 void DrawTextFromResource(HINSTANCE hInstance, UINT uID, HDC hDC, LPRECT lpRect, UINT uFormat)
 {
-    LPWSTR lpBuffer;
+    LPSTR lpBuffer;
     int nCount;
 
-    nCount = LoadStringW(hInstance, uID, (LPWSTR)&lpBuffer, 0);
+    nCount = LoadString(hInstance, uID, (LPSTR)&lpBuffer, 0);
     if (nCount)
-        DrawTextW(hDC, lpBuffer, nCount, lpRect, uFormat);
+        DrawText(hDC, lpBuffer, nCount, lpRect, uFormat);
 }
 
 void DrawTextFromClipboard(UINT uFormat, PAINTSTRUCT ps, SCROLLSTATE state)
 {
     POINT ptOrg;
     HGLOBAL hGlobal;
-    PVOID lpText, ptr;
-    SIZE_T lineSize;
-    INT FirstLine, LastLine;
+    LPSTR lpText, ptr;
+    size_t lineSize;
+    int FirstLine, LastLine;
 
     hGlobal = GetClipboardData(uFormat);
     if (!hGlobal)
@@ -97,18 +93,18 @@ void DrawTextFromClipboard(UINT uFormat, PAINTSTRUCT ps, SCROLLSTATE state)
     /* Find the first text line to display */
     while (FirstLine > 0)
     {
-        if (uFormat == CF_UNICODETEXT)
+        /*if (uFormat == CF_UNICODETEXT)
         {
             if (*(LPCWSTR)lpText == UNICODE_NULL)
                 break;
-            GetLineExtentW(lpText, (LPCWSTR*)&ptr);
+            GetLineExtent(lpText, (LPCWSTR*)&ptr);
         }
         else
-        {
-            if (*(LPCSTR)lpText == ANSI_NULL)
+        {*/
+            if (*(LPCSTR)lpText == (char)0)
                 break;
             GetLineExtentA(lpText, (LPCSTR*)&ptr);
-        }
+        //}
 
         --FirstLine;
         --LastLine;
@@ -124,7 +120,8 @@ void DrawTextFromClipboard(UINT uFormat, PAINTSTRUCT ps, SCROLLSTATE state)
     ++LastLine;
     while (LastLine >= 0)
     {
-        if (uFormat == CF_UNICODETEXT)
+        #if 0
+		if (uFormat == CF_UNICODETEXT)
         {
             if (*(LPCWSTR)lpText == UNICODE_NULL)
                 break;
@@ -135,13 +132,14 @@ void DrawTextFromClipboard(UINT uFormat, PAINTSTRUCT ps, SCROLLSTATE state)
         }
         else
         {
-            if (*(LPCSTR)lpText == ANSI_NULL)
+			#endif
+            if (*(LPCSTR)lpText == (char)0)
                 break;
-            lineSize = GetLineExtentA(lpText, (LPCSTR*)&ptr);
-            TabbedTextOutA(ps.hdc, /*ptOrg.x*/0 - state.CurrentX, ptOrg.y,
+            lineSize = GetLineExtent(lpText, (LPCSTR FAR *)&ptr);
+            TabbedTextOut(ps.hdc, /*ptOrg.x*/0 - state.CurrentX, ptOrg.y,
                            lpText, lineSize, 0, NULL,
                            /*ptOrg.x*/0 - state.CurrentX);
-        }
+        //}
 
         --LastLine;
 
@@ -164,7 +162,7 @@ void BitBltFromClipboard(PAINTSTRUCT ps, SCROLLSTATE state, DWORD dwRop)
         return;
 
     hBitmap = (HBITMAP)GetClipboardData(CF_BITMAP);
-    GetObjectW(hBitmap, sizeof(bmp), &bmp);
+    GetObject(hBitmap, sizeof(bmp), &bmp);
 
     SelectObject(hdcMem, hBitmap);
 
@@ -196,7 +194,7 @@ void SetDIBitsToDeviceFromClipboard(UINT uFormat, PAINTSTRUCT ps, SCROLLSTATE st
     if (!hGlobal)
         return;
 
-    lpInfoHeader = GlobalLock(hGlobal);
+    lpInfoHeader = (LPBITMAPINFOHEADER)GlobalLock(hGlobal);
     if (!lpInfoHeader)
         return;
 
@@ -219,9 +217,9 @@ void SetDIBitsToDeviceFromClipboard(UINT uFormat, PAINTSTRUCT ps, SCROLLSTATE st
         bmWidth  = lpCoreHeader->bcWidth;
         bmHeight = lpCoreHeader->bcHeight;
     }
-    else if ((lpInfoHeader->biSize == sizeof(BITMAPINFOHEADER)) ||
+    else if ((lpInfoHeader->biSize == sizeof(BITMAPINFOHEADER)) /*||
              (lpInfoHeader->biSize == sizeof(BITMAPV4HEADER))   ||
-             (lpInfoHeader->biSize == sizeof(BITMAPV5HEADER)))
+             (lpInfoHeader->biSize == sizeof(BITMAPV5HEADER))*/)
     {
         dwPalSize = lpInfoHeader->biClrUsed;
 
@@ -233,11 +231,11 @@ void SetDIBitsToDeviceFromClipboard(UINT uFormat, PAINTSTRUCT ps, SCROLLSTATE st
         else
             dwPalSize *= sizeof(WORD);
 
-        if (/*(lpInfoHeader->biSize == sizeof(BITMAPINFOHEADER)) &&*/
-            (lpInfoHeader->biCompression == BI_BITFIELDS))
-        {
-            dwPalSize += 3 * sizeof(DWORD);
-        }
+        //if (/*(lpInfoHeader->biSize == sizeof(BITMAPINFOHEADER)) &&*/
+//            (lpInfoHeader->biCompression == BI_BITFIELDS))
+        //{
+            //dwPalSize += 3 * sizeof(DWORD);
+        //}
 
         /*
          * This is a (disabled) hack for Windows, when uFormat == CF_DIB
@@ -323,6 +321,7 @@ void PlayMetaFileFromClipboard(HDC hdc, const RECT *lpRect)
     GlobalUnlock(hGlobal);
 }
 
+#if 0
 void PlayEnhMetaFileFromClipboard(HDC hdc, const RECT *lpRect)
 {
     HENHMETAFILE hEmf;
@@ -330,6 +329,7 @@ void PlayEnhMetaFileFromClipboard(HDC hdc, const RECT *lpRect)
     hEmf = GetClipboardData(CF_ENHMETAFILE);
     PlayEnhMetaFile(hdc, hEmf, lpRect);
 }
+#endif
 
 BOOL RealizeClipboardPalette(HDC hdc)
 {
@@ -347,7 +347,7 @@ BOOL RealizeClipboardPalette(HDC hdc)
     if (!hOldPalette)
         return FALSE;
 
-    Success = (RealizePalette(hdc) != GDI_ERROR);
+    Success = (RealizePalette(hdc) != -1/*GDI_ERROR*/);
 
     SelectPalette(hdc, hOldPalette, FALSE);
 

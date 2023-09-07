@@ -30,7 +30,7 @@ typedef struct _CLIPFORMATHEADER
     WORD  dwFormatID;
     DWORD dwLenData;
     DWORD dwOffData;
-    CHAR  szName[MAX_FMT_NAME_LEN];
+    char  szName[MAX_FMT_NAME_LEN];
 } CLIPFORMATHEADER;
 #pragma pack(pop)
 
@@ -48,8 +48,8 @@ typedef struct _NTCLIPFORMATHEADER
     DWORD dwFormatID;
     DWORD dwLenData;
     DWORD dwOffData;
-    WCHAR szName[MAX_FMT_NAME_LEN];
+    char szName[MAX_FMT_NAME_LEN];
 } NTCLIPFORMATHEADER;
 
-void ReadClipboardFile(LPCWSTR lpFileName);
-void WriteClipboardFile(LPCWSTR lpFileName, WORD wFileIdentifier);
+void ReadClipboardFile(LPCSTR lpFileName);
+void WriteClipboardFile(LPCSTR lpFileName, WORD wFileIdentifier);

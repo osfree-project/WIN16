@@ -58,16 +58,17 @@ void OnKeyScroll(HWND hWnd, WPARAM wParam, LPARAM lParam, LPSCROLLSTATE state)
     }
 }
 
+#if 0
 void OnMouseScroll(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LPSCROLLSTATE state)
 {
-    INT nBar;
-    INT nPage;
-    INT iDelta;
+    int nBar;
+    int nPage;
+    int iDelta;
     UINT uLinesToScroll = state->uLinesToScroll;
-    INT zDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+    //int zDelta = GET_WHEEL_DELTA_WPARAM(wParam);
     WORD sbCode;
 
-    assert(uMsg == WM_MOUSEWHEEL || uMsg == WM_MOUSEHWHEEL);
+    //assert(uMsg == WM_MOUSEWHEEL || uMsg == WM_MOUSEHWHEEL);
 
     if (uMsg == WM_MOUSEWHEEL)
     {
@@ -120,6 +121,7 @@ void OnMouseScroll(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LPSCROLLS
 
     OnScroll(hWnd, nBar, MAKELONG(sbCode, 0), iDelta, state);
 }
+#endif
 
 void OnScroll(HWND hWnd, INT nBar, WPARAM wParam, INT iDelta, LPSCROLLSTATE state)
 {

@@ -8,24 +8,24 @@
 
 #include "precomp.h"
 
-static const WCHAR szClassName[] = L"ClipBookWClass";
+static const char szClassName[] = "ClipBookClass";
 
 CLIPBOARD_GLOBALS Globals;
 SCROLLSTATE Scrollstate;
 
 static void SaveClipboardToFile(void)
 {
-    OPENFILENAMEW sfn;
-    LPWSTR c;
-    WCHAR szFileName[MAX_PATH];
-    WCHAR szFilterMask[MAX_STRING_LEN + 10];
+    OPENFILENAME sfn;
+    LPSTR c;
+    char szFileName[MAX_PATH];
+    char szFilterMask[MAX_STRING_LEN + 10];
 
-    ZeroMemory(&szFilterMask, sizeof(szFilterMask));
-    c = szFilterMask + LoadStringW(Globals.hInstance, STRING_FORMAT_NT, szFilterMask, MAX_STRING_LEN) + 1;
-    wcscpy(c, L"*.clp");
+    memset(&szFilterMask, 0, sizeof(szFilterMask));
+    c = szFilterMask + LoadString(Globals.hInstance, STRING_FORMAT_NT, szFilterMask, MAX_STRING_LEN) + 1;
+    lstrcpy(c, "*.clp");
 
-    ZeroMemory(&szFileName, sizeof(szFileName));
-    ZeroMemory(&sfn, sizeof(sfn));
+    memset(&szFileName, 0, sizeof(szFileName));
+    memset(&sfn, 0, sizeof(sfn));
     sfn.lStructSize = sizeof(sfn);
     sfn.hwndOwner = Globals.hMainWnd;
     sfn.hInstance = Globals.hInstance;
@@ -33,14 +33,14 @@ static void SaveClipboardToFile(void)
     sfn.lpstrFile = szFileName;
     sfn.nMaxFile = ARRAYSIZE(szFileName);
     sfn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
-    sfn.lpstrDefExt = L"clp";
+    sfn.lpstrDefExt = "clp";
 
-    if (!GetSaveFileNameW(&sfn))
+    if (!GetSaveFileName(&sfn))
         return;
 
     if (!OpenClipboard(Globals.hMainWnd))
     {
-        ShowLastWin32Error(Globals.hMainWnd);
+        //ShowLastWin32Error(Globals.hMainWnd);
         return;
     }
 
@@ -49,11 +49,11 @@ static void SaveClipboardToFile(void)
     CloseClipboard();
 }
 
-static void LoadClipboardDataFromFile(LPWSTR lpszFileName)
+static void LoadClipboardDataFromFile(LPSTR lpszFileName)
 {
     if (MessageBoxRes(Globals.hMainWnd, Globals.hInstance,
                       STRING_DELETE_MSG, STRING_DELETE_TITLE,
-                      MB_ICONWARNING | MB_YESNO) != IDYES)
+                      MB_ICONEXCLAMATION | MB_YESNO) != IDYES)
     {
         return;
     }
@@ -72,17 +72,17 @@ static void LoadClipboardDataFromFile(LPWSTR lpszFileName)
 
 static void LoadClipboardFromFile(void)
 {
-    OPENFILENAMEW ofn;
-    LPWSTR c;
-    WCHAR szFileName[MAX_PATH];
-    WCHAR szFilterMask[MAX_STRING_LEN + 10];
+    OPENFILENAME ofn;
+    LPSTR c;
+    char szFileName[MAX_PATH];
+    char szFilterMask[MAX_STRING_LEN + 10];
 
-    ZeroMemory(&szFilterMask, sizeof(szFilterMask));
-    c = szFilterMask + LoadStringW(Globals.hInstance, STRING_FORMAT_GEN, szFilterMask, MAX_STRING_LEN) + 1;
-    wcscpy(c, L"*.clp");
+    memset(&szFilterMask, 0, sizeof(szFilterMask));
+    c = szFilterMask + LoadString(Globals.hInstance, STRING_FORMAT_GEN, szFilterMask, MAX_STRING_LEN) + 1;
+    lstrcpy(c, "*.clp");
 
-    ZeroMemory(&szFileName, sizeof(szFileName));
-    ZeroMemory(&ofn, sizeof(ofn));
+    memset(&szFileName, 0, sizeof(szFileName));
+    memset(&ofn, 0, sizeof(ofn));
     ofn.lStructSize = sizeof(ofn);
     ofn.hwndOwner = Globals.hMainWnd;
     ofn.hInstance = Globals.hInstance;
@@ -91,7 +91,7 @@ static void LoadClipboardFromFile(void)
     ofn.nMaxFile = ARRAYSIZE(szFileName);
     ofn.Flags = OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_FILEMUSTEXIST;
 
-    if (!GetOpenFileNameW(&ofn))
+    if (!GetOpenFileName(&ofn))
         return;
 
     LoadClipboardDataFromFile(szFileName);
@@ -99,9 +99,9 @@ static void LoadClipboardFromFile(void)
 
 static void LoadClipboardFromDrop(HDROP hDrop)
 {
-    WCHAR szFileName[MAX_PATH];
+    char szFileName[MAX_PATH];
 
-    DragQueryFileW(hDrop, 0, szFileName, ARRAYSIZE(szFileName));
+    DragQueryFile(hDrop, 0, szFileName, ARRAYSIZE(szFileName));
     DragFinish(hDrop);
 
     LoadClipboardDataFromFile(szFileName);
@@ -155,7 +155,7 @@ static void UpdateDisplayMenu(void)
 {
     UINT uFormat;
     HMENU hMenu;
-    WCHAR szFormatName[MAX_FMT_NAME_LEN + 1];
+    char szFormatName[MAX_FMT_NAME_LEN + 1];
 
     hMenu = GetSubMenu(Globals.hMenu, DISPLAY_MENU_POS);
 
@@ -170,7 +170,7 @@ static void UpdateDisplayMenu(void)
     if (!OpenClipboard(Globals.hMainWnd))
         return;
 
-    AppendMenuW(hMenu, MF_SEPARATOR, 0, NULL);
+    AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
 
     /* Display the supported clipboard formats first */
     for (uFormat = EnumClipboardFormats(0); uFormat;
@@ -180,7 +180,7 @@ static void UpdateDisplayMenu(void)
         {
             RetrieveClipboardFormatName(Globals.hInstance, uFormat, TRUE,
                                         szFormatName, ARRAYSIZE(szFormatName));
-            AppendMenuW(hMenu, MF_STRING, CMD_AUTOMATIC + uFormat, szFormatName);
+            AppendMenu(hMenu, MF_STRING, CMD_AUTOMATIC + uFormat, szFormatName);
         }
     }
 
@@ -192,7 +192,7 @@ static void UpdateDisplayMenu(void)
         {
             RetrieveClipboardFormatName(Globals.hInstance, uFormat, TRUE,
                                         szFormatName, ARRAYSIZE(szFormatName));
-            AppendMenuW(hMenu, MF_STRING | MF_GRAYED, 0, szFormatName);
+            AppendMenu(hMenu, MF_STRING | MF_GRAYED, 0, szFormatName);
         }
     }
 
@@ -217,7 +217,7 @@ static int OnCommand(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case CMD_EXIT:
         {
-            PostMessageW(Globals.hMainWnd, WM_CLOSE, 0, 0);
+            PostMessage(Globals.hMainWnd, WM_CLOSE, 0, 0);
             break;
         }
 
@@ -225,7 +225,7 @@ static int OnCommand(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         {
             if (MessageBoxRes(Globals.hMainWnd, Globals.hInstance,
                               STRING_DELETE_MSG, STRING_DELETE_TITLE,
-                              MB_ICONWARNING | MB_YESNO) != IDYES)
+                              MB_ICONEXCLAMATION | MB_YESNO) != IDYES)
             {
                 break;
             }
@@ -249,11 +249,11 @@ static int OnCommand(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         case CMD_ABOUT:
         {
             HICON hIcon;
-            WCHAR szTitle[MAX_STRING_LEN];
+            char szTitle[MAX_STRING_LEN];
 
-            hIcon = LoadIconW(Globals.hInstance, MAKEINTRESOURCE(CLIPBRD_ICON));
-            LoadStringW(Globals.hInstance, STRING_CLIPBOARD, szTitle, ARRAYSIZE(szTitle));
-            ShellAboutW(Globals.hMainWnd, szTitle, NULL, hIcon);
+            hIcon = LoadIcon(Globals.hInstance, MAKEINTRESOURCE(CLIPBRD_ICON));
+            LoadString(Globals.hInstance, STRING_CLIPBOARD, szTitle, ARRAYSIZE(szTitle));
+            ShellAbout(Globals.hMainWnd, szTitle, NULL, hIcon);
             DeleteObject(hIcon);
             break;
         }
@@ -300,7 +300,7 @@ static void OnPaint(HWND hWnd, WPARAM wParam, LPARAM lParam)
         case CF_DSPTEXT:
         case CF_TEXT:
         case CF_OEMTEXT:
-        case CF_UNICODETEXT:
+        //case CF_UNICODETEXT:
         {
             DrawTextFromClipboard(Globals.uDisplayFormat, ps, Scrollstate);
             break;
@@ -314,7 +314,7 @@ static void OnPaint(HWND hWnd, WPARAM wParam, LPARAM lParam)
         }
 
         case CF_DIB:
-        case CF_DIBV5:
+        //case CF_DIBV5:
         {
             SetDIBitsToDeviceFromClipboard(Globals.uDisplayFormat, ps, Scrollstate, DIB_RGB_COLORS);
             break;
@@ -328,13 +328,13 @@ static void OnPaint(HWND hWnd, WPARAM wParam, LPARAM lParam)
             break;
         }
 
-        case CF_DSPENHMETAFILE:
-        case CF_ENHMETAFILE:
-        {
-            GetClientRect(hWnd, &rc);
-            PlayEnhMetaFileFromClipboard(hdc, &rc);
-            break;
-        }
+        //case CF_DSPENHMETAFILE:
+        //case CF_ENHMETAFILE:
+        //{
+            //GetClientRect(hWnd, &rc);
+            //PlayEnhMetaFileFromClipboard(hdc, &rc);
+            //break;
+        //}
 
         // case CF_PALETTE:
             // TODO: Draw a palette with squares filled with colors.
@@ -343,13 +343,13 @@ static void OnPaint(HWND hWnd, WPARAM wParam, LPARAM lParam)
         case CF_OWNERDISPLAY:
         {
             HGLOBAL hglb;
-            PPAINTSTRUCT pps;
+            LPPAINTSTRUCT pps;
 
             hglb = GlobalAlloc(GMEM_MOVEABLE, sizeof(ps));
             if (hglb)
             {
-                pps = GlobalLock(hglb);
-                CopyMemory(pps, &ps, sizeof(ps));
+                pps = (LPPAINTSTRUCT)GlobalLock(hglb);
+                _fmemcpy(pps, &ps, sizeof(ps));
                 GlobalUnlock(hglb);
 
                 SendClipboardOwnerMessage(TRUE, WM_PAINTCLIPBOARD,
@@ -384,14 +384,14 @@ static LRESULT WINAPI MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
     {
         case WM_CREATE:
         {
-            TEXTMETRICW tm;
+            TEXTMETRIC tm;
             HDC hDC = GetDC(hWnd);
 
             /*
              * Note that the method with GetObjectW just returns
              * the original parameters with which the font was created.
              */
-            if (GetTextMetricsW(hDC, &tm))
+            if (GetTextMetrics(hDC, &tm))
             {
                 Globals.CharWidth  = tm.tmMaxCharWidth; // tm.tmAveCharWidth;
                 Globals.CharHeight = tm.tmHeight + tm.tmExternalLeading;
@@ -427,12 +427,12 @@ static LRESULT WINAPI MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
             if (Globals.uDisplayFormat == CF_OWNERDISPLAY)
             {
                 HGLOBAL hglb;
-                PRECT prc;
+                LPRECT prc;
 
                 hglb = GlobalAlloc(GMEM_MOVEABLE, sizeof(*prc));
                 if (hglb)
                 {
-                    prc = GlobalLock(hglb);
+                    prc = (LPRECT)GlobalLock(hglb);
                     SetRectEmpty(prc);
                     GlobalUnlock(hglb);
 
@@ -459,12 +459,12 @@ static LRESULT WINAPI MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
             break;
         }
 
-        case WM_MOUSEWHEEL:
-        case WM_MOUSEHWHEEL:
-        {
-            OnMouseScroll(hWnd, uMsg, wParam, lParam, &Scrollstate);
-            break;
-        }
+        //case WM_MOUSEWHEEL:
+        //case WM_MOUSEHWHEEL:
+        //{
+            //OnMouseScroll(hWnd, uMsg, wParam, lParam, &Scrollstate);
+            //break;
+        //}
 
         case WM_HSCROLL:
         {
@@ -487,12 +487,12 @@ static LRESULT WINAPI MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
             if (Globals.uDisplayFormat == CF_OWNERDISPLAY)
             {
                 HGLOBAL hglb;
-                PRECT prc;
+                LPRECT prc;
 
                 hglb = GlobalAlloc(GMEM_MOVEABLE, sizeof(*prc));
                 if (hglb)
                 {
-                    prc = GlobalLock(hglb);
+                    prc = (LPRECT)GlobalLock(hglb);
                     if (wParam == SIZE_MINIMIZED)
                         SetRectEmpty(prc);
                     else
@@ -515,8 +515,8 @@ static LRESULT WINAPI MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
             if (!IsClipboardFormatSupported(Globals.uDisplayFormat) ||
                 Globals.uDisplayFormat == CF_DSPTEXT ||
                 Globals.uDisplayFormat == CF_TEXT    ||
-                Globals.uDisplayFormat == CF_OEMTEXT ||
-                Globals.uDisplayFormat == CF_UNICODETEXT)
+                Globals.uDisplayFormat == CF_OEMTEXT /*||
+                Globals.uDisplayFormat == CF_UNICODETEXT*/)
             {
                 InvalidateRect(Globals.hMainWnd, NULL, TRUE);
             }
@@ -535,9 +535,9 @@ static LRESULT WINAPI MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
             {
                 Globals.hWndNext = (HWND)lParam;
             }
-            else if (Globals.hWndNext != NULL)
+            else if (Globals.hWndNext != (HANDLE)NULL)
             {
-                SendMessageW(Globals.hWndNext, uMsg, wParam, lParam);
+                SendMessage(Globals.hWndNext, uMsg, wParam, lParam);
             }
 
             break;
@@ -569,7 +569,7 @@ static LRESULT WINAPI MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
             SetDisplayFormat(0);
 
             /* Pass the message to the next window in clipboard viewer chain */
-            SendMessageW(Globals.hWndNext, uMsg, wParam, lParam);
+            SendMessage(Globals.hWndNext, uMsg, wParam, lParam);
             break;
         }
 
@@ -642,14 +642,14 @@ static LRESULT WINAPI MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
             break;
         }
 
-        case WM_SETTINGCHANGE:
-        {
-            if (wParam == SPI_SETWHEELSCROLLLINES)
-            {
-                UpdateLinesToScroll(&Scrollstate);
-            }
-            break;
-        }
+        //case WM_SETTINGCHANGE:
+        //{
+            //if (wParam == SPI_SETWHEELSCROLLLINES)
+            //{
+                //UpdateLinesToScroll(&Scrollstate);
+            //}
+            //break;
+        //}
 
         default:
         {
@@ -660,54 +660,54 @@ static LRESULT WINAPI MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
     return 0;
 }
 
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
     MSG msg;
     HACCEL hAccel;
     HWND hPrevWindow;
-    WNDCLASSEXW wndclass;
-    WCHAR szBuffer[MAX_STRING_LEN];
+    WNDCLASS wndclass;
+    char szBuffer[MAX_STRING_LEN];
 
-    hPrevWindow = FindWindowW(szClassName, NULL);
+    hPrevWindow = FindWindow(szClassName, NULL);
     if (hPrevWindow)
     {
         BringWindowToFront(hPrevWindow);
         return 0;
     }
 
-    switch (GetUserDefaultUILanguage())
-    {
-        case MAKELANGID(LANG_HEBREW, SUBLANG_DEFAULT):
-            SetProcessDefaultLayout(LAYOUT_RTL);
-            break;
+    //switch (GetUserDefaultUILanguage())
+    //{
+        //case MAKELANGID(LANG_HEBREW, SUBLANG_DEFAULT):
+            //SetProcessDefaultLayout(LAYOUT_RTL);
+            //break;
 
-        default:
-            break;
-    }
+//        default:
+            //break;
+    //}
 
-    ZeroMemory(&Globals, sizeof(Globals));
+    memset(&Globals, 0, sizeof(Globals));
     Globals.hInstance = hInstance;
 
-    ZeroMemory(&wndclass, sizeof(wndclass));
-    wndclass.cbSize = sizeof(wndclass);
+    memset(&wndclass, 0, sizeof(wndclass));
+//    wndclass.cbSize = sizeof(wndclass);
     wndclass.lpfnWndProc = MainWndProc;
     wndclass.hInstance = hInstance;
-    wndclass.hIcon = LoadIconW(hInstance, MAKEINTRESOURCEW(CLIPBRD_ICON));
-    wndclass.hCursor = LoadCursorW(0, IDC_ARROW);
+    wndclass.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(CLIPBRD_ICON));
+    wndclass.hCursor = LoadCursor(0, IDC_ARROW);
     wndclass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    wndclass.lpszMenuName = MAKEINTRESOURCEW(MAIN_MENU);
+    wndclass.lpszMenuName = MAKEINTRESOURCE(MAIN_MENU);
     wndclass.lpszClassName = szClassName;
 
-    if (!RegisterClassExW(&wndclass))
+    if (!RegisterClass(&wndclass))
     {
-        ShowLastWin32Error(NULL);
+        //ShowLastWin32Error(NULL);
         return 0;
     }
 
-    ZeroMemory(&Scrollstate, sizeof(Scrollstate));
+    memset(&Scrollstate, 0, sizeof(Scrollstate));
 
-    LoadStringW(hInstance, STRING_CLIPBOARD, szBuffer, ARRAYSIZE(szBuffer));
-    Globals.hMainWnd = CreateWindowExW(WS_EX_CLIENTEDGE | WS_EX_ACCEPTFILES,
+    LoadString(hInstance, STRING_CLIPBOARD, szBuffer, ARRAYSIZE(szBuffer));
+    Globals.hMainWnd = CreateWindowEx(/*WS_EX_CLIENTEDGE |*/ WS_EX_ACCEPTFILES,
                                        szClassName,
                                        szBuffer,
                                        WS_OVERLAPPEDWINDOW | WS_HSCROLL | WS_VSCROLL,
@@ -715,35 +715,35 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
                                        CW_USEDEFAULT,
                                        CW_USEDEFAULT,
                                        CW_USEDEFAULT,
-                                       NULL,
-                                       NULL,
+                                       0,
+                                       0,
                                        Globals.hInstance,
                                        NULL);
     if (!Globals.hMainWnd)
     {
-        ShowLastWin32Error(NULL);
+        //ShowLastWin32Error(NULL);
         return 0;
     }
 
     ShowWindow(Globals.hMainWnd, nCmdShow);
     UpdateWindow(Globals.hMainWnd);
 
-    hAccel = LoadAcceleratorsW(Globals.hInstance, MAKEINTRESOURCEW(ID_ACCEL));
+    hAccel = LoadAccelerators(Globals.hInstance, MAKEINTRESOURCE(ID_ACCEL));
     if (!hAccel)
     {
-        ShowLastWin32Error(Globals.hMainWnd);
+        //ShowLastWin32Error(Globals.hMainWnd);
     }
 
     /* If the user provided a path to a clipboard data file, try to open it */
     if (__argc >= 2)
-        LoadClipboardDataFromFile(__wargv[1]);
+        LoadClipboardDataFromFile(__argv[1]);
 
-    while (GetMessageW(&msg, 0, 0, 0))
+    while (GetMessage(&msg, 0, 0, 0))
     {
-        if (!TranslateAcceleratorW(Globals.hMainWnd, hAccel, &msg))
+        if (!TranslateAccelerator(Globals.hMainWnd, hAccel, &msg))
         {
             TranslateMessage(&msg);
-            DispatchMessageW(&msg);
+            DispatchMessage(&msg);
         }
     }
 
