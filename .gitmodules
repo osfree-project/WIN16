@@ -10,3 +10,6 @@
 [submodule "programs/notepad"]
 	path = programs/notepad
 	url = https://github.com/osfree-project/notepad
+[submodule "programs/clipbrd"]
+	path = programs/clipbrd
+	url = https://github.com/osfree-project/clipbrd
