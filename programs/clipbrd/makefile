@@ -3,8 +3,8 @@
 # (c) osFree project,
 #
 
-PROJ  = clock1
-PROJ1 = clock
+PROJ  = clipbrd1
+PROJ1 = clipbrd
 TRGT = $(PROJ1).exe
 DESC = Windows Clipboard Viewer
 srcfiles = $(p)clipbrd$(e) $(p)cliputils$(e) $(p)winutils$(e) $(p)fileutils$(e) $(p)scrollutils$(e)

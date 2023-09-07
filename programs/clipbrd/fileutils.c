@@ -173,7 +173,7 @@ static BOOL ClipboardReadMetafile(HANDLE hFile, DWORD dwOffset, DWORD dwLength)
         return FALSE;
     }
 
-    hMf = SetMetaFileBitsEx(dwLength, lpData);
+    hMf = SetMetaFileBits(hData);
 
     GlobalUnlock(hData);
     GlobalFree(hData);
@@ -339,7 +339,7 @@ void ReadClipboardFile(LPCSTR lpFileName)
 	_llseek(hFile, 0, SEEK_SET);
     if (!_lread(hFile, pClipFileHeader, SizeOfFileHeader)!=SizeOfFileHeader)
     {
-        ShowLastWin32Error(Globals.hMainWnd);
+        //ShowLastWin32Error(Globals.hMainWnd);
         goto done;
     }
 

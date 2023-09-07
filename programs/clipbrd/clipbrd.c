@@ -60,7 +60,7 @@ static void LoadClipboardDataFromFile(LPSTR lpszFileName)
 
     if (!OpenClipboard(Globals.hMainWnd))
     {
-        ShowLastWin32Error(Globals.hMainWnd);
+        //ShowLastWin32Error(Globals.hMainWnd);
         return;
     }
 
@@ -242,7 +242,8 @@ static int OnCommand(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case CMD_HELP:
         {
-            HtmlHelpW(Globals.hMainWnd, L"clipbrd.chm", 0, 0);
+			WinHelp(Globals.hMainWnd, "clipbrd.hlp", HELP_INDEX, 0);
+            //HtmlHelpW(Globals.hMainWnd, L"clipbrd.chm", 0, 0);
             break;
         }
 
@@ -660,7 +661,7 @@ static LRESULT WINAPI MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
     return 0;
 }
 
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
     MSG msg;
     HACCEL hAccel;

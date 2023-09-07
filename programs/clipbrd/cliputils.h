@@ -26,14 +26,14 @@ void DeleteClipboardContent(void);
 UINT GetAutomaticClipboardFormat(void);
 BOOL IsClipboardFormatSupported(UINT uFormat);
 
-size_t
-GetLineExtentW(
-    LPCSTR lpText,
-    LPCSTR* lpNextLine);
+//size_t
+//GetLineExtentW(
+    //LPCSTR lpText,
+    //LPCSTR* lpNextLine);
 
 size_t
-GetLineExtentA(
+GetLineExtent(
     LPCSTR lpText,
-    LPCSTR* lpNextLine);
+    LPCSTR FAR * lpNextLine);
 
 BOOL GetClipboardDataDimensions(UINT uFormat, PRECT pRc);

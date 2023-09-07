@@ -123,13 +123,14 @@ void OnMouseScroll(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LPSCROLLS
 }
 #endif
 
-void OnScroll(HWND hWnd, INT nBar, WPARAM wParam, INT iDelta, LPSCROLLSTATE state)
+void OnScroll(HWND hWnd, int nBar, WPARAM wParam, int iDelta, LPSCROLLSTATE state)
 {
-    SCROLLINFO si;
-    PINT pCurrent;
-    INT Maximum;
-    INT NewPos;
-    INT OldX, OldY;
+    //SCROLLINFO si;
+    int FAR * pCurrent;
+    int Maximum;
+    int NewPos;
+    int nMin, nMax;
+    int OldX, OldY;
 
     assert(nBar == SB_HORZ || nBar == SB_VERT);
 
@@ -159,66 +160,69 @@ void OnScroll(HWND hWnd, INT nBar, WPARAM wParam, INT iDelta, LPSCROLLSTATE stat
         Maximum = state->MaxY;
     }
 
-    ZeroMemory(&si, sizeof(si));
-    si.cbSize = sizeof(si);
-    si.fMask = SIF_RANGE | SIF_PAGE | SIF_POS | SIF_TRACKPOS;
-    GetScrollInfo(hWnd, nBar, &si);
+    //ZeroMemory(&si, sizeof(si));
+    //si.cbSize = sizeof(si);
+    //si.fMask = SIF_RANGE | SIF_PAGE | SIF_POS | SIF_TRACKPOS;
+    //GetScrollInfo(hWnd, nBar, &si);
 
     switch (LOWORD(wParam))
     {
-        case SB_THUMBPOSITION:
-        case SB_THUMBTRACK:
-        {
-            NewPos = si.nTrackPos;
-            break;
-        }
+        //case SB_THUMBPOSITION:
+        //case SB_THUMBTRACK:
+        //{
+            //NewPos = si.nTrackPos;
+            //break;
+        //}
 
         case SB_LINEUP:     // SB_LINELEFT:
         {
-            NewPos = si.nPos - iDelta;
+            //NewPos = si.nPos - iDelta;
+			NewPos = GetScrollPos(hWnd, nBar) - iDelta;
             break;
         }
 
         case SB_LINEDOWN:   // SB_LINERIGHT:
         {
-            NewPos = si.nPos + iDelta;
+            NewPos = GetScrollPos(hWnd, nBar)/*si.nPos*/ + iDelta;
             break;
         }
 
-        case SB_PAGEUP:     // SB_PAGELEFT:
-        {
-            NewPos = si.nPos - si.nPage;
-            break;
-        }
+        //case SB_PAGEUP:     // SB_PAGELEFT:
+        //{
+            //NewPos = si.nPos - si.nPage;
+            //break;
+        //}
 
-        case SB_PAGEDOWN:   // SB_PAGERIGHT:
-        {
-            NewPos = si.nPos + si.nPage;
-            break;
-        }
+        //case SB_PAGEDOWN:   // SB_PAGERIGHT:
+        //{
+            //NewPos = si.nPos + si.nPage;
+            //break;
+        //}
 
         case SB_TOP:        // SB_LEFT:
         {
-            NewPos = si.nMin;
+			GetScrollRange(hWnd, nBar, &nMin, &nMax);
+            NewPos = /*si.*/nMin;
             break;
         }
 
         case SB_BOTTOM:     // SB_RIGHT:
         {
-            NewPos = si.nMax;
+			GetScrollRange(hWnd, nBar, &nMin, &nMax);
+            NewPos = /*si.*/nMax;
             break;
         }
 
         default:
         {
-            NewPos = si.nPos;
+            NewPos = GetScrollPos(hWnd, nBar)/*si.nPos*/;
             break;
         }
     }
 
     NewPos = min(max(NewPos, 0), Maximum);
 
-    if (si.nPos == NewPos)
+    if (GetScrollPos(hWnd, nBar)/*si.nPos*/ == NewPos)
         return;
 
     OldX = state->CurrentX;
@@ -230,60 +234,67 @@ void OnScroll(HWND hWnd, INT nBar, WPARAM wParam, INT iDelta, LPSCROLLSTATE stat
                    OldY - state->CurrentY,
                    NULL,
                    NULL,
-                   NULL,
+                   0,
                    NULL,
                    SW_ERASE | SW_INVALIDATE);
     UpdateWindow(hWnd);
 
-    si.fMask = SIF_POS;
-    si.nPos = NewPos;
-    SetScrollInfo(hWnd, nBar, &si, TRUE);
+//    si.fMask = SIF_POS;
+//    si.nPos = NewPos;
+    //SetScrollInfo(hWnd, nBar, &si, TRUE);
+	SetScrollPos(hWnd, nBar, NewPos, TRUE);
 }
 
 void UpdateLinesToScroll(LPSCROLLSTATE state)
 {
-    UINT uLinesToScroll;
+//    UINT uLinesToScroll;
 
-    if (!SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &uLinesToScroll, 0))
-    {
+//    if (!SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &uLinesToScroll, 0))
+    //{
         /* Default value on Windows */
         state->uLinesToScroll = 3;
-    }
-    else
-    {
-        state->uLinesToScroll = uLinesToScroll;
-    }
+    //}
+    //else
+    //{
+        //state->uLinesToScroll = uLinesToScroll;
+    //}
 }
 
-void UpdateWindowScrollState(HWND hWnd, INT nMaxWidth, INT nMaxHeight, LPSCROLLSTATE lpState)
+void UpdateWindowScrollState(HWND hWnd, int nMaxWidth, int nMaxHeight, LPSCROLLSTATE lpState)
 {
     RECT rc;
-    SCROLLINFO si;
+    //SCROLLINFO si;
 
-    if (!GetClientRect(hWnd, &rc))
-        SetRectEmpty(&rc);
+    //if (!GetClientRect(hWnd, &rc))
+      //  SetRectEmpty(&rc);
+    GetClientRect(hWnd, &rc);
 
-    ZeroMemory(&si, sizeof(si));
-    si.cbSize = sizeof(si);
-    si.fMask  = SIF_RANGE | SIF_PAGE | SIF_POS | SIF_DISABLENOSCROLL;
+    //ZeroMemory(&si, sizeof(si));
+    //si.cbSize = sizeof(si);
+    //si.fMask  = SIF_RANGE | SIF_PAGE | SIF_POS | SIF_DISABLENOSCROLL;
 
     lpState->nMaxWidth = nMaxWidth;
     lpState->MaxX = max(nMaxWidth - rc.right, 0);
     lpState->CurrentX = min(lpState->CurrentX, lpState->MaxX);
     lpState->nPageX = rc.right;
-    si.nMin  = 0;
-    si.nMax  = nMaxWidth;
-    si.nPage = lpState->nPageX;
-    si.nPos  = lpState->CurrentX;
-    SetScrollInfo(hWnd, SB_HORZ, &si, TRUE);
+    //si.nMin  = 0;
+    //si.nMax  = nMaxWidth;
+    //si.nPage = lpState->nPageX;
+    //si.nPos  = lpState->CurrentX;
+    //SetScrollInfo(hWnd, SB_HORZ, &si, TRUE);
+	SetScrollPos(hWnd, SB_HORZ, lpState->CurrentX, TRUE);
+	SetScrollRange(hWnd, SB_HORZ, 0, nMaxWidth, TRUE);
+
 
     lpState->nMaxHeight = nMaxHeight;
     lpState->MaxY = max(nMaxHeight - rc.bottom, 0);
     lpState->CurrentY = min(lpState->CurrentY, lpState->MaxY);
     lpState->nPageY = rc.bottom;
-    si.nMin  = 0;
-    si.nMax  = nMaxHeight;
-    si.nPage = lpState->nPageY;
-    si.nPos  = lpState->CurrentY;
-    SetScrollInfo(hWnd, SB_VERT, &si, TRUE);
+    //si.nMin  = 0;
+    //si.nMax  = nMaxHeight;
+    //si.nPage = lpState->nPageY;
+    //si.nPos  = lpState->CurrentY;
+    //SetScrollInfo(hWnd, SB_VERT, &si, TRUE);
+	SetScrollPos(hWnd, SB_VERT, lpState->CurrentY, TRUE);
+	SetScrollRange(hWnd, SB_VERT, 0, nMaxHeight, TRUE);
 }

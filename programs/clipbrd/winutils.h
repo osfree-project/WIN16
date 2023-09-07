@@ -8,7 +8,7 @@
 
 #pragma once
 
-void ShowLastWin32Error(HWND hwndParent);
+//void ShowLastWin32Error(HWND hwndParent);
 void BringWindowToFront(HWND hWnd);
 int MessageBoxRes(HWND hWnd, HINSTANCE hInstance, UINT uText, UINT uCaption, UINT uType);
 void DrawTextFromResource(HINSTANCE hInstance, UINT uID, HDC hDC, LPRECT lpRect, UINT uFormat);

@@ -39,11 +39,13 @@ void BringWindowToFront(HWND hWnd)
     if (IsIconic(hWnd))
     {
         ShowWindow(hWnd, SW_RESTORE);
-        SetForegroundWindow(hWnd);
+        //SetForegroundWindow(hWnd);
+		SetActiveWindow(hWnd);
     }
     else
     {
-        SetForegroundWindow(hWnd);
+        //SetForegroundWindow(hWnd);
+		SetActiveWindow(hWnd);
     }
 }
 
@@ -103,7 +105,7 @@ void DrawTextFromClipboard(UINT uFormat, PAINTSTRUCT ps, SCROLLSTATE state)
         {*/
             if (*(LPCSTR)lpText == (char)0)
                 break;
-            GetLineExtentA(lpText, (LPCSTR*)&ptr);
+            GetLineExtent(lpText, (LPCSTR*)&ptr);
         //}
 
         --FirstLine;
