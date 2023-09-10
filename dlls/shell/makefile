@@ -4,12 +4,14 @@
 # author, date
 #
 
-PROJ     = shell
-TRGT     = $(PROJ).dll
+PROJ     = shell1
+PROJ1    = shell
+TRGT     = $(PROJ1).dll
 DESC     = Windows Shell API Library
-srcfiles = $(p)atomex$(e) $(p)strings$(e) $(p)Shell$(e) $(p)About$(e) $(p)Registry$(e)  $(p)DragDrop$(e)
+srcfiles = $(p)atomex$(e) $(p)strings$(e) $(p)Shell$(e) $(p)Registry$(e)  $(p)DragDrop$(e)
 # linking dll file
 DLL     = 1
+HEAPSIZE= 16k
 EXPORTS = &
 	RegOpenKey.1, &
 	RegCreateKey.2, &
@@ -18,6 +20,7 @@ EXPORTS = &
 	RegSetValue	.5, &
 	RegQueryValue	.6, &
 	RegEnumKey	.7, &
+	WEP.8 RESIDENT, &
 	DragAcceptFiles .9, &
 	DragQueryFile   .11, &
 	DragFinish      .12, &
@@ -25,28 +28,34 @@ EXPORTS = &
 	ShellExecute	.20, &
 	FindExecutable	.21, &
 	ShellAbout	.22, &
-	ABOUTDLGPROC.33=ShellAboutHandler, &
+	AboutDlgProc	.33, &
 	ExtractIcon	.34, &
+	ExtractAssociatedIcon	.36, &
 	DOENVIRONMENTSUBST.37, &
 	FINDENVIRONMENTSTRING.38, &
-	DLLENTRYPOINT.101
+	INTERNALEXTRACTICON.39, &
+	DLLENTRYPOINT.101, &
+	RegisterShellHook.102, &
+	SHELLHOOKPROC.103
 
 # not implemented yet
 
-#	ExtractAssociatedIcon	.36, &
-#	INTERNALEXTRACTICON.39, &
 #	EXTRACTICONEX.40, &
-#	RegisterShellHook.102, &
-#	SHELLHOOKPROC.103, &
 # here is 9x serie APIs
 #	RESTARTDIALOG.157, &
 #	DRIVETYPE.262, &
 #	SHFORMATDRIVE .400, &
 #	SHCHECKDRIVE .401
   
-# WEP.8 Need this?
 
 DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
-#ADD_COPT=-pl
 
 !include $(%ROOT)tools/mk/appsw16.mk
+
+TARGETS = $(PATH)$(PROJ1).dll
+
+.ico: $(MYDIR)res
+
+$(PATH)$(PROJ1).dll: $(PATH)$(PROJ).dll $(MYDIR)$(PROJ1).rc
+ @$(SAY) RESCMP   $^. $(LOG)
+ @wrc -q -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win

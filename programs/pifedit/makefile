@@ -16,6 +16,7 @@ ADD_LINKOPT = LIB commdlg.lib
 CLEAN_ADD = *.mbr
 HEAPSIZE = 4k
 STACKSIZE = 8k
+
 !include $(%ROOT)tools/mk/appsw16.mk
 
 TARGETS = $(PATH)$(PROJ1).exe

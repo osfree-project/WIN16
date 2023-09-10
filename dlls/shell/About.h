@@ -43,3 +43,4 @@ To send email to the maintainer of the Willows Twin Libraries.
 #define SAB_HOST			1008
 #define SAB_TERM			1009
 
+#define IDD_SHELLABOUT                  4001
