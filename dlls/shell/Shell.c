@@ -77,13 +77,17 @@ void WINAPI ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText, HICO
 	FreeProcInstance(lpProc); 
 }
 
+char far *lstrchr(const char far *s, int c);
+
 BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	SHELLABOUTDATA FAR *sad;
 	HWND	        hWnd;
 	HDC	        hDC;
 	char		abouttext[256];
+	char		buf[256];
 	char		dirname[256];
+	LPSTR		lpszTmp = NULL;
 	DWORD		version;
 	int		bpp;
 
@@ -94,50 +98,49 @@ BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 		/************************************************/
 		/*	Caption first				*/
 		/************************************************/
-		sprintf(abouttext,"About %s", sad->lpszCaption);
-	    	SetWindowText(hDlg,abouttext);
+		if (lpszTmp=lstrchr(sad->lpszCaption, '#'))
+		{
+			*lpszTmp='\0';
+		    	SetWindowText(hDlg,sad->lpszCaption);
+			lpszTmp++;
+			sad->lpszCaption=lpszTmp;
+		} else {
+			GetWindowText(hDlg, buf, sizeof(buf));
+			sprintf(abouttext, buf, sad->lpszCaption);
+		    	SetWindowText(hDlg, abouttext);
+		}
 
 		/************************************************/
 		/*	Default first two lines			*/
 		/************************************************/
-		SendDlgItemMessage (hDlg, SAB_ABOUT, WM_SETTEXT, 0,
-		                    ( LONG )sad->lpszCaption);
-		SendDlgItemMessage (hDlg, SAB_TEXT, WM_SETTEXT, 0,
-		                    ( LONG )sad->lpszText);
+		GetDlgItemText(hDlg, SAB_ABOUT, buf, sizeof(buf));
+		sprintf(abouttext, buf, sad->lpszCaption);
+		SetDlgItemText(hDlg, SAB_ABOUT, abouttext);
+
+		SetDlgItemText(hDlg, SAB_TEXT, sad->lpszText);
 
 		/************************************************/
 		/*	Twin specific 5 lines			*/
 		/************************************************/
 		GetModuleFileName(0,abouttext,256);
 
-
 		/* add any shell about specific string */
-		SendDlgItemMessage(hDlg, SAB_USER, WM_SETTEXT, 0,
-			(LONG) abouttext);
+		SetDlgItemText(hDlg, SAB_USER, abouttext);
 
 		GetWindowsDirectory(dirname,256);
 		sprintf(abouttext,"Windows: %s",dirname);
-		SendDlgItemMessage(hDlg, SAB_WINDOW, WM_SETTEXT, 0,
-			(LONG) abouttext);
+		SetDlgItemText(hDlg, SAB_WINDOW, abouttext);
 
 		GetSystemDirectory(dirname,256);
 		sprintf(abouttext,"System: %s",dirname);
-		SendDlgItemMessage(hDlg, SAB_SYSTEM, WM_SETTEXT, 0,
-			(LONG) abouttext);
+		SetDlgItemText(hDlg, SAB_SYSTEM, abouttext);
 
 		/************************************************/
 		/*	Host specific 2 lines			*/
 		/************************************************/
 		/* host system information */
 		sprintf ( abouttext, "Host: %s",TWIN_PLATFORM);
-		SendDlgItemMessage(hDlg, SAB_HOST, WM_SETTEXT, 0,
-			(LONG)abouttext);
-
-		/* workstation information */
-//		hDC = GetDC(hDlg);
-//		bpp = GetDeviceCaps(hDC, BITSPIXEL);
-//		ReleaseDC(hDlg, hDC);
-
+		SetDlgItemText(hDlg, SAB_HOST, abouttext);
 
 		/* add the current mode... */
 		version = GetVersion();
@@ -146,8 +149,7 @@ BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			HIWORD(version)
 			);
 
-		SendDlgItemMessage(hDlg, SAB_VERSION, WM_SETTEXT, 0,
-			(LONG)abouttext);
+		SetDlgItemText(hDlg, SAB_VERSION, abouttext);
 
 		/************************************************/
 		/*	Icon passed in?				*/

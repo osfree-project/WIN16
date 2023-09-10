@@ -34,7 +34,6 @@ To send email to the maintainer of the Willows Twin Libraries.
 #define SAB_ICON			1002
 
 #define SAB_USER			1003
-#define SAB_TWIN			1004
 #define SAB_VERSION			1005
 
 #define SAB_WINDOW			1006 
