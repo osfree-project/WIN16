@@ -54,11 +54,11 @@ void WINAPI ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText, HICO
 	HINSTANCE  hIns;
 	int     rc;
 	
-	if(hWnd)
-		hIns = ((HMODULE)GetWindowWord(hWnd, GWW_HINSTANCE));
-	else    hIns = hInst;
+//	if(hWnd)
+//		hIns = ((HMODULE)GetWindowWord(hWnd, GWW_HINSTANCE));
+//	else    hIns = hInst;
 
-	lpProc= MakeProcInstance((FARPROC)AboutDlgProc, hIns);
+	lpProc= MakeProcInstance((FARPROC)AboutDlgProc, hInst);
 
 	sad.lpszText    = (LPSTR)lpszAboutText;
 	sad.lpszCaption = (LPSTR)lpszCaption;
@@ -262,6 +262,7 @@ static const char lpstrMsgShellActivate[] = "ACTIVATESHELLWINDOW";
 
 static HWND SHELL_hWnd=0;
 static HHOOK SHELL_hHook=0;
+static HOOKPROC SHELL_lpProc=NULL;
 
 static UINT	uMsgWndCreated = 0;
 static UINT	uMsgWndDestroyed = 0;
@@ -269,7 +270,7 @@ static UINT	uMsgShellActivate = 0;
 
 
 /*************************************************************************
- *				ShellHookProc		[SHELL.103]
+ * ShellHookProc		[SHELL.103]
  * System-wide WH_SHELL hook.
  */
 LRESULT CALLBACK ShellHookProc(int code, WPARAM wParam, LPARAM lParam)
@@ -296,7 +297,33 @@ LRESULT CALLBACK ShellHookProc(int code, WPARAM wParam, LPARAM lParam)
 /*************************************************************************
  * RegisterShellHook	[SHELL.102]
  *
+
+From xoblite:
+		RegisterShellHook(NULL, true);
+
+                if(osInfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS)
+                        RegisterShellHook(hMainWnd, 1);
+                else
+                        RegisterShellHook(hMainWnd, 3);
+
+-----------
+        if (RegisterShellHook) RegisterShellHook(hMainWnd, 0);
+
+From wine shell32.dll
+
+// RegisterShellHook types
+#define RSH_DEREGISTER          0
+#define RSH_REGISTER            1
+#define RSH_REGISTER_PROGMAN    2
+#define RSH_REGISTER_TASKMAN    3
+
  */
+
+#define RSH_DEREGISTER          0
+#define RSH_REGISTER            1
+#define RSH_REGISTER_PROGMAN    2
+#define RSH_REGISTER_TASKMAN    3
+
 BOOL WINAPI RegisterShellHook(HWND hWnd, UINT uAction)
 {
 	MessageBox(0, "RegisterShellHook", "RegisterShellHook", MB_OK);
@@ -304,22 +331,37 @@ BOOL WINAPI RegisterShellHook(HWND hWnd, UINT uAction)
 
     switch( uAction )
     {
-    case 2:  /* register hWnd as a shell window */
+    case RSH_DEREGISTER:
+        if (SHELL_hHook)
+        {
+		UnhookWindowsHook(WH_SHELL, (HOOKPROC)SHELL_lpProc);
+		FreeProcInstance(SHELL_lpProc);
+		SHELL_hHook = 0;
+		return TRUE;
+        }
+	break;
+    case RSH_REGISTER:
+        break;
+    case RSH_REGISTER_PROGMAN:  /* register hWnd as a shell window */
         if( !SHELL_hHook )
         {
-            SHELL_hHook = SetWindowsHookEx( WH_SHELL, ShellHookProc, hInst, 0 );
+		SHELL_lpProc= MakeProcInstance((FARPROC)ShellHookProc, hInst);
+            SHELL_hHook = SetWindowsHookEx( WH_SHELL, SHELL_lpProc, hInst, 0 );
             if ( SHELL_hHook )
             {
                 uMsgWndCreated = RegisterWindowMessage( lpstrMsgWndCreated );
                 uMsgWndDestroyed = RegisterWindowMessage( lpstrMsgWndDestroyed );
                 uMsgShellActivate = RegisterWindowMessage( lpstrMsgShellActivate );
             }
-            else  ;
-                //WARN("-- unable to install ShellHookProc()!\n");
+            else  
+                MessageBox(0, "-- unable to install ShellHookProc()!", "", MB_OK);
         }
 
         if ( SHELL_hHook )
             return ((SHELL_hWnd = hWnd) != 0);
+        break;
+
+    case RSH_REGISTER_TASKMAN:
         break;
 
     default:
