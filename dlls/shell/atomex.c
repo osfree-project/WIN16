@@ -1,7 +1,12 @@
 /*
- * Atom table functions - 16 bit variant
+ * 				Shell Library Functions
  *
  * Copyright 1993, 1994, 1995 Alexandre Julliard
+ * Copyright 1997 Willows Software, Inc. 
+ * Copyright 1998 Marcus Meissner
+ * Copyright 2000 Juergen Schmied
+ * Copyright 2002 Eric Pouech
+ * Copyright 2023 Yuri Prokushev
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,15 +23,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-/*
- * Warning: The code assumes that LocalAlloc() returns a block aligned
- * on a 4-bytes boundary (because of the shifting done in
- * HANDLETOATOM).  If this is not the case, the allocation code will
- * have to be changed.
- */
-
 #include <win16.h>
-//#include <win_private.h>
 
 int strnicmp(char far *s1, const char far *s2, int n);
 void memcpy(void far * s1, void far * s2, unsigned length);

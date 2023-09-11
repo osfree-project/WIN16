@@ -13,30 +13,30 @@ srcfiles = $(p)atomex$(e) $(p)strings$(e) $(p)Shell$(e) $(p)Registry$(e)  $(p)Dr
 DLL     = 1
 HEAPSIZE= 16k
 EXPORTS = &
-	RegOpenKey.1, &
-	RegCreateKey.2, &
-	RegCloseKey.3, &
-	RegDeleteKey.4, &
-	RegSetValue	.5, &
-	RegQueryValue	.6, &
-	RegEnumKey	.7, &
-	WEP.8 RESIDENT, &
-	DragAcceptFiles .9, &
-	DragQueryFile   .11, &
-	DragFinish      .12, &
-	DragQueryPoint  .13, &
-	ShellExecute	.20, &
-	FindExecutable	.21, &
-	ShellAbout	.22, &
-	AboutDlgProc	.33, &
-	ExtractIcon	.34, &
+	RegOpenKey				.1, &
+	RegCreateKey			.2, &
+	RegCloseKey				.3, &
+	RegDeleteKey			.4, &
+	RegSetValue				.5, &
+	RegQueryValue			.6, &
+	RegEnumKey				.7, &
+	WEP						.8 RESIDENT, &
+	DragAcceptFiles			.9, &
+	DragQueryFile			.11, &
+	DragFinish				.12, &
+	DragQueryPoint			.13, &
+	ShellExecute			.20, &
+	FindExecutable			.21, &
+	ShellAbout				.22, &
+	AboutDlgProc			.33, &
+	ExtractIcon				.34, &
 	ExtractAssociatedIcon	.36, &
-	DOENVIRONMENTSUBST.37, &
-	FINDENVIRONMENTSTRING.38, &
-	INTERNALEXTRACTICON.39, &
-	DLLENTRYPOINT.101, &
-	RegisterShellHook.102, &
-	SHELLHOOKPROC.103
+	DoEnvironmentSubst		.37, &
+	FindEnvironmentString	.38, &
+	InternalExtractIcon		.39, &
+	DLLEntryPoint			.101, &
+	RegisterShellHook		.102, &
+	ShellHookProc			.103
 
 # not implemented yet
 
