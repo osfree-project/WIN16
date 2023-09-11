@@ -21,7 +21,8 @@
 #include "windows.h"
 #include "winver.h"
 
-int WINAPI ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText,
+
+BOOL WINAPI ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText,
                 HICON hIcon);
 
 int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
@@ -29,6 +30,6 @@ int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
    char szTitle[50];
 
    LoadString(inst, IDS_PACKAGE_NAME, szTitle, 50);
-   return ShellAbout(NULL, szTitle, NULL, NULL);
+   return ShellAbout(0, szTitle, NULL, NULL);
 }
 

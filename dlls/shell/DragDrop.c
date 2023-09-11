@@ -40,11 +40,14 @@ To send email to the maintainer of the Willows Twin Libraries.
 //#include "Log.h"
 #include "DragDrop.h"
 
-void WINAPI
-DragAcceptFiles(HWND hWnd, BOOL fAccept)
+/******************************************************************************
+ * DragAcceptFiles   [SHELL.9]
+ */
+void WINAPI DragAcceptFiles(HWND hWnd, BOOL fAccept)
 {
     DWORD dwExStyle;
 
+	MessageBox(0, "DragAcceptFiles", "DragAcceptFiles", MB_OK);
 //    APISTR((LF_APICALL,"DragAcceptFiles(HWND=%x,BOOL=%d)\n",
 //	hWnd,fAccept));
 
@@ -67,7 +70,7 @@ DragAcceptFiles(HWND hWnd, BOOL fAccept)
 
 
 /*************************************************************************
- *				DragQueryFile		[SHELL.11]
+ * DragQueryFile		[SHELL.11]
  */
 UINT WINAPI DragQueryFile(
 	HDROP hDrop,
@@ -79,6 +82,7 @@ UINT WINAPI DragQueryFile(
 	UINT i = 0;
 	LPDROPFILESTRUCT lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock(hDrop);
 
+	MessageBox(0, "DragQueryFile", "DragQueryFile", MB_OK);
 //	TRACE("(%04x, %x, %p, %u)\n", hDrop,wFile,lpszFile,wLength);
 
 	if(!lpDropFileStruct) goto end;
@@ -105,12 +109,15 @@ end:
 
 
 
-BOOL WINAPI
-DragQueryPoint(HDROP hDrop, LPPOINT lppt)
+/*************************************************************************
+ * DragQueryPoint		[SHELL.13]
+ */
+BOOL WINAPI DragQueryPoint(HDROP hDrop, LPPOINT lppt)
 {
     LPDROPFILESTRUCT lpDragInfo;
     BOOL bRet;
 
+	MessageBox(0, "DragQueryPoint", "DragQueryPoint", MB_OK);
 //    APISTR((LF_APICALL,"DragQueryPoint(HDROP=%x,POINT=%x)\n",
 //	hDrop,lppt));
 
@@ -128,11 +135,15 @@ DragQueryPoint(HDROP hDrop, LPPOINT lppt)
     return bRet;
 }
 
-void WINAPI
-DragFinish(HDROP hDrop)
+/*************************************************************************
+ * DragFinish		[SHELL.12]
+ */
+void WINAPI DragFinish(HDROP hDrop)
 {
 
 //    APISTR((LF_APICALL,"DragFinish(HDROP=%x)\n",hDrop));
+
+	MessageBox(0, "DragFinish", "DragFinish", MB_OK);
 
     GlobalFree(hDrop);
 

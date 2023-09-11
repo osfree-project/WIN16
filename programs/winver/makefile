@@ -9,10 +9,12 @@ PROJ1 = winver
 TRGT = $(PROJ1).exe
 DESC = Windows Version
 #defines object file names in format $(p)objname$(e)
-srcfiles = $(p)winver$(e)
+srcfiles = $(p)winver$(e) 
 # defines additional options for C compiler
-ADD_COPT = -zW
+ADD_COPT = -sg
 IMPORTS  = SHELLABOUT SHELL.22
+HEAPSIZE = 4k
+#STACKSIZE = 8k
 
 !include $(%ROOT)tools/mk/appsw16.mk
 

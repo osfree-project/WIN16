@@ -1,3 +1,58 @@
 /* Shell.rc 
  * resource file for shell.dll
  */
+
+/*************************************************************************
+
+	About.rc 1.0
+    	Copyright 1997 Willows Software, Inc. 
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Library General Public License as
+published by the Free Software Foundation; either version 2 of the
+License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Library General Public License for more details.
+
+You should have received a copy of the GNU Library General Public
+License along with this library; see the file COPYING.LIB.  If
+not, write to the Free Software Foundation, Inc., 675 Mass Ave,
+Cambridge, MA 02139, USA.
+
+
+For more information about the Willows Twin Libraries.
+
+	http://www.willows.com	
+
+To send email to the maintainer of the Willows Twin Libraries.
+
+	mailto:twin@willows.com 
+
+**************************************************************************/
+
+#include "windows.h"
+#include "About.h"
+
+SAB_ICON	ICON	"willows.ico"
+
+IDD_SHELLABOUT DIALOG 0,0,228,175
+CAPTION "About %s"
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+Font 8, "MS Sans Serif"
+BEGIN
+	DEFPUSHBUTTON   "OK",SAB_OKAY, 184, 5, 40, 14
+	ICON		SAB_ICON,SAB_ICON,10,5,18,16
+	LTEXT		"osFree Windows %s", SAB_ABOUT, 45, 5, 135, 8
+	LTEXT		"",SAB_VERSION,45,15,135,10
+	LTEXT		"Copyright © 2023 osFree",-1, 45, 25, 135,10
+	LTEXT		"",SAB_TEXT, 45,35,145,20
+	CONTROL         "", -1, "Static", SS_BLACKRECT, 45, 54, 180, 1
+	LTEXT		"Static",SAB_USER,46,55,180,20
+	LTEXT		"Static",SAB_WINDOW,46,65,150,10
+	LTEXT		"Host:",SAB_HOST,46,75,150,10
+	LTEXT		"Display:",SAB_TERM,46,85,150,10
+END
+
