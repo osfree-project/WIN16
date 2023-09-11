@@ -30,7 +30,24 @@
 //#include "mpr.h"
 //#include <wfext.h>
 #include <commdlg.h>
-//#include <commctrl.h>
+//#define NOTOOLBAR
+#define NOUPDOWN    
+#define NOSTATUSBAR 
+#define NOMENUHELP  
+#define NOTRACKBAR  
+#define NODRAGLIST  
+#define NOPROGRESS  
+#define NOHOTKEY    
+#define NOHEADER    
+#define NOIMAGEAPIS 
+#define NOLISTVIEW  
+#define NOTREEVIEW  
+#define NOTABCONTROL
+#define NOANIMATE   
+#define ANSI_ONLY
+#define _PRSHT_H_
+
+#include <commctrl.h>
 //#include "fmifs.h"
 #include <shellapi.h>
 #include "suggest.h"

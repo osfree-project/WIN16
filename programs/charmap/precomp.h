@@ -13,7 +13,8 @@
 
 #define SIZEOF(_v)  (sizeof(_v) / sizeof(*_v))
 
-#define MAX_GLYPHS  65536
+//#define MAX_GLYPHS  65536
+#define MAX_GLYPHS  16384
 
 #define XCELLS 20
 #define YCELLS 10

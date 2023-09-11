@@ -134,10 +134,10 @@ static struct {
 static int iSel = -1;
 
 Static VOID
-ExtensionName(int i, LPTSTR szName)
+ExtensionName(int i, LPSTR szName)
 {
-  TCHAR szFullName[256];
-  LPTSTR lpName;
+  char szFullName[256];
+  LPSTR lpName;
 
   *szName = '\0';
 
@@ -288,12 +288,12 @@ EnableCheckTBButtons(HWND hwndActive)
 
 
 VOID
-BuildDriveLine(LPTSTR* ppszTemp, DRIVEIND driveInd,
+BuildDriveLine(LPSTR* ppszTemp, DRIVEIND driveInd,
    BOOL fGetFloppyLabel, DWORD dwType)
 {
    static TCHAR szDrive[64];
    DRIVE drive;
-   LPTSTR p;
+   LPSTR p;
    DWORD dwError;
 
    drive = rgiDrive[driveInd];
@@ -450,7 +450,7 @@ Static VOID
 PaintDriveLine(DRAWITEMSTRUCT FAR *lpdis)
 {
    HDC hdc = lpdis->hDC;
-   LPTSTR lpszText;
+   LPSTR lpszText;
    TCHAR* pchTab;
    RECT rc = lpdis->rcItem;
    DRIVE drive;
@@ -507,7 +507,7 @@ PaintDriveLine(DRAWITEMSTRUCT FAR *lpdis)
       // will at worst return the blank-o A:
       //
 #if 0
-      if (lpszText == NULL || lpszText == (LPTSTR)-1 ||
+      if (lpszText == NULL || lpszText == (LPSTR)-1 ||
          lpdis->itemID == (UINT) -1)
          return;
 #endif
@@ -615,14 +615,14 @@ ResetToolbar(void)
 
 
 Static VOID
-LoadDesc(UINT uID, LPTSTR lpDesc)
+LoadDesc(UINT uID, LPSTR lpDesc)
 {
    HMENU hMenu;
    UINT uMenu;
    TCHAR szFormat[20];
    TCHAR szMenu[20];
    TCHAR szItem[MAXDESCLEN-COUNTOF(szMenu)];
-   LPTSTR lpIn;
+   LPSTR lpIn;
 
    HWND hwndActive;
 
@@ -1324,7 +1324,7 @@ FreeToolbarExtensions(VOID)
 VOID
 SaveRestoreToolbar(BOOL bSave)
 {
-   static LPTSTR aNames[] = { szSettings, szTheINIFile } ;
+   static LPSTR aNames[] = { szSettings, szTheINIFile } ;
    static TCHAR  szSubKey[] = "Software\\Microsoft\\File Manager\\Settings";
    static TCHAR  szValueName [] = "ToolbarWindow";
 
@@ -1333,7 +1333,7 @@ SaveRestoreToolbar(BOOL bSave)
 
    if (bSave) {
       INT i;
-      LPTSTR pName;
+      LPSTR pName;
 
       // Write out a comma separated list of the current extensions
 
@@ -1365,7 +1365,7 @@ SaveRestoreToolbar(BOOL bSave)
       INT i, iExt, nExtButtons;
       BOOL bRestored;
       TBBUTTON tbButton;
-      LPTSTR pName, pEnd;
+      LPSTR pName, pEnd;
 
       // Only load the buttons for the extensions that were the same as
       // the last time the state was saved.

@@ -10,7 +10,7 @@
 #define _GLOBALS
 #include "winfile.h"
 #include "lfn.h"
-//#include <commctrl.h>
+
 
 //
 // prototypes
