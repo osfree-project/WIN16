@@ -25,8 +25,8 @@
 
 typedef struct
 {
-    WORD        size;
-    HANDLE	entries[1];
+	WORD	size;
+	HANDLE	entries[1];
 } ATOMTABLE;
 typedef ATOMTABLE FAR *LPATOMTABLE;
 

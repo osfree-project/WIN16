@@ -24,22 +24,24 @@
  */
 
 #include "windows.h"
-//#include "windowsx.h"
-
 #include "shellapi.h"
-
-#define __SHELLAPI_H__
-//#include "Willows.h"
-
-//#include "Log.h"
 #include "DragDrop.h"
 
 /******************************************************************************
  * DragAcceptFiles   [SHELL.9]
+ *
+ * Registers whether a window accepts dropped files.
+ *
+ * HWND hWnd
+ *	The identifier of the window that is registering whether it will accept dropped files.
+ * BOOL fAccept
+ *	A value that indicates if the window identified by the hWnd parameter accepts dropped files.
+ *	This value is TRUE to accept dropped files or FALSE to discontinue accepting dropped files.
+ *
  */
 void WINAPI DragAcceptFiles(HWND hWnd, BOOL fAccept)
 {
-    DWORD dwExStyle;
+	DWORD dwExStyle;
 
 	MessageBox(0, "DragAcceptFiles", "DragAcceptFiles", MB_OK);
 //    APISTR((LF_APICALL,"DragAcceptFiles(HWND=%x,BOOL=%d)\n",
@@ -50,14 +52,14 @@ void WINAPI DragAcceptFiles(HWND hWnd, BOOL fAccept)
 	return;
     }
 
-    dwExStyle = GetWindowLong(hWnd,GWL_EXSTYLE);
+	dwExStyle = GetWindowLong(hWnd,GWL_EXSTYLE);
 
-    if (fAccept)
-	dwExStyle |= WS_EX_ACCEPTFILES;
-    else
-	dwExStyle &= ~WS_EX_ACCEPTFILES;
+	if (fAccept)
+		dwExStyle |= WS_EX_ACCEPTFILES;
+	else
+		dwExStyle &= ~WS_EX_ACCEPTFILES;
 
-    SetWindowLong(hWnd,GWL_EXSTYLE,dwExStyle);
+	SetWindowLong(hWnd,GWL_EXSTYLE,dwExStyle);
 //    APISTR((LF_APIRET,"DragAcceptFiles: returns void\n"));
 }
 
@@ -72,7 +74,7 @@ UINT WINAPI DragQueryFile(
 	LPSTR lpszFile,
 	UINT wLength)
 {
- 	LPSTR lpDrop;
+	LPSTR lpDrop;
 	UINT i = 0;
 	LPDROPFILESTRUCT lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock(hDrop);
 
@@ -85,12 +87,12 @@ UINT WINAPI DragQueryFile(
 
 	while (i++ < wFile)
 	{
-	  while (*lpDrop++); /* skip filename */
-	  if (!*lpDrop)
-	  {
-	    i = (wFile == 0xFFFF) ? i : 0;
-	    goto end;
-	  }
+		while (*lpDrop++); /* skip filename */
+		if (!*lpDrop)
+		{
+			i = (wFile == 0xFFFF) ? i : 0;
+			goto end;
+		}
 	}
 
 	i = lstrlen(lpDrop);
@@ -99,34 +101,6 @@ UINT WINAPI DragQueryFile(
 end:
 	GlobalUnlock(hDrop);
 	return i;
-}
-
-
-
-/*************************************************************************
- * DragQueryPoint		[SHELL.13]
- */
-BOOL WINAPI DragQueryPoint(HDROP hDrop, LPPOINT lppt)
-{
-    LPDROPFILESTRUCT lpDragInfo;
-    BOOL bRet;
-
-	MessageBox(0, "DragQueryPoint", "DragQueryPoint", MB_OK);
-//    APISTR((LF_APICALL,"DragQueryPoint(HDROP=%x,POINT=%x)\n",
-//	hDrop,lppt));
-
-    if (NULL == (lpDragInfo = (LPDROPFILESTRUCT)GlobalLock(hDrop))) {
-//        APISTR((LF_APICALL,"DragQueryPoint: returns BOOL FALSE\n"));
-	return FALSE;
-    }
-
-    *lppt = lpDragInfo->ptMousePos;
-    bRet = !lpDragInfo->fInNonClientArea;
-
-    GlobalUnlock(hDrop);
-
-//    APISTR((LF_APICALL,"DragQueryPoint: returns BOOL TRUE\n"));
-    return bRet;
 }
 
 /*************************************************************************
@@ -139,7 +113,34 @@ void WINAPI DragFinish(HDROP hDrop)
 
 	MessageBox(0, "DragFinish", "DragFinish", MB_OK);
 
-    GlobalFree(hDrop);
+	GlobalFree(hDrop);
 
 //    APISTR((LF_APIRET,"DragFinish: returns void\n"));
+}
+
+
+/*************************************************************************
+ * DragQueryPoint		[SHELL.13]
+ */
+BOOL WINAPI DragQueryPoint(HDROP hDrop, LPPOINT lppt)
+{
+	LPDROPFILESTRUCT lpDragInfo;
+	BOOL bRet;
+
+	MessageBox(0, "DragQueryPoint", "DragQueryPoint", MB_OK);
+//    APISTR((LF_APICALL,"DragQueryPoint(HDROP=%x,POINT=%x)\n",
+//	hDrop,lppt));
+
+	if (NULL == (lpDragInfo = (LPDROPFILESTRUCT)GlobalLock(hDrop))) {
+//        APISTR((LF_APICALL,"DragQueryPoint: returns BOOL FALSE\n"));
+		return FALSE;
+	}
+
+	*lppt = lpDragInfo->ptMousePos;
+	bRet = !lpDragInfo->fInNonClientArea;
+
+	GlobalUnlock(hDrop);
+
+//    APISTR((LF_APICALL,"DragQueryPoint: returns BOOL TRUE\n"));
+	return bRet;
 }

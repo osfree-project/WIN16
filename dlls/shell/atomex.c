@@ -25,9 +25,9 @@
 
 #include <win16.h>
 
-int strnicmp(char far *s1, const char far *s2, int n);
-void memcpy(void far * s1, void far * s2, unsigned length);
-void far * memset (void far *start, int c, int len);
+int strnicmp(char FAR *s1, const char FAR *s2, int n);
+void memcpy(void FAR * s1, void FAR * s2, unsigned length);
+void FAR * memset (void FAR *start, int c, int len);
 int toupper (int c);
 
 extern  unsigned short          GetDS( void );
@@ -45,11 +45,11 @@ extern  unsigned short          GetDS( void );
 
 typedef struct
 {
-    HANDLE	next;
-    WORD        refCount;
-    BYTE        length;
-    char        str[1];
-} ATOMENTRY;
+	HANDLE	next;
+	WORD	refCount;
+	BYTE	length;
+	char	str[1];
+} ATOMENTRY, FAR * LPATOMENTRY;
 
 #include "atomex.h"	
 
@@ -74,9 +74,9 @@ static WORD ATOM_Hash(
 
 
 /***********************************************************************
- *           ATOM_IsIntAtomA
+ *           ATOM_IsIntAtom
  */
-static BOOL ATOM_IsIntAtomA(LPCSTR atomstr,WORD *atomid)
+static BOOL ATOM_IsIntAtom(LPCSTR atomstr,WORD *atomid)
 {
     UINT atom = 0;
     if (!HIWORD(atomstr)) atom = LOWORD(atomstr);
@@ -105,7 +105,7 @@ static BOOL ATOM_IsIntAtomA(LPCSTR atomstr,WORD *atomid)
  *
  * Make an ATOMENTRY pointer from a handle (obtained from GetAtomHandle()).
  */
-ATOMENTRY far *ATOM_MakePtr( HANDLE handle /* [in] Handle */ )
+LPATOMENTRY ATOM_MakePtr( HANDLE handle /* [in] Handle */ )
 {
     return MAKELP(GetDS(), handle);
 }
@@ -128,12 +128,12 @@ ATOM WINAPI AddAtomEx(LPATOMTABLE atomtable, LPCSTR str )
     char buffer[MAX_ATOM_LEN+1];
     WORD hash;
     HANDLE entry;
-    ATOMENTRY far * entryPtr;
+    LPATOMENTRY entryPtr;
     LPATOMTABLE table;
     int len, ae_len;
     WORD iatom;
 
-    if (ATOM_IsIntAtomA( str, &iatom )) return iatom;
+    if (ATOM_IsIntAtom( str, &iatom )) return iatom;
 
 //    TRACE("%s\n",debugstr_a(str));
 
@@ -182,7 +182,7 @@ ATOM WINAPI AddAtomEx(LPATOMTABLE atomtable, LPCSTR str )
  */
 ATOM WINAPI DeleteAtomEx(LPATOMTABLE atomtable, ATOM atom )
 {
-    ATOMENTRY far * entryPtr;
+    LPATOMENTRY entryPtr;
     LPATOMTABLE table;
     HANDLE entry, *prevEntry;
     WORD hash;
@@ -200,7 +200,7 @@ ATOM WINAPI DeleteAtomEx(LPATOMTABLE atomtable, ATOM atom )
     prevEntry = &table->entries[hash];
     while (*prevEntry && *prevEntry != entry)
     {
-        ATOMENTRY far * prevEntryPtr = ATOM_MakePtr( *prevEntry );
+        LPATOMENTRY  prevEntryPtr = ATOM_MakePtr( *prevEntry );
         prevEntry = &prevEntryPtr->next;
     }
     if (!*prevEntry) return atom;
@@ -227,14 +227,14 @@ ATOM WINAPI FindAtomEx(LPATOMTABLE atomtable, LPCSTR str )
 
 //    TRACE("%s\n",debugstr_a(str));
 
-    if (ATOM_IsIntAtomA( str, &iatom )) return iatom;
+    if (ATOM_IsIntAtom( str, &iatom )) return iatom;
     if ((len = lstrlen( str )) > 255) len = 255;
     if (!(table = atomtable)) return 0;
     hash = ATOM_Hash( table->size, str, len );
     entry = table->entries[hash];
     while (entry)
     {
-        ATOMENTRY far * entryPtr = ATOM_MakePtr( entry );
+        LPATOMENTRY  entryPtr = ATOM_MakePtr( entry );
         if ((entryPtr->length == len) &&
             (!strnicmp( entryPtr->str, str, len )))
         {
@@ -253,7 +253,7 @@ ATOM WINAPI FindAtomEx(LPATOMTABLE atomtable, LPCSTR str )
  */
 UINT WINAPI GetAtomNameEx(LPATOMTABLE atomtable, ATOM atom, LPSTR buffer, int count )
 {
-    ATOMENTRY far * entryPtr;
+    LPATOMENTRY  entryPtr;
     HANDLE entry;
     LPSTR strPtr;
     int len;
@@ -278,7 +278,7 @@ UINT WINAPI GetAtomNameEx(LPATOMTABLE atomtable, ATOM atom, LPSTR buffer, int co
         strPtr = entryPtr->str;
     }
     if (len >= count) len = count-1;
-    memcpy( (void far *)buffer, strPtr, len );
+    memcpy( (void FAR *)buffer, strPtr, len );
     buffer[len] = '\0';
     return len;
 }

@@ -29,7 +29,10 @@
 #include "windows.h"
 #include "About.h"
 
-#define TWIN_PLATFORM	"DOS"
+void lmemcpy(void FAR * s1, void FAR * s2, unsigned length);
+int lstrnicmp(char FAR *s1, const char FAR *s2, int n);
+char FAR *lstrchr(const char FAR *s, int c);
+
 #define GET_WM_COMMAND_ID(wp, lp)                   (wp)
 
 typedef struct {
@@ -51,7 +54,7 @@ void WINAPI ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText, HICO
 	DLGPROC	lpProc;
 	SHELLABOUTDATA sad;
 	LPSHELLABOUTDATA lpsad;
-	HINSTANCE  hIns;
+//	HINSTANCE  hIns;
 	int     rc;
 	
 //	if(hWnd)
@@ -67,7 +70,7 @@ void WINAPI ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText, HICO
 	lpsad=&sad;
 
 	rc = DialogBoxParam(
-	        hInst,
+		hInst,
 		MAKEINTRESOURCE(IDD_SHELLABOUT),
 		hWnd,
 		lpProc,
@@ -76,8 +79,6 @@ void WINAPI ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText, HICO
 
 	FreeProcInstance(lpProc); 
 }
-
-char far *lstrchr(const char far *s, int c);
 
 BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -139,7 +140,7 @@ BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 		/*	Host specific 2 lines			*/
 		/************************************************/
 		/* host system information */
-		sprintf ( abouttext, "Host: %s",TWIN_PLATFORM);
+		sprintf ( abouttext, "Host: DOS");
 		SetDlgItemText(hDlg, SAB_HOST, abouttext);
 
 		/* add the current mode... */
@@ -197,8 +198,6 @@ extern  unsigned short          GetDS( void );
 #define GlobalAllocPtr(flags, cb) \
   (GlobalLock(GlobalAlloc((flags), (cb))))
 
-void lmemcpy(void far * s1, void far * s2, unsigned length);
-int lstrnicmp(char far *s1, const char far *s2, int n);
 
 /*************************************************************************
  * ExtractIcon	[SHELL.34]
