@@ -24,7 +24,7 @@
  */
 
 #include "windows.h"
-#include "About.h"
+#include "Shell.h"
 
 SAB_ICON	ICON	"willows.ico"
 

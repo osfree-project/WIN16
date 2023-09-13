@@ -23,9 +23,19 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-void lmemcpy(void far * s1, void far * s2, unsigned length)
-{	char far * p;
-	char far * q;
+#include "Shell.h"
+
+void FAR * lmemset (void FAR * dest, int val, int len)
+{
+  char FAR *ptr = (char FAR *)dest;
+  while (len-- > 0)
+    *ptr++ = val;
+  return dest;
+}
+
+void lmemcpy(void FAR * s1, void FAR * s2, unsigned length)
+{	char FAR * p;
+	char FAR * q;
 
 	if(length) {
 		p = s1;
@@ -43,27 +53,27 @@ int toupper (int c)
   return c;
 }
 
-int lstrnicmp(char far *s1, const char far *s2, int n)
+int lstrnicmp(char FAR *s1, const char FAR *s2, int n)
 {
 
     if (n == 0)
 	return 0;
     do {
 	if (toupper(*s1) != toupper(*s2++))
-	    return toupper(*(unsigned char *) s1) -
-		toupper(*(unsigned char *) --s2);
+		return toupper(*(unsigned char FAR *) s1) -
+		toupper(*(unsigned char FAR *) --s2);
 	if (*s1++ == 0)
-	    break;
-    } while (--n != 0);
-    return 0;
+		break;
+	} while (--n != 0);
+	return 0;
 }
 
-char far *lstrchr(const char far *s, int c)
+char FAR *lstrchr(const char FAR *s, int c)
 {
-    const char ch = c;
+	const char ch = c;
 
-    for ( ; *s != ch; s++)
-        if (*s == '\0')
-            return 0;
-    return (char far *)s;
+	for ( ; *s != ch; s++)
+		if (*s == '\0')
+			return 0;
+	return (char FAR *)s;
 }

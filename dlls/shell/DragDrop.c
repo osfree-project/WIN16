@@ -23,9 +23,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "windows.h"
-#include "shellapi.h"
-#include "DragDrop.h"
+#include <windows.h>
+#include <shellapi.h>
+
+#include "Shell.h"
 
 /******************************************************************************
  * DragAcceptFiles   [SHELL.9]
@@ -43,7 +44,7 @@ void WINAPI DragAcceptFiles(HWND hWnd, BOOL fAccept)
 {
 	DWORD dwExStyle;
 
-	MessageBox(0, "DragAcceptFiles", "DragAcceptFiles", MB_OK);
+	//MessageBox(0, "DragAcceptFiles", "DragAcceptFiles", MB_OK);
 //    APISTR((LF_APICALL,"DragAcceptFiles(HWND=%x,BOOL=%d)\n",
 //	hWnd,fAccept));
 

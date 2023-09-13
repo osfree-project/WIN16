@@ -33,24 +33,9 @@
 #include "direct.h"
 
 #include "windows.h"
-
-#define GlobalPtrHandle(lp) \
-  ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))
-
-#define     GlobalUnlockPtr(lp)      \
-                GlobalUnlock(GlobalPtrHandle(lp))
-
-#define GlobalFreePtr(lp) \
-  (GlobalUnlockPtr(lp),(BOOL)GlobalFree(GlobalPtrHandle(lp)))
-
-#define GlobalAllocPtr(flags, cb) \
-  (GlobalLock(GlobalAlloc((flags), (cb))))
-
-char far *lstrchr(const char far *s, int c);
-
 #include "shellapi.h"
 
-#include "atomex.h"
+#include "Shell.h"
 
 static ATOMTABLE AtomTable;
 

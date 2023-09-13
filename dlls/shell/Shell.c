@@ -27,19 +27,7 @@
 #include <stdio.h>
 
 #include "windows.h"
-#include "About.h"
-
-void lmemcpy(void FAR * s1, void FAR * s2, unsigned length);
-int lstrnicmp(char FAR *s1, const char FAR *s2, int n);
-char FAR *lstrchr(const char FAR *s, int c);
-
-#define GET_WM_COMMAND_ID(wp, lp)                   (wp)
-
-typedef struct {
-	LPSTR	lpszCaption;
-	LPSTR	lpszText;
-	HICON	hIcon;
-} SHELLABOUTDATA, FAR * LPSHELLABOUTDATA;
+#include "Shell.h"
 
 static HINSTANCE hInst = 0;
 
@@ -82,19 +70,19 @@ void WINAPI ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText, HICO
 
 BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	SHELLABOUTDATA FAR *sad;
-	HWND	        hWnd;
-	HDC	        hDC;
+	LPSHELLABOUTDATA sad;
+	HWND		hWnd;
+	HDC			hDC;
 	char		abouttext[256];
 	char		buf[256];
 	char		dirname[256];
 	LPSTR		lpszTmp = NULL;
 	DWORD		version;
-	int		bpp;
+	int			bpp;
 
 	switch(msg) {
 	case WM_INITDIALOG:
-		sad = (SHELLABOUTDATA FAR *) lParam;
+		sad = (LPSHELLABOUTDATA) lParam;
 
 		/************************************************/
 		/*	Caption first				*/

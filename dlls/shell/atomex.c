@@ -23,36 +23,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <win16.h>
+#include <windows.h>
 
-int strnicmp(char FAR *s1, const char FAR *s2, int n);
-void memcpy(void FAR * s1, void FAR * s2, unsigned length);
-void FAR * memset (void FAR *start, int c, int len);
-int toupper (int c);
-
-extern  unsigned short          GetDS( void );
-#pragma aux GetDS               = \
-        "mov    ax,ds"          \
-        value                   [ax];
-
-#define DEFAULT_ATOMTABLE_SIZE    37
-#define MAX_ATOM_LEN              255
-#define MAXINTATOM          0xc000
-
-#define ATOMTOHANDLE(atom)        ((HANDLE)(atom) << 2)
-#define HANDLETOATOM(handle)      ((ATOM)(0xc000 | ((handle) >> 2)))
-
-
-typedef struct
-{
-	HANDLE	next;
-	WORD	refCount;
-	BYTE	length;
-	char	str[1];
-} ATOMENTRY, FAR * LPATOMENTRY;
-
-#include "atomex.h"	
-
+#include "Shell.h"
 
 /***********************************************************************
  *           ATOM_Hash
@@ -149,7 +122,7 @@ ATOM WINAPI AddAtomEx(LPATOMTABLE atomtable, LPCSTR str )
     {
         entryPtr = ATOM_MakePtr( entry );
         if ((entryPtr->length == len) &&
-            (!strnicmp( entryPtr->str, buffer, len )))
+            (!lstrnicmp( entryPtr->str, buffer, len )))
         {
             entryPtr->refCount++;
 //            TRACE("-- existing 0x%x\n", entry);
@@ -167,10 +140,10 @@ ATOM WINAPI AddAtomEx(LPATOMTABLE atomtable, LPCSTR str )
     entryPtr->next = table->entries[hash];
     entryPtr->refCount = 1;
     entryPtr->length = len;
-    memcpy( entryPtr->str, buffer, len);
+    lmemcpy( entryPtr->str, buffer, len);
     /* Some applications _need_ the '\0' padding provided by memset */
     /* Note that 1 byte of the str is accounted for in the ATOMENTRY struct */
-    memset( entryPtr->str+len, 0, ae_len - sizeof(ATOMENTRY) - (len - 1));
+    lmemset( entryPtr->str+len, 0, ae_len - sizeof(ATOMENTRY) - (len - 1));
     table->entries[hash] = entry;
 //    TRACE("-- new 0x%x\n", entry);
     return HANDLETOATOM( entry );
@@ -236,7 +209,7 @@ ATOM WINAPI FindAtomEx(LPATOMTABLE atomtable, LPCSTR str )
     {
         LPATOMENTRY  entryPtr = ATOM_MakePtr( entry );
         if ((entryPtr->length == len) &&
-            (!strnicmp( entryPtr->str, str, len )))
+            (!lstrnicmp( entryPtr->str, str, len )))
         {
 //            TRACE("-- found %x\n", entry);
             return HANDLETOATOM( entry );
@@ -278,7 +251,7 @@ UINT WINAPI GetAtomNameEx(LPATOMTABLE atomtable, ATOM atom, LPSTR buffer, int co
         strPtr = entryPtr->str;
     }
     if (len >= count) len = count-1;
-    memcpy( (void FAR *)buffer, strPtr, len );
+    lmemcpy( (void FAR *)buffer, strPtr, len );
     buffer[len] = '\0';
     return len;
 }
