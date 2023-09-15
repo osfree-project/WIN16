@@ -4,7 +4,7 @@
 # author
 #
 
-DIRS = cards commdlg ddeml lzexpand shell toolhelp
+DIRS = cards commdlg ddeml lzexpand toolhelp # shell
 
 !include $(%ROOT)tools/mk/all.mk
 

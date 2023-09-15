@@ -537,6 +537,456 @@ int FAR PASCAL WEP( int nParameter )
   return( 1 );
 }
 
+#pragma pack(push, 1)
+
+#define IMAGE_DOS_SIGNATURE     0x5A4D
+#define IMAGE_OS2_SIGNATURE     0x454E
+
+/* Header shared by DOS, Win16, Win32, and Win64 executables */
+typedef struct _IMAGE_DOS_HEADER {
+    WORD    e_magic;
+    WORD    e_cblp;
+    WORD    e_cp;
+    WORD    e_crlc;
+    WORD    e_cparhdr;
+    WORD    e_minalloc;
+    WORD    e_maxalloc;
+    WORD    e_ss;
+    WORD    e_sp;
+    WORD    e_csum;
+    WORD    e_ip;
+    WORD    e_cs;
+    WORD    e_lfarlc;
+    WORD    e_ovno;
+    WORD    e_res[4];
+    WORD    e_oemid;
+    WORD    e_oeminfo;
+    WORD    e_res2[10];
+    LONG    e_lfanew;
+} IMAGE_DOS_HEADER;
+typedef IMAGE_DOS_HEADER FAR * LPIMAGE_DOS_HEADER;
+
+/* Header for OS/2 executables */
+typedef struct _IMAGE_OS2_HEADER {
+    WORD    ne_magic;
+    char    ne_ver;
+    char    ne_rev;
+    WORD    ne_enttab;
+    WORD    ne_cbenttab;
+    LONG    ne_crc;
+    WORD    ne_flags;
+    WORD    ne_autodata;
+    WORD    ne_heap;
+    WORD    ne_stack;
+    LONG    ne_csip;
+    LONG    ne_sssp;
+    WORD    ne_cseg;
+    WORD    ne_cmod;
+    WORD    ne_cbnrestab;
+    WORD    ne_segtab;
+    WORD    ne_rsrctab;
+    WORD    ne_restab;
+    WORD    ne_modtab;
+    WORD    ne_imptab;
+    LONG    ne_nrestab;
+    WORD    ne_cmovent;
+    WORD    ne_align;
+    WORD    ne_cres;
+    BYTE    ne_exetyp;
+    BYTE    ne_flagsothers;
+    WORD    ne_pretthunks;
+    WORD    ne_psegrefbytes;
+    WORD    ne_swaparea;
+    WORD    ne_expver;
+} IMAGE_OS2_HEADER;
+typedef IMAGE_OS2_HEADER FAR * LPIMAGE_OS2_HEADER;
+
+typedef struct
+{
+    BYTE        bWidth;          /* Width, in pixels, of the image	*/
+    BYTE        bHeight;         /* Height, in pixels, of the image	*/
+    BYTE        bColorCount;     /* Number of colors in image (0 if >=8bpp) */
+    BYTE        bReserved;       /* Reserved ( must be 0)		*/
+    WORD        wPlanes;         /* Color Planes			*/
+    WORD        wBitCount;       /* Bits per pixel			*/
+    DWORD       dwBytesInRes;    /* How many bytes in this resource?	*/
+    DWORD       dwImageOffset;   /* Where in the file is this image?	*/
+} icoICONDIRENTRY, FAR * LPicoICONDIRENTRY;
+
+typedef struct
+{
+    WORD            idReserved;   /* Reserved (must be 0) */
+    WORD            idType;       /* Resource Type (RES_ICON or RES_CURSOR) */
+    WORD            idCount;      /* How many images */
+    icoICONDIRENTRY idEntries[1]; /* An entry for each image (idCount of 'em) */
+} icoICONDIR, FAR * LPicoICONDIR;
+
+typedef struct
+{
+    WORD offset;
+    WORD length;
+    WORD flags;
+    WORD id;
+    WORD handle;
+    WORD usage;
+} NE_NAMEINFO;
+
+typedef struct
+{
+    WORD  type_id;
+    WORD  count;
+    DWORD resloader;
+} NE_TYPEINFO;
+
+#define NE_RSCTYPE_ICON        0x8003
+#define NE_RSCTYPE_GROUP_ICON  0x800e
+
+typedef struct
+{
+    BYTE   bWidth;
+    BYTE   bHeight;
+    BYTE   bColorCount;
+    BYTE   bReserved;
+} ICONRESDIR;
+
+typedef struct
+{
+    WORD   wWidth;
+    WORD   wHeight;
+} CURSORDIR;
+
+typedef struct
+{   union
+    { ICONRESDIR icon;
+      CURSORDIR  cursor;
+    } ResInfo;
+    WORD   wPlanes;
+    WORD   wBitCount;
+    DWORD  dwBytesInRes;
+    WORD   wResId;
+} CURSORICONDIRENTRY;
+
+typedef struct
+{
+    WORD                idReserved;
+    WORD                idType;
+    WORD                idCount;
+    CURSORICONDIRENTRY  idEntries[1];
+} CURSORICONDIR;
+
+typedef struct {
+    BYTE bWidth;
+    BYTE bHeight;
+    BYTE bColorCount;
+    BYTE bReserved;
+    WORD xHotspot;
+    WORD yHotspot;
+    DWORD dwDIBSize;
+    DWORD dwDIBOffset;
+} CURSORICONFILEDIRENTRY;
+
+typedef struct
+{
+    WORD                idReserved;
+    WORD                idType;
+    WORD                idCount;
+    CURSORICONFILEDIRENTRY  idEntries[1];
+} CURSORICONFILEDIR;
+
+#pragma pack(pop)
+
+/*************************************************************************
+ *                      ICO_GetIconDirectory
+ *
+ * Reads .ico file and build phony ICONDIR struct
+ */
+static BYTE FAR * ICO_GetIconDirectory( LPBYTE peimage, LPicoICONDIR FAR * lplpiID, ULONG *uSize )
+{
+	CURSORICONFILEDIR FAR *lpcid;	/* icon resource in resource-dir format */
+	CURSORICONDIR FAR * lpID;		/* icon resource in resource format */
+	int		i;
+
+	//TRACE("%p %p\n", peimage, lplpiID);
+
+	lpcid = (CURSORICONFILEDIR FAR *)peimage;
+
+	if( lpcid->idReserved || (lpcid->idType != 1) || (!lpcid->idCount) )
+	  return 0;
+
+	/* allocate the phony ICONDIR structure */
+        *uSize = FIELD_OFFSET(CURSORICONDIR, idEntries[lpcid->idCount]);
+	if( (lpID = GlobalAllocPtr(GPTR, *uSize) ))
+	{
+	  /* copy the header */
+	  lpID->idReserved = lpcid->idReserved;
+	  lpID->idType = lpcid->idType;
+	  lpID->idCount = lpcid->idCount;
+
+	  /* copy the entries */
+	  for( i=0; i < lpcid->idCount; i++ )
+	  {
+            lmemcpy(&lpID->idEntries[i], &lpcid->idEntries[i], sizeof(CURSORICONDIRENTRY) - 2);
+	    lpID->idEntries[i].wResId = i;
+	  }
+
+	  *lplpiID = (LPicoICONDIR)peimage;
+	  return (BYTE *)lpID;
+	}
+	return 0;
+}
+
+/*************************************************************************
+ *                      ICO_LoadIcon
+ */
+static BYTE FAR * ICO_LoadIcon( LPBYTE peimage, LPicoICONDIRENTRY lpiIDE, ULONG FAR * uSize)
+{
+//	TRACE("%p %p\n", peimage, lpiIDE);
+
+	*uSize = lpiIDE->dwBytesInRes;
+	return peimage + lpiIDE->dwImageOffset;
+}
+
+/*************************************************************************
+ *				USER32_GetResourceTable
+ */
+static DWORD USER32_GetResourceTable(LPBYTE peimage,DWORD pesize,LPBYTE FAR *retptr)
+{
+	LPIMAGE_DOS_HEADER	mz_header;
+
+//	TRACE("%p %p\n", peimage, retptr);
+
+	*retptr = NULL;
+
+	mz_header = (LPIMAGE_DOS_HEADER) peimage;
+
+	if (mz_header->e_magic != IMAGE_DOS_SIGNATURE)
+	{
+	  if (mz_header->e_cblp == 1)	/* .ICO file ? */
+	  {
+	    *retptr = (LPBYTE)-1;	/* ICONHEADER.idType, must be 1 */
+	    return 1;
+	  }
+	  else
+	    return 0; /* failed */
+	}
+	if (mz_header->e_lfanew >= pesize) {
+	    return 0; /* failed, happens with PKZIP DOS Exes for instance. */
+	}
+	//if (*((DWORD*)(peimage + mz_header->e_lfanew)) == IMAGE_NT_SIGNATURE )
+//	  return IMAGE_NT_SIGNATURE;
+
+	if (*((WORD FAR *)(peimage + mz_header->e_lfanew)) == IMAGE_OS2_SIGNATURE )
+	{
+	  LPIMAGE_OS2_HEADER	ne_header;
+
+	  ne_header = (LPIMAGE_OS2_HEADER)(peimage + mz_header->e_lfanew);
+
+	  if (ne_header->ne_magic != IMAGE_OS2_SIGNATURE)
+	    return 0;
+
+	  if( (ne_header->ne_restab - ne_header->ne_rsrctab) <= sizeof(NE_TYPEINFO) )
+	    *retptr = (LPBYTE)-1;
+	  else
+	    *retptr = peimage + mz_header->e_lfanew + ne_header->ne_rsrctab;
+
+	  return IMAGE_OS2_SIGNATURE;
+	}
+	return 0; /* failed */
+}
+
+/***********************************************************************
+ *           PrivateExtractIconsA			[USER32.@]
+ */
+
+UINT WINAPI PrivateExtractIconsA (
+	LPCSTR lpszExeFileName,
+	int nIconIndex,
+	UINT cxDesired,
+	UINT cyDesired,
+	HICON * RetPtr, /* [out] pointer to array of nIcons HICON handles */
+	UINT * pIconId,  /* [out] pointer to array of nIcons icon identifiers or NULL */
+	UINT nIcons,    /* [in] number of icons to retrieve */
+	UINT flags )    /* [in] LR_* flags used by LoadImage */
+{
+//	TRACE("%s %d %dx%d %p %p %d 0x%08x\n",
+//	      debugstr_w(lpwstrFile), nIndex, sizeX, sizeY, phicon, pIconId, nIcons, flags);
+
+//	if ((nIcons & 1) && HIWORD(sizeX) && HIWORD(sizeY))
+//	{
+//	  WARN("Uneven number %d of icons requested for small and large icons!\n", nIcons);
+	//}
+	//return ICO_ExtractIconExW(lpwstrFile, phicon, nIndex, nIcons, sizeX, sizeY, pIconId, flags);
+/*************************************************************************
+ *	ICO_ExtractIconExW		[internal]
+ *
+ * NOTES
+ *  nIcons = 0: returns number of Icons in file
+ *
+ * returns
+ *  invalid file: -1
+ *  failure:0;
+ *  success: number of icons in file (nIcons = 0) or nr of icons retrieved
+ */
+//static UINT ICO_ExtractIconExW(
+//	LPCSTR lpszExeFileName,
+//	HICON * RetPtr,
+//	INT nIconIndex,
+//	UINT nIcons,
+//	UINT cxDesired,
+//	UINT cyDesired,
+//	UINT *pIconId,
+//	UINT flags)
+//{
+	UINT		ret = 0;
+	UINT		cx1, cx2, cy1, cy2;
+	LPBYTE		pData;
+	DWORD		sig;
+	HANDLE		hFile;
+	UINT		iconDirCount = 0,iconCount = 0;
+	LPBYTE		peimage;
+	HANDLE		fmapping;
+	DWORD		fsizeh,fsizel;
+    char		szExePath[MAX_PATH];
+    DWORD		dwSearchReturn;
+
+//	TRACE("%s, %d, %d %p 0x%08x\n", debugstr_w(lpszExeFileName), nIconIndex, nIcons, pIconId, flags);
+
+        dwSearchReturn = SearchPath(NULL, lpszExeFileName, NULL, ARRAY_SIZE(szExePath), szExePath, NULL);
+        if ((dwSearchReturn == 0) || (dwSearchReturn > ARRAY_SIZE(szExePath)))
+        {
+            //WARN("File %s not found or path too long\n", debugstr_w(lpszExeFileName));
+            return -1;
+        }
+
+	hFile = CreateFile(szExePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
+	if (hFile == INVALID_HANDLE_VALUE) return ret;
+	fsizel = GetFileSize(hFile,&fsizeh);
+
+	/* Map the file */
+	fmapping = CreateFileMapping(hFile, NULL, PAGE_READONLY | SEC_COMMIT, 0, 0, NULL);
+	CloseHandle(hFile);
+	if (!fmapping)
+	{
+          //WARN("CreateFileMapping error %ld\n", GetLastError() );
+	  return 0xFFFF;
+	}
+
+	if (!(peimage = MapViewOfFile(fmapping, FILE_MAP_READ, 0, 0, 0)))
+	{
+          //WARN("MapViewOfFile error %ld\n", GetLastError() );
+	  CloseHandle(fmapping);
+	  return 0xFFFF;
+	}
+	CloseHandle(fmapping);
+
+	cx1 = LOWORD(cxDesired);
+	cx2 = HIWORD(cxDesired);
+	cy1 = LOWORD(cyDesired);
+	cy2 = HIWORD(cyDesired);
+
+	if (pIconId) /* Invalidate first icon identifier */
+		*pIconId = 0xFFFF;
+
+	if (!pIconId) /* if no icon identifier array present use the icon handle array as intermediate storage */
+	  pIconId = (UINT*)RetPtr;
+
+	sig = USER32_GetResourceTable(peimage, fsizel, &pData);
+
+/* ico file or NE exe/dll*/
+	if (sig==IMAGE_OS2_SIGNATURE || sig==1) /* .ICO file */
+	{
+	  BYTE		*pCIDir = 0;
+	  NE_TYPEINFO	FAR * pTInfo = (NE_TYPEINFO FAR *)(pData + 2);
+	  NE_NAMEINFO	*pIconStorage = NULL;
+	  NE_NAMEINFO	*pIconDir = NULL;
+	  LPicoICONDIR	lpiID = NULL;
+	  ULONG		uSize = 0;
+
+          //TRACE("-- OS2/icon Signature (0x%08lx)\n", sig);
+
+	  if (pData == (BYTE FAR *)-1)
+	  {
+	    pCIDir = ICO_GetIconDirectory(peimage, &lpiID, &uSize);	/* check for .ICO file */
+	    if (pCIDir)
+	    {
+	      iconDirCount = 1; iconCount = lpiID->idCount;
+              //TRACE("-- icon found %p 0x%08lx 0x%08x 0x%08x\n", pCIDir, uSize, iconDirCount, iconCount);
+	    }
+	  }
+	  else while (pTInfo->type_id && !(pIconStorage && pIconDir))
+	  {
+	    if (pTInfo->type_id == NE_RSCTYPE_GROUP_ICON)	/* find icon directory and icon repository */
+	    {
+	      iconDirCount = pTInfo->count;
+	      pIconDir = ((NE_NAMEINFO*)(pTInfo + 1));
+	      //TRACE("\tfound directory - %i icon families\n", iconDirCount);
+	    }
+	    if (pTInfo->type_id == NE_RSCTYPE_ICON)
+	    {
+	      iconCount = pTInfo->count;
+	      pIconStorage = ((NE_NAMEINFO*)(pTInfo + 1));
+	      //TRACE("\ttotal icons - %i\n", iconCount);
+	    }
+	    pTInfo = (NE_TYPEINFO *)((char*)(pTInfo+1)+pTInfo->count*sizeof(NE_NAMEINFO));
+	  }
+
+	  if ((pIconStorage && pIconDir) || lpiID)	  /* load resources and create icons */
+	  {
+	    if (nIcons == 0)
+	    {
+	      ret = iconDirCount;
+              if (lpiID)	/* *.ico file, deallocate heap pointer*/
+	        HeapFree(GetProcessHeap(), 0, pCIDir);
+	    }
+	    else if (nIconIndex < iconDirCount)
+	    {
+	      UINT   i, icon;
+	      if (nIcons > iconDirCount - nIconIndex)
+	        nIcons = iconDirCount - nIconIndex;
+
+	      for (i = 0; i < nIcons; i++)
+	      {
+	        /* .ICO files have only one icon directory */
+	        if (lpiID == NULL)	/* not *.ico */
+	          pCIDir = USER32_LoadResource(peimage, pIconDir + i + nIconIndex, *(WORD*)pData, &uSize);
+	        pIconId[i] = LookupIconIdFromDirectoryEx(pCIDir, TRUE, cx1, cy1, flags);
+                if (cx2 && cy2) pIconId[++i] = LookupIconIdFromDirectoryEx(pCIDir, TRUE,  cx2, cy2, flags);
+	      }
+              if (lpiID)	/* *.ico file, deallocate heap pointer*/
+	        HeapFree(GetProcessHeap(), 0, pCIDir);
+
+	      for (icon = 0; icon < nIcons; icon++)
+	      {
+	        pCIDir = NULL;
+	        if (lpiID)
+	          pCIDir = ICO_LoadIcon(peimage, lpiID->idEntries + (int)pIconId[icon], &uSize);
+	        else
+	          for (i = 0; i < iconCount; i++)
+	            if (pIconStorage[i].id == ((int)pIconId[icon] | 0x8000) )
+	              pCIDir = USER32_LoadResource(peimage, pIconStorage + i, *(WORD*)pData, &uSize);
+
+	        if (pCIDir)
+                {
+	          RetPtr[icon] = CreateIconFromResourceEx(pCIDir, uSize, TRUE, 0x00030000,
+                                                                 cx1, cy1, flags);
+                  if (cx2 && cy2)
+                      RetPtr[++icon] = CreateIconFromResourceEx(pCIDir, uSize, TRUE, 0x00030000,
+                                                                       cx2, cy2, flags);
+                }
+	        else
+	          RetPtr[icon] = 0;
+	      }
+	      ret = icon;	/* return number of retrieved icons */
+	    }
+	  }
+	}
+/* end ico file */
+
+end:
+	UnmapViewOfFile(peimage);	/* success */
+	return ret;
+
+}
 
 /*************************************************************************
  *			InternalExtractIcon		[SHELL.39]
@@ -560,7 +1010,7 @@ HGLOBAL WINAPI InternalExtractIcon(HINSTANCE hInstance, LPCSTR lpszExeFileName, 
 
 	if (nIconIndex == (UINT)-1)  /* get number of icons */
 	{
-//	  RetPtr[0] = PrivateExtractIconsA(lpszExeFileName, 0, 0, 0, NULL, NULL, 0, LR_DEFAULTCOLOR);
+	  RetPtr[0] = PrivateExtractIconsA(lpszExeFileName, 0, 0, 0, NULL, NULL, 0, LR_DEFAULTCOLOR);
 	}
 	else
 	{
@@ -568,16 +1018,15 @@ HGLOBAL WINAPI InternalExtractIcon(HINSTANCE hInstance, LPCSTR lpszExeFileName, 
 	  HICON FAR *icons;
 
 	  icons = (HICON FAR *)GlobalAllocPtr(GPTR, n * sizeof(*icons));
-//	  ret = PrivateExtractIconsA(lpszExeFileName, nIconIndex,
-//	                             GetSystemMetrics(SM_CXICON),
-//	                             GetSystemMetrics(SM_CYICON),
-//	                             icons, NULL, n, LR_DEFAULTCOLOR);
-	  if ((ret != 0xffffffff) && ret)
+	  ret = PrivateExtractIconsA(lpszExeFileName, nIconIndex,
+	                             GetSystemMetrics(SM_CXICON),
+	                             GetSystemMetrics(SM_CYICON),
+	                             icons, NULL, n, LR_DEFAULTCOLOR);
+	  if ((ret != 0xffff) && ret)
 	  {
 	    int i;
-//	    for (i = 0; i < n; i++) RetPtr[i] = convert_icon_to_16(hInstance, icons[i]);
-	  }
-	  else
+	    for (i = 0; i < n; i++) RetPtr[i] = icons[i];
+	  } else
 	  {
 	    GlobalFree(hRet);
 	    hRet = 0;

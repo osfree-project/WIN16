@@ -1325,7 +1325,7 @@ DWORD WINAPI VerInstallFile( UINT flags,
  */
 UINT WINAPI VerLanguageName( UINT uLang, LPSTR lpszLang, UINT cbLang )
 {
-    // in Windows 3.x country information stored in control.inf file
+    // in Windows 3.x country information stored in setup.inf file
     return 0;
 }
 
