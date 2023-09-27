@@ -56,6 +56,7 @@ BOOL	CALLBACK _export SMMsgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lP
 
 #define IDB_GENERAL		102
 #define IDB_TASK		105
+#define IDB_ADVANCED	106
 
 #define IDD_GENERAL	102		// 'General' dialog
 

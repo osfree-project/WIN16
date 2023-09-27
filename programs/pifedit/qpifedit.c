@@ -32,6 +32,7 @@
 typedef UINT (CALLBACK * COMMDLGHOOKPROC)(HWND, UINT, WPARAM, LPARAM);
 
 BOOL	CALLBACK _export PaneMsgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
+BOOL	CALLBACK _export AdvancedMsgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 VOID	Pane_OnCommand(HWND hWnd, UINT id, HWND hWndCtl, WORD codeNotify);
 BOOL	Pane_OnInitDialog(HWND hWnd, HWND hWndFocus, LPARAM lParam);
 VOID	Pane_OnPaint(HWND hWnd);
@@ -208,6 +209,7 @@ CONTROL aControls[] = {
     { IDD_GENERAL,	IDB_BACKEXEC,	BUTTON },
     { IDD_GENERAL,	IDB_EXCLEXEC,	BUTTON },
     { IDD_GENERAL,	IDB_CLOSEEXIT,	BUTTON },
+    { IDD_GENERAL,	IDB_ADVANCED,	BUTTON },
 
 //{ 0,	IDB_MEMORY,	BUTTON },
 #if 0
@@ -319,40 +321,37 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
     }
 
 
-    if (! (GetWinFlags() & WF_PMODE)) { // Real mode
-	char	szBuf[128];
+	if (! (GetWinFlags() & WF_PMODE)) { // Real mode
+		char	szBuf[128];
 
-	LoadString(hInst, IDS_REALMODE, szBuf, sizeof(szBuf));
-	MessageBox(NULL, szBuf, szAppTitle, MB_OK);
+		LoadString(hInst, IDS_REALMODE, szBuf, sizeof(szBuf));
+		MessageBox(NULL, szBuf, szAppTitle, MB_OK);
 	return (1);
-    }
+	}
 
 // Initialize the COMMDLG OPENFILENAME structure
 
-    memset(&ofn, 0, sizeof(OPENFILENAME));
+	memset(&ofn, 0, sizeof(OPENFILENAME));
 
-    ofn.lStructSize = sizeof(OPENFILENAME);
-    ofn.lpstrFilter = szFilter;
-    ofn.nFilterIndex = 1;
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.lpstrFilter = szFilter;
+	ofn.nFilterIndex = 1;
 
 // Initialize the model PIF
 
-    memset(&pifModel, 0, sizeof(PIF));
-    memset(&pifBackup, 0, sizeof(PIF));
+	memset(&pifModel, 0, sizeof(PIF));
+	memset(&pifBackup, 0, sizeof(PIF));
 
+	hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_QIF));
 
-    hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_QIF));
+	lpfn = MakeProcInstance((FARPROC) PaneMsgProc, hInst);
+	rc = DialogBox(hInst, MAKEINTRESOURCE(IDD_FRAME), NULL, (DLGPROC) lpfn);
+	FreeProcInstance(lpfn);
 
+	if (hFontHelp)
+		DeleteFont(hFontHelp);
 
-
-    lpfn = MakeProcInstance((FARPROC) PaneMsgProc, hInst);
-    rc = DialogBox(hInst, MAKEINTRESOURCE(IDD_FRAME), NULL, (DLGPROC) lpfn);
-    FreeProcInstance(lpfn);
-
-    if (hFontHelp)
-	DeleteFont(hFontHelp);
-
-    return (rc);
+	return (rc);
 } /* WinMain */
 
 
@@ -1240,6 +1239,153 @@ BOOL CALLBACK _export PaneMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 	return (FALSE);
 }
 
+/****************************************************************************
+ *
+ *  FUNCTION :	AdvancedMsgProc(HWND, UINT, WPARAM, LPARAM)
+ *
+ *  PURPOSE  :	Dialog proc for the frame and panes
+ *
+ *  ENTRY    :	HWND	hWndDlg;	// Dialog window handle
+ *		UINT	msg;		// WM_xxx message
+ *		WPARAM	wParam; 	// Message 16-bit parameter
+ *		LPARAM	lParam; 	// Message 32-bit parameter
+ *
+ *  RETURNS  :	Non-zero - Message processed
+ *		Zero	- DefDlgProc() must process the message
+ *
+ ****************************************************************************/
+
+BOOL CALLBACK _export AdvancedMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	char	szBuf[128];
+	WINDOWPLACEMENT wndpl;
+
+	switch (msg) {
+	case WM_ACTIVATEAPP:
+	    fCheckOnKillFocus = (BOOL) wParam;
+	    break;
+
+	case WM_ACTIVATE:
+	    fCheckOnKillFocus = (wParam != WA_INACTIVE);
+	    break;
+
+	case WM_CLOSE:
+	    {
+		if (IDCANCEL == CheckSave(hWnd)) break;
+
+		fCheckOnKillFocus = FALSE;	// Stop checking controls
+
+		if (nActiveDlg) {	// A dialog is still open
+		    SetFocus(hWnd);
+
+		    nActiveDlg = 0;
+		}
+
+		EndDialog(hWnd, IDCANCEL);
+		nActiveDlg = 0;
+	    }
+	    break;
+
+	case WM_COMMAND:
+	    Pane_OnCommand(hWnd, (UINT) wParam, (HWND) LOWORD(lParam), (WORD) HIWORD(lParam));
+	    return (FALSE);
+
+	case WM_CTLCOLOR:
+	    {
+		HDC	hDC = (HDC) wParam;
+		HWND	hWndChild = (HWND) LOWORD(lParam);
+
+		if (GetDlgItem(hWnd, IDD_HELP) != hWndChild) return (NULL);
+
+		switch ((UINT) HIWORD(lParam)) {
+		    case CTLCOLOR_EDIT:
+			SetBkColor(hDC, GetSysColor(COLOR_BTNFACE));
+			return ((BOOL) (WORD) hbrHelp);
+
+		    case CTLCOLOR_MSGBOX:
+			return ((BOOL) (WORD) hbrHelp);
+		}
+
+		return (NULL);
+	    }
+
+	case WM_QUERYENDSESSION:
+
+		memset(&wndpl, 0, sizeof(WINDOWPLACEMENT));
+		wndpl.length = sizeof(WINDOWPLACEMENT);
+		GetWindowPlacement(hWnd, &wndpl);
+
+		wsprintf( szBuf, "%d %d", wndpl.rcNormalPosition.left,
+			wndpl.rcNormalPosition.top );
+
+		WritePrivateProfileString( szAppName,	// Section name
+			"Position", (LPSTR) &szBuf, PROFILE );
+
+		// this _should_ return 1, but Windows fails to close if it
+		//   does!!
+		return 0;
+
+	case WM_DESTROY:
+	    {
+		char	szBuf[128];
+		WINDOWPLACEMENT wndpl;
+
+		if (hbrHelp) { DeleteBrush(hbrHelp);  hbrHelp = NULL; }
+
+#if 0
+
+		memset(&wndpl, 0, sizeof(WINDOWPLACEMENT));
+		wndpl.length = sizeof(WINDOWPLACEMENT);
+		GetWindowPlacement(hWnd, &wndpl);
+
+		wsprintf( szBuf, "%d %d", wndpl.rcNormalPosition.left,
+			wndpl.rcNormalPosition.top );
+
+		WritePrivateProfileString(
+				    szAppName,	// Section name
+				    "Position", // Window position
+				    (LPSTR) &szBuf,	// New text
+				    PROFILE		// Profile filename
+				    );
+					#endif
+		return (FALSE);
+	    }
+
+	case WM_SIZE:
+	    if (wParam == SIZE_MINIMIZED) {
+			//SetWindowText(hWnd, APPNAME);
+	    } else if (wParam == SIZE_MAXIMIZED || wParam == SIZE_RESTORED) {
+			//SetWindowText(hWnd, szWindowTitle);
+	    }
+
+	    return (FALSE);		// Requires default processing
+
+	case WM_ERASEBKGND:
+	    if (IsIconic(hWnd)) {
+		return (TRUE);		// Pretend we erased it
+	    } else {
+		return (FALSE); 	// We didn't erase anything
+	    }
+
+	//case WM_INITDIALOG:
+	    //return (Pane_OnInitDialog(hWnd, (HWND) wParam, lParam));
+
+	case WM_PAINT:
+		if (IsIconic(hWnd)) {
+			Pane_OnPaint_Iconic(hWnd);
+		} else {
+			Pane_OnPaint(hWnd);
+		}
+	    return (FALSE);
+
+	case WM_SETFONT:
+	    Pane_OnSetFont(hWnd, (HFONT) wParam, (BOOL) LOWORD(lParam));
+	    return (FALSE);
+	}
+
+	return (FALSE);
+}
+
 
 /****************************************************************************
  *
@@ -1287,26 +1433,37 @@ VOID Pane_OnCommand(HWND hWnd, UINT id, HWND hWndCtl, WORD codeNotify)
 	    break;
 
 	case IDM_H_OVERVIEW:
-	    WinHelp( hWnd, szHelpName, HELP_KEY, (DWORD)((char _far *)HK_OVERVIEW ));
+	    WinHelp( hWnd, szHelpName, HELP_KEY, (DWORD)((char FAR *)HK_OVERVIEW ));
 	    break;
 
 	case IDM_H_SEARCH:
-	    WinHelp( hWnd, szHelpName, HELP_PARTIALKEY, (DWORD)((char _far *)"") );
+	    WinHelp( hWnd, szHelpName, HELP_PARTIALKEY, (DWORD)((char FAR *)"") );
 	    break;
 
 	case IDM_H_TECHSUP:
-	    WinHelp( hWnd, szHelpName, HELP_KEY, (DWORD)((char _far *)HK_TECHS) );
+	    WinHelp( hWnd, szHelpName, HELP_KEY, (DWORD)((char FAR *)HK_TECHS) );
 	    break;
 
 	/* show "about" box */
 	case IDM_H_ABOUT:
-		ShellAbout(hWnd, szAppTitle, "", 0);
+		ShellAbout(hWnd, szAppTitle, "Copyright © 1992, 1993 Qualitas, Inc.\n\r\Copyright © 2013 osFree. GPLv3.", 0);
 		break;
 
 	case IDB_RUNPIF:
 	    TestPIF();
 	    SetFocus(GetDlgItem(hWnd, (nActiveDlg % 10) * 100));
 	    break;
+
+	case IDB_ADVANCED:
+	{
+		FARPROC lpfn;
+		int rc;	
+		
+		lpfn = MakeProcInstance((FARPROC) AdvancedMsgProc, hInst);
+		rc = DialogBox(hInst, MAKEINTRESOURCE(IDD_ADVFRAME), NULL, (DLGPROC) lpfn);
+		FreeProcInstance(lpfn);
+		break;
+	}
 
 	case IDB_GENERAL:
 	case IDB_TASK:
@@ -1661,12 +1818,12 @@ VOID Pane_OnPaint(HWND hWnd)
     }
 
 // Paint the bottom right shadow on the border
-    SelectObject(hDC, hPenWhite);
+	SelectObject(hDC, hPenWhite);
 
-    for (i = 0; i < EDITBORDER - EDITWASTE; i++) {
-	MoveTo(hDC, rect.left+i, rect.bottom-i-1);
-	LineTo(hDC, rect.right-i-1, rect.bottom-i-1);
-	LineTo(hDC, rect.right-i-1, rect.top+i);
+	for (i = 0; i < EDITBORDER - EDITWASTE; i++) {
+		MoveTo(hDC, rect.left+i, rect.bottom-i-1);
+		LineTo(hDC, rect.right-i-1, rect.bottom-i-1);
+		LineTo(hDC, rect.right-i-1, rect.top+i);
     }
 
     SelectObject(hDC, hPenOld);
