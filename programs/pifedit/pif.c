@@ -11,10 +11,12 @@
 
 #include <string.h>		// For memset
 
-#include "qpifedit.h"
+#include "main.h"
 
-extern PIF	pifModel;	// Complete 545-byte .PIF image
-extern PIF	pifBackup;	// Complete 545-byte .PIF image before editing
+extern PIFEDIT_GLOBALS Globals;
+
+//extern PIF	pifModel;	// Complete 545-byte .PIF image
+//extern PIF	pifBackup;	// Complete 545-byte .PIF image before editing
 
 /****************************************************************************
  *
@@ -55,65 +57,65 @@ BYTE ComputePIFChecksum(PPIF pPIF)		// Checksum the PIFHDR
 
 VOID DefaultPIF(VOID)
 {
-    memset(&pifModel, 0, sizeof(PIF));
+    memset(&Globals.pifModel, 0, sizeof(PIF));
 
-    lstrcpy(pifModel.pifSigEX.Signature, "MICROSOFT PIFEX");
-    pifModel.pifSigEX.DataOff = 0;					// 0000
-    pifModel.pifSigEX.DataLen = sizeof(PIFHDR); 			// 0171
-    pifModel.pifSigEX.NextOff = sizeof(PIFHDR) + sizeof(PIFSIG);	// 0187
+    lstrcpy(Globals.pifModel.pifSigEX.Signature, "MICROSOFT PIFEX");
+    Globals.pifModel.pifSigEX.DataOff = 0;					// 0000
+    Globals.pifModel.pifSigEX.DataLen = sizeof(PIFHDR); 			// 0171
+    Globals.pifModel.pifSigEX.NextOff = sizeof(PIFHDR) + sizeof(PIFSIG);	// 0187
 
-    lstrcpy(pifModel.pifSig286.Signature, "WINDOWS 286 3.0");
-    pifModel.pifSig286.DataOff = pifModel.pifSigEX.NextOff + sizeof(PIFSIG);
-    pifModel.pifSig286.DataLen = sizeof(PIF286);
-    pifModel.pifSig286.NextOff = sizeof(PIFHDR) + 2*sizeof(PIFSIG)+ sizeof(PIF286);
+    lstrcpy(Globals.pifModel.pifSig286.Signature, "WINDOWS 286 3.0");
+    Globals.pifModel.pifSig286.DataOff = Globals.pifModel.pifSigEX.NextOff + sizeof(PIFSIG);
+    Globals.pifModel.pifSig286.DataLen = sizeof(PIF286);
+    Globals.pifModel.pifSig286.NextOff = sizeof(PIFHDR) + 2*sizeof(PIFSIG)+ sizeof(PIF286);
 
-    lstrcpy(pifModel.pifSig386.Signature, "WINDOWS 386 3.0");
-    pifModel.pifSig386.DataOff = pifModel.pifSig286.NextOff + sizeof(PIFSIG);
-    pifModel.pifSig386.DataLen = sizeof(PIF386);
-    pifModel.pifSig386.NextOff = 0xFFFF;
+    lstrcpy(Globals.pifModel.pifSig386.Signature, "WINDOWS 386 3.0");
+    Globals.pifModel.pifSig386.DataOff = Globals.pifModel.pifSig286.NextOff + sizeof(PIFSIG);
+    Globals.pifModel.pifSig386.DataLen = sizeof(PIF386);
+    Globals.pifModel.pifSig386.NextOff = 0xFFFF;
 
-    pifModel.pifHdr.Title[0] = '\0';
-    pifModel.pifHdr.PgmName[0] = '\0';
-    pifModel.pifHdr.StartupDir[0] = '\0';
-    pifModel.pifHdr.CmdLineS[0] = '\0';
+    Globals.pifModel.pifHdr.Title[0] = '\0';
+    Globals.pifModel.pifHdr.PgmName[0] = '\0';
+    Globals.pifModel.pifHdr.StartupDir[0] = '\0';
+    Globals.pifModel.pifHdr.CmdLineS[0] = '\0';
 
 // TopView fields
-    pifModel.pifHdr.ScreenType = 0x7F;		// Windows doesn't use this
-    pifModel.pifHdr.ScreenPages = 1;		// # of screen pages
-    pifModel.pifHdr.IntVecLow = 0;		// Low	bound of INT vectors
-    pifModel.pifHdr.IntVecHigh = 255;		// High bound of INT vectors
+    Globals.pifModel.pifHdr.ScreenType = 0x7F;		// Windows doesn't use this
+    Globals.pifModel.pifHdr.ScreenPages = 1;		// # of screen pages
+    Globals.pifModel.pifHdr.IntVecLow = 0;		// Low	bound of INT vectors
+    Globals.pifModel.pifHdr.IntVecHigh = 255;		// High bound of INT vectors
 
-    pifModel.pifHdr.ScrnRows = 25;		// Windows doesn't use this
-    pifModel.pifHdr.ScrnCols = 80;		// Windows doesn't use this
+    Globals.pifModel.pifHdr.ScrnRows = 25;		// Windows doesn't use this
+    Globals.pifModel.pifHdr.ScrnCols = 80;		// Windows doesn't use this
 //  pifModel.pifHdr.RowOffs = 80;		// Windows doesn't use this
 //  pifModel.pifHdr.ColOffs = 80;		// Windows doesn't use this
 
-    pifModel.pifHdr.SystemMem = 7;		// 7 - text, 23 - graphics
+    Globals.pifModel.pifHdr.SystemMem = 7;		// 7 - text, 23 - graphics
 
-    pifModel.pifHdr.DosMaxS = 640;
-    pifModel.pifHdr.DosMinS = 128;
-    pifModel.pifHdr.Flags1 = 0x10;		// Close window on exit
+    Globals.pifModel.pifHdr.DosMaxS = 640;
+    Globals.pifModel.pifHdr.DosMinS = 128;
+    Globals.pifModel.pifHdr.Flags1 = 0x10;		// Close window on exit
 
-    pifModel.pif386.DosMax = 640;
-    pifModel.pif386.DosMin = 128;
+    Globals.pifModel.pif386.DosMax = 640;
+    Globals.pifModel.pif386.DosMin = 128;
 
-    pifModel.pif386.ForePrio = 100;
-    pifModel.pif386.BackPrio = 50;
+    Globals.pifModel.pif386.ForePrio = 100;
+    Globals.pifModel.pif386.BackPrio = 50;
 
-    pifModel.pif386.EmsMax = 1024;
-    pifModel.pif386.EmsMin = 0;
-    pifModel.pif386.XmsMax = 1024;
-    pifModel.pif386.XmsMin = 0;
+    Globals.pifModel.pif386.EmsMax = 1024;
+    Globals.pifModel.pif386.EmsMin = 0;
+    Globals.pifModel.pif386.XmsMax = 1024;
+    Globals.pifModel.pif386.XmsMin = 0;
 
-    pifModel.pif386.WinFlags = 0x08;		// Fullscreen
-    pifModel.pif386.TaskFlags = 0x0200 | 0x0010; // Allow faste paste
+    Globals.pifModel.pif386.WinFlags = 0x08;		// Fullscreen
+    Globals.pifModel.pif386.TaskFlags = 0x0200 | 0x0010; // Allow faste paste
 						// Detect idle time
-    pifModel.pif386.VidFlags = 0x1F;		// Video mode text
+    Globals.pifModel.pif386.VidFlags = 0x1F;		// Video mode text
 						// Emulate text mode
 						// No monitor ports
-    pifModel.pif386.CmdLine3[0] = '\0';
+    Globals.pifModel.pif386.CmdLine3[0] = '\0';
 
-    pifModel.pifHdr.CheckSum = ComputePIFChecksum(&pifModel);
+    Globals.pifModel.pifHdr.CheckSum = ComputePIFChecksum(&Globals.pifModel);
 
 }
 
@@ -132,7 +134,7 @@ VOID DefaultPIF(VOID)
 
 VOID SnapPif(VOID)
 {
-    memcpy(&pifBackup, &pifModel, sizeof(PIF));
+    memcpy(&Globals.pifBackup, &Globals.pifModel, sizeof(PIF));
 }
 
 /****************************************************************************
@@ -173,7 +175,7 @@ int WritePIF(HWND hWndDlg, LPSTR lpszPIFName)
 
 	ControlsToPIF(hWndDlg);
 
-	rc = _lwrite(hFilePIF, (LPVOID) (PPIF) &pifModel, sizeof(PIF));
+	rc = _lwrite(hFilePIF, (LPVOID) (PPIF) &Globals.pifModel, sizeof(PIF));
 	if (rc != sizeof(PIF)) {
 	    DebugPrintf("SavePIF() _lwrite(hFilePIF, (LPVOID) (PPIF) &pifModel, sizeof(PIF)) failed %d\r\n", rc);
 	    rc = IDABORT;  goto WRITEPIF_EXIT;

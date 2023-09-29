@@ -68,12 +68,15 @@ typedef struct _PIFHDR {	// Windows 2.x section taken from TopView
 				//	0x40 Run in foreground (TopView)
 				//	0x20 Uses math co-processor (TopView)
 				//	0x10 Modify keyboard /S
-    BYTE	SystemFlags;	// 170: TopView behavior bits
+	BYTE	SystemFlags;	// 170: TopView behavior bits
 				//	0x20 Swap interrupt vectors
 				//	0x40 Uses parameters
 				// 171:
 } PIFHDR, * PPIFHDR, FAR * LPPIFHDR;
 
+// NOTE!! Maximum whole file size is 03ffh for Windows 3.x and Windows NT 3.x series!!
+
+// Sig				Size	Desc
 //MICROSOFT PIFEX	0171h	The basic section, all OS
 //WINDOWS 286 3.0	0006h	Windows 3.X in standard mode
 //WINDOWS 386 3.0	0068h	Windows 3.X in enhanced mode, 95, 98, NT, 2000
@@ -84,13 +87,13 @@ typedef struct _PIFHDR {	// Windows 2.x section taken from TopView
 //AUTOEXECBAT 4.0	Variable	Windows 95, 98
 
 typedef struct _PIFSIG {
-    char	Signature[16];	// 00: "MICROSOFT PIFEX", 0
+	char	Signature[16];	// 00: "MICROSOFT PIFEX", 0
 				// 00: "WINDOWS 286 3.0", 0
 				// 00: "WINDOWS 386 3.0", 0
 				// 00: "WINDOWS VMM 4.0", 0
-    WORD	NextOff;	// 10: Lseek offset to next signature, or -1
-    WORD	DataOff;	// 12: Lseek offset to data section
-    WORD	DataLen;	// 14: Length of data section
+	WORD	NextOff;	// 10: Lseek offset to next signature, or -1
+	WORD	DataOff;	// 12: Lseek offset to data section
+	WORD	DataLen;	// 14: Length of data section
 				// 16:
 } PIFSIG, * PPIFSIG, FAR * LPPIFSIG;
 
@@ -199,13 +202,91 @@ typedef struct _PIF386 {
 				// 68:
 } PIF386, * PPIF386, FAR * LPPIF386;
 
+typedef struct _PIFVMM4 {
+	BYTE	unk1[88];		// 0000h 	88	00...0000h 	  	Unknown 	  	  	  	  	  	 
+	char	iconfile[80];	// 0058h 	80	PIFMGR.DLL 	  	Name of the file containing an icon 	  	  	  	95 	NT 	ANSI character set, long filename without quotes, can contain a complete path, is trailed by a null symbol.
+	WORD	iconnumber;		// 00A8h 	2	0000h 	  	Number of an icon 	  	  	  	95 	NT 	The first icon in a file has number 0.
+	WORD	runinback;		//00AAh 	2	0002h 		0002h 	Continue to run in background mode 	  	  	  	95 	NT 	Bit mask.
+														//0010h 	Not warn on exit 	  	  	  	95 	NT
+														// 0020h 	Disallow Screen Saver 	  	  	  	95 	NT
+	BYTE	unk2[10];		//00ACh 	10 	00...0000h 	  	Unknown 	  	  	  	  	  	 
+	WORD	priority;		//00B6h 	2 	0032h 	  	Priority 	  	  	  	95 	NT 	Number from 0 up to 100, 0 - maximal priority, 100 - minimal.
+	WORD	VRAMEmulation;	//00B8h 	2 	0001h 	0001h 	Video-ROM emulation 	  	  	  	95 	NT 	Bit mask.
+								//0080h 	Do not dynamically allocate video memory 	  	  	  	95 	NT
+								//0100h 	Full-screen mode 	  	  	  	95 	NT
+	BYTE	unk3[8];		//00BAh 	8 	00...0000h 	  	Unknown 	  	  	  	  	  	 
+	WORD	lines;			////00C2h 	2 	0000h 	  	Number of text lines in a window 	  	  	  	95 	  	Auto - 0, or appropriate number (25, 43 or 50).
+	WORD	Flags;			//00C4h 	2 	0001h 	0001h 	Fast paste 	  	  	  	95 	NT 	Bit mask.
+								//0020h 	Not use Alt+Tab 	  	  	  	95 	NT
+								//0040h 	Not use Alt+Esc 	  	  	  	95 	NT
+								//0080h 	Not use Alt+Space 	  	  	  	95 	NT
+								//0100h 	Not use Alt+Enter 	  	  	  	95 	NT
+								//0200h 	Not use Alt+PrtSc 	  	  	  	95 	NT
+								//0400h 	Not use PrtSc 	  	  	  	95 	NT
+								//0800h 	Not use Ctrl+Esc 	  	  	  	95 	NT
+	WORD	unk4;			//00C6h 	2 	0000h 	  	Unknown 	  	  	  	  	  	 
+	WORD	unk5;			//00C8h 	2 	0005h 	  	Unknown 	  	  	  	95 	NT 	 
+	WORD	unk6;			//00CAh 	2 	0019h 	  	Unknown 	  	  	  	95 	NT 	 
+	WORD	unk7;			//00CCh 	2 	0003h 	  	Unknown 	  	  	  	95 	NT 	 
+	WORD	unk8;			//00CEh 	2 	00C8h 	  	Unknown 	  	  	  	95 	NT 	 
+	WORD	unk9;			//00D0h 	2 	03E8h 	  	Unknown 	  	  	  	95 	NT 	 
+	WORD	unk10;			//00D2h 	2 	0002h 	  	Unknown 	  	  	  	95 	NT 	 
+	WORD	unk11;			//00D4h 	2 	000Ah 	  	Unknown 	  	  	  	95 	NT 	 
+	WORD	MouseFlags;		//00D6h 	2 	0001h 	0001h 	Not use the mouse for selection 	  	  	  	95 	  	Bit mask.
+								//0002h 	Exclusive use of the mouse 	  	  	  	95 	NT
+	BYTE	unk12[6];		//00D8h 	6 	00...0000h 	  	Unknown 	  	  	  	  	  	 
+	WORD	FontFlags;		//00DEh 	2 	001Ch 	0004h 	Use raster fonts 	  	  	  	95 	NT 	Bit mask.
+								//0008h 	Use TrueType fonts 	  	  	  	95 	NT
+								//0010h 	Automatically choose the font size 	  	  	  	95 	NT
+								//0400h 	The current font is raster 	  	  	  	95 	NT
+								//0800h 	The current font is TrueType 	  	  	  	95 	NT
+	WORD	unk13;			//00E0h 	2 	0000h 	  	Unknown 	  	  	  	  	  	 
+	WORD	RasterFontHSize;		////00E2h 	2 	0000h 	  	Horizontal size of the current font (only for raster fonts). 	  	  	  	95 	NT 	Auto or TrueType - 0000h, raster font - horizontal size in pixels.
+	WORD	FontVSize;		//00E4h 	2 	0000h 	  	Vertical size of the current font. 	  	  	  	95 	NT 	Auto - any value, otherwise vertical size in pixels.
+	WORD	FontHSize;		//00E6h 	2 	0000h 	  	Horizontal size of the current font. 	  	  	  	95 	NT 	Auto - any value, otherwise horizontal size in pixels.
+	WORD	FontVSize2;		//00E8h 	2 	0000h 	  	Vertical size of the current font. 	  	  	  	95 	NT 	Auto - any value, otherwise vertical size in pixels.
+	char	RasterFont[32];	//00EAh 	32 	Terminal 	  	The name of a raster font 	  	  	  	95 	NT 	Not used, trailed by a null symbol.
+	char	VectorFont[32];	//010Ah 	32 	Lucida Console 	  	The name of a TrueType font 	  	  	  	95 	NT 	Not used, trailed by a null symbol.
+	WORD	unk14;			//012Ah 	2 	04E3h in Windows NT/2000, 0000h in Windows 95/98 	  	Unknown 	  	  	  	  	NT 	 
+	WORD	Flags2;			//012Ch 	2 	0003h 	0001h 	Unknown 	  	  	  	95 	NT 	Bit mask.
+									//0002h 	Show toolbar 	  	  	  	95 	NT
+	WORD	IgnoreSetting;	//012Eh 	2 	0000h 	0001h 	Not restore settings at startup 	  	  	  	95 	NT 	 
+	WORD	ScreenWidth;	//0130h 	2 	0000h 	  	?? The horizontal size of the screen in symbols 	  	  	  	95 	  	After the first start of the program the value becomes equal to 80.
+	WORD	ScreenHeight;	//0132h 	2 	0000h 	  	?? The vertical size of the screen in symbols 	  	  	  	95 	  	After the first start of the program the value becomes equal to 25.
+	WORD	ClientWidthPx;	//0134h 	2 	0000h 	  	The horizontal size of the window client area 	  	  	  	95 	  	In pixels.
+	WORD	ClientHeightPx;	//0136h 	2 	0000h 	  	The vertical size of the window client area 	  	  	  	95 	  	In pixels.
+	WORD	WindowWidth;	//0138h 	2 	0000h 	  	The horizontal size of the window 	  	  	  	95 	  	In pixels.
+	WORD	WindowHeight;	//013Ah 	2 	0000h 	  	The vertical size of the window 	  	  	  	95 	  	In pixels.
+	WORD	unk15;			//013Ch 	2 	0016h 	  	Unknown 	  	  	  	95 	NT 	 
+	WORD	LastMaximized;	//013Eh 	2 	0000h 	0002h 	At last start the window was maximized 	  	  	  	95 	  	Bit mask. If the given value is not set, the value at offset 0140h is not interpreted.
+	WORD	LastState;		//0140h 	2 	0001h 	0001h 	At last start the window was of the normal size 	  	  	  	95 	  	Is not a bit mask. The value 0002h is interpreted as the maximized window.
+								//0002h 	At last start the window was minimized 	  	  	  	95 	 
+								//0003h 	At last start the window was maximized 	  	  	  	95 	 
+	WORD	unk16;			//0142h 	2 	FFFFh 	  	Unknown 	  	  	  	95 	  	 
+	WORD	unk17;			//0144h 	2 	FFFFh 	  	Unknown 	  	  	  	95 	  	 
+	WORD	RightPos;		//0146h 	2 	FFFFh 	  	The right window border position in maximized window 	  	  	  	95 	  	In pixels, if the given value is less than or equal to the left border position, and the values at offsets 013Eh, 0140h specify that the window was maximized, it is considered, that the parameters of the window were not saved, and the default values are used.
+	WORD	BottomPos;		//0148h 	2 	FFFFh 	  	The bottom window border position in maximized window 	  	  	  	95 	  	In pixels, if the given value is less than or equal to the top border position, and the values at offsets 013Eh, 0140h specify that the window was maximized, it is considered, that the parameters of the window were not saved, and the default values are used.
+	WORD	LeftPos;		//014Ah 	2 	0000h 	  	Left window border position 	  	  	  	95 	  	In pixels.
+	WORD	TopPos;			//014Ch 	2 	0000h 	  	Top window border position 	  	  	  	95 	  	In pixels.
+	WORD	RightNormPos;	//014Eh 	2 	0000h 	  	The right window border position in normal window 	  	  	  	95 	  	In pixels, if the given value is less than or equal to the left border position, and the values at offsets 013Eh, 0140h specify that the window was not maximized, it is considered, that the parameters of the window were not saved, and the default values are used.
+	WORD	BottonNormPos;	//0150h 	2 	0000h 	  	The bottom window border position in normal window 	  	  	  	95 	  	In pixels, if the given value is less than or equal to the top border position, and the values at offsets 013Eh, 0140h specify that the window was not maximized, it is considered, that the parameters of the window were not saved, and the default values are used.
+	BYTE	unk18[4];		//0152h 	4 	00000000h 	  	Unknown 	  	  	  	  	  	 
+	char	BATName[80];	//0156h 	80 	  	  	Name of the BAT file 	  	  	  	95 	NT 	OEM character set. Can contain a complete path. If the long filename contains spaces, it must be enclosed in quotes. Is trailed by a null symbol.
+	WORD	MemSize;		//01A6h 	2 	0000h 	  	Memory amount for environment 	  	  	  	95 	NT 	Auto - 0, otherwise amount of memory in kilobytes, max - 4096.
+	WORD	DPMIMemSize;	//01A8h 	2 	0000h 	  	Volume of memory DPMI 	  	  	  	95 	NT 	Auto - 0, otherwise amount of memory in kilobytes, max - 16384.
+	WORD	unk19;			//01AAh 	2 	0001h 	  	Unknown 	  	  	  	95 	NT 	 
+} PIFVMM4, * PPIFVMM4, FAR * LPPIFVMM4;
+
 // Hey!!! According docs extra block can be in any order!!!
+// But use less or more standard order.
 typedef struct _PIF {
 	PIFHDR	pifHdr; 	// Old-style .PIF and header
 	PIFSIG	pifSigEX;	// "MICROSOFT PIFEX" signature
 	PIFSIG	pifSig286;	// "WINDOWS 286 3.0" signature
-	PIF286	pif286; 	// Standard mode data
+	PIF286	pif286;		// Standard mode data
 	PIFSIG	pifSig386;	// "WINDOWS 386 3.0" signature
-	PIF386	pif386; 	// Enhanced mode data
+	PIF386	pif386;		// Enhanced mode data
+//	PIFSIG	pifSigVMM3;	// "WINDOWS VMM 4.0" signature
+//	PIFVMM4	pifVMM4; 	// Windows 95 mode data
 } PIF, * PPIF, FAR * LPPIF;
 

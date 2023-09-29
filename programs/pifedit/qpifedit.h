@@ -1,15 +1,12 @@
 /* qpifedit.h - (C) Copyright 1992-93 Qualitas, Inc.  GNU General Public License version 3. */
 
-#include <commdlg.h>
 #include <cderr.h>
-
-#include <pif.h>		// .PIF structure
 
 #define APPNAME 	"PIFEDIT"
 #define PROFILE 	"PIFEDIT.INI"
 
 #define APPTITLE	"PIF Editor"
-#define APPTITLETHE	"PIF Editor"
+//#define APPTITLETHE	"PIF Editor"
 
 #define COMMDLGFAIL_STR "COMMDLG.DLL failure"
 #define NONE_STR	"None"
@@ -20,9 +17,6 @@
     // help keys. These must match topics in Help file.
 #define HK_OVERVIEW	"Qualitas PIF editor overview"
 #define HK_TECHS	"Technical support"
-
-VOID	FAR cdecl DebugPrintf(LPSTR szFormat, ...);
-VOID	FAR cdecl MessageBoxPrintf(LPSTR szFormat, ...);
 
 VOID	StandardModeBitchBox(HWND hWnd);
 
@@ -54,8 +48,8 @@ BOOL	CALLBACK _export SMMsgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lP
 #define IDD_FRAME	101	// Main frame dialog resource
 #define IDD_ADVFRAME	102	// Advanced frame dialog resource
 
-#define IDB_GENERAL		102
-#define IDB_TASK		105
+#define IDB_ENHANCED		102
+#define IDB_STANDARD		105
 #define IDB_ADVANCED	106
 
 #define IDD_GENERAL	102		// 'General' dialog
@@ -158,7 +152,7 @@ BOOL	CALLBACK _export SMMsgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lP
 
 #define IDS_APPNAME		3001
 #define IDS_APPTITLE		3002
-#define IDS_APPTITLETHE 	3003
+//#define IDS_APPTITLETHE 	3003
 
 #define IDS_REGISTER_CLASS	3028
 #define IDS_CREATE_WINDOW	3029

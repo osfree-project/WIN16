@@ -19,9 +19,9 @@
 
 #include <ctype.h>		// For isdigit()
 #include <stdio.h>		// For sscanf()
-#include <stdlib.h>		// For _MAX_DIR, _MAX_DRIVE, _MAX_FNAME, _MAX_EXT, _MAX_PATH, _fullpath, _splitpath, _makepath
 #include <string.h>		// For memset, memcmp, memcpy, strncpy, strchr
 
+#include "main.h"
 #include "qpifedit.h"
 
 #ifndef DEBUG
@@ -66,7 +66,6 @@ VOID	TestPIF(VOID);
 
 VOID	DefaultPIF(VOID);
 int	ControlsFromPIF(PPIF pPIF,  HWND hWnd);
-VOID	ControlsToPIF(HWND hWnd);
 
 BOOL	IsPifFile(LPCSTR lpszFileSpec);
 UINT	CALLBACK _export GetOpenFileNameHookProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -83,57 +82,8 @@ void	MakePathName(char *, char *);
 #define BUTTON_BKGNDCOLOR RGB(0, 128, 128)
 #define ACTIVE_BTN_BORDER_WIDTH 	1
 
-/* Global variables */
+PIFEDIT_GLOBALS Globals;
 
-char	szAppName[20];		// "QpifEdit"
-char	szAppTitle[64]; 	// "Qualitas PIF Editor"
-char	szAppTitleThe[64];	// "The Qualitas PIF Editor"
-char	szIniName[80];
-char	szHelpName[80];
-char	szMaxPath[80];
-char	szUntitled[20]; 	// "<Untitled>"
-char	szFilter[80];		// "PIF Files(*.PIF)\n*.pif\n\0"
-char	szWindowTitle[128] = "";
-
-HINSTANCE hInst;
-
-HICON	hIcon;			// Icon for minimized state
-
-HBRUSH	hbrHelp = NULL;
-HFONT	hFontDlg = NULL;
-
-HFONT	hFontHelp = NULL;
-
-int	nActiveDlg = 0; 	// Active dialog int resource, or zero
-HWND	hWndDlg;
-RECT	rectDlg;		// Used to permanently remember the dialog size
-int	cxDlg, cyDlg;
-
-BOOL	fUntitled = TRUE;	// No .PIF loaded yet
-
-
-PIF	pifModel;	// Complete 545-byte .PIF image
-PIF	pifBackup;	// Complete 545-byte .PIF image before editing
-
-static BOOL fDefDlgEx = FALSE;
-
-OPENFILENAME	ofn;		// For GetOpenFileName() and GetSaveFileName
-
-char	szDirName[256] = { '\0' };
-
-char	szFile[_MAX_PATH];
-char	szExtension[5];
-char	szFileTitle[16];
-
-WORD	wHotkeyScancode = 0;	// 0 indicates 'None'
-BYTE	bHotkeyBits = 0;	//  Bits 24-31 of WM_KEYDOWN
-
-HLOCAL	hPIF = NULL;	// HANDLE to LocalAlloc()'ed .PIF structure
-
-BOOL	fCheckOnKillFocus = TRUE;
-UINT	idHelpCur = 0;
-
-UINT	auDlgHeights[] = {160, 160};
 
 typedef struct tagCONTROL {
 	int	Pane;		// Pane ID
@@ -174,7 +124,7 @@ CONTROL aControls[] = {
 { 0,	IDB_RUNPIF,	BUTTON },
 { 0,	IDD_HELP,	EDIT,	EDIT_NOSEL },
 
-{ 0,	IDB_GENERAL,	BUTTON },
+{ 0,	IDB_ENHANCED,	BUTTON },
     { IDD_GENERAL,	IDT_FILENAME,	LTEXT },
     { IDD_GENERAL,	IDE_FILENAME,	EDIT,	EDIT_TEXT },
     { IDD_GENERAL,	IDT_TITLE,	LTEXT },
@@ -227,7 +177,7 @@ CONTROL aControls[] = {
 #endif
 
 
-{ 0,	IDB_TASK,	BUTTON },
+{ 0,	IDB_STANDARD,	BUTTON },
     { IDD_TASK, IDG_PRIORITY,	GROUP },
     { IDD_TASK, IDT_FOREPRIO,	LTEXT },
     { IDD_TASK, IDE_FOREPRIO,	EDIT,	EDIT_RANGE, 100, 1, 10000, 0 },
@@ -285,71 +235,62 @@ CONTROL aControls[] = {
 
 int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int nCmdShow)
 {
-    FARPROC	lpfn;
-    int 	rc;
-    char	szTemp[ 256 ];
-    DWORD	dwVersion;
+	FARPROC	lpfn;
+	int 	rc;
+	char	szTemp[ 256 ];
+	DWORD	dwVersion;
 
-    hInst = hInstance;
+	/* Setup Globals */
+	memset(&Globals, 0, sizeof (Globals));
+	Globals.hInst = hInstance;
+	lstrcpy(Globals.szWindowTitle, "");
+	Globals.fUntitled = TRUE;
+	Globals.fCheckOnKillFocus = TRUE;
+	//Globals.auDlgHeights = {160, 160};
 
-    LoadString(hInst, IDS_APPNAME, szAppName, sizeof(szAppName));
-    LoadString(hInst, IDS_APPTITLE, szAppTitle, sizeof(szAppTitle));
-    LoadString(hInst, IDS_APPTITLETHE, szAppTitleThe, sizeof(szAppTitleThe));
-    LoadString(hInst, IDS_UNTITLED, szUntitled, sizeof(szUntitled));
+	LoadString(Globals.hInst, IDS_APPNAME, Globals.szAppName, sizeof(Globals.szAppName));
+	LoadString(Globals.hInst, IDS_APPTITLE, Globals.szAppTitle, sizeof(Globals.szAppTitle));
+	LoadString(Globals.hInst, IDS_UNTITLED, Globals.szUntitled, sizeof(Globals.szUntitled));
+	LoadString(Globals.hInst, IDS_FILEMASK, Globals.szFilter, sizeof(Globals.szFilter));
 
-    // set .INI name
-    GetWindowsDirectory( szIniName, 80 );
-    MakePathName( szIniName, "QMAX.INI" );
-
-
-    // get name of .HLP file
-    GetPrivateProfileString( "CONFIG", "Qualitas MAX Path", "c:\\qmax", szMaxPath, 80, szIniName );
-    GetPrivateProfileString( "CONFIG", "Qualitas MAX Help", "maxhelp.hlp", szTemp, 80, szIniName );
-    lstrcpy( szHelpName, szMaxPath );
-    MakePathName( szHelpName, szTemp );
-
-    LoadString(hInst, IDS_FILEMASK, szFilter, sizeof(szFilter));
-
-
-    {
-		PSTR	p = szFilter;
+	{
+		PSTR	p = Globals.szFilter;
 
 		while (*p) {
 			if (*p == '\n') *p = '\0';
 			p++;
 		}
-    }
+	}
 
 
 	if (! (GetWinFlags() & WF_PMODE)) { // Real mode
 		char	szBuf[128];
 
-		LoadString(hInst, IDS_REALMODE, szBuf, sizeof(szBuf));
-		MessageBox(NULL, szBuf, szAppTitle, MB_OK);
+		LoadString(Globals.hInst, IDS_REALMODE, szBuf, sizeof(szBuf));
+		MessageBox(NULL, szBuf, Globals.szAppTitle, MB_OK);
 	return (1);
 	}
 
 // Initialize the COMMDLG OPENFILENAME structure
 
-	memset(&ofn, 0, sizeof(OPENFILENAME));
-
-	ofn.lStructSize = sizeof(OPENFILENAME);
-	ofn.lpstrFilter = szFilter;
-	ofn.nFilterIndex = 1;
+	//memset(&Globals.ofn, 0, sizeof(OPENFILENAME));
+	Globals.ofn.lStructSize = sizeof(OPENFILENAME);
+	Globals.ofn.lpstrFilter = Globals.szFilter;
+	Globals.ofn.nFilterIndex = 1;
 
 // Initialize the model PIF
 
-	memset(&pifModel, 0, sizeof(PIF));
-	memset(&pifBackup, 0, sizeof(PIF));
+//	memset(&pifModel, 0, sizeof(PIF));
+//	memset(&pifBackup, 0, sizeof(PIF));
 
-	hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_QIF));
+	Globals.hIcon = LoadIcon(Globals.hInst, MAKEINTRESOURCE(IDI_QIF));
 
-	lpfn = MakeProcInstance((FARPROC) PaneMsgProc, hInst);
-	rc = DialogBox(hInst, MAKEINTRESOURCE(IDD_FRAME), NULL, (DLGPROC) lpfn);
+	lpfn = MakeProcInstance((FARPROC) PaneMsgProc, Globals.hInst);
+	rc = DialogBox(Globals.hInst, MAKEINTRESOURCE(IDD_FRAME), NULL, (DLGPROC) lpfn);
 	FreeProcInstance(lpfn);
 
-	if (hFontHelp)
-		DeleteFont(hFontHelp);
+	if (Globals.hFontHelp)
+		DeleteFont(Globals.hFontHelp);
 
 	return (rc);
 } /* WinMain */
@@ -377,14 +318,14 @@ int CheckSave(HWND hWnd)
 
     ControlsToPIF(hWnd);
 
-    if (memcmp(&pifModel, &pifBackup, sizeof(PIF))) {	// It's changed
+    if (memcmp(&Globals.pifModel, &Globals.pifBackup, sizeof(PIF))) {	// It's changed
 	char	szFmt[128];
 
-	LoadString(hInst, IDS_SAVECHANGES, szFmt, sizeof(szFmt));
+	LoadString(Globals.hInst, IDS_SAVECHANGES, szFmt, sizeof(szFmt));
 
-	wsprintf(szBuf, szFmt, (LPSTR) (fUntitled ? szUntitled : szFileTitle));
+	wsprintf(szBuf, szFmt, (LPSTR) (Globals.fUntitled ? Globals.szUntitled : Globals.szFileTitle));
 
-	rc = MessageBox(hWnd, szBuf, szAppTitle, MB_YESNOCANCEL);
+	rc = MessageBox(hWnd, szBuf, Globals.szAppTitle, MB_YESNOCANCEL);
 // Returns rc == IDYES, IDNO, or IDCANCEL
 
 	if (rc == IDCANCEL) {		// User pressed CANCEL
@@ -415,21 +356,21 @@ int CheckSave(HWND hWnd)
 void MenuFileNew(BOOL fCheck)
 {
     if (fCheck) {
-	if (CheckSave(hWndDlg) == IDCANCEL)
+	if (CheckSave(Globals.hWndDlg) == IDCANCEL)
 		return;
     }
 
-    lstrcpy(szWindowTitle, szAppTitleThe);
-    lstrcat(szWindowTitle, " - ");
-    lstrcat(szWindowTitle, szUntitled);
+    lstrcpy(Globals.szWindowTitle, Globals.szAppTitle);
+    lstrcat(Globals.szWindowTitle, " - ");
+    lstrcat(Globals.szWindowTitle, Globals.szUntitled);
 
-    SetWindowText(hWndDlg, szWindowTitle);
+    SetWindowText(Globals.hWndDlg, Globals.szWindowTitle);
 
-    fUntitled = TRUE;
+    Globals.fUntitled = TRUE;
 
     DefaultPIF();
 
-    ControlsFromPIF(&pifModel, hWndDlg);
+    ControlsFromPIF(&Globals.pifModel, Globals.hWndDlg);
 // We don't check the return code from ControlFromPIF() because we just
 // created the default PIF models and we should be able to count on something
 
@@ -457,37 +398,37 @@ VOID MenuFileOpen(VOID)
 
 	PPIF	pPIF = NULL;
 
-    rc = CheckSave(hWndDlg);
+    rc = CheckSave(Globals.hWndDlg);
     if (rc == IDCANCEL)
 	goto MENUFILEOPEN_EXIT;
 
 	if (OpenPIF()) {	// Open didn't work
 
 	} else {
-		pPIF = (PPIF)LocalLock(hPIF);
+		pPIF = (PPIF)LocalLock(Globals.hPIF);
 
 		if (!pPIF) {
 			char	szBuf[80];
 
-			LoadString(hInst, IDS_OUTOFMEMORY2 , szBuf, sizeof(szBuf));
-			MessageBox(hWndDlg, szBuf, szAppTitle, MB_OK);
+			LoadString(Globals.hInst, IDS_OUTOFMEMORY2 , szBuf, sizeof(szBuf));
+			MessageBox(Globals.hWndDlg, szBuf, Globals.szAppTitle, MB_OK);
 			goto MENUFILEOPEN_EXIT;
 		}
 
-		rc = ControlsFromPIF(pPIF, hWndDlg);
+		rc = ControlsFromPIF(pPIF, Globals.hWndDlg);
 
 		if (rc) {			// Couldn't set the controls
 			MenuFileNew(FALSE); 	// Don't check old contents
 			goto MENUFILEOPEN_EXIT;
 		}
 
-		ControlsToPIF(hWndDlg);
+		ControlsToPIF(Globals.hWndDlg);
 		SnapPif();
 	}
 
 MENUFILEOPEN_EXIT:
-	if (pPIF) { LocalUnlock(hPIF);  pPIF = NULL; }
-	if (hPIF) { LocalFree(hPIF);  hPIF = NULL; }
+	if (pPIF) { LocalUnlock(Globals.hPIF);  pPIF = NULL; }
+	if (Globals.hPIF) { LocalFree(Globals.hPIF);  Globals.hPIF = NULL; }
 
 	return;
 }
@@ -509,7 +450,7 @@ int MenuFileSave(VOID)
 {
     register int	rc;
 
-    if (szFile[0] == '\0') {    // Untitled, use SaveAs
+    if (Globals.szFile[0] == '\0') {    // Untitled, use SaveAs
 	rc = SaveAsPIF();	// Save didn't work
     } else {
 	rc = SavePIF(); 	// Save didn't work
@@ -599,12 +540,12 @@ VOID CommDlgError(HWND hWnd, DWORD dwErrorCode)
 	    return;
     }
 
-    if (!LoadString(hInst, id , szBuf, sizeof(szBuf))) {
+    if (!LoadString(Globals.hInst, id , szBuf, sizeof(szBuf))) {
 	MessageBox(hWnd, COMMDLGFAIL_STR, NULL, MB_ICONEXCLAMATION);
 	return;
     }
 
-    MessageBox(hWnd, szBuf, szAppTitle, MB_OK);
+    MessageBox(hWnd, szBuf, Globals.szAppTitle, MB_OK);
 }
 
 
@@ -749,10 +690,10 @@ UINT CALLBACK _export GetOpenFileNameHookProc(HWND hWnd, UINT msg, WPARAM wParam
 	} else {
 	    char	szBuf[128], szFmt[128];
 
-	    LoadString(hInst, IDS_NOTVALIDPIF , szFmt, sizeof(szFmt));
+	    LoadString(Globals.hInst, IDS_NOTVALIDPIF , szFmt, sizeof(szFmt));
 	    wsprintf(szBuf, szFmt, (LPSTR) lpofn->lpstrFile);
 	    MessageBeep(MB_ICONEXCLAMATION);
-	    MessageBox(hWnd, szBuf, szAppTitle, MB_ICONEXCLAMATION | MB_OK);
+	    MessageBox(hWnd, szBuf, Globals.szAppTitle, MB_ICONEXCLAMATION | MB_OK);
 	    return (TRUE);
 	}
     }
@@ -792,33 +733,33 @@ int OpenPIF(VOID)
 
     PPIF	pPIF = NULL;
 
-    szFile[0] = '\0';
+    Globals.szFile[0] = '\0';
 
-    ofn.hwndOwner	= hWndDlg;
+    Globals.ofn.hwndOwner	= Globals.hWndDlg;
 
-    ofn.lpstrFile	= szFile;
-    ofn.nMaxFile	= sizeof(szFile);
-    ofn.lpstrFileTitle	= szFileTitle;
-    ofn.nMaxFileTitle	= sizeof(szFileTitle);
-    ofn.lpstrInitialDir = szDirName;
+    Globals.ofn.lpstrFile	= Globals.szFile;
+    Globals.ofn.nMaxFile	= sizeof(Globals.szFile);
+    Globals.ofn.lpstrFileTitle	= Globals.szFileTitle;
+    Globals.ofn.nMaxFileTitle	= sizeof(Globals.szFileTitle);
+    Globals.ofn.lpstrInitialDir = Globals.szDirName;
 
-    ofn.lpstrDefExt	= "PIF";
+    Globals.ofn.lpstrDefExt	= "PIF";
 
-    ofn.Flags		= OFN_PATHMUSTEXIST	|
+    Globals.ofn.Flags		= OFN_PATHMUSTEXIST	|
 			  OFN_FILEMUSTEXIST	|
 			  OFN_HIDEREADONLY	|
 			  OFN_ENABLEHOOK;
 
-    ofn.lpfnHook	= (COMMDLGHOOKPROC) MakeProcInstance((FARPROC) GetOpenFileNameHookProc, hInst);
-    ofn.lCustData	= MAKELPARAM(msgFileOK, 0);
+    Globals.ofn.lpfnHook	= (COMMDLGHOOKPROC) MakeProcInstance((FARPROC) GetOpenFileNameHookProc, Globals.hInst);
+    Globals.ofn.lCustData	= MAKELPARAM(msgFileOK, 0);
 
-    rc = GetOpenFileName(&ofn);
+    rc = GetOpenFileName(&Globals.ofn);
 
-    FreeProcInstance((FARPROC) ofn.lpfnHook);
+    FreeProcInstance((FARPROC) Globals.ofn.lpfnHook);
 
 	if (!rc) {
 		if (CommDlgExtendedError()) {
-			CommDlgError(hWndDlg, CommDlgExtendedError());
+			CommDlgError(Globals.hWndDlg, CommDlgExtendedError());
 			rc = IDABORT;
 		} else {
 			rc = IDCANCEL;
@@ -827,45 +768,45 @@ int OpenPIF(VOID)
 		goto OPENPIF_EXIT;
 	}
 
-    lstrcpy(szWindowTitle, szAppTitleThe);
-    lstrcat(szWindowTitle, " - ");
-    lstrcat(szWindowTitle, szFileTitle);
-    SetWindowText(hWndDlg, szWindowTitle);
+    lstrcpy(Globals.szWindowTitle, Globals.szAppTitle);
+    lstrcat(Globals.szWindowTitle, " - ");
+    lstrcat(Globals.szWindowTitle, Globals.szFileTitle);
+    SetWindowText(Globals.hWndDlg, Globals.szWindowTitle);
 
-    fUntitled = FALSE;
+    Globals.fUntitled = FALSE;
 
-    strncpy(szDirName, szFile, ofn.nFileOffset-1);
-    lstrcpy(szExtension, szFile + ofn.nFileExtension);
+    strncpy(Globals.szDirName, Globals.szFile, Globals.ofn.nFileOffset-1);
+    lstrcpy(Globals.szExtension, Globals.szFile + Globals.ofn.nFileExtension);
 
 /* Switch to the hour glass cursor */
-    SetCapture(hWndDlg);
+    SetCapture(Globals.hWndDlg);
     hCursorOld = SetCursor(LoadCursor(NULL, IDC_WAIT));
 
 /* Open and read the file */
-    DebugPrintf("OpenPIF(): _lopen(%s, OF_READ)\r\n", (LPSTR) szFile);
+    DebugPrintf("OpenPIF(): _lopen(%s, OF_READ)\r\n", (LPSTR) Globals.szFile);
 
-    hFilePIF = _lopen(szFile, OF_READ);
+    hFilePIF = _lopen(Globals.szFile, OF_READ);
 
 	if ((int) hFilePIF == HFILE_ERROR) {	// Can't open the .PIF
 		char	szFmt[80];
 
-		DebugPrintf("OpenPIF() _lopen(%s, OF_READ) failed\r\n", (LPSTR) szFile);
+		DebugPrintf("OpenPIF() _lopen(%s, OF_READ) failed\r\n", (LPSTR) Globals.szFile);
 
-		LoadString(hInst, IDS_CANTOPEN , szFmt, sizeof(szFmt));
-		MessageBoxPrintf(szFmt, (LPSTR) szFile);
+		LoadString(Globals.hInst, IDS_CANTOPEN , szFmt, sizeof(szFmt));
+		MessageBoxPrintf(szFmt, (LPSTR) Globals.szFile);
 		rc = IDABORT;  goto OPENPIF_EXIT;
 	}
 
     dwPIFLen = _llseek(hFilePIF, 0L, SEEK_END);
     _llseek(hFilePIF, 0L, SEEK_SET);
 
-    DebugPrintf("%s filesize is %6ld\r\n", (LPSTR) szFile, dwPIFLen);
+    DebugPrintf("%s filesize is %6ld\r\n", (LPSTR) Globals.szFile, dwPIFLen);
 
 	if (dwPIFLen >= 65520L) {
 		char	szFmt[80];
 
-		LoadString(hInst, IDS_TOOBIG , szFmt, sizeof(szFmt));
-		MessageBox(hWndDlg, szFmt, szAppTitle, MB_OK);
+		LoadString(Globals.hInst, IDS_TOOBIG , szFmt, sizeof(szFmt));
+		MessageBox(Globals.hWndDlg, szFmt, Globals.szAppTitle, MB_OK);
 		rc = IDABORT;  goto OPENPIF_EXIT;
 	} else {
 		wPifLen = (WORD) dwPIFLen;
@@ -873,27 +814,27 @@ int OpenPIF(VOID)
 		if (wPifLen <= sizeof(PIFHDR)) {	// Old-style .PIF
 			char	szFmt[80];
 
-			LoadString(hInst, IDS_OLDPIF , szFmt, sizeof(szFmt));
-			MessageBox(hWndDlg, szFmt, szAppTitle, MB_OK);
+			LoadString(Globals.hInst, IDS_OLDPIF , szFmt, sizeof(szFmt));
+			MessageBox(Globals.hWndDlg, szFmt, Globals.szAppTitle, MB_OK);
 			rc = IDABORT;  goto OPENPIF_EXIT;
 		}
 	}
 
-	hPIF = LocalAlloc(LMEM_MOVEABLE, wPifLen);
-	if (!hPIF) {
+	Globals.hPIF = LocalAlloc(LMEM_MOVEABLE, wPifLen);
+	if (!Globals.hPIF) {
 		char	szBuf[80];
 
-		LoadString(hInst, IDS_OUTOFMEMORY , szBuf, sizeof(szBuf));
-		MessageBox(hWndDlg, szBuf, szAppTitle, MB_OK);
+		LoadString(Globals.hInst, IDS_OUTOFMEMORY , szBuf, sizeof(szBuf));
+		MessageBox(Globals.hWndDlg, szBuf, Globals.szAppTitle, MB_OK);
 		rc = IDABORT;  goto OPENPIF_EXIT;
 	}
 
-    pPIF = (PPIF)LocalLock(hPIF);
+    pPIF = (PPIF)LocalLock(Globals.hPIF);
     if (!pPIF) {
 	char	szBuf[80];
 
-	LoadString(hInst, IDS_OUTOFMEMORY2 , szBuf, sizeof(szBuf));
-	MessageBox(hWndDlg, szBuf, szAppTitle, MB_OK);
+	LoadString(Globals.hInst, IDS_OUTOFMEMORY2 , szBuf, sizeof(szBuf));
+	MessageBox(Globals.hWndDlg, szBuf, Globals.szAppTitle, MB_OK);
 	rc = IDABORT;  goto OPENPIF_EXIT;
     }
 
@@ -910,7 +851,7 @@ int OpenPIF(VOID)
 	rc = IDABORT;  goto OPENPIF_EXIT;
     }
 
-    if (pPIF) { LocalUnlock(hPIF); pPIF = NULL; }
+    if (pPIF) { LocalUnlock(Globals.hPIF); pPIF = NULL; }
 
 OPENPIF_EXIT:
 	if (hCursorOld) {
@@ -918,7 +859,7 @@ OPENPIF_EXIT:
 		ReleaseCapture();
 	}
 
-	if (pPIF) { LocalUnlock(hPIF); pPIF = NULL; }
+	if (pPIF) { LocalUnlock(Globals.hPIF); pPIF = NULL; }
 
 	if (hFilePIF > 0) _lclose(hFilePIF);
 
@@ -958,11 +899,11 @@ int CheckPIFValidity(BOOL fMustBeValid)
     char	szBuf[128];
 
 // Checkout the program filename
-    if (!*SkipWhite(pifModel.pifHdr.PgmName)) {
-	LoadString(hInst, IDS_FILENAMEREQ , szBuf, sizeof(szBuf));
+    if (!*SkipWhite(Globals.pifModel.pifHdr.PgmName)) {
+	LoadString(Globals.hInst, IDS_FILENAMEREQ , szBuf, sizeof(szBuf));
 
 MSGBOXCOM:
-	rc = MessageBox(NULL, szBuf, szAppTitle, MB_OKCANCEL | MB_DEFBUTTON2 | MB_ICONEXCLAMATION);
+	rc = MessageBox(NULL, szBuf, Globals.szAppTitle, MB_OKCANCEL | MB_DEFBUTTON2 | MB_ICONEXCLAMATION);
 CHECK_VALID_COM:
 	if (fMustBeValid)
 		return (IDCANCEL);
@@ -970,12 +911,12 @@ CHECK_VALID_COM:
 		return (rc);
     }
 
-    _fullpath(szPathname,pifModel.pifHdr.PgmName, _MAX_PATH);
+    _fullpath(szPathname,Globals.pifModel.pifHdr.PgmName, _MAX_PATH);
     _splitpath(szPathname, szDrive, szDir, szFname, szExt);
 
     n = lstrlen(szFname);
     if (n == 0 || n > 8 || (lstrcmpi(szExt, ".BAT") && lstrcmpi(szExt, ".COM") && lstrcmpi(szExt, ".EXE") )) {
-	LoadString(hInst, IDS_BADFILENAME , szBuf, sizeof(szBuf));
+	LoadString(Globals.hInst, IDS_BADFILENAME , szBuf, sizeof(szBuf));
 
 	goto MSGBOXCOM;
     }
@@ -1002,12 +943,12 @@ int SavePIF(VOID)
 {
     register int	rc;
 
-    ControlsToPIF(hWndDlg);
+    ControlsToPIF(Globals.hWndDlg);
 
     rc = CheckPIFValidity(FALSE);
     if (rc) return (rc);
 
-    return (WritePIF(hWndDlg, szFile));
+    return (WritePIF(Globals.hWndDlg, Globals.szFile));
 }
 
 
@@ -1027,73 +968,42 @@ int SavePIF(VOID)
 
 int SaveAsPIF(VOID)
 {
-    szFile[0] = '\0';
+    Globals.szFile[0] = '\0';
 
-    ofn.hwndOwner	= hWndDlg;
+    Globals.ofn.hwndOwner	= Globals.hWndDlg;
 
-    ofn.lpstrFile	= szFile;
-    ofn.nMaxFile	= sizeof(szFile);
-    ofn.lpstrFileTitle	= szFileTitle;
-    ofn.nMaxFileTitle	= sizeof(szFileTitle);
-    ofn.lpstrInitialDir = szDirName;
+    Globals.ofn.lpstrFile	= Globals.szFile;
+    Globals.ofn.nMaxFile	= sizeof(Globals.szFile);
+    Globals.ofn.lpstrFileTitle	= Globals.szFileTitle;
+    Globals.ofn.nMaxFileTitle	= sizeof(Globals.szFileTitle);
+    Globals.ofn.lpstrInitialDir = Globals.szDirName;
 
-    ofn.lpstrDefExt	= "PIF";
+    Globals.ofn.lpstrDefExt	= "PIF";
 
-    ofn.Flags		= OFN_PATHMUSTEXIST	|
+    Globals.ofn.Flags		= OFN_PATHMUSTEXIST	|
 			  OFN_HIDEREADONLY	|
 			  OFN_OVERWRITEPROMPT;
 
-    if (!GetSaveFileName(&ofn)) {
+    if (!GetSaveFileName(&Globals.ofn)) {
 	if (CommDlgExtendedError() == 0) return (IDCANCEL);
 
-	CommDlgError(hWndDlg, CommDlgExtendedError());
+	CommDlgError(Globals.hWndDlg, CommDlgExtendedError());
 	return (1);
     }
 
-    lstrcpy(szWindowTitle, szAppTitleThe);
-    lstrcat(szWindowTitle, " - ");
-    lstrcat(szWindowTitle, szFileTitle);
-    SetWindowText(hWndDlg, szWindowTitle);
+    lstrcpy(Globals.szWindowTitle, Globals.szAppTitle);
+    lstrcat(Globals.szWindowTitle, " - ");
+    lstrcat(Globals.szWindowTitle, Globals.szFileTitle);
+    SetWindowText(Globals.hWndDlg, Globals.szWindowTitle);
 
-    strncpy(szDirName, szFile, ofn.nFileOffset-1);
-    lstrcpy(szExtension, szFile + ofn.nFileExtension);
+    strncpy(Globals.szDirName, Globals.szFile, Globals.ofn.nFileOffset-1);
+    lstrcpy(Globals.szExtension, Globals.szFile + Globals.ofn.nFileExtension);
 
-    fUntitled = FALSE;
+    Globals.fUntitled = FALSE;
 
     return (SavePIF());
 }
 
-
-#if 0
-/****************************************************************************
- *
- *  FUNCTION :	PaneMsgProc_Old(HWND, UINT, WPARAM, LPARAM)
- *
- *  PURPOSE  :	Windows 3.0-style BOOL dialog proc cover function
- *		Calls the new LRESULT returning dialog proc
- *		Avoids recursion with a flag using the Windows 3.1 macro
- *
- *  ENTRY    :	HWND	hWndDlg;	// Dialog window handle
- *		UINT	msg;		// WM_xxx message
- *		WPARAM	wParam; 	// Message 16-bit parameter
- *		LPARAM	lParam; 	// Message 32-bit parameter
- *
- *  RETURNS  :	Non-zero - Message processed
- *		Zero	- DefDlgProc() must process the message
- *
- ****************************************************************************/
-
-BOOL CALLBACK _export PaneMsgProc_Old(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    CheckDefDlgRecursion(&fDefDlgEx);
-
-    return SetDlgMsgResult(
-			hWndDlg,
-			msg,
-			PaneMsgProc(hWndDlg, msg, wParam, lParam)
-			);
-}
-#endif
 
 /****************************************************************************
  *
@@ -1118,27 +1028,27 @@ BOOL CALLBACK _export PaneMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 
 	switch (msg) {
 	case WM_ACTIVATEAPP:
-	    fCheckOnKillFocus = (BOOL) wParam;
+	    Globals.fCheckOnKillFocus = (BOOL) wParam;
 	    break;
 
 	case WM_ACTIVATE:
-	    fCheckOnKillFocus = (wParam != WA_INACTIVE);
+	    Globals.fCheckOnKillFocus = (wParam != WA_INACTIVE);
 	    break;
 
 	case WM_CLOSE:
 	    {
 		if (IDCANCEL == CheckSave(hWnd)) break;
 
-		fCheckOnKillFocus = FALSE;	// Stop checking controls
+		Globals.fCheckOnKillFocus = FALSE;	// Stop checking controls
 
-		if (nActiveDlg) {	// A dialog is still open
+		if (Globals.nActiveDlg) {	// A dialog is still open
 		    SetFocus(hWnd);
 
-		    nActiveDlg = 0;
+		    Globals.nActiveDlg = 0;
 		}
 
 		EndDialog(hWnd, IDCANCEL);
-		nActiveDlg = 0;
+		Globals.nActiveDlg = 0;
 	    }
 	    break;
 
@@ -1156,10 +1066,10 @@ BOOL CALLBACK _export PaneMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 		switch ((UINT) HIWORD(lParam)) {
 		    case CTLCOLOR_EDIT:
 			SetBkColor(hDC, GetSysColor(COLOR_BTNFACE));
-			return ((BOOL) (WORD) hbrHelp);
+			return ((BOOL) (WORD) Globals.hbrHelp);
 
 		    case CTLCOLOR_MSGBOX:
-			return ((BOOL) (WORD) hbrHelp);
+			return ((BOOL) (WORD) Globals.hbrHelp);
 		}
 
 		return (NULL);
@@ -1174,7 +1084,7 @@ BOOL CALLBACK _export PaneMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 		wsprintf( szBuf, "%d %d", wndpl.rcNormalPosition.left,
 			wndpl.rcNormalPosition.top );
 
-		WritePrivateProfileString( szAppName,	// Section name
+		WritePrivateProfileString( Globals.szAppName,	// Section name
 			"Position", (LPSTR) &szBuf, PROFILE );
 
 		// this _should_ return 1, but Windows fails to close if it
@@ -1186,7 +1096,7 @@ BOOL CALLBACK _export PaneMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 		char	szBuf[128];
 		WINDOWPLACEMENT wndpl;
 
-		if (hbrHelp) { DeleteBrush(hbrHelp);  hbrHelp = NULL; }
+		if (Globals.hbrHelp) { DeleteBrush(Globals.hbrHelp);  Globals.hbrHelp = NULL; }
 
 		memset(&wndpl, 0, sizeof(WINDOWPLACEMENT));
 		wndpl.length = sizeof(WINDOWPLACEMENT);
@@ -1196,7 +1106,7 @@ BOOL CALLBACK _export PaneMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 			wndpl.rcNormalPosition.top );
 
 		WritePrivateProfileString(
-				    szAppName,	// Section name
+				    Globals.szAppName,	// Section name
 				    "Position", // Window position
 				    (LPSTR) &szBuf,	// New text
 				    PROFILE		// Profile filename
@@ -1262,27 +1172,27 @@ BOOL CALLBACK _export AdvancedMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 
 	switch (msg) {
 	case WM_ACTIVATEAPP:
-	    fCheckOnKillFocus = (BOOL) wParam;
+	    Globals.fCheckOnKillFocus = (BOOL) wParam;
 	    break;
 
 	case WM_ACTIVATE:
-	    fCheckOnKillFocus = (wParam != WA_INACTIVE);
+	    Globals.fCheckOnKillFocus = (wParam != WA_INACTIVE);
 	    break;
 
 	case WM_CLOSE:
 	    {
 		if (IDCANCEL == CheckSave(hWnd)) break;
 
-		fCheckOnKillFocus = FALSE;	// Stop checking controls
+		Globals.fCheckOnKillFocus = FALSE;	// Stop checking controls
 
-		if (nActiveDlg) {	// A dialog is still open
+		if (Globals.nActiveDlg) {	// A dialog is still open
 		    SetFocus(hWnd);
 
-		    nActiveDlg = 0;
+		    Globals.nActiveDlg = 0;
 		}
 
 		EndDialog(hWnd, IDCANCEL);
-		nActiveDlg = 0;
+		Globals.nActiveDlg = 0;
 	    }
 	    break;
 
@@ -1300,10 +1210,10 @@ BOOL CALLBACK _export AdvancedMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 		switch ((UINT) HIWORD(lParam)) {
 		    case CTLCOLOR_EDIT:
 			SetBkColor(hDC, GetSysColor(COLOR_BTNFACE));
-			return ((BOOL) (WORD) hbrHelp);
+			return ((BOOL) (WORD) Globals.hbrHelp);
 
 		    case CTLCOLOR_MSGBOX:
-			return ((BOOL) (WORD) hbrHelp);
+			return ((BOOL) (WORD) Globals.hbrHelp);
 		}
 
 		return (NULL);
@@ -1318,7 +1228,7 @@ BOOL CALLBACK _export AdvancedMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 		wsprintf( szBuf, "%d %d", wndpl.rcNormalPosition.left,
 			wndpl.rcNormalPosition.top );
 
-		WritePrivateProfileString( szAppName,	// Section name
+		WritePrivateProfileString( Globals.szAppName,	// Section name
 			"Position", (LPSTR) &szBuf, PROFILE );
 
 		// this _should_ return 1, but Windows fails to close if it
@@ -1330,7 +1240,7 @@ BOOL CALLBACK _export AdvancedMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 		char	szBuf[128];
 		WINDOWPLACEMENT wndpl;
 
-		if (hbrHelp) { DeleteBrush(hbrHelp);  hbrHelp = NULL; }
+		if (Globals.hbrHelp) { DeleteBrush(Globals.hbrHelp);  Globals.hbrHelp = NULL; }
 
 #if 0
 
@@ -1433,25 +1343,25 @@ VOID Pane_OnCommand(HWND hWnd, UINT id, HWND hWndCtl, WORD codeNotify)
 	    break;
 
 	case IDM_H_OVERVIEW:
-	    WinHelp( hWnd, szHelpName, HELP_KEY, (DWORD)((char FAR *)HK_OVERVIEW ));
+	    //WinHelp( hWnd, szHelpName, HELP_KEY, (DWORD)((char FAR *)HK_OVERVIEW ));
 	    break;
 
 	case IDM_H_SEARCH:
-	    WinHelp( hWnd, szHelpName, HELP_PARTIALKEY, (DWORD)((char FAR *)"") );
+	    //WinHelp( hWnd, szHelpName, HELP_PARTIALKEY, (DWORD)((char FAR *)"") );
 	    break;
 
 	case IDM_H_TECHSUP:
-	    WinHelp( hWnd, szHelpName, HELP_KEY, (DWORD)((char FAR *)HK_TECHS) );
+	    //WinHelp( hWnd, szHelpName, HELP_KEY, (DWORD)((char FAR *)HK_TECHS) );
 	    break;
 
 	/* show "about" box */
 	case IDM_H_ABOUT:
-		ShellAbout(hWnd, szAppTitle, "Copyright © 1992, 1993 Qualitas, Inc.\n\r\Copyright © 2013 osFree. GPLv3.", 0);
+		ShellAbout(hWnd, Globals.szAppTitle, "Copyright © 1992, 1993 Qualitas, Inc.\n\r\Copyright © 2013 osFree. GPLv3.", 0);
 		break;
 
 	case IDB_RUNPIF:
 	    TestPIF();
-	    SetFocus(GetDlgItem(hWnd, (nActiveDlg % 10) * 100));
+	    SetFocus(GetDlgItem(hWnd, (Globals.nActiveDlg % 10) * 100));
 	    break;
 
 	case IDB_ADVANCED:
@@ -1459,15 +1369,15 @@ VOID Pane_OnCommand(HWND hWnd, UINT id, HWND hWndCtl, WORD codeNotify)
 		FARPROC lpfn;
 		int rc;	
 		
-		lpfn = MakeProcInstance((FARPROC) AdvancedMsgProc, hInst);
-		rc = DialogBox(hInst, MAKEINTRESOURCE(IDD_ADVFRAME), NULL, (DLGPROC) lpfn);
+		lpfn = MakeProcInstance((FARPROC) AdvancedMsgProc, Globals.hInst);
+		rc = DialogBox(Globals.hInst, MAKEINTRESOURCE(IDD_ADVFRAME), NULL, (DLGPROC) lpfn);
 		FreeProcInstance(lpfn);
 		break;
 	}
 
-	case IDB_GENERAL:
-	case IDB_TASK:
-	    if ((UINT) nActiveDlg != id) {
+	case IDB_ENHANCED:
+	case IDB_STANDARD:
+	    if ((UINT) Globals.nActiveDlg != id) {
 			ShowCursor(FALSE);		// Hide the mouse cursor
 			SwitchPanes(hWnd, id);
 			SetFocus(GetDlgItem(hWnd, (id % 10) * 100));
@@ -1510,7 +1420,7 @@ VOID TestPIF(VOID)		// Write out a temporary .PIF and test run it
 
     HCURSOR	hCursorOld = NULL;
 
-    ControlsToPIF(hWndDlg);
+    ControlsToPIF(Globals.hWndDlg);
     rc = CheckPIFValidity(TRUE);	// Don't return 0 unless PIF is OK
     if (rc) return;
 
@@ -1526,12 +1436,12 @@ VOID TestPIF(VOID)		// Write out a temporary .PIF and test run it
     _makepath(szPIFName, szDrive, szDir, "~QIFEDIT", ".PIF");
 
 /* Switch to the hour glass cursor */
-    SetCapture(hWndDlg);
+    SetCapture(Globals.hWndDlg);
     hCursorOld = SetCursor(LoadCursor(NULL, IDC_WAIT));
 
     OpenFile(szPIFName, &OpenBuff, OF_DELETE);
 
-    rc = WritePIF(hWndDlg, szPIFName);
+    rc = WritePIF(Globals.hWndDlg, szPIFName);
 
     WinExec(szPIFName, SW_SHOWNORMAL);
 
@@ -1578,13 +1488,13 @@ BOOL Pane_OnInitDialog(HWND hWnd, HWND hWndFocus, LPARAM lParam)
     int 	cxFrame = GetSystemMetrics(SM_CXFRAME);
     int 	cyCaption = GetSystemMetrics(SM_CYCAPTION);
 
-	WNDPROC	lpfnNumEdit = (WNDPROC) MakeProcInstance((FARPROC) NumEdit_SubClassProc, hInst);
+	WNDPROC	lpfnNumEdit = (WNDPROC) MakeProcInstance((FARPROC) NumEdit_SubClassProc, Globals.hInst);
 
-    WNDPROC	lpfnKeyEdit = (WNDPROC) MakeProcInstance((FARPROC) KeyEdit_SubClassProc, hInst);
+    WNDPROC	lpfnKeyEdit = (WNDPROC) MakeProcInstance((FARPROC) KeyEdit_SubClassProc, Globals.hInst);
 
-    WNDPROC	lpfnButtonEdit = (WNDPROC) MakeProcInstance((FARPROC) Button_SubClassProc, hInst);
+    WNDPROC	lpfnButtonEdit = (WNDPROC) MakeProcInstance((FARPROC) Button_SubClassProc, Globals.hInst);
 
-    hWndDlg = hWnd;
+    Globals.hWndDlg = hWnd;
 
 // Figure out the prefered window size and position
 
@@ -1593,7 +1503,7 @@ BOOL Pane_OnInitDialog(HWND hWnd, HWND hWndFocus, LPARAM lParam)
     wsprintf(szBuf, "%d %d", rect.left, rect.top);
 
     GetPrivateProfileString(
-			szAppName,
+			Globals.szAppName,
 			"Position",
 			(LPSTR) &szBuf,
 			(LPSTR) &szBuf2,
@@ -1615,13 +1525,13 @@ BOOL Pane_OnInitDialog(HWND hWnd, HWND hWndFocus, LPARAM lParam)
 
     lf.lfHeight = -10;
 
-    hFontHelp = CreateFontIndirect(&lf);
+    Globals.hFontHelp = CreateFontIndirect(&lf);
 
 // Prepare the panes
-    GetClientRect(hWnd, &rectDlg);
+    GetClientRect(hWnd, &Globals.rectDlg);
 
-    cxDlg = (rectDlg.right  - rectDlg.left);
-    cyDlg = (rectDlg.bottom - rectDlg.top );
+    Globals.cxDlg = (Globals.rectDlg.right  - Globals.rectDlg.left);
+    Globals.cyDlg = (Globals.rectDlg.bottom - Globals.rectDlg.top );
 
     ShowWindow(hWnd, SW_SHOWNORMAL);
 
@@ -1680,9 +1590,9 @@ BOOL Pane_OnInitDialog(HWND hWnd, HWND hWndFocus, LPARAM lParam)
 
 #endif
 
-    nActiveDlg = IDD_GENERAL;
+    Globals.nActiveDlg = IDD_GENERAL;
 
-    hbrHelp = CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
+    Globals.hbrHelp = CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
     InitHelpWindow(hWnd);
     ShowWindow(GetDlgItem(hWnd, IDD_HELP), SW_SHOWNORMAL);
 
@@ -1718,7 +1628,7 @@ BOOL Pane_OnInitDialog(HWND hWnd, HWND hWndFocus, LPARAM lParam)
     SetFocus(GetDlgItem(hWnd, IDE_FILENAME));
 
     if (GetWinFlags() & WF_STANDARD) {	// Standard mode
-	StandardModeBitchBox(hWnd);
+		StandardModeBitchBox(hWnd);
     }
 
     return (FALSE);		// Indicate the focus has been changed
@@ -1786,9 +1696,9 @@ VOID Pane_OnPaint(HWND hWnd)
 // Paint the help border
 
 // Prepare rect for help window including border and sunken frame
-    SetRect(&rect, 0, 0, 0, auDlgHeights[nActiveDlg - IDD_GENERAL]);
+    SetRect(&rect, 0, 0, 0, Globals.auDlgHeights[Globals.nActiveDlg - IDD_GENERAL]);
     MapDialogRect(hWnd, &rect);
-    SetRect(&rect, 0, rect.bottom, cxDlg, cyDlg);
+    SetRect(&rect, 0, rect.bottom, Globals.cxDlg, Globals.cyDlg);
 
 // Draw the black separator line
     hPenOld = SelectObject(hDC, hPenBlack);
@@ -1801,7 +1711,7 @@ VOID Pane_OnPaint(HWND hWnd)
     rect.top++; 	// Account for the black separator
 
 // Fill in the whole thing COLOR_BTNFACE
-    FillRect(hDC, &rect, hbrHelp);
+    FillRect(hDC, &rect, Globals.hbrHelp);
 
 #define EDITWASTE	3
 
@@ -1861,7 +1771,7 @@ VOID Pane_OnPaint_Iconic(HWND hWnd)
     nMapModeOld = GetMapMode(hDC);
     if (nMapModeOld != MM_TEXT) SetMapMode(hDC, MM_TEXT);
 
-    DrawIcon(hDC, 0, 0, hIcon);
+    DrawIcon(hDC, 0, 0, Globals.hIcon);
 
     if (nMapModeOld != MM_TEXT) SetMapMode(hDC, nMapModeOld);
 
@@ -1886,7 +1796,7 @@ VOID Pane_OnPaint_Iconic(HWND hWnd)
 
 VOID Pane_OnSetFont(HWND hWndCtl, HFONT hFont, BOOL fRedraw)
 {
-    hFontDlg = hFont;
+    Globals.hFontDlg = hFont;
 }
 
 
@@ -1914,9 +1824,9 @@ VOID SwitchPanes(HWND hWnd, int idNewDlg)
     RECT	rect;
     HDWP	hdwp;
 
-    int 	nLastDlg = nActiveDlg;
+    int 	nLastDlg = Globals.nActiveDlg;
 
-    nActiveDlg = idNewDlg;
+    Globals.nActiveDlg = idNewDlg;
 
     if (nLastDlg) {
 	hWndBtn = GetDlgItem(hWnd, nLastDlg);
@@ -1924,7 +1834,7 @@ VOID SwitchPanes(HWND hWnd, int idNewDlg)
 	InvalidateRect(hWndBtn, &rect, TRUE);
     }
 
-    hWndBtn = GetDlgItem(hWnd, nActiveDlg);
+    hWndBtn = GetDlgItem(hWnd, Globals.nActiveDlg);
     GetClientRect(hWndBtn, &rect);
     InvalidateRect(hWndBtn, &rect, TRUE);
 
@@ -1935,7 +1845,7 @@ VOID SwitchPanes(HWND hWnd, int idNewDlg)
 // Replace '&' with '#', and restore when done.
 
     for (n = 0; n < sizeof(aControls)/sizeof(CONTROL); n++) {
-	if (aControls[n].Pane == nActiveDlg) {
+	if (aControls[n].Pane == Globals.nActiveDlg) {
 	    HWND	hWndCtl = aControls[n].hWnd;
 
 	    EnableWindow(hWndCtl, TRUE);
@@ -1973,7 +1883,7 @@ VOID SwitchPanes(HWND hWnd, int idNewDlg)
     }
 
     for (n = 0; n < sizeof(aControls)/sizeof(CONTROL); n++) {
-	if (aControls[n].Pane == nActiveDlg) {
+	if (aControls[n].Pane == Globals.nActiveDlg) {
 	    hdwp = DeferWindowPos(
 			hdwp,
 			aControls[n].hWnd,
@@ -2039,22 +1949,22 @@ VOID InitHelpWindow(HWND hWnd)
     HWND	hWndHelp = GetDlgItem(hWnd, IDD_HELP);
 
 // Prepare rect for help window including border and sunken frame
-    SetRect(&rect, 0, 0, 0, auDlgHeights[nActiveDlg - IDD_GENERAL]);
+    SetRect(&rect, 0, 0, 0, Globals.auDlgHeights[Globals.nActiveDlg - IDD_GENERAL]);
     MapDialogRect(hWnd, &rect);
-    SetRect(&rect, 0, rect.bottom, cxDlg, cyDlg);
+    SetRect(&rect, 0, rect.bottom, Globals.cxDlg, Globals.cyDlg);
 
     MoveWindow(
 		hWndHelp,
 		EDITBORDER + HELPSLOP,			// X origin
 		rect.top + 1 + EDITBORDER,		// Y origin
-		cxDlg - EDITBORDER * 2 - HELPSLOP,	// X size
-		(cyDlg - rect.top) - (EDITBORDER * 2) - 1, // Y size
+		Globals.cxDlg - EDITBORDER * 2 - HELPSLOP,	// X size
+		(Globals.cyDlg - rect.top) - (EDITBORDER * 2) - 1, // Y size
 		TRUE
 		);
 
-    SendMessage(hWndHelp, WM_SETFONT, (WPARAM) hFontHelp, 0L);
+    SendMessage(hWndHelp, WM_SETFONT, (WPARAM) Globals.hFontHelp, 0L);
 
-    SetHelpText(hWnd, nActiveDlg);
+    SetHelpText(hWnd, Globals.nActiveDlg);
 }
 
 
@@ -2091,13 +2001,13 @@ VOID SetHelpText(HWND hWnd, UINT idHelp)
     if (!idHelp)
 	return;
 
-    if (idHelp == idHelpCur)
+    if (idHelp == Globals.idHelpCur)
 	return;
 
-    hRsrc = FindResource(hInst, MAKEINTRESOURCE(idHelp), RT_RCDATA);
+    hRsrc = FindResource(Globals.hInst, MAKEINTRESOURCE(idHelp), RT_RCDATA);
 
     if (hRsrc) {
-	hGblRsrc = LoadResource(hInst, hRsrc);
+	hGblRsrc = LoadResource(Globals.hInst, hRsrc);
 	if (hGblRsrc) {
 	    lpsz = (LPSTR) LockResource(hGblRsrc);
 	    if (lpsz) {
@@ -2125,7 +2035,7 @@ VOID SetHelpText(HWND hWnd, UINT idHelp)
 	}
     }
 
-    idHelpCur = idHelp;
+    Globals.idHelpCur = idHelp;
 }
 
 
@@ -2169,7 +2079,7 @@ LRESULT CALLBACK _export NumEdit_SubClassProc(HWND hWnd, UINT msg, WPARAM wParam
 
 	case WM_KEYDOWN:
 	    {
-		HWND	hWndHelp = GetDlgItem(hWndDlg, IDD_HELP);
+		HWND	hWndHelp = GetDlgItem(Globals.hWndDlg, IDD_HELP);
 
 		if (hWndHelp == GetFocus()) break;
 
@@ -2192,7 +2102,7 @@ LRESULT CALLBACK _export NumEdit_SubClassProc(HWND hWnd, UINT msg, WPARAM wParam
 
 	    if (!(aControls[n].Flags & EDIT_NUM)) break;
 
-	    if (!fCheckOnKillFocus) break;
+	    if (!Globals.fCheckOnKillFocus) break;
 
 	    Edit_GetText(hWnd, szBuf, sizeof(szBuf));
 
@@ -2214,8 +2124,8 @@ LRESULT CALLBACK _export NumEdit_SubClassProc(HWND hWnd, UINT msg, WPARAM wParam
 		nNewVal = aControls[n].nMin;
 QQQ:
 		idFmt = (aControls[n].Flags & (EDIT_OPTVAL-EDIT_NUM)) ? IDS_BADNUM2 : IDS_BADNUM;
-		LoadString(hInst, id, szBuf2, sizeof(szBuf2));
-		LoadString(hInst, idFmt, szFmt, sizeof(szFmt));
+		LoadString(Globals.hInst, id, szBuf2, sizeof(szBuf2));
+		LoadString(Globals.hInst, idFmt, szFmt, sizeof(szFmt));
 
 		wsprintf(
 			szBuf,
@@ -2225,7 +2135,7 @@ QQQ:
 			aControls[n].nMax
 			);
 
-		MessageBox(NULL, szBuf, szAppTitle, MB_OK);
+		MessageBox(NULL, szBuf, Globals.szAppTitle, MB_OK);
 
 		lr = CallWindowProc(aControls[n].lpfnOld, hWnd, msg, wParam, lParam);
 		SetFocus(hWnd);
@@ -2250,7 +2160,7 @@ QQQ:
 	    break;
 
 	case WM_SETFOCUS:
-	    SetHelpText(hWndDlg, id);
+	    SetHelpText(Globals.hWndDlg, id);
 
 	    if (aControls[n].Flags & EDIT_NOSEL) {
 			Edit_SetSel(hWnd, 0, 0);
@@ -2326,7 +2236,7 @@ LRESULT CALLBACK _export KeyEdit_SubClassProc(HWND hWnd, UINT msg, WPARAM wParam
 	    {
 		int	nCtrl = GetDlgCtrlID((HWND) wParam);	// Control getting the focus
 
-		if (!fCheckOnKillFocus) break;
+		if (!Globals.fCheckOnKillFocus) break;
 
 		if (nCtrl != IDB_ALT	&&
 		    nCtrl != IDB_CTRL	&&
@@ -2337,8 +2247,8 @@ LRESULT CALLBACK _export KeyEdit_SubClassProc(HWND hWnd, UINT msg, WPARAM wParam
 			LRESULT lr;
 
 			lr = CallWindowProc(aControls[n].lpfnOld, hWnd, msg, wParam, lParam);
-			SetFocus(GetDlgItem(hWndDlg, IDB_ALT));
-			CheckDlgButton(hWndDlg, IDB_ALT, IsDlgButtonChecked(hWndDlg, IDB_ALT));
+			SetFocus(GetDlgItem(Globals.hWndDlg, IDB_ALT));
+			CheckDlgButton(Globals.hWndDlg, IDB_ALT, IsDlgButtonChecked(Globals.hWndDlg, IDB_ALT));
 			return (0);
 		    }
 		}
@@ -2346,7 +2256,7 @@ LRESULT CALLBACK _export KeyEdit_SubClassProc(HWND hWnd, UINT msg, WPARAM wParam
 	    break;
 
 	case WM_SETFOCUS:
-			SetHelpText(hWndDlg, id);
+			SetHelpText(Globals.hWndDlg, id);
 	    break;
 
 // If we get a character that's not a SHIFT, ALT, or CTRL, save the scancode.
@@ -2363,13 +2273,13 @@ LRESULT CALLBACK _export KeyEdit_SubClassProc(HWND hWnd, UINT msg, WPARAM wParam
 		if (vk == VK_SHIFT || vk == VK_CONTROL || vk == VK_MENU) {
 		    return (CallWindowProc(aControls[n].lpfnOld, hWnd, msg, wParam, lParam) );
 		} else if (vk == VK_BACK) {	// Erase or NONE
-		    wHotkeyScancode = 0;
-		    bHotkeyBits = 0;
+		    Globals.wHotkeyScancode = 0;
+		    Globals.bHotkeyBits = 0;
 
 		    SetWindowText(hWnd, "None");
 		} else {
-		    wHotkeyScancode = LOBYTE(HIWORD(lParam));
-		    bHotkeyBits = HIBYTE(HIWORD(lParam));
+		    Globals.wHotkeyScancode = LOBYTE(HIWORD(lParam));
+		    Globals.bHotkeyBits = HIBYTE(HIWORD(lParam));
 
 		    lParam |=  0x02000000;	// Ignore left vs. right CTRL and SHIFT state
 
@@ -2377,9 +2287,9 @@ LRESULT CALLBACK _export KeyEdit_SubClassProc(HWND hWnd, UINT msg, WPARAM wParam
 		    SetWindowText(hWnd, szBuf);
 
 		// Set the ALT, CTRL, and SHIFT checkboxes
-		    CheckDlgButton(hWndDlg, IDB_ALT, ((GetKeyState(VK_MENU) & 0x8000) ? 1 : 0) );
-		    CheckDlgButton(hWndDlg, IDB_CTRL, ((GetKeyState(VK_CONTROL) & 0x8000) ? 1 : 0) );
-		    CheckDlgButton(hWndDlg, IDB_SHIFT, ((GetKeyState(VK_SHIFT) & 0x8000) ? 1 : 0) );
+		    CheckDlgButton(Globals.hWndDlg, IDB_ALT, ((GetKeyState(VK_MENU) & 0x8000) ? 1 : 0) );
+		    CheckDlgButton(Globals.hWndDlg, IDB_CTRL, ((GetKeyState(VK_CONTROL) & 0x8000) ? 1 : 0) );
+		    CheckDlgButton(Globals.hWndDlg, IDB_SHIFT, ((GetKeyState(VK_SHIFT) & 0x8000) ? 1 : 0) );
 		}
 	    }
 	    return (0);
@@ -2399,7 +2309,7 @@ LRESULT CALLBACK _export Button_SubClassProc(HWND hWnd, UINT msg, WPARAM wParam,
 	;
 
     if (msg == WM_SETFOCUS)
-		SetHelpText(hWndDlg, id);
+		SetHelpText(Globals.hWndDlg, id);
 
     return (CallWindowProc(aControls[n].lpfnOld, hWnd, msg, wParam, lParam) );
 }
@@ -2437,8 +2347,8 @@ int ControlsFromPIF(PPIF pPIF, HWND hWnd)
     if (pPIFHDR->CheckSum != 0 && pPIFHDR->CheckSum != ComputePIFChecksum(pPIF)) {
 	char	szBuf[80];
 
-	LoadString(hInst, IDS_BADCHECKSUM, szBuf, sizeof(szBuf));
-	MessageBox(hWnd, szBuf, szAppTitle, MB_OK);
+	LoadString(Globals.hInst, IDS_BADCHECKSUM, szBuf, sizeof(szBuf));
+	MessageBox(hWnd, szBuf, Globals.szAppTitle, MB_OK);
     }
 
 // Find the 386 Enhanced mode section
@@ -2454,8 +2364,8 @@ int ControlsFromPIF(PPIF pPIF, HWND hWnd)
     if (n) {	// No 386 Enhanced section -- use the defaults
 	char	szBuf[80];
 
-	LoadString(hInst, IDS_BADCHECKSUM, szBuf, sizeof(szBuf));
-	MessageBox(hWnd, szBuf, szAppTitle, MB_OK);
+	LoadString(Globals.hInst, IDS_BADCHECKSUM, szBuf, sizeof(szBuf));
+	MessageBox(hWnd, szBuf, Globals.szAppTitle, MB_OK);
 	return (1);
     }
 
@@ -2533,8 +2443,8 @@ int ControlsFromPIF(PPIF pPIF, HWND hWnd)
     CheckDlgButton(hWnd, IDB_ALTSPACE, pPif386->WinFlags & 0x80 ? 1 : 0);
 
     if (pPif386->TaskFlags & 0x0040) {	// User-definable hotkey
-	wHotkeyScancode = pPif386->Hotkey;
-	bHotkeyBits = pPif386->HotkeyBits;
+	Globals.wHotkeyScancode = pPif386->Hotkey;
+	Globals.bHotkeyBits = pPif386->HotkeyBits;
 
 	CheckDlgButton(hWnd, IDB_ALT, pPif386->HotkeyShift & 0x08 ? 1 : 0);
 	CheckDlgButton(hWnd, IDB_CTRL, pPif386->HotkeyShift & 0x04 ? 1 : 0);
@@ -2551,8 +2461,8 @@ int ControlsFromPIF(PPIF pPIF, HWND hWnd)
 	SetDlgItemText(hWnd, IDE_KEY, szNumBuf);
 
     } else {
-	wHotkeyScancode = 0;
-	bHotkeyBits = 0;
+	Globals.wHotkeyScancode = 0;
+	Globals.bHotkeyBits = 0;
 
 	CheckDlgButton(hWnd, IDB_ALT, 0);
 	CheckDlgButton(hWnd, IDB_CTRL, 0);
@@ -2586,7 +2496,7 @@ VOID ControlsToPIF(HWND hWnd)
 {
     char	szNumBuf[32];
 
-    PPIF	pPIF = &pifModel;
+    PPIF	pPIF = &Globals.pifModel;
 
     DefaultPIF();
 
@@ -2666,10 +2576,10 @@ VOID ControlsToPIF(HWND hWnd)
     pPIF->pif386.WinFlags |= IsDlgButtonChecked(hWnd, IDB_ALTESC) ? 0x40 : 0;
     pPIF->pif386.WinFlags |= IsDlgButtonChecked(hWnd, IDB_ALTSPACE) ? 0x80 : 0;
 
-    if (wHotkeyScancode) {		// User hotkey defined
+    if (Globals.wHotkeyScancode) {		// User hotkey defined
 	pPIF->pif386.TaskFlags |= 0x0040;
-	pPIF->pif386.Hotkey = wHotkeyScancode;
-	pPIF->pif386.HotkeyBits = bHotkeyBits;
+	pPIF->pif386.Hotkey = Globals.wHotkeyScancode;
+	pPIF->pif386.HotkeyBits = Globals.bHotkeyBits;
 
 	pPIF->pif386.HotkeyShift |= IsDlgButtonChecked(hWnd, IDB_ALT) ? 0x08 : 0;
 	pPIF->pif386.HotkeyShift |= IsDlgButtonChecked(hWnd, IDB_CTRL) ? 0x04 : 0;
@@ -2707,7 +2617,7 @@ VOID StandardModeBitchBox(HWND hWnd)
 {
     FARPROC	lpfnSMMsgProc;
 
-    if (!GetPrivateProfileInt(szAppName,	// Section name
+    if (!GetPrivateProfileInt(Globals.szAppName,	// Section name
 			    "WarnIfNotEnhancedMode", // Key
 			    TRUE,		// Default
 			    PROFILE		// Profile filename
@@ -2715,9 +2625,9 @@ VOID StandardModeBitchBox(HWND hWnd)
 
     MessageBeep(MB_ICONEXCLAMATION);
 
-    lpfnSMMsgProc = MakeProcInstance((FARPROC) SMMsgProc, hInst);
+    lpfnSMMsgProc = MakeProcInstance((FARPROC) SMMsgProc, Globals.hInst);
 
-    DialogBox(hInst, MAKEINTRESOURCE(IDD_STANDARD), hWnd, (DLGPROC) lpfnSMMsgProc);
+    DialogBox(Globals.hInst, MAKEINTRESOURCE(IDD_STANDARD), hWnd, (DLGPROC) lpfnSMMsgProc);
 
     FreeProcInstance(lpfnSMMsgProc);
 }
@@ -2755,7 +2665,7 @@ BOOL CALLBACK _export SMMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		BOOL	fExpert = IsDlgButtonChecked(hWnd, IDB_EXPERT);
 
 		WritePrivateProfileString(
-		    szAppName,			// Section name
+		    Globals.szAppName,			// Section name
 		    "WarnIfNotEnhancedMode",    // Key
 		    fExpert ? "0" : "1",        // New '=' text
 		    PROFILE			// Profile filename
@@ -2795,14 +2705,14 @@ BOOL CALLBACK _export SMMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 
 BOOL	ValidateHotKey(BOOL fComplain)
 {
-    BOOL	fALT	= IsDlgButtonChecked(hWndDlg, IDB_ALT);
-    BOOL	fCTRL	= IsDlgButtonChecked(hWndDlg, IDB_CTRL);
+    BOOL	fALT	= IsDlgButtonChecked(Globals.hWndDlg, IDB_ALT);
+    BOOL	fCTRL	= IsDlgButtonChecked(Globals.hWndDlg, IDB_CTRL);
 //  BOOL	fSHIFT	= IsDlgButtonChecked(hWndDlg, IDB_SHIFT);
 
 // Map the hotkey scancode to a virtual key code
-    UINT	VKHotkey = MapVirtualKey(wHotkeyScancode, 1);
+    UINT	VKHotkey = MapVirtualKey(Globals.wHotkeyScancode, 1);
 
-    if (wHotkeyScancode == 0) return (TRUE);	// 'None' is always valid
+    if (Globals.wHotkeyScancode == 0) return (TRUE);	// 'None' is always valid
 
     if (!fALT && !fCTRL) goto HOTKEY_IS_BAD;	// Must have ALT or CTRL
 
@@ -2816,7 +2726,7 @@ BOOL	ValidateHotKey(BOOL fComplain)
 HOTKEY_IS_BAD:
     if (fComplain) {
 	MessageBeep(MB_ICONEXCLAMATION);
-	MessageBox(hWndDlg, BADHOTKEY_STR, HOTKEY_STR, MB_ICONEXCLAMATION);
+	MessageBox(Globals.hWndDlg, BADHOTKEY_STR, HOTKEY_STR, MB_ICONEXCLAMATION);
     }
 
     return (FALSE);
