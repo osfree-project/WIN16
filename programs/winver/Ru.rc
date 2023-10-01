@@ -1,0 +1,4 @@
+STRINGTABLE PRELOAD
+BEGIN
+    IDS_PACKAGE_NAME, "Версия Windows#"
+END
