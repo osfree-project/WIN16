@@ -27,7 +27,6 @@
 // #include <commctrl.h>
 
 #include "winecalc.h"
-#include "dialog.h"
 #include "stats.h"
 #include "resource.h"
 
@@ -173,9 +172,9 @@ int PASCAL WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmd
     wc.cbClsExtra    = 0;
     wc.cbWndExtra    = 0;
     wc.hInstance     = hInst;
-    wc.hIcon         = LoadIcon( hInst, appname );
+    wc.hIcon         = 0;//LoadIcon( hInst, appname );
     wc.hCursor       = LoadCursor( 0/*NULL*/, IDI_APPLICATION );
-    wc.hbrBackground = (HBRUSH)(COLOR_BTNFACE+1);
+    wc.hbrBackground = 0;//(HBRUSH)(COLOR_BTNFACE+1);
     wc.lpszMenuName  = NULL;
     wc.lpszClassName = appname;
 
@@ -745,7 +744,7 @@ LRESULT CALLBACK MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return 0;
 
         case IDM_ABOUT:
-            DialogBox( calc.hInst, "DLG_ABOUT", hWnd, AboutDlgProc );
+		ShellAbout(hWnd, appname, "Copyright © 2003 James Briggs\n\rCopyright © 2023 osFree. LGPLv2.1", 0);
             return 0;
 
         case ID_CALC_NS_HEX:

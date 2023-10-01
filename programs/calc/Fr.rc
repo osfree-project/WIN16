@@ -28,12 +28,6 @@ STRINGTABLE DISCARDABLE
 {
    IDS_APPNAME,            "GNU Calculator"
 
-   IDS_COPYRIGHT1,         "GNU Calculator 5.0. Licensed under LGPL 2"
-   IDS_COPYRIGHT2          "Copyright 2003, James Briggs"
-   IDS_COPYRIGHT3          "San Jose, California, USA"
-   IDS_COPYRIGHT4          "james@ActionMessage.com"
-   IDS_COPYRIGHT5          "http://www.ActionMessage.com/winecalc/"
-
    IDS_BTN_BACKSPACE,      "Backspace"
    IDS_BTN_CLEAR_ENTRY,    "CE"
    IDS_BTN_CLEAR_ALL,      "C"
@@ -135,13 +129,6 @@ WHATS_THIS_MENU MENU DISCARDABLE
       MENUITEM "What's This?",     IDM_WHATS_THIS
   }
 }
-
-DLG_ABOUT DIALOG 12,0,120,82
-CAPTION "About GNU winecalc"
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-BEGIN
-   DEFPUSHBUTTON "OK", IDOK,       42, 60, 30, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
-END
 
 DLG_STATS DIALOG 12,0,125,78
 CAPTION "Statistics Box"

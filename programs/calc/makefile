@@ -7,11 +7,12 @@ PROJ  = calc1
 PROJ1 = calc
 TRGT = $(PROJ1).exe
 DESC = Windows Calculator
-srcfiles = $(p)dialog$(e) $(p)stats$(e) $(p)winecalc$(e)
+srcfiles = $(p)stats$(e) $(p)winecalc$(e)
 
 # defines additional options for C compiler
 #ADD_COPT = -0 -sg -zw -bw -bg -d3 -db -hw -ml -od #-pl
 ADD_COPT =  -dDEBUG=0
+ADD_LINKOPT = LIB commdlg.lib
 #DEBUG    = watcom
 #IMPORTS  = CHOOSEFONT     COMMDLG.15
 

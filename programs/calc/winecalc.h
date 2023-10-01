@@ -333,7 +333,6 @@ typedef struct tagCalc {
 }
 CALC;
 
-BOOL CALLBACK AboutDlgProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam );
 LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 void InitLuts(void);
@@ -362,3 +361,5 @@ long factorial(long n);
 calcfloat calc_convert_to_radians(CALC *calc);
 calcfloat calc_convert_from_radians(CALC *calc);
 
+int WINAPI ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText,
+                HICON hIcon);

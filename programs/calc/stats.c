@@ -19,6 +19,7 @@
  */
 
 #include <stdio.h> // sprintf
+#include <string.h> // strlen
 
 #include <windows.h>
 

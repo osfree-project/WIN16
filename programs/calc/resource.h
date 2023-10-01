@@ -50,12 +50,6 @@
 #define IDS_ERR_DIVIDE_BY_ZERO 1121
 #define IDS_ERR_UNDEFINED      1122
 
-#define IDS_COPYRIGHT1         1130
-#define IDS_COPYRIGHT2         1131
-#define IDS_COPYRIGHT3         1132
-#define IDS_COPYRIGHT4         1133
-#define IDS_COPYRIGHT5         1134
-
 /* keys */
 
 #define IDV_HELP                103
