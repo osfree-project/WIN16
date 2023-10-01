@@ -1356,7 +1356,7 @@ VOID Pane_OnCommand(HWND hWnd, UINT id, HWND hWndCtl, WORD codeNotify)
 
 	/* show "about" box */
 	case IDM_H_ABOUT:
-		ShellAbout(hWnd, Globals.szAppTitle, "Copyright © 1992, 1993 Qualitas, Inc.\n\r\Copyright © 2013 osFree. GPLv3.", 0);
+		ShellAbout(hWnd, Globals.szAppTitle, "Copyright © 1992, 1993 Qualitas, Inc.\n\rCopyright © 2023 osFree. GPLv3.", 0);
 		break;
 
 	case IDB_RUNPIF:

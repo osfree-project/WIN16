@@ -77,12 +77,6 @@
 // and the setup help
 #define QDSETUP_HLP			QDISPATCH_ABBR2 "SETUP.HLP"
 
-// Constants used in About Box definitions
-#define ABOUT_About "About "
-#define ABOUT_Version "Version "
-#define ABOUT_ThisProductIsLicensedTo "This product is licensed to: "
-#define ABOUT_SerialNumber "Serial Number: "
-
 // Names for WIN.INI (used for QDISPTCH.DRV)
 #define WINI_NAME		QDISPATCH
 #define WINI_DRVNAME		QDISPATCH_ABBR8		// [drvname,port]
