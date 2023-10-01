@@ -15,7 +15,7 @@
 //------------------ private stuff ---------------------------  /* ;Internal */
                                                                 /* ;Internal */
 typedef struct _EXTENSION {                                     /* ;Internal */
-        DWORD    (APIENTRY *ExtProc)(HWND, WORD, LONG);         /* ;Internal */
+        DWORD    (WINAPI * ExtProc)(HWND, WORD, LONG);      /* ;Internal */
         WORD     Delta;                                         /* ;Internal */
         HANDLE   hModule;                                       /* ;Internal */
         HMENU    hMenu;                                         /* ;Internal */

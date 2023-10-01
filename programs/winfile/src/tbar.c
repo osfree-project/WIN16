@@ -161,7 +161,7 @@ EnableStopShareButton(void)
 Static VOID
 EnableDisconnectButton(void)
 {
-   INT i;
+   int i;
 
    for (i=0; i<cDrives; i++)
       if (!IsCDRomDrive(rgiDrive[i]) && IsRemoteDrive(rgiDrive[i]))
@@ -212,7 +212,7 @@ EnableCheckTBButtons(HWND hwndActive)
 {
    DWORD dwSort;
    BOOL fEnable;
-   INT  iButton;
+   int  iButton;
 
    // If the active window is the search window, clear the selection
    // in the drive list.
@@ -291,7 +291,7 @@ VOID
 BuildDriveLine(LPSTR* ppszTemp, DRIVEIND driveInd,
    BOOL fGetFloppyLabel, DWORD dwType)
 {
-   static TCHAR szDrive[64];
+   static char szDrive[64];
    DRIVE drive;
    LPSTR p;
    DWORD dwError;
@@ -360,10 +360,10 @@ Failed:
 VOID
 RefreshToolbarDrive(DRIVEIND iDriveInd)
 {
-   INT iSel;
+   int iSel;
    DRIVE drive;
 
-   iSel = (INT)SendMessage(hwndDriveList, CB_GETCURSEL, 0, 0L);
+   iSel = (int)SendMessage(hwndDriveList, CB_GETCURSEL, 0, 0L);
 
    SendMessage(hwndDriveList, CB_DELETESTRING, iDriveInd, 0L);
 
@@ -416,7 +416,7 @@ SelectToolbarDrive(DRIVEIND DriveInd)
 VOID
 FillToolbarDrives(DRIVE drive)
 {
-   INT i;
+   int i;
 
    if (hwndDriveList == NULL)
       return;
@@ -451,10 +451,10 @@ PaintDriveLine(DRAWITEMSTRUCT FAR *lpdis)
 {
    HDC hdc = lpdis->hDC;
    LPSTR lpszText;
-   TCHAR* pchTab;
+   LPSTR pchTab;
    RECT rc = lpdis->rcItem;
    DRIVE drive;
-   INT dxTabstop=MINIDRIVE_WIDTH;
+   int dxTabstop=MINIDRIVE_WIDTH;
    HBRUSH hbrFill;
    HFONT hfontOld;
    DWORD clrBackground;
@@ -489,7 +489,7 @@ PaintDriveLine(DRAWITEMSTRUCT FAR *lpdis)
          ;
 
       if (*pchTab)
-         *(pchTab++) = (TCHAR) 0;
+         *(pchTab++) = (char) 0;
    }
 
    if (lpdis->itemAction != ODA_FOCUS) {
@@ -548,8 +548,8 @@ PaintDriveLine(DRAWITEMSTRUCT FAR *lpdis)
 Static VOID
 ResetToolbar(void)
 {
-   INT nItem;
-   INT i, idCommand;
+   int nItem;
+   int i, idCommand;
    HMENU hMenu;
    UINT state;
 
@@ -557,7 +557,7 @@ ResetToolbar(void)
 
    // Remove from back to front as a speed optimization
 
-   for (nItem=(INT)SendMessage(hwndToolbar, TB_BUTTONCOUNT, 0, 0L)-1;
+   for (nItem=(int)SendMessage(hwndToolbar, TB_BUTTONCOUNT, 0, 0L)-1;
       nItem>=0; --nItem)
 
       SendMessage(hwndToolbar, TB_DELETEBUTTON, nItem, 0L);
@@ -570,10 +570,10 @@ ResetToolbar(void)
    // Add the extensions back in
 
    if (hwndExtensions) {
-      INT nExtButtons;
+      int nExtButtons;
       TBBUTTON tbButton;
 
-      nExtButtons = (INT)SendMessage(hwndExtensions, TB_BUTTONCOUNT, 0, 0L);
+      nExtButtons = (int)SendMessage(hwndExtensions, TB_BUTTONCOUNT, 0, 0L);
       for (nItem=0; nItem<nExtButtons; ++nItem) {
          SendMessage(hwndExtensions, TB_GETBUTTON, nItem,
             (LPARAM)(LPTBBUTTON)&tbButton);
@@ -619,9 +619,9 @@ LoadDesc(UINT uID, LPSTR lpDesc)
 {
    HMENU hMenu;
    UINT uMenu;
-   TCHAR szFormat[20];
-   TCHAR szMenu[20];
-   TCHAR szItem[MAXDESCLEN-COUNTOF(szMenu)];
+   char szFormat[20];
+   char szMenu[20];
+   char szItem[MAXDESCLEN-COUNTOF(szMenu)];
    LPSTR lpIn;
 
    HWND hwndActive;
@@ -660,7 +660,7 @@ LoadDesc(UINT uID, LPSTR lpDesc)
    // Remove the ampersands
 
    for (lpIn=lpDesc; ; ++lpIn, ++lpDesc) {
-      TCHAR cTemp;
+      char cTemp;
 
       cTemp = *lpIn;
       if (cTemp == '&')
@@ -740,7 +740,7 @@ DriveListMessage(UINT uMsg, WPARAM wParam, LPARAM lParam, UINT* puiRetVal)
 {
    UINT uID;
    FMS_HELPSTRING tbl;
-   INT iExt;
+   int iExt;
    DRIVE drive;
    HMENU hMenu;
 
@@ -997,7 +997,7 @@ NormalHelp:
          case CBN_CLOSEUP:
             {
                HWND hwndActive;
-               INT iNewSel;
+               int iNewSel;
 
                hwndActive = (HWND)SendMessage(hwndMDIClient,
                   WM_MDIGETACTIVE, 0, 0L);
@@ -1053,7 +1053,7 @@ VOID
 CreateFMToolbar(void)
 {
    RECT rc;
-   INT xStart;
+   int xStart;
    HDC hDC;
    HFONT hOldFont;
    TEXTMETRIC TextMetric;
@@ -1077,7 +1077,7 @@ CreateFMToolbar(void)
    GetTextMetrics(hDC, &TextMetric);
 
    cchDriveListMax =
-       (INT)( (dxDriveList - MINIDRIVE_WIDTH - 2 * MINIDRIVE_MARGIN) /
+       (int)( (dxDriveList - MINIDRIVE_WIDTH - 2 * MINIDRIVE_MARGIN) /
               (TextMetric.tmAveCharWidth * 3 / 2) - 2 );
 
    dyDriveItem = TextMetric.tmHeight;
@@ -1156,7 +1156,7 @@ ShareCountStub(DWORD iType)
 VOID
 InitToolbarButtons(VOID)
 {
-   INT i;
+   int i;
    HMENU hMenu;
    BOOL bLastSep;
 
@@ -1208,12 +1208,12 @@ InitToolbarButtons(VOID)
 
 
 BOOL
-InitToolbarExtension(INT iExt)
+InitToolbarExtension(int iExt)
 {
    TBBUTTON extButton;
    FMS_TOOLBARLOAD tbl;
    LPEXT_BUTTON lpButton;
-   INT i, iStart, iBitmap;
+   int i, iStart, iBitmap;
    BOOL fSepLast;
    TBADDBITMAP tbAddBitmap;
 
@@ -1245,7 +1245,7 @@ InitToolbarExtension(INT iExt)
       // If the last "button" is not a separator, then add one.  If it is, and
       // there are no extensions yet, then "include" it in the extensions.
 
-      i = (INT)SendMessage(hwndToolbar, TB_BUTTONCOUNT, 0, 0L);
+      i = (int)SendMessage(hwndToolbar, TB_BUTTONCOUNT, 0, 0L);
       SendMessage(hwndToolbar, TB_GETBUTTON, i-1,
          (LPARAM)(LPTBBUTTON)&extButton);
       if (!(extButton.fsStyle & TBSTYLE_SEP))
@@ -1274,12 +1274,12 @@ AddSep:
    if (tbl.idBitmap) {
       tbAddBitmap.hInst = extensions[iExt].hModule;
       tbAddBitmap.nID   = tbl.idBitmap;
-      iStart = (INT)SendMessage(hwndToolbar, TB_ADDBITMAP, tbl.cButtons,
+      iStart = (int)SendMessage(hwndToolbar, TB_ADDBITMAP, tbl.cButtons,
                                (LPARAM) &tbAddBitmap);
    } else {
       tbAddBitmap.hInst = 0;
       tbAddBitmap.nID   = (UINT)tbl.hBitmap;
-      iStart = (INT)SendMessage(hwndToolbar, TB_ADDBITMAP, tbl.cButtons,
+      iStart = (int)SendMessage(hwndToolbar, TB_ADDBITMAP, tbl.cButtons,
                                (LPARAM) &tbAddBitmap);
    }
 
@@ -1325,14 +1325,14 @@ VOID
 SaveRestoreToolbar(BOOL bSave)
 {
    static LPSTR aNames[] = { szSettings, szTheINIFile } ;
-   static TCHAR  szSubKey[] = "Software\\Microsoft\\File Manager\\Settings";
-   static TCHAR  szValueName [] = "ToolbarWindow";
+   static char szSubKey[] = "Software\\Microsoft\\File Manager\\Settings";
+   static char  szValueName [] = "ToolbarWindow";
 
-   TCHAR szNames[20*MAX_EXTENSIONS];
+   char szNames[20*MAX_EXTENSIONS];
    TBSAVEPARAMS tbSave;
 
    if (bSave) {
-      INT i;
+      int i;
       LPSTR pName;
 
       // Write out a comma separated list of the current extensions
@@ -1362,7 +1362,7 @@ SaveRestoreToolbar(BOOL bSave)
       SendMessage(hwndToolbar, TB_INSERTBUTTON, 0,
          (LPARAM)(LPTBBUTTON)tbButtons);
    } else {
-      INT i, iExt, nExtButtons;
+      int i, iExt, nExtButtons;
       BOOL bRestored;
       TBBUTTON tbButton;
       LPSTR pName, pEnd;
@@ -1374,7 +1374,7 @@ SaveRestoreToolbar(BOOL bSave)
          COUNTOF(szNames), szTheINIFile);
 
       for (iExt=0, pName=szNames; iExt<iNumExtensions; ++iExt, pName=pEnd) {
-         TCHAR szName[20];
+         char szName[20];
 
          pEnd = StrChr(pName, ',');
          if (!pEnd)
@@ -1408,7 +1408,7 @@ SaveRestoreToolbar(BOOL bSave)
          InitToolbarExtension(iExt);
 
       if (bRestored) {
-         INT idGood, idBad, nItem;
+         int idGood, idBad, nItem;
          HMENU hMenu;
 
          // Change CONNECTIONS to CONNECT (or vice versa) if necessary

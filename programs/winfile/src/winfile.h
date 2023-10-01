@@ -53,7 +53,7 @@
 #include "suggest.h"
 #include "numfmt.h"
 
-//#include "wfexti.h"
+#include "wfexti.h"
 #include "wfhelp.h"
 
 #include "wfmem.h"
@@ -1913,7 +1913,7 @@ Extern char szWinfileHelp[]  EQ( "WINFILE.HLP" );
 Extern char wszWinfileHelp[] EQ( "WINFILE.HLP" );
 
 Extern int iNumExtensions     EQ( 0 );
-//Extern EXTENSION extensions[MAX_EXTENSIONS];
+Extern EXTENSION extensions[MAX_EXTENSIONS];
 
 //Extern DWORD (APIENTRY *lpfpUndelete)(HWND, LPTSTR) EQ( NULL );
 
