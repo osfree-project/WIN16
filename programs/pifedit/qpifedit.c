@@ -1,4 +1,3 @@
-//' $Header:   P:/PVCS/MAX/QPIFEDIT/QPIFEDIT.C_V   1.10   02 Feb 1996 14:44:26   BOB  $
 /************************  The Qualitas PIF Editor  ***************************
  *									      *
  *	     (C) Copyright 1992, 1993 Qualitas, Inc.  GNU General Public License version 3.    *
@@ -23,6 +22,7 @@
 
 #include "main.h"
 #include "qpifedit.h"
+#include "advanced.h"
 
 #ifndef DEBUG
 #define DebugPrintf
@@ -32,7 +32,6 @@
 typedef UINT (CALLBACK * COMMDLGHOOKPROC)(HWND, UINT, WPARAM, LPARAM);
 
 BOOL	CALLBACK _export PaneMsgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
-BOOL	CALLBACK _export AdvancedMsgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 VOID	Pane_OnCommand(HWND hWnd, UINT id, HWND hWndCtl, WORD codeNotify);
 BOOL	Pane_OnInitDialog(HWND hWnd, HWND hWndFocus, LPARAM lParam);
 VOID	Pane_OnPaint(HWND hWnd);
@@ -43,7 +42,6 @@ VOID	Pane_OnSetFont(HWND hWndCtl, HFONT hFont, BOOL fRedraw);
 VOID	SwitchPanes(HWND hWnd, int idNewDlg);
 VOID	InitHelpWindow(HWND hWnd);
 VOID	SetHelpText(HWND hWnd, UINT idString);
-VOID	PaintHelpBorder(HDC hDC);
 
 LRESULT CALLBACK _export NumEdit_SubClassProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK _export KeyEdit_SubClassProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -158,61 +156,10 @@ CONTROL aControls[] = {
     { IDD_GENERAL,	IDG_EXEC,	GROUP },
     { IDD_GENERAL,	IDB_BACKEXEC,	BUTTON },
     { IDD_GENERAL,	IDB_EXCLEXEC,	BUTTON },
-    { IDD_GENERAL,	IDB_CLOSEEXIT,	BUTTON },
     { IDD_GENERAL,	IDB_ADVANCED,	BUTTON },
-
-//{ 0,	IDB_MEMORY,	BUTTON },
-#if 0
-    { IDD_MEMORY,	IDG_SUPERDOS,	GROUP },
-    { IDD_MEMORY,	IDB_SUPERVM_DEF,BUTTON },
-    { IDD_MEMORY,	IDB_SUPERVM_ON, BUTTON },
-    { IDD_MEMORY,	IDB_SUPERVM_OFF,BUTTON },
-#endif
-#if 0
-    { IDD_MEMORY,	IDT_DOSMEM,	LTEXT },
-    { IDD_MEMORY,	IDT_DOSMIN,	LTEXT },
-    { IDD_MEMORY,	IDE_DOSMIN,	EDIT,	EDIT_OPTVAL,  128,     0,   640 },
-    { IDD_MEMORY,	IDT_DOSMAX,	LTEXT },
-    { IDD_MEMORY,	IDE_DOSMAX,	EDIT,	EDIT_OPTVAL,  640,     0,   736 },
-#endif
-
-
-{ 0,	IDB_STANDARD,	BUTTON },
-    { IDD_TASK, IDG_PRIORITY,	GROUP },
-    { IDD_TASK, IDT_FOREPRIO,	LTEXT },
-    { IDD_TASK, IDE_FOREPRIO,	EDIT,	EDIT_RANGE, 100, 1, 10000, 0 },
-    { IDD_TASK, IDT_BACKPRIO,	LTEXT },
-    { IDD_TASK, IDE_BACKPRIO,	EDIT,	EDIT_RANGE, 50, 1, 10000, 0 },
-    { IDD_TASK, IDB_DETECTIDLE, BUTTON },
-    { IDD_TASK,	IDG_MEMOPTS,	GROUP },
-    { IDD_TASK,	IDB_EMSLOCK,	BUTTON },
-    { IDD_TASK,	IDB_XMSLOCK,	BUTTON },
-    { IDD_TASK,	IDB_XMSHMA,	BUTTON },
-    { IDD_TASK,	IDB_DOSLOCK,	BUTTON },
-    { IDD_TASK,	IDG_VIDEOMEM,	GROUP },
-    { IDD_TASK,	IDT_MONITOR,	LTEXT },
-    { IDD_TASK,	IDB_MONTEXT,	BUTTON },
-    { IDD_TASK,	IDB_MONLOW,	BUTTON },
-    { IDD_TASK,	IDB_MONHIGH,	BUTTON },
-    { IDD_TASK,	IDB_EMULATE,	BUTTON },
-    { IDD_TASK,	IDB_RETAIN,	BUTTON },
-    { IDD_TASK,	IDG_OTHER,	GROUP },
-    { IDD_TASK,	IDB_FASTPASTE,	BUTTON },
-    { IDD_TASK,	IDB_ALLOWCLOSE, BUTTON },
-    { IDD_TASK,	IDT_SHORTCUT,	LTEXT },
-    { IDD_TASK,	IDB_ALT,	BUTTON, BUTTON_HOTGRP },
-    { IDD_TASK,	IDB_CTRL,	BUTTON, BUTTON_HOTGRP },
-    { IDD_TASK,	IDB_SHIFT,	BUTTON, BUTTON_HOTGRP },
-    { IDD_TASK,	IDT_KEY,	LTEXT },
-    { IDD_TASK,	IDE_KEY,	KEYEDIT },
-    { IDD_TASK,	IDT_RESERVE,	LTEXT },
-    { IDD_TASK,	IDB_ALTTAB,	BUTTON },
-    { IDD_TASK,	IDB_ALTESC,	BUTTON },
-    { IDD_TASK,	IDB_CTRLESC,	BUTTON },
-    { IDD_TASK,	IDB_PRTSC,	BUTTON },
-    { IDD_TASK,	IDB_ALTSPACE,	BUTTON },
-    { IDD_TASK,	IDB_ALTENTER,	BUTTON },
-    { IDD_TASK,	IDB_ALTPRTSC,	BUTTON },
+    { IDD_GENERAL,	IDB_CLOSEEXIT,	BUTTON },
+//{ 0,	IDB_STANDARD,	BUTTON },
+    //{ IDD_TASK,	IDB_ALTPRTSC,	BUTTON },
 
 { 0,	LASTCONTROL, LASTCONTROL}		// End of table marker
 };
@@ -273,15 +220,9 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 
 // Initialize the COMMDLG OPENFILENAME structure
 
-	//memset(&Globals.ofn, 0, sizeof(OPENFILENAME));
 	Globals.ofn.lStructSize = sizeof(OPENFILENAME);
 	Globals.ofn.lpstrFilter = Globals.szFilter;
 	Globals.ofn.nFilterIndex = 1;
-
-// Initialize the model PIF
-
-//	memset(&pifModel, 0, sizeof(PIF));
-//	memset(&pifBackup, 0, sizeof(PIF));
 
 	Globals.hIcon = LoadIcon(Globals.hInst, MAKEINTRESOURCE(IDI_QIF));
 
@@ -410,7 +351,7 @@ VOID MenuFileOpen(VOID)
 		if (!pPIF) {
 			char	szBuf[80];
 
-			LoadString(Globals.hInst, IDS_OUTOFMEMORY2 , szBuf, sizeof(szBuf));
+			LoadString(Globals.hInst, IDS_OUTOFMEMORY , szBuf, sizeof(szBuf));
 			MessageBox(Globals.hWndDlg, szBuf, Globals.szAppTitle, MB_OK);
 			goto MENUFILEOPEN_EXIT;
 		}
@@ -833,7 +774,7 @@ int OpenPIF(VOID)
     if (!pPIF) {
 	char	szBuf[80];
 
-	LoadString(Globals.hInst, IDS_OUTOFMEMORY2 , szBuf, sizeof(szBuf));
+	LoadString(Globals.hInst, IDS_OUTOFMEMORY , szBuf, sizeof(szBuf));
 	MessageBox(Globals.hWndDlg, szBuf, Globals.szAppTitle, MB_OK);
 	rc = IDABORT;  goto OPENPIF_EXIT;
     }
@@ -1075,42 +1016,11 @@ BOOL CALLBACK _export PaneMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 		return (NULL);
 	    }
 
-	case WM_QUERYENDSESSION:
-
-		memset(&wndpl, 0, sizeof(WINDOWPLACEMENT));
-		wndpl.length = sizeof(WINDOWPLACEMENT);
-		GetWindowPlacement(hWnd, &wndpl);
-
-		wsprintf( szBuf, "%d %d", wndpl.rcNormalPosition.left,
-			wndpl.rcNormalPosition.top );
-
-		WritePrivateProfileString( Globals.szAppName,	// Section name
-			"Position", (LPSTR) &szBuf, PROFILE );
-
-		// this _should_ return 1, but Windows fails to close if it
-		//   does!!
-		return 0;
-
 	case WM_DESTROY:
 	    {
-		char	szBuf[128];
-		WINDOWPLACEMENT wndpl;
 
 		if (Globals.hbrHelp) { DeleteBrush(Globals.hbrHelp);  Globals.hbrHelp = NULL; }
 
-		memset(&wndpl, 0, sizeof(WINDOWPLACEMENT));
-		wndpl.length = sizeof(WINDOWPLACEMENT);
-		GetWindowPlacement(hWnd, &wndpl);
-
-		wsprintf( szBuf, "%d %d", wndpl.rcNormalPosition.left,
-			wndpl.rcNormalPosition.top );
-
-		WritePrivateProfileString(
-				    Globals.szAppName,	// Section name
-				    "Position", // Window position
-				    (LPSTR) &szBuf,	// New text
-				    PROFILE		// Profile filename
-				    );
 		return (FALSE);
 	    }
 
@@ -1149,152 +1059,6 @@ BOOL CALLBACK _export PaneMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 	return (FALSE);
 }
 
-/****************************************************************************
- *
- *  FUNCTION :	AdvancedMsgProc(HWND, UINT, WPARAM, LPARAM)
- *
- *  PURPOSE  :	Dialog proc for the frame and panes
- *
- *  ENTRY    :	HWND	hWndDlg;	// Dialog window handle
- *		UINT	msg;		// WM_xxx message
- *		WPARAM	wParam; 	// Message 16-bit parameter
- *		LPARAM	lParam; 	// Message 32-bit parameter
- *
- *  RETURNS  :	Non-zero - Message processed
- *		Zero	- DefDlgProc() must process the message
- *
- ****************************************************************************/
-
-BOOL CALLBACK _export AdvancedMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	char	szBuf[128];
-	WINDOWPLACEMENT wndpl;
-
-	switch (msg) {
-	case WM_ACTIVATEAPP:
-	    Globals.fCheckOnKillFocus = (BOOL) wParam;
-	    break;
-
-	case WM_ACTIVATE:
-	    Globals.fCheckOnKillFocus = (wParam != WA_INACTIVE);
-	    break;
-
-	case WM_CLOSE:
-	    {
-		if (IDCANCEL == CheckSave(hWnd)) break;
-
-		Globals.fCheckOnKillFocus = FALSE;	// Stop checking controls
-
-		if (Globals.nActiveDlg) {	// A dialog is still open
-		    SetFocus(hWnd);
-
-		    Globals.nActiveDlg = 0;
-		}
-
-		EndDialog(hWnd, IDCANCEL);
-		Globals.nActiveDlg = 0;
-	    }
-	    break;
-
-	case WM_COMMAND:
-	    Pane_OnCommand(hWnd, (UINT) wParam, (HWND) LOWORD(lParam), (WORD) HIWORD(lParam));
-	    return (FALSE);
-
-	case WM_CTLCOLOR:
-	    {
-		HDC	hDC = (HDC) wParam;
-		HWND	hWndChild = (HWND) LOWORD(lParam);
-
-		if (GetDlgItem(hWnd, IDD_HELP) != hWndChild) return (NULL);
-
-		switch ((UINT) HIWORD(lParam)) {
-		    case CTLCOLOR_EDIT:
-			SetBkColor(hDC, GetSysColor(COLOR_BTNFACE));
-			return ((BOOL) (WORD) Globals.hbrHelp);
-
-		    case CTLCOLOR_MSGBOX:
-			return ((BOOL) (WORD) Globals.hbrHelp);
-		}
-
-		return (NULL);
-	    }
-
-	case WM_QUERYENDSESSION:
-
-		memset(&wndpl, 0, sizeof(WINDOWPLACEMENT));
-		wndpl.length = sizeof(WINDOWPLACEMENT);
-		GetWindowPlacement(hWnd, &wndpl);
-
-		wsprintf( szBuf, "%d %d", wndpl.rcNormalPosition.left,
-			wndpl.rcNormalPosition.top );
-
-		WritePrivateProfileString( Globals.szAppName,	// Section name
-			"Position", (LPSTR) &szBuf, PROFILE );
-
-		// this _should_ return 1, but Windows fails to close if it
-		//   does!!
-		return 0;
-
-	case WM_DESTROY:
-	    {
-		char	szBuf[128];
-		WINDOWPLACEMENT wndpl;
-
-		if (Globals.hbrHelp) { DeleteBrush(Globals.hbrHelp);  Globals.hbrHelp = NULL; }
-
-#if 0
-
-		memset(&wndpl, 0, sizeof(WINDOWPLACEMENT));
-		wndpl.length = sizeof(WINDOWPLACEMENT);
-		GetWindowPlacement(hWnd, &wndpl);
-
-		wsprintf( szBuf, "%d %d", wndpl.rcNormalPosition.left,
-			wndpl.rcNormalPosition.top );
-
-		WritePrivateProfileString(
-				    szAppName,	// Section name
-				    "Position", // Window position
-				    (LPSTR) &szBuf,	// New text
-				    PROFILE		// Profile filename
-				    );
-					#endif
-		return (FALSE);
-	    }
-
-	case WM_SIZE:
-	    if (wParam == SIZE_MINIMIZED) {
-			//SetWindowText(hWnd, APPNAME);
-	    } else if (wParam == SIZE_MAXIMIZED || wParam == SIZE_RESTORED) {
-			//SetWindowText(hWnd, szWindowTitle);
-	    }
-
-	    return (FALSE);		// Requires default processing
-
-	case WM_ERASEBKGND:
-	    if (IsIconic(hWnd)) {
-		return (TRUE);		// Pretend we erased it
-	    } else {
-		return (FALSE); 	// We didn't erase anything
-	    }
-
-	//case WM_INITDIALOG:
-	    //return (Pane_OnInitDialog(hWnd, (HWND) wParam, lParam));
-
-	case WM_PAINT:
-		if (IsIconic(hWnd)) {
-			Pane_OnPaint_Iconic(hWnd);
-		} else {
-			Pane_OnPaint(hWnd);
-		}
-	    return (FALSE);
-
-	case WM_SETFONT:
-	    Pane_OnSetFont(hWnd, (HFONT) wParam, (BOOL) LOWORD(lParam));
-	    return (FALSE);
-	}
-
-	return (FALSE);
-}
 
 
 /****************************************************************************
@@ -1479,7 +1243,7 @@ BOOL Pane_OnInitDialog(HWND hWnd, HWND hWndFocus, LPARAM lParam)
 
     char	szBuf[128], szBuf2[128];
     int 	n;
-    int 	left, top;
+    //int 	left, top;
     RECT	rect;
 
     int 	cxScreen = GetSystemMetrics(SM_CXSCREEN);
@@ -1496,26 +1260,6 @@ BOOL Pane_OnInitDialog(HWND hWnd, HWND hWndFocus, LPARAM lParam)
 
     Globals.hWndDlg = hWnd;
 
-// Figure out the prefered window size and position
-
-    GetWindowRect(hWnd, &rect); 	// Current & default position
-
-    wsprintf(szBuf, "%d %d", rect.left, rect.top);
-
-    GetPrivateProfileString(
-			Globals.szAppName,
-			"Position",
-			(LPSTR) &szBuf,
-			(LPSTR) &szBuf2,
-			128,
-			PROFILE 	// Profile filename
-			);
-
-    sscanf(szBuf2, "%d %d", &left, &top);
-
-    if (left < cxScreen - cxFrame && top < cyScreen - cyCaption/3) {
-		MoveWindow(hWnd, left, top, (rect.right - rect.left), (rect.bottom - rect.top), TRUE);
-    }
 // Build the font for the help text
     memset(&lf, 0, sizeof(LOGFONT));
 
@@ -1696,7 +1440,7 @@ VOID Pane_OnPaint(HWND hWnd)
 // Paint the help border
 
 // Prepare rect for help window including border and sunken frame
-    SetRect(&rect, 0, 0, 0, Globals.auDlgHeights[Globals.nActiveDlg - IDD_GENERAL]);
+    SetRect(&rect, 0, 0, 0, 160/*Globals.auDlgHeights[Globals.nActiveDlg - IDD_GENERAL]*/);
     MapDialogRect(hWnd, &rect);
     SetRect(&rect, 0, rect.bottom, Globals.cxDlg, Globals.cyDlg);
 
@@ -1713,7 +1457,7 @@ VOID Pane_OnPaint(HWND hWnd)
 // Fill in the whole thing COLOR_BTNFACE
     FillRect(hDC, &rect, Globals.hbrHelp);
 
-#define EDITWASTE	3
+#define EDITWASTE	1
 
 // Prepare rect for help border
     InflateRect(&rect, -EDITWASTE, -EDITWASTE);
@@ -1949,7 +1693,7 @@ VOID InitHelpWindow(HWND hWnd)
     HWND	hWndHelp = GetDlgItem(hWnd, IDD_HELP);
 
 // Prepare rect for help window including border and sunken frame
-    SetRect(&rect, 0, 0, 0, Globals.auDlgHeights[Globals.nActiveDlg - IDD_GENERAL]);
+    SetRect(&rect, 0, 0, 0, 160/*Globals.auDlgHeights[Globals.nActiveDlg - IDD_GENERAL]*/);
     MapDialogRect(hWnd, &rect);
     SetRect(&rect, 0, rect.bottom, Globals.cxDlg, Globals.cyDlg);
 
@@ -2137,7 +1881,7 @@ QQQ:
 
 		MessageBox(NULL, szBuf, Globals.szAppTitle, MB_OK);
 
-		lr = CallWindowProc(aControls[n].lpfnOld, hWnd, msg, wParam, lParam);
+		lr = CallWindowProc((FARPROC)aControls[n].lpfnOld, hWnd, msg, wParam, lParam);
 		SetFocus(hWnd);
 
 		wsprintf(szBuf,"%d",nNewVal);
@@ -2194,10 +1938,10 @@ QQQ:
 		}
 	    }
 
-	    return (CallWindowProc(aControls[n].lpfnOld, hWnd, msg, wParam, lParam));
+	    return (CallWindowProc((FARPROC)aControls[n].lpfnOld, hWnd, msg, wParam, lParam));
     }
 
-    return (CallWindowProc(aControls[n].lpfnOld, hWnd, msg, wParam, lParam));
+    return (CallWindowProc((FARPROC)aControls[n].lpfnOld, hWnd, msg, wParam, lParam));
 }
 
 
@@ -2246,7 +1990,7 @@ LRESULT CALLBACK _export KeyEdit_SubClassProc(HWND hWnd, UINT msg, WPARAM wParam
 		    if (!ValidateHotKey(TRUE)) {
 			LRESULT lr;
 
-			lr = CallWindowProc(aControls[n].lpfnOld, hWnd, msg, wParam, lParam);
+			lr = CallWindowProc((FARPROC)aControls[n].lpfnOld, hWnd, msg, wParam, lParam);
 			SetFocus(GetDlgItem(Globals.hWndDlg, IDB_ALT));
 			CheckDlgButton(Globals.hWndDlg, IDB_ALT, IsDlgButtonChecked(Globals.hWndDlg, IDB_ALT));
 			return (0);
@@ -2271,7 +2015,7 @@ LRESULT CALLBACK _export KeyEdit_SubClassProc(HWND hWnd, UINT msg, WPARAM wParam
 		UINT	vk = (UINT) wParam;
 
 		if (vk == VK_SHIFT || vk == VK_CONTROL || vk == VK_MENU) {
-		    return (CallWindowProc(aControls[n].lpfnOld, hWnd, msg, wParam, lParam) );
+		    return (CallWindowProc((FARPROC)aControls[n].lpfnOld, hWnd, msg, wParam, lParam) );
 		} else if (vk == VK_BACK) {	// Erase or NONE
 		    Globals.wHotkeyScancode = 0;
 		    Globals.bHotkeyBits = 0;
@@ -2295,7 +2039,7 @@ LRESULT CALLBACK _export KeyEdit_SubClassProc(HWND hWnd, UINT msg, WPARAM wParam
 	    return (0);
     }
 
-    return (CallWindowProc(aControls[n].lpfnOld, hWnd, msg, wParam, lParam) );
+    return (CallWindowProc((FARPROC)aControls[n].lpfnOld, hWnd, msg, wParam, lParam) );
 }
 
 
@@ -2311,7 +2055,7 @@ LRESULT CALLBACK _export Button_SubClassProc(HWND hWnd, UINT msg, WPARAM wParam,
     if (msg == WM_SETFOCUS)
 		SetHelpText(Globals.hWndDlg, id);
 
-    return (CallWindowProc(aControls[n].lpfnOld, hWnd, msg, wParam, lParam) );
+    return (CallWindowProc((FARPROC)aControls[n].lpfnOld, hWnd, msg, wParam, lParam) );
 }
 
 
@@ -2471,10 +2215,6 @@ int ControlsFromPIF(PPIF pPIF, HWND hWnd)
 
     }
 
-//	CheckDlgButton(hWnd, IDB_SUPERVM_DEF, TRUE);
-//	CheckDlgButton(hWnd, IDB_SUPERVM_ON, FALSE);
-//	CheckDlgButton(hWnd, IDB_SUPERVM_OFF, FALSE);
-
     return (0);
 }
 
@@ -2617,12 +2357,6 @@ VOID StandardModeBitchBox(HWND hWnd)
 {
     FARPROC	lpfnSMMsgProc;
 
-    if (!GetPrivateProfileInt(Globals.szAppName,	// Section name
-			    "WarnIfNotEnhancedMode", // Key
-			    TRUE,		// Default
-			    PROFILE		// Profile filename
-			    ) ) return;
-
     MessageBeep(MB_ICONEXCLAMATION);
 
     lpfnSMMsgProc = MakeProcInstance((FARPROC) SMMsgProc, Globals.hInst);
@@ -2659,19 +2393,6 @@ BOOL CALLBACK _export SMMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		    EndDialog(hWnd, TRUE);
 	    }
 	    return (0);
-
-	case WM_DESTROY:
-	    {
-		BOOL	fExpert = IsDlgButtonChecked(hWnd, IDB_EXPERT);
-
-		WritePrivateProfileString(
-		    Globals.szAppName,			// Section name
-		    "WarnIfNotEnhancedMode",    // Key
-		    fExpert ? "0" : "1",        // New '=' text
-		    PROFILE			// Profile filename
-		    );
-	    }
-	    return (FALSE);
 
 	case WM_INITDIALOG:
 	    return (TRUE);

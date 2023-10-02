@@ -126,7 +126,7 @@ BEGIN
 
 	PUSHBUTTON "&Advanced...",  IDB_ADVANCED, 120, 140, 45, 15
 
-	CONTROL    "", IDD_HELP, "EDIT", 0/*ES_LEFT | ES_MULTILINE | ES_AUTOVSCROLL | WS_VSCROLL */, 10, 100, 240, 8 
+	CONTROL    "", IDD_HELP, "EDIT", ES_LEFT /*| ES_MULTILINE | ES_AUTOVSCROLL | WS_VSCROLL */, 10, 100, 240, 8 
 
 END
 
@@ -243,7 +243,6 @@ BEGIN
 ;	CONTROL "Standard mode.", -1, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 43, 62, 127, 8
 
 	PUSHBUTTON "OK", IDOK, 76, 115, 32, 14, WS_TABSTOP
-;	CONTROL "&Don't display this message in the future.", IDB_EXPERT, "BUTTON", BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 20, 83, 143, 14
 END
 
 
@@ -251,7 +250,6 @@ STRINGTABLE PRELOAD MOVEABLE DISCARDABLE
 BEGIN
     IDS_APPNAME, APPNAME
     IDS_APPTITLE, APPTITLE
-    //IDS_APPTITLETHE, APPTITLETHE
 
     1, "No help available for this control\0"
 
@@ -268,8 +266,8 @@ BEGIN
     IDS_FILEMASK,	"PIF Files(*.PIF)\n*.pif\n"
 
     IDS_REGISTER_CLASS, "Register class failed"
-    IDS_REALMODE,	"QPIFEDIT requires Windows 3.x running in Standard or 386 Enhanced mode"
-    IDS_MODE286,	"QPIFEDIT doesn't support the editting of Standard mode .PIFs"
+    IDS_REALMODE,	"PIFEDIT requires Windows 3.x running in Standard or 386 Enhanced mode"
+    IDS_MODE286,	"PIFEDIT doesn't support the editting of Standard mode .PIFs"
     IDS_SAVECHANGES,	"Save changes to %s?"
     IDS_UNTITLED,	"(Untitled)"
 
@@ -288,8 +286,6 @@ BEGIN
 
     IDS_COMMDLGERR,	"Problem using COMMDLG.DLL for OPEN or SAVE"
     IDS_OUTOFMEMORY,	"Out of memory"
-    IDS_OUTOFMEMORY2,	"Out of memory"
-    IDS_OUTOFMEMORY3,	"Out of memory"
-    IDS_NOWIN95,	"QPIFEDIT is not compatible with Windows 95.  To edit PIF values in Win95, right click on the icon and edit the Property sheets."
+    IDS_NOWIN95,	"PIFEDIT is not compatible with Windows 95.  To edit PIF values in Win95, right click on the icon and edit the Property sheets."
 END
 

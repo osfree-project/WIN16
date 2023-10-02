@@ -23,7 +23,6 @@ VOID	StandardModeBitchBox(HWND hWnd);
 BOOL	CALLBACK _export SMMsgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 
 #define IDD_STANDARD	107		// Standard mode bitch dialog
-#define IDB_EXPERT	108		// Don't remind me again
 
 #define IDI_QIF 	100		// App's icon
 #define IDI_DOSMAX	101		// DOSMAX icon
@@ -63,12 +62,6 @@ BOOL	CALLBACK _export SMMsgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lP
 #define IDT_DIRECTORY		206
 #define IDE_DIRECTORY		207
 
-#define IDD_MEMORY	103		// 'Memory' dialog
-
-#define IDG_SUPERDOS		300
-#define IDB_SUPERVM_DEF 	301
-#define IDB_SUPERVM_ON		302
-#define IDB_SUPERVM_OFF 	303
 #define IDG_MEMOPTS		304
 #define IDT_DOSMEM		305
 #define IDT_DOSMIN		306
@@ -90,8 +83,6 @@ BOOL	CALLBACK _export SMMsgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lP
 #define IDB_XMSLOCK		322
 #define IDB_XMSHMA		323
 
-#define IDD_VIDEO	104		// 'Video' dialog
-
 #define IDG_DISPLAY		400
 #define IDB_FULLSCREEN		401
 #define IDB_WINDOWED		402
@@ -108,8 +99,6 @@ BOOL	CALLBACK _export SMMsgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lP
 #define IDB_RETAIN		413
 #define IDT_VIDMEM		414
 
-#define IDD_TASK	105		// 'Task' dialog
-
 #define IDG_PRIORITY		500
 #define IDT_BACKPRIO		501
 #define IDE_BACKPRIO		502
@@ -119,8 +108,6 @@ BOOL	CALLBACK _export SMMsgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lP
 #define IDB_DETECTIDLE		506
 #define IDB_BACKEXEC		507
 #define IDB_EXCLEXEC		508
-
-#define IDD_OTHER	106		// 'Other' dialog
 
 #define IDT_SHORTCUT		600
 #define IDB_ALT 		601
@@ -178,12 +165,10 @@ BOOL	CALLBACK _export SMMsgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lP
 
 #define IDS_COMMDLGERR	90	// "Problem using COMMDLG.DLL for OPEN or SAVE"
 #define IDS_OUTOFMEMORY 91	// "Out of memory"
-#define IDS_OUTOFMEMORY2 92	// "Out of memory"      Can't lock PIF
-#define IDS_OUTOFMEMORY3 93	// "Out of memory"      Can't lock QPE
 #define IDS_NOWIN95	 94	// "Not compatible with Win95"
 
 
-#define EDITBORDER	5
+#define EDITBORDER	3
 
 #define FILEOKSTRING "commdlg_FileNameOK"
 

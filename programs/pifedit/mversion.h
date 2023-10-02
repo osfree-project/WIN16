@@ -7,7 +7,6 @@
 // Copyright (C) 1995 Qualitas, Inc.  GNU General Public License version 3
 // ------------------------------------------------------
 
-#include <maxnames.h>
 #include <_lcldefs.h>					// Define BUILD_BETA, BUILD_ALPHA
 
 // Check for required stuff
@@ -45,7 +44,7 @@
 #define VER_PRODUCTVERSION			VER_MAJOR,VER_MINOR,VER_BETA,VER_MODULE
 #define VER_PRODUCTVERSION_STR		VERSION
 
-#define VER_PRODUCTNAME_STR		MAX8PRODUCT
+#define VER_PRODUCTNAME_STR		"osFree PIFEDIT"
 #define VER_LEGALCOPYRIGHT_YEARS	"1995-97"
 #define VER_COMPANYNAME_STR		"Qualitas, Inc."
 #define VER_COPYRIGHT1_STR			"Copyright \251 " VER_LEGALCOPYRIGHT_YEARS " " VER_COMPANYNAME_STR

@@ -141,111 +141,10 @@ typedef int		HFILE;
 #define VFT2_FONT_VECTOR	0x00000002L
 #define VFT2_FONT_TRUETYPE	0x00000003L
 
-/* ----- VerFindFile() flags ----- */
-#define VFFF_ISSHAREDFILE	0x0001
-
-#define VFF_CURNEDEST		0x0001
-#define VFF_FILEINUSE		0x0002
-#define VFF_BUFFTOOSMALL	0x0004
-
-/* ----- VerInstallFile() flags ----- */
-#define VIFF_FORCEINSTALL	0x0001
-#define VIFF_DONTDELETEOLD	0x0002
-
-#define VIF_TEMPFILE		0x00000001L
-#define VIF_MISMATCH		0x00000002L
-#define VIF_SRCOLD		0x00000004L
-
-#define VIF_DIFFLANG		0x00000008L
-#define VIF_DIFFCODEPG		0x00000010L
-#define VIF_DIFFTYPE		0x00000020L
-
-#define VIF_WRITEPROT		0x00000040L
-#define VIF_FILEINUSE		0x00000080L
-#define VIF_OUTOFSPACE		0x00000100L
-#define VIF_ACCESSVIOLATION	0x00000200L
-#define VIF_SHARINGVIOLATION	0x00000400L
-#define VIF_CANNOTCREATE	0x00000800L
-#define VIF_CANNOTDELETE	0x00001000L
-#define VIF_CANNOTRENAME	0x00002000L
-#define VIF_CANNOTDELETECUR	0x00004000L
-#define VIF_OUTOFMEMORY 	0x00008000L
-
-#define VIF_CANNOTREADSRC	0x00010000L
-#define VIF_CANNOTREADDST	0x00020000L
-
-#define VIF_BUFFTOOSMALL	0x00040000L
-
 #ifndef RC_INVOKED		/* RC doesn't need to see the rest of this */
 
 /* ----- Types and structures ----- */
 
-typedef signed short int SHORT;
-
-typedef struct tagVS_FIXEDFILEINFO
-{
-    DWORD   dwSignature;	    /* e.g. 0xfeef04bd */
-    DWORD   dwStrucVersion;	    /* e.g. 0x00000042 = "0.42" */
-    DWORD   dwFileVersionMS;	    /* e.g. 0x00030075 = "3.75" */
-    DWORD   dwFileVersionLS;	    /* e.g. 0x00000031 = "0.31" */
-    DWORD   dwProductVersionMS;     /* e.g. 0x00030010 = "3.10" */
-    DWORD   dwProductVersionLS;     /* e.g. 0x00000031 = "0.31" */
-    DWORD   dwFileFlagsMask;	    /* = 0x3F for version "0.42" */
-    DWORD   dwFileFlags;	    /* e.g. VFF_DEBUG | VFF_PRERELEASE */
-    DWORD   dwFileOS;		    /* e.g. VOS_DOS_WINDOWS16 */
-    DWORD   dwFileType; 	    /* e.g. VFT_DRIVER */
-    DWORD   dwFileSubtype;	    /* e.g. VFT2_DRV_KEYBOARD */
-    DWORD   dwFileDateMS;	    /* e.g. 0 */
-    DWORD   dwFileDateLS;	    /* e.g. 0 */
-} VS_FIXEDFILEINFO;
-
-/* ----- Function prototypes ----- */
-
-UINT WINAPI VerFindFile(UINT uFlags, LPCSTR szFileName,
-      LPCSTR szWinDir, LPCSTR szAppDir,
-      LPSTR szCurDir, UINT FAR* lpuCurDirLen,
-      LPSTR szDestDir, UINT FAR* lpuDestDirLen);
-
-DWORD WINAPI VerInstallFile(UINT uFlags,
-      LPCSTR szSrcFileName, LPCSTR szDestFileName, LPCSTR szSrcDir,
-      LPCSTR szDestDir, LPCSTR szCurDir, LPSTR szTmpFile, UINT FAR* lpuTmpFileLen);
-
-/* Returns size of version info in bytes */
-DWORD WINAPI GetFileVersionInfoSize(
-      LPCSTR lpstrFilename,	/* Filename of version stamped file */
-      DWORD FAR *lpdwHandle);	/* Information for use by GetFileVersionInfo */
-
-/* Read version info into buffer */
-BOOL WINAPI GetFileVersionInfo(
-      LPCSTR lpstrFilename,	/* Filename of version stamped file */
-      DWORD dwHandle,		/* Information from GetFileVersionSize */
-      DWORD dwLen,		/* Length of buffer for info */
-      void FAR* lpData);	/* Buffer to place the data structure */
-
-/* Returns size of resource in bytes */
-DWORD WINAPI GetFileResourceSize(
-      LPCSTR lpstrFilename,	/* Filename of version stamped file */
-      LPCSTR lpstrResType,	/* Type:  normally VS_FILE_INFO */
-      LPCSTR lpstrResID,	/* ID:	normally VS_VERSION_INFO */
-      DWORD FAR *lpdwFileOffset); /* Returns file offset of resource */
-
-/* Reads file resource into buffer */
-BOOL WINAPI GetFileResource(
-      LPCSTR lpstrFilename,	/* Filename of version stamped file */
-      LPCSTR lpstrResType,	/* Type:  normally VS_FILE_INFO */
-      LPCSTR lpstrResID,	/* ID:	normally VS_VERSION_INFO */
-      DWORD dwFileOffset,	/* File offset or NULL */
-      DWORD dwResLen,		/* Length of resource to read or NULL */
-      void FAR* lpData);	/* Pointer to data buffer */
-
-UINT WINAPI VerLanguageName(UINT wLang, LPSTR szLang, UINT nSize);
-
-UINT WINAPI GetWindowsDir(LPCSTR szAppDir, LPSTR lpBuffer, int nSize);
-
-UINT WINAPI GetSystemDir(LPCSTR szAppDir, LPSTR lpBuffer, int nSize);
-
-BOOL WINAPI VerQueryValue(const void FAR* pBlock, LPCSTR lpSubBlock,
-      void FAR* FAR* lplpBuffer, UINT FAR* lpuLen);
 
 #ifdef __cplusplus
 }
@@ -255,4 +154,3 @@ BOOL WINAPI VerQueryValue(const void FAR* pBlock, LPCSTR lpSubBlock,
 
 #endif	/* !RC_INVOKED */
 #endif	/* !_INC_VER */
-
