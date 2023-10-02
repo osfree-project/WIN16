@@ -14,8 +14,8 @@ ADD_COPT = -sg -DDEBUG=1
 ADD_LINKOPT = LIB commdlg.lib
 
 CLEAN_ADD = *.mbr
-HEAPSIZE = 4k
-STACKSIZE = 8k
+HEAPSIZE = 18k
+STACKSIZE = 18k
 
 !include $(%ROOT)tools/mk/appsw16.mk
 

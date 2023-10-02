@@ -1153,7 +1153,7 @@ VOID Pane_OnCommand(HWND hWnd, UINT id, HWND hWndCtl, WORD codeNotify)
 
 //	default:
 // RCC - added kludge 10/15
-//		SetHelpText(hWndDlg, id);
+//		SetHelpText(Globals.hWndDlg, id);
 	}
 }
 
@@ -1281,7 +1281,7 @@ BOOL Pane_OnInitDialog(HWND hWnd, HWND hWndFocus, LPARAM lParam)
 
 // Grab the hWnd for each child control and stuff it in aControls
 // Enable all the GENERAL controls, and disable all others
-#if 0
+#if 1
     hdwp = BeginDeferWindowPos(64);
 
     for (n = 0; n < sizeof(aControls)/sizeof(CONTROL); n++) {
@@ -1420,22 +1420,6 @@ VOID Pane_OnPaint(HWND hWnd)
     //GetClientRect(GetDlgItem(hWnd, IDB_TASK), &rect);
     GetClientRect(hWnd, &rectWnd);
 
-// Move it to the right corner
-//    OffsetRect(&rect, rectWnd.right - rect.right, 0);
-
-//    rect.bottom--;		// Leave room for the black line
-
-// Fill it with that ugly green
-    //FillRect(hDC, &rect, hbrButton);
-
-//    DeleteBrush(hbrButton);
-
-//    hPenOld = SelectObject(hDC, hPenBlack);
-
-//    MoveTo(hDC, rect.left, rect.bottom);
-//    LineTo(hDC, rect.right, rect.bottom);
-
-//    SelectObject(hDC, hPenOld);
 
 // Paint the help border
 
@@ -1733,51 +1717,64 @@ VOID InitHelpWindow(HWND hWnd)
 
 VOID SetHelpText(HWND hWnd, UINT idHelp)
 {
-    HRSRC	hRsrc;
-    HGLOBAL	hGblRsrc;
-    HLOCAL	hOld, hNew;
+	HRSRC	hRsrc;
+	HGLOBAL	hGblRsrc;
+	HLOCAL	hOld, hNew;
 
-    PSTR	psz;
-    LPSTR	lpsz;
+	PSTR	psz;
+	LPSTR	lpsz;
 
-    HWND	hWndHelp = GetDlgItem(hWnd, IDD_HELP);
+	HWND	hWndHelp = GetDlgItem(hWnd, IDD_HELP);
 
-    if (!idHelp)
-	return;
+	if (!idHelp)
+		return;
 
-    if (idHelp == Globals.idHelpCur)
-	return;
+	if (idHelp == Globals.idHelpCur)
+		return;
 
-    hRsrc = FindResource(Globals.hInst, MAKEINTRESOURCE(idHelp), RT_RCDATA);
 
-    if (hRsrc) {
-	hGblRsrc = LoadResource(Globals.hInst, hRsrc);
-	if (hGblRsrc) {
-	    lpsz = (LPSTR) LockResource(hGblRsrc);
-	    if (lpsz) {
-		hNew = LocalAlloc(LMEM_MOVEABLE, lstrlen(lpsz) + 1);
-		if (hNew) {
-		    psz = LocalLock(hNew);
-		    if (psz) {
-			lstrcpy(psz, lpsz);
-			LocalUnlock(hNew);
+	hRsrc = FindResource(Globals.hInst, MAKEINTRESOURCE(idHelp), RT_RCDATA);
 
-			hOld = (HLOCAL) SendMessage(hWndHelp,
-						    EM_GETHANDLE,
-						    (WPARAM) 0,
-						    (LPARAM) 0L
-						    );
-			if (hOld) LocalFree(hOld);
 
-			Edit_SetHandle(hWndHelp, hNew);
-			Edit_SetReadOnly(hWndHelp, TRUE);
-		    }
-		}
-		UnlockResource(hGblRsrc);
-	    }
-	    FreeResource(hGblRsrc);
+	if (hRsrc) {
+		hGblRsrc = LoadResource(Globals.hInst, hRsrc);
+
+		if (hGblRsrc) {
+			lpsz = (LPSTR) LockResource(hGblRsrc);
+
+			if (lpsz) {
+				hNew = LocalAlloc(LMEM_MOVEABLE, lstrlen(lpsz) + 1);
+				if (hNew) {
+					psz = LocalLock(hNew);
+
+
+					if (psz) {
+						lstrcpy(psz, lpsz);
+	#if 0
+	{
+		char szBuf[8200];
+		sprintf(szBuf, "%d %s", hGblRsrc, psz);
+		MessageBox(0, psz, szBuf, MB_OK);
 	}
-    }
+	#endif
+						LocalUnlock(hNew);
+
+						hOld = (HLOCAL) SendMessage(hWndHelp,
+								EM_GETHANDLE,
+								(WPARAM) 0,
+								(LPARAM) 0L
+								);
+						if (hOld) LocalFree(hOld);
+
+						Edit_SetHandle(hWndHelp, hNew);
+						Edit_SetReadOnly(hWndHelp, TRUE);
+					}
+				}
+				UnlockResource(hGblRsrc);
+			}
+			FreeResource(hGblRsrc);
+		}
+	}
 
     Globals.idHelpCur = idHelp;
 }

@@ -34,14 +34,17 @@ END
 
 /*  GENERAL ******************************************************************/
 
-IDB_GENERAL	RCDATA	LOADONCALL MOVEABLE DISCARDABLE
+IDB_ENHANCED	RCDATA	LOADONCALL MOVEABLE DISCARDABLE
 BEGIN
 #ifdef LANG_GR
 	"Hier geben Sie den Programmdateinamen, Programmtitel, Anfangsverzeichnis "
 	"und wahlfreie Programmparameter an.\0"
 #else
+	"Press F1 for Help on Program Filename.\0"
+	#if 0
 	"Specify program filename, window title, start-up directory "
 	"and any optional parameters.\0"
+	#endif
 #endif				/* IFDEF LANG_GR */
 END
 
@@ -64,6 +67,8 @@ BEGIN
 	"Wenn Sie im Programm-Manager ein neues DOS-Programm einrichten möchten, "
 	"geben Sie den Namen der PIF-Datei an.\0"
 #else
+	"Press F1 for Help on Program Filename.\0"
+	#if 0
 	"Enter the name of the executable program or batch file with "
 	"which this Program Information File (PIF) is to be "
 	"associated.  The program name must have one of the following "
@@ -78,6 +83,7 @@ BEGIN
 	"this field.\r\n\r\n"
 	"When adding a new program to Program Manager, you may "
 	"specify the name of a PIF.\0"
+	#endif
 #endif				/* IFDEF LANG_GR */
 END
 
@@ -92,6 +98,8 @@ BEGIN
 	"Ein Text, den Sie im Programm-Manager Dialogfeld 'Programmeigenschaften' "
 	"Textfeld 'Beschreibung' eingeben, hat Vorrang vor dem PIF-Programmtitel.\0"
 #else
+	"Press F1 for Help on Program Title.\0"
+	#if 0
 	"Enter the text you would like to appear in the title bar "
 	"when the DOS session is run in a windowed state.  This text "
 	"is also used as the icon caption when the DOS session is "
@@ -99,6 +107,7 @@ BEGIN
 	"Any text entered in the Description field in Program "
 	"Manager's Properties dialog box will override the PIF Window "
 	"Title.\0"
+	#endif
 #endif				/* IFDEF LANG_GR */
 END
 
@@ -114,6 +123,8 @@ BEGIN
 	"Wenn Sie möchten, daß Windows die Parameter bei jedem PIF-Aufruf "
 	"anfordert, geben Sie in diesem Feld ein Fragezeichen '?' ein.\0"
 #else
+	"Press F1 for Help on Optional Parameters.\0"
+	#if 0
 	"Enter any command line options for the program you are "
 	"running.\r\n\r\n"
 	"For example, to create a PIF that runs the DOS editor with "
@@ -123,6 +134,7 @@ BEGIN
 	"If you would like windows to prompt you for Optional "
 	"Parameters each time the PIF is invoked then enter a "
 	"question mark in this field.\0"
+	#endif
 #endif				/* IFDEF LANG_GR */
 END
 
@@ -138,6 +150,8 @@ BEGIN
 	"und die Programmdatei nicht im DOS Pfad zu finden ist, "
 	"müssen Sie den 'Lagerort' der Datei als Startverzeichnis angeben.\0"
 #else
+	"Press F1 for Help on Start-up Directory.\0"
+	#if 0
 	"Enter the complete directory path indicating from where you "
 	"would like Windows to start the application.\r\n\r\n"
 	"Many applications use this directory as the default for File "
@@ -145,6 +159,7 @@ BEGIN
 	"If you do not include the path as part of the Program "
 	"Filename and if the program file is not in the DOS path, you "
 	"must specify the location of the file as the Start-up Directory.\0"
+	#endif
 #endif				/* IFDEF LANG_GR */
 END
 
@@ -156,138 +171,11 @@ BEGIN
 	"Geben Sie an, wieviel Speicher welchen Typs für die DOS-Sitzung "
 	"verfügbar sein soll.\0"
 #else
+	"Press F1 for Help on Video Memory.\0"
+	#if 0
 	"Specify how much and what type(s) of memory should be made "
 	"available in the DOS session.\0"
-#endif				/* IFDEF LANG_GR */
-END
-
-// DOSMAX
-IDB_SUPERVM_DEF RCDATA	LOADONCALL MOVEABLE DISCARDABLE
-BEGIN
-#ifdef LANG_GR
-	"WICHTIG! Lesen Sie diesen Hilfetext vollständig durch. "
-	"Die Hinweise können Sie vor Datenverlust bewahren.\r\n\r\n"
-	"Diese Option schaltet die Qualitas DOSMAX Funktion ein. DOSMAX "
-	"stellt Textmodus-Anwendungen bis zu 736 KB konventionellen "
-	"Speicher zur Verfügung.\r\n\r\n"
-	"'Voreinstellung' legt fest, daß die DOSMAX-Funktion durch den "
-	"Eintrag 'DOSMAXDefault=' im Abschnitt [QUALITAS] der Datei "
-	"SYSTEM.INI geregelt wird. (Sie können diesen Schalter auf 'ON' oder 'OFF' "
-	"setzen.) 'EIN' aktiviert die DOSMAX-Unterstützung unabhängig vom Schalter "
-	"in der Datei SYSTEM.INI. "
-	"'AUS' deaktiviert die DOSMAX-Unterstützung unabhängig vom Schalter "
-	"in der Datei SYSTEM.INI.\r\n\r\n"
-	"Denken Sie daran, daß viele Anwendungen zwischen Text- und Grafikmodus "
-	"umschalten und damit unvorhersehbare Ergebnisse bewirken können "
-	"(einschließlich Datenverlust im Speicher oder Abbruch einer DOS-Sitzung.) "
-	"So ist z.B. WordPerfect DOS primär eine Textmodus-Anwendung, "
-	"obwohl sie für bestimmte Funktionen in den Grafikmodus "
-	"umschaltet (z.B. für die Druckbildvorschau).\0"
-#else
-	"IMPORTANT!  Read this entire help screen to prevent "
-	"accidental loss of work in memory.\r\n\r\n"
-	"This option enables Qualitas's DOSMAX feature.  DOSMAX "
-	"provides text mode applications with as much as 736K "
-	"conventional memory.\r\n\r\n"
-	"'Use Default' indicates that DOSMAX support is determined "
-	"by the 'DOSMAXDefault=' switch in the [QUALITAS] section of "
-	"SYSTEM.INI.  You may set this switch to 'ON' or 'OFF'. "
-	"'ON' enables DOSMAX support regardless of the SYSTEM.INI "
-	"switch setting. "
-	"'OFF' disables DOSMAX support regardless of the SYSTEM.INI "
-	"switch setting.\r\n\r\n"
-	"Keep in mind that many applications switch between graphics "
-	"and text modes which can cause unpredictable results "
-	"(including the loss of data in memory or a DOS session "
-	"crash).  For example, WordPerfect DOS version is primarily a "
-	"text mode application although it does switch into graphics "
-	"mode for certain features (i.e. Page Preview).\0"
-#endif				/* IFDEF LANG_GR */
-END
-
-IDB_SUPERVM_ON	RCDATA	LOADONCALL MOVEABLE DISCARDABLE
-BEGIN
-#ifdef LANG_GR
-	"WICHTIG! Lesen Sie diesen Hilfetext vollständig durch. "
-	"Die Hinweise können Sie vor Datenverlust bewahren.\r\n\r\n"
-	"Diese Option schaltet die Qualitas DOSMAX Funktion ein. DOSMAX "
-	"stellt Textmodus-Anwendungen bis zu 736 KB konventionellen "
-	"Speicher zur Verfügung.\r\n\r\n"
-	"'Voreinstellung' legt fest, daß die DOSMAX-Funktion durch den "
-	"Eintrag 'DOSMAXDefault=' im Abschnitt [QUALITAS] der Datei "
-	"SYSTEM.INI geregelt wird. (Sie können diesen Schalter auf 'ON' oder 'OFF' "
-	"setzen.) 'EIN' aktiviert die DOSMAX-Unterstützung unabhängig vom Schalter "
-	"in der Datei SYSTEM.INI. "
-	"'AUS' deaktiviert die DOSMAX-Unterstützung unabhängig vom Schalter "
-	"in der Datei SYSTEM.INI.\r\n\r\n"
-	"Denken Sie daran, daß viele Anwendungen zwischen Text- und Grafikmodus "
-	"umschalten und damit unvorhersehbare Ergebnisse bewirken können "
-	"(einschließlich Datenverlust im Speicher oder Abbruch einer DOS-Sitzung.) "
-	"So ist z.B. WordPerfect DOS primär eine Textmodus-Anwendung, "
-	"obwohl sie für bestimmte Funktionen in den Grafikmodus "
-	"umschaltet (z.B. für die Druckbildvorschau).\0"
-#else
-	"IMPORTANT!  Read this entire help screen to prevent "
-	"accidental loss of work in memory.\r\n\r\n"
-	"This option enables Qualitas's DOSMAX feature.  DOSMAX "
-	"provides text mode applications with as much as 736K "
-	"conventional memory.\r\n\r\n"
-	"'Use Default' indicates that DOSMAX support is determined "
-	"by the 'DOSMAXDefault=' switch in the [QUALITAS] section of "
-	"SYSTEM.INI.  You may set this switch to 'ON' or 'OFF'. "
-	"'ON' enables DOSMAX support regardless of the SYSTEM.INI "
-	"switch setting. "
-	"'OFF' disables DOSMAX support regardless of the SYSTEM.INI "
-	"switch setting.\r\n\r\n"
-	"Keep in mind that many applications switch between graphics "
-	"and text modes which can cause unpredictable results "
-	"(including the loss of data in memory or a DOS session "
-	"crash).  For example, WordPerfect DOS version is primarily a "
-	"text mode application although it does switch into graphics "
-	"mode for certain features (i.e. Page Preview).\0"
-#endif				/* IFDEF LANG_GR */
-END
-
-IDB_SUPERVM_OFF RCDATA	LOADONCALL MOVEABLE DISCARDABLE
-BEGIN
-#ifdef LANG_GR
-	"WICHTIG! Lesen Sie diesen Hilfetext vollständig durch. "
-	"Die Hinweise können Sie vor Datenverlust bewahren.\r\n\r\n"
-	"Diese Option schaltet die Qualitas DOSMAX Funktion ein. DOSMAX "
-	"stellt Textmodus-Anwendungen bis zu 736 KB konventionellen "
-	"Speicher zur Verfügung.\r\n\r\n"
-	"'Voreinstellung' legt fest, daß die DOSMAX-Funktion durch den "
-	"Eintrag 'DOSMAXDefault=' im Abschnitt [QUALITAS] der Datei "
-	"SYSTEM.INI geregelt wird. (Sie können diesen Schalter auf 'ON' oder 'OFF' "
-	"setzen.) 'EIN' aktiviert die DOSMAX-Unterstützung unabhängig vom Schalter "
-	"in der Datei SYSTEM.INI. "
-	"'AUS' deaktiviert die DOSMAX-Unterstützung unabhängig vom Schalter "
-	"in der Datei SYSTEM.INI.\r\n\r\n"
-	"Denken Sie daran, daß viele Anwendungen zwischen Text- und Grafikmodus "
-	"umschalten und damit unvorhersehbare Ergebnisse bewirken können "
-	"(einschließlich Datenverlust im Speicher oder Abbruch einer DOS-Sitzung.) "
-	"So ist z.B. WordPerfect DOS primär eine Textmodus-Anwendung, "
-	"obwohl sie für bestimmte Funktionen in den Grafikmodus "
-	"umschaltet (z.B. für die Druckbildvorschau).\0"
-#else
-	"IMPORTANT!  Read this entire help screen to prevent "
-	"accidental loss of work in memory.\r\n\r\n"
-	"This option enables Qualitas's DOSMAX feature.  DOSMAX "
-	"provides text mode applications with as much as 736K "
-	"conventional memory.\r\n\r\n"
-	"'Use Default' indicates that DOSMAX support is determined "
-	"by the 'DOSMAXDefault=' switch in the [QUALITAS] section of "
-	"SYSTEM.INI.  You may set this switch to 'ON' or 'OFF'. "
-	"'ON' enables DOSMAX support regardless of the SYSTEM.INI "
-	"switch setting. "
-	"'OFF' disables DOSMAX support regardless of the SYSTEM.INI "
-	"switch setting.\r\n\r\n"
-	"Keep in mind that many applications switch between graphics "
-	"and text modes which can cause unpredictable results "
-	"(including the loss of data in memory or a DOS session "
-	"crash).  For example, WordPerfect DOS version is primarily a "
-	"text mode application although it does switch into graphics "
-	"mode for certain features (i.e. Page Preview).\0"
+	#endif
 #endif				/* IFDEF LANG_GR */
 END
 
@@ -301,10 +189,13 @@ BEGIN
 	"Mit dem Eintrag -1 weisen Sie Windows an, den gesamten verfügbaren "
 	"Speicher zu benutzen.\0"
 #else
+	"Press F1 for Help on Memory Requirements.\0"
+	#if 0
 	"Specifies the minimum amount of conventional memory required "
 	"to start the DOS window.  If the indicated amount is not "
 	"available, Windows will fail to start the DOS session.\r\n\r\n"
 	"Use -1 to direct Windows to use as much memory as is available.\0"
+	#endif
 #endif				/* IFDEF LANG_GR */
 END
 
@@ -318,10 +209,13 @@ BEGIN
 	"Mit dem Eintrag -1 weisen Sie Windows an, den gesamten verfügbaren "
 	"Speicher zu benutzen.\0"
 #else
+	"Press F1 for Help on Memory Requirements.\0"
+	#if 0
 	"Specifies the amount of conventional memory to be provided "
 	"if available.  If the indicated amount is not available, "
 	"Windows will allocate as much as possible.\r\n\r\n"
 	"Use -1 to direct Windows to use as much memory as is available.\0"
+	#endif
 #endif				/* IFDEF LANG_GR */
 END
 
@@ -367,10 +261,13 @@ BEGIN
 	"Mit dem Eintrag -1 weisen Sie Windows an, den gesamten verfügbaren "
 	"Speicher zu benutzen.\0"
 #else
+	"Press F1 for Help on EMS Memory.\0"
+	#if 0
 	"Specifies the minimum amount of Expanded (EMS) memory "
 	"required to start the DOS window.  If the indicated amount "
 	"is not available, Windows will fail to start the DOS session.\r\n\r\n"
 	"Use -1 to direct Windows to use as much memory as is available.\0"
+	#endif
 #endif				/* IFDEF LANG_GR */
 END
 
@@ -384,11 +281,14 @@ BEGIN
 	"Mit dem Eintrag -1 weisen Sie Windows an, den gesamten verfügbaren "
 	"Speicher zu benutzen.\0"
 #else
+	"Press F1 for Help on EMS Memory.\0"
+	#if 0
 	"Specifies the amount of Expanded (EMS) memory desired if "
 	"available.  If the indicated amount is not available, "
 	"Windows will allocate as much as possible.\r\n\r\n"
 	"Use -1 to direct Windows to use as much memory as is "
 	"available.\0"
+	#endif
 #endif				/* IFDEF LANG_GR */
 END
 
@@ -435,10 +335,13 @@ BEGIN
 	"Mit dem Eintrag -1 weisen Sie Windows an, den gesamten verfügbaren "
 	"Speicher zu benutzen.\0"
 #else
+	"Press F1 for Help on XMS Memory.\0"
+	#if 0
 	"Specifies the minimum amount of eXtended (XMS) memory "
 	"required to start the DOS window.  If the indicated amount "
 	"is not available, Windows will fail to start the DOS session.\r\n\r\n"
 	"Use -1 to direct Windows to use as much memory as is available.\0"
+	#endif
 #endif				/* IFDEF LANG_GR */
 END
 
@@ -452,10 +355,13 @@ BEGIN
 	"Mit dem Eintrag -1 weisen Sie Windows an, den gesamten verfügbaren "
 	"Speicher zu benutzen.\0"
 #else
+	"Press F1 for Help on XMS Memory.\0"
+	#if 0
 	"Specifies the amount of eXtended (XMS) memory desired if "
 	"available.  If the indicated amount is not available, "
 	"Windows will allocate as much as possible.\r\n\r\n"
 	"Use -1 to direct Windows to use as much memory as is available.\0"
+	#endif
 #endif				/* IFDEF LANG_GR */
 END
 
@@ -523,8 +429,11 @@ BEGIN
 	"Hier geben Sie Informationen zum Anzeigemodus, Bildschirmspeicher "
 	"und andere Video-bezogene Daten an.\0"
 #else
+	"Press F1 for Help on Video Memory.\0"
+	#if 0
 	"Specify information on display usage, video memory and other "
 	"video related information topics.\0"
+	#endif
 #endif				/* IFDEF LANG_GR */
 END
 
@@ -591,6 +500,8 @@ BEGIN
 	"in einer Sitzung mit dieser Einstellung ein Grafikprogramm aufrufen, wird "
 	"Windows möglicherweise einen Fehler melden und das DOS-Fenster nicht öffnen.\0"
 #else
+	"Press F1 for Help on Video Memory.\0"
+	#if 0
 	"When Windows starts a DOS session, it allocates memory in "
 	"which to store the information displayed in that DOS session.  "
 	"Graphics programs require more memory than do text programs.  "
@@ -602,6 +513,7 @@ BEGIN
 	"video memory in which to store a text display.  If you attempt "
 	"to run a graphics program in a session with this setting "
 	"then Windows may display an error and fail to open the DOS window.\0"
+	#endif
 #endif				/* IFDEF LANG_GR */
 END
 
@@ -625,6 +537,8 @@ BEGIN
 	"benutzen und die Anwendungen mit dieser PIF-Datei starten, kann die Auswahl "
 	"'Niedrige Auflösung' mehr Speicher reservieren als tatsächlich benötigt wird.\0"
 #else
+	"Press F1 for Help on Video Memory.\0"
+	#if 0
 	"When Windows starts a DOS session, it allocates memory in "
 	"which to store the information displayed in that DOS session.  "
 	"Graphics programs require more memory than do text programs.  "
@@ -639,6 +553,7 @@ BEGIN
 	"fail to open the DOS window.  If you intend to run only text "
 	"applications in DOS sessions started with this PIF then selecting "
 	"'Low Graphics' may waste memory.\0"
+	#endif
 #endif				/* IFDEF LANG_GR */
 END
 
@@ -662,6 +577,8 @@ BEGIN
 	"die Anwendungen mit dieser PIF-Datei starten, kann die Auswahl 'Hohe Auflösung' "
 	"mehr Speicher reservieren als tatsächlich benötigt wird.\0"
 #else
+	"Press F1 for Help on Video Memory.\0"
+	#if 0
 	"When Windows starts a DOS session, it allocates memory in "
 	"which to store the information displayed in that DOS session.  "
 	"Graphics programs require more memory than do text programs.  "
@@ -676,6 +593,7 @@ BEGIN
 	"fail to open the DOS window.  If you intend to run only text or "
 	"low resolution graphics applications in DOS sessions started "
 	"with this PIF then selecting 'High Graphics' may waste memory.\0"
+	#endif
 #endif				/* IFDEF LANG_GR */
 END
 

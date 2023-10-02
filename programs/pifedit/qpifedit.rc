@@ -53,8 +53,6 @@ MENU MenuApp
 FONT 8, "MS Sans Serif"
 BEGIN
 
-; New scheme that include all panes in the main dialog (subject to change)
-
 ; General
     LTEXT	    "&Program Filename:", IDT_FILENAME, 6, 4, 61, 8,
 			NOT WS_GROUP
@@ -126,7 +124,7 @@ BEGIN
 
 	PUSHBUTTON "&Advanced...",  IDB_ADVANCED, 120, 140, 45, 15
 
-	CONTROL    "", IDD_HELP, "EDIT", ES_LEFT /*| ES_MULTILINE | ES_AUTOVSCROLL | WS_VSCROLL */, 10, 100, 240, 8 
+	CONTROL    "", IDD_HELP, "EDIT", ES_LEFT | ES_MULTILINE /*| ES_AUTOVSCROLL | WS_VSCROLL*/ , 10, 100, 240, 8 
 
 END
 
