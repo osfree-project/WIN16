@@ -1275,6 +1275,3 @@ BEGIN
 	"        Manager properties\0"
 #endif				/* IFDEF LANG_GR */
 END
-
-
-

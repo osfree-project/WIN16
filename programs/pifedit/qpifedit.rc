@@ -16,7 +16,6 @@
 #include <common.ver>
 
 IDI_QIF 	ICON	qpifedit.ico
-IDI_DOSMAX	ICON	dosmax.ico
 
 MenuApp MENU PRELOAD MOVEABLE DISCARDABLE
 BEGIN

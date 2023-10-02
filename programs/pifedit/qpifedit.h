@@ -25,7 +25,6 @@ BOOL	CALLBACK _export SMMsgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lP
 #define IDD_STANDARD	107		// Standard mode bitch dialog
 
 #define IDI_QIF 	100		// App's icon
-#define IDI_DOSMAX	101		// DOSMAX icon
 
 // Menu resource IDs
 
