@@ -19,13 +19,18 @@ STACKSIZE = 1k
 # linking dll file
 DLL     = 1
 EXPORTS = &
+	MessageBox.1, &
 	OldExitWindows .2, &
+	DisableOEMLayer .4, &
+	ExitWindows .7, &
 	GetTickCount .13, &
-	GetCurrentTime . 15, &
+	GetCurrentTime .15, &
+	GetFocus .23, &
 	GetWindowText .36, &
 	SetWindowText .37, &
 	GetWindowTextLength .38, &
 	CreateWindow .41, &
+	IsWindow .47, &
 	RegisterClass .57, &
 	SetRect .72, &
 	SetRectEmpty .73, &
@@ -48,6 +53,7 @@ EXPORTS = &
 	IsDlgButtonChecked  .98, &
 	DlgDirSelect .99, &
 	SendDlgItemMessage .101, &
+	PostMessage .110, &
 	SetWindowsHook .121, &
 	UpdateWindow .124, &
 	InvalidateRect .125, &
@@ -100,6 +106,7 @@ EXPORTS = &
 	DialogBoxIndirect .218, &
 	CreateDialogIndirect .219, &
 	LoadMenuIndirect .220, &
+	GetWindowTask .224, &
 	DefHookProc .235, &
 	CreateDialogParam .241, &
 	EqualRect.244, &
@@ -114,9 +121,12 @@ EXPORTS = &
 	OldSetDeskPattern .279, &
 	GetFreeSystemResources .284, &
 	mouse_event .299, &
+	SignalProc .314, &
+	SysErrorBox .320, &
 	FillWindow .324, &
 	PaintRect .325, &
 	GetControlBrush .326, &
+	UserYield .332, &
 	IsUserIdle .333, &
 	GetMouseEventProc .337, &
 	CopyIcon .368, &
@@ -125,6 +135,7 @@ EXPORTS = &
 	DllEntryPoint .374, &
 	RegisterClassEx .397, &
 	GetClassInfoEx .398, &
+	FinalUserInit .400, &
 	UnregisterClass .403, &
 	GetClassInfo .404, &
 	CreateCursor .406, &
@@ -153,6 +164,7 @@ EXPORTS = &
 	DestroyIcon .457, &
 	DestroyCursor .458, &
 	DrawFocusRect .466, &
+	StringFunc .470, &
 	LSTRCMPI .471, &
 	AnsiNext .472, &
 	AnsiPrev .473, &

@@ -33,3 +33,57 @@ GrayString(HDC hDC, HBRUSH hBr, GRAYSTRINGPROC gsprc, LPARAM lParam,
 //    APISTR((LF_APIRET,"GrayString: returns BOOL %d\n",bRet));
     return bRet;
 }
+
+/***********************************************************************
+ *		ExitWindows (USER.7)
+ */
+BOOL WINAPI ExitWindows( DWORD dwReturnCode, UINT wReserved )
+{
+    return 0;
+}
+
+/***********************************************************************
+ *		DisableOEMLayer (USER.4)
+ */
+void FAR PASCAL DisableOEMLayer()
+{
+}
+
+/***********************************************************************
+ *		FinalUserInit (USER.400)
+ */
+void WINAPI FinalUserInit( void )
+{
+    /* FIXME: Should chain to FinalGdiInit */
+}
+
+/***********************************************************************
+ *		PostMessage  (USER.110)
+ */
+BOOL WINAPI PostMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    return 0;
+}
+
+/***********************************************************************
+ *		SignalProc (USER.314)
+ */
+void WINAPI SignalProc( HANDLE hModule, UINT code,
+                          UINT uExitFn, HINSTANCE hInstance, UINT /*HQUEUE*/ hQueue )
+{
+#if 0
+    if (code == USIG16_DLL_UNLOAD)
+    {
+        hModule = GetExePtr(hModule);
+        /* HOOK_FreeModuleHooks( hModule ); */
+        free_module_classes( hModule );
+        free_module_icons( hModule );
+    }
+#endif
+}
+
+
+void WINAPI StringFunc(void)
+{
+}
+

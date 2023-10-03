@@ -95,3 +95,49 @@ void WINAPI ValidateRgn( HWND hwnd, HRGN hrgn )
 {
     RedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE | RDW_NOCHILDREN );
 }
+
+/**************************************************************************
+ *              MessageBox   (USER.1)
+ */
+int WINAPI MessageBox( HWND hwnd, LPCSTR text, LPCSTR title, UINT type )
+{
+    return 0;
+}
+
+/**************************************************************************
+ *              SysErrorBox   (USER.320)
+ */
+int FAR PASCAL SysErrorBox(LPSTR lpszMsg,        LPSTR lpszTitle, WORD wButton1, WORD wButton2, WORD wButton3)
+{
+	  return 0;
+}
+
+/**************************************************************************
+ *              GetFocus   (USER.23)
+ */
+HWND WINAPI GetFocus(void)
+{
+    return 0;
+}
+
+/***********************************************************************
+ *		GetWindowTask   (USER.224)
+ */
+HTASK WINAPI GetWindowTask( HWND hwnd )
+{
+//    DWORD tid = GetWindowThreadProcessId( HWND_32(hwnd), NULL );
+    //if (!tid) return 0;
+    //return HTASK_16(tid);
+	return 0;
+}
+
+/**************************************************************************
+ *              IsWindow   (USER.47)
+ */
+BOOL WINAPI IsWindow( HWND hwnd )
+{
+    //CURRENT_STACK16->es = USER_HeapSel;
+    /* don't use WIN_Handle32 here, we don't care about the full handle */
+//    return IsWindow( HWND_32(hwnd) );
+  return 0;
+}

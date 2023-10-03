@@ -32,3 +32,12 @@ BOOL WINAPI IsUserIdle(void)
     /* Should check for screen saver activation here ... */
     return TRUE;
 }
+
+/***********************************************************************
+ *		UserYield (USER.332)
+ */
+void WINAPI UserYield(void)
+{
+    MSG msg;
+    //PeekMessage( &msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE );
+}
