@@ -102,6 +102,9 @@ szTraceCheckMem db 'Check required free memory', 0dh, 0ah, '$'
 szTraceSearchKernel db 'Search KERNEL.EXE', 0dh, 0ah, '$'
 szTraceSearchKernel286 db 'Search KRNL286.EXE', 0dh, 0ah, '$'
 szTraceSearchKernel386 db 'Search KRNL386.EXE', 0dh, 0ah, '$'
+szTraceKrnl386 db 'KRNL386.EXE selected', 0dh, 0ah, '$'
+szTraceKrnl286 db 'KRNL286.EXE selected', 0dh, 0ah, '$'
+szTraceKernel db 'KERNEL.EXE selected', 0dh, 0ah, '$'
 szTraceSearchDOSX db 'Search DOSX.EXE', 0dh, 0ah, '$'
 szTraceExecDOSX db 'Execute DOSX.EXE', 0dh, 0ah, '$'
 szTraceExecKernel db 'Execute KERNEL.EXE', 0dh, 0ah, '$'
@@ -114,6 +117,8 @@ szTraceRealMode db 'Real Mode selected', 0dh, 0ah, '$'
 szTraceStandardMode db 'Standard Mode selected', 0dh, 0ah, '$'
 szTraceEnhancedMode db 'Enhanced Mode selected', 0dh, 0ah, '$'
 szTraceShowLogo db 'Show logo', 0dh, 0ah, '$'
+szTraceHideLogo db 'Hide logo', 0dh, 0ah, '$'
+szTraceNoLogo db 'Logo not found', 0dh, 0ah, '$'
 
 skip:
 	@Trace	szTraceShowLogo
@@ -172,6 +177,8 @@ EnhancedMode:
 	cmp	[opKRNL386], 1
 	jnz	StandardMode		; If no KRNL386 kernel, then  downgrade to StandardMode
 
+	@Trace	szTraceKrnl386
+
 	; All exists for Enhanced mode
 	@Trace	szTraceEnhancedMode
 
@@ -198,6 +205,7 @@ StandardMode:
 	jnz	StandardModeKrnl286	; If no KRNL386, then try KRNL286
 
 	; Here we ready to start KRNL386
+	@Trace	szTraceKrnl386
 	jmp	CheckExt
 
 StandardModeKrnl286:
@@ -205,6 +213,7 @@ StandardModeKrnl286:
 	jnz	RealModeKernel		; If no KRNL286, then downgrade to RealModeKernel
 
 	; Here we ready to start KRNL286
+	@Trace	szTraceKrnl386
 
 CheckExt:
 	cmp	[opDOSX], 1
@@ -247,7 +256,8 @@ endif
 	cmp	[opKERNEL], 1
 	jnz	NoKernel
 
-	@Trace	szTraceEnhancedMode
+	@Trace	szTraceKernel
+	@Trace	szTraceRealMode
 
 ; load and execute KERNEL.EXE
 	@Trace	szTraceExecKernel
@@ -268,6 +278,7 @@ KernelFound:
 ;
 ; exit from windows kernel
 Exit:
+	@Trace	szTraceHideLogo
 	call	HideLogo
 	@Exit	0			; die
 
@@ -296,9 +307,9 @@ CallLogo:
 
 	xor	bx, bx			; check for 'LOGO' signature
 	cmp	word ptr [bx], 'OL'
-	jne	LogoRet
+	jne	NoLogo
 	cmp	word ptr [bx+2], 'OG'
-	jne	LogoRet
+	jne	NoLogo
 
 	lea	bx, LogoRet
 	push	cs			; prepare return from ShowLogo
@@ -307,6 +318,11 @@ CallLogo:
 	push	ds			; LOGO code segment
 	push	dx			; Show logo entry
 	retf				; Simulate far jump to LogoStart:0004h
+
+NoLogo:
+	pop	ds			; Restore our data segment (stored in ShowLogo)
+	@Trace	szTraceNoLogo
+	retn
 
 ; Return from LOGO
 LogoRet:
