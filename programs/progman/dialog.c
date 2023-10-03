@@ -20,12 +20,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define WIN32_LEAN_AND_MEAN
+#include <direct.h>
 
-#include "win16.h"
+#include "windows.h"
 #include "commdlg.h"
+
 #include "progman.h"
-//#include <string.h>
+
 static BOOL    DIALOG_BrowsePrograms(HWND, LPSTR, int);
 static BOOL    DIALOG_BrowseSymbols(HWND, LPSTR, int);
 static int CALLBACK DIALOG_NEW_DlgProc(HWND, unsigned int, WPARAM, LPARAM);
@@ -561,14 +562,15 @@ static BOOL DIALOG_Browse(HWND hDlg, LPCSTR lpszzFilter,
                           LPSTR lpstrFile, int nMaxFile)
 
 {
-    OPENFILENAME openfilename;
+    OPENFILENAME openfilename = {0};
 
     char szDir[MAX_PATH];
     char szDefaultExt[] = "exe";
 
 //    ZeroMemory(&openfilename, sizeof(openfilename));
 
-    GetCurrentDirectory(sizeof(szDir), szDir);
+    //GetCurrentDirectory(sizeof(szDir), szDir);
+	getcwd(szDir, sizeof(szDir));
 
     openfilename.lStructSize       = sizeof(openfilename);
     openfilename.hwndOwner         = Globals.hMainWnd;
