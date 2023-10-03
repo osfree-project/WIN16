@@ -13,3 +13,6 @@
 [submodule "programs/clipbrd"]
 	path = programs/clipbrd
 	url = https://github.com/osfree-project/clipbrd
+[submodule "programs/winver"]
+	path = programs/winver
+	url = https://github.com/osfree-project/winver
