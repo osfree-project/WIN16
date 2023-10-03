@@ -11,11 +11,10 @@ srcfiles = $(p)dialog$(e) $(p)group$(e) $(p)grpfile$(e) $(p)main$(e) $(p)program
 
 # defines additional options for C compiler
 #ADD_COPT = -0 -sg -zw -bw -bg -d3 -db -hw -ml -od #-pl
-ADD_COPT = -sg -DDEBUG=1
+ADD_COPT = -sg #-DDEBUG=1
+ADD_LINKOPT = LIB commdlg.lib
 #DEBUG    = watcom
-IMPORTS  = GETOPENFILENAME     COMMDLG.1, &
-           GETCURRENTDIRECTORY KERNEL.411
-#           GETCURRENTDIRECTORY WINSMSG.20
+IMPORTS  =  GETCURRENTDIRECTORY KERNEL.411
 #RESOURCE = $(PATH)rsrc.res
 CLEAN_ADD = *.mbr
 
