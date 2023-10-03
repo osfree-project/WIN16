@@ -14,17 +14,11 @@ srcfiles = $(p)dialog$(e) $(p)group$(e) $(p)grpfile$(e) $(p)main$(e) $(p)program
 ADD_COPT = -sg #-DDEBUG=1
 ADD_LINKOPT = LIB commdlg.lib
 #DEBUG    = watcom
-#IMPORTS  =  GETCURRENTDIRECTORY KERNEL.411
-#RESOURCE = $(PATH)rsrc.res
 CLEAN_ADD = *.mbr
 
 !include $(%ROOT)tools/mk/appsw16.mk
 
 TARGETS = $(PATH)$(PROJ1).exe # subdirs
-
-#$(PATH)$(PROJ1).res: $(PATH)rsrc.rc
-# @$(SAY) WINRES   $^. $(LOG)
-# @winres $^< -I $(%WATCOM)$(SEP)h$(SEP)win -o $^@
 
 .ico: $(MYDIR)res
 

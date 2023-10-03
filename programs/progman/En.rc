@@ -595,6 +595,7 @@ IDS_DELETE_PROGRAM_s,           "Delete program `%s' ?"
 IDS_NOT_IMPLEMENTED,            "Not implemented"
 IDS_FILE_READ_ERROR_s,          "Error reading `%s'."
 IDS_FILE_WRITE_ERROR_s,         "Error writing `%s'."
+IDS_GRPFILE_NOT_IN_INI_s,       "Error reading `%s' from PROGMAN.INI."
 IDS_GRPFILE_READ_ERROR_s,       "\
 The group file `%s' cannot be opened.\n\
 Should it be tried further on?"

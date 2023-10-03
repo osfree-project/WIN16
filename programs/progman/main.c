@@ -147,6 +147,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
   /* Setup menu, stringtable and resourcenames */
   STRING_LoadMenus();
 
+  /* Create MDI window to hold Group windows */
   MAIN_CreateMDIWindow();
 
   /* Initialize groups */
@@ -172,52 +173,59 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
  * https://jeffpar.github.io/kbarchive/kb/084/Q84925/ Information about Order and Group keys
  * https://jeffpar.github.io/kbarchive/kb/095/Q95873/ Information about maximum number of groups
  */
+ 
+ #define MAX_GROUPS 40
 
 static VOID MAIN_CreateGroups(void)
 {
-  char buffer[BUFFER_SIZE];
-  char szPath[MAX_PATHNAME_LEN];
-  char key[20], *ptr;
-  int i;
-  BOOL inited[40];
+	char buffer[BUFFER_SIZE];
+	char szPath[MAX_PATHNAME_LEN];
+	char key[20], *ptr;
+	int i;
+	BOOL inited[MAX_GROUPS] = {FALSE};
 
-  memset(inited, 0, sizeof(inited));
+	/* Initialize groups according the `Order' entry of `progman.ini' */
+	GetPrivateProfileString("Settings", "Order", "", buffer, sizeof(buffer), Globals.lpszIniFile);
+	ptr = buffer;
+	while (ptr < buffer + sizeof(buffer))
+	{
+		int num, skip, ret;
+		ret = sscanf(ptr, "%d%n", &num, &skip);
 
-  /* Initialize groups according the `Order' entry of `progman.ini' */
-  GetPrivateProfileString("Settings", "Order", "", buffer, sizeof(buffer), Globals.lpszIniFile);
-  ptr = buffer;
-  while (ptr < buffer + sizeof(buffer))
-    {
-      int num, skip, ret;
-      ret = sscanf(ptr, "%d%n", &num, &skip);
-      if (ret == 0)
-        MAIN_MessageBoxIDS_s(IDS_FILE_READ_ERROR_s, Globals.lpszIniFile, IDS_ERROR, MB_OK);
-      if (ret != 1) break;
+		if (ret == 0)
+			MAIN_MessageBoxIDS_s(IDS_FILE_READ_ERROR_s, Globals.lpszIniFile, IDS_ERROR, MB_OK);
 
-      sprintf(key, "Group%d", num);
-      GetPrivateProfileString("Groups", key, "", szPath,
-                              sizeof(szPath), Globals.lpszIniFile);
-      if (!szPath[0]) continue; // @todo show message box about GroupX not found
+		if (ret != 1) break;
 
-      GRPFILE_ReadGroupFile(szPath);
-      inited[num]=TRUE;
+		sprintf(key, "Group%d", num);
+		GetPrivateProfileString("Groups", key, "", szPath,
+								sizeof(szPath), Globals.lpszIniFile);
+		if (!szPath[0]) 
+		{
+			MAIN_MessageBoxIDS_s(IDS_GRPFILE_NOT_IN_INI_s, key, IDS_ERROR, MB_OK);
+			ptr += skip;
+			continue;
+		}
 
-      ptr += skip;
-    }
+		GRPFILE_ReadGroupFile(szPath);
+		inited[num]=TRUE;
 
-  /* Initialize other groups, not enumerated by `Order'. Max is 40 groups (limit set by win 3.1, win 3.0 has no such limit)  */
-  for (i = 0; i < 39; i++ )
-  {
-    if (!inited[i])
-    {
-      sprintf(key, "Group%d", i);
-      GetPrivateProfileString("Groups", key, "", szPath,
-                              sizeof(szPath), Globals.lpszIniFile);
-      if (!szPath[0]) continue; // Group not found
+		ptr += skip;
+	}
 
-      GRPFILE_ReadGroupFile(szPath);
-    }
-  }
+	/* Initialize other groups, not enumerated by `Order'. Max is 40 groups (limit set by win 3.1, win 3.0 has no such limit)  */
+	for (i = 0; i < (MAX_GROUPS-1); i++ )
+	{
+		if (!inited[i])
+		{
+			sprintf(key, "Group%d", i);
+			GetPrivateProfileString("Groups", key, "", szPath,
+									sizeof(szPath), Globals.lpszIniFile);
+			if (!szPath[0]) continue; // Group not found, don't warn about it
+
+			GRPFILE_ReadGroupFile(szPath);
+		}
+	}
 }
 
 /***********************************************************************
@@ -501,11 +509,6 @@ static VOID MAIN_CreateMainWindow(void)
                   WS_OVERLAPPEDWINDOW, left, top, width, height,
                   0, 0, Globals.hInstance, 0);
 
-/*        sprintf(&buffer, "Unable to register window class [%u]", GetLastError());
-        MessageBox(NULL, &buffer, "GFXBase::NewWindow", 
-                   MB_OK | MB_ICONERROR | MB_TASKMODAL);
-        return NULL;
-		*/
   ShowWindow (Globals.hMainWnd, show);
   UpdateWindow (Globals.hMainWnd);
 }

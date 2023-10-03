@@ -273,6 +273,7 @@ extern char STRING_EXECUTE[];
 #define IDS_LIBRARIES_DLL              0x15
 #define IDS_SYMBOL_FILES               0x16
 #define IDS_SYMBOLS_ICO                0x17
+#define IDS_GRPFILE_NOT_IN_INI_s		0x18
 
 #define IDS_LICENSE_CAPTION            0x20
 #define IDS_LICENSE                    0x21
