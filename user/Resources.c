@@ -1,4 +1,4 @@
-#include <windows.h>
+#include <user.h>
 
 #define GlobalPtrHandle(lp) \
   ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))

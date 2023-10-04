@@ -8,14 +8,24 @@ extern  unsigned short          GetDS( void );
 BOOL WINAPI DllEntryPoint( DWORD reason, HINSTANCE inst, WORD ds,
                            WORD heap, DWORD reserved1, WORD reserved2 );
 
-BOOL WINAPI LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+#pragma off (unreferenced);
+BOOL FAR PASCAL LibMain( HINSTANCE hInstance, WORD wDataSegment, WORD wHeapSize, LPSTR lpszCmdLine )
+#pragma on (unreferenced);
 {
-	BOOL res;
-
 	FUNCTION_START
-	
-	// Local Heap already initialized by OW Runtime, so we pass 0 here...
-	res=DllEntryPoint( fdwReason, hinstDLL, GetDS(), 0, 0, 0 );
+
 	FUNCTION_END
-	return res;
+	return(1);
 }
+
+//BOOL WINAPI LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+//{
+//	BOOL res;
+
+//	FUNCTION_START
+
+	// Local Heap already initialized by OW Runtime, so we pass 0 here...
+//	res=DllEntryPoint( fdwReason, hinstDLL, GetDS(), 0, 0, 0 );
+//	FUNCTION_END
+//	return res;
+//}

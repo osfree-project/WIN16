@@ -1,3 +1,5 @@
+#include <stdio.h> // sprintf
+
 #include <windows.h>
 
 typedef struct tagQUEUE{
@@ -147,7 +149,15 @@ typedef CLASSINFO FAR	*LPCLASSINFO;
 {\
 	OutputDebugString(__FUNCTION__ " end\r\n");\
 }
+#define TRACE(...) \
+	{ \
+		char DebugBuffer[100]; \
+		sprintf(DebugBuffer, __VA_ARGS__); \
+		OutputDebugString(DebugBuffer); \
+		OutputDebugString("\r\n"); \
+	}
 #else
 #define FUNCTION_START
 #define FUNCTION_END
+#define TRACE
 #endif
