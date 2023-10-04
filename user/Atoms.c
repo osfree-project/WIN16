@@ -1,4 +1,4 @@
-#include <windows.h>
+#include <user.h>
 
 // Selector of Global Atom Table
 static WORD GlobalAtomTable_Selector;
@@ -20,6 +20,7 @@ extern  void          SetDS( unsigned short );
 // This is initialization of Global Atoms. This function must be called during USER.EXE initialization.
 void PASCAL GlobalInitAtom(void)
 {
+	FUNCTION_START
   PushDS();
   GlobalAtomTable_Selector=GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT | GMEM_DDESHARE, 0xfa);
   if (GlobalAtomTable_Selector)
@@ -39,6 +40,7 @@ void PASCAL GlobalInitAtom(void)
 ATOM WINAPI
 GlobalAddAtom(LPCSTR lpstr)
 {
+	FUNCTION_START
   SetGlobalTableDS();
   return AddAtom(lpstr);
 }
@@ -49,6 +51,7 @@ GlobalAddAtom(LPCSTR lpstr)
 ATOM WINAPI
 GlobalFindAtom(LPCSTR lpstr)
 {
+	FUNCTION_START
   SetGlobalTableDS();
   return FindAtom(lpstr);
 }
@@ -59,6 +62,7 @@ GlobalFindAtom(LPCSTR lpstr)
 UINT WINAPI
 GlobalGetAtomName(ATOM atom,LPSTR lpszbuf,int len)
 {
+	FUNCTION_START
   SetGlobalTableDS();
   return GetAtomName(atom, lpszbuf, len);
 }
@@ -69,6 +73,7 @@ GlobalGetAtomName(ATOM atom,LPSTR lpszbuf,int len)
 ATOM WINAPI
 GlobalDeleteAtom(ATOM atom)
 {
+	FUNCTION_START
   SetGlobalTableDS();
   return DeleteAtom(atom);
 }

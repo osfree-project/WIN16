@@ -20,7 +20,7 @@
 
 #include <stdarg.h>
 
-#include <windows.h>
+#include <user.h>
 //#include "winbase.h"
 //#include "wownt32.h"
 //#include "wine/winuser16.h"
@@ -73,6 +73,7 @@ typedef struct
 #if 0
 static void DIALOG_EnableOwner( HWND hOwner )
 {
+	FUNCTION_START
     /* Owner must be a top-level window */
     if (hOwner)
         hOwner = GetAncestor( hOwner, GA_ROOT );
@@ -89,6 +90,7 @@ static void DIALOG_EnableOwner( HWND hOwner )
  */
 static BOOL DIALOG_DisableOwner( HWND hOwner )
 {
+	FUNCTION_START
     /* Owner must be a top-level window */
     if (hOwner)
         hOwner = GetAncestor( hOwner, GA_ROOT );
@@ -113,6 +115,8 @@ static LPCSTR DIALOG_GetControl16( LPCSTR p, DLG_CONTROL_INFO *info )
 {
     static char buffer[10];
     int int_id;
+
+	FUNCTION_START
 
     info->x       = GET_WORD(p);  p += sizeof(WORD);
     info->y       = GET_WORD(p);  p += sizeof(WORD);
@@ -249,6 +253,8 @@ static BOOL DIALOG_CreateControls16( HWND hwnd, LPCSTR template,
  */
 static LPCSTR DIALOG_ParseTemplate16( LPCSTR p, DLG_TEMPLATE * result )
 {
+	FUNCTION_START
+
     result->style   = GET_DWORD(p); p += sizeof(DWORD);
     result->nbItems = (unsigned char) *p++;
     result->x       = GET_WORD(p);  p += sizeof(WORD);
@@ -521,6 +527,8 @@ static HWND DIALOG_CreateIndirect16( HINSTANCE hInst, LPCVOID dlgTemplate,
 int WINAPI DialogBox( HINSTANCE hInst, LPCSTR dlgTemplate,
                           HWND owner, DLGPROC dlgProc )
 {
+	FUNCTION_START
+
     return DialogBoxParam( hInst, dlgTemplate, owner, dlgProc, 0 );
 }
 
@@ -530,6 +538,7 @@ int WINAPI DialogBox( HINSTANCE hInst, LPCSTR dlgTemplate,
 HWND WINAPI CreateDialog( HINSTANCE hInst, LPCSTR dlgTemplate,
                               HWND owner, DLGPROC dlgProc )
 {
+	FUNCTION_START
     return CreateDialogParam( hInst, dlgTemplate, owner, dlgProc, 0 );
 }
 
@@ -539,6 +548,7 @@ HWND WINAPI CreateDialog( HINSTANCE hInst, LPCSTR dlgTemplate,
  */
 void WINAPI SetDlgItemText( HWND hwnd, int id, LPCSTR lpString )
 {
+	FUNCTION_START
     SendDlgItemMessage( hwnd, id, WM_SETTEXT, 0, (LONG)lpString );
 }
 
@@ -547,6 +557,7 @@ void WINAPI SetDlgItemText( HWND hwnd, int id, LPCSTR lpString )
  */
 int WINAPI GetDlgItemText( HWND hwnd, int id, LPSTR str, int len )
 {
+	FUNCTION_START
     return SendDlgItemMessage( hwnd, id, WM_GETTEXT, len, (LONG)str );
 }
 
@@ -556,6 +567,7 @@ int WINAPI GetDlgItemText( HWND hwnd, int id, LPSTR str, int len )
  */
 VOID WINAPI CheckDlgButton( HWND hwnd, int id, UINT check )
 {
+	FUNCTION_START
     SendDlgItemMessage( hwnd, id, BM_SETCHECK, check, 0 );
 //    return TRUE;
 }
@@ -566,6 +578,7 @@ VOID WINAPI CheckDlgButton( HWND hwnd, int id, UINT check )
  */
 UINT WINAPI IsDlgButtonChecked( HWND hwnd, int id )
 {
+	FUNCTION_START
     return (UINT)SendDlgItemMessage( hwnd, id, BM_GETCHECK, 0, 0 );
 }
 
@@ -575,6 +588,7 @@ UINT WINAPI IsDlgButtonChecked( HWND hwnd, int id )
  */
 BOOL WINAPI DlgDirSelect( HWND hwnd, LPSTR str, int id )
 {
+	FUNCTION_START
     return DlgDirSelectEx( hwnd, str, 128, id );
 }
 
@@ -587,6 +601,7 @@ LRESULT WINAPI SendDlgItemMessage( HWND hwnd, int id, UINT msg,
                                      WPARAM wParam, LPARAM lParam )
 {
     HWND hwndCtrl = GetDlgItem( hwnd, id );
+	FUNCTION_START
     if (hwndCtrl) return SendMessage( hwndCtrl, msg, wParam, lParam );
     else return 0;
 }
@@ -597,6 +612,7 @@ LRESULT WINAPI SendDlgItemMessage( HWND hwnd, int id, UINT msg,
  */
 BOOL WINAPI DlgDirSelectComboBox( HWND hwnd, LPSTR str, int id )
 {
+	FUNCTION_START
     return DlgDirSelectComboBoxEx( hwnd, str, 128, id );
 }
 
@@ -608,6 +624,7 @@ BOOL WINAPI DlgDirSelectComboBox( HWND hwnd, LPSTR str, int id )
 int WINAPI DialogBoxIndirect( HINSTANCE hInst, HANDLE dlgTemplate,
                                   HWND owner, DLGPROC dlgProc )
 {
+	FUNCTION_START
     return DialogBoxIndirectParam( hInst, dlgTemplate, owner, dlgProc, 0 );
 }
 
@@ -618,6 +635,7 @@ int WINAPI DialogBoxIndirect( HINSTANCE hInst, HANDLE dlgTemplate,
 HWND WINAPI CreateDialogIndirect( HINSTANCE hInst, const void far * dlgTemplate,
                                       HWND owner, DLGPROC dlgProc )
 {
+	FUNCTION_START
     return CreateDialogIndirectParam( hInst, dlgTemplate, owner, dlgProc, 0);
 }
 
@@ -634,6 +652,8 @@ INT16 WINAPI DialogBoxParam16( HINSTANCE16 hInst, LPCSTR template,
     HGLOBAL16 hmem;
     LPCVOID data;
     int ret = -1;
+
+	FUNCTION_START
 
     if (!(hRsrc = FindResource16( hInst, template, (LPSTR)RT_DIALOG ))) return 0;
     if (!(hmem = LoadResource16( hInst, hRsrc ))) return 0;
@@ -658,6 +678,8 @@ INT16 WINAPI DialogBoxIndirectParam16( HINSTANCE16 hInst, HANDLE16 dlgTemplate,
     HWND hwnd, owner = WIN_Handle32( owner16 );
     LPCVOID ptr;
 
+	FUNCTION_START
+
     if (!(ptr = GlobalLock16( dlgTemplate ))) return -1;
     hwnd = DIALOG_CreateIndirect16( hInst, ptr, owner, dlgProc, param, TRUE );
     GlobalUnlock16( dlgTemplate );
@@ -677,6 +699,8 @@ HWND WINAPI CreateDialogParam( HINSTANCE hInst, LPCSTR dlgTemplate,
     HRSRC hRsrc;
     HGLOBAL hmem;
     const void far * data;
+
+	FUNCTION_START
 
 //    TRACE("%04x,%s,%04x,%p,%Ix\n",
 //          hInst, debugstr_a(dlgTemplate), owner, dlgProc, param );
@@ -703,3 +727,95 @@ HWND16 WINAPI CreateDialogIndirectParam16( HINSTANCE16 hInst, LPCVOID dlgTemplat
 }
 
 #endif
+
+/***********************************************************************
+ *		DialogBoxParam (USER.239)
+ */
+int WINAPI DialogBoxParam( HINSTANCE hInst, LPCSTR template,
+                               HWND owner16, DLGPROC dlgProc, LPARAM param )
+{
+	FUNCTION_START
+	#if 0
+    HWND hwnd = 0;
+    HRSRC16 hRsrc;
+    HGLOBAL16 hmem;
+    LPCVOID data;
+    int ret = -1;
+
+    if (!(hRsrc = FindResource16( hInst, template, (LPSTR)RT_DIALOG ))) return 0;
+    if (!(hmem = LoadResource16( hInst, hRsrc ))) return 0;
+    if ((data = LockResource16( hmem )))
+    {
+        HWND owner = WIN_Handle32(owner16);
+        hwnd = DIALOG_CreateIndirect16( hInst, data, owner, dlgProc, param, TRUE );
+        if (hwnd) ret = wow_handlers32.dialog_box_loop( hwnd, owner  );
+        GlobalUnlock16( hmem );
+    }
+    FreeResource16( hmem );
+    return ret;
+	#endif
+	return 0;
+}
+
+/**************************************************************************
+ *              DlgDirSelectEx   (USER.422)
+ */
+BOOL WINAPI DlgDirSelectEx( HWND hwnd, LPSTR str, int len, int id )
+{
+	FUNCTION_START
+    return FALSE;
+}
+
+/**************************************************************************
+ *              GetDlgItem   (USER.91)
+ */
+HWND WINAPI GetDlgItem( HWND hwndDlg, int id )
+{
+	FUNCTION_START
+    return 0;
+}
+
+
+/**************************************************************************
+ *              DlgDirSelectComboBoxEx   (USER.423)
+ */
+BOOL WINAPI DlgDirSelectComboBoxEx( HWND hwnd, LPSTR str, int len,
+                                        int id )
+{
+	FUNCTION_START
+    return FALSE;
+}
+
+/***********************************************************************
+ *		DialogBoxIndirectParam (USER.240)
+ */
+int WINAPI DialogBoxIndirectParam( HINSTANCE hInst, HANDLE dlgTemplate,
+                                       HWND owner16, DLGPROC dlgProc, LPARAM param )
+{
+	FUNCTION_START
+	#if 0
+    HWND hwnd, owner = WIN_Handle32( owner16 );
+    LPCVOID ptr;
+
+    if (!(ptr = GlobalLock16( dlgTemplate ))) return -1;
+    hwnd = DIALOG_CreateIndirect16( hInst, ptr, owner, dlgProc, param, TRUE );
+    GlobalUnlock16( dlgTemplate );
+    if (hwnd) return wow_handlers32.dialog_box_loop( hwnd, owner );
+	#endif
+    return -1;
+}
+
+/***********************************************************************
+ *		CreateDialogIndirectParam (USER.242)
+ */
+HWND WINAPI CreateDialogIndirectParam( HINSTANCE hInst, const void FAR * dlgTemplate,
+                                           HWND owner, DLGPROC dlgProc, LPARAM param )
+{
+	FUNCTION_START
+	#if 0
+    if (!dlgTemplate) return 0;
+    return HWND_16( DIALOG_CreateIndirect16( hInst, dlgTemplate, WIN_Handle32(owner),
+                                             dlgProc, param, FALSE ));
+	#endif
+	return 0;
+}

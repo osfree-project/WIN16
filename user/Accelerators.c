@@ -1,4 +1,4 @@
-#include <windows.h>
+#include <user.h>
 
 /**********************************************************************
  *              LoadAccelerators  (USER.177)
@@ -9,6 +9,7 @@ LoadAccelerators(HINSTANCE hInstance, LPCSTR lpTableName)
 	HANDLE hResInfo;
 	HACCEL rc;
 
+	FUNCTION_START
 //    	APISTR((LF_APICALL,"LoadAccelerators(HINSTANCE=%x,LPCSTR=%x)\n",
 //		hInstance,lpTableName));
 

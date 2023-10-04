@@ -1,4 +1,4 @@
-#include <windows.h>
+#include <user.h>
 
 WORD USER_HeapSel = 0;  /* USER heap selector */
 
@@ -10,6 +10,7 @@ static HINSTANCE gdi_inst;
 void WINAPI
 OldExitWindows(void)
 {
+	FUNCTION_START
         ExitWindows(0,0);
 }
 
@@ -21,8 +22,21 @@ OldExitWindows(void)
 BOOL WINAPI DllEntryPoint( DWORD reason, HINSTANCE inst, WORD ds,
                            WORD heap, DWORD reserved1, WORD reserved2 )
 {
-    if (reason != 1/*DLL_PROCESS_ATTACH*/) return TRUE;
-    if (USER_HeapSel) return TRUE;  /* already called */
+	FUNCTION_START
+	
+	TRACE("reason=%d", reason);
+
+    if (reason != 1/*DLL_PROCESS_ATTACH*/)
+	{
+		FUNCTION_END
+		return TRUE;
+	}
+    if (USER_HeapSel) 
+	{
+		FUNCTION_END
+		return TRUE;  /* already called */
+	}
+
 
     USER_HeapSel = ds;
 //    register_wow_handlers();
@@ -30,7 +44,8 @@ BOOL WINAPI DllEntryPoint( DWORD reason, HINSTANCE inst, WORD ds,
     LoadLibrary( "display.drv" );
     LoadLibrary( "keyboard.drv" );
     LoadLibrary( "mouse.drv" );
-    LoadLibrary( "user.exe" );  /* make sure it never gets unloaded */
+//    LoadLibrary( "user.exe" );  /* make sure it never gets unloaded */
+	FUNCTION_END
     return TRUE;
 }
 
@@ -59,6 +74,8 @@ DWORD WINAPI UserSeeUserDo(WORD wReqType, WORD wParam1, WORD wParam2, WORD wPara
 {
     WORD oldDS = GetDS();
     DWORD ret = (DWORD)-1;
+
+	FUNCTION_START
 
     SetDS(USER_HeapSel);
     switch (wReqType)
@@ -90,6 +107,7 @@ DWORD WINAPI UserSeeUserDo(WORD wReqType, WORD wParam1, WORD wParam2, WORD wPara
  */
 BOOL WINAPI OldSetDeskPattern(void)
 {
+	FUNCTION_START
     return SystemParametersInfo( SPI_SETDESKPATTERN, -1, NULL, FALSE );
 }
 
@@ -104,6 +122,8 @@ UINT WINAPI GetFreeSystemResources( UINT resType )
 {
     WORD oldDS = GetDS();
     int userPercent, gdiPercent;
+
+	FUNCTION_START
 
     switch(resType)
     {

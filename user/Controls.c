@@ -1,4 +1,4 @@
-#include <windows.h>
+#include <user.h>
 
 #define GET_WM_CTLCOLOR_MSG(type)		    (UINT)(WM_CTLCOLOR)
 #define GET_WM_CTLCOLOR_MPS(hdc, hwnd, type) \
@@ -12,6 +12,8 @@ GetControlBrush(HWND hWnd, HDC hDC, WORD wType)
 {
     HWND hWndParent;
     HBRUSH hBrush;
+
+	FUNCTION_START
 
     hWndParent = GetParent(hWnd);
     if (!hWndParent)

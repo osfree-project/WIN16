@@ -32,7 +32,7 @@ To send email to the maintainer of the Willows Twin Libraries.
 #include <stdio.h>
 #include <string.h>
 
-#include <windows.h>
+#include <user.h>
 
 //#include "SysMetrics.h"
 

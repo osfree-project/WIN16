@@ -10,6 +10,8 @@ WORD WINAPI __loadds InitApp(HINSTANCE hInstance)
   char is_setup;
   LPQUEUE queuePtr;
 
+	FUNCTION_START
+
 //    APISTR((LF_APICALL,"InitApp(HINSTANCE=%x)\n",hInstance));
   if (first_program)
   {

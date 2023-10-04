@@ -1,4 +1,4 @@
-#include <windows.h>
+#include <user.h>
 
 extern  unsigned short          GetDS( void );
 #pragma aux GetDS               = \
@@ -10,6 +10,12 @@ BOOL WINAPI DllEntryPoint( DWORD reason, HINSTANCE inst, WORD ds,
 
 BOOL WINAPI LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    // Local Heap already initialized by OW Runtime, so we pass 0 here...
-    return DllEntryPoint( fdwReason, hinstDLL, GetDS(), 0, 0, 0 );
+	BOOL res;
+
+	FUNCTION_START
+	
+	// Local Heap already initialized by OW Runtime, so we pass 0 here...
+	res=DllEntryPoint( fdwReason, hinstDLL, GetDS(), 0, 0, 0 );
+	FUNCTION_END
+	return res;
 }

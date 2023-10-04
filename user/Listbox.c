@@ -30,7 +30,7 @@ To send email to the maintainer of the Willows Twin Libraries.
 #include <string.h>
 #include <ctype.h>
 
-#include "windows.h"
+#include "user.h"
 //#include "windowsx.h"
 
 //#include "kerndef.h"
@@ -38,7 +38,6 @@ To send email to the maintainer of the Willows Twin Libraries.
 //#include "Log.h"
 #include "Listbox.h"
 #include "Menu.h"
-#include "User.h"
 
 #define GET_WM_VKEYTOITEM_CODE(wp, lp)              (wp)
 #define GET_WM_VKEYTOITEM_ITEM(wp, lp)              (INT)HIWORD(lp)
@@ -162,6 +161,8 @@ DefLISTBOXProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
     int nOffset;
     WORD wStart, wEnd, w;
     LRESULT rc;
+
+	FUNCTION_START
 
     if ((lpLBoxInfo = (LPLISTBOXINFO)GetWindowLong(hWnd, LWD_LPMENUDATA))
 			== (LPLISTBOXINFO)-1L)

@@ -6,8 +6,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#include <windows.h>
-
 #include "user.h"
 
 #define GlobalPtrHandle(lp) \
@@ -61,6 +59,8 @@ AtomHashString(LPCSTR lp,int far *lplen)
 	char  far *p,ch;
 	int	len;
 
+	FUNCTION_START
+
 	/* if we have an intatom... */
 	if(HIWORD(lp) == 0) {
 		if(lplen) *lplen = 0;
@@ -89,11 +89,13 @@ AtomHashString(LPCSTR lp,int far *lplen)
 /*	range, and that the data is accessible		*/
 /********************************************************/
 
-static ATOMENTRY far *
-GetAtomPointer(ATOMTABLE far *at,int index)
+static ATOMENTRY FAR *
+GetAtomPointer(ATOMTABLE FAR *at,int index)
 {
-	ATOMENTRY far *lp;
-	
+	ATOMENTRY FAR *lp;
+
+	FUNCTION_START
+
 	/* if no table, then no pointers */
 	if(at->AtomTable == 0)
 		return 0;
@@ -118,6 +120,8 @@ DeleteAtomEx(ATOMTABLE far *at,ATOM atom)
 {
 	ATOMENTRY far *lp;
 	
+	FUNCTION_START
+
 	/* a free slot has q == 0 && refcnt == 0 */
 	if((lp = GetAtomPointer(at,atom - ATOMBASE))) {
 		if(lp->idsize)
@@ -137,6 +141,8 @@ GetAtomNameEx(ATOMTABLE far *at,ATOM atom,LPSTR lpstr,int len)
 	char 	 far  *atomstr;
 	int	   atomlen;
 	
+	FUNCTION_START
+
 	/* return the atom name, or create the INTATOM */
 	if((lp = GetAtomPointer(at,atom - ATOMBASE))) {
 		if(lp->idsize) {
@@ -164,6 +170,8 @@ FindAtomEx(ATOMTABLE far *at,LPCSTR lpstr)
 	int		index;
 	int		atomlen;
 
+	FUNCTION_START
+
 	/* convert string to 'q', and get length */
 	q = AtomHashString(lpstr,&atomlen);
 
@@ -190,6 +198,8 @@ AddAtomEx(ATOMTABLE far *at,LPCSTR lpstr)
 	int		atomlen;
 	int		newlen;
 	
+	FUNCTION_START
+
 	/* if we already have it, bump refcnt */
 	if((atom = FindAtomEx(at,lpstr))) {
 		lp = GetAtomPointer(at,atom - ATOMBASE);
@@ -338,6 +348,8 @@ SearchClass(LPCLASSINFO lpClassType, LPCSTR lpClassStr,
     char lpDialogString[80];
     LPSTR lpClassName;
 
+	FUNCTION_START
+
     if (!hModule && !HIWORD((DWORD)lpClassStr) &&
 	LOWORD((DWORD)lpClassStr) == LOWORD((DWORD)WC_DIALOG)) {
 	lstrcpy(lpDialogString,TWIN_DIALOGCLASS);
@@ -374,6 +386,8 @@ FindClass(LPCSTR lpClassName, HINSTANCE hInstance)
     LPCLASSINFO lpClassFound;
     HMODULE hModule;
 
+	FUNCTION_START
+
 //    APISTR((LF_APICALL, "FindClass(LPCSTR=%p,HINSTANCE=%x)\n",
 //	HIWORD(lpClassName) ? lpClassName : "atom", hInstance));
 
@@ -407,6 +421,8 @@ InternalRegisterClassEx(const WNDCLASSEX far *lpwcx)
     HMODULE hModule;
     LPCLASSINFO lpNewC, far *lpClassType;
     int    size;
+
+	FUNCTION_START
 
     if (lpwcx->hInstance) {
 //        if (!(hModule = GetModuleFromInstance(lpwcx->hInstance))) {
@@ -493,6 +509,8 @@ RegisterClassEx(const WNDCLASSEX far *lpwcx)
     LPCLASSINFO lpClassInfo;
     ATOM atmClass;
 
+	FUNCTION_START
+
 //    APISTR((LF_APICALL, "RegisterClassEx(WNDCLASS *=%x)\n", lpwcx));
     lpClassInfo = InternalRegisterClassEx(lpwcx);
     atmClass = (lpClassInfo)?lpClassInfo->atmClassName:(ATOM)0;
@@ -510,6 +528,8 @@ RegisterClass(const WNDCLASS far *lpwc)
 {
     WNDCLASSEX wcx;
     ATOM atom;
+
+	FUNCTION_START
 
 //    APISTR((LF_APICALL, "RegisterClass(WNDCLASS *=%x)\n", lpwc));
 
@@ -534,6 +554,8 @@ RegisterClass(const WNDCLASS far *lpwc)
 
 BOOL TWIN_InternalUnregisterClass(LPCLASSINFO lpClassFound)
 {
+	FUNCTION_START
+
     if (lpClassFound->lpClsExtra)
 	GlobalFreePtr(lpClassFound->lpClsExtra);
 
@@ -566,6 +588,8 @@ UnregisterClass(LPCSTR lpClassName, HINSTANCE hInstance)
     LPCLASSINFO lpClassFound;
     BOOL rc;
 
+	FUNCTION_START
+
 //    APISTR((LF_APICALL,"UnregisterClass(LPCSTR=%s, HINSTANCE=%x)\n",
 //		HIWORD(lpClassName)?lpClassName:"ATOM", 
 //		hInstance));
@@ -594,6 +618,8 @@ InternalGetClassInfo(LPCLASSINFO hClass32, LPWNDCLASS lpwc)
 {
 	LPCLASSINFO lpClassInfo = hClass32;
 
+	FUNCTION_START
+
 	if (!lpClassInfo)
 		return;
 	lpwc->style = lpClassInfo->wndClass.style;
@@ -615,6 +641,8 @@ void
 InternalGetClassInfoEx(LPCLASSINFO hClass32, LPWNDCLASSEX lpwcx)
 {
 	LPCLASSINFO lpClassInfo = hClass32;
+
+	FUNCTION_START
 
 	if (!lpClassInfo)
 		return;
@@ -646,6 +674,8 @@ GetClassInfoEx(HINSTANCE hInstance, LPCSTR lpszClassName, LPWNDCLASSEX lpwcx)
 {
     LPCLASSINFO ClassFound;
     HMODULE hModule;
+
+	FUNCTION_START
 
 //    APISTR((LF_APICALL, 
 //	"GetClassInfoEx(HINSTANCE=%x,LPCTSTR=%s,LPWNDCLASSEX=%x)\n",
@@ -688,6 +718,8 @@ BOOL WINAPI
 GetClassInfo(HINSTANCE hInstance, LPCSTR lpszClassName, LPWNDCLASS lpwc)
 {
     WNDCLASSEX wcx;
+
+	FUNCTION_START
 
 //    APISTR((LF_APICALL, "GetClassInfo(HINSTANCE=%x,LPCSTR=%s,LPWNDCLASS=%x)\n",
 //	hInstance, 

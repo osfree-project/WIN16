@@ -29,6 +29,7 @@ HANDLE WINAPI LoadImage(HINSTANCE hinst, LPCSTR name, UINT type, int cx, int cy,
             return get_icon_16( LoadImageA( 0, name, type, cx, cy, flags ));
     }
 */
+#if 0
     hinst = GetExePtr( hinst );
 
     if (flags & LR_DEFAULTSIZE)
@@ -126,4 +127,15 @@ HANDLE WINAPI LoadImage(HINSTANCE hinst, LPCSTR name, UINT type, int cx, int cy,
     default:
         return 0;
     }
+#endif
+  return 0;
 }
+
+/**********************************************************************
+ *		LoadBitmap (USER.175)
+ */
+HBITMAP WINAPI LoadBitmap(HINSTANCE hInstance, LPCSTR name)
+{
+    return 0;//return LoadImage( hInstance, name, IMAGE_BITMAP, 0, 0, 0 );
+}
+

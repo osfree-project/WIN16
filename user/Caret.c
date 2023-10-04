@@ -28,7 +28,7 @@ To send email to the maintainer of the Willows Twin Libraries.
 
  */
 
-#include "windows.h"
+#include "user.h"
 
 //#include "kerndef.h"
 
@@ -84,6 +84,8 @@ DrawCaret(HDC hDC,int turnon)
 	HDC	hBitDC;
 	HRGN	hrgnClip ;
 	RECT	rcClient ;
+
+	FUNCTION_START
 
 	if (caret.hWnd == 0)
            return;
@@ -144,6 +146,8 @@ DrawCaret(HDC hDC,int turnon)
 static WORD CALLBACK
 InternalCaretFunc(HWND hWnd, WORD wMsg,int nId, DWORD dwTime)
 {
+	FUNCTION_START
+
 	if(wMsg == WM_SYSTIMER)
 		/* this will toggle the caret */
 		CaretDrv(CARET_SHOWHIDE,0,-1);
@@ -159,6 +163,8 @@ CaretDrv(int msg, LONG flag,DWORD lParam)
 {
 	CARET  *lpcaret;
 	LPPOINT lppt;
+
+	FUNCTION_START
 
 	switch(msg) {
 		case CARET_CREATE:
@@ -227,6 +233,8 @@ CreateCaret(HWND hWnd, HBITMAP hBitmap, int nWidth, int nHeight)
 	new.hBitmap 	= hBitmap;	
 	new.Width	= nWidth;
 	new.Height	= nHeight;
+
+	FUNCTION_START
 	
 	if (new.hBitmap)
 	{
@@ -251,6 +259,7 @@ CreateCaret(HWND hWnd, HBITMAP hBitmap, int nWidth, int nHeight)
 void WINAPI
 DestroyCaret(void)
 {
+	FUNCTION_START
 	CaretDrv(CARET_DESTROY,0,0);
 }
 
@@ -261,6 +270,8 @@ void WINAPI
 SetCaretPos(int X, int Y)
 {
 	POINT	caretpos;
+
+	FUNCTION_START
 
 	caretpos.x = X;
 	caretpos.y = Y;
@@ -273,6 +284,7 @@ SetCaretPos(int X, int Y)
 void WINAPI
 HideCaret(HWND hWnd)
 {
+	FUNCTION_START
 	CaretDrv(CARET_SHOWHIDE,-1,(DWORD)hWnd);
 }
 
@@ -282,6 +294,7 @@ HideCaret(HWND hWnd)
 void WINAPI
 ShowCaret(HWND hWnd)
 {
+	FUNCTION_START
 	CaretDrv(CARET_SHOWHIDE, 1,(DWORD)hWnd);
 }
 
@@ -291,6 +304,7 @@ ShowCaret(HWND hWnd)
 void WINAPI
 SetCaretBlinkTime(UINT	blinkrate)
 {
+	FUNCTION_START
 	caret.blinkrate = blinkrate;
 
 	/* turn on or off timers as needed */
@@ -313,6 +327,7 @@ SetCaretBlinkTime(UINT	blinkrate)
 UINT WINAPI
 GetCaretBlinkTime()
 {
+	FUNCTION_START
 	if ( caret.blinkrate == 0 )
 		caret.blinkrate = 500;
 
@@ -325,6 +340,7 @@ GetCaretBlinkTime()
 void WINAPI
 GetCaretPos(LPPOINT lpPoint)
 {
+	FUNCTION_START
 	CaretDrv(CARET_POSITION,1,(DWORD) lpPoint);
 
 }

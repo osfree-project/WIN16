@@ -30,7 +30,7 @@ To send email to the maintainer of the Willows Twin Libraries.
 
 #include <string.h>
 
-#include <windows.h>
+#include <user.h>
 
 /************************************************************************
  * 	DrawText
@@ -71,6 +71,8 @@ DrawTextOut(HDC hDC,int x,int y,char far *lpstr,int len,UINT uFormat)
 {
 	int i,j,k,dx,dy,x1;
 	long extent;
+
+	FUNCTION_START
 
 	for(i=0, j=0, k=0, x1=0; i<len; i++) {
 		if(lpstr[i] == '&') {
@@ -141,6 +143,8 @@ DrawText(HDC hDC, LPCSTR lpsz, int cb, LPRECT lprc, UINT uFormat)
 	char far *lpstr = (char far *)lpsz;
 
 	int   	charwidth[256];
+
+	FUNCTION_START
 
 	if ( !lprc )
 		return 0;
@@ -367,4 +371,24 @@ DrawText(HDC hDC, LPCSTR lpsz, int cb, LPRECT lprc, UINT uFormat)
 	}
 
 	return baseline - lprc->top;	
+}
+
+/***********************************************************************
+ *           TabbedTextOut    (USER.196)
+ */
+LONG WINAPI TabbedTextOut( HDC hdc, int x, int y, LPCSTR lpstr,
+                             int count, int nb_tabs, int FAR *tabs16, int tab_org )
+{
+	FUNCTION_START
+	return 0;
+}
+
+/***********************************************************************
+ *           GetTabbedTextExtent    (USER.197)
+ */
+DWORD WINAPI GetTabbedTextExtent( HDC hdc, LPCSTR lpstr, int count,
+                                    int nb_tabs, LPINT tabs16 )
+{
+	FUNCTION_START
+    return 0;
 }

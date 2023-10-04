@@ -138,3 +138,16 @@ typedef CLASSINFO NEAR	*NPCLASSINFO;
 typedef CLASSINFO FAR	*LPCLASSINFO;
 
 
+#ifdef DEBUG
+#define FUNCTION_START \
+{\
+	OutputDebugString(__FUNCTION__ " start\r\n");\
+}
+#define FUNCTION_END \
+{\
+	OutputDebugString(__FUNCTION__ " end\r\n");\
+}
+#else
+#define FUNCTION_START
+#define FUNCTION_END
+#endif

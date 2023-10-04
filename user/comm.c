@@ -1,5 +1,5 @@
 
-#include <windows.h>
+#include <user.h>
 
 /**************************************************************************
  *         BuildCommDCB		(USER.213)
@@ -9,6 +9,8 @@
  */
 int WINAPI BuildCommDCB(LPCSTR device, LPDCB lpdcb)
 {
+	FUNCTION_START
+
 	return 0;
 }
 
@@ -17,6 +19,8 @@ int WINAPI BuildCommDCB(LPCSTR device, LPDCB lpdcb)
  */
 int WINAPI OpenComm(LPCSTR device,UINT cbInQueue,UINT cbOutQueue)
 {
+	FUNCTION_START
+
 	return 0;
 }
 
@@ -25,7 +29,8 @@ int WINAPI OpenComm(LPCSTR device,UINT cbInQueue,UINT cbOutQueue)
  */
 int WINAPI CloseComm(int cid)
 {
-		return 0;
+	FUNCTION_START
+	return 0;
 }
 
 /*****************************************************************************
@@ -33,6 +38,7 @@ int WINAPI CloseComm(int cid)
  */
 int WINAPI SetCommBreak(int cid)
 {
+	FUNCTION_START
 	return 0;
 }
 
@@ -41,6 +47,7 @@ int WINAPI SetCommBreak(int cid)
  */
 int WINAPI ClearCommBreak(int cid)
 {
+	FUNCTION_START
 	return 0;
 }
 
@@ -49,6 +56,7 @@ int WINAPI ClearCommBreak(int cid)
  */
 LONG WINAPI EscapeCommFunction(int cid,int nFunction)
 {
+	FUNCTION_START
 	return -1;
 }
 
@@ -57,7 +65,8 @@ LONG WINAPI EscapeCommFunction(int cid,int nFunction)
  */
 int WINAPI FlushComm(int cid,int fnQueue)
 {
-		return 0;
+	FUNCTION_START
+	return 0;
 }
 
 /********************************************************************
@@ -65,6 +74,7 @@ int WINAPI FlushComm(int cid,int fnQueue)
  */
 int WINAPI GetCommError(int cid, COMSTAT far * lpStat)
 {
+	FUNCTION_START
 	return(0);
 }
 
@@ -73,7 +83,8 @@ int WINAPI GetCommError(int cid, COMSTAT far * lpStat)
  */
 UINT far * WINAPI SetCommEventMask(int cid,UINT fuEvtMask)
 {
-        return 0;
+	FUNCTION_START
+	return 0;
 }
 
 /*****************************************************************************
@@ -81,6 +92,7 @@ UINT far * WINAPI SetCommEventMask(int cid,UINT fuEvtMask)
  */
 UINT WINAPI GetCommEventMask(int cid,int fnEvtClear)
 {
+	FUNCTION_START
 	return 0;
 }
 
@@ -89,7 +101,8 @@ UINT WINAPI GetCommEventMask(int cid,int fnEvtClear)
  */
 int WINAPI SetCommState(const DCB far * lpdcb)
 {
-		return 0;
+	FUNCTION_START
+	return 0;
 }
 
 /*****************************************************************************
@@ -97,6 +110,7 @@ int WINAPI SetCommState(const DCB far * lpdcb)
  */
 int WINAPI GetCommState(int cid, LPDCB lpdcb)
 {
+	FUNCTION_START
 	return 0;
 }
 
@@ -105,6 +119,7 @@ int WINAPI GetCommState(int cid, LPDCB lpdcb)
  */
 int WINAPI TransmitCommChar(int cid,char chTransmit)
 {
+	FUNCTION_START
 	return 0;
 }
 
@@ -113,6 +128,7 @@ int WINAPI TransmitCommChar(int cid,char chTransmit)
  */
 int WINAPI UngetCommChar(int cid,char chUnget)
 {
+	FUNCTION_START
 	return 0;
 }
 
@@ -121,6 +137,7 @@ int WINAPI UngetCommChar(int cid,char chUnget)
  */
 int WINAPI ReadComm(int cid, void far * lpvBuf,int cbRead)
 {
+	FUNCTION_START
 	return 0;
 }
 
@@ -129,6 +146,7 @@ int WINAPI ReadComm(int cid, void far * lpvBuf,int cbRead)
  */
 int WINAPI WriteComm(int cid, void const far * lpvBuf, int cbWrite)
 {
+	FUNCTION_START
 	return 0;
 }
 
@@ -138,5 +156,6 @@ int WINAPI WriteComm(int cid, void const far * lpvBuf, int cbWrite)
 BOOL WINAPI EnableCommNotification( int cid, HWND hwnd,
                                       int cbWriteNotify, int cbOutQueue )
 {
+	FUNCTION_START
 	return FALSE;
 }
