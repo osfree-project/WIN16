@@ -1,0 +1,2 @@
+; D:\DEV-CPP\BIN\dlltool --base-file C:\WINDOWS\TEMP/cca07637.base --output-exp ofcdll.exp --dllname ofcdll.dll --output-def libofcdll.def --no-export-all-symbols --add-stdcall-alias --exclude-symbol=DllMainCRTStartup@12 --def C:\WINDOWS\TEMP/cca07637.def --output-lib libofcdll.a
+EXPORTS
