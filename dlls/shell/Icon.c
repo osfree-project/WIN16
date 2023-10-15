@@ -26,7 +26,6 @@ HICON WINAPI ExtractAssociatedIcon(HINSTANCE hInst, LPSTR lpIconPath, LPWORD lpi
 }
 
 
-static HDC display_dc;
 
 HDC get_display_dc(void)
 {

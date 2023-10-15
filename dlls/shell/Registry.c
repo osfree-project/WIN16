@@ -32,28 +32,63 @@
 
 #include "Shell.h"
 
-static ATOMTABLE AtomTable;
-
-static BOOL fRegInitialized = FALSE;
 static BOOL InitReg();
-
-typedef struct keyKEYSTRUCT {
-	HKEY hParentKey;
-	ATOM atomKey;
-	BOOL fOpen;
-	HKEY hSubKey;
-	HKEY hNext;
-	LPSTR lpszValue;
-} KEYSTRUCT;
-
-typedef KEYSTRUCT FAR * LPKEYSTRUCT;
-
-static KEYSTRUCT RootKey;
 static LPKEYSTRUCT InternalFindKey(LPKEYSTRUCT,LPCSTR,WORD);
 static LPKEYSTRUCT InternalCreateKey(LPKEYSTRUCT,ATOM);
 
-#define IFK_FIND	0
-#define IFK_CREATE	1
+/******************************************************************************/
+
+static void ReadSetupReg()
+{
+    char buf[_MAX_PATH];
+    HFILE hf;
+    LPSTR lpBuffer,ptr;
+    char lpTmp[0x100];
+    DWORD dwFileSize;
+    int i = 0,j;
+    LPKEYSTRUCT lpKeyStruct;
+    HKEY hk;
+
+    if (!GetWindowsDirectory(buf,_MAX_PATH)) 
+	getcwd(buf,_MAX_PATH);
+    lstrcat(buf,"/setup.reg");
+    if ((hf = _lopen(buf,READ)) == HFILE_ERROR)
+	return;
+    dwFileSize = _llseek(hf,0,2);
+    lpBuffer = (LPSTR) GlobalAllocPtr(GPTR, dwFileSize+2);
+    _llseek(hf,0,0);
+    _lread(hf,lpBuffer,dwFileSize);
+    _lclose(hf);
+
+    ptr = lpBuffer;
+    while (i < dwFileSize) {
+	while ((lpBuffer[i] != '\n') && (i < dwFileSize))
+	    i++;
+	if (lpBuffer[i] == '\n')
+	    lpBuffer[i] = '\0';
+	else
+	    lpBuffer[i+1] ='\0';
+	if (lpBuffer[i-1] == 0xd)	/* strip ^M */
+	    lpBuffer[i-1] = 0;
+	lstrcpyn(lpTmp,ptr,17);
+	lpTmp[17] = 0;
+	if (!lstrcmpi(lpTmp,"HKEY_CLASSES_ROOT")) { /* <key> <value> pair */
+	    lstrcpy(lpTmp,ptr);
+	    lpKeyStruct = &RootKey;
+	    while (*ptr++ != '\\');
+	    j = 0;
+	    while (ptr[j] != ' ') j++;
+	    ptr[j] = 0;
+	    if (RegCreateKey((HKEY)lpKeyStruct,ptr,&hk) != ERROR_SUCCESS)
+		break;
+	    ptr += j+3;
+	    if (RegSetValue(hk,NULL,REG_SZ,ptr,lstrlen(ptr)) != ERROR_SUCCESS)
+		break;
+	}
+	ptr = &lpBuffer[i+1];
+    }
+    GlobalFreePtr(lpBuffer);
+}
 
 /* 0 and 1 are valid rootkeys in win16 shell.dll and are used by
  * some programs. Do not remove those cases. -MM
@@ -430,59 +465,6 @@ RegQueryValueEx
 
 
 
-/******************************************************************************/
-
-static void ReadSetupReg()
-{
-    char buf[_MAX_PATH];
-    HFILE hf;
-    LPSTR lpBuffer,ptr;
-    char lpTmp[0x100];
-    DWORD dwFileSize;
-    int i = 0,j;
-    LPKEYSTRUCT lpKeyStruct;
-    HKEY hk;
-
-    if (!GetWindowsDirectory(buf,_MAX_PATH)) 
-	getcwd(buf,_MAX_PATH);
-    lstrcat(buf,"/setup.reg");
-    if ((hf = _lopen(buf,READ)) == HFILE_ERROR)
-	return;
-    dwFileSize = _llseek(hf,0,2);
-    lpBuffer = (LPSTR) GlobalAllocPtr(GPTR, dwFileSize+2);
-    _llseek(hf,0,0);
-    _lread(hf,lpBuffer,dwFileSize);
-    _lclose(hf);
-
-    ptr = lpBuffer;
-    while (i < dwFileSize) {
-	while ((lpBuffer[i] != '\n') && (i < dwFileSize))
-	    i++;
-	if (lpBuffer[i] == '\n')
-	    lpBuffer[i] = '\0';
-	else
-	    lpBuffer[i+1] ='\0';
-	if (lpBuffer[i-1] == 0xd)	/* strip ^M */
-	    lpBuffer[i-1] = 0;
-	lstrcpyn(lpTmp,ptr,17);
-	lpTmp[17] = 0;
-	if (!lstrcmpi(lpTmp,"HKEY_CLASSES_ROOT")) { /* <key> <value> pair */
-	    lstrcpy(lpTmp,ptr);
-	    lpKeyStruct = &RootKey;
-	    while (*ptr++ != '\\');
-	    j = 0;
-	    while (ptr[j] != ' ') j++;
-	    ptr[j] = 0;
-	    if (RegCreateKey((HKEY)lpKeyStruct,ptr,&hk) != ERROR_SUCCESS)
-		break;
-	    ptr += j+3;
-	    if (RegSetValue(hk,NULL,REG_SZ,ptr,lstrlen(ptr)) != ERROR_SUCCESS)
-		break;
-	}
-	ptr = &lpBuffer[i+1];
-    }
-    GlobalFreePtr(lpBuffer);
-}
 
 
 static LPKEYSTRUCT

@@ -348,9 +348,42 @@ struct cursoricon_desc
 #define	IDS_EXTENSIONS		103
 #define	IDS_OPEN		104
 
+typedef struct keyKEYSTRUCT {
+	HKEY hParentKey;
+	ATOM atomKey;
+	BOOL fOpen;
+	HKEY hSubKey;
+	HKEY hNext;
+	LPSTR lpszValue;
+} KEYSTRUCT;
+
+typedef KEYSTRUCT FAR * LPKEYSTRUCT;
+
+#define IFK_FIND	0
+#define IFK_CREATE	1
+
 extern char szWindows[20];
 extern char szPrograms[20];
 extern char szProgramsValue[20];
 extern char szExtensions[20];
 extern char szOpen[20];
 
+extern const char lpstrMsgWndCreated[];
+extern const char lpstrMsgWndDestroyed[];
+extern const char lpstrMsgShellActivate[];
+
+extern HWND SHELL_hWnd;
+extern HHOOK SHELL_hHook;
+extern HOOKPROC SHELL_lpProc;
+
+extern UINT	uMsgWndCreated;
+extern UINT	uMsgWndDestroyed;
+extern UINT	uMsgShellActivate;
+
+extern HDC display_dc;
+
+extern ATOMTABLE AtomTable;
+
+extern BOOL fRegInitialized;
+
+extern KEYSTRUCT RootKey;
