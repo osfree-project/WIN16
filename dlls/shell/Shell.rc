@@ -45,3 +45,12 @@ BEGIN
 	LTEXT		"Display:",SAB_TERM,46,85,150,10
 END
 
+
+STRINGTABLE DISCARDABLE
+BEGIN
+	IDS_WINDOWS,		"windows"
+	IDS_PROGRAMS,		"programs"
+	IDS_PROGRAMS_VALUE,	"com exe bat pif"
+	IDS_EXTENSIONS,		"extensions"
+	IDS_OPEN,		"open"
+END

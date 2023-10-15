@@ -67,7 +67,7 @@ DWORD WINAPI DoEnvironmentSubst(LPSTR str,WORD length)
   WORD    retLength = length;
 
 	MessageBox(0, "DoEnvironmentSubst", "DoEnvironmentSubst", MB_OK);
-  CharToOem(str,str);
+  AnsiToOem(str,str);
 
 //  TRACE("accept %s\n", str);
 
@@ -117,7 +117,7 @@ DWORD WINAPI DoEnvironmentSubst(LPSTR str,WORD length)
 //      WARN("-- Env subst aborted - string too short or invalid input\n");
 //  TRACE("-- return %s\n", str);
 
-  OemToChar(str,str);
+  OemToAnsi(str,str);
   GlobalFreePtr(lpBuffer);
 
   return (DWORD)MAKELONG(retLength, retStatus);

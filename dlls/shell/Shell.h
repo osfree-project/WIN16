@@ -341,3 +341,16 @@ struct cursoricon_desc
 };
 
 #pragma pack(pop)
+
+#define	IDS_WINDOWS		100
+#define	IDS_PROGRAMS		101
+#define	IDS_PROGRAMS_VALUE	102
+#define	IDS_EXTENSIONS		103
+#define	IDS_OPEN		104
+
+extern char szWindows[20];
+extern char szPrograms[20];
+extern char szProgramsValue[20];
+extern char szExtensions[20];
+extern char szOpen[20];
+

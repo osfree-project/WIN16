@@ -8,7 +8,7 @@ PROJ     = shell1
 PROJ1    = shell
 TRGT     = $(PROJ1).dll
 DESC     = Windows Shell API Library
-srcfiles = $(p)About$(e) $(p)Environment$(e) $(p)AtomEx$(e) $(p)Strings$(e) $(p)Shell$(e) $(p)Registry$(e) $(p)DragDrop$(e) $(p)Exec$(e) $(p)Hook$(e) $(p)Icon$(e)
+srcfiles = $(p)GlobalData$(e) $(p)About$(e) $(p)Environment$(e) $(p)AtomEx$(e) $(p)Strings$(e) $(p)Shell$(e) $(p)Registry$(e) $(p)DragDrop$(e) $(p)Exec$(e) $(p)Hook$(e) # $(p)Icon$(e)
 # linking dll file
 DLL     = 1
 HEAPSIZE= 16k
@@ -29,14 +29,16 @@ EXPORTS = &
 	FindExecutable			.21, &
 	ShellAbout				.22, &
 	AboutDlgProc			.33, &
-	ExtractIcon				.34, &
-	ExtractAssociatedIcon	.36, &
 	DoEnvironmentSubst		.37, &
 	FindEnvironmentString	.38, &
-	InternalExtractIcon		.39, &
 	DLLEntryPoint			.101, &
 	RegisterShellHook		.102, &
 	ShellHookProc			.103
+
+#
+#	ExtractIcon				.34, &
+#	ExtractAssociatedIcon	.36, &
+#	InternalExtractIcon		.39, &
 
 # not implemented yet
 
