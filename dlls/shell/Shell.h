@@ -387,3 +387,51 @@ extern ATOMTABLE AtomTable;
 extern BOOL fRegInitialized;
 
 extern KEYSTRUCT RootKey;
+
+/* REG.DAT structures */
+
+typedef struct tagDATHEADER {
+	char szSignature[8];	//0x0000  8 Byte  ASCII-Text: "SHCC3.10"
+	DWORD unk1;		//0x0008  D-Word  ?
+	DWORD unk2;		//0x000C  D-Word  ? (always equal the D-Word at 0x0008) Note: May be first is header size, second is offset of navblock
+	DWORD dwEntries;	//0x0010  D-Word  Number of entrys in the navigation-block
+	DWORD offsetDataBlock;	//0x0014  D-Word  Offset of the data-block
+	DWORD sizeDataBlock;	//0x0018  D-Word  Size of the data-block
+	WORD  unk3;		//0x001C  Word    ?
+	WORD  unk4;		//0x001E  Word    ?
+} DATHEADER;
+
+typedef struct tagDATNAVIGATION {
+	WORD	Next;	//0x00    Word    Next Key (same level)
+	WORD	Sub;	//0x02    Word    First Sub-Key (one level deeper)
+	WORD	Name;	//0x04    Word    Text-Info-Record Key-Namens
+	WORD	Value;	//0x06    Word    Text-Info-Record Key-Value (default)
+} DATNAVIGATION;
+
+typedef struct tagDATTEXT {
+	WORD	unk1;		//0x00    Word    ?
+	WORD	RefCount;	//0x02    Word    number of references to this text
+	WORD	Length;		//0x04    Word    Text-length
+	WORD	offset;		//0x06    Word    Offset of the text-string inside the data-block
+} DATTEXT;
+
+/*
+Navigation-Info-Record
+
+Offset  Size    Contents
+
+The values are the locical number of the block inside the file:
+
+	offset=blocksize*blocknumber+headersize
+
+since 2 of this values are constant:
+
+	offset=8*blocknumber+0x20
+
+
+Text-Info-Record
+================
+
+
+Offset  Size    Contents
+*/

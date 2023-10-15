@@ -25,9 +25,16 @@
 
 /*
   @todo This module uses its own global atom table. So, we need here something to replace.
+
   https://devblogs.microsoft.com/oldnewthing/20080117-00/?p=23783
   https://devblogs.microsoft.com/oldnewthing/20120521-00/?p=7573
   
+*/
+
+/* 
+
+  @todo Registry for now in memory only. See note.txt for REG.DAT format.
+
 */
 
 #include "Shell.h"
