@@ -53,20 +53,9 @@ From xoblite:
 -----------
         if (RegisterShellHook) RegisterShellHook(hMainWnd, 0);
 
-From wine shell32.dll
-
-// RegisterShellHook types
-#define RSH_DEREGISTER          0
-#define RSH_REGISTER            1
-#define RSH_REGISTER_PROGMAN    2
-#define RSH_REGISTER_TASKMAN    3
 
  */
 
-#define RSH_DEREGISTER          0
-#define RSH_REGISTER            1
-#define RSH_REGISTER_PROGMAN    2
-#define RSH_REGISTER_TASKMAN    3
 
 BOOL WINAPI RegisterShellHook(HWND hWnd, UINT uAction)
 {

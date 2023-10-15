@@ -155,3 +155,189 @@ static HINSTANCE hInst = 0;
 #define AnsiUpperChar(c) ((char)AnsiUpper((LPSTR)(unsigned char)(c)))
 
 #define SE_ERR_FNF 3
+
+#define RSH_DEREGISTER          0
+#define RSH_REGISTER            1
+#define RSH_REGISTER_PROGMAN    2
+#define RSH_REGISTER_TASKMAN    3
+
+#pragma pack(push, 1)
+
+#define IMAGE_DOS_SIGNATURE     0x5A4D
+#define IMAGE_OS2_SIGNATURE     0x454E
+
+/* Header shared by DOS, Win16, Win32, and Win64 executables */
+typedef struct _IMAGE_DOS_HEADER {
+    WORD    e_magic;
+    WORD    e_cblp;
+    WORD    e_cp;
+    WORD    e_crlc;
+    WORD    e_cparhdr;
+    WORD    e_minalloc;
+    WORD    e_maxalloc;
+    WORD    e_ss;
+    WORD    e_sp;
+    WORD    e_csum;
+    WORD    e_ip;
+    WORD    e_cs;
+    WORD    e_lfarlc;
+    WORD    e_ovno;
+    WORD    e_res[4];
+    WORD    e_oemid;
+    WORD    e_oeminfo;
+    WORD    e_res2[10];
+    LONG    e_lfanew;
+} IMAGE_DOS_HEADER;
+typedef IMAGE_DOS_HEADER FAR * LPIMAGE_DOS_HEADER;
+
+/* Header for OS/2 executables */
+typedef struct _IMAGE_OS2_HEADER {
+    WORD    ne_magic;
+    char    ne_ver;
+    char    ne_rev;
+    WORD    ne_enttab;
+    WORD    ne_cbenttab;
+    LONG    ne_crc;
+    WORD    ne_flags;
+    WORD    ne_autodata;
+    WORD    ne_heap;
+    WORD    ne_stack;
+    LONG    ne_csip;
+    LONG    ne_sssp;
+    WORD    ne_cseg;
+    WORD    ne_cmod;
+    WORD    ne_cbnrestab;
+    WORD    ne_segtab;
+    WORD    ne_rsrctab;
+    WORD    ne_restab;
+    WORD    ne_modtab;
+    WORD    ne_imptab;
+    LONG    ne_nrestab;
+    WORD    ne_cmovent;
+    WORD    ne_align;
+    WORD    ne_cres;
+    BYTE    ne_exetyp;
+    BYTE    ne_flagsothers;
+    WORD    ne_pretthunks;
+    WORD    ne_psegrefbytes;
+    WORD    ne_swaparea;
+    WORD    ne_expver;
+} IMAGE_OS2_HEADER;
+typedef IMAGE_OS2_HEADER FAR * LPIMAGE_OS2_HEADER;
+
+typedef struct
+{
+    BYTE        bWidth;          /* Width, in pixels, of the image	*/
+    BYTE        bHeight;         /* Height, in pixels, of the image	*/
+    BYTE        bColorCount;     /* Number of colors in image (0 if >=8bpp) */
+    BYTE        bReserved;       /* Reserved ( must be 0)		*/
+    WORD        wPlanes;         /* Color Planes			*/
+    WORD        wBitCount;       /* Bits per pixel			*/
+    DWORD       dwBytesInRes;    /* How many bytes in this resource?	*/
+    DWORD       dwImageOffset;   /* Where in the file is this image?	*/
+} icoICONDIRENTRY, FAR * LPicoICONDIRENTRY;
+
+typedef struct
+{
+    WORD            idReserved;   /* Reserved (must be 0) */
+    WORD            idType;       /* Resource Type (RES_ICON or RES_CURSOR) */
+    WORD            idCount;      /* How many images */
+    icoICONDIRENTRY idEntries[1]; /* An entry for each image (idCount of 'em) */
+} icoICONDIR, FAR * LPicoICONDIR;
+
+typedef struct
+{
+    WORD offset;
+    WORD length;
+    WORD flags;
+    WORD id;
+    WORD handle;
+    WORD usage;
+} NE_NAMEINFO;
+
+typedef struct
+{
+    WORD  type_id;
+    WORD  count;
+    DWORD resloader;
+} NE_TYPEINFO;
+
+#define NE_RSCTYPE_ICON        0x8003
+#define NE_RSCTYPE_GROUP_ICON  0x800e
+
+typedef struct
+{
+    BYTE   bWidth;
+    BYTE   bHeight;
+    BYTE   bColorCount;
+    BYTE   bReserved;
+} ICONRESDIR;
+
+typedef struct
+{
+    WORD   wWidth;
+    WORD   wHeight;
+} CURSORDIR;
+
+typedef struct
+{   union
+    { ICONRESDIR icon;
+      CURSORDIR  cursor;
+    } ResInfo;
+    WORD   wPlanes;
+    WORD   wBitCount;
+    DWORD  dwBytesInRes;
+    WORD   wResId;
+} CURSORICONDIRENTRY;
+
+typedef struct
+{
+    WORD                idReserved;
+    WORD                idType;
+    WORD                idCount;
+    CURSORICONDIRENTRY  idEntries[1];
+} CURSORICONDIR;
+
+typedef struct {
+    BYTE bWidth;
+    BYTE bHeight;
+    BYTE bColorCount;
+    BYTE bReserved;
+    WORD xHotspot;
+    WORD yHotspot;
+    DWORD dwDIBSize;
+    DWORD dwDIBOffset;
+} CURSORICONFILEDIRENTRY;
+
+typedef struct
+{
+    WORD                idReserved;
+    WORD                idType;
+    WORD                idCount;
+    CURSORICONFILEDIRENTRY  idEntries[1];
+} CURSORICONFILEDIR;
+
+/* NtUserSetCursorIconData parameter, not compatible with Windows */
+struct cursoricon_frame
+{
+    UINT     width;    /* frame-specific width */
+    UINT     height;   /* frame-specific height */
+    HBITMAP  color;    /* color bitmap */
+    HBITMAP  alpha;    /* pre-multiplied alpha bitmap for 32-bpp icons */
+    HBITMAP  mask;     /* mask bitmap (followed by color for 1-bpp icons) */
+    POINT    hotspot;
+};
+
+struct cursoricon_desc
+{
+    UINT flags;
+    UINT num_steps;
+    UINT num_frames;
+    UINT delay;
+    struct cursoricon_frame *frames;
+    DWORD *frame_seq;
+    DWORD *frame_rates;
+    HRSRC rsrc;
+};
+
+#pragma pack(pop)
