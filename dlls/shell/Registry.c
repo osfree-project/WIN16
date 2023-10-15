@@ -30,11 +30,6 @@
   
 */
 
-#include "direct.h"
-
-#include "windows.h"
-#include "shellapi.h"
-
 #include "Shell.h"
 
 static ATOMTABLE AtomTable;
@@ -60,14 +55,24 @@ static LPKEYSTRUCT InternalCreateKey(LPKEYSTRUCT,ATOM);
 #define IFK_FIND	0
 #define IFK_CREATE	1
 
-#define _MAX_PATH	255		// @todo not good solution, but so
-
 /* 0 and 1 are valid rootkeys in win16 shell.dll and are used by
  * some programs. Do not remove those cases. -MM
  */
 static inline void fix_win16_hkey( HKEY *hkey )
 {
     if (*hkey == 0 || *hkey == (HKEY)1) *hkey = HKEY_CLASSES_ROOT;
+}
+
+static BOOL InitReg()
+{
+    RootKey.hParentKey = (HKEY)0L;
+    if (!RootKey.atomKey)
+	RootKey.atomKey = AddAtomEx(&AtomTable,"HKEY_CLASSES_ROOT");
+    RootKey.fOpen = TRUE;
+    fRegInitialized = TRUE;
+    ReadSetupReg();
+    
+    return TRUE;
 }
 
 /******************************************************************************
@@ -427,8 +432,7 @@ RegQueryValueEx
 
 /******************************************************************************/
 
-static void
-ReadSetupReg()
+static void ReadSetupReg()
 {
     char buf[_MAX_PATH];
     HFILE hf;
@@ -445,7 +449,6 @@ ReadSetupReg()
     if ((hf = _lopen(buf,READ)) == HFILE_ERROR)
 	return;
     dwFileSize = _llseek(hf,0,2);
-//    lpBuffer = (LPSTR) WinMalloc(dwFileSize+2);
     lpBuffer = (LPSTR) GlobalAllocPtr(GPTR, dwFileSize+2);
     _llseek(hf,0,0);
     _lread(hf,lpBuffer,dwFileSize);
@@ -478,21 +481,7 @@ ReadSetupReg()
 	}
 	ptr = &lpBuffer[i+1];
     }
-//    WinFree(lpBuffer);
     GlobalFreePtr(lpBuffer);
-}
-
-static BOOL
-InitReg()
-{
-    RootKey.hParentKey = (HKEY)0L;
-    if (!RootKey.atomKey)
-	RootKey.atomKey = AddAtomEx(&AtomTable,"HKEY_CLASSES_ROOT");
-    RootKey.fOpen = TRUE;
-    fRegInitialized = TRUE;
-    ReadSetupReg();
-    
-    return TRUE;
 }
 
 
@@ -547,7 +536,6 @@ InternalCreateKey(LPKEYSTRUCT lpKeyStruct, ATOM atomSubKey)
     LPKEYSTRUCT lpSubKey;
     LPKEYSTRUCT lpKeyTmp;
 
-//    lpSubKey = (KEYSTRUCT *)WinMalloc(sizeof(KEYSTRUCT));
     lpSubKey = (LPKEYSTRUCT)GlobalAllocPtr(GPTR, sizeof(KEYSTRUCT));
 
     if (!lpKeyStruct->hSubKey)

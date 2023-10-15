@@ -23,9 +23,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <windows.h>
-#include <shellapi.h>
-
 #include "Shell.h"
 
 /******************************************************************************
@@ -112,7 +109,7 @@ void WINAPI DragFinish(HDROP hDrop)
 
 //    APISTR((LF_APICALL,"DragFinish(HDROP=%x)\n",hDrop));
 
-	MessageBox(0, "DragFinish", "DragFinish", MB_OK);
+//	MessageBox(0, "DragFinish", "DragFinish", MB_OK);
 
 	GlobalFree(hDrop);
 
@@ -128,7 +125,7 @@ BOOL WINAPI DragQueryPoint(HDROP hDrop, LPPOINT lppt)
 	LPDROPFILESTRUCT lpDragInfo;
 	BOOL bRet;
 
-	MessageBox(0, "DragQueryPoint", "DragQueryPoint", MB_OK);
+//	MessageBox(0, "DragQueryPoint", "DragQueryPoint", MB_OK);
 //    APISTR((LF_APICALL,"DragQueryPoint(HDROP=%x,POINT=%x)\n",
 //	hDrop,lppt));
 

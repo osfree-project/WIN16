@@ -23,8 +23,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <windows.h>
-
 #include "Shell.h"
 
 /***********************************************************************
@@ -41,7 +39,7 @@ static WORD ATOM_Hash(
 
 //    TRACE("%x, %s, %x\n", entries, str, len);
 
-    for (i = 0; i < len; i++) hash ^= toupper(str[i]) + i;
+    for (i = 0; i < len; i++) hash ^= AnsiUpperChar(str[i]) + i;
     return hash % entries;
 }
 

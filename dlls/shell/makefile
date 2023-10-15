@@ -8,7 +8,7 @@ PROJ     = shell1
 PROJ1    = shell
 TRGT     = $(PROJ1).dll
 DESC     = Windows Shell API Library
-srcfiles = $(p)atomex$(e) $(p)strings$(e) $(p)Shell$(e) $(p)Registry$(e)  $(p)DragDrop$(e)
+srcfiles = $(p)About$(e) $(p)Environment$(e) $(p)AtomEx$(e) $(p)Strings$(e) $(p)Shell$(e) $(p)Registry$(e) $(p)DragDrop$(e) $(p)Exec$(e) $(p)Hook$(e) $(p)Icon$(e)
 # linking dll file
 DLL     = 1
 HEAPSIZE= 16k

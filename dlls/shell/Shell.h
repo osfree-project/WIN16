@@ -23,7 +23,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <direct.h>
+#include <dos.h>
+#define MAX_PATH FILENAME_MAX
+
 #include <windows.h>
+#include <shellapi.h>
  
 #define SAB_OKAY			IDOK
 #define SAB_ABOUT			1000
@@ -46,7 +54,7 @@ int lstrnicmp(char FAR *s1, const char FAR *s2, int n);
 char FAR *lstrchr(const char FAR *s, int c);
 void lmemcpy(void FAR * s1, void FAR * s2, unsigned length);
 void FAR * lmemset (void FAR *start, int c, int len);
-int toupper (int c);
+//int toupper (int c);
 
 #define GET_WM_COMMAND_ID(wp, lp)                   (wp)
 
@@ -68,6 +76,10 @@ typedef struct {
 #define GlobalAllocPtr(flags, cb) \
   (GlobalLock(GlobalAlloc((flags), (cb))))
 
+extern  unsigned short          GetDS( void );
+#pragma aux GetDS               = \
+        "mov    ax,ds"          \
+        value                   [ax];
 
 typedef struct
 {
@@ -133,3 +145,13 @@ typedef struct tagDROPFILESTRUCT {
     BOOL	fInNonClientArea;
 } DROPFILESTRUCT, FAR *LPDROPFILESTRUCT;
 
+#define offsetof(s,m)       (size_t)&(((s*)NULL)->m)
+#define FIELD_OFFSET(type, field) ((LONG)offsetof(type, field))
+
+BOOL CALLBACK AboutDlgProc(HWND, UINT, WPARAM, LPARAM);
+
+static HINSTANCE hInst = 0;
+
+#define AnsiUpperChar(c) ((char)AnsiUpper((LPSTR)(unsigned char)(c)))
+
+#define SE_ERR_FNF 3

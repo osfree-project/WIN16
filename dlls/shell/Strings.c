@@ -45,23 +45,15 @@ void lmemcpy(void FAR * s1, void FAR * s2, unsigned length)
 	}
 }
 
-int toupper (int c)
-{
-  if (c >= 'a' && c <= 'z')
-    return (c + ('A' - 'a'));
-
-  return c;
-}
-
 int lstrnicmp(char FAR *s1, const char FAR *s2, int n)
 {
 
     if (n == 0)
 	return 0;
     do {
-	if (toupper(*s1) != toupper(*s2++))
-		return toupper(*(unsigned char FAR *) s1) -
-		toupper(*(unsigned char FAR *) --s2);
+	if (AnsiUpperChar(*s1) != AnsiUpperChar(*s2++))
+		return AnsiUpperChar(*(unsigned char FAR *) s1) -
+		AnsiUpperChar(*(unsigned char FAR *) --s2);
 	if (*s1++ == 0)
 		break;
 	} while (--n != 0);
