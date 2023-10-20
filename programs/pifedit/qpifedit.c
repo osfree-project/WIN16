@@ -2267,24 +2267,6 @@ VOID ControlsToPIF(HWND hWnd)
     GetDlgItemText(hWnd, IDE_XMSMAX, szNumBuf, sizeof(szNumBuf));
     pPIF->pif386.XmsMax = atoi(szNumBuf);
 
-    //GetDlgItemText(hWnd, IDE_FOREPRIO, szNumBuf, sizeof(szNumBuf));
-    //pPIF->pif386.ForePrio = atoi(szNumBuf);
-
-    //GetDlgItemText(hWnd, IDE_BACKPRIO, szNumBuf, sizeof(szNumBuf));
-    //pPIF->pif386.BackPrio = atoi(szNumBuf);
-
-    pPIF->pif386.TaskFlags &= ~0x0400;
-    //pPIF->pif386.TaskFlags |= IsDlgButtonChecked(hWnd, IDB_DOSLOCK) ? 0x0400 : 0;
-    pPIF->pif386.TaskFlags &= ~0x0080;
-    //pPIF->pif386.TaskFlags |= IsDlgButtonChecked(hWnd, IDB_EMSLOCK) ? 0x0080 : 0;
-    pPIF->pif386.TaskFlags &= ~0x0100;
-    //pPIF->pif386.TaskFlags |= IsDlgButtonChecked(hWnd, IDB_XMSLOCK) ? 0x0100 : 0;
-    pPIF->pif386.TaskFlags &= ~0x0010;
-    //pPIF->pif386.TaskFlags |= IsDlgButtonChecked(hWnd, IDB_DETECTIDLE) ? 0x0010 :0;
-    pPIF->pif386.TaskFlags &= ~0x0200;
-    pPIF->pif386.TaskFlags |= IsDlgButtonChecked(hWnd, IDB_FASTPASTE) ? 0x0200 : 0;
-    pPIF->pif386.TaskFlags |= 0x0020;
-    //pPIF->pif386.TaskFlags &= ~(IsDlgButtonChecked(hWnd, IDB_XMSHMA) ? 0x0020 : 0);
 
     pPIF->pif386.WinFlags &= ~0x08;
     pPIF->pif386.WinFlags |= IsDlgButtonChecked(hWnd, IDB_FULLSCREEN) ? 0x08 : 0;
@@ -2296,37 +2278,8 @@ VOID ControlsToPIF(HWND hWnd)
     pPIF->pif386.VidFlags |= IsDlgButtonChecked(hWnd, IDB_TEXT) ? 0x10 : 0;
     pPIF->pif386.VidFlags |= IsDlgButtonChecked(hWnd, IDB_LOW) ? 0x20 : 0;
     pPIF->pif386.VidFlags |= IsDlgButtonChecked(hWnd, IDB_HIGH) ? 0x40 : 0;
-    pPIF->pif386.VidFlags |= (!IsDlgButtonChecked(hWnd, IDB_MONTEXT)) ? 0x02 : 0;
-    pPIF->pif386.VidFlags |= (!IsDlgButtonChecked(hWnd, IDB_MONLOW)) ? 0x04 : 0;
-    pPIF->pif386.VidFlags |= (!IsDlgButtonChecked(hWnd, IDB_MONHIGH)) ? 0x08 : 0;
 
-    pPIF->pif386.VidFlags |= IsDlgButtonChecked(hWnd, IDB_EMULATE) ? 0x01 : 0;
-    pPIF->pif386.VidFlags |= IsDlgButtonChecked(hWnd, IDB_RETAIN) ? 0x80 : 0;
 
-    pPIF->pif386.TaskFlags |= IsDlgButtonChecked(hWnd, IDB_ALTENTER) ? 0x0001 : 0;
-    pPIF->pif386.TaskFlags |= IsDlgButtonChecked(hWnd, IDB_ALTPRTSC) ? 0x0002 : 0;
-    pPIF->pif386.TaskFlags |= IsDlgButtonChecked(hWnd, IDB_PRTSC) ? 0x0004 : 0;
-    pPIF->pif386.TaskFlags |= IsDlgButtonChecked(hWnd, IDB_CTRLESC) ? 0x0008 : 0;
-
-    pPIF->pif386.WinFlags |= IsDlgButtonChecked(hWnd, IDB_ALTTAB) ? 0x20 : 0;
-    pPIF->pif386.WinFlags |= IsDlgButtonChecked(hWnd, IDB_ALTESC) ? 0x40 : 0;
-    pPIF->pif386.WinFlags |= IsDlgButtonChecked(hWnd, IDB_ALTSPACE) ? 0x80 : 0;
-
-    if (Globals.wHotkeyScancode) {		// User hotkey defined
-	pPIF->pif386.TaskFlags |= 0x0040;
-	pPIF->pif386.Hotkey = Globals.wHotkeyScancode;
-	pPIF->pif386.HotkeyBits = Globals.bHotkeyBits;
-
-	pPIF->pif386.HotkeyShift |= IsDlgButtonChecked(hWnd, IDB_ALT) ? 0x08 : 0;
-	pPIF->pif386.HotkeyShift |= IsDlgButtonChecked(hWnd, IDB_CTRL) ? 0x04 : 0;
-	pPIF->pif386.HotkeyShift |= IsDlgButtonChecked(hWnd, IDB_SHIFT) ? 0x03 : 0;
-	pPIF->pif386.Hotkey3 = 0x0F;	// Unknown purpose
-    } else {		// No user hotkey defined
-	pPIF->pif386.TaskFlags &= ~0x0040;
-	pPIF->pif386.Hotkey = 0;
-	pPIF->pif386.HotkeyShift = 0;
-	pPIF->pif386.Hotkey3 = 0;	// Unknown purpose
-    }
 
 // Calculate the checksum for the old-style header
     pPIF->pifHdr.CheckSum = ComputePIFChecksum(pPIF);
