@@ -21,7 +21,6 @@
 #include <string.h>		// For memset, memcmp, memcpy, strncpy, strchr
 
 #include "main.h"
-#include "qpifedit.h"
 #include "advanced.h"
 
 #ifndef DEBUG
@@ -69,7 +68,6 @@ BOOL	IsPifFile(LPCSTR lpszFileSpec);
 UINT	CALLBACK _export GetOpenFileNameHookProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 VOID	SnapPif(VOID);			// Copy pifModel to pifBackup
-BYTE	ComputePIFChecksum(PPIF pPIF);	// Checksum the PIFHDR
 
 BOOL	ValidateHotKey(BOOL fComplain);
 
@@ -304,7 +302,6 @@ void MenuFileNew(BOOL fCheck)
     lstrcpy(Globals.szWindowTitle, Globals.szAppTitle);
     lstrcat(Globals.szWindowTitle, " - ");
     lstrcat(Globals.szWindowTitle, Globals.szUntitled);
-
     SetWindowText(Globals.hWndDlg, Globals.szWindowTitle);
 
     Globals.fUntitled = TRUE;
@@ -392,9 +389,9 @@ int MenuFileSave(VOID)
     register int	rc;
 
     if (Globals.szFile[0] == '\0') {    // Untitled, use SaveAs
-	rc = SaveAsPIF();	// Save didn't work
+		rc = SaveAsPIF();	// Save didn't work
     } else {
-	rc = SavePIF(); 	// Save didn't work
+		rc = SavePIF(); 	// Save didn't work
     }
 
 // FIXME what if `rc' is set?
@@ -857,9 +854,9 @@ CHECK_VALID_COM:
 
     n = lstrlen(szFname);
     if (n == 0 || n > 8 || (lstrcmpi(szExt, ".BAT") && lstrcmpi(szExt, ".COM") && lstrcmpi(szExt, ".EXE") )) {
-	LoadString(Globals.hInst, IDS_BADFILENAME , szBuf, sizeof(szBuf));
+		LoadString(Globals.hInst, IDS_BADFILENAME , szBuf, sizeof(szBuf));
 
-	goto MSGBOXCOM;
+		goto MSGBOXCOM;
     }
 
     if (!ValidateHotKey(FALSE)) goto CHECK_VALID_COM;
@@ -921,16 +918,16 @@ int SaveAsPIF(VOID)
 
     Globals.ofn.lpstrDefExt	= "PIF";
 
-    Globals.ofn.Flags		= OFN_PATHMUSTEXIST	|
+	Globals.ofn.Flags		= OFN_PATHMUSTEXIST	|
 			  OFN_HIDEREADONLY	|
 			  OFN_OVERWRITEPROMPT;
 
-    if (!GetSaveFileName(&Globals.ofn)) {
-	if (CommDlgExtendedError() == 0) return (IDCANCEL);
+	if (!GetSaveFileName(&Globals.ofn)) {
+		if (CommDlgExtendedError() == 0) return (IDCANCEL);
 
-	CommDlgError(Globals.hWndDlg, CommDlgExtendedError());
-	return (1);
-    }
+		CommDlgError(Globals.hWndDlg, CommDlgExtendedError());
+		return (1);
+	}
 
     lstrcpy(Globals.szWindowTitle, Globals.szAppTitle);
     lstrcat(Globals.szWindowTitle, " - ");
@@ -2099,20 +2096,22 @@ int ControlsFromPIF(PPIF pPIF, HWND hWnd)
 	    pPifSig->NextOff != 0xFFFF &&
 	    pPifSig->NextOff > 0 &&
 	    (PBYTE) pPifSig < (PBYTE) (pPIF+1) ) {
-	pPifSig = (PPIFSIG) ((PBYTE) pPIFHDR + pPifSig->NextOff);
+
+		pPifSig = (PPIFSIG) ((PBYTE) pPIFHDR + pPifSig->NextOff);
+
     }
 
-    if (n) {	// No 386 Enhanced section -- use the defaults
-	char	szBuf[80];
+	if (n) {	// No 386 Enhanced section -- use the defaults
+		char	szBuf[80];
 
-	LoadString(Globals.hInst, IDS_BADCHECKSUM, szBuf, sizeof(szBuf));
-	MessageBox(hWnd, szBuf, Globals.szAppTitle, MB_OK);
-	return (1);
-    }
+		LoadString(Globals.hInst, IDS_BADCHECKSUM, szBuf, sizeof(szBuf));
+		MessageBox(hWnd, szBuf, Globals.szAppTitle, MB_OK);
+		return (1);
+	}
 
-    pPif386 = (PPIF386) ((PBYTE) pPIFHDR + pPifSig->DataOff);
+	pPif386 = (PPIF386) ((PBYTE) pPIFHDR + pPifSig->DataOff);
 
-// Fill in the controls
+	// Fill in the controls
 
     SetDlgItemText(hWnd, IDE_FILENAME, pPIFHDR->PgmName);
 
@@ -2140,21 +2139,21 @@ int ControlsFromPIF(PPIF pPIF, HWND hWnd)
     wsprintf(szNumBuf,"%d",pPif386->XmsMax);
     SetDlgItemText(hWnd, IDE_XMSMAX, szNumBuf);
 
-    CheckDlgButton(hWnd, IDB_DOSLOCK, (pPif386->TaskFlags & 0x0400) ? 1 : 0);
-    CheckDlgButton(hWnd, IDB_EMSLOCK, (pPif386->TaskFlags & 0x0080) ? 1 : 0);
-    CheckDlgButton(hWnd, IDB_XMSLOCK, (pPif386->TaskFlags & 0x0100) ? 1 : 0);
-    CheckDlgButton(hWnd, IDB_XMSHMA, (!(pPif386->TaskFlags & 0x0020)) ? 1 : 0);
+    //CheckDlgButton(hWnd, IDB_DOSLOCK, (pPif386->TaskFlags & 0x0400) ? 1 : 0);
+    //CheckDlgButton(hWnd, IDB_EMSLOCK, (pPif386->TaskFlags & 0x0080) ? 1 : 0);
+    //CheckDlgButton(hWnd, IDB_XMSLOCK, (pPif386->TaskFlags & 0x0100) ? 1 : 0);
+    //CheckDlgButton(hWnd, IDB_XMSHMA, (!(pPif386->TaskFlags & 0x0020)) ? 1 : 0);
 
-    wsprintf(szNumBuf,"%d",pPif386->ForePrio);
-    SetDlgItemText(hWnd, IDE_FOREPRIO, szNumBuf);
+    //wsprintf(szNumBuf,"%d",pPif386->ForePrio);
+    //SetDlgItemText(hWnd, IDE_FOREPRIO, szNumBuf);
 
-    wsprintf(szNumBuf,"%d",pPif386->BackPrio);
-    SetDlgItemText(hWnd, IDE_BACKPRIO, szNumBuf);
+    //wsprintf(szNumBuf,"%d",pPif386->BackPrio);
+    //SetDlgItemText(hWnd, IDE_BACKPRIO, szNumBuf);
 
     CheckDlgButton(hWnd, IDB_FULLSCREEN, pPif386->WinFlags & 0x08 ? 1 : 0);
     CheckDlgButton(hWnd, IDB_WINDOWED, pPif386->WinFlags & 0x08 ? 0 : 1);
 
-    CheckDlgButton(hWnd, IDB_DETECTIDLE, pPif386->TaskFlags & 0x0010 ? 1 : 0);
+    //CheckDlgButton(hWnd, IDB_DETECTIDLE, pPif386->TaskFlags & 0x0010 ? 1 : 0);
 
     CheckDlgButton(hWnd, IDB_BACKEXEC, pPif386->WinFlags & 0x02 ? 1 : 0);
     CheckDlgButton(hWnd, IDB_EXCLEXEC, pPif386->WinFlags & 0x04 ? 1 : 0);
@@ -2167,50 +2166,50 @@ int ControlsFromPIF(PPIF pPIF, HWND hWnd)
     CheckDlgButton(hWnd, IDB_LOW,  pPif386->VidFlags & 0x20 ? 1 : 0);
     CheckDlgButton(hWnd, IDB_HIGH, pPif386->VidFlags & 0x40 ? 1 : 0);
 
-    CheckDlgButton(hWnd, IDB_MONTEXT, (!(pPif386->VidFlags & 0x02)) ? 1 : 0);
-    CheckDlgButton(hWnd, IDB_MONLOW,  (!(pPif386->VidFlags & 0x04)) ? 1 : 0);
-    CheckDlgButton(hWnd, IDB_MONHIGH, (!(pPif386->VidFlags & 0x08)) ? 1 : 0);
+//    CheckDlgButton(hWnd, IDB_MONTEXT, (!(pPif386->VidFlags & 0x02)) ? 1 : 0);
+//    CheckDlgButton(hWnd, IDB_MONLOW,  (!(pPif386->VidFlags & 0x04)) ? 1 : 0);
+//    CheckDlgButton(hWnd, IDB_MONHIGH, (!(pPif386->VidFlags & 0x08)) ? 1 : 0);
 
     CheckDlgButton(hWnd, IDB_EMULATE, pPif386->VidFlags & 0x01 ? 1 : 0);
     CheckDlgButton(hWnd, IDB_RETAIN,  pPif386->VidFlags & 0x80 ? 1 : 0);
 
-    CheckDlgButton(hWnd, IDB_ALTENTER, pPif386->TaskFlags & 0x0001 ? 1 : 0);
-    CheckDlgButton(hWnd, IDB_ALTPRTSC, pPif386->TaskFlags & 0x0002 ? 1 : 0);
-    CheckDlgButton(hWnd, IDB_PRTSC, pPif386->TaskFlags & 0x0004 ? 1 : 0);
-    CheckDlgButton(hWnd, IDB_CTRLESC, pPif386->TaskFlags & 0x0008 ? 1 : 0);
+//    CheckDlgButton(hWnd, IDB_ALTENTER, pPif386->TaskFlags & 0x0001 ? 1 : 0);
+//    CheckDlgButton(hWnd, IDB_ALTPRTSC, pPif386->TaskFlags & 0x0002 ? 1 : 0);
+//    CheckDlgButton(hWnd, IDB_PRTSC, pPif386->TaskFlags & 0x0004 ? 1 : 0);
+//    CheckDlgButton(hWnd, IDB_CTRLESC, pPif386->TaskFlags & 0x0008 ? 1 : 0);
 
-    CheckDlgButton(hWnd, IDB_ALTTAB, pPif386->WinFlags & 0x20 ? 1 : 0);
-    CheckDlgButton(hWnd, IDB_ALTESC, pPif386->WinFlags & 0x40 ? 1 : 0);
-    CheckDlgButton(hWnd, IDB_ALTSPACE, pPif386->WinFlags & 0x80 ? 1 : 0);
+//    CheckDlgButton(hWnd, IDB_ALTTAB, pPif386->WinFlags & 0x20 ? 1 : 0);
+//    CheckDlgButton(hWnd, IDB_ALTESC, pPif386->WinFlags & 0x40 ? 1 : 0);
+//    CheckDlgButton(hWnd, IDB_ALTSPACE, pPif386->WinFlags & 0x80 ? 1 : 0);
 
-    if (pPif386->TaskFlags & 0x0040) {	// User-definable hotkey
-	Globals.wHotkeyScancode = pPif386->Hotkey;
-	Globals.bHotkeyBits = pPif386->HotkeyBits;
+//    if (pPif386->TaskFlags & 0x0040) {	// User-definable hotkey
+//	Globals.wHotkeyScancode = pPif386->Hotkey;
+//	Globals.bHotkeyBits = pPif386->HotkeyBits;
 
-	CheckDlgButton(hWnd, IDB_ALT, pPif386->HotkeyShift & 0x08 ? 1 : 0);
-	CheckDlgButton(hWnd, IDB_CTRL, pPif386->HotkeyShift & 0x04 ? 1 : 0);
-	CheckDlgButton(hWnd, IDB_SHIFT, pPif386->HotkeyShift & 0x03 ? 1 : 0);
+//	CheckDlgButton(hWnd, IDB_ALT, pPif386->HotkeyShift & 0x08 ? 1 : 0);
+//	CheckDlgButton(hWnd, IDB_CTRL, pPif386->HotkeyShift & 0x04 ? 1 : 0);
+//	CheckDlgButton(hWnd, IDB_SHIFT, pPif386->HotkeyShift & 0x03 ? 1 : 0);
 
-	GetKeyNameText(
-		    MAKELPARAM(1, pPif386->Hotkey |
-				((WORD) (pPif386->HotkeyBits & 1) << 8) |
-				0x0200
-				),
-		    szNumBuf,
-		    sizeof(szNumBuf)
-		    );
-	SetDlgItemText(hWnd, IDE_KEY, szNumBuf);
+//	GetKeyNameText(
+//		    MAKELPARAM(1, pPif386->Hotkey |
+//				((WORD) (pPif386->HotkeyBits & 1) << 8) |
+//				0x0200
+//				),
+//		    szNumBuf,
+//		    sizeof(szNumBuf)
+//		    );
+//	SetDlgItemText(hWnd, IDE_KEY, szNumBuf);
 
-    } else {
-	Globals.wHotkeyScancode = 0;
-	Globals.bHotkeyBits = 0;
+//    } else {
+//	Globals.wHotkeyScancode = 0;
+//	Globals.bHotkeyBits = 0;
 
-	CheckDlgButton(hWnd, IDB_ALT, 0);
-	CheckDlgButton(hWnd, IDB_CTRL, 0);
-	CheckDlgButton(hWnd, IDB_SHIFT, 0);
-	SetDlgItemText(hWnd, IDE_KEY, NONE_STR);
+//	CheckDlgButton(hWnd, IDB_ALT, 0);
+//	CheckDlgButton(hWnd, IDB_CTRL, 0);
+//	CheckDlgButton(hWnd, IDB_SHIFT, 0);
+//	SetDlgItemText(hWnd, IDE_KEY, NONE_STR);
 
-    }
+//    }
 
     return (0);
 }
@@ -2218,7 +2217,7 @@ int ControlsFromPIF(PPIF pPIF, HWND hWnd)
 
 /****************************************************************************
  *
- *  FUNCTION :	ControlToPIF(HWND)
+ *  FUNCTION :	ControlsToPIF(HWND)
  *
  *  PURPOSE  :	Extract the data from the dialog controls and fills the
  *		model .PIF structure
@@ -2244,11 +2243,11 @@ VOID ControlsToPIF(HWND hWnd)
     GetDlgItemText(hWnd, IDE_DIRECTORY, pPIF->pifHdr.StartupDir, sizeof(pPIF->pifHdr.StartupDir));
     GetDlgItemText(hWnd, IDE_PARAMS, pPIF->pif386.CmdLine3, sizeof(pPIF->pif386.CmdLine3));
 
-    if (IsDlgButtonChecked(hWnd, IDB_CLOSEEXIT)) {
-	pPIF->pifHdr.Flags1 |= 0x10;
-    } else {
-	pPIF->pifHdr.Flags1 &= ~0x10;
-    }
+	if (IsDlgButtonChecked(hWnd, IDB_CLOSEEXIT)) {
+		pPIF->pifHdr.Flags1 |= 0x10;
+	} else {
+		pPIF->pifHdr.Flags1 &= ~0x10;
+	}
 
     GetDlgItemText(hWnd, IDE_DOSMIN, szNumBuf, sizeof(szNumBuf));
     pPIF->pif386.DosMin = atoi(szNumBuf);
@@ -2268,24 +2267,24 @@ VOID ControlsToPIF(HWND hWnd)
     GetDlgItemText(hWnd, IDE_XMSMAX, szNumBuf, sizeof(szNumBuf));
     pPIF->pif386.XmsMax = atoi(szNumBuf);
 
-    GetDlgItemText(hWnd, IDE_FOREPRIO, szNumBuf, sizeof(szNumBuf));
-    pPIF->pif386.ForePrio = atoi(szNumBuf);
+    //GetDlgItemText(hWnd, IDE_FOREPRIO, szNumBuf, sizeof(szNumBuf));
+    //pPIF->pif386.ForePrio = atoi(szNumBuf);
 
-    GetDlgItemText(hWnd, IDE_BACKPRIO, szNumBuf, sizeof(szNumBuf));
-    pPIF->pif386.BackPrio = atoi(szNumBuf);
+    //GetDlgItemText(hWnd, IDE_BACKPRIO, szNumBuf, sizeof(szNumBuf));
+    //pPIF->pif386.BackPrio = atoi(szNumBuf);
 
     pPIF->pif386.TaskFlags &= ~0x0400;
-    pPIF->pif386.TaskFlags |= IsDlgButtonChecked(hWnd, IDB_DOSLOCK) ? 0x0400 : 0;
+    //pPIF->pif386.TaskFlags |= IsDlgButtonChecked(hWnd, IDB_DOSLOCK) ? 0x0400 : 0;
     pPIF->pif386.TaskFlags &= ~0x0080;
-    pPIF->pif386.TaskFlags |= IsDlgButtonChecked(hWnd, IDB_EMSLOCK) ? 0x0080 : 0;
+    //pPIF->pif386.TaskFlags |= IsDlgButtonChecked(hWnd, IDB_EMSLOCK) ? 0x0080 : 0;
     pPIF->pif386.TaskFlags &= ~0x0100;
-    pPIF->pif386.TaskFlags |= IsDlgButtonChecked(hWnd, IDB_XMSLOCK) ? 0x0100 : 0;
+    //pPIF->pif386.TaskFlags |= IsDlgButtonChecked(hWnd, IDB_XMSLOCK) ? 0x0100 : 0;
     pPIF->pif386.TaskFlags &= ~0x0010;
-    pPIF->pif386.TaskFlags |= IsDlgButtonChecked(hWnd, IDB_DETECTIDLE) ? 0x0010 :0;
+    //pPIF->pif386.TaskFlags |= IsDlgButtonChecked(hWnd, IDB_DETECTIDLE) ? 0x0010 :0;
     pPIF->pif386.TaskFlags &= ~0x0200;
     pPIF->pif386.TaskFlags |= IsDlgButtonChecked(hWnd, IDB_FASTPASTE) ? 0x0200 : 0;
     pPIF->pif386.TaskFlags |= 0x0020;
-    pPIF->pif386.TaskFlags &= ~(IsDlgButtonChecked(hWnd, IDB_XMSHMA) ? 0x0020 : 0);
+    //pPIF->pif386.TaskFlags &= ~(IsDlgButtonChecked(hWnd, IDB_XMSHMA) ? 0x0020 : 0);
 
     pPIF->pif386.WinFlags &= ~0x08;
     pPIF->pif386.WinFlags |= IsDlgButtonChecked(hWnd, IDB_FULLSCREEN) ? 0x08 : 0;

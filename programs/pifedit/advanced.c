@@ -32,115 +32,123 @@
 
 BOOL CALLBACK _export AdvancedMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	//char	szBuf[128];
-	//WINDOWPLACEMENT wndpl;
-
 	switch (msg) {
-//	case WM_ACTIVATEAPP:
-//	    Globals.fCheckOnKillFocus = (BOOL) wParam;
-//	    break;
-
-//	case WM_ACTIVATE:
-//	    Globals.fCheckOnKillFocus = (wParam != WA_INACTIVE);
-//	    break;
 
 	case WM_CLOSE:
-	    {
-//		if (IDCANCEL == CheckSave(hWnd)) break;
+		{
+			EndDialog(hWnd, IDCANCEL);
+		}
+		break;
 
-//		Globals.fCheckOnKillFocus = FALSE;	// Stop checking controls
 
-//		if (Globals.nActiveDlg) {	// A dialog is still open
-//		    SetFocus(hWnd);
-//
-//		    Globals.nActiveDlg = 0;
-//		}
+	case WM_INITDIALOG:
+		{
+			// Copy the data to the dialog controls from our .PIF model
+			char szNumBuf[32];
+			int 	n;
 
-		EndDialog(hWnd, IDCANCEL);
-//		Globals.nActiveDlg = 0;
-	    }
-	    break;
+			PPIFHDR	pPIFHDR = (PPIFHDR) &Globals.pifModel;
+			PPIFSIG	pPifSig = NULL;
+		//  PPIF286	pPif286 = NULL;
+			PPIF386	pPif386 = NULL;
 
-	//case WM_COMMAND:
-	    //Pane_OnCommand(hWnd, (UINT) wParam, (HWND) LOWORD(lParam), (WORD) HIWORD(lParam));
-	    //return (FALSE);
+			// Verify the checksum
+			if (pPIFHDR->CheckSum != 0 && pPIFHDR->CheckSum != ComputePIFChecksum(&Globals.pifModel)) 
+			{
+				char	szBuf[80];
 
-	#if 0
-	case WM_CTLCOLOR:
-	    {
-		HDC	hDC = (HDC) wParam;
-		HWND	hWndChild = (HWND) LOWORD(lParam);
+				LoadString(Globals.hInst, IDS_BADCHECKSUM, szBuf, sizeof(szBuf));
+				MessageBox(hWnd, szBuf, Globals.szAppTitle, MB_OK);
+			}
 
-		//if (GetDlgItem(hWnd, IDD_HELP) != hWndChild) return (NULL);
+			// Find the 386 Enhanced mode section
+			pPifSig = (PPIFSIG) (pPIFHDR + 1);
 
-		switch ((UINT) HIWORD(lParam)) {
-		    case CTLCOLOR_EDIT:
-			SetBkColor(hDC, GetSysColor(COLOR_BTNFACE));
-			return ((BOOL) (WORD) Globals.hbrHelp);
+			while ( ((n = lstrcmp(pPifSig->Signature, "WINDOWS 386 3.0")) != 0) &&
+				pPifSig->NextOff != 0xFFFF &&
+				pPifSig->NextOff > 0 &&
+				(PBYTE) pPifSig < (PBYTE) (&Globals.pifModel+1) ) {
 
-		    case CTLCOLOR_MSGBOX:
-			return ((BOOL) (WORD) Globals.hbrHelp);
+				pPifSig = (PPIFSIG) ((PBYTE) pPIFHDR + pPifSig->NextOff);
+
+			}
+
+			if (n) {	// No 386 Enhanced section -- use the defaults
+				char	szBuf[80];
+
+				LoadString(Globals.hInst, IDS_BADCHECKSUM, szBuf, sizeof(szBuf));
+				MessageBox(hWnd, szBuf, Globals.szAppTitle, MB_OK);
+				return (1);
+			}
+
+			pPif386 = (PPIF386) ((PBYTE) pPIFHDR + pPifSig->DataOff);
+
+			// Fill in the controls
+
+			CheckDlgButton(hWnd, IDB_DOSLOCK, (pPif386->TaskFlags & 0x0400) ? 1 : 0);
+			CheckDlgButton(hWnd, IDB_EMSLOCK, (pPif386->TaskFlags & 0x0080) ? 1 : 0);
+			CheckDlgButton(hWnd, IDB_XMSLOCK, (pPif386->TaskFlags & 0x0100) ? 1 : 0);
+			CheckDlgButton(hWnd, IDB_XMSHMA, (!(pPif386->TaskFlags & 0x0020)) ? 1 : 0);
+
+			wsprintf(szNumBuf,"%d",pPif386->ForePrio);
+			SetDlgItemText(hWnd, IDE_FOREPRIO, szNumBuf);
+
+			wsprintf(szNumBuf,"%d",pPif386->BackPrio);
+			SetDlgItemText(hWnd, IDE_BACKPRIO, szNumBuf);
+
+			CheckDlgButton(hWnd, IDB_DETECTIDLE, pPif386->TaskFlags & 0x0010 ? 1 : 0);
+
+
+			CheckDlgButton(hWnd, IDB_FASTPASTE,  pPif386->TaskFlags & 0x0200 ? 1 : 0);
+			CheckDlgButton(hWnd, IDB_ALLOWCLOSE, pPif386->WinFlags & 0x01 ? 1 : 0);
+
+			CheckDlgButton(hWnd, IDB_MONTEXT, (!(pPif386->VidFlags & 0x02)) ? 1 : 0);
+			CheckDlgButton(hWnd, IDB_MONLOW,  (!(pPif386->VidFlags & 0x04)) ? 1 : 0);
+			CheckDlgButton(hWnd, IDB_MONHIGH, (!(pPif386->VidFlags & 0x08)) ? 1 : 0);
+
+			CheckDlgButton(hWnd, IDB_EMULATE, pPif386->VidFlags & 0x01 ? 1 : 0);
+			CheckDlgButton(hWnd, IDB_RETAIN,  pPif386->VidFlags & 0x80 ? 1 : 0);
+
+			CheckDlgButton(hWnd, IDB_ALTENTER, pPif386->TaskFlags & 0x0001 ? 1 : 0);
+			CheckDlgButton(hWnd, IDB_ALTPRTSC, pPif386->TaskFlags & 0x0002 ? 1 : 0);
+			CheckDlgButton(hWnd, IDB_PRTSC, pPif386->TaskFlags & 0x0004 ? 1 : 0);
+			CheckDlgButton(hWnd, IDB_CTRLESC, pPif386->TaskFlags & 0x0008 ? 1 : 0);
+
+			CheckDlgButton(hWnd, IDB_ALTTAB, pPif386->WinFlags & 0x20 ? 1 : 0);
+			CheckDlgButton(hWnd, IDB_ALTESC, pPif386->WinFlags & 0x40 ? 1 : 0);
+			CheckDlgButton(hWnd, IDB_ALTSPACE, pPif386->WinFlags & 0x80 ? 1 : 0);
+
+			if (pPif386->TaskFlags & 0x0040) {	// User-definable hotkey
+				Globals.wHotkeyScancode = pPif386->Hotkey;
+				Globals.bHotkeyBits = pPif386->HotkeyBits;
+
+				CheckDlgButton(hWnd, IDB_ALT, pPif386->HotkeyShift & 0x08 ? 1 : 0);
+				CheckDlgButton(hWnd, IDB_CTRL, pPif386->HotkeyShift & 0x04 ? 1 : 0);
+				CheckDlgButton(hWnd, IDB_SHIFT, pPif386->HotkeyShift & 0x03 ? 1 : 0);
+
+				GetKeyNameText(
+					MAKELPARAM(1, pPif386->Hotkey |
+						((WORD) (pPif386->HotkeyBits & 1) << 8) |
+						0x0200
+						),
+					szNumBuf,
+					sizeof(szNumBuf)
+					);
+				SetDlgItemText(hWnd, IDE_KEY, szNumBuf);
+
+			} else {
+				Globals.wHotkeyScancode = 0;
+				Globals.bHotkeyBits = 0;
+
+				CheckDlgButton(hWnd, IDB_ALT, 0);
+				CheckDlgButton(hWnd, IDB_CTRL, 0);
+				CheckDlgButton(hWnd, IDB_SHIFT, 0);
+				SetDlgItemText(hWnd, IDE_KEY, NONE_STR);
+
+			}
+
 		}
 
-		return (NULL);
-	    }
-#endif
-	//case WM_QUERYENDSESSION:
-
-		//memset(&wndpl, 0, sizeof(WINDOWPLACEMENT));
-		//wndpl.length = sizeof(WINDOWPLACEMENT);
-		//GetWindowPlacement(hWnd, &wndpl);
-
-//		wsprintf( szBuf, "%d %d", wndpl.rcNormalPosition.left,
-			//wndpl.rcNormalPosition.top );
-
-		//WritePrivateProfileString( Globals.szAppName,	// Section name
-//			"Position", (LPSTR) &szBuf, PROFILE );
-
-		// this _should_ return 1, but Windows fails to close if it
-		//   does!!
-		//return 0;
-
-	//case WM_DESTROY:
-	    //{
-//		char	szBuf[128];
-		//WINDOWPLACEMENT wndpl;
-
-		//if (Globals.hbrHelp) { DeleteBrush(Globals.hbrHelp);  Globals.hbrHelp = NULL; }
-
-		//return (FALSE);
-	    //}
-
-	//case WM_SIZE:
-	    //if (wParam == SIZE_MINIMIZED) {
-			//SetWindowText(hWnd, APPNAME);
-	    //} else if (wParam == SIZE_MAXIMIZED || wParam == SIZE_RESTORED) {
-			//SetWindowText(hWnd, szWindowTitle);
-	    //}
-
-	    //return (FALSE);		// Requires default processing
-
-	//case WM_ERASEBKGND:
-	    //if (IsIconic(hWnd)) {
-		//return (TRUE);		// Pretend we erased it
-	    //} else {
-		//return (FALSE); 	// We didn't erase anything
-	    //}
-
-	//case WM_INITDIALOG:
-	    //return (Pane_OnInitDialog(hWnd, (HWND) wParam, lParam));
-
-	//case WM_PAINT:
-//		if (IsIconic(hWnd)) {
-			//Pane_OnPaint_Iconic(hWnd);
-		//} else {
-		//	Pane_OnPaint(hWnd);
-		//}
-	    //return (FALSE);
-
-	//case WM_SETFONT:
-	    //Pane_OnSetFont(hWnd, (HFONT) wParam, (BOOL) LOWORD(lParam));
-	    //return (FALSE);
 	}
 
 	return (FALSE);

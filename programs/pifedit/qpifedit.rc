@@ -7,7 +7,7 @@
 
 #include <windows.h>
 
-#include "qpifedit.h"
+#include "main.h"
 
 #include "qpifhelp.rc"
 
