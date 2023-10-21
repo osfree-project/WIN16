@@ -32,6 +32,9 @@
 
 #include <windows.h>
 #include <shellapi.h>
+
+/* About Dialog */
+#define IDD_SHELLABOUT                  100
  
 #define SAB_OKAY			IDOK
 #define SAB_ABOUT			1000
@@ -47,7 +50,29 @@
 #define SAB_HOST			1008
 #define SAB_TERM			1009
 
-#define IDD_SHELLABOUT                  4001
+/* String resourses */
+#define	IDS_WINDOWS		100
+#define	IDS_PROGRAMS		101
+#define	IDS_PROGRAMS_VALUE	102
+#define	IDS_EXTENSIONS		103
+#define	IDS_OPEN		104
+#define IDS_REGISTRY		208
+#define IDS_REALMODE		209
+#define IDS_REALMODELEMS	210
+#define IDS_REALMODESEMS	211
+#define IDS_STANDARDMODE	212
+#define IDS_ENHANCEDMODE	213
+#define	IDS_SYSTEMRESOURCES	215
+#define IDS_VERSION		216
+#define IDS_DEBUG		217
+#define IDS_FREE		218
+#define IDS_FREEEMS		219
+#define IDS_FREEP		220
+#define IDS_FILENOTFOUND	223
+#define IDS_FOUND		224
+#define IDS_NOTFOUND		225
+#define IDS_NOCOMMDLG		226
+#define IDS_REGCLOSE		227
 
 void lmemcpy(void FAR * s1, void FAR * s2, unsigned length);
 int lstrnicmp(char FAR *s1, const char FAR *s2, int n);
@@ -342,11 +367,6 @@ struct cursoricon_desc
 
 #pragma pack(pop)
 
-#define	IDS_WINDOWS		100
-#define	IDS_PROGRAMS		101
-#define	IDS_PROGRAMS_VALUE	102
-#define	IDS_EXTENSIONS		103
-#define	IDS_OPEN		104
 
 typedef struct keyKEYSTRUCT {
 	HKEY hParentKey;
@@ -389,6 +409,8 @@ extern BOOL fRegInitialized;
 extern KEYSTRUCT RootKey;
 
 /* REG.DAT structures */
+
+#define DATMAGIC "SHCC3.10"
 
 typedef struct tagDATHEADER {
 	char szSignature[8];	//0x0000  8 Byte  ASCII-Text: "SHCC3.10"
