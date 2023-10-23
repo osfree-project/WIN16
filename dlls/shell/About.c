@@ -11,7 +11,7 @@ void WINAPI ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText, HICO
 	LPSHELLABOUTDATA lpsad;
 	int     rc;
 	
-	lpProc= MakeProcInstance((FARPROC)AboutDlgProc, hInst);
+	lpProc= MakeProcInstance((FARPROC)AboutDlgProc, Globals.hInstance);
 
 	sad.lpszText    = (LPSTR)lpszAboutText;
 	sad.lpszCaption = (LPSTR)lpszCaption;
@@ -20,7 +20,7 @@ void WINAPI ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText, HICO
 	lpsad=&sad;
 
 	rc = DialogBoxParam(
-		hInst,
+		Globals.hInstance,
 		MAKEINTRESOURCE(IDD_SHELLABOUT),
 		hWnd,
 		lpProc,
@@ -40,7 +40,6 @@ BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 	char		dirname[256];
 	LPSTR		lpszTmp = NULL;
 	DWORD		version;
-	int			bpp;
 
 	switch(msg) {
 	case WM_INITDIALOG:
@@ -57,7 +56,7 @@ BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			sad->lpszCaption=lpszTmp;
 		} else {
 			GetWindowText(hDlg, buf, sizeof(buf));
-			sprintf(abouttext, buf, sad->lpszCaption);
+			wsprintf(abouttext, buf, sad->lpszCaption);
 		    	SetWindowText(hDlg, abouttext);
 		}
 
@@ -65,7 +64,7 @@ BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 		/*	Default first two lines			*/
 		/************************************************/
 		GetDlgItemText(hDlg, SAB_ABOUT, buf, sizeof(buf));
-		sprintf(abouttext, buf, sad->lpszCaption);
+		wsprintf(abouttext, buf, sad->lpszCaption);
 		SetDlgItemText(hDlg, SAB_ABOUT, abouttext);
 
 		SetDlgItemText(hDlg, SAB_TEXT, sad->lpszText);
@@ -79,26 +78,29 @@ BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 		SetDlgItemText(hDlg, SAB_USER, abouttext);
 
 		GetWindowsDirectory(dirname,256);
-		sprintf(abouttext,"Windows: %s",dirname);
+		wsprintf(abouttext,"Windows: %s",dirname);
 		SetDlgItemText(hDlg, SAB_WINDOW, abouttext);
 
 		GetSystemDirectory(dirname,256);
-		sprintf(abouttext,"System: %s",dirname);
+		wsprintf(abouttext,"System: %s",dirname);
 		SetDlgItemText(hDlg, SAB_SYSTEM, abouttext);
 
 		/************************************************/
 		/*	Host specific 2 lines			*/
 		/************************************************/
 		/* host system information */
-		sprintf ( abouttext, "Host: DOS");
+		wsprintf ( abouttext, "Host: DOS");
 		SetDlgItemText(hDlg, SAB_HOST, abouttext);
 
-		/* add the current mode... */
 		version = GetVersion();
-		sprintf(abouttext,"Version: Win16 %d.%d build %d) ",
-			LOBYTE(LOWORD(version)), HIBYTE(LOWORD(version)),
-			HIWORD(version)
-			);
+		LoadString(Globals.hInstance, IDS_VERSION, buf, sizeof(buf));
+		{
+			char szMajor[4];
+			char szMinor[4];
+			wsprintf(szMajor, "%d", LOBYTE(LOWORD(version)));
+			wsprintf(szMinor, "%d", HIBYTE(LOWORD(version)));
+			wsprintf(abouttext, buf, szMajor, szMinor);
+		}
 
 		SetDlgItemText(hDlg, SAB_VERSION, abouttext);
 

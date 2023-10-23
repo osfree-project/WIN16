@@ -67,8 +67,8 @@ BOOL WINAPI RegisterShellHook(HWND hWnd, UINT uAction)
     case RSH_REGISTER_PROGMAN:  /* register hWnd as a shell window */
         if( !SHELL_hHook )
         {
-		SHELL_lpProc= MakeProcInstance((FARPROC)ShellHookProc, hInst);
-            SHELL_hHook = SetWindowsHookEx( WH_SHELL, SHELL_lpProc, hInst, 0 );
+		SHELL_lpProc= MakeProcInstance((FARPROC)ShellHookProc, Globals.hInstance);
+            SHELL_hHook = SetWindowsHookEx( WH_SHELL, SHELL_lpProc, Globals.hInstance, 0 );
             if ( SHELL_hHook )
             {
                 uMsgWndCreated = RegisterWindowMessage( lpstrMsgWndCreated );

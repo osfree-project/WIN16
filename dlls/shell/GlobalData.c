@@ -1,5 +1,7 @@
 #include "Shell.h"
 
+GLOBALS Globals;
+
 char szWindows[20];
 char szPrograms[20];
 char szProgramsValue[20];

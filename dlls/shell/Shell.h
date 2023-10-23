@@ -33,16 +33,26 @@
 #include <windows.h>
 #include <shellapi.h>
 
+/* Global Data */
+typedef struct tagGLOBALS {
+	HINSTANCE	hInstance;
+	HGLOBAL		EntryTable;
+	HGLOBAL		StringTable;
+} GLOBALS;
+
+extern GLOBALS Globals;
+
 /* About Dialog */
 #define IDD_SHELLABOUT                  100
  
 #define SAB_OKAY			IDOK
 #define SAB_ABOUT			1000
-#define SAB_TEXT			1001
-#define SAB_ICON			1002
+
+#define SAB_ICON			111
+#define SAB_VERSION			112
+#define SAB_TEXT			115
 
 #define SAB_USER			1003
-#define SAB_VERSION			1005
 
 #define SAB_WINDOW			1006 
 #define SAB_SYSTEM			1007
@@ -175,7 +185,6 @@ typedef struct tagDROPFILESTRUCT {
 
 BOOL CALLBACK AboutDlgProc(HWND, UINT, WPARAM, LPARAM);
 
-static HINSTANCE hInst = 0;
 
 #define AnsiUpperChar(c) ((char)AnsiUpper((LPSTR)(unsigned char)(c)))
 

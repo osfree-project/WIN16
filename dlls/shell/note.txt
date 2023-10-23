@@ -1,10 +1,28 @@
 ===============================================================================
-reg.txt      osFree      Windows 3.x Registry Binary File Format    17-Oct-2023
+reg.txt      osFree      Windows 3.x SHELL.DLL                      17-Oct-2023
 ===============================================================================
 
 This document composed using WinReg.txt file found in Internet signed by B.D.
 and from Wine source of 1990th by Tor Sjoewall (sorry, don't know correct
 transletion to English). And some my research also added.
+
+Windows Registration Database
+=============================
+
++-tabent[0]-+
+| next rec. |---+			+----->	+tabent[key]-+
+| first sub |   |			|	| Usage cnt. |
+| name      |	|  +-->	+tabent[child]	|	| length     |
+| value     |	|  |	| next rec.  |	|	| text       |------->	+-------+
++-----------+	|  |	| name rec.  |--+	+------------+		| xxxxx |
+   +------------+  |	| value rec. |-------->	+------------+		+-------+
+   v		   |	+------------+		| Usage cnt. |
++-----------+	   |				| length     |
+| next rec. |	   |				| text       |------->	+-------+
+| first sub |------+				+------------+		| xxxxx |
+| name      |								+-------+
+| value     |
++-----------+	
 
 Windows Registry REG.DAT file consist of 3 parts:
 
@@ -49,10 +67,6 @@ struct _w31_dirent {
     unsigned short	value_idx;	/* table index of value valent */
 };
 
-
-
-
-
 The values are the locical number of the block inside the file:
 
 	offset=blocksize*blocknumber+headersize
@@ -68,36 +82,18 @@ mapped to ".classes". So, .classes is a root entry of registry.
 
 Hash function is very simple
 
-hash=sum(toupper(s))
+hashindex=sum(toupper(s)) % hashsize
 
 .classes has hash equal to 0x11. It is stored in tabent[0x11+0x1]
 
 0x1 here added because tabent[0x0] used as root of registry tree.
 
 
-simplyfied win-3.?? registry:
-=============================
+Adding value to Registry
+========================
 
-
-+-tabent[0]-+
-| next rec. |---+			+----->	+------------+
-| first sub |   |			|	| Usage cnt. |
-| name      |	|  +-->	+------------+	|	| length     |
-| value     |	|  |	| next rec.  |	|	| text       |------->	+-------+
-+-----------+	|  |	| name rec.  |--+	+------------+		| xxxxx |
-   +------------+  |	| value rec. |-------->	+------------+		+-------+
-   v		   |	+------------+		| Usage cnt. |
-+-----------+	   |				| length     |
-| next rec. |	   |				| text       |------->	+-------+
-| first sub |------+				+------------+		| xxxxx |
-| name      |								+-------+
-| value     |
-+-----------+	
-
-
-
-
-
+First of all, calculate hash of key. Check tabent[hash+1]. If it zero, then
+need to add new string to strings.
 
 
 /******************************************************************/
@@ -323,19 +319,27 @@ Initialization of REG.DAT
 =========================
 
 REG.DAT is initially created during DLL Initialization. Name of REG.DAT is taken from String reousrce 208.
-Initial content of REG.DAT taken from Resource id=100. If REG.DAT doesn't exists, then it created from
+Initial content of REG.DAT taken from Resource id=100(9999??). If REG.DAT doesn't exists, then it created from
 resource.
 
+Easter Eggs
+===========
+
+About dialog contains easter egg. It uses resources 9997 and 9998 for graphics part.
+It is animated Logo Flag and Bear, Gates and others.
 
 Resourses
 =========
 
-130   OS Logo               Bitmap 64x64 16 colors
-9997  OS Flag               Bitmap 129x33 16 colors
-9998  Easter Egg            (Gates, other and Bear) Bitmap 171x75 16 colors
-100   About Doalog          Standard About Dialog
-200   Exe Find Dialog       Dialog shown for associations if not exe found
-300   Exe Directory locatio Locate EXE dialog
+SHELL.DLL contains some resources, used mostly for About Dialog. Interesting thing is
+resource 9999 is a empty REG.DAT, used to create initial emoty Registry.
+
+130   OS Logo                Bitmap 64x64 16 colors
+9997  OS Flag                Bitmap 129x33 16 colors
+9998  Easter Egg             (Gates, other and Bear) Bitmap 171x75 16 colors
+100   About Doalog           Standard About Dialog
+200   Exe Find Dialog        Dialog shown for associations if not exe found
+300   Exe Directory location Locate EXE dialog
 208   REG.DAT
 209   Real Mode
 210   Real Mode (Large Frame EMS)
@@ -353,5 +357,7 @@ Resourses
 225   (not found)
 226   Cannot load COMMDLG.DLL
 227   \nSHELL.DLL: RegCloseKey called with no corresponding RegOpenKey
-9999  Empty REG.DAT
+9999  ????
+
+100 100   Empty REG.DAT
 1     Version Information Resources

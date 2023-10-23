@@ -117,9 +117,9 @@ static UINT SHELL_FindExecutable(LPCSTR lpPath, LPCSTR lpFile, LPCSTR lpVerb,
         /* See if it's a program - if GetProfileString fails, we skip this
          * section. Actually, if GetProfileString fails, we've probably
          * got a lot more to worry about than running a program... */
-	LoadString(hInst, IDS_WINDOWS, szWindows, sizeof(szWindows));
-	LoadString(hInst, IDS_PROGRAMS, szPrograms, sizeof(szPrograms));
-	LoadString(hInst, IDS_PROGRAMS_VALUE, szProgramsValue, sizeof(szProgramsValue));
+	LoadString(Globals.hInstance, IDS_WINDOWS, szWindows, sizeof(szWindows));
+	LoadString(Globals.hInstance, IDS_PROGRAMS, szPrograms, sizeof(szPrograms));
+	LoadString(Globals.hInstance, IDS_PROGRAMS_VALUE, szProgramsValue, sizeof(szProgramsValue));
 
         if (GetProfileString(szWindows, szPrograms, szProgramsValue, wBuffer, sizeof(wBuffer)) > 0)
         {
@@ -203,7 +203,7 @@ static UINT SHELL_FindExecutable(LPCSTR lpPath, LPCSTR lpFile, LPCSTR lpVerb,
 #endif
     {
 	/* Toss the leading dot */
-	LoadString(hInst, IDS_EXTENSIONS, szExtensions, sizeof(szExtensions));
+	LoadString(Globals.hInstance, IDS_EXTENSIONS, szExtensions, sizeof(szExtensions));
 	extension++;
 	if (GetProfileString(szExtensions, extension, "", command, sizeof(command)) > 0)
         {
@@ -278,7 +278,7 @@ HINSTANCE WINAPI FindExecutable(LPCSTR lpszFile, LPCSTR lpszDir, LPSTR lpResult)
         chdir(lpszDir);
     }
 
-	LoadString(hInst, IDS_OPEN, szOpen, sizeof(szOpen));
+	LoadString(Globals.hInstance, IDS_OPEN, szOpen, sizeof(szOpen));
     retval = SHELL_FindExecutable(lpszDir, lpszFile, szOpen, res, MAX_PATH);
 
     if (retval > 32)
