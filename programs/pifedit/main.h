@@ -1,9 +1,14 @@
+#include <ctype.h>		// For isdigit()
+#include <stdio.h>		// For sscanf()
+#include <string.h>		// For memset, memcmp, memcpy, strncpy, strchr
 #include <stdlib.h>		// For _MAX_DIR, _MAX_DRIVE, _MAX_FNAME, _MAX_EXT, _MAX_PATH, _fullpath, _splitpath, _makepath
 
+//#define STRICT		// Enable strict type checking
+#define NOCOMM			// Avoid inclusion of bulky COMM driver stuff
 #include <windows.h>
 #include <commdlg.h>
 
-#include <pif.h>		// .PIF structure
+#include "pif.h"		// .PIF structure
 
 /* Global variables */
 
@@ -57,8 +62,14 @@ typedef struct
 
 extern PIFEDIT_GLOBALS Globals;
 
+#ifndef DEBUG
+#define DebugPrintf
+#define MessageBoxPrintf
+#else
 VOID	FAR cdecl DebugPrintf(LPSTR szFormat, ...);
 VOID	FAR cdecl MessageBoxPrintf(LPSTR szFormat, ...);
+#endif
+
 
 VOID	ControlsToPIF(HWND hWnd);
 
@@ -106,7 +117,6 @@ BOOL	CALLBACK _export SMMsgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lP
 
 // Dialog and control resource IDs
 
-#define IDB_RUNPIF	119	// Run PIF to test settings
 #define IDD_HELP	120	// Help window
 #define IDD_FRAME	101	// Main frame dialog resource
 #define IDD_ADVFRAME	102	// Advanced frame dialog resource
@@ -256,3 +266,6 @@ int WINAPI ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText,
                 HICON hIcon);
 
 BYTE	ComputePIFChecksum(PPIF pPIF);	// Checksum the PIFHDR
+
+int MessageBoxString(HWND hWnd, HINSTANCE hInst, UINT uID, UINT uType);
+void FAR cdecl MessageBoxPrintf(LPSTR szFormat, ...);

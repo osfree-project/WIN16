@@ -1,15 +1,16 @@
 /************************  The Qualitas PIF Editor  ***************************
- *									      *
- *	     (C) Copyright 1992, 1993 Qualitas, Inc.  GNU General Public License version 3.    *
- *									      *
- *  MODULE   :	QPIFEDIT.C - Main source module for QPIFEDIT.EXE	      *
- *									      *
- *  HISTORY  :	Who	When		What				      *
- *		---	----		----				      *
- *		WRL	11 DEC 92	Original revision		      *
- *		WRL	11 MAR 93	Changes for TWT 		      *
- *		RCC	21 JUN 95	Added Ctl3d, tightened code a bit     *
- *									      *
+ *
+ *	(C) Copyright 1992, 1993 Qualitas, Inc.  GNU General Public License version 3.
+ *	(C) Copyright 2013 osFree
+ *
+ *  MODULE   :	ADVANCED.C - Advanced dialog box
+ *
+ *  HISTORY  :	Who	When		What
+ *		---	----		----
+ *		WRL	11 DEC 92	Original revision
+ *		WRL	11 MAR 93	Changes for TWT
+ *		RCC	21 JUN 95	Added Ctl3d, tightened code a bit
+ *
  ******************************************************************************/
 
 #include "main.h"
@@ -110,10 +111,7 @@ BOOL CALLBACK _export AdvancedMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 			// Verify the checksum
 			if (pPIFHDR->CheckSum != 0 && pPIFHDR->CheckSum != ComputePIFChecksum(&Globals.pifModel)) 
 			{
-				char	szBuf[80];
-
-				LoadString(Globals.hInst, IDS_BADCHECKSUM, szBuf, sizeof(szBuf));
-				MessageBox(hWnd, szBuf, Globals.szAppTitle, MB_OK);
+				MessageBoxString(hWnd, Globals.hInst, IDS_BADCHECKSUM, MB_OK);
 			}
 
 			// Find the 386 Enhanced mode section
@@ -129,10 +127,7 @@ BOOL CALLBACK _export AdvancedMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 			}
 
 			if (n) {	// No 386 Enhanced section -- use the defaults
-				char	szBuf[80];
-
-				LoadString(Globals.hInst, IDS_BADCHECKSUM, szBuf, sizeof(szBuf));
-				MessageBox(hWnd, szBuf, Globals.szAppTitle, MB_OK);
+				MessageBoxString(hWnd, Globals.hInst, IDS_BADCHECKSUM, MB_OK);
 				return (1);
 			}
 
@@ -204,6 +199,18 @@ BOOL CALLBACK _export AdvancedMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
 
 		}
 
+	case WM_COMMAND:
+		{
+			switch(wParam)
+			{
+				case IDOK:
+				case IDCANCEL:
+				{
+					EndDialog(hWnd, 0);
+					return TRUE;
+				}
+			}
+		}
 	}
 
 	return (FALSE);

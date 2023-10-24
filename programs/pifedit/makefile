@@ -7,13 +7,12 @@ PROJ  = pifedit1
 PROJ1 = pifedit
 TRGT = $(PROJ1).exe
 DESC = Windows PIF Editor
-srcfiles = $(p)qpifedit$(e) $(p)pif$(e) $(p)advanced$(e)
+srcfiles = $(p)pifedit$(e) $(p)pif$(e) $(p)advanced$(e) $(p)utils$(e)
 
 # defines additional options for C compiler
 ADD_COPT = -sg -DDEBUG=1
 ADD_LINKOPT = LIB commdlg.lib
 
-CLEAN_ADD = *.mbr
 HEAPSIZE = 18k
 STACKSIZE = 18k
 

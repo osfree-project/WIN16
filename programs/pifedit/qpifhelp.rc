@@ -13,24 +13,6 @@
  *									      *
  ******************************************************************************/
 
-/* TEST PIF BUTTON ************************************************************/
-
-IDB_RUNPIF	RCDATA	LOADONCALL MOVEABLE DISCARDABLE
-BEGIN
-#ifdef LANG_GR
-	"Sie starten hier eine neue DOS-Sitzung mit den aktuellen "
-	"Qualitas PIF-Editor Einstellungen.\r\n\r\n"
-	"Es ist nicht notwendig, die PIF-Datei (Program Information "
-	"File) vor dem Start der DOS-Sitzung zu speichern. "
-	"Die neuen Einstellungen sind für den Test der PIF-Datei sofort wirksam.\0"
-#else
-	"Begin a new DOS session using the current Qualitas PIF "
-	"editor settings.\r\n\r\n"
-	"Users do not need to save the Program Information File (PIF) "
-	"before starting the DOS session to use current PIF settings.  "
-	"This is useful for testing a new PIF.\0"
-#endif				/* IFDEF LANG_GR */
-END
 
 /*  GENERAL ******************************************************************/
 

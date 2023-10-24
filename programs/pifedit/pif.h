@@ -23,7 +23,7 @@ https://drdobbs.com/architecture-and-design/undocumented-corner/184409042
 #include <windows.h>
 #endif	/* #ifndef _INC_WINDOWS */
 
-typedef struct _PIFHDR {	// Windows 2.x section taken from TopView
+typedef struct tagPIFHDR {	// Windows 2.x section taken from TopView
     BYTE	Reserved0;	// 000: Reserved
     BYTE	CheckSum;	// 001: Checksum of bytes 002 thru 170
     char	Title[30];	// 002: Program title padded with blanks
@@ -86,7 +86,7 @@ typedef struct _PIFHDR {	// Windows 2.x section taken from TopView
 //CONFIG  SYS 4.0	Variable	Windows 95, 98
 //AUTOEXECBAT 4.0	Variable	Windows 95, 98
 
-typedef struct _PIFSIG {
+typedef struct tagPIFSIG {
 	char	Signature[16];	// 00: "MICROSOFT PIFEX", 0
 				// 00: "WINDOWS 286 3.0", 0
 				// 00: "WINDOWS 386 3.0", 0
@@ -98,7 +98,7 @@ typedef struct _PIFSIG {
 } PIFSIG, * PPIFSIG, FAR * LPPIFSIG;
 
 
-typedef struct _PIF286 {
+typedef struct tagPIF286 {
     WORD	XmsMax; 	// 00: XMS max
     WORD	XmsMin; 	// 02: XMS min
     BYTE	Flags1; 	// 04: Flags 1
@@ -114,7 +114,7 @@ typedef struct _PIF286 {
 				// 06:
 } PIF286, * PPIF286, FAR * LPPIF286;
 
-typedef struct _PIF386 {
+typedef struct tagPIF386 {
     WORD	DosMax; 	// 00: DOS max
     WORD	DosMin; 	// 02: DOS min
     WORD	ForePrio;	// 04: Foreground priority
@@ -202,7 +202,7 @@ typedef struct _PIF386 {
 				// 68:
 } PIF386, * PPIF386, FAR * LPPIF386;
 
-typedef struct _PIFVMM4 {
+typedef struct tagPIFVMM4 {
 	BYTE	unk1[88];		// 0000h 	88	00...0000h 	  	Unknown 	  	  	  	  	  	 
 	char	iconfile[80];	// 0058h 	80	PIFMGR.DLL 	  	Name of the file containing an icon 	  	  	  	95 	NT 	ANSI character set, long filename without quotes, can contain a complete path, is trailed by a null symbol.
 	WORD	iconnumber;		// 00A8h 	2	0000h 	  	Number of an icon 	  	  	  	95 	NT 	The first icon in a file has number 0.
@@ -277,16 +277,29 @@ typedef struct _PIFVMM4 {
 	WORD	unk19;			//01AAh 	2 	0001h 	  	Unknown 	  	  	  	95 	NT 	 
 } PIFVMM4, * PPIFVMM4, FAR * LPPIFVMM4;
 
+
+//WINDOWS NT  3.1	008Eh	Windows NT, 2000
+//WINDOWS NT  4.0	068Ch	Windows NT 4.0, 2000
+//CONFIG  SYS 4.0	Variable	Windows 95, 98
+//AUTOEXECBAT 4.0	Variable	Windows 95, 98
+
+
 // Hey!!! According docs extra block can be in any order!!!
 // But use less or more standard order.
-typedef struct _PIF {
+typedef struct tagPIF {
 	PIFHDR	pifHdr; 	// Old-style .PIF and header
 	PIFSIG	pifSigEX;	// "MICROSOFT PIFEX" signature
 	PIFSIG	pifSig286;	// "WINDOWS 286 3.0" signature
 	PIF286	pif286;		// Standard mode data
 	PIFSIG	pifSig386;	// "WINDOWS 386 3.0" signature
 	PIF386	pif386;		// Enhanced mode data
-//	PIFSIG	pifSigVMM3;	// "WINDOWS VMM 4.0" signature
+//	PIFSIG	pifSigVMM4;	// "WINDOWS VMM 4.0" signature
 //	PIFVMM4	pifVMM4; 	// Windows 95 mode data
+//	PIFSIG	pifSigCONFIG;	// Windows 95 CONFIG.SYS
+//	PIFSIG	pifSigAUTOEXEC;	// Windows 95 AUTOEXEC.BAT
+//	PIFSIG	pifSigNT31;	// "WINDOWS NT  3.1" signature
+//	PIFNT31	pifNT31;	// Windows NT 3.1 mode data
+//	PIFSIG	pifSigNT40;	// "WINDOWS NT  4.0" signature
+//	PIFNT40	pifNT40;	// Windows NT 4.0 mode data
 } PIF, * PPIF, FAR * LPPIF;
 
