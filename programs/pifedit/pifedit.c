@@ -26,7 +26,6 @@ VOID	Pane_OnPaint_Iconic(HWND hWnd);
 VOID	Pane_OnSetFont(HWND hWndCtl, HFONT hFont, BOOL fRedraw);
 
 
-VOID	SwitchPanes(HWND hWnd, int idNewDlg);
 VOID	InitHelpWindow(HWND hWnd);
 VOID	SetHelpText(HWND hWnd, UINT idString);
 
@@ -176,7 +175,6 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	lstrcpy(Globals.szWindowTitle, "");
 	Globals.fUntitled = TRUE;
 	Globals.fCheckOnKillFocus = TRUE;
-	//Globals.auDlgHeights = {160, 160};
 
 	LoadString(Globals.hInst, IDS_APPNAME, Globals.szAppName, sizeof(Globals.szAppName));
 	LoadString(Globals.hInst, IDS_APPTITLE, Globals.szAppTitle, sizeof(Globals.szAppTitle));
@@ -193,7 +191,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	}
 
 
-	if (! (GetWinFlags() & WF_PMODE)) { // Real mode
+	if (!(GetWinFlags() & WF_PMODE)) { // Real mode
 		MessageBoxString(0, Globals.hInst, IDS_REALMODE, MB_OK);
 		return (1);
 	}
@@ -1098,16 +1096,9 @@ VOID Pane_OnCommand(HWND hWnd, UINT id, HWND hWndCtl, WORD codeNotify)
 		break;
 	}
 
-	case IDB_ENHANCED:
+	//case IDB_ENHANCED:
 	case IDB_STANDARD:
-	    if ((UINT) Globals.nActiveDlg != id) {
-			ShowCursor(FALSE);		// Hide the mouse cursor
-			SwitchPanes(hWnd, id);
-			SetFocus(GetDlgItem(hWnd, (id % 10) * 100));
-			ShowCursor(TRUE);		// Show the mouse cursor
-	    } else {
-			SetFocus(GetDlgItem(hWnd, (id % 10) * 100));
-	    }
+		StandardMode(0);
 	    break;
 
 //	default:
@@ -1143,7 +1134,6 @@ BOOL Pane_OnInitDialog(HWND hWnd, HWND hWndFocus, LPARAM lParam)
 
     char	szBuf[128], szBuf2[128];
     int 	n;
-    //int 	left, top;
     RECT	rect;
 
     int 	cxScreen = GetSystemMetrics(SM_CXSCREEN);
@@ -1179,9 +1169,9 @@ BOOL Pane_OnInitDialog(HWND hWnd, HWND hWndFocus, LPARAM lParam)
 
     ShowWindow(hWnd, SW_SHOWNORMAL);
 
+#if 0
 // Grab the hWnd for each child control and stuff it in aControls
 // Enable all the GENERAL controls, and disable all others
-#if 1
     hdwp = BeginDeferWindowPos(64);
 
     for (n = 0; n < sizeof(aControls)/sizeof(CONTROL); n++) {
@@ -1205,7 +1195,9 @@ BOOL Pane_OnInitDialog(HWND hWnd, HWND hWndFocus, LPARAM lParam)
     }
 
     EndDeferWindowPos(hdwp);	// FIXME -- check return code
+#endif
 
+#if 0
     for (n = 0; n < sizeof(aControls)/sizeof(CONTROL); n++) {
 	if (aControls[n].Type == LASTCONTROL) continue;
 
@@ -1323,7 +1315,7 @@ VOID Pane_OnPaint(HWND hWnd)
 // Paint the help border
 
 // Prepare rect for help window including border and sunken frame
-    SetRect(&rect, 0, 0, 0, 160/*Globals.auDlgHeights[Globals.nActiveDlg - IDD_GENERAL]*/);
+    SetRect(&rect, 0, 0, 0, 160);
     MapDialogRect(hWnd, &rect);
     SetRect(&rect, 0, rect.bottom, Globals.cxDlg, Globals.cyDlg);
 
@@ -1427,133 +1419,6 @@ VOID Pane_OnSetFont(HWND hWndCtl, HFONT hFont, BOOL fRedraw)
 }
 
 
-/****************************************************************************
- *
- *  FUNCTION :	SwitchPanes(HWND, int)
- *
- *  PURPOSE  :	Switch dialog panes
- *		Hide the controls in the current dialog
- *		Unhide the control in the new dialog
- *		Invalidate the buttons
- *		Redraw the help window
- *
- *  ENTRY    :	HWND	hWnd;		// Parent window handle
- *		int	idNewDlg;	// Dialog pane resource ID
- *
- *  RETURNS  :	VOID
- *
- ****************************************************************************/
-
-VOID SwitchPanes(HWND hWnd, int idNewDlg)
-{
-    register int	n;
-    HWND	hWndBtn;
-    RECT	rect;
-    HDWP	hdwp;
-
-    int 	nLastDlg = Globals.nActiveDlg;
-
-    Globals.nActiveDlg = idNewDlg;
-
-    if (nLastDlg) {
-	hWndBtn = GetDlgItem(hWnd, nLastDlg);
-	GetClientRect(hWndBtn, &rect);
-	InvalidateRect(hWndBtn, &rect, TRUE);
-    }
-
-    hWndBtn = GetDlgItem(hWnd, Globals.nActiveDlg);
-    GetClientRect(hWndBtn, &rect);
-    InvalidateRect(hWndBtn, &rect, TRUE);
-
-// Disable all the previous panes's controls, and enable the new ones.
-
-// Blast a new character over the WindowText for any control with an
-// accelerator so the stupid code in USER will handle the checkboxes right.
-// Replace '&' with '#', and restore when done.
-
-    for (n = 0; n < sizeof(aControls)/sizeof(CONTROL); n++) {
-	if (aControls[n].Pane == Globals.nActiveDlg) {
-	    HWND	hWndCtl = aControls[n].hWnd;
-
-	    EnableWindow(hWndCtl, TRUE);
-
-	    if (aControls[n].Type == BUTTON ||
-		aControls[n].Type == LTEXT ||
-		aControls[n].Type == GROUP ||
-		aControls[n].Type == EDIT) {
-		char	szBuf[128];
-		PSTR	p;
-
-		GetWindowText(hWndCtl, szBuf, sizeof(szBuf));
-
-		p = strchr(szBuf, '#');
-		if (p) {
-		    *p = '&';
-		    SetWindowText(hWndCtl, szBuf);
-		}
-	    }
-	}
-    }
-
-    hdwp = BeginDeferWindowPos(48);
-
-    for (n = 0; n < sizeof(aControls)/sizeof(CONTROL); n++) {
-	if (aControls[n].Pane == nLastDlg) {
-	    hdwp = DeferWindowPos(
-			hdwp,
-			aControls[n].hWnd,
-			0,
-			0, 0, 0, 0,
-			SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_HIDEWINDOW
-			);
-	}
-    }
-
-    for (n = 0; n < sizeof(aControls)/sizeof(CONTROL); n++) {
-	if (aControls[n].Pane == Globals.nActiveDlg) {
-	    hdwp = DeferWindowPos(
-			hdwp,
-			aControls[n].hWnd,
-			0,
-			0, 0, 0, 0,
-			SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW
-			);
-
-	}
-    }
-
-    EndDeferWindowPos(hdwp);	// FIXME -- check return code
-				// Use MoveWindow() if it failed
-
-    for (n = 0; n < sizeof(aControls)/sizeof(CONTROL); n++) {
-	if (aControls[n].Pane == nLastDlg) {
-	    HWND	hWndCtl = aControls[n].hWnd;
-
-	    if (aControls[n].Type == BUTTON ||
-		aControls[n].Type == LTEXT ||
-		aControls[n].Type == GROUP ||
-		aControls[n].Type == EDIT) {
-		char	szBuf[128];
-		PSTR	p;
-
-		GetWindowText(hWndCtl, szBuf, sizeof(szBuf));
-
-		p = strchr(szBuf, '&');
-		if (p) {
-		    *p = '#';
-		    SetWindowText(hWndCtl, szBuf);
-		}
-	    }
-
-	    EnableWindow(hWndCtl, FALSE);
-	}
-    }
-
-    InitHelpWindow(hWnd);
-
-    InvalidateRect(hWnd, NULL, TRUE);
-}
-
 
 #define HELPSLOP	4
 
@@ -1576,7 +1441,7 @@ VOID InitHelpWindow(HWND hWnd)
     HWND	hWndHelp = GetDlgItem(hWnd, IDD_HELP);
 
 // Prepare rect for help window including border and sunken frame
-    SetRect(&rect, 0, 0, 0, 160/*Globals.auDlgHeights[Globals.nActiveDlg - IDD_GENERAL]*/);
+    SetRect(&rect, 0, 0, 0, 160);
     MapDialogRect(hWnd, &rect);
     SetRect(&rect, 0, rect.bottom, Globals.cxDlg, Globals.cyDlg);
 
@@ -1649,13 +1514,6 @@ VOID SetHelpText(HWND hWnd, UINT idHelp)
 
 					if (psz) {
 						lstrcpy(psz, lpsz);
-	#if 0
-	{
-		char szBuf[8200];
-		sprintf(szBuf, "%d %s", hGblRsrc, psz);
-		MessageBox(0, psz, szBuf, MB_OK);
-	}
-	#endif
 						LocalUnlock(hNew);
 
 						hOld = (HLOCAL) SendMessage(hWndHelp,
@@ -2189,67 +2047,6 @@ VOID ControlsToPIF(HWND hWnd)
 
 /****************************************************************************
  *
- *  FUNCTION :	StandardModeBitchBox(HWND)
- *
- *  PURPOSE  :	Puts up a dialog box to warn about Standard mode
- *
- *  ENTRY    :	HWND	hWnd;		// Parent window handle
- *
- *  RETURNS  :	VOID
- *
- ****************************************************************************/
-
-VOID StandardModeBitchBox(HWND hWnd)
-{
-    FARPROC	lpfnSMMsgProc;
-
-    MessageBeep(MB_ICONEXCLAMATION);
-
-    lpfnSMMsgProc = MakeProcInstance((FARPROC) SMMsgProc, Globals.hInst);
-
-    DialogBox(Globals.hInst, MAKEINTRESOURCE(IDD_STANDARD), hWnd, (DLGPROC) lpfnSMMsgProc);
-
-    FreeProcInstance(lpfnSMMsgProc);
-}
-
-
-/****************************************************************************
- *
- *  FUNCTION :	SMMsgProc(HWND, UINT, WPARAM, LPARAM)
- *
- *  PURPOSE  :	Message proc for the Standard mode bitch dialog box
- *
- *  ENTRY    :	HWND	hWnd;		// Window handle
- *		UINT	msg;		// WM_xxx message
- *		WPARAM	wParam; 	// Message 16-bit parameter
- *		LPARAM	lParam; 	// Message 32-bit parameter
- *
- *  RETURNS  :	FALSE	- Message has been processed
- *		TRUE	- DefDlgProc() processing required
- *
- ****************************************************************************/
-
-BOOL CALLBACK _export SMMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    switch (msg) {
-	case WM_COMMAND:
-	    switch (wParam) {	// id
-		case IDOK:
-		case IDCANCEL:
-		    EndDialog(hWnd, TRUE);
-	    }
-	    return (0);
-
-	case WM_INITDIALOG:
-	    return (TRUE);
-    }
-
-    return (FALSE);
-}
-
-
-/****************************************************************************
- *
  *  FUNCTION :	ValidateHotKey(BOOL fComplain)
  *
  *  PURPOSE  :	Validate the shortcut hotkey
@@ -2300,41 +2097,8 @@ HOTKEY_IS_BAD:
 }
 
 
-// make a file name from a directory name by appending '\' (if necessary)
-//   and then appending the filename
-void MakePathName(register char *dname, char *pszFileName)
-{
-	register int length;
-
-	length = lstrlen( dname );
-
-	if ((*dname) && (strchr( "/\\:", dname[length-1] ) == NULL ))
-		lstrcat( dname, "\\" );
-
-	lstrcat( dname, pszFileName );
-}
 
 
-#ifdef DEBUG
-void FAR cdecl DebugPrintf(LPSTR szFormat, ...)
-{
-    char ach[256];
-    int  s,d;
-
-    if (!GetSystemMetrics(SM_DEBUG)) return;
-
-    s = wvsprintf(ach, szFormat, (LPSTR) (&szFormat + 1));
-
-    for (d = sizeof(ach) - 1; s >= 0; s--) {
-	if ((ach[d--] = ach[s]) == '\n')
-	    ach[d--] = '\r';
-    }
-
-    OutputDebugString(ach+d+1);
-}
-
-
-#endif	/* #ifdef DEBUG */
 
 /* End of QPIFEDIT.C */
 

@@ -98,7 +98,8 @@ VOID	StandardModeBitchBox(HWND hWnd);
 
 BOOL	CALLBACK _export SMMsgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 
-#define IDD_STANDARD	107		// Standard mode bitch dialog
+#define IDD_STANDARDBITCH	107		// Standard mode bitch dialog
+#define IDD_STANDARD	108		// Standard mode
 
 #define IDI_QIF 	100		// App's icon
 
@@ -202,6 +203,16 @@ BOOL	CALLBACK _export SMMsgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lP
 #define IDB_ALLOWCLOSE		616
 #define IDB_CLOSEEXIT		617
 
+#define IDT_DIRECTACCESS	700
+#define IDB_COM1	701
+#define IDB_COM2	702
+#define IDB_COM3	703
+#define IDB_COM4	704
+#define IDB_KEYBOARD	705
+#define IDB_GRAPHICS	706
+#define IDB_NOSCREENSWITCH 707
+#define IDB_NOSWITCH 708
+#define IDB_NOSAVESCREEN 709
 
 /****************************************************************************
 *									    *
@@ -269,3 +280,4 @@ BYTE	ComputePIFChecksum(PPIF pPIF);	// Checksum the PIFHDR
 
 int MessageBoxString(HWND hWnd, HINSTANCE hInst, UINT uID, UINT uType);
 void FAR cdecl MessageBoxPrintf(LPSTR szFormat, ...);
+VOID StandardMode(HWND hWnd);

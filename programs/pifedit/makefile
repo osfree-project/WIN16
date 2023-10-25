@@ -7,7 +7,7 @@ PROJ  = pifedit1
 PROJ1 = pifedit
 TRGT = $(PROJ1).exe
 DESC = Windows PIF Editor
-srcfiles = $(p)pifedit$(e) $(p)pif$(e) $(p)advanced$(e) $(p)utils$(e)
+srcfiles = $(p)pifedit$(e) $(p)pif$(e) $(p)standard$(e) $(p)advanced$(e) $(p)utils$(e)
 
 # defines additional options for C compiler
 ADD_COPT = -sg -DDEBUG=1
