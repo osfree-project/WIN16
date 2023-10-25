@@ -16,3 +16,6 @@
 [submodule "programs/winver"]
 	path = programs/winver
 	url = https://github.com/osfree-project/winver
+[submodule "programs/pifedit"]
+	path = programs/pifedit
+	url = https://github.com/osfree-project/pifedit
