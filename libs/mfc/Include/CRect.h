@@ -26,11 +26,13 @@ mm-dd-yy  ver   who  what
 #ifndef CRECT_H
 #define CRECT_H
 
-#include <windef.h>
+#include <windows.h>
 
 class CSize;
 class CPoint;
 class CRect;
+
+typedef const RECT FAR* LPCRECT;       // far pointer to read/only RECT
 
 class CRect : public tagRECT
 {

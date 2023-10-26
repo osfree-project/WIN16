@@ -74,8 +74,9 @@ mm-dd-yy  who  ver   What
   Copyright (c) 2000 Carsten Breuer
 /************************************************************************/
 #include <afxwin.h>
-#include <string.h>
-#include <ctype.h>
+#include <stdlib>
+#include <cstring>
+#include <ctype>
 
 #ifdef _DEBUG
 void dbg_printf(LPCSTR pszForm,...);

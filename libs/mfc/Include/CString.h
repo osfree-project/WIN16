@@ -49,7 +49,11 @@ mm-dd-yy  ver   who  what
 #define afxEmptyString AfxGetEmpyString()
 
 //This string functions could change depending on the compiler
+#ifndef MSVC32
+#define AfxStrCompare(a, b) a.Compare(b)
+#else
 #define AfxStrCompare(a, b) strcmp( (a), (b) )
+#endif
 #ifndef MSVC32
 #define AfxStrICompare(a, b) strcasecmp( (a), (b) )
 #else
@@ -64,8 +68,8 @@ class CMemoryException;
 
 typedef char TCHAR;
 typedef const wchar_t* LPCWSTR;
-typedef const char* LPCSTR;
-typedef char* LPSTR;
+//typedef const char* LPCSTR;
+//typedef char* LPSTR;
 typedef LPCSTR LPCTSTR;
 typedef LPSTR LPTSTR;
 
@@ -83,6 +87,8 @@ struct CStringData
     long IncRef() { if (!IsEmpty()) return nRefs++; else return nRefs; }; //ofc enhancement
     long DecRef() { if (!IsEmpty()) return nRefs--; else return nRefs; }; //ofc enhancement
 };
+
+typedef char FAR * BSTR;
 
 class CString
 {

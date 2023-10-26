@@ -25,7 +25,7 @@ mm-dd-yy  ver   who  what
 #ifndef CPOINT_H
 #define CPOINT_H
 
-#include <windef.h>
+#include <windows.h>
 
 class CSize;
 class CRect;

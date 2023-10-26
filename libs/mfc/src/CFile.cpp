@@ -52,7 +52,7 @@ mm-dd-yy  who   ver   what
   Copyright (c) 2003 William D. Herndon
 /************************************************************************/
 
-#include <string.h>
+//#include <string>
 #include <errno.h>
 #include <afxwin.h>
 
@@ -118,15 +118,15 @@ BOOL CFile::Open(
 	char szFlags[10];
 	if ((nOpenFlags & modeReadWrite) != 0) {
 		if ((nOpenFlags & modeCreate) != 0)
-			strcpy(szFlags, "w+");
+			lstrcpy(szFlags, "w+");
 		else
-			strcpy(szFlags, "r+");
+			lstrcpy(szFlags, "r+");
 	} else if ((nOpenFlags & modeWrite) != 0)
-		strcpy(szFlags, "w");
+		lstrcpy(szFlags, "w");
 	else
-		strcpy(szFlags, "r");
+		lstrcpy(szFlags, "r");
 	// Make it binary - compatible and fewer problems with pointers.
-	strcat(szFlags, "b");
+	lstrcat(szFlags, "b");
 	m_pFile = fopen(pszFileName, szFlags);
 	if (m_pFile != NULL)
 		return( TRUE );
@@ -211,7 +211,7 @@ void CFile::SeekToBegin()
 	Seek(0, CFile::begin);
 }
 
-ULONG CFile::SeekToEnd()
+DWORD CFile::SeekToEnd()
 {
 	return( Seek(0, CFile::end) );
 }

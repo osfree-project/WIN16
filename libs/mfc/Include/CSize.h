@@ -26,7 +26,7 @@ mm-dd-yy  ver   who  what
 #ifndef CSIZE_H
 #define CSIZE_H
 
-#include <windef.h>
+#include <windows.h>
 #include <CPoint.h>
 
 class CPoint;

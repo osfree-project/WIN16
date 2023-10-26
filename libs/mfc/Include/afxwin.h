@@ -56,7 +56,7 @@ mm-dd-yy  ver   who  what
 #ifndef __AFXWIN_H__
 #define __AFXWIN_H__
 
-#include <string.h>
+
 #include <windows.h> // Standard Windows includes from CygWin or MS
 
 #include <ofcglobals.h>
