@@ -35,8 +35,8 @@ mm-dd-yy  ver   who  what
 
 //So we can change the alloc-free functions
 #ifndef mem_alloc
-#define mem_alloc(size) malloc(size)
-#define mem_free(obj) free(obj)
+#define mem_alloc(size) std::malloc(size)
+#define mem_free(obj) std::free(obj)
 #else
 #ifndef mem_free
 #error "You must redefine mem_free if you had redefined mem_alloc"
@@ -52,17 +52,17 @@ mm-dd-yy  ver   who  what
 #ifndef MSVC32
 #define AfxStrCompare(a, b) a.Compare(b)
 #else
-#define AfxStrCompare(a, b) strcmp( (a), (b) )
+#define AfxStrCompare(a, b) _fstrcmp( (a), (b) )
 #endif
 #ifndef MSVC32
 #define AfxStrICompare(a, b) strcasecmp( (a), (b) )
 #else
 #define AfxStrICompare(a, b) stricmp( (a), (b) )
 #endif
-#define AfxStrNCompare(a, b, n) strncmp( (a), (b), (n) )
-#define AfxStrStr(a, b) strstr( (a), (b) )
-#define AfxStrLen(a) strlen( (a) )
-#define AfxStrChr(a, b) strchr((a), (b))
+#define AfxStrNCompare(a, b, n) _fstrncmp( (a), (b), (n) )
+#define AfxStrStr(a, b) _fstrstr( (a), (b) )
+#define AfxStrLen(a) lstrlen( (a) )
+#define AfxStrChr(a, b) _fstrchr((a), (b))
 
 class CMemoryException;
 

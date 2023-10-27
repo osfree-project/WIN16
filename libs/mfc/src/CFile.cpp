@@ -54,6 +54,7 @@ mm-dd-yy  who   ver   what
 
 //#include <string>
 #include <errno.h>
+#include <cstdlib>
 #include <afxwin.h>
 
 
@@ -116,6 +117,7 @@ BOOL CFile::Open(
 	CFileException* pError
 ) {
 	char szFlags[10];
+	char szFilename[_MAX_PATH];
 	if ((nOpenFlags & modeReadWrite) != 0) {
 		if ((nOpenFlags & modeCreate) != 0)
 			lstrcpy(szFlags, "w+");
@@ -127,7 +129,8 @@ BOOL CFile::Open(
 		lstrcpy(szFlags, "r");
 	// Make it binary - compatible and fewer problems with pointers.
 	lstrcat(szFlags, "b");
-	m_pFile = fopen(pszFileName, szFlags);
+	lstrcpy(szFilename, pszFileName);
+	m_pFile = fopen(szFilename, szFlags);
 	if (m_pFile != NULL)
 		return( TRUE );
 	if (((int)pError) != 0/*NULL*/) {

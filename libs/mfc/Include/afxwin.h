@@ -59,6 +59,9 @@ mm-dd-yy  ver   who  what
 
 #include <windows.h> // Standard Windows includes from CygWin or MS
 
+
+
+
 #include <ofcglobals.h>
 #include <CPoint.h>
 #include <CSize.h>

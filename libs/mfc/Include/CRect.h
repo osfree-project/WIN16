@@ -53,8 +53,8 @@ class CRect : public tagRECT
    BOOL    IsRectEmpty ();
    BOOL    IsRectNull  ();
    BOOL    PtInRect    (POINT Pt);
-   BOOL    RectInRect  (CRect& Rect);       // This is a OFC enhancement
-   BOOL    RectInRect  (const RECT* pRect); // This is a OFC enhancement
+   //BOOL    RectInRect  (CRect& Rect);       // This is a OFC enhancement
+   //BOOL    RectInRect  (const RECT* pRect); // This is a OFC enhancement
    void    SetRect     (int left, int top, int right, int bottom);
    void    SetRect     (const RECT* pRect); // This is a OFC enhancement
    void    SetRectEmpty(void);
