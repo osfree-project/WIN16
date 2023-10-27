@@ -83,20 +83,11 @@ void dbg_printf(LPCSTR pszForm,...);
 #endif
 
 // @todo quick hack. For some strange reason watcom doesn't see this functions
-//_WCIRTLINK extern void    *memcpy( void *__s1, const void *__s2, size_t __n );
-//_WCRTLINK  extern void    *memmove( void *__s1, const void *__s2, size_t __n );
-//_WCIRTLINK extern char    *strchr( const char *__s, int __c );
-//_WCIRTLINK extern char    *strcpy( char *__s1, const char *__s2 );
-//_WCIRTLINK extern size_t  strlen( const char *__s );
-//_WCRTLINK  extern char    *strstr( const char *__s1, const char *__s2 );
 #if !defined(_fmemcpy) || !defined(_INC_WINDOWSX)
 _WCIRTLINK extern void _WCFAR *_fmemcpy( void _WCFAR *__s1, const void _WCFAR *__s2, _w_size_t __n );
 #endif
 #if !defined(_fmemset) || !defined(_INC_WINDOWSX)
 _WCIRTLINK extern void _WCFAR *_fmemset( void _WCFAR *__s, int __c, _w_size_t __n );
-#endif
-#if !defined(_fstricmp) || !defined(_INC_WINDOWSX)
-_WCRTLINK extern int _fstricmp( const char _WCFAR *__s1, const char _WCFAR *__s2 );
 #endif
 #if !defined(_fstrchr) || !defined(_INC_WINDOWSX)
 _WCRTLINK extern char _WCFAR *_fstrchr( const char _WCFAR *__s, int __c );
@@ -490,7 +481,7 @@ int CString::Compare( LPCTSTR pstr ) const
 
 int CString::CompareNoCase( LPCTSTR pstr ) const
 {
-    return _fstricmp( m_pchData, pstr );//AfxStrICompare( m_pchData, pstr );
+    return lstrcmpi( m_pchData, pstr );//AfxStrICompare( m_pchData, pstr );
 }
 
 int CString::Collate( LPCTSTR pstr ) const
@@ -506,7 +497,7 @@ int CString::CollateNoCase( LPCTSTR pstr ) const
 //#ifndef MSVC32
     //return( stricoll(m_pchData, pstr) );
 //#else
-    return( _fstricmp(m_pchData, pstr) );
+    return( lstrcmpi(m_pchData, pstr) );
 //#endif
 }
 

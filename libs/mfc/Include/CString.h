@@ -49,16 +49,16 @@ mm-dd-yy  ver   who  what
 #define afxEmptyString AfxGetEmpyString()
 
 //This string functions could change depending on the compiler
-#ifndef MSVC32
-#define AfxStrCompare(a, b) a.Compare(b)
-#else
-#define AfxStrCompare(a, b) _fstrcmp( (a), (b) )
-#endif
-#ifndef MSVC32
-#define AfxStrICompare(a, b) strcasecmp( (a), (b) )
-#else
-#define AfxStrICompare(a, b) stricmp( (a), (b) )
-#endif
+//#ifndef MSVC32
+//#define AfxStrCompare(a, b) a.Compare(b)
+//#else
+#define AfxStrCompare(a, b) lstrcmp( (a), (b) )
+//#endif
+//#ifndef MSVC32
+//#define AfxStrICompare(a, b) strcasecmp( (a), (b) )
+//#else
+#define AfxStrICompare(a, b) lstrcmpi( (a), (b) )
+//#endif
 #define AfxStrNCompare(a, b, n) _fstrncmp( (a), (b), (n) )
 #define AfxStrStr(a, b) _fstrstr( (a), (b) )
 #define AfxStrLen(a) lstrlen( (a) )

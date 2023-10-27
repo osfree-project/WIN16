@@ -137,6 +137,28 @@ BOOL CWinApp::ProcessShellCommand(CCommandLineInfo& rCmdInfo)
 	return( TRUE );
 }
 
+	//https://learn.microsoft.com/en-us/cpp/mfc/reference/cwinapp-class?view=msvc-170#domessagebox
+int CWinApp::DoMessageBox(LPCSTR lpszPrompt, UINT nType, UINT nIDPrompt)
+{
+	if ((nType & MB_ICONMASK)==0)
+	{
+		switch (nType & MB_TYPEMASK)
+		{
+		case MB_OK:
+		case MB_OKCANCEL:
+			nType|=MB_ICONEXCLAMATION;
+			break;
+
+		case MB_YESNO:
+		case MB_YESNOCANCEL:
+			nType|=MB_ICONQUESTION;
+			break;
+		}
+	}
+
+	return ::MessageBox(0, lpszPrompt, NULL, nType);
+}
+
 int WINAPI WinMain(
     HINSTANCE hThisInstance,
     HINSTANCE hPrevInstance,
@@ -159,10 +181,14 @@ int WINAPI WinMain(
 
 int AfxMessageBox(LPCSTR lpszText, UINT nType, UINT nIDHelp)
 {
-	return 0;
+	return AfxGetApp()->DoMessageBox(lpszText, nType, nIDHelp);
 }
 
 int AfxMessageBox(UINT nIDPrompt, UINT nType, UINT nIDHelp)
 {
-	return 0;
+	CString str;
+	
+	str.LoadString(nIDPrompt);
+	if (nIDHelp==(UINT)-1) nIDHelp=nIDPrompt;
+	return AfxGetApp()->DoMessageBox(str, nType, nIDHelp);
 }
