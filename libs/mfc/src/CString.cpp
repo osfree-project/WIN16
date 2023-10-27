@@ -82,16 +82,39 @@ mm-dd-yy  who  ver   What
 void dbg_printf(LPCSTR pszForm,...);
 #endif
 
+
+// Helper string functions (far version)
+void FAR * lmemset (void FAR * dest, int val, int len)
+{
+  char FAR *ptr = (char FAR *)dest;
+  while (len-- > 0)
+    *ptr++ = val;
+  return dest;
+}
+
+void lmemcpy(LPCSTR s1, LPCSTR s2, unsigned length)
+{	char FAR * p;
+	char FAR * q;
+
+	if(length) {
+		p = (LPSTR)s1;
+		q = (LPSTR)s2;
+		do *p++ = *q++;
+		while(--length);
+	}
+}
+
+char FAR *lstrchr(const char FAR *s, int c)
+{
+	const char ch = c;
+
+	for ( ; *s != ch; s++)
+		if (*s == '\0')
+			return 0;
+	return (char FAR *)s;
+}
+
 // @todo quick hack. For some strange reason watcom doesn't see this functions
-#if !defined(_fmemcpy) || !defined(_INC_WINDOWSX)
-_WCIRTLINK extern void _WCFAR *_fmemcpy( void _WCFAR *__s1, const void _WCFAR *__s2, _w_size_t __n );
-#endif
-#if !defined(_fmemset) || !defined(_INC_WINDOWSX)
-_WCIRTLINK extern void _WCFAR *_fmemset( void _WCFAR *__s, int __c, _w_size_t __n );
-#endif
-#if !defined(_fstrchr) || !defined(_INC_WINDOWSX)
-_WCRTLINK extern char _WCFAR *_fstrchr( const char _WCFAR *__s, int __c );
-#endif
 #if !defined(_fmemmove) || !defined(_INC_WINDOWSX)
 _WCRTLINK extern void _WCFAR *_fmemmove( void _WCFAR *__s1, const void _WCFAR *__s2, _w_size_t __n );
 #endif
@@ -136,7 +159,7 @@ void CString::AllocCopy(CString& str, int nLen1, int nIndex, int nLen2) const
         str.Init();
     else {
         str.AllocBuffer(nLen);
-		_fmemcpy(str.m_pchData, m_pchData + nIndex, nLen*sizeof(TCHAR));
+		lmemcpy(str.m_pchData, m_pchData + nIndex, nLen*sizeof(TCHAR));
     }
 }
 
@@ -161,7 +184,7 @@ void CString::SetData(int nLen, LPCTSTR pstr)
     //The buffer must be sufficiently large to allow the data
     ASSERT( pData->nAllocLength >= nLen );
 
-    _fmemcpy( m_pchData, pstr, nLen*sizeof(TCHAR) );
+    lmemcpy( m_pchData, pstr, nLen*sizeof(TCHAR) );
     pData->nDataLength = nLen;
     m_pchData[nLen] = 0;
 }
@@ -195,14 +218,14 @@ void CString::ConcatInPlace(int nLen, LPCTSTR pstr)
         if ( pData->nAllocLength < nNewLen )
         {
             AllocBuffer( nNewLen );
-            _fmemcpy( m_pchData, pData->data(), pData->nDataLength * sizeof(TCHAR) );
-            _fmemcpy( m_pchData + pData->nDataLength, pstr, nLen * sizeof(TCHAR) );
+            lmemcpy( m_pchData, pData->data(), pData->nDataLength * sizeof(TCHAR) );
+            lmemcpy( m_pchData + pData->nDataLength, pstr, nLen * sizeof(TCHAR) );
             CString::Release( pData );
         }
         else //The buffer is sufficiently big to fit the data
         {
 //            CopyBeforeWrite();
-            _fmemcpy( m_pchData + pData->nDataLength, pstr, nLen * sizeof(TCHAR) );
+            lmemcpy( m_pchData + pData->nDataLength, pstr, nLen * sizeof(TCHAR) );
             pData->nDataLength = nNewLen;
         }
         m_pchData[nNewLen] = 0;
@@ -471,7 +494,7 @@ void CString::SetAt( int nIndex, TCHAR ch )
 void CString::Fill( TCHAR ch, int nCount )
 {   ASSERT( nCount > 0 );
     AllocBeforeWrite( nCount );
-    _fmemset( m_pchData, ch, nCount * sizeof(TCHAR) );
+    lmemset( m_pchData, ch, nCount * sizeof(TCHAR) );
 }
 
 int CString::Compare( LPCTSTR pstr ) const
@@ -565,7 +588,7 @@ CString CString::SpanIncluding( LPCTSTR pstr ) const
 {   CString str;
     CStringData* pData = GetData();
 
-    for (int i=0; _fstrchr/*AfxStrChr*/(pstr, m_pchData[i]); i++)
+    for (int i=0; lstrchr/*AfxStrChr*/(pstr, m_pchData[i]); i++)
             str += m_pchData[i];
 
     return str;
@@ -575,7 +598,7 @@ CString CString::SpanExcluding( LPCTSTR pstr ) const
 {   CString str;
     CStringData* pData = GetData();
 
-    for (int i=0; !_fstrchr/*AfxStrChr*/(pstr, m_pchData[i]); i++)
+    for (int i=0; !lstrchr/*AfxStrChr*/(pstr, m_pchData[i]); i++)
             str += m_pchData[i];
 
     return str;
@@ -645,7 +668,7 @@ int CString::Replace( LPCTSTR poldStr, LPCTSTR pnewStr )
         TCHAR FAR*pstr = m_pchData;
         for ( i = 0; i + nLen1 < pData->nDataLength; )
         {   if (AfxStrNCompare( pstr, poldStr, nLen1 ) == 0)
-            {   _fmemcpy(pstr, pnewStr, nLen2 * sizeof(TCHAR) );
+            {   lmemcpy(pstr, pnewStr, nLen2 * sizeof(TCHAR) );
                 nCount ++;
                 i += nLen1;
                 pstr += nLen1;
@@ -697,10 +720,10 @@ int CString::Insert( int nIndex, LPCTSTR pnewStr )
         int newLen = pData->nDataLength + nLen;
         if ( newLen > pData->nAllocLength )
         {   AllocBuffer( newLen );
-            _fmemcpy(m_pchData, pData->data(), nIndex * sizeof (TCHAR ) );
-            _fmemcpy(m_pchData + nIndex, pnewStr, nLen * sizeof( TCHAR ) );
+            lmemcpy(m_pchData, pData->data(), nIndex * sizeof (TCHAR ) );
+            lmemcpy(m_pchData + nIndex, pnewStr, nLen * sizeof( TCHAR ) );
             if (nIndex < pData->nDataLength)
-                _fmemcpy(m_pchData + nIndex + nLen, pData->data() + nIndex, (pData->nDataLength - nIndex) * sizeof(TCHAR));
+                lmemcpy(m_pchData + nIndex + nLen, pData->data() + nIndex, (pData->nDataLength - nIndex) * sizeof(TCHAR));
 
             CString::Release( pData );
 
@@ -711,7 +734,7 @@ int CString::Insert( int nIndex, LPCTSTR pnewStr )
             LPTSTR pStr = m_pchData + nIndex;
             if ( nIndex < pData->nDataLength )
               _fmemmove(pStr + nLen, pStr, pData->nDataLength - nIndex);
-            _fmemcpy(pStr, pnewStr, nLen * sizeof(TCHAR) );
+            lmemcpy(pStr, pnewStr, nLen * sizeof(TCHAR) );
             GetData()->nDataLength = newLen;
             m_pchData[newLen] = 0;
             return newLen;

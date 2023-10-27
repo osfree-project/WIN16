@@ -156,6 +156,7 @@ int CWinApp::DoMessageBox(LPCSTR lpszPrompt, UINT nType, UINT nIDPrompt)
 		}
 	}
 
+	// @todo Need to add application title
 	return ::MessageBox(0, lpszPrompt, NULL, nType);
 }
 

@@ -62,7 +62,7 @@ mm-dd-yy  ver   who  what
 #define AfxStrNCompare(a, b, n) _fstrncmp( (a), (b), (n) )
 #define AfxStrStr(a, b) _fstrstr( (a), (b) )
 #define AfxStrLen(a) lstrlen( (a) )
-#define AfxStrChr(a, b) _fstrchr((a), (b))
+#define AfxStrChr(a, b) lstrchr((a), (b))
 
 class CMemoryException;
 
