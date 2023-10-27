@@ -114,17 +114,52 @@ char FAR *lstrchr(const char FAR *s, int c)
 	return (char FAR *)s;
 }
 
-// @todo quick hack. For some strange reason watcom doesn't see this functions
-#if !defined(_fmemmove) || !defined(_INC_WINDOWSX)
-_WCRTLINK extern void _WCFAR *_fmemmove( void _WCFAR *__s1, const void _WCFAR *__s2, _w_size_t __n );
-#endif
-#if !defined(_fstrstr) || !defined(_INC_WINDOWSX)
-_WCRTLINK extern char _WCFAR *_fstrstr( const char _WCFAR *__s1, const char _WCFAR *__s2 );
-#endif
-#if !defined(_fstrncmp) || !defined(_INC_WINDOWSX)
-_WCRTLINK extern int _fstrncmp( const char _WCFAR *__s1, const char _WCFAR *__s2, _w_size_t __n );
-#endif
+int lstrncmp(LPCSTR s1, LPCSTR s2, int n)
+{
+	if (n == 0)
+		return (0);
+	do {
+		if (*s1 != *s2++)
+			return (*(unsigned char *)s1 - *(unsigned char *)--s2);
+		if (*s1++ == 0)
+			break;
+	} while (--n != 0);
+	return (0);
+}
 
+LPSTR lmemmove (LPSTR dest, LPCSTR src, size_t len)
+{
+  LPSTR d = dest;
+  LPCSTR s = src;
+  if (d < s)
+    while (len--)
+      *d++ = *s++;
+  else
+    {
+      LPCSTR lasts = s + (len-1);
+      LPSTR lastd = d + (len-1);
+      while (len--)
+        *lastd-- = *lasts--;
+    }
+  return dest;
+}
+
+LPSTR lstrstr(LPCSTR s1, LPCSTR s2)
+{
+	char c1, c2;
+	int len;
+	if ((c1=*s2++)!=0) {
+		len=lstrlen(s2);
+		do {
+			do {
+				if ((c2=*s1++)==0)
+					return (NULL);
+			} while (c2!=c1);
+		} while (lstrncmp(s1, s2, len)!=0);
+		s1--;
+	}
+	return ((LPSTR)s1);
+}
 
 #define MAX_LOAD_STRING 32768
 
@@ -733,7 +768,7 @@ int CString::Insert( int nIndex, LPCTSTR pnewStr )
         {   CopyBeforeWrite();
             LPTSTR pStr = m_pchData + nIndex;
             if ( nIndex < pData->nDataLength )
-              _fmemmove(pStr + nLen, pStr, pData->nDataLength - nIndex);
+              lmemmove(pStr + nLen, pStr, pData->nDataLength - nIndex);
             lmemcpy(pStr, pnewStr, nLen * sizeof(TCHAR) );
             GetData()->nDataLength = newLen;
             m_pchData[newLen] = 0;
@@ -753,7 +788,7 @@ int CString::Delete( int nIndex, int nCount)
     if (nIndex == 0 && nCount == pData->nDataLength) //Optimize
         Empty();
     else
-    {   _fmemmove( m_pchData + nIndex, m_pchData + nIndex + nCount, pData->nDataLength - (nCount + nIndex));
+    {   lmemmove( m_pchData + nIndex, m_pchData + nIndex + nCount, pData->nDataLength - (nCount + nIndex));
         pData->nDataLength -= nCount;
         m_pchData[pData->nDataLength] = 0;
         FreeExtra();
@@ -801,7 +836,7 @@ void CString::TrimLeft( LPCTSTR pstr )
     CStringData* pData = GetData();
     while ( AfxStrChr(pstr, m_pchData[i]) ) i++;
     if ( i > 0)
-    {   _fmemmove(m_pchData, m_pchData + i, (pData->nDataLength - i)*sizeof(TCHAR));
+    {   lmemmove(m_pchData, m_pchData + i, (pData->nDataLength - i)*sizeof(TCHAR));
         pData->nDataLength -= i;
         m_pchData[pData->nDataLength] = 0;
         FreeExtra(); //Free extra space if were posible
