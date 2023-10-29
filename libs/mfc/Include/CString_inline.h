@@ -47,6 +47,7 @@ mm-dd-yy  ver   who  what
   Copyright (c) 2000 Ivan Deras
 /************************************************************************/
 
+
 inline int CString::GetLength() const
 {
   return GetData()->nDataLength;
@@ -75,7 +76,7 @@ inline BOOL operator ==( const CString& cstr1, LPCTSTR pstr2 )
 
 inline BOOL operator ==( LPCTSTR pstr1, const CString& cstr2 )
 {
-    return AfxStrCompare( pstr1, cstr2 ) == 0;
+    return AfxStrCompare( cstr2, pstr1 ) == 0;
 }
 
 inline BOOL operator !=( const CString& cstr1, const CString& cstr2 )
@@ -90,7 +91,7 @@ inline BOOL operator !=( const CString& cstr1, LPCTSTR pstr2 )
 
 inline BOOL operator != ( LPCTSTR pstr1, const CString& cstr2 )
 {
-    return AfxStrCompare( pstr1, cstr2 ) != 0;
+    return AfxStrCompare( cstr2, pstr1 ) != 0;
 }
 
 inline BOOL operator < ( const CString& cstr1, const CString& cstr2 )
@@ -105,7 +106,7 @@ inline BOOL operator < ( const CString& cstr1, LPCTSTR pstr2 )
 
 inline BOOL operator < ( LPCTSTR pstr1, const CString& cstr2 )
 {
-    return AfxStrCompare( pstr1, cstr2 ) < 0;
+    return AfxStrCompare( cstr2, pstr1 ) > 0;
 }
 
 inline BOOL operator > ( const CString& cstr1, const CString& cstr2 )
@@ -120,7 +121,7 @@ inline BOOL operator > ( const CString& cstr1, LPCTSTR pstr2 )
 
 inline BOOL operator >( LPCTSTR pstr1, const CString& cstr2 )
 {
-    return AfxStrCompare( pstr1, cstr2 ) > 0;
+    return AfxStrCompare( cstr2, pstr1 ) < 0;
 }
 
 inline BOOL operator <=( const CString& cstr1, const CString& cstr2 )
@@ -135,7 +136,7 @@ inline BOOL operator <=( const CString& cstr1, LPCTSTR pstr2 )
 
 inline BOOL operator <=( LPCTSTR pstr1, const CString& cstr2 )
 {
-    return AfxStrCompare( pstr1, cstr2 ) <= 0;
+    return AfxStrCompare( cstr2, pstr1 ) >= 0;
 }
 
 inline BOOL operator >=( const CString& cstr1, const CString& cstr2 )
@@ -150,5 +151,5 @@ inline BOOL operator >=( const CString& cstr1, LPCTSTR pstr2 )
 
 inline BOOL operator >=( LPCTSTR pstr1, const CString& cstr2 )
 {
-    return AfxStrCompare( pstr1, cstr2 ) >= 0;
+    return AfxStrCompare( cstr2,pstr1 ) <= 0;
 }

@@ -26,11 +26,13 @@ mm-dd-yy  ver   who  what
 #ifndef CRECT_H
 #define CRECT_H
 
-#include <windef.h>
+#include <windows.h>
 
 class CSize;
 class CPoint;
 class CRect;
+
+typedef const RECT FAR* LPCRECT;       // far pointer to read/only RECT
 
 class CRect : public tagRECT
 {
@@ -51,8 +53,8 @@ class CRect : public tagRECT
    BOOL    IsRectEmpty ();
    BOOL    IsRectNull  ();
    BOOL    PtInRect    (POINT Pt);
-   BOOL    RectInRect  (CRect& Rect);       // This is a OFC enhancement
-   BOOL    RectInRect  (const RECT* pRect); // This is a OFC enhancement
+   //BOOL    RectInRect  (CRect& Rect);       // This is a OFC enhancement
+   //BOOL    RectInRect  (const RECT* pRect); // This is a OFC enhancement
    void    SetRect     (int left, int top, int right, int bottom);
    void    SetRect     (const RECT* pRect); // This is a OFC enhancement
    void    SetRectEmpty(void);

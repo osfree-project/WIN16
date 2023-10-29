@@ -95,7 +95,7 @@ class CBitmap : public CGdiObject {
 	BOOL CreateBitmapIndirect(LPBITMAP pBmp);
 	BOOL CreateCompatibleBitmap(CDC* pDC,int iWidth,int iHeight);
 	operator HBITMAP() const;
-	int GetBitmap(BITMAP* pBmp);
+	int GetBitmap(LPBITMAP pBmp);
 };
 
 class CBrush : public CGdiObject {
@@ -203,7 +203,7 @@ static	CDC* FromHandle(HDC hdc);
 	BOOL Polygon(LPPOINT lpPoints,int nPts);
 	BOOL PolyPolygon(LPPOINT pPts,LPINT pCnts,int nCnts);
 	BOOL Polyline(LPPOINT pPts,int nPts);
-	BOOL PolyPolyline(LPPOINT pPts,LPDWORD pCnts,int nCnts);
+//	BOOL PolyPolyline(LPPOINT pPts,LPDWORD pCnts,int nCnts);
 	BOOL Rectangle(int x1, int y1, int x2, int y2);
 	BOOL Rectangle(LPCRECT lpRect);
 	BOOL RoundRect(int x1, int y1, int x2, int y2, int x3, int y3);
@@ -224,30 +224,30 @@ static	CDC* FromHandle(HDC hdc);
 	int DrawText(const CString& str,LPRECT prc,UINT wFlags);
 
 	// Path Functions
-	BOOL AbortPath();
-	BOOL ArcTo(int x1,int y1,int x2,int y2,int x3,int y3,int x4,int y4);
-	BOOL ArcTo(LPCRECT prc,POINT ptBeg,POINT ptEnd);
-	BOOL BeginPath();
+//	BOOL AbortPath();
+//	BOOL ArcTo(int x1,int y1,int x2,int y2,int x3,int y3,int x4,int y4);
+//	BOOL ArcTo(LPCRECT prc,POINT ptBeg,POINT ptEnd);
+//	BOOL BeginPath();
 	BOOL Chord(int x1,int y1,int x2,int y2,int x3,int y3,int x4,int y4);
 	BOOL Chord(LPCRECT prc,POINT ptBeg,POINT ptEnd);
-	BOOL CloseFigure();
-	BOOL EndPath();
-	BOOL FillPath();
-	BOOL FlattenPath();
+//	BOOL CloseFigure();
+//	BOOL EndPath();
+//	BOOL FillPath();
+//	BOOL FlattenPath();
 	void LineTo(int x,int y);
 	void LineTo(POINT pt);
 	void MoveTo(int x,int y);
 	void MoveTo(POINT pt);
-	BOOL PolyBezier(const POINT* pPts,int nPts);
-	BOOL PolyBezierTo(const POINT* pPts,int nPts);
-	BOOL PolyDraw(const POINT* pPts,const BYTE* pTypes,int nPts);
-	BOOL PolylineTo(LPPOINT pPts,int nPts);
-	BOOL StrokeAndFillPath();
-	BOOL StrokePath();
-	BOOL WidenPath();
-	float GetMiterLimit() const;
-	BOOL SetMiterLimit(float fLimit);
-	int GetPath(LPPOINT pPts,LPBYTE pTypes,int nPts) const;
+//	BOOL PolyBezier(const POINT* pPts,int nPts);
+//	BOOL PolyBezierTo(const POINT* pPts,int nPts);
+//	BOOL PolyDraw(const POINT* pPts,const BYTE* pTypes,int nPts);
+//	BOOL PolylineTo(LPPOINT pPts,int nPts);
+//	BOOL StrokeAndFillPath();
+//	BOOL StrokePath();
+//	BOOL WidenPath();
+//	float GetMiterLimit() const;
+//	BOOL SetMiterLimit(float fLimit);
+//	int GetPath(LPPOINT pPts,LPBYTE pTypes,int nPts) const;
 
 	// Info Functions
 	int GetClipBox(LPRECT prc);

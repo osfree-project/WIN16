@@ -52,8 +52,9 @@ mm-dd-yy  who   ver   what
   Copyright (c) 2003 William D. Herndon
 /************************************************************************/
 
-#include <string.h>
+//#include <string>
 #include <errno.h>
+#include <cstdlib>
 #include <afxwin.h>
 
 
@@ -116,18 +117,20 @@ BOOL CFile::Open(
 	CFileException* pError
 ) {
 	char szFlags[10];
+	char szFilename[_MAX_PATH];
 	if ((nOpenFlags & modeReadWrite) != 0) {
 		if ((nOpenFlags & modeCreate) != 0)
-			strcpy(szFlags, "w+");
+			lstrcpy(szFlags, "w+");
 		else
-			strcpy(szFlags, "r+");
+			lstrcpy(szFlags, "r+");
 	} else if ((nOpenFlags & modeWrite) != 0)
-		strcpy(szFlags, "w");
+		lstrcpy(szFlags, "w");
 	else
-		strcpy(szFlags, "r");
+		lstrcpy(szFlags, "r");
 	// Make it binary - compatible and fewer problems with pointers.
-	strcat(szFlags, "b");
-	m_pFile = fopen(pszFileName, szFlags);
+	lstrcat(szFlags, "b");
+	lstrcpy(szFilename, pszFileName);
+	m_pFile = fopen(szFilename, szFlags);
 	if (m_pFile != NULL)
 		return( TRUE );
 	if (((int)pError) != 0/*NULL*/) {
@@ -211,7 +214,7 @@ void CFile::SeekToBegin()
 	Seek(0, CFile::begin);
 }
 
-ULONG CFile::SeekToEnd()
+DWORD CFile::SeekToEnd()
 {
 	return( Seek(0, CFile::end) );
 }

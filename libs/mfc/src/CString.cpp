@@ -74,12 +74,92 @@ mm-dd-yy  who  ver   What
   Copyright (c) 2000 Carsten Breuer
 /************************************************************************/
 #include <afxwin.h>
-#include <string.h>
-#include <ctype.h>
-
+#include <ole2.h>
+#include <dispatch.h>
+#include <cstdlib>
+#include <cstring>
 #ifdef _DEBUG
 void dbg_printf(LPCSTR pszForm,...);
 #endif
+
+
+// Helper string functions (far version)
+void FAR * lmemset (void FAR * dest, int val, int len)
+{
+  char FAR *ptr = (char FAR *)dest;
+  while (len-- > 0)
+    *ptr++ = val;
+  return dest;
+}
+
+void lmemcpy(LPCSTR s1, LPCSTR s2, unsigned length)
+{	char FAR * p;
+	char FAR * q;
+
+	if(length) {
+		p = (LPSTR)s1;
+		q = (LPSTR)s2;
+		do *p++ = *q++;
+		while(--length);
+	}
+}
+
+char FAR *lstrchr(const char FAR *s, int c)
+{
+	const char ch = c;
+
+	for ( ; *s != ch; s++)
+		if (*s == '\0')
+			return 0;
+	return (char FAR *)s;
+}
+
+int lstrncmp(LPCSTR s1, LPCSTR s2, int n)
+{
+	if (n == 0)
+		return (0);
+	do {
+		if (*s1 != *s2++)
+			return (*(unsigned char *)s1 - *(unsigned char *)--s2);
+		if (*s1++ == 0)
+			break;
+	} while (--n != 0);
+	return (0);
+}
+
+LPSTR lmemmove (LPSTR dest, LPCSTR src, size_t len)
+{
+  LPSTR d = dest;
+  LPCSTR s = src;
+  if (d < s)
+    while (len--)
+      *d++ = *s++;
+  else
+    {
+      LPCSTR lasts = s + (len-1);
+      LPSTR lastd = d + (len-1);
+      while (len--)
+        *lastd-- = *lasts--;
+    }
+  return dest;
+}
+
+LPSTR lstrstr(LPCSTR s1, LPCSTR s2)
+{
+	char c1, c2;
+	int len;
+	if ((c1=*s2++)!=0) {
+		len=lstrlen(s2);
+		do {
+			do {
+				if ((c2=*s1++)==0)
+					return (NULL);
+			} while (c2!=c1);
+		} while (lstrncmp(s1, s2, len)!=0);
+		s1--;
+	}
+	return ((LPSTR)s1);
+}
 
 #define MAX_LOAD_STRING 32768
 
@@ -106,13 +186,15 @@ void CString::AllocBuffer( int nLen )
     m_pchData[nLen] = 0;
 }
 
+
 void CString::AllocCopy(CString& str, int nLen1, int nIndex, int nLen2) const
-{   int nLen = nLen1 + nLen2;
+{
+	int nLen = nLen1 + nLen2;
     if (nLen == 0)
         str.Init();
     else {
         str.AllocBuffer(nLen);
-        memcpy(str.m_pchData, m_pchData + nIndex, nLen*sizeof(TCHAR));
+		lmemcpy(str.m_pchData, m_pchData + nIndex, nLen*sizeof(TCHAR));
     }
 }
 
@@ -137,7 +219,7 @@ void CString::SetData(int nLen, LPCTSTR pstr)
     //The buffer must be sufficiently large to allow the data
     ASSERT( pData->nAllocLength >= nLen );
 
-    memcpy( m_pchData, pstr, nLen*sizeof(TCHAR) );
+    lmemcpy( m_pchData, pstr, nLen*sizeof(TCHAR) );
     pData->nDataLength = nLen;
     m_pchData[nLen] = 0;
 }
@@ -171,14 +253,14 @@ void CString::ConcatInPlace(int nLen, LPCTSTR pstr)
         if ( pData->nAllocLength < nNewLen )
         {
             AllocBuffer( nNewLen );
-            memcpy( m_pchData, pData->data(), pData->nDataLength * sizeof(TCHAR) );
-            memcpy( m_pchData + pData->nDataLength, pstr, nLen * sizeof(TCHAR) );
+            lmemcpy( m_pchData, pData->data(), pData->nDataLength * sizeof(TCHAR) );
+            lmemcpy( m_pchData + pData->nDataLength, pstr, nLen * sizeof(TCHAR) );
             CString::Release( pData );
         }
         else //The buffer is sufficiently big to fit the data
         {
 //            CopyBeforeWrite();
-            memcpy( m_pchData + pData->nDataLength, pstr, nLen * sizeof(TCHAR) );
+            lmemcpy( m_pchData + pData->nDataLength, pstr, nLen * sizeof(TCHAR) );
             pData->nDataLength = nNewLen;
         }
         m_pchData[nNewLen] = 0;
@@ -447,33 +529,34 @@ void CString::SetAt( int nIndex, TCHAR ch )
 void CString::Fill( TCHAR ch, int nCount )
 {   ASSERT( nCount > 0 );
     AllocBeforeWrite( nCount );
-    memset( m_pchData, ch, nCount * sizeof(TCHAR) );
+    lmemset( m_pchData, ch, nCount * sizeof(TCHAR) );
 }
 
 int CString::Compare( LPCTSTR pstr ) const
 {
-    return AfxStrCompare( m_pchData, pstr );
+    return lstrcmp( m_pchData, pstr );//AfxStrCompare( m_pchData, pstr );
 }
 
 int CString::CompareNoCase( LPCTSTR pstr ) const
 {
-    return AfxStrICompare( m_pchData, pstr );
+    return lstrcmpi( m_pchData, pstr );//AfxStrICompare( m_pchData, pstr );
 }
 
 int CString::Collate( LPCTSTR pstr ) const
 {
     // Same as strcmp() except for locale specific special characters
-    return( strcoll(m_pchData, pstr) );
+	// @todo
+    return lstrcmp(m_pchData, pstr);//( strcoll(m_pchData, pstr) );
 }
 
 int CString::CollateNoCase( LPCTSTR pstr ) const
 {
     // Same as stricmp() except for locale specific special characters
-#ifndef MSVC32
-    return( stricoll(m_pchData, pstr) );
-#else
-    return( stricmp(m_pchData, pstr) );
-#endif
+//#ifndef MSVC32
+    //return( stricoll(m_pchData, pstr) );
+//#else
+    return( lstrcmpi(m_pchData, pstr) );
+//#endif
 }
 
 CString CString::Mid( int nPos ) const
@@ -540,7 +623,7 @@ CString CString::SpanIncluding( LPCTSTR pstr ) const
 {   CString str;
     CStringData* pData = GetData();
 
-    for (int i=0; AfxStrChr(pstr, m_pchData[i]); i++)
+    for (int i=0; lstrchr/*AfxStrChr*/(pstr, m_pchData[i]); i++)
             str += m_pchData[i];
 
     return str;
@@ -550,24 +633,27 @@ CString CString::SpanExcluding( LPCTSTR pstr ) const
 {   CString str;
     CStringData* pData = GetData();
 
-    for (int i=0; !AfxStrChr(pstr, m_pchData[i]); i++)
+    for (int i=0; !lstrchr/*AfxStrChr*/(pstr, m_pchData[i]); i++)
             str += m_pchData[i];
 
     return str;
 }
 
+#define AnsiUpperChar(c) ((char)AnsiUpper((LPSTR)(unsigned char)(c)))
+#define AnsiLowerChar(c) ((char)AnsiLower((LPSTR)(unsigned char)(c)))
+
 void CString::MakeUpper( )
 {   CopyBeforeWrite();
     CStringData* pData = GetData();
     for (int i=0; i<pData->nDataLength; i++)
-        m_pchData[i] = toupper( m_pchData[i] );
+        m_pchData[i] = AnsiUpperChar( m_pchData[i] );
 }
 
 void CString::MakeLower( )
 {   CopyBeforeWrite();
     CStringData* pData = GetData();
     for (int i=0; i<pData->nDataLength; i++)
-        m_pchData[i] = tolower( m_pchData[i] );
+        m_pchData[i] = AnsiLowerChar( m_pchData[i] );
 }
 
 void CString::MakeReverse( )
@@ -614,10 +700,10 @@ int CString::Replace( LPCTSTR poldStr, LPCTSTR pnewStr )
     else if ( nLen1 == nLen2 ) //the two strings has the same length
     {   int i;
         CStringData* pData = GetData();
-        TCHAR *pstr = m_pchData;
+        TCHAR FAR*pstr = m_pchData;
         for ( i = 0; i + nLen1 < pData->nDataLength; )
         {   if (AfxStrNCompare( pstr, poldStr, nLen1 ) == 0)
-            {   memcpy(pstr, pnewStr, nLen2 * sizeof(TCHAR) );
+            {   lmemcpy(pstr, pnewStr, nLen2 * sizeof(TCHAR) );
                 nCount ++;
                 i += nLen1;
                 pstr += nLen1;
@@ -628,8 +714,8 @@ int CString::Replace( LPCTSTR poldStr, LPCTSTR pnewStr )
     }
     else
     {   CString strTemp;
-        TCHAR *pCurrent = m_pchData;
-        TCHAR *pstr;
+        TCHAR FAR *pCurrent = m_pchData;
+        TCHAR FAR *pstr;
 
         while ( *pCurrent != 0 )
         {   pstr = AfxStrStr(pCurrent, poldStr);
@@ -669,10 +755,10 @@ int CString::Insert( int nIndex, LPCTSTR pnewStr )
         int newLen = pData->nDataLength + nLen;
         if ( newLen > pData->nAllocLength )
         {   AllocBuffer( newLen );
-            memcpy(m_pchData, pData->data(), nIndex * sizeof (TCHAR ) );
-            memcpy(m_pchData + nIndex, pnewStr, nLen * sizeof( TCHAR ) );
+            lmemcpy(m_pchData, pData->data(), nIndex * sizeof (TCHAR ) );
+            lmemcpy(m_pchData + nIndex, pnewStr, nLen * sizeof( TCHAR ) );
             if (nIndex < pData->nDataLength)
-                memcpy(m_pchData + nIndex + nLen, pData->data() + nIndex, (pData->nDataLength - nIndex) * sizeof(TCHAR));
+                lmemcpy(m_pchData + nIndex + nLen, pData->data() + nIndex, (pData->nDataLength - nIndex) * sizeof(TCHAR));
 
             CString::Release( pData );
 
@@ -682,8 +768,8 @@ int CString::Insert( int nIndex, LPCTSTR pnewStr )
         {   CopyBeforeWrite();
             LPTSTR pStr = m_pchData + nIndex;
             if ( nIndex < pData->nDataLength )
-              memmove(pStr + nLen, pStr, pData->nDataLength - nIndex);
-            memcpy(pStr, pnewStr, nLen * sizeof(TCHAR) );
+              lmemmove(pStr + nLen, pStr, pData->nDataLength - nIndex);
+            lmemcpy(pStr, pnewStr, nLen * sizeof(TCHAR) );
             GetData()->nDataLength = newLen;
             m_pchData[newLen] = 0;
             return newLen;
@@ -702,7 +788,7 @@ int CString::Delete( int nIndex, int nCount)
     if (nIndex == 0 && nCount == pData->nDataLength) //Optimize
         Empty();
     else
-    {   memmove( m_pchData + nIndex, m_pchData + nIndex + nCount, pData->nDataLength - (nCount + nIndex));
+    {   lmemmove( m_pchData + nIndex, m_pchData + nIndex + nCount, pData->nDataLength - (nCount + nIndex));
         pData->nDataLength -= nCount;
         m_pchData[pData->nDataLength] = 0;
         FreeExtra();
@@ -750,7 +836,7 @@ void CString::TrimLeft( LPCTSTR pstr )
     CStringData* pData = GetData();
     while ( AfxStrChr(pstr, m_pchData[i]) ) i++;
     if ( i > 0)
-    {   memmove(m_pchData, m_pchData + i, (pData->nDataLength - i)*sizeof(TCHAR));
+    {   lmemmove(m_pchData, m_pchData + i, (pData->nDataLength - i)*sizeof(TCHAR));
         pData->nDataLength -= i;
         m_pchData[pData->nDataLength] = 0;
         FreeExtra(); //Free extra space if were posible
@@ -785,7 +871,7 @@ void CString::TrimRight( LPCTSTR pstr )
 }
 
 int CString::Find( TCHAR ch, int nPos) const
-{   TCHAR* pstr;
+{   TCHAR FAR * pstr;
     if (nPos < 0 || nPos >= GetData()->nDataLength)
         nPos = 0;
     pstr = AfxStrChr( &m_pchData[nPos+1], ch );
@@ -796,7 +882,7 @@ int CString::Find( TCHAR ch, int nPos) const
 }
 
 int CString::Find( LPCTSTR pstr, int nPos) const
-{   TCHAR* pstr_t;
+{   TCHAR FAR * pstr_t;
     if (nPos < 0 || nPos >= GetData()->nDataLength)
         nPos = 0;
     pstr_t = AfxStrStr( &m_pchData[nPos+1], pstr );
@@ -920,7 +1006,7 @@ BSTR CString::AllocSysString ( ) const
     BSTR bstr;
 
     bstr = ::SysAllocStringLen(NULL, pData->nDataLength);
-    mbstowcs(bstr, m_pchData, pData->nDataLength);
+    //@todo mbstowcs(bstr, m_pchData, pData->nDataLength);
 
     return bstr;
 }
@@ -930,7 +1016,7 @@ BSTR CString::SetSysString( BSTR* pbstr ) const
     CStringData* pData = GetData();
 
     ::SysReAllocStringLen(pbstr, NULL, pData->nDataLength);
-    mbstowcs(*pbstr, m_pchData, pData->nDataLength);
+    //@todo mbstowcs(*pbstr, m_pchData, pData->nDataLength);
 
     return *pbstr;
 }

@@ -64,6 +64,21 @@ inline void AfxThrowFileException(int eExceptType)
 	{ throw(new CFileException(eExceptType)); };
 
 
+extern int dosrename(LPCSTR szold, LPCSTR sznew);
+#pragma aux dosrename = \
+	"mov ah, 56h" \
+	"int 21h" \
+	parm [ds dx es di] \
+	value [ax] \
+	modify [ds dx es di];
+
+extern int dosremove(LPCSTR sz);
+#pragma aux dosremove = \
+	"mov ah, 41h" \
+	"int 21h" \
+	parm [ds dx] \
+	value [ax] \
+	modify [ds dx];
 
 // CFile - standard file function in the form of a class.
 // Especially useful when you want to do things like write
@@ -104,13 +119,14 @@ public:
 	CFile(LPCSTR pszFileName,UINT nOpenFlags)
 		{ Open(pszFileName, nOpenFlags, NULL); };
 
+
 static	void Rename(LPCSTR pszOldName,LPCSTR pszNewName) {
-		if (rename(pszOldName, pszNewName) != 0)
-			CFileException::ThrowErrno(errno);
+		if (dosrename(pszOldName, pszNewName) != 0) ;
+			// @todo CFileException::ThrowErrno(errno);
 	};
 static	void Remove(LPCSTR pszFileName) {
-		if (remove(pszFileName) != 0)
-			CFileException::ThrowErrno(errno);
+		if (dosremove(pszFileName) != 0) ;
+			// @todo CFileException::ThrowErrno(errno);
 	};
 
 	// Almost everything must be virtual, so that
@@ -119,7 +135,7 @@ static	void Remove(LPCSTR pszFileName) {
 		CFileException* pError = NULL);
 	virtual long Seek(long lOff,UINT nFrom);
 	virtual void SeekToBegin();
-	virtual ULONG SeekToEnd();
+	virtual DWORD SeekToEnd();
 	virtual UINT ReadHuge(void* pBuf,UINT nCount);
 	virtual UINT Read(void* pBuf,UINT nCount);
 	virtual void WriteHuge(const void* pBuf,UINT nCount);

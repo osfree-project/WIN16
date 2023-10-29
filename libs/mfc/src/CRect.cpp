@@ -186,6 +186,7 @@ BOOL CRect::PtInRect (POINT Pt)
    return FALSE;
 }
 
+#if 0
 // Is it better to put all ofc enhancemnts in a seperated
 // class (e. g. CExRect)? We have to check it.
  // This is a OFC enhancement
@@ -209,6 +210,7 @@ BOOL CRect::RectInRect (CRect& Rect)
    // equal rectangles should contain each other.
    return( RectInRect((const RECT*)Rect) );
 }
+#endif
 
 void CRect::SetRect (int nLeft, int nTop, int nRight, int nBottom)
 {
