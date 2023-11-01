@@ -23,23 +23,19 @@
 */
 
 #include <stdio.h>	// sscanf
-//#include <string.h>	// strcpy
 
 #include "taskman.h"
 
 /* Globals */
 static WORD nLeft=0, nTop=0;
 
-
-BOOL CALLBACK EnumWindowsProc(
-  HWND   hWnd,   // идентификатор родительского окна
-  LPARAM lParam) // адрес строки заголовка окна
+BOOL CALLBACK EnumWindowsProc(HWND   hWnd, LPARAM lParam)
 {
-	char szBuf[512];
+	char szBuf[80];
 
 	if (IsWindowVisible(hWnd)) 
 	{
-		GetWindowText(hWnd, szBuf, 512);
+		GetWindowText(hWnd, szBuf, sizeof(szBuf));
 		if (lstrlen(szBuf))
 		{
 			SendMessage((HWND)lParam, LB_SETITEMDATA, SendMessage((HWND)lParam, LB_ADDSTRING, 0, (LPARAM)(LPCSTR)szBuf), (LPARAM)hWnd);
@@ -81,93 +77,102 @@ BOOL CALLBACK _export TaskManDlgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPAR
 		}
 
 	case WM_CLOSE:
-			EndDialog(hWndDlg, IDCANCEL);
+		EndDialog(hWndDlg, IDCANCEL);
+		return FALSE;
 		break;
 
 	case WM_COMMAND:
 		switch (wParam) {
-		case IDD_TASKLIST:
-		{
-			if(HIWORD(lParam) != LBN_DBLCLK)
-		        {
+			case IDD_TASKLIST:
+			{
+				if(HIWORD(lParam) != LBN_DBLCLK)
+			        {
+					break;
+				}
+				// passthru
+			}
+			case IDD_SWITCHTO:
+			{
+				HWND hwnd, hwndPopup;
+				HWND hListBox=GetDlgItem(hWndDlg, IDD_TASKLIST);
+	
+				ShowWindow(hWndDlg, SW_HIDE);
+	
+				if (IsWindow(hwnd=SendMessage(hListBox, LB_GETITEMDATA, SendMessage(hListBox, LB_GETCURSEL, 0, 0), 0)))
+				{
+					if (IsWindow(hwndPopup=GetLastActivePopup(hwnd)))
+					{
+						if (!(GetWindowLong(hwndPopup, GWL_STYLE) & WS_DISABLED))
+						{
+							SwitchToThisWindow(hwndPopup, TRUE);
+						}
+					}
+				}
+				EndDialog(hWndDlg, IDCANCEL);
 				break;
-		        }
-			// passthru
-		}
-		case IDD_SWITCHTO:
-		{
-			HWND hwnd, hwndPopup;
-			HWND hListBox=GetDlgItem(hWndDlg, IDD_TASKLIST);
-
-			ShowWindow(hWndDlg, SW_HIDE);
-
-			if (IsWindow(hwnd=SendMessage(hListBox, LB_GETITEMDATA, SendMessage(hListBox, LB_GETCURSEL, 0, 0), 0)))
+			}
+			case IDD_ENDTASK:
 			{
-				if (IsWindow(hwndPopup=GetLastActivePopup(hwnd)))
+				HWND hwnd, hwndPopup;
+				HWND hListBox=GetDlgItem(hWndDlg, IDD_TASKLIST);
+
+				ShowWindow(hWndDlg, SW_HIDE);
+
+				if (IsWindow(hwnd=SendMessage(hListBox, LB_GETITEMDATA, SendMessage(hListBox, LB_GETCURSEL, 0, 0), 0)))
 				{
-					if (!(GetWindowLong(hwndPopup, GWL_STYLE) & WS_DISABLED))
+					if (IsWindow(hwndPopup=GetLastActivePopup(hwnd)))
 					{
-						SwitchToThisWindow(hwndPopup, TRUE);
+						if (!(GetWindowLong(hwndPopup, GWL_STYLE) & WS_DISABLED))
+						{
+							SwitchToThisWindow(hwndPopup, TRUE);
+							PostMessage(hwndPopup, WM_CLOSE, 0, 0);
+						}
 					}
 				}
+				EndDialog(hWndDlg, IDCANCEL);
+				break;
 			}
-			break;
-		}
-		case IDD_ENDTASK:
-		{
-			HWND hwnd, hwndPopup;
-			HWND hListBox=GetDlgItem(hWndDlg, IDD_TASKLIST);
-
-			ShowWindow(hWndDlg, SW_HIDE);
-
-			if (IsWindow(hwnd=SendMessage(hListBox, LB_GETITEMDATA, SendMessage(hListBox, LB_GETCURSEL, 0, 0), 0)))
+			case IDCANCEL:
 			{
-				if (IsWindow(hwndPopup=GetLastActivePopup(hwnd)))
-				{
-					if (!(GetWindowLong(hwndPopup, GWL_STYLE) & WS_DISABLED))
-					{
-						SwitchToThisWindow(hwndPopup, TRUE);
-						PostMessage(hwndPopup, WM_CLOSE, 0, 0);
-					}
-				}
+				ShowWindow(hWndDlg, SW_HIDE);
+				EndDialog(hWndDlg, IDCANCEL);
+				break;
 			}
-			break;
+			case IDD_CASCADE:
+			{
+				ShowWindow(hWndDlg, SW_HIDE);
+				CascadeChildWindows(GetDesktopWindow(), 0);
+				EndDialog(hWndDlg, IDCANCEL);
+				break;
+			}
+			case IDD_TILE:
+			{
+				HWND hWndDesktop;
+				ShowWindow(hWndDlg, SW_HIDE);
+				hWndDesktop=GetDesktopWindow();
+				if (GetKeyState(VK_SHIFT) == 0x8000)
+					TileChildWindows(hWndDesktop, MDITILE_HORIZONTAL);
+				else
+					TileChildWindows(hWndDesktop, MDITILE_VERTICAL);
+				EndDialog(hWndDlg, IDCANCEL);
+				break;
+			}
+			case IDD_ARRANGEICONS:
+			{
+				ShowWindow(hWndDlg, SW_HIDE);
+				ArrangeIconicWindows(GetDesktopWindow());
+				EndDialog(hWndDlg, IDCANCEL);
+				break;
+			}
+		        break;
 		}
-		case IDCANCEL:
-		{
-			ShowWindow(hWndDlg, SW_HIDE);
-			break;
-		}
-		case IDD_CASCADE:
-		{
-			ShowWindow(hWndDlg, SW_HIDE);
-			CascadeChildWindows(GetDesktopWindow(), 0);
-			break;
-		}
-		case IDD_TILE:
-		{
-			HWND hWndDesktop;
-			ShowWindow(hWndDlg, SW_HIDE);
-			hWndDesktop=GetDesktopWindow();
-			if (GetKeyState(VK_SHIFT) == 0x8000)
-				TileChildWindows(hWndDesktop, MDITILE_HORIZONTAL);
-			else
-				TileChildWindows(hWndDesktop, MDITILE_VERTICAL);
-			break;
-		}
-		case IDD_ARRANGEICONS:
-		{
-			ShowWindow(hWndDlg, SW_HIDE);
-			ArrangeIconicWindows(GetDesktopWindow());
-			break;
-		}
-		}
-		return FALSE;
 
+	    default:
+	        return FALSE;
 
 	}
 
-	return FALSE;
+	return TRUE;
 }
 
 int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
@@ -176,7 +181,10 @@ int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 	FARPROC fpDlgProc;
 	char CmdLine[260];
 
-	if (prev) return 0;
+	if (prev) 
+	{
+		return 0;
+	}
 
 	if (*cmdline)
 	{
