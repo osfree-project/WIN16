@@ -1,3 +1,11 @@
+; /*
+; * Windows Task Manager
+; *
+; * Copyright 2023 by Yuri Prokushev
+; *
+; * osFree licence.
+; */
+
 #include "taskman.h"
 
 //#include "Bg.rc"

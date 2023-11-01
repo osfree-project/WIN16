@@ -1,3 +1,11 @@
+/*
+ * Windows Task Manager
+ *
+ * Copyright 2023 by Yuri Prokushev
+ *
+ * osFree licence.
+ */
+
 #include <windows.h>
 #include <penwin.h>
 

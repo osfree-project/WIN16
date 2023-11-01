@@ -1,5 +1,5 @@
 /*
- * Windows Task Managet
+ * Windows Task Manager
  *
  * Copyright 2023 by Yuri Prokushev
  *
