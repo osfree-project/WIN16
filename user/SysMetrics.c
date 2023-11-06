@@ -85,7 +85,11 @@ static int SysMetricsDef[] =
         1,              /* SM_MOUSEPRESENT     19 */
         20,             /* SM_CYVSCROLL        20 */
         20,             /* SM_CXHSCROLL        21 */
+#if DEBUG
+        255,            /* SM_DEBUG            22 */
+#else
         0,              /* SM_DEBUG            22 */
+#endif
         0,              /* SM_SWAPBUTTON       23 */
         0,              /* SM_RESERVED1        24 */
         1,              /* SM_RESERVED2        25 */

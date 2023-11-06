@@ -35,9 +35,10 @@
 
 /* Global Data */
 typedef struct tagGLOBALS {
-	HINSTANCE	hInstance;
-	HGLOBAL		EntryTable;
-	HGLOBAL		StringTable;
+	HINSTANCE	hInstance;		// SHELL.EXE Instance
+	HGLOBAL		Registry;		// Registry Header Handle
+	HGLOBAL		EntryTable;		// Registry Entries Table
+	HGLOBAL		StringTable;		// Registry String Table
 } GLOBALS;
 
 extern GLOBALS Globals;
@@ -89,7 +90,6 @@ int lstrnicmp(char FAR *s1, const char FAR *s2, int n);
 char FAR *lstrchr(const char FAR *s, int c);
 void lmemcpy(void FAR * s1, void FAR * s2, unsigned length);
 void FAR * lmemset (void FAR *start, int c, int len);
-//int toupper (int c);
 
 #define GET_WM_COMMAND_ID(wp, lp)                   (wp)
 
@@ -423,13 +423,13 @@ extern KEYSTRUCT RootKey;
 
 typedef struct tagDATHEADER {
 	char szSignature[8];	//0x0000  8 Byte  ASCII-Text: "SHCC3.10"
-	DWORD unk1;		//0x0008  D-Word  ?
-	DWORD unk2;		//0x000C  D-Word  ? (always equal the D-Word at 0x0008) Note: May be first is header size, second is offset of navblock
-	DWORD dwEntries;	//0x0010  D-Word  Number of entrys in the navigation-block
-	DWORD offsetDataBlock;	//0x0014  D-Word  Offset of the data-block
-	DWORD sizeDataBlock;	//0x0018  D-Word  Size of the data-block
-	WORD  unk3;		//0x001C  Word    ?
-	WORD  unk4;		//0x001E  Word    ?
+	DWORD unk1;		//0x0008  DWord  ?
+	DWORD unk2;		//0x000C  DWord  ? (always equal the D-Word at 0x0008) Note: May be first is header size, second is offset of navblock
+	DWORD dwEntries;	//0x0010  DWord  Number of entries in the navigation-block
+	DWORD offsetDataBlock;	//0x0014  DWord  Offset of the data-block
+	DWORD sizeDataBlock;	//0x0018  DWord  Size of the data-block
+	WORD  hashsize;		//0x00??  Word   Hash size
+	WORD  freeidx;		//0x00??  Word   Free index
 } DATHEADER;
 
 typedef struct tagDATNAVIGATION {
@@ -440,7 +440,7 @@ typedef struct tagDATNAVIGATION {
 } DATNAVIGATION;
 
 typedef struct tagDATTEXT {
-	WORD	unk1;		//0x00    Word    ?
+	WORD	Index;		//0x00    Word    Entry Table Index * 2 + 1
 	WORD	RefCount;	//0x02    Word    number of references to this text
 	WORD	Length;		//0x04    Word    Text-length
 	WORD	offset;		//0x06    Word    Offset of the text-string inside the data-block
@@ -465,4 +465,8 @@ Text-Info-Record
 
 
 Offset  Size    Contents
+
+
 */
+
+BOOL InitReg();
