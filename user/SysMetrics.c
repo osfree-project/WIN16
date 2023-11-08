@@ -29,8 +29,8 @@ To send email to the maintainer of the Willows Twin Libraries.
    This file contains for the sysmetrics-related API functions.    
  */
 
-#include <stdio.h>
-#include <string.h>
+//#include <stdio.h>
+//#include <string.h>
 
 #include <user.h>
 
@@ -384,7 +384,7 @@ SystemParametersInfo(UINT uAction, UINT uParam, LPVOID lpvParam,
 	    nGridGranularity = (int)uParam;
 	    if (fuWinIni & SPIF_UPDATEINIFILE) {
 		lstrcpy(lpszSection,"desktop");
-		sprintf(szBuffer,"%d",(int)uParam);
+		lstrcpy(szBuffer, itoa(uParam));//sprintf(szBuffer,"%d",(int)uParam);
 		WriteProfileString(lpszSection,"GridGranularity",szBuffer);
 		if (fuWinIni & SPIF_SENDWININICHANGE)
 		    bSendWinIniChange = TRUE;
@@ -440,7 +440,7 @@ SystemParametersInfo(UINT uAction, UINT uParam, LPVOID lpvParam,
 	    nKeyboardDelay = (int)uParam;
 	    if (fuWinIni & SPIF_UPDATEINIFILE) {
 		lstrcpy(lpszSection,"windows");
-		sprintf(szBuffer,"%d",(int)uParam);
+		lstrcpy(szBuffer, itoa(uParam));//sprintf(szBuffer,"%d",(int)uParam);
 		WriteProfileString(lpszSection,"KeyboardDelay",szBuffer);
 		if (fuWinIni & SPIF_SENDWININICHANGE)
 		    bSendWinIniChange = TRUE;
@@ -456,7 +456,7 @@ SystemParametersInfo(UINT uAction, UINT uParam, LPVOID lpvParam,
 	    nKeyboardSpeed = (int)uParam;
 	    if (fuWinIni & SPIF_UPDATEINIFILE) {
 		lstrcpy(lpszSection,"windows");
-		sprintf(szBuffer,"%d",(int)uParam);
+		lstrcpy(szBuffer, itoa(uParam));//sprintf(szBuffer,"%d",(int)uParam);
 		WriteProfileString(lpszSection,"KeyboardSpeed",szBuffer);
 		if (fuWinIni & SPIF_SENDWININICHANGE)
 		    bSendWinIniChange = TRUE;
@@ -503,7 +503,7 @@ SystemParametersInfo(UINT uAction, UINT uParam, LPVOID lpvParam,
 	    nScreenSaveTimeOut = (int)uParam;
 	    if (fuWinIni & SPIF_UPDATEINIFILE) {
 		lstrcpy(lpszSection,"windows");
-		sprintf(szBuffer,"%d",nScreenSaveTimeOut);
+		lstrcpy(szBuffer, itoa(nScreenSaveTimeOut));//sprintf(szBuffer,"%d",nScreenSaveTimeOut);
 		WriteProfileString(lpszSection,"ScreenSaveTimeOut",szBuffer);
 		if (fuWinIni & SPIF_SENDWININICHANGE)
 		    bSendWinIniChange = TRUE;
@@ -519,7 +519,7 @@ SystemParametersInfo(UINT uAction, UINT uParam, LPVOID lpvParam,
 	    SysMetricsDef[SM_CXICONSPACING] = (int)uParam;
 	    if (fuWinIni & SPIF_UPDATEINIFILE) {
 		lstrcpy(lpszSection,"desktop");
-		sprintf(szBuffer,"%d",SysMetricsDef[SM_CXICONSPACING]);
+		lstrcpy(szBuffer, itoa(SysMetricsDef[SM_CXICONSPACING]));//sprintf(szBuffer,"%d",SysMetricsDef[SM_CXICONSPACING]);
 		WriteProfileString(lpszSection,"IconSpacing",szBuffer);
 		if (fuWinIni & SPIF_SENDWININICHANGE)
 		    bSendWinIniChange = TRUE;
@@ -536,7 +536,7 @@ SystemParametersInfo(UINT uAction, UINT uParam, LPVOID lpvParam,
 	    SysMetricsDef[SM_CYICONSPACING] = (int)uParam;
 	    if (fuWinIni & SPIF_UPDATEINIFILE) {
 		lstrcpy(lpszSection,"windows");
-		sprintf(szBuffer,"%d",SysMetricsDef[SM_CYICONSPACING]);
+		lstrcpy(szBuffer, itoa(SysMetricsDef[SM_CYICONSPACING]));//sprintf(szBuffer,"%d",SysMetricsDef[SM_CYICONSPACING]);
 		WriteProfileString(lpszSection,"IconSpacing",szBuffer);
 		if (fuWinIni & SPIF_SENDWININICHANGE)
 		    bSendWinIniChange = TRUE;
@@ -559,7 +559,7 @@ SystemParametersInfo(UINT uAction, UINT uParam, LPVOID lpvParam,
 	    nDoubleClickTime = (int)uParam;
 	    if (fuWinIni & SPIF_UPDATEINIFILE) {
 		lstrcpy(lpszSection,"windows");
-		sprintf(szBuffer,"%d",nDoubleClickTime);
+		lstrcpy(szBuffer, itoa(nDoubleClickTime));//sprintf(szBuffer,"%d",nDoubleClickTime);
 		WriteProfileString(lpszSection,"DoubleClickSpeed",szBuffer);
 		if (fuWinIni & SPIF_SENDWININICHANGE)
 		    bSendWinIniChange = TRUE;

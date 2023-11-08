@@ -21,11 +21,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
+//#include <stdarg.h>
 
-#include <user.h>
+#include "user.h"
 
-HANDLE WINAPI FarGetOwner( HGLOBAL handle );
 
 /***********************************************************************
  *		SetWindowsHook (USER.121)

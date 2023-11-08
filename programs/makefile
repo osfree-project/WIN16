@@ -6,7 +6,7 @@
 
 # First directory must be UNI which produces C/C++ header files
 
-DIRS = calc clipbrd clock notepad pifedit progman winhelp winmine winver taskman
+DIRS = calc clipbrd clock notepad pifedit progman taskman winhelp winmine winver
 
 !include $(%ROOT)tools/mk/all.mk
 

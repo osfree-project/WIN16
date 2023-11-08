@@ -8,12 +8,14 @@ PROJ     = user1
 PROJ1    = user
 TRGT     = $(PROJ1).exe
 DESC     = Windows USER.EXE
-srcfiles = $(p)hook$(e) $(p)dialog$(e) $(p)Time$(e) $(p)Atoms$(e) $(p)InitApp$(e) $(p)comm$(e) $(p)Caret$(e) $(p)DrawText$(e) $(p)network$(e) $(p)SysMetrics$(e) $(p)Listbox$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Resources$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)libmain$(e)
-ADD_COPT = -zc -s -DDEBUG=1
-ADD_ASMOPT = -i=..$(SEP)tables$(SEP)xlat
+srcfiles = $(p)libentry$(e) $(p)smallcode$(e) $(p)GlobalData1$(e) $(p)hook$(e) $(p)dialog$(e) $(p)Time$(e) $(p)Atoms$(e) $(p)InitApp$(e) $(p)comm$(e) $(p)Caret$(e) $(p)DrawText$(e) $(p)network$(e) $(p)SysMetrics$(e) $(p)Listbox$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Resources$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)libmain$(e) #$(p)StringFunc$(e)
+ADD_COPT = -zW -s -zc -2 -DDEBUG=1 # optimize prolog, no stack checks, put constants in code segment 
+ADD_LINKOPT = SEGMENT CLASS DATA FIXED SHARE
+NOLIBS = 1 # Don't use default libentry
+NODEFAULTLIBS = 1 # Don'y use libc
 
-STACKSIZE = 1k
-HEAPSIZE = 1k
+STACKSIZE = 10k
+HEAPSIZE = 20k
 
 # linking dll file
 DLL     = 1
@@ -255,7 +257,14 @@ IMPORTS = GETEXEVERSION KERNEL.105, &
 	LOCALHEAPSIZE KERNEL.162, &
 	FARSETOWNER KERNEL.403, &
 	FarGetOwner KERNEL.404, &
-	GetSystemMSecCount SYSTEM.6
+	GetSystemMSecCount SYSTEM.6, &
+	Resurrection GDI.122, &
+	InquireMouse MOUSE.1, &
+	InquireKeyboard KEYBOARD.1, &
+	InquireDisplay DISPLAY.101, &
+	SetTaskQueue KERNEL.34, &
+	MakeObjectPrivate GDI.463, &
+	SetSpeed KEYBOARD.7
 
 # GETPRIVATEPROFILEINT KERNEL.127, &
 #          __AHSHIFT KERNEL.113
@@ -267,5 +276,8 @@ DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 
 TARGETS = $(PATH)$(PROJ1).exe
 
-$(PATH)$(PROJ1).exe: $(PATH)$(PROJ).dll
+$(PATH)$(PROJ1).exe: $(PATH)$(PROJ).dll $(MYDIR)$(PROJ1).rc
  @$(CP) $(PATH)$(PROJ).dll $(PATH)$(PROJ1).exe $(BLACKHOLE)
+ @$(SAY) RESCMP   $^. $(LOG)
+ @wrc -q -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win
+

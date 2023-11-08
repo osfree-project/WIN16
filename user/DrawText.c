@@ -28,7 +28,7 @@ To send email to the maintainer of the Willows Twin Libraries.
 
  */
 
-#include <string.h>
+//#include <string.h>
 
 #include <user.h>
 

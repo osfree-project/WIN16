@@ -1,16 +1,85 @@
 #include <user.h>
 
-#define GlobalPtrHandle(lp) \
-  ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))
+/**********************************************************************
+ *     LoadString   (USER.176)
+ */
+int WINAPI LoadString( HINSTANCE instance, UINT resource_id, LPSTR buffer, int buflen )
+{
+    HGLOBAL hmem;
+    HRSRC hrsrc;
+    unsigned char far *p;
+    int string_num;
+    int ret;
 
-#define     GlobalUnlockPtr(lp)      \
-                GlobalUnlock(GlobalPtrHandle(lp))
+	FUNCTION_START
+	TRACE("inst=%04x id=%04x buff=%p len=%d", instance, resource_id, buffer, buflen);
 
-#define GlobalFreePtr(lp) \
-  (GlobalUnlockPtr(lp),(BOOL)GlobalFree(GlobalPtrHandle(lp)))
+	hrsrc = FindResource( instance, MAKEINTRESOURCE((resource_id>>4)+1), RT_STRING );
+	if (!hrsrc) 
+	{
+		TRACE("Resource not found");
+		FUNCTION_END
+		return 0;
+	}
 
-#define GlobalAllocPtr(flags, cb) \
-  (GlobalLock(GlobalAlloc((flags), (cb))))
+	hmem = LoadResource( instance, hrsrc );
+	if (!hmem) 
+	{
+		TRACE("Error loading resource");
+		FUNCTION_END
+		return 0;
+	}
+
+	p = LockResource(hmem);
+	string_num = resource_id & 0x000f;
+	while (string_num--) p += *p + 1;
+
+	if (buffer == NULL) ret = *p;
+	else
+	{
+		ret = min(buflen - 1, *p);
+		if (ret > 0)
+		{
+			_fmemcpy(buffer, p + 1, ret);
+			buffer[ret] = '\0';
+		}
+		else if (buflen > 1)
+		{
+			buffer[0] = '\0';
+			ret = 0;
+		}
+        TRACE( "%s loaded\n", buffer);
+	}
+	FreeResource( hmem );
+
+	FUNCTION_END
+	return ret;
+}
+
+/**********************************************************************
+ *              LoadAccelerators  (USER.177)
+ */
+HACCEL	WINAPI
+LoadAccelerators(HINSTANCE hInstance, LPCSTR lpTableName)
+{
+	HANDLE hResInfo;
+	HACCEL rc;
+
+	FUNCTION_START
+	TRACE("LoadAccelerators(HINSTANCE=%x,LPCSTR=%x)",
+		hInstance,lpTableName);
+
+	hResInfo = FindResource(hInstance, lpTableName, RT_ACCELERATOR);
+
+	if(hResInfo == 0) {
+    		TRACE("LoadAccelerators: returns HACCEL 0");
+		return 0;
+	}
+
+	rc =  LoadResource(hInstance,hResInfo);
+    	TRACE("LoadAccelerators: returns HACCEL %x",rc);
+	return rc;
+}
 
 /***********************************************************************
  *		LoadImage (USER.389)

@@ -1,6 +1,5 @@
 #include <user.h>
 
-WORD USER_HeapSel = 0;  /* USER heap selector */
 
 static HINSTANCE gdi_inst;
 
@@ -41,10 +40,7 @@ BOOL WINAPI DllEntryPoint( DWORD reason, HINSTANCE inst, WORD ds,
     USER_HeapSel = ds;
 //    register_wow_handlers();
     gdi_inst = LoadLibrary( "gdi.exe" );
-    LoadLibrary( "display.drv" );
-    LoadLibrary( "keyboard.drv" );
-    LoadLibrary( "mouse.drv" );
-//    LoadLibrary( "user.exe" );  /* make sure it never gets unloaded */
+
 	FUNCTION_END
     return TRUE;
 }
@@ -93,10 +89,10 @@ DWORD WINAPI UserSeeUserDo(WORD wReqType, WORD wParam1, WORD wParam2, WORD wPara
         ret = USER_HeapSel;
         break;
     case USUD_FIRSTCLASS:
-//        FIXME("return a pointer to the first window class.\n");
+        FIXME("return a pointer to the first window class.\n");
         break;
     default:
-	{}//        WARN("wReqType %04x (unknown)\n", wReqType);
+		WARN("wReqType %04x (unknown)\n", wReqType);
     }
     SetDS(oldDS);
     return ret;
@@ -107,13 +103,12 @@ DWORD WINAPI UserSeeUserDo(WORD wReqType, WORD wParam1, WORD wParam2, WORD wPara
  */
 BOOL WINAPI OldSetDeskPattern(void)
 {
+	BOOL rc;
 	FUNCTION_START
-    return SystemParametersInfo( SPI_SETDESKPATTERN, -1, NULL, FALSE );
+	rc=SystemParametersInfo( SPI_SETDESKPATTERN, -1, NULL, FALSE );
+	FUNCTION_END
+    return rc;
 }
-
-WORD WINAPI LocalCountFree();
-WORD WINAPI LocalHeapSize();
-
 
 /***********************************************************************
  *		GetFreeSystemResources (USER.284)
@@ -153,6 +148,6 @@ UINT WINAPI GetFreeSystemResources( UINT resType )
         userPercent = gdiPercent = 0;
         break;
     }
-//    TRACE("<- userPercent %d, gdiPercent %d\n", userPercent, gdiPercent);
+    TRACE("<- userPercent %d, gdiPercent %d\n", userPercent, gdiPercent);
     return (UINT)min( userPercent, gdiPercent );
 }

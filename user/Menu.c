@@ -75,7 +75,7 @@ int latoi(char far *h)
   l = lstrlen(s) - 1;
 
   while (*s) {
-    c = tolower(*s);
+    c = _tolower(*s);
 
     if ('a' <= c && c <= 'f') {
       if (base == 16) {
@@ -677,7 +677,7 @@ GetSubMenu(HMENU hMenu, int nPos)
 
   //  if (!(hMenu32 = GetMenuHandle32(hMenu)))
 //	return 0;
-    memset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
+    _fmemset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
     mis.wItemFlags = MF_BYPOSITION;
     mis.wPosition = (WORD)nPos;
     mis.wAction = LCA_GET | LCA_ITEMID;
@@ -704,7 +704,7 @@ TWIN_FindMenuItem(HMENU hMenu, UINT uiIDItem)
 
     if (!hMenu)
 	return 0L;
-    memset((char *)&mnis, '\0', sizeof(MENUITEMSTRUCT));
+    _fmemset((char *)&mnis, '\0', sizeof(MENUITEMSTRUCT));
     mnis.wPosition = (WORD)-1;
     mnis.wAction = LCA_ITEMCOUNT;
     nCount = (int)LBoxAPI(hMenu,LBA_GETDATA,(LPARAM)&mnis);
@@ -772,7 +772,7 @@ ModifyMenuEx(HMENU hMenu, UINT uiPosition, UINT uiFlags,
 
     if (!hMenu)
 	return FALSE;
-    memset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
+    _fmemset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
     mis.wItemFlags = uiFlags;
     if (uiAction == LBA_MODIFYITEM) {
 	mis.wPosition = (WORD)uiPosition;
@@ -953,7 +953,7 @@ ChangeMIFlags(HMENU hMenu, UINT uiItem, UINT uiFlags, UINT uiMask)
 
     if (!hMenu)
 	return -1;
-    memset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
+    _fmemset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
     mis.wPosition = (WORD)uiItem;
     mis.wAction = LCA_GET | LCA_FLAGS;
     mis.wItemFlags = uiFlags;
@@ -1056,7 +1056,7 @@ GetMenuString(HMENU hMenu, UINT uiIDItem, LPSTR lpString,
 
 //    if (!(hMenu32 = GetMenuHandle32(hMenu)))
 //	return (UINT)-1;
-    memset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
+    _fmemset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
     mis.wAction = LCA_GET | LCA_CONTENTS;
     mis.wItemFlags = uiFlags;
     mis.wPosition = (WORD)uiIDItem;
@@ -1095,7 +1095,7 @@ GetMenuState(HMENU hMenu, UINT uiID, UINT uiFlags)
     MENUITEMSTRUCT mis;
     LONG lFlags;
 
-    memset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
+    _fmemset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
     mis.wAction = LCA_GET | LCA_FLAGS;
     mis.wPosition = (WORD)uiID;
     mis.wItemFlags = (WORD)uiFlags;
@@ -1132,7 +1132,7 @@ GetMenuItemCount(HMENU hMenu)
 
 //    if (!(hMenu32 = GetMenuHandle32(hMenu)))
 //	return (int)-1;
-    memset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
+    _fmemset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
     mis.wAction = LCA_ITEMCOUNT;
     mis.wPosition = (WORD)-1;
     nCount = (int)LBoxAPI(hMenu,LBA_GETDATA,(LPARAM)&mis);
@@ -1153,7 +1153,7 @@ GetMenuItemID(HMENU hMenu, int nPos)
 
 //    if (!(hMenu32 = GetMenuHandle32(hMenu)))
 //	return (UINT)-1;
-    memset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
+    _fmemset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
     mis.wItemFlags = MF_BYPOSITION;
     mis.wPosition = (WORD)nPos;
     mis.wAction = LCA_GET | LCA_FLAGS;
@@ -1322,7 +1322,7 @@ SetMenuItemBitmaps(HMENU hMenu, UINT uiItem, UINT uiFlags,
 //    if (!(hMenu32 = GetMenuHandle32(hMenu)))
 //	return FALSE;
     hMenuorig = hMenu;
-    memset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
+    _fmemset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
     mis.wPosition = (WORD)uiItem;
     mis.wAction = LCA_GET | LCA_FLAGS;
     mis.wItemFlags = uiFlags;

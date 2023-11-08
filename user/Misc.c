@@ -89,13 +89,6 @@ void WINAPI SignalProc( HANDLE hModule, UINT code,
 #endif
 }
 
-
-void WINAPI StringFunc(void)
-{
-	FUNCTION_START
-}
-
-
 /***********************************************************************
  *		SendMessage  (USER.111)
  */

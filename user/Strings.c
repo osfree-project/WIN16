@@ -1,67 +1,32 @@
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
+#include <stdarg.h>
 
-#include <windows.h>
-
-/**********************************************************************
- *     LoadString   (USER.176)
- */
-int WINAPI LoadString( HINSTANCE instance, UINT resource_id, LPSTR buffer, int buflen )
-{
-    HGLOBAL hmem;
-    HRSRC hrsrc;
-    unsigned char far *p;
-    int string_num;
-    int ret;
-
-//    TRACE("inst=%04x id=%04x buff=%p len=%d\n", instance, resource_id, buffer, buflen);
-
-    hrsrc = FindResource( instance, MAKEINTRESOURCE((resource_id>>4)+1), (LPSTR)RT_STRING );
-    if (!hrsrc) return 0;
-    hmem = LoadResource( instance, hrsrc );
-    if (!hmem) return 0;
-
-    p = LockResource(hmem);
-    string_num = resource_id & 0x000f;
-    while (string_num--) p += *p + 1;
-
-    if (buffer == NULL) ret = *p;
-    else
-    {
-        ret = min(buflen - 1, *p);
-        if (ret > 0)
-        {
-            _fmemcpy(buffer, p + 1, ret);
-            buffer[ret] = '\0';
-        }
-        else if (buflen > 1)
-        {
-	    buffer[0] = '\0';
-	    ret = 0;
-	}
-//        TRACE( "%s loaded\n", debugstr_a(buffer));
-    }
-    FreeResource( hmem );
-    return ret;
-}
+#include <user.h>
 
 /***********************************************************************
  *           lstrcmp   (USER.430)
  */
 int WINAPI lstrcmp( LPCSTR str1, LPCSTR str2 )
 {
-  while (*str1 || *str2)
-    {
-      if (*str1 < *str2)
-        return -1;
-      else if (*str1 > *str2)
-        return 1;
-      str1 ++;
-      str2 ++;
-    }
+	FUNCTION_START
 
-  return 0;
+	while (*str1 || *str2)
+		{
+		if (*str1 < *str2)
+		{
+			FUNCTION_END
+			return -1;
+		}
+		else if (*str1 > *str2)
+		{
+			FUNCTION_END
+			return 1;
+		}
+		str1 ++;
+		str2 ++;
+	}
+
+	FUNCTION_END
+	return 0;
 }
 
 /***********************************************************************
@@ -70,6 +35,7 @@ int WINAPI lstrcmp( LPCSTR str1, LPCSTR str2 )
 
 LPSTR WINAPI AnsiUpper( LPSTR strOrChar )
 {
+	FUNCTION_START
     /* uppercase only one char if strOrChar < 0x10000 */
     if (HIWORD(strOrChar))
     {
@@ -89,18 +55,19 @@ LPSTR WINAPI AnsiUpper( LPSTR strOrChar )
  */
 LPSTR WINAPI AnsiLower( LPSTR strOrChar )
 {
+	FUNCTION_START
     /* lowercase only one char if strOrChar < 0x10000 */
     if (HIWORD(strOrChar))
     {
         char far *s = strOrChar;
         while (*s)
         {
-            *s = tolower(*s);
+            *s = _tolower(*s);
             s++;
         }
         return strOrChar;
     }
-    else return (LPSTR)tolower((char)strOrChar);
+    else return (LPSTR)_tolower((char)strOrChar);
 }
 
 /***********************************************************************
@@ -108,13 +75,14 @@ LPSTR WINAPI AnsiLower( LPSTR strOrChar )
  */
 LPSTR WINAPI AnsiNext(LPCSTR lpchCurrentChar)
 {
+	FUNCTION_START
     if (!lpchCurrentChar)
 	return (LPSTR)0;
 
     if (*lpchCurrentChar) {
-//	if ( IsDBCSLeadByte(*lpchCurrentChar) )
-//	    return (LPSTR)(lpchCurrentChar+2);
-//	else
+	if ( IsDBCSLeadByte(*lpchCurrentChar) )
+	    return (LPSTR)(lpchCurrentChar+2);
+	else
 	    return (LPSTR)(lpchCurrentChar+1);
     }
     else
@@ -126,11 +94,16 @@ LPSTR WINAPI AnsiNext(LPCSTR lpchCurrentChar)
  */
 LPSTR WINAPI AnsiPrev(LPCSTR lpchStart, LPCSTR lpchCurrentChar)
 {
-    LPSTR lpPrev = (LPSTR)lpchStart;
-    LPSTR lpNext;
+	LPSTR lpPrev = (LPSTR)lpchStart;
+	LPSTR lpNext;
+
+	FUNCTION_START
 
     if (lpchStart == lpchCurrentChar)
-	return (LPSTR)lpchStart;
+	{
+		FUNCTION_END
+		return (LPSTR)lpchStart;
+	}
 
 //    if ( SetCodePage() ) {
 //	while ((lpNext = AnsiNext((LPCSTR)lpPrev)) != (LPSTR)lpchCurrentChar)
@@ -138,7 +111,8 @@ LPSTR WINAPI AnsiPrev(LPCSTR lpchStart, LPCSTR lpchCurrentChar)
 //	return lpPrev;
 //    }
 
-    return (LPSTR)(lpchCurrentChar-1);
+	FUNCTION_END
+	return (LPSTR)(lpchCurrentChar-1);
 }
 
 typedef VOID const far *VA_LIST;
@@ -150,8 +124,134 @@ typedef VOID const far *VA_LIST;
      *((type far *)(void far *)((char far *)(list) - __VA_ROUNDED(type))))
 
 /***********************************************************************
- * Helper for wsprintf16
- */
+ * Helper for wsprintf
+ *
+ * int parse_format( LPCSTR format, WPRINTF_FORMAT *res )
+ *
+ * format - format-control string
+ * res - result flags structure 
+ *
+ * Returns size of parsed part of format-control string
+ *
+ * The format-control string contains format specifications that determine 
+ * the output format for the arguments following the lpFmt parameter. 
+ * Format specifications, discussed below, always begin with a percent 
+ * sign (%). If a percent sign is followed by a character that has no 
+ * meaning as a format field, the character is not formatted 
+ * (for example, %% produces a single percent-sign character).
+ *
+ * The format-control string is read from left to right. When the first format
+ * specification (if any) is encountered, it causes the value of the first 
+ * argument after the format-control string to be converted and copied 
+ * to the output buffer according to the format specification. The second
+ * format specification causes the second argument to be converted and 
+ * copied, and so on. If there are more arguments than format specifications,
+ * the extra arguments are ignored. If there are not enough arguments for 
+ * all of the format specifications, the results are undefined.
+ *
+ * A format specification has the following form:
+ *
+ * %[-][#][0][width][.precision]type
+ *
+ * Each field is a single character or a number signifying a particular 
+ * format option. The type characters that appear after the last 
+ * optional format field determine whether the associated argument
+ * is interpreted as a character, a string, or a number. The simplest
+ * format specification contains only the percent sign and a type 
+ * character (for example, %s). The optional fields control other 
+ * aspects of the formatting. Following are the optional and 
+ * required fields and their meanings.
+ *
+ * +------------+-----------------------------------------------------+
+ * ! Field      ! Meaning                                             !
+ * +------------+-----------------------------------------------------+
+ * ! -          ! Pad the output with blanks or zeros to the right to !
+ * !            ! fill the field width, justifying output to the left.!
+ * !            ! If this field is omitted, the output is padded to   !
+ * !            ! the left, justifying it to the right.               !
+ * +------------+-----------------------------------------------------+
+ * ! #          ! Prefix hexadecimal values with 0x (lowercase) or 0X !
+ * !            ! (uppercase).                                        !
+ * +------------+-----------------------------------------------------+
+ * ! 0          ! Pad the output value with zeros to fill the field   !
+ * !            ! width. If this field is omitted, the output value   !
+ * !            ! is padded with blank spaces.                        !
+ * +------------+-----------------------------------------------------+
+ * ! width      ! Copy the specified minimum number of characters to  !
+ * !            ! the output buffer. The width field is a nonnegative !
+ * !            ! integer. The width specification never causes a     !
+ * !            ! value to be truncated; if the number of characters  !
+ * !            ! in the output value is greater than the specified   !
+ * !            ! width, or if the width field is not present, all    !
+ * !            ! characters of the value are printed, subject to the !
+ * !            ! precision specification.                            !
+ * +------------+-----------------------------------------------------+
+ * ! .precision ! For numbers, copy the specified minimum number of   !
+ * !            ! digits to the output buffer. If the number of       !
+ * !            ! digits in the argument is less than the specified   !
+ * !            ! precision, the output value is padded on the left   !
+ * !            ! with zeros. The value is not truncated when the     !
+ * !            ! number of digits exceeds the specified precision.   !
+ * !            ! If the specified precision is 0 or omitted entirely,!
+ * !            ! or if the period (.) appears without a number       !
+ * !            ! following it, the precision is set to 1.            !
+ * !            ! For strings, copy the specified maximum number of   !
+ * !            ! characters to the output buffer.                    !
+ * +------------+-----------------------------------------------------+
+ * ! type       ! Output the corresponding argument as a character, a !
+ * !            ! string, or a number. This field can be any of the   !
+ * !            ! following values.                                   !
+ * +------------+-----------------------------------------------------+
+ *
+ * +------------+-----------------------------------------------------+
+ * ! Type       ! Meaning                                             !
+ * +------------+-----------------------------------------------------+
+ * ! c          ! Single character. This value is interpreted as type !
+ * !            ! char.                                               !
+ * +------------+-----------------------------------------------------+
+ * ! C          ! Single character. This value is interpreted as type !
+ * !            ! char (for win32 as WCHAR).                          !
+ * +------------+-----------------------------------------------------+
+ * ! d          ! Signed decimal integer. This value is equivalent to !
+ * !            ! i.                                                  !
+ * +------------+-----------------------------------------------------+
+hc, hC
+    Single character. The wsprintf function ignores character arguments with a numeric value of zero. This value is always interpreted as type CHAR, even when the calling application defines Unicode. 
+hd
+    Signed short integer argument. 
+hs, hS
+    String. This value is always interpreted as type LPSTR, even when the calling application defines Unicode. 
+hu
+    Unsigned short integer. 
+i
+    Signed decimal integer. This value is equivalent to d. 
+Ix, IX
+    64-bit unsigned hexadecimal integer in lowercase or uppercase on 64-bit platforms, 32-bit unsigned hexadecimal integer in lowercase or uppercase on 32-bit platforms. 
+lc, lC
+    Single character. The wsprintf function ignores character arguments with a numeric value of zero. This value is always interpreted as type WCHAR, even when the calling application does not define Unicode. 
+ld
+    Long signed integer. This value is equivalent to li. 
+li
+    Long signed integer. This value is equivalent to ld. 
+ls, lS
+    String. This value is always interpreted as type LPWSTR, even when the calling application does not define Unicode. This value is equivalent to ws. 
+lu
+    Long unsigned integer. 
+lx, lX
+    Long unsigned hexadecimal integer in lowercase or uppercase. 
+p
+    Pointer. The address is printed using hexadecimal. 
+s
+    String. This value is interpreted as type LPWSTR when the calling application defines Unicode and as type LPSTR otherwise. 
+S
+    String. This value is interpreted as type LPSTR when the calling application defines Unicode and as type LPWSTR otherwise. 
+u
+    Unsigned integer argument. 
+x, X
+    Unsigned hexadecimal integer in lowercase or uppercase. 
+
+  */
+  
 
 #define WPRINTF_LEFTALIGN   0x0001  /* Align output on the left ('-' prefix) */
 #define WPRINTF_PREFIX_HEX  0x0002  /* Prefix hex with 0x ('#' prefix) */
@@ -181,6 +281,8 @@ typedef struct
 static int parse_format( LPCSTR format, WPRINTF_FORMAT *res )
 {
     LPCSTR p = format;
+
+	FUNCTION_START
 
     res->flags = 0;
     res->width = 0;
@@ -236,7 +338,9 @@ static int parse_format( LPCSTR format, WPRINTF_FORMAT *res )
         p--;  /* print format as normal char */
         break;
     }
-    return (int)(p - format) + 1;
+	
+	FUNCTION_END
+    return (p - format) + 1;
 }
 
 /***********************************************************************
@@ -253,9 +357,19 @@ int WINAPI wvsprintf( LPSTR buffer, LPCSTR spec, VA_LIST args )
     int int_view;
     LPCSTR seg_str;
 
+	FUNCTION_START
+
     while (*spec)
     {
-        if (*spec != '%') { *p++ = *spec++; continue; }
+		if (IsBadWritePtr(buffer, 1))
+		{
+			OutputDebugString("oops 1\r\n");
+		};
+		if (IsBadReadPtr(spec, 1))
+		{
+			OutputDebugString("oops 2\r\n");
+		};
+        if (*spec != '%') { *p = *spec; p++; spec++; continue; }
         spec++;
         if (*spec == '%') { *p++ = *spec++; continue; }
         spec += parse_format( spec, &format );
@@ -277,17 +391,20 @@ int WINAPI wvsprintf( LPSTR buffer, LPCSTR spec, VA_LIST args )
         case WPR_SIGNED:
             if (format.flags & WPRINTF_LONG) int_view = VA_ARG( args, int );
             else int_view = VA_ARG( args, int );
-            len = sprintf( number, "%d", int_view );
+			lstrcpy(number, itoa(int_view));
+            len = lstrlen(number);
             break;
         case WPR_UNSIGNED:
             if (format.flags & WPRINTF_LONG) int_view = VA_ARG( args, UINT );
             else int_view = VA_ARG( args, UINT );
-            len = sprintf( number, "%u", int_view );
+			lstrcpy(number, uitoa(int_view));
+			len = lstrlen(number);
             break;
         case WPR_HEXA:
             if (format.flags & WPRINTF_LONG) int_view = VA_ARG( args, UINT );
             else int_view = VA_ARG( args, UINT );
-            len = sprintf( number, (format.flags & WPRINTF_UPPER_HEX) ? "%X" : "%x", int_view);
+			lstrcpy(number, itox(int_view));
+            len = lstrlen(number);//sprintf( number, (format.flags & WPRINTF_UPPER_HEX) ? "%X" : "%x", int_view);
             break;
         case WPR_UNKNOWN:
             continue;
@@ -301,11 +418,13 @@ int WINAPI wvsprintf( LPSTR buffer, LPCSTR spec, VA_LIST args )
         sign = 0;
         if (!(format.flags & WPRINTF_LEFTALIGN))
             for (i = format.precision; i < format.width; i++) *p++ = ' ';
+
+		
         switch(format.type)
         {
         case WPR_CHAR:
             *p = char_view;
-            /* wsprintf16 ignores null characters */
+            /* wsprintf ignores null characters */
             if (*p != '\0') p++;
             else if (format.width > 1) *p++ = ' ';
             break;
@@ -341,16 +460,28 @@ int WINAPI wvsprintf( LPSTR buffer, LPCSTR spec, VA_LIST args )
             for (i = format.precision; i < format.width; i++) *p++ = ' ';
     }
     *p = 0;
+
+	FUNCTION_END
     return p - buffer;
 }
 
 
 /***********************************************************************
- *           _wsprintf   (USER.420)
+ *           wsprintf   (USER.420)
  */
-int WINAPI _wsprintf( LPSTR buffer, LPCSTR spec, VA_LIST valist )
+int FAR CDECL wsprintf( LPSTR buffer, LPCSTR spec, ... )
 {
-    return wvsprintf( buffer, spec, valist );
+	int rc;
+	va_list valist;
+
+	FUNCTION_START
+
+	va_start(valist, spec);
+	rc=wvsprintf( buffer, spec, valist );
+	va_end(valist);
+
+	FUNCTION_END
+	return rc;
 }
 
 /***********************************************************************
@@ -358,31 +489,46 @@ int WINAPI _wsprintf( LPSTR buffer, LPCSTR spec, VA_LIST valist )
  */
 int WINAPI lstrcmpi(LPCSTR lpszString1,LPCSTR lpszString2)
 {
-    if (!lpszString1 || !lpszString2)
+	int rc;
+
+	FUNCTION_START
+
+	if (!lpszString1 || !lpszString2)
 	return (lpszString2-lpszString1);
 
-//    LOGSTR((LF_API,"lstrcmpi: %s %s\n",lpszString1,lpszString2));
+	while (_tolower((unsigned char) *lpszString1) == _tolower((unsigned char) *lpszString2)) {
+		if (*lpszString1 == '\0')
+			return 0;
+		lpszString1++; lpszString2++;
+	}
 
-    return _fstricmp(lpszString1,lpszString2);
+	rc=(int) _tolower((unsigned char) *lpszString1) -
+		(int) _tolower((unsigned char) *lpszString2);
+
+	FUNCTION_END
+	return rc;
 }
 
 BOOL    WINAPI 
 IsCharUpper(char ch)
 {
+	FUNCTION_START
 //	APISTR((LF_API,"IsCharUpper(char %c)\n",ch));
-	return (BOOL) isupper((int) ch);	
+	return (BOOL) _isupper((int) ch);	
 }
 
 BOOL    WINAPI 
 IsCharLower(char ch)
 {
+	FUNCTION_START
 //	APISTR((LF_API,"IsCharLower(char %c)\n",ch));
-	return (BOOL) islower((int) ch);	
+	return (BOOL) _islower((int) ch);	
 }
 
 BOOL    WINAPI 
 IsCharAlpha(char ch)
 {
+	FUNCTION_START
 //	APISTR((LF_API,"IsCharAlpha(char=%c)\n",ch));
 	return (BOOL) isalpha((int) ch);
 }
@@ -390,6 +536,7 @@ IsCharAlpha(char ch)
 BOOL    WINAPI 
 IsCharAlphaNumeric(char ch)
 {
+	FUNCTION_START
 //	APISTR((LF_API,"IsCharAlphaNumeric(char=%c)\n",ch));
 	return (BOOL) isalnum((int) ch);
 }
@@ -398,6 +545,8 @@ UINT    WINAPI
 AnsiUpperBuff(LPSTR lpstr, UINT n)
 {
 	unsigned long count = n;
+
+	FUNCTION_START
 	
 	if(count == 0)
 		count = 65536;	
@@ -413,13 +562,159 @@ UINT    WINAPI
 AnsiLowerBuff(LPSTR lpstr, UINT n) 
 {
 	unsigned long count = n;
+
+	FUNCTION_START
 	
 	if(count == 0)
 		count = 65536;	
 	while(count) {
-		*lpstr = tolower(*lpstr);	
+		*lpstr = _tolower(*lpstr);	
 		lpstr++;
 		count--;
 	}
 	return n;
+}
+
+
+
+int _tolower (int c)
+{
+  if (c >= 'A' && c <= 'Z')
+    return (c + ('a' - 'A'));
+
+  return c;
+}
+
+int toupper (int c)
+{
+  if (c >= 'a' && c <= 'z')
+    return (c + ('A' - 'a'));
+
+  return c;
+}
+
+void far * _fmemset (void far *start, int c, unsigned int len)
+{
+  char far *p = start;
+
+  while (len -- > 0)
+    *p ++ = c;
+
+  return start;
+}
+
+void far * _fmemcpy(void far * s1, void const far * s2, unsigned length)
+{	
+	char far * p;
+	char far * q;
+
+	FUNCTION_START
+	TRACE(s2);
+	if(length) {
+		p = s1;
+		q = (char far *)s2;
+		do *p++ = *q++;
+		while(--length);
+	}
+
+	FUNCTION_END
+	return s1;
+}
+
+int _fstrnicmp(char const far *s1, const char far *s2, unsigned int n)
+{
+
+    if (n == 0)
+	return 0;
+    do {
+	if (toupper(*s1) != toupper(*s2++))
+	    return toupper(*(unsigned char *) s1) -
+		toupper(*(unsigned char *) --s2);
+	if (*s1++ == 0)
+	    break;
+    } while (--n != 0);
+    return 0;
+}
+
+int _islower(int c)
+{
+	if (c >= 'a' && c <= 'z')
+		return (1);
+	else
+		return (0);
+}
+
+int _isupper(int c)
+{
+	if (c >= 'A' && c <= 'Z')
+		return (1);
+	else
+		return (0);
+}
+
+int isalpha(int c)
+{
+	return _isupper(c) || _islower(c);
+}
+
+int isdigit(int c)
+{
+	if (c >= '0' && c <= '9')
+		return 1;
+	return 0;
+}
+
+int isalnum(int c)
+{
+    return isalpha(c) || isdigit(c);
+}
+
+
+char far *itoa(int i)
+{
+  static char buf[12]={0};
+  char far * p = buf + sizeof(buf) -1;
+  if (i >= 0) {
+    do {
+      *--p = '0' + (i % 10);
+      i /= 10;
+    } while (i != 0);
+    return p;
+  }
+  else {			/* i < 0 */
+    do {
+      *--p = '0' - (i % 10);
+      i /= 10;
+    } while (i != 0);
+    *--p = '-';
+  }
+  return p;
+}
+
+char far *uitoa(unsigned int i)
+{
+  static char buf[12]={0};
+  char far *p = buf + sizeof(buf)-1;
+  do {
+    *--p = '0' + (i % 10);
+    i /= 10;
+  } while (i != 0);
+  return p;
+}
+
+char far * itox(int i) 
+{
+  char hexdigits[] = "0123456789ABCDEF";
+  static char buf[12]={0};
+  char far *p = buf + sizeof(buf)-1;
+  do {
+    *--p = hexdigits[i % 16];
+    i /= 16;
+  } while (i != 0);
+  return p;
+}
+
+void WINAPI StringFunc(void)
+{
+	FUNCTION_START
 }

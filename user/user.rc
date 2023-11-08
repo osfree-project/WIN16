@@ -1,0 +1,21 @@
+#include <user.h>
+
+STRINGTABLE DISCARDABLE 
+{
+	IDS_WINDOWS,						"Windows"
+	IDS_TYPEAHEAD,						"TypeAhead"
+	IDS_DEFAULTQUEUESIZE,				"DefaultQueueSize"
+	IDS_SYSTEMERROR,					"System Error"
+	IDS_DIVIDEBYZERO,					"Divede By Zero or Overflow Error"
+	IDS_UNTITLED,						"Untitled"
+	IDS_ERROR,							"Error"
+	IDS_OK,								"Ok"
+	IDS_CANCEL,							"Cancel"
+	IDS_ABORT,							"Abort"
+	IDS_RETRY,							"Retry"
+	IDS_IGNORE,							"Ignore"
+	IDS_YES,							"Yes"
+	IDS_NO,								"No"
+	IDS_AM,								"am"
+	IDS_PM,								"pm"
+}

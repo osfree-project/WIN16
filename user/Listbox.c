@@ -27,15 +27,9 @@ To send email to the maintainer of the Willows Twin Libraries.
 	mailto:twin@willows.com 
 
  */
-#include <string.h>
-#include <ctype.h>
 
 #include "user.h"
-//#include "windowsx.h"
 
-//#include "kerndef.h"
-//#include "WinDefs.h"
-//#include "Log.h"
 #include "Listbox.h"
 #include "Menu.h"
 
@@ -642,7 +636,7 @@ DefLISTBOXProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 	/* listbox specific messages */
 	case LB_ADDSTRING:
 	case LB_INSERTSTRING:
-	    memset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
+	    _fmemset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
 	    mis.wLeftIndent = lpLBoxInfo->wLeftIndent;
 	    mis.wRightIndent = lpLBoxInfo->wRightIndent;
 	    mis.lpItemData = (LPSTR)lParam;
@@ -660,7 +654,7 @@ DefLISTBOXProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 			(LPMENUITEMSTRUCT)lParam) >= 0);
 
 	case LB_DELETESTRING:
-	    memset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
+	    _fmemset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
 	    mis.wItemFlags = LIF_BYPOSITION;
 	    mis.wPosition = wParam;
 	    rc = (LRESULT)LBoxDeleteItem(lpLBoxInfo, &mis);
@@ -714,7 +708,7 @@ DefLISTBOXProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 	/* this is an HSWIN private message */
 	case LB_SETITEMBITMAPS:
 	case LB_GETITEMRECT:
-	    memset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
+	    _fmemset((char *)&mis, '\0', sizeof(MENUITEMSTRUCT));
 	    mis.wItemFlags = LIF_BYPOSITION;
 	    mis.wPosition = wParam;
 	    switch(wMsg) {
@@ -2023,7 +2017,7 @@ LBoxCaseComparePrefix(HWND hDest, LPCOMPAREITEMSTRUCT lpcis)
 static int
 LBoxCaseCompareExact(HWND hDest, LPCOMPAREITEMSTRUCT lpcis)
 {
-    return _fstricmp((LPSTR)(lpcis->itemData1),
+    return lstrcmpi((LPSTR)(lpcis->itemData1),
 			(LPSTR)(lpcis->itemData2));
 }
 

@@ -1,36 +1,55 @@
-#include <stdio.h> // sprintf
-
 #include <windows.h>
 
+// Message Queue structures. See Matt Pietrek for description.
+
+typedef struct tagINTERNALMSG{
+	DWORD ExtraInfo;
+	MSG msg;
+} INTERNALMSG, * PINTERNALMSG, FAR * LPINTERNALMSG;
+
 typedef struct tagQUEUE{
-                WORD wNext;
-                HANDLE hOwner;
-                WORD wMsgSize;
-                WORD wWaitMsgs;
-                WORD wNextMsg;
-                WORD wNextAvail;
-                WORD wQueueEnd;
-                DWORD dwTime;
-                DWORD dwPos;
-                WORD reserved;
-                DWORD dwExtra;
-                DWORD reserved2;
-                DWORD dwLParam;
-                WORD wParam;
-                WORD wMsg;
-                HANDLE hWnd;
-                BOOL bPostQMsg;
-                WORD wExitCode;
-                HANDLE hInSend;
-                HANDLE hNextReply;
-                HANDLE hNextServe;
-                WORD wQueueFlags;
-                WORD wQueueState;
-                BYTE Msgs[1];
+	WORD NextQueue;
+	HANDLE OwningTask;
+	WORD MessageSize;
+	WORD NumMessages;
+	WORD ReadPtr;
+	WORD WritePtr;
+	WORD Size;
+	LONG MessageTime;
+	POINT MessagePoint;
+	WORD reserved;
+	DWORD ExtraInfo;
+	WORD reserved2;
+	LONG SendMessageLParam;
+	WORD SendMessageWParam;
+	WORD SendMessageMessage;
+	HWND SendMessageHWnd;
+	WORD QuitFlag;
+	int ExitCode;
+	WORD flags;
+	DWORD reserved3;
+	WORD ExpWinVersion;
+	WORD SendingHQ;
+	WORD sendmsg_helper1;
+	WORD sendmsg_helper2;
+	WORD PaintCount;
+	WORD TimersCount;
+	WORD ChangeBits;
+	WORD WakeBits;
+	WORD WakeMask;
+	WORD SendMessageResult1;
+	WORD SendMessageResult2;
+	WORD Hook;
+	BYTE Hooks2[30];
+	INTERNALMSG MessageArrayStart[1];
 } QUEUE;
 typedef QUEUE * PQUEUE;
 typedef QUEUE NEAR * NPQUEUE;
 typedef QUEUE FAR * LPQUEUE;
+
+#define HQUEUE HGLOBAL
+
+HQUEUE WINAPI SetTaskQueue(HTASK, HQUEUE);
 
 typedef struct tagWNDCLASSEX {
 	UINT	cbSize;
@@ -139,6 +158,30 @@ typedef CLASSINFO	*PCLASSINFO;
 typedef CLASSINFO NEAR	*NPCLASSINFO;
 typedef CLASSINFO FAR	*LPCLASSINFO;
 
+/* Global Data */
+extern char DebugBuffer[100];
+extern WORD USER_HeapSel;  /* USER heap selector */
+extern char szSysError[0x14];
+extern char szDivZero[0x14];
+extern char szUntitled[0x14];
+extern char szError[0x14];
+extern char szOk[0x14];
+extern char szCancel[0x14];
+extern char szAbort[0x14];
+extern char szRetry[0x14];
+extern char szIgnore[0x14];
+extern char szYes[0x14];
+extern char szNo[0x14];
+//char szClose[0x14]; not found in user.exe resources
+extern char szAm[0x14];
+extern char szPm[0x14];
+
+extern int CBEntries;
+extern int DefQueueSize;
+
+extern char DISPLAY[];
+extern HDC tempHDC;
+
 
 #ifdef DEBUG
 #define FUNCTION_START \
@@ -149,15 +192,83 @@ typedef CLASSINFO FAR	*LPCLASSINFO;
 {\
 	OutputDebugString(__FUNCTION__ " end\r\n");\
 }
+
+
 #define TRACE(...) \
 	{ \
-		char DebugBuffer[100]; \
-		sprintf(DebugBuffer, __VA_ARGS__); \
+		wsprintf(DebugBuffer, __VA_ARGS__); \
 		OutputDebugString(DebugBuffer); \
 		OutputDebugString("\r\n"); \
 	}
+
+#define WARN(...) \
+	{ \
+		OutputDebugString("WARNING: "); \
+		TRACE(__VA_ARGS__); \
+	};
+
+#define FIXME(...) \
+	{ \
+		OutputDebugString("FIXME: "); \
+		TRACE(__VA_ARGS__); \
+	};
 #else
 #define FUNCTION_START
 #define FUNCTION_END
 #define TRACE
+#define WARN
+#define FIXME
 #endif
+
+
+#define IDS_WINDOWS 0x00					// Windows
+#define IDS_TYPEAHEAD 0x07					// TypeAhead
+#define IDS_DEFAULTQUEUESIZE 0x0f			// DefaultQueueSize
+#define IDS_SYSTEMERROR 0x4b				// System Error
+#define IDS_DIVIDEBYZERO 0x4c				// Divede By Zero or Overflow Error
+#define IDS_UNTITLED 0x4d					// Untitiled
+#define IDS_ERROR 0x4e						// Error
+#define IDS_OK 0x54							// Ok
+#define IDS_CANCEL 0x55						// Cancel
+#define IDS_ABORT 0x56						// Abort
+#define IDS_RETRY 0x57						// Retry
+#define IDS_IGNORE 0x58						// Ignore
+#define IDS_YES 0x59						// Yes
+#define IDS_NO 0x5a							// No
+#define IDS_AM 0x5c							// am
+#define IDS_PM 0x5d							// pm
+
+
+/* Varoius undocumented protos */
+HANDLE WINAPI FarGetOwner( HGLOBAL handle );
+int WINAPI SetSpeed(int rate);
+VOID WINAPI Resurrection(HDC hdc, WORD w1, WORD w2, WORD w3, WORD w4, WORD w5, WORD w6);
+WORD WINAPI LocalCountFree();
+WORD WINAPI LocalHeapSize();
+#define GlobalPtrHandle(lp) \
+  ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))
+
+#define     GlobalUnlockPtr(lp)      \
+                GlobalUnlock(GlobalPtrHandle(lp))
+
+#define GlobalFreePtr(lp) \
+  (GlobalUnlockPtr(lp),(BOOL)GlobalFree(GlobalPtrHandle(lp)))
+
+#define GlobalAllocPtr(flags, cb) \
+  (GlobalLock(GlobalAlloc((flags), (cb))))
+
+
+void far * _fmemcpy(void far * s1, void const far * s2, unsigned length);
+void far * _fmemset (void far *start, int c, unsigned int len);
+int _islower(int c);
+int _isupper(int c);
+int toupper(int c);
+int _tolower(int c);
+int isalnum(int c);
+int isalpha(int c);
+int _fstrnicmp(char const far *s1, const char far *s2, unsigned int n);
+char far *itoa(int i);
+char far *uitoa(unsigned int i);
+char far *itox(int m);
+
+

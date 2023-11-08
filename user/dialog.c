@@ -164,10 +164,10 @@ static LPCSTR DIALOG_GetControl16( LPCSTR p, DLG_CONTROL_INFO *info )
 
     p += *p + 1;
 
-//    TRACE("   %s %s %d, %d, %d, %d, %d, %08lx, %p\n",
-//          debugstr_a(info->className),  debugstr_a(info->windowName),
-//          info->id, info->x, info->y, info->cx, info->cy,
-//          info->style, info->data );
+    TRACE("   %s %s %d, %d, %d, %d, %d, %08lx, %p\n",
+          info->className,  info->windowName,
+          info->id, info->x, info->y, info->cx, info->cy,
+          info->style, info->data );
 
     return p;
 }

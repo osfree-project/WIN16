@@ -3,22 +3,9 @@
  * but TWIN uses global heap instead of local. Also seems original uses standard application atom table,
  * TWIN uses its own atom table.
  */
-#include <string.h>
-#include <ctype.h>
 
 #include "user.h"
 
-#define GlobalPtrHandle(lp) \
-  ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))
-
-#define     GlobalUnlockPtr(lp)      \
-                GlobalUnlock(GlobalPtrHandle(lp))
-
-#define GlobalFreePtr(lp) \
-  (GlobalUnlockPtr(lp),(BOOL)GlobalFree(GlobalPtrHandle(lp)))
-
-#define GlobalAllocPtr(flags, cb) \
-  (GlobalLock(GlobalAlloc((flags), (cb))))
 
 /* MSWin dialog class name */
 #define	TWIN_DIALOGCLASS "#32770"
@@ -69,7 +56,7 @@ AtomHashString(LPCSTR lp,int far *lplen)
 
 	/* convert the string to an internal representation */
 	for(p=(LPSTR)lp,q=0,len=0;(ch=*p++);len++)
-		q = (q<<1) + islower(ch)?toupper(ch):ch;
+		q = (q<<1) + _islower(ch)?toupper(ch):ch;
 
 	/* 0 is reserved for empty slots */
 	if(q == 0)
@@ -155,7 +142,8 @@ GetAtomNameEx(ATOMTABLE far *at,ATOM atom,LPSTR lpstr,int len)
 			}
 			return (UINT)lstrlen(lpstr);
 		} else {
-			wsprintf(lpstr,"#%d",lp->q);
+			*lpstr='#';
+			lstrcpy(lpstr+1, itoa(lp->q));
 			return (UINT)lstrlen(lpstr);
 		}
 	}
@@ -181,7 +169,7 @@ FindAtomEx(ATOMTABLE far *at,LPCSTR lpstr)
 		if(lp->q == q) {	
 			if(HIWORD(lpstr) == 0)
 				return ATOMBASE + index;
-			if(_fstricmp(&at->AtomData[lp->idx],lpstr) == 0)
+			if(lstrcmpi(&at->AtomData[lp->idx],lpstr) == 0)
 				return ATOMBASE + index;
 		}
 	}
@@ -372,7 +360,7 @@ SearchClass(LPCLASSINFO lpClassType, LPCSTR lpClassStr,
 	    else
 		GetAtomNameEx(&ClassTable,
 			lpClass->atmClassName,lpAtomString,80);
-	    if((!_fstricmp(lpAtomString,lpClassName)) &&
+	    if((!lstrcmpi(lpAtomString,lpClassName)) &&
 		(!hModule || (lpClass->wndClass.hInstance == hModule)))
 		return lpClass;
 	}
@@ -511,10 +499,10 @@ RegisterClassEx(const WNDCLASSEX far *lpwcx)
 
 	FUNCTION_START
 
-//    APISTR((LF_APICALL, "RegisterClassEx(WNDCLASS *=%x)\n", lpwcx));
+    TRACE("RegisterClassEx(WNDCLASS *=%x)", lpwcx);
     lpClassInfo = InternalRegisterClassEx(lpwcx);
     atmClass = (lpClassInfo)?lpClassInfo->atmClassName:(ATOM)0;
-//    APISTR((LF_APIRET, "RegisterClassEx: returns ATOM %x\n",atmClass));
+    TRACE("RegisterClassEx: returns ATOM %x",atmClass);
     return atmClass;
 
 }
@@ -531,7 +519,7 @@ RegisterClass(const WNDCLASS far *lpwc)
 
 	FUNCTION_START
 
-//    APISTR((LF_APICALL, "RegisterClass(WNDCLASS *=%x)\n", lpwc));
+    TRACE("RegisterClass(WNDCLASS *=%x)", lpwc);
 
     wcx.cbSize = sizeof(WNDCLASSEX);
     wcx.style = lpwc->style;
@@ -547,7 +535,7 @@ RegisterClass(const WNDCLASS far *lpwc)
     wcx.hIconSm = (HICON)0;
 
     atom = RegisterClassEx(&wcx);
-//    APISTR((LF_APIRET, "RegisterClass: returns ATOM %x\n",atom));
+    TRACE("RegisterClass: returns ATOM %x",atom);
     return atom;
 
 }
@@ -721,14 +709,14 @@ GetClassInfo(HINSTANCE hInstance, LPCSTR lpszClassName, LPWNDCLASS lpwc)
 
 	FUNCTION_START
 
-//    APISTR((LF_APICALL, "GetClassInfo(HINSTANCE=%x,LPCSTR=%s,LPWNDCLASS=%x)\n",
-//	hInstance, 
-//	HIWORD(lpszClassName) ? lpszClassName : "ATOM",
-//	lpwc));
+    TRACE("GetClassInfo(HINSTANCE=%x,LPCSTR=%s,LPWNDCLASS=%x)",
+	hInstance, 
+	HIWORD(lpszClassName) ? lpszClassName : "ATOM",
+	lpwc);
 
-    if (!GetClassInfoEx(hInstance, lpszClassName, &wcx)) {
-//    	APISTR((LF_APIFAIL, "GetClassInfo: returns BOOL FALSE\n"));
-	return (FALSE);
+	if (!GetClassInfoEx(hInstance, lpszClassName, &wcx)) {
+		TRACE("GetClassInfo: returns BOOL FALSE\n");
+		return (FALSE);
     }
 
     lpwc->style = wcx.style;
@@ -742,7 +730,7 @@ GetClassInfo(HINSTANCE hInstance, LPCSTR lpszClassName, LPWNDCLASS lpwc)
     lpwc->lpszMenuName = wcx.lpszMenuName;
     lpwc->lpszClassName = wcx.lpszClassName;
 
-//    APISTR((LF_APIRET, "GetClassInfo: returns BOOL TRUE\n"));
+    TRACE("GetClassInfo: returns BOOL TRUE");
     return (TRUE);
 
 }
