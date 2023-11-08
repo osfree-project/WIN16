@@ -19,3 +19,6 @@
 [submodule "programs/pifedit"]
 	path = programs/pifedit
 	url = https://github.com/osfree-project/pifedit
+[submodule "programs/taskman"]
+	path = programs/taskman
+	url = https://github.com/osfree-project/taskman

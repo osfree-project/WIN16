@@ -56,18 +56,18 @@ static void ReadSetupReg()
     LPKEYSTRUCT lpKeyStruct;
     HKEY hk;
 
-    if (!GetWindowsDirectory(buf,_MAX_PATH)) 
-	getcwd(buf,_MAX_PATH);
-    lstrcat(buf,"/setup.reg");
-    if ((hf = _lopen(buf,READ)) == HFILE_ERROR)
-	return;
-    dwFileSize = _llseek(hf,0,2);
-    lpBuffer = (LPSTR) GlobalAllocPtr(GPTR, dwFileSize+2);
-    _llseek(hf,0,0);
-    _lread(hf,lpBuffer,dwFileSize);
-    _lclose(hf);
+	if (!GetWindowsDirectory(buf,_MAX_PATH)) getcwd(buf,_MAX_PATH);
+	if (buf[lstrlen(buf)-1]!='\\') lstrcat(buf, "\\");
+	lstrcat(buf,"setup.reg");
 
-    ptr = lpBuffer;
+	if ((hf = _lopen(buf,READ)) == HFILE_ERROR) return;
+	dwFileSize = _llseek(hf,0,2);
+	lpBuffer = (LPSTR) GlobalAllocPtr(GPTR, dwFileSize+2);
+	_llseek(hf,0,0);
+	_lread(hf,lpBuffer,dwFileSize);
+	_lclose(hf);
+
+	ptr = lpBuffer;
     while (i < dwFileSize) {
 	while ((lpBuffer[i] != '\n') && (i < dwFileSize))
 	    i++;
@@ -105,11 +105,54 @@ static inline void fix_win16_hkey( HKEY *hkey )
     if (*hkey == 0 || *hkey == (HKEY)1) *hkey = HKEY_CLASSES_ROOT;
 }
 
+static WORD StringHash(LPCSTR str)
+{
+	WORD i, hash = 0;
+	LPDATHEADER lpDatHeader;
+
+//    TRACE("%x, %s, %x\n", entries, str, len);
+
+	lpDatHeader=(LPDATHEADER)GlobalLock(Globals.Registry);
+
+	for (i = 0; i < lstrlen(str); i++) hash ^= AnsiUpperChar(str[i]);
+	hash=hash % lpDatHeader->hashsize;
+	GlobalUnlock(Globals.Registry);
+	return hash;
+}
+
+static void AddString(LPCSTR str)
+{
+	LPDATHEADER lpDatHeader;
+	LPDATNAVIGATION lpDatNavigation[1];
+	WORD hash=StringHash(str);
+
+	lpDatHeader=(LPDATHEADER)GlobalLock(Globals.Registry);
+
+	lpDatNavigation=(LPDATNAVIGATION)GlobalLock(Globals.EntryTable);
+	if (lpDatNavigation[hash+1]==hash+1)	// Empty busket, so create new string
+	{
+		lpDatHeader->dwEntries++;	// Add one more entry for string info
+		GlobalUnlock(Globals.EntryTable); // Allocate memory for it
+		GlobalReAlloc(Globals.EntryTable, lpDatHeader->dwEntries*sizeof(LPDATNAVIGATION), GMEM_MOVEABLE)
+		lpDatNavigation=(LPDATNAVIGATION)GlobalLock(Globals.EntryTable);
+		// Fill string information entry
+		lpDatNavigation[lpDatHeader->dwEntries]->length=lstrlen(str);
+		// Allocame memory for string
+	}
+
+	GlobalUnlock(Globals.EntryTable);
+	GlobalUnlock(Globals.Registry);
+}
+
 static BOOL InitReg()
 {
+	LPDATNAVIGATION lpDatNavigation[1];
+	lpDatNavigation=(LPDATNAVIGATION)GlobalLock(Globals.EntryTable);
+	GlobalUnlock(Globals.EntryTable);
+
     RootKey.hParentKey = (HKEY)0L;
     if (!RootKey.atomKey)
-	RootKey.atomKey = AddAtomEx(&AtomTable,"HKEY_CLASSES_ROOT");
+	RootKey.atomKey = AddAtomEx(&AtomTable,".classes");
     RootKey.fOpen = TRUE;
     fRegInitialized = TRUE;
     ReadSetupReg();
@@ -469,10 +512,6 @@ RegQueryValueEx
 }
 
 #endif
-
-
-
-
 
 static LPKEYSTRUCT
 InternalFindKey(LPKEYSTRUCT lpKeyStruct, LPCSTR lpszSubKey, WORD wFlag)

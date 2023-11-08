@@ -22,9 +22,9 @@ ADD_COPT = -sg -zc -dDEBUG #-dSTRICT
 #DEBUG    = watcom
 IMPORTS  = GETOPENFILENAME     COMMDLG.1, &
            PRINTDLG       COMMDLG.20
-#           GETCURRENTDIRECTORY WINSMSG.20
-#RESOURCE = $(PATH)rsrc.res
 CLEAN_ADD = *.mbr
+HEAPSIZE = 4k
+STACKSIZE = 8k
 
 !include $(%ROOT)tools/mk/appsw16.mk
 

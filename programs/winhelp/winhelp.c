@@ -209,7 +209,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
     wsprintf(DebugBuffer, "Winmain start: cmdline=%04x:%04x\n", cmdline);
     OutputDebugString(DebugBuffer);
     //wsprintf(DebugBuffer, "Winmain start: cmdline=%c\n", *cmdline);
-    OutputDebugString(DebugBuffer);
+//    OutputDebugString(DebugBuffer);
 #endif
 
     /* Get options */

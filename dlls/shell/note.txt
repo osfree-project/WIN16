@@ -119,7 +119,7 @@ need to add new string to strings.
     deduced from the reg.dat file by me. Mistakes may
     have been made. I claim no rights and give no guarantees for this program.
 
-    Tor Sj?wall, tor@sn.no
+    Tor Sjoewall, tor@sn.no
 */
 
 
@@ -319,7 +319,7 @@ Initialization of REG.DAT
 =========================
 
 REG.DAT is initially created during DLL Initialization. Name of REG.DAT is taken from String reousrce 208.
-Initial content of REG.DAT taken from Resource id=100(9999??). If REG.DAT doesn't exists, then it created from
+Initial content of REG.DAT taken from Resource type=100 id=100. If REG.DAT doesn't exists, then it created from
 resource.
 
 Easter Eggs
@@ -331,15 +331,16 @@ It is animated Logo Flag and Bear, Gates and others.
 Resourses
 =========
 
-SHELL.DLL contains some resources, used mostly for About Dialog. Interesting thing is
-resource 9999 is a empty REG.DAT, used to create initial emoty Registry.
+SHELL.DLL contains some resources, used mostly for About Dialog. 
 
 130   OS Logo                Bitmap 64x64 16 colors
 9997  OS Flag                Bitmap 129x33 16 colors
 9998  Easter Egg             (Gates, other and Bear) Bitmap 171x75 16 colors
+Dialogs:
 100   About Doalog           Standard About Dialog
 200   Exe Find Dialog        Dialog shown for associations if not exe found
 300   Exe Directory location Locate EXE dialog
+Strings:
 208   REG.DAT
 209   Real Mode
 210   Real Mode (Large Frame EMS)
@@ -357,7 +358,20 @@ resource 9999 is a empty REG.DAT, used to create initial emoty Registry.
 225   (not found)
 226   Cannot load COMMDLG.DLL
 227   \nSHELL.DLL: RegCloseKey called with no corresponding RegOpenKey
-9999  ????
 
 100 100   Empty REG.DAT
 1     Version Information Resources
+
+
+
+Undocumented exports
+====================
+104  Create REG.DAT file from 100 100 resource
+105  Calls int 21h AH=19h (get default drive)
+106  Calls int 21h AH=0Eh (set default drive)
+107  Unknown variable
+108  Writes registry to REG.DAT
+109  Unknown
+110  Unknown
+117  Calls int 21h AH=3Bh (SetCurrentDirectory)
+118  Calls int 21h AH=47H (GetCurrentDirectory)

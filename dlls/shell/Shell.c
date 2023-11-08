@@ -72,7 +72,8 @@ BOOL WINAPI LibMain( HINSTANCE hInstance, WORD wDataSegment, WORD wHeapSize, LPS
 			lstrcat(szPath, szFilename);
 
 			if ((Globals.EntryTable=GlobalAlloc(GMEM_MOVEABLE | GMEM_DISCARDABLE | GMEM_LOWER, 0)) &
-			    (Globals.StringTable=GlobalAlloc(GMEM_MOVEABLE | GMEM_DISCARDABLE | GMEM_LOWER, 0)))
+			    (Globals.StringTable=GlobalAlloc(GMEM_MOVEABLE | GMEM_DISCARDABLE | GMEM_LOWER, 0)) &
+			    (Globals.Registry=GlobalAlloc(GMEM_MOVEABLE | GMEM_DISCARDABLE | GMEM_LOWER, 0)))
 			{
 				if ((hfRegistry=_lopen(szPath, 0))==HFILE_ERROR)
 				{
@@ -92,6 +93,7 @@ BOOL WINAPI LibMain( HINSTANCE hInstance, WORD wDataSegment, WORD wHeapSize, LPS
 											_lclose(hfRegistry);
 											UnlockResource(hRegistry);
 											FreeResource(hRegistry);
+											InitReg;
 											return TRUE;
 										}
 										_lclose(hfRegistry);
@@ -118,7 +120,52 @@ BOOL WINAPI LibMain( HINSTANCE hInstance, WORD wDataSegment, WORD wHeapSize, LPS
 int WINAPI WEP( int bSystemExit )
 #pragma on (unreferenced);
 {
+	char szPath[MAX_PATH];
+	char szFilename[MAX_PATH];
+	HFILE hfRegistry;
+	LPSTR lpRegistry;
+
 	// Save regfile here
+	if ((GetWindowsDirectory(szPath, sizeof(szPath))) &
+	    (LoadString(Globals.hInstance, IDS_REGISTRY, szFilename, sizeof(szFilename))))
+	{
+		if (szPath[lstrlen(szPath)-1]!='\\') lstrcat(szPath, "\\");
+		lstrcat(szPath, szFilename);
+		
+		// save header
+		lpRegistry=GlobalLock(Globals.Registry);
+		if ((hfRegistry=_lcreat(szPath, 0))!=HFILE_ERROR)
+		{
+			if (_lwrite(hfRegistry, lpRegistry, GlobalSize(Globals.Registry))!=HFILE_ERROR)
+			{
+				_lclose(hfRegistry);
+			}
+			_lclose(hfRegistry);
+		}
+		GlobalUnlock(Globals.Registry);
+		// save table
+		lpRegistry=GlobalLock(Globals.EntryTable);
+		if ((hfRegistry=_lcreat(szPath, 0))!=HFILE_ERROR)
+		{
+			if (_lwrite(hfRegistry, lpRegistry, GlobalSize(Globals.EntryTable))!=HFILE_ERROR)
+			{
+				_lclose(hfRegistry);
+			}
+			_lclose(hfRegistry);
+		}
+		GlobalUnlock(Globals.EntryTable);
+		// save strings
+		lpRegistry=GlobalLock(Globals.StringTable);
+		if ((hfRegistry=_lcreat(szPath, 0))!=HFILE_ERROR)
+		{
+			if (_lwrite(hfRegistry, lpRegistry, GlobalSize(Globals.StringTable))!=HFILE_ERROR)
+			{
+				_lclose(hfRegistry);
+			}
+			_lclose(hfRegistry);
+		}
+		GlobalUnlock(Globals.StringTable);
+	}
 	return( 1 );
 }
 

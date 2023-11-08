@@ -31,7 +31,7 @@ srcfiles = $(p)hello$(e) &
 #$(p)Debug$(e) &
 
 # defines additional options for C compiler
-ADD_COPT = -xs -i=..$(SEP)..$(SEP)Include -i=c:\watcom\h
+ADD_COPT = -od -xs -i=..$(SEP)..$(SEP)Include -i=c:\watcom\h
 ADD_LINKOPT = LIB commdlg.lib, ole2disp.lib
 
 HEAPSIZE = 18k
