@@ -29,11 +29,11 @@
    so we must use globals instead */
    
 BOARD *g_board; 
-
+HINSTANCE g_hInst;
 
 //#define RAND_MAX 0x7fff
 
-static const DWORD wnd_style =  WS_POPUP | WS_BORDER | WS_CAPTION | WS_SYSMENU;
+static const DWORD wnd_style =  WS_POPUP | WS_BORDER | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
 
 void CheckLevel(BOARD * p_board )
 {
@@ -1065,51 +1065,62 @@ LRESULT CALLBACK MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return( DefWindowProc( hWnd, msg, wParam, lParam ));
 }
 
+/***********************************************************************
+ *
+ *           MAIN_RegisterMainWinClass
+ */
+
+static ATOM MAIN_RegisterMainWinClass(void)
+{
+	WNDCLASS class;
+
+	class.style = CS_HREDRAW | CS_VREDRAW;
+	class.lpfnWndProc = MainProc;
+	class.cbClsExtra = 0;
+	class.cbWndExtra = 0;
+	class.hInstance = g_hInst;
+	class.hIcon = LoadIcon( g_hInst, "WINEMINE" );
+	class.hCursor = LoadCursor( 0, IDC_ARROW );
+	class.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);//(HBRUSH)CreateSolidBrush(RGB(0, 0xFF, 0xFF)); 
+	class.lpszMenuName = "MENU_WINEMINE";
+	class.lpszClassName = "mineclass";
+
+	return RegisterClass(&class);
+}
+
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmdshow )
 {
     MSG msg;
-    WNDCLASS wc;
     HWND hWnd;
     HANDLE haccel;
     char appname[20];
 
-    LoadString( hInst, IDS_APPNAME, appname, sizeof(appname));
+    g_hInst=hInst;
 
-    /*wc.cbSize = sizeof(wc); */
-    wc.style = CS_HREDRAW | CS_VREDRAW;
-    wc.lpfnWndProc = MainProc;
-    wc.cbClsExtra = 0;
-    wc.cbWndExtra = 0;
-    wc.hInstance = hInst;
-    wc.hIcon = LoadIcon( hInst, "WINEMINE" );
-    wc.hCursor = LoadCursor( 0, IDI_APPLICATION );
-    wc.hbrBackground = (HBRUSH)CreateSolidBrush(RGB(0, 0xFF, 0xFF)); 
-    wc.lpszMenuName = "MENU_WINEMINE";
-    wc.lpszClassName = appname;
-    /*wc.hIconSm = LoadImage( hInst, "WINEMINE", IMAGE_ICON,
-                            GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED );*/
-
-    if (!RegisterClass(&wc)) 
-      return FALSE;
-    hWnd = CreateWindow( appname, appname,
-	wnd_style,
-        0, 0, 0, 0,
-        0, 0, hInst, NULL );
-
-    if (!hWnd) 
-      return FALSE;;
-
-    ShowWindow( hWnd, cmdshow );
-    UpdateWindow( hWnd );
-
-    haccel = LoadAccelerators( hInst, MAKEINTRESOURCE(IDA_WINEMINE) );
-    SetTimer( hWnd, ID_TIMER, 1000, NULL );
-
-    while( GetMessage(&msg, 0, 0, 0) ) {
-        if (!TranslateAccelerator( hWnd, haccel, &msg ))
-            TranslateMessage( &msg );
-
-        DispatchMessage( &msg );
+    if (LoadString(hInst, IDS_APPNAME, appname, sizeof(appname)))
+    {
+      if (MAIN_RegisterMainWinClass())
+      {
+      		if (hWnd = CreateWindow( "mineclass", appname,
+    			wnd_style,
+			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+			0, 0, hInst, NULL))
+		{
+		        ShowWindow( hWnd, cmdshow );
+		        UpdateWindow( hWnd );
+		  
+		        haccel = LoadAccelerators( hInst, MAKEINTRESOURCE(IDA_WINEMINE) );
+		        SetTimer( hWnd, ID_TIMER, 1000, NULL );
+		  
+		        while( GetMessage(&msg, 0, 0, 0) ) {
+		            if (!TranslateAccelerator( hWnd, haccel, &msg ))
+		                TranslateMessage( &msg );
+		    
+		            DispatchMessage( &msg );
+		        }
+	        	return msg.wParam;
+		}
+      }
     }
-    return msg.wParam;
+    return FALSE;
 }

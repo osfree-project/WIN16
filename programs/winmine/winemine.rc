@@ -27,6 +27,7 @@
 
 IDA_WINEMINE ACCELERATORS
 {
+//    VK_F1, IDM_NEW, VIRTKEY
     VK_F2, IDM_NEW, VIRTKEY
     "X", IDM_EXIT
 }
@@ -44,36 +45,42 @@ LEDS BITMAP "rc/leds.bmp"
 MINES BITMAP "rc/mines.bmp"
 
 STRINGTABLE BEGIN
-     IDS_APPNAME, "WineMine"
+     IDS_APPNAME, "Minesweeper"
      IDS_NOBODY,  "Nobody"
      IDS_ABOUT,   "Copyright 2000 Joshua Thielen"
 END
 
 MENU_WINEMINE MENU
 BEGIN
-    POPUP "Options" BEGIN
-        MENUITEM "New\tF2",          IDM_NEW
+    POPUP "&Game" BEGIN
+        MENUITEM "&New\tF2",          IDM_NEW
         MENUITEM SEPARATOR
-        MENUITEM "Mark Question",    IDM_MARKQ
+        MENUITEM "&Beginner",         IDM_BEGINNER
+        MENUITEM "&Intermediate",         IDM_ADVANCED
+        MENUITEM "&Expert",           IDM_EXPERT
+        MENUITEM "&Custom...",        IDM_CUSTOM
         MENUITEM SEPARATOR
-        MENUITEM "Beginner",         IDM_BEGINNER
-        MENUITEM "Advanced",         IDM_ADVANCED
-        MENUITEM "Expert",           IDM_EXPERT
-        MENUITEM "Custom...",        IDM_CUSTOM
+        MENUITEM "&Marks (?)",        IDM_MARKQ
+//        MENUITEM "Color",            IDM_COLOR
         MENUITEM SEPARATOR
-        MENUITEM "Exit\tAlt+X",      IDM_EXIT
+        MENUITEM "Best &Times...",    IDM_TIMES
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit\tAlt+X",      IDM_EXIT
     END
-    POPUP "Info" BEGIN
-        MENUITEM "Fastest Times...", IDM_TIMES
-        MENUITEM "About WineMine...", IDM_ABOUT
+    POPUP "&Help" BEGIN
+//        MENUITEM "&Contents\tF1",    IDM_TIMES
+//        MENUITEM "&Search for Help On...",    IDM_TIMES
+//        MENUITEM "&How to Use Help",    IDM_TIMES
+//        MENUITEM SEPARATOR
+        MENUITEM "&About Minesweeper...", IDM_ABOUT
     END
 END
 
 DLG_TIMES DIALOG 0, 0, 160, 80
 STYLE  WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP 
-CAPTION "Fastest Times"
+CAPTION "Best Times"
 BEGIN
-    GROUPBOX        "Fastest Times", -1,  10,  10, 140,  45
+    GROUPBOX        "Best Times", -1,  10,  10, 140,  45
     LTEXT           "Beginner",      -1,  20,  20,  40,   8
     LTEXT           "Advanced",      -1,  20,  30,  40,   8
     LTEXT           "Expert",        -1,  20,  40,  40,   8
