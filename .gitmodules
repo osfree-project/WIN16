@@ -22,3 +22,6 @@
 [submodule "programs/taskman"]
 	path = programs/taskman
 	url = https://github.com/osfree-project/taskman
+[submodule "programs/winmine"]
+	path = programs/winmine
+	url = https://github.com/osfree-project/minesweeper
