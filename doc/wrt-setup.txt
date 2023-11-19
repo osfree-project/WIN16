@@ -1,35 +1,4 @@
 
-Configuring Willows Twin Software for MS Applications.
-
-This is the first of a multi-part message, that will describe how to configure 
-the Willows twin software to run MS Applications.  Although a specific 
-configuration will be described, the same procedures can be modified to run
-in other configurations.  In this message, I discuss specifically configuring
-xwin to run ms applications from a linux partition dedicated to dos/windows.
-
-Configuration
-
-In this example, I have a linux partition with the windows executables that I
-want to run.  I have chosen to NOT use the 'real' windows directory, but to
-have a windows directory in the unix file system.  This allows me to avoid
-writing to the 'real' windows directory, and modifying any 'real' files.  The
-next version of this example will actually use the real directory, and show
-how to map the logical C: and D: drives to their DOS counterparts.
-
-Setup
-
-The essential parts to run the Willows Twin Emulator, xwin, are a version of
-xwin for your platform, the shared library libtwin.so, in either the debug
-or optimized flavors and a Twin Configuration file, twinrc.  As described in
-the Getting Started Guide, you may need to configure your system to run xwin
-by setting up the dynamic loader, in the case of linux it is /lib/ld.so.
-
-I have configured ld.so to recognize where libtwin.so actually lives, but on
-most machines, you can also use the environment variable LD_LIBRARY_PATH as
-a colon separated list of directories that ld.so should search to find dynamic
-libraries.  Once xwin runs you have passed the first milestone, and are now
-ready to start configuring it to run your windows applications.
-
 Configure
 
 The key to configuring Willows TWIN software is to setup a twin configuration
