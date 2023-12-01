@@ -1,0 +1,104 @@
+INFOPLUS
+
+Version 1.35  Released to the public domain.
+
+By Andrew Rossmann, 10/7/90
+
+Originally based on Steve Grant's Public Domain SYSID 4.44.
+
+Usage:  [d:][path]INFOPLUS
+
+A system description for DOS-based PC/XT/AT- and PS/2-class machines.
+INFOPLUS generates 18 screens of information about the host system and
+runs under DOS versions 3.0 and later.
+
+My primary sources of ideas in INFOPLUS were Ray Duncans "Advanced MS-DOS"
+and Terry Dettman's "DOS Programmer's Reference."  The ideas of Prakash
+Chandra,Terje Mathisen,Bob Smith, and others appear in various places.
+Also James Howard, John Levine, Mark Aitchison.
+
+Some of the techniques INFOPLUS uses are not documented or officially
+supported by either IBM or Microsoft.  Where possible I have followed
+the undocumented routine with a comment describing my source for the
+technique.
+
+        INFOPLUS.PAS       - Main file source code
+        PAGE_xx.INC        - Each of the pages
+        INFOPLUS.ASM       - assembly language procedures
+        INFOPLUS.PIF       - Windows 3 Program Information File
+        INFOPLUS.ICO       - Icon for Windows 3 Program Manager
+
+  Using INFOPLUS is easy. Just use the PGUP and PGDN keys to move from page
+to page. HOME and END will move to the first and last pages, respectively.
+If you hit ENTER, you can then type in the page you want to go to. Hit ESC
+to end the program. Some pages won't fit all on one screen, for that you hit
+the DOWN ARROW key to get more information. If you wish a hard copy, just
+hit SHIFT-PrtSc or SHIFT-PRINT or PrintScrn, depending on your keyboard.
+  If you have trouble with bad colors on the screen, try setting your computer
+to MODE MONO or MODE BW80 before starting INFOPLUS. INFOPLUS will use a black
+and white palette if either of these modes are detected.
+  If you are in a 40 column mode, INFOPLUS will run in 80 column, but return
+you back to 40 columns upon completion. 132 column modes are not supported
+because Turbo Pascal's CRT unit only works with standard modes, and I don't
+want to give up all the nice features.
+  INFOPLUS does support more than 25 lines, although most of the pages are set
+up to look best at 25 lines. Some display modes do not properly return the
+correct number of lines.
+
+WINDOWS 3.0 NOTES!!!
+     You can add INFOPLUS to the Program Manager. Open the group that you
+     want to put INFOPLUS in. Select File, New, Program item. Use whatever
+     you want for the Description. For Command line, enter INFOPLUS.EXE,
+     preceed with a drive and directory if not on your PATH. If you hit
+     ENTER, and end up at the screen, select File, Properties. Hit Change
+     Icon, and for the file name, use INFOPLUS.ICO. Then OK everything.
+
+
+Personal info:
+
+     My computer is a Gateway 2000 386/25 running MS-DOS 4.01, Windows 3,
+     an ESDI drive, and an ATI VGA Wonder card.
+     Compiled under Turbo Pascal 5.5 and Turbo Assembler 2.00.
+     Much of the additional info came from Ray Duncan's "Advanced MSDOS
+     Programming" second edition (a must get book for anyone interested
+     in low-level stuff.) Also, additional information on the DOS 4 boot
+     sector format came from "The Norton Troubleshooter." A book that
+     comes with The Norton Utilities 4.5. Even more information comes from
+     Ralf Brown's interrupt list, which lists hundreds of goodies. It's
+     available via BBS's, and resides on SIMTEL20 and many other public
+     access UNIX sites.
+       Additional information on XMS and DPMI came from the book 'Extending
+     DOS' by Ray Duncan (and others.)
+       Information on additional partition values came from numerous people
+     of which I never wrote down their names!!
+       Information on detecting VGA chipsets came from "Advanced Programmer's
+     Guide to Super VGAs" by George Sutty and Steve Blair. Published by Brady.
+       Information on reading the CMOS came from a program posted by Mark
+     Aitchison on USENET.
+
+     Andrew Rossmann
+     Wheeling, IL
+
+     Infoplus BBS, 1-708-537-0247 (1200/2400)
+     RCS Defender BBS, 1-708-390-6603 (1200/2400, 2 lines)
+     Beacon BBS, 1-708-615-0845 (1200/2400)
+     DDSW1 BBS, 1-708-808-7300 (6 lines),
+                1-708-808-7306 (Telebit PEP only!!)
+
+     Unix Mail:
+     andyross@ddsw1.MCS.COM, or <well-connected>!ddsw1!andyross
+     gargoyle!igloo!infopls!andyross
+
+From Steve Grant:
+     Both the source and object code of SYSID are hereby released into the
+     public domain.  Neither version carries any warranty, expressed or
+     implied, of merchantability or fitness for a particular purpose.
+
+     Comments, suggestions, and questions may be addressed to:
+             BIXMail: sjgrant
+             CompuServe: 71101,706
+
+     Steve Grant
+     Long Beach, CA
+     January 13, 1989
+
