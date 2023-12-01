@@ -1,0 +1,50 @@
+  This page lists all the device drivers in use. Some are internal to DOS,
+and others are loaded with DEVICE= lines in CONFIG.SYS.
+
+  The information shown is:
+
+Device: The name of the driver, if given.
+
+Units:  For a block device, the number of units inside of it.
+
+Header: The address where the driver resides.
+
+Attributes: There are 16 bits that define what the driver does. Numbering
+            left to right, with left being 15:
+
+            15: 1 = character device, 0 = block device
+            14: 1 if IOCTL (special commands) are supported
+            13: if a block device, then 1 means to use the boot sector to
+                get information, 0 to use media ID byte.
+                if a character device, then 1 means you can output till
+                busy
+            12: unused (0)
+            11: 1 if open/close/removable media is supported
+            10: unused (0)
+            09: unused (0)
+            08: unused (0)
+            07: unused (0)
+            06: 1 if generic IOCTL and get/set logical drive supported
+            05: unused (0)
+            04: 1 if the CON device, and fast output (Int 29h) supported
+            03: 1 if the CLOCK$ device
+            02: 1 if the NUL device
+            01: if a block device, then 1 means 32-bit sectors supported
+                if a character device, then 1 means it is standard output
+            00: 1 if device is standard input
+
+Strategy: This is the address used to setup a call.
+
+Interrupt: The address called to execute a command.
+
+Some common driver names:
+
+EMMXXXX0: an EMS driver
+XMMXXXX0: an XMS driver
+\MMXXXX0: EMS driver disabled under Windows 3 (which supplies its own.)
+SMARTAAR: Disk cache (older versions of SmartDrive)
+SETVERXX: SETVER.EXE
+
+  If no name is given, but there is a number under Units, then that is
+typically a disk or RAMdrive driver.
+

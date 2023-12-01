@@ -1,0 +1,14 @@
+  This page displays information about your hard disk's partition table.
+
+  The partition table is used by DOS on startup so that it knows where the
+information is. It also keeps track of multiple partitions on a single hard
+disk.
+
+  INFOPLUS will only display the first 4 partitions, since more than 4 is
+not standardized.
+
+  INFOPLUS currently does not display logical drives in an extended
+partition.
+
+  Some system ID numbers are duplicated by different operating systems.
+I've tried to pick the most common one to use as a name.

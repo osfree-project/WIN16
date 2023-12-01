@@ -1,0 +1,170 @@
+  On this page, you will get ALOT of general information about DOS.
+
+DOS version: Your current version. If DR DOS is detected, you also see it's
+             version.
+
+             INFOPLUS will display the OS/2 version number if you are running
+             it in a Compatibility box.
+
+             Under DOS 5, if you have tried to use the SETVER command to
+             change the version of DOS that INFOPLUS normally looks for,
+             you will be told what it was changed to. (INFOPLUS knows how
+             to find the true DOS version, bypassing SETVER.) INFOPLUS will
+             also tell you the revision letter of DOS 5, whether or not it
+             is using the HMA, and whether or not it is based in ROM.
+
+OEM serial number: Some versions of DOS support a number.
+
+System date/time: The current date and time as given by DOS. It is shown
+                  in the format of your current country settings.
+
+Command load paragraph: The memory segment where programs are loaded. The
+                        lower this number is, the more memory you have
+                        available.
+
+Ctrl-C check: This is the setting of the BREAK command. When OFF, you can
+              stop a DOS command only when it is writing to the screen.
+              When ON, you can stop it during copies and disk reads.
+
+Disk verify: This is the setting of the VERIFY command. When ON, DOS will
+             attempt to re-read any data written to disk. It only checks if
+             it can read it. It does NOT compare what it reads back with
+             what it wrote.
+
+Switch prefix character: For DOS commands (and some programs) this is the
+                         character you use to let a program know that it is
+                         being given a command (like /H). Many programs are
+                         hard coded to use the '/' character. Many Unix
+                         users prefer using '-'. When the prefix is set to
+                         '-', you can use '/' in paths, instead of '\'.
+                         Starting with DOS 5, this character is set to '/',
+                         and cannot be changed.
+
+\DEV\ prefix: When you access devices such as PRN or LPT1, you can also use
+              \DEV\PRN. This was probably to make it work similar to Unix.
+
+Reset boot: This is a flag in the BIOS data area that lets the computer
+            know what to do when you hit CTL-ALT-DEL.
+
+Boot disk: The drive used to boot the computer. This is shown only for DOS
+           4 or newer.
+
+DOS flags: This is the memory address for special flags that let TSR's and
+           similar know when it is safe to make a DOS call while another
+           program is active.
+
+Printer echo: This is toggled by typing Ctl-P, or Ctl-PrtScr. When on, any
+              text output by DOS will be echoed to the printer.
+
+PrtSc status: This lets you know if Shift-PrtScr is available, and if the
+              last attempt was successfull.
+
+Memory allocation: When a program is loaded, it can request blocks of
+                   memory from DOS.
+
+                   There are 3 ways DOS will look for one:
+
+                     First fit: Start at the bottom of memory, and search
+                                forward until it finds one that is big enough
+                                or larger that what's requested.
+                     Best fit:  Search through all available blocks, and find
+                                the one closest to the size requested.
+                     Last fit:  Start at the top of memory, and search
+                                backward until it finds one that is big
+                                enough or larger than what's requested.
+
+                   The default is First fit, and outside of a running
+                   program, any other settings can confuse DOS.
+
+                   WIth the introduction of DOS 5, there are several
+                   additional ways DOS will look for free memory. The new
+                   ways involve searching the Upper Memory Blocks in
+                   addition to conventional memory.
+
+Buffers: These are the amount of BUFFERS allocated in CONFIG.SYS (or
+         defaulted to by DOS.)
+
+         DOS 4 also supports up to 8 read-ahead buffers. When a disk is
+         being read, and the sector being read is immediately after the
+         one previously read, DOS will read up to 8 sectors immediatlely.
+         That way, if they are needed, they will come from the read-ahead
+         buffer, instead of the disk.
+
+         DOS 4 also supports placing it's buffers in EMS memory. If so, it
+         will round the count UP to the next multiple of 30 (30 buffers
+         fit in each 16K EMS page.) If EMS is being used, INFOPLUS will
+         tell you which EMS handle is being used. DOS 5 does NOT support
+         the placing of buffers in EMS memory.
+
+         If DOS 5 is loaded high, the buffers will be placed in the HMA,
+         unless too many are specified. In that case, it uses conventional
+         memory.
+
+File handles: Most current programs access files using what's called
+              'handles'. This is set by the FILES statement in your
+              CONFIG.SYS. Every program will have 5 of them used. These
+              are for CON, error device (always the screen,) PRN, AUX
+              (COM1), and NUL. There is a second 'screen' that gives
+              detailed information about currently open files.
+
+File Control Blocks: An older method of access files used special blocks.
+                     These methods were superceeded by handles, although a
+                     few special functions still require using FCBs. The
+                     default by DOS is FCBS=4,0 and typically never needs
+                     changing.
+
+                     Under DOS 4, FCBs can be dangerous. If a disk drive
+                     partition is larger than 32 Megabytes, some of the
+                     values in the block can 'roll over' at the 32M mark.
+                     This can cause data to write in the wrong place! To
+                     prevent disaster, DOS 4 will attempt to load
+                     SHARE.EXE. SHARE translates FCBs into handles. It also
+                     increases the number of FCBs to 16,8. You can regain
+                     some memory by specifying FCBS=4,1 in your CONFIG.SYS.
+                     This prevents SHARE from increasing the size.
+
+                     DOS 5 has full support for large disks built-in. DOS 5
+                     does NOT support the second parameter of FCBS= (the
+                     protected FCB parameter.)
+
+Stacks: When an interrupt occurrs, DOS will select a stack that is used to
+        temporarily store data. This can sometimes cause problems with
+        programs. There are two values, the number of stacks, and the size.
+        If no STACKS=x,y is found in CONFIG.SYS, DOS will use 0,0 for a
+        PC/XT, and 9,128 for all others. You can regain memory by
+        specifying 0,0. This tells DOS to use the current program stack to
+        hold data. Some disk caches recommend using STACKS=x,128, where x
+        is the number of sectors per track of your hard disk.
+
+UMBs: Under DOS 5, Upper Memory Blocks (memory between 640K and 1M) can
+      be part of the memory allocation chain.
+
+International information: This reports on various settings that programs
+                           can use.  This allows programs to display data
+                           in a format that users in many countries are
+                           used to seeing.
+
+  The second 'page' of page 9 displays the locations of your file handle
+tables.  Each table can hold information on several handles.  The total
+sizes of all tables should add up to the FILES= setting in your CONFIG.SYS.
+If you don't specify one, DOS picks a default.  Also, under Windows 3 in
+enhanced mode, each window can have some private handles of it's own.  The
+amount is set using the PerVMFILES= entry in SYSTEM.INI, under the [386enh]
+section.  The default is 10.  (If you have FILES=30, you will see 40 files
+under Windows.)
+
+  Under each table entry is a listing of any open files in that table.
+Information is displayed for each one giving which modes it was opened
+with, date and time last modified, current size, and owners PSP. You can
+use the PSP listing on page 4 to see which program has opened the file.
+
+  Most of the time, you will only see 3 files open (CON, AUX, and PRN).
+These are the standard DOS devices.  You will usually only see other files
+if they are being held open by TSR's, or you have shelled out of another
+program that didn't close it's files.
+
+  Under multitaskers such as Windows or Desqview, you can see most of the
+open files. (Under Windows 3 enhanced, each window can have files that are
+exclusive to it. You won't see those.) The owner PSP you see may not be
+displayed on page 4 if the owner is running in another window.
+

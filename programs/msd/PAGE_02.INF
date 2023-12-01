@@ -1,0 +1,31 @@
+  On this page, INFOPLUS attemts to determine the CPU and math coprocessor
+that you have.
+
+  The CPU is determined by exploiting minor differences between the CPU's.
+INFOPLUS can detect the 8088, 8086, V20, V30, 80188, 80186, 80286, i386,
+i486, and i486SX.  Currently, INFOPLUS cannot distinguish between the
+i386SX and the i386DX. Also, the AMD clones (Am386DX and Am386SX) are
+indistinguishable from their Intel counterparts.
+
+                  **********The i386 POPAD bug**********
+
+  If an i386 is detected, a test for a minor bug is done.  Failure of this
+test is nothing to worry about.  The majority of CPU's will fail.
+
+  TECHNICAL NOTE:  On many 386's, the EAX register can be lost after a
+POPAD (POP All Double, the complement of PUSHAD) is performed.  The most
+common fix is to put a NOP immediately after the POPAD.  This is a very
+well known bug, and programs that use 386 specific code should work around
+it.
+
+  For a 286/386/486, INFOPLUS will inform you of some of the special
+registers and status bits of these CPUs.
+
+  In Coprocessors, INFOPLUS can detect the 8087, 80287, and 80387.  It also
+informs on whether the BIOS flag has been set.  On PC/XT computers, this
+bit is determined by a DIP switch setting.  On AT's and better, by a CMOS
+setting.
+
+  For a 386/486, INFOPLUS checks to see if the BIOS has set a flag for the
+Weitek coprocessor.  Not all BIOSs support this flag.
+

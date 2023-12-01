@@ -2,9 +2,9 @@
 ;
 ;       INFOPLUS.ASM
 ;
-;       Version 1.35
+;       Version 1.57
 ;
-;       Six subprograms used by INFOPLUS.PAS:
+;       Eleven subprograms used by INFOPLUS.PAS:
 ;
 ;               CPUID           - identifies host CPU and NDP (if
 ;                                       any)
@@ -17,20 +17,21 @@
 ;               CTICK           - Chips & Technologies VGA check
 ;               TSENGCK         - Tseng VGA check
 ;               ZYMOSCK         - ZyMOS VGA check
+;               BUGTST          - Test for 386 POPAD bug
 ;
 ;       Originally by:
 ;       Steve Grant
 ;       Long Beach, CA
 ;       January 13, 1989
 ;
-;       mods by Andrew Rossmann (10/7/90)
+;       mods by Andrew Rossmann (6/26/93)
 ;--------------------------------------------------------------------
 
 .286P
 .8087
 
         public  CPUID, DISKREAD, LONGCALL, ATIINFO, ALTINTR, ALTMSDOS
-        public  CIRRUSCK, CTICK, TSENGCK, ZYMOSCK
+        public  CTICK, TSENGCK, ZYMOSCK, CIRRUSCK, BUGTST
 
 CODE    segment byte
 
@@ -497,18 +498,24 @@ assume cs:CODE, ds:DATA, es:nothing
         int     21h
         cmp     al,4                    ;DOS 4?
         jge     read4                   ;We have 4 or newer, so use extended
+        cmp     ax,1d04h                ;use old for anything less than 3.30
+        jle     read3
+;
+;Check bit 1 of the device attributes bit. If it's set, then the driver
+;supports use of the extended access method
+;
         push    es                      ;save regs
         push    ds
         mov     dl,drive                ;get drive number (0=A,1=B,etc)
+        inc     dl                      ;func uses 0=dflt, 1=A, etc..
         mov     ah,32h                  ;get driver parameter block
         int     21h
         push    ds                      ;move ds to es
         pop     es
         pop     ds                      ;restore original ds
         les     bx,[es:bx + 12h]        ;point ES:BX to device driver
-        mov     ax,[es:bx + 4]          ;get device attributes
+        test    word ptr [es:bx + 4],2  ;test device attributes
         pop     es
-        test    ax,2                    ;check if bit 1 set
         jz      read3                   ;wasn't, so use old method
 
 read4:
@@ -588,8 +595,16 @@ addr    equ     [bp + 10]
         lodsw                           ;load ES
         mov     es,ax
         lodsw                           ;load Flags
+        and     ax,008D5h               ;mask out non-standard bits
+        push    bx                      ;I need a register!
+        mov     bx,ax
+        pushf                           ;get current flags in AX
+        pop     ax
+        and     ax,0F72Ah               ;mask out normal bits
+        or      ax,bx                   ;set needed flags
         push    ax
         popf
+        pop     bx
         pop     ds                      ;get rest of regs
         pop     si
         pop     ax
@@ -597,8 +612,8 @@ addr    equ     [bp + 10]
         pushf                           ;save flags and modified regs
         push    es
         push    di
-        mov     es,cs:save_ds           ;get regs pointer into ES:DI
-        mov     di,cs:save_si
+        mov     es,cs:ds_save           ;get regs pointer into ES:DI
+        mov     di,cs:si_save
         cld                             ;go forward
         stosw                           ;save AX
         mov     ax,bx
@@ -707,8 +722,16 @@ altcont:
         lodsw                           ;load ES
         mov     es,ax
         lodsw                           ;load Flags
+        and     ax,008D5h               ;mask out non-standard bits
+        push    bx                      ;I need a register!
+        mov     bx,ax
+        pushf                           ;get current flags in AX
+        pop     ax
+        and     ax,0F72Ah               ;mask out normal bits
+        or      ax,bx                   ;set needed flags
         push    ax
         popf
+        pop     bx
         pop     ds                      ;get rest of regs
         pop     si
         pop     ax
@@ -786,15 +809,15 @@ CIRRUSCK        proc    far
         mov     ax,40h          ;BIOS segment
         mov     es,ax
         mov     dx,es:[63h]     ;get CRTC address
-        push    dx              ;save
 ; clear Start Address register in CRTC (index 0Ch)
         mov     al,0ch          ;index of Start Address reg
         out     dx,al           ;select
         inc     dx
+        mov     ah,al
         in      al,dx           ;get current value
-        mov     ah,al           ;save
-        mov     al,0ch
+        xchg    ah,al           ;save
         push    ax
+        push    dx
         xor     al,al
         out     dx,al           ;clear start address reg
         dec     dx
@@ -804,8 +827,22 @@ CIRRUSCK        proc    far
         inc     dx
         in      al,dx           ;read unlock password
         mov     ah,al           ;save
+        mov     bh,al           ;save again
+        mov     ch,cl
 ; enable extended regs
+        mov     cl,4            ;nibble swap rotate count
         mov     dx,3c4h         ;address of sequencer
+        mov     bl,6            ;get extension control value
+        ror     bh,cl           ;compute extensions disable value
+        mov     ax,bx           ;extensions disable
+        out     dx,al           ;disable extensions
+        inc     dx
+        in      al,dx
+        or      al,al           ;disabled?
+        jnz     exit_cirrus
+
+        mov     bh,al           ;save current setting
+        dec     dx
         mov     al,6
         out     dx,al           ;select extension control reg
         inc     dx
@@ -813,28 +850,29 @@ CIRRUSCK        proc    far
         out     dx,al           ;enable extended regs
         in      al,dx           ;read back extension reg
         cmp     al,1
-        jne     not_cirrus      ;wasn't a cirrus
-;disable extended regs
-        mov     al,ah           ;get unlock password
-        ror     al,1            ;compute lock password
-        ror     al,1
-        ror     al,1
-        ror     al,1
-        out     dx,al           ;lock extended regs
+        jne     exit_cirrus     ;wasn't a cirrus
+        ror     bh,cl           ;compute extensions enable value
+        dec     dx
+        mov     ax,bx           ;extensions enable
+        out     dx,ax           ;enable extensions
+        inc     dx
         in      al,dx           ;read extended control reg
-        or      al,al           ;is it 0
-        jne     not_cirrus      ;wasn't cirrus
-        pop     ax              ;restore regs
+        cmp     al,1            ;enabled
+        jne     exit_cirrus     ;wasn't cirrus
         pop     dx
-        out     dx,ax           ;retore registerC
-        mov     ax,1
-        jmp     short end_altcirrus
-not_cirrus:
-        pop     ax              ;restore regs
-        pop     dx
-        out     dx,ax           ;restore registerC
-        xor     ax,ax
-end_altcirrus:
+        dec     dx
+        pop     ax
+        out     dx,ax
+        mov     ah,0
+        mov     al,ch
+        jmp     short end_cirrusck
+exit_cirrus:
+        pop     dx              ;restore CRTC addr
+        dec     dx              ;point to index
+        pop     ax              ;restore CRC value
+        out     dx,ax
+        mov     ax,0
+end_cirrusck:
         ret
 
 CIRRUSCK        endp
@@ -862,7 +900,7 @@ CTICK   proc    far
 ; place vga in normal mode
         mov     dx,46e8h
         in      al,dx
-        and     al,0efh         ;disable setup
+        and     al,03fh
         out     dx,al
         sti
 ; read version extended register
@@ -912,6 +950,8 @@ TSENGCK proc    far
         in      al,dx
         cmp     al,0aah         ;same
         jne     nottseng
+        mov     al,ah           ;restore original settings
+        out     dx,al
         mov     al,1
         jmp     short end_tsengck
 nottseng:
@@ -928,19 +968,44 @@ ZYMOSCK proc    far
 
         mov     dx,3c4h         ;extended reg bank
         mov     al,0bh          ;version reg
-        cli
         out     dx,al
         inc     dx
         in      al,dx           ;get version
-        sti
         and     al,0fh
         cmp     al,2
+        je      end_zymosck
         mov     al,0
-        jmp     short end_zymosck
-        mov     al,1
 end_zymosck:
         ret
 ZYMOSCK endp
+
+BUGTST  proc    far
+;
+; BUGTST.ASM - By: John Lauro
+;              Based on bug found by Jeff Prothero
+;               Adapted for Infoplus by Andrew Rossmann, 7/20/91.
+
+        ASSUME  CS:CODE,DS:DATA,ES:nothing
+.386
+        mov     eax,12345678
+        mov     edx, 0
+        mov     edi, 0
+        pushad
+        popad
+
+; The instruction immediately following popad is the critical
+; instruction.  Simple fix, insert a NOP after popad.
+
+        mov     ecx, [edx+edi]
+
+        cmp     eax, 12345678
+.286
+        mov     al,0
+        je      end_bugtst
+        mov     al,1
+end_bugtst:
+        ret
+BUGTST  endp
 
 code    ends
 
@@ -977,4 +1042,3 @@ extd_bufseg                     dw      ?
 DATA    ends
 
         end
-

@@ -1,0 +1,20 @@
+  On this page, you will get information very specific to your video
+system.
+
+NOTE!!  If you have QEMM 6 or newer, and are using Stealth, some chipsets
+may not be detectable if the ROM is overlayed by High RAM.  It should be
+detectable if it is under the Page Frame.
+
+  INFOPLUS will attempt to determine your display adapter type (CGA, EGA,
+etcc.)  For a VGA, it will then attempt to determine the type of video
+chipset used.  Depending on what's found, you may get extra information
+telling about the type of display and version of chipset used.
+
+  Font and address show the various fonts that are available.  CGA systems
+will have only 1, whereas VGA's typically have 8.
+
+  For an EGA or VGA, you get information on the type of display, the amount
+of memory (NOTE:  INFOPLUS is not capable of getting the amount of memory
+on some VGA chipsets.  It will therefore use a standard VGA call, which
+typically returns 256K for compatibility reasons.)
+

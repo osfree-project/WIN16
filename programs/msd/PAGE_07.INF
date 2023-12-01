@@ -1,0 +1,30 @@
+  This page gives information about the type of keyboard and mouse you
+have.
+
+Keyboard: INFOPLUS checks if you have an enhanced (12 function key)
+          keyboard, and if your computer supports it. It also shows the
+          current state of the various lock keys.
+
+          The buffer holds keystrokes you type ahead. The standard buffer
+          holds 15 keys (each key takes 2 bytes.) Many buffer extenders
+          hook the keyboard at a lower level, and therefore won't show up
+          in the buffer size count.
+
+Internal modem/serial printer: This lets you know if an equipment word bit
+                               is set. This is typically only used in the
+                               PCjr.
+
+Game port: INFOPLUS checks for a game port, and also tells you if the
+           equipment word reports one.
+
+Mouse: If you have a mouse and a Microsoft or compatible driver, you will
+       get information about your mouse.
+
+       Mickeys are a measurement of mouse movement. The numbers shown are
+       the number of 'mickeys' needed to move the cursor one pixel (or
+       spot) on the screen.
+
+       MDD stands for 'Mouse Display Driver'. A mouse driver will often
+       have many display drivers built in. Others can be linked on newer
+       versions.
+

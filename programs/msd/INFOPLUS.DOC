@@ -1,93 +1,271 @@
 INFOPLUS
 
-Version 1.35  Released to the public domain.
+Version 1.58 alpha Released to the public domain.
 
-By Andrew Rossmann, 10/7/90
+By Andrew Rossmann, 9/17/1993
 
 Originally based on Steve Grant's Public Domain SYSID 4.44.
 
-Usage:  [d:][path]INFOPLUS
+Syntax:
+  INFOPLUS [B][D][M][C][F][NP][NV][AP[:filename]][H][?]
+where:
+  B  = Write to screen using BIOS (default under Desqview)
+  D  = Write directly to screen memory (default)
+  M  = Use monochrome colors (default under MODE BWxx)
+  C  = Use normal colors (default)
+  F  = Leave 16550 FIFO's enabled
+  NV = Do not perform VGA chipset detection
+  NP = Do not read Partition Table
+  AP = AutoPrint all screens, ask for setup
+  AP:filename = AutoPrint to a file or device
+  H or ? = This help screen
 
-A system description for DOS-based PC/XT/AT- and PS/2-class machines.
-INFOPLUS generates 18 screens of information about the host system and
-runs under DOS versions 3.0 and later.
+ex: INFOPLUS B M NV
+      Run INFOPLUS using BIOS, monochrome colors, no VGA check.
 
-My primary sources of ideas in INFOPLUS were Ray Duncans "Advanced MS-DOS"
+  A system description for DOS-based PC/XT/AT- and PS/2-class machines.
+INFOPLUS generates 18 screens of information about the host system and runs
+under DOS versions 3.0 and later.
+
+  My primary sources of ideas in INFOPLUS were Ray Duncans "Advanced MS-DOS"
 and Terry Dettman's "DOS Programmer's Reference."  The ideas of Prakash
-Chandra,Terje Mathisen,Bob Smith, and others appear in various places.
-Also James Howard, John Levine, Mark Aitchison.
+Chandra,Terje Mathisen,Bob Smith, and others appear in various places.  Also
+James Howard, John Levine, Mark Aitchison, Jay Caplan, David Tay, Heribert
+Eisele, Matthias Heidbrink.
 
-Some of the techniques INFOPLUS uses are not documented or officially
-supported by either IBM or Microsoft.  Where possible I have followed
-the undocumented routine with a comment describing my source for the
-technique.
+  Some of the techniques INFOPLUS uses are not documented or officially
+supported by either IBM or Microsoft.  Where possible I have followed the
+undocumented routine with a comment describing my source for the technique.
 
-        INFOPLUS.PAS       - Main file source code
-        PAGE_xx.INC        - Each of the pages
-        INFOPLUS.ASM       - assembly language procedures
+  The following files are included with the runtime program:
+
+        INFOPLUS.EXE       - The main program
+        INFOPLUS.HIS       - Changes in each version
+        INFOPLUS.HLP       - The help screens
+        INFOPLUS.DOC       - This file
         INFOPLUS.PIF       - Windows 3 Program Information File
+        IP-PIF.DVP         - Desqview Program Information File
         INFOPLUS.ICO       - Icon for Windows 3 Program Manager
+        PRINTHLP.EXE       - Program to print some or all .HLP pages
 
-  Using INFOPLUS is easy. Just use the PGUP and PGDN keys to move from page
-to page. HOME and END will move to the first and last pages, respectively.
-If you hit ENTER, you can then type in the page you want to go to. Hit ESC
-to end the program. Some pages won't fit all on one screen, for that you hit
-the DOWN ARROW key to get more information. If you wish a hard copy, just
-hit SHIFT-PrtSc or SHIFT-PRINT or PrintScrn, depending on your keyboard.
+  The following files are included with the source code:
+
+        INFOPLUS.PAS       - Main file
+        IFPGLOBL.PAS       - Global variables, constants, and types
+        IFPCOMON.PAS       - Routines common to many of the pages
+        IFPRUN.PAS         - General runtime manager
+        IFPINIT.PAS        - Initialization routines
+        PAGE_xx.PAS        - Each of the pages
+        IFPEXTRN.PAS       - Unit for external routines
+        IFPSCRPT.PAS       - Unit for screen printing
+        IFPHELP.PAS        - Unit for help screens
+        INFOPLUS.ASM       - Assembly language procedures
+        INFOPLUS.OBJ       - Assembly routines for linking
+        PRINTHLP.PAS       - For printing out the help pages
+        MAKEHELP.PAS       - Compiles PAGE_xx.INF files into INFOPLUS.HLP
+        PAGE_xx.INF        - Help screen for each page
+
+   Using INFOPLUS is easy.  Just use the PGUP and PGDN keys to move from
+page to page.  HOME and END will move to the first and last pages,
+respectively.  If you hit ENTER, you can then type in the page you want to
+go to.  If you hit ENTER without typing a new page number, it will re-run
+the current page.  Hit ESC to end the program.  Some pages won't fit all on
+one screen, for that you hit the DOWN ARROW key to get more information.
+Some pages let you hit UP ARROW to review already displayed information.
+
+  If you want to save a copy of the information on a screen, hit ALT-P.  A
+window will pop up.  You can send your output to a File or the Printer.  If a
+File already exists, you can Overwrite it, or Append to it.
+
+  If your printer does not support the IBM 'graphics' characters (such as line
+drawing), then choose Normal ASCII.
+
+  Lastly, you can optionally add an extra header line to the output.  You can
+put anything you want there (up to 255 characters.)  The most logical is to
+put a little information on what computer your using. ie:  Betty's Office
+
+  If you want a full record, start INFOPLUS using the AP option. This will
+send a copy of every screen to a file or the printer. Before the first
+page, you will be asked the same questions as for a single page, plus one
+new one: Number of screens per page. INFOPLUS will place that many screens
+on a page before issuing a form-feed. If you want everything all together,
+use 0 to suppress form-feeds.
+
+  You can hit F1 during screen displays to get a help screen explaining
+what's being displayed. INFOPLUS looks for the environment variable
+INFOPLUS, and if found, uses a path given on it to look for INFOPLUS.HLP
+(INFOPLUS=C:\UTIL). If no environment variable is found, INFOPLUS will look
+in the current directory, then the same directory as the program was found,
+then your PATH.
+
   If you have trouble with bad colors on the screen, try setting your computer
-to MODE MONO or MODE BW80 before starting INFOPLUS. INFOPLUS will use a black
-and white palette if either of these modes are detected.
+to MODE MONO or MODE BW80 before starting INFOPLUS.  INFOPLUS will use a black
+and white palette if either of these modes are detected. You can also use
+the M command line switch. (INFOPLUS M)
+
   If you are in a 40 column mode, INFOPLUS will run in 80 column, but return
 you back to 40 columns upon completion. 132 column modes are not supported
 because Turbo Pascal's CRT unit only works with standard modes, and I don't
 want to give up all the nice features.
+
   INFOPLUS does support more than 25 lines, although most of the pages are set
-up to look best at 25 lines. Some display modes do not properly return the
+up to look best at 25 lines.  Some display modes do not properly return the
 correct number of lines.
 
-WINDOWS 3.0 NOTES!!!
+  For ease of use, a utility named PRINTHLP comes with INFOPLUS.  When you
+run it, you can have one or all of the help pages sent to your printer (or
+any DOS device or file.)  Each information page will be paginated any way
+you like.  Each new page will have a small header giving the INFOPLUS
+version it refers to, the page number, and what is on the page.
+
+WINDOWS 3.x NOTES!!!
      You can add INFOPLUS to the Program Manager. Open the group that you
      want to put INFOPLUS in. Select File, New, Program item. Use whatever
      you want for the Description. For Command line, enter INFOPLUS.EXE,
      preceed with a drive and directory if not on your PATH. If you hit
      ENTER, and end up at the screen, select File, Properties. Hit Change
      Icon, and for the file name, use INFOPLUS.ICO. Then OK everything.
+     Note that when you minimize INFOPLUS, you will see a standard DOS
+     icon. This can't be changed.
+
+Desqview NOTES:
+     INFOPLUS runs safely under Desqview, and is 'Desqview Aware.' If DV is
+     detected, INFOPLUS will write to the screen using BIOS calls unless
+     you use the D command line switch. This allows windowed screens even
+     on non-386/486's.
+
+     IP-PIF.DVP is a sample setup for INFOPLUS. The settings should be:
+
+                               Change a Program
+
+ Program Name............: Infoplus
+
+ Keys to Use on Open Menu: IP                         Memory Size (in K): 300
+------------------------------------------------------------------------------
+ Program...: C:\UTIL\INFOPLUS.EXE     <---Change this for your own setup
+
+ Parameters:
+
+ Directory.: C:\UTIL   <---Not needed if you use the environment variable
+------------------------------------------------------------------------------
+ Options:
+                  Writes text directly to screen.......: [N]
+                  Displays graphics information........: [N]
+                  Virtualize text/graphics (Y,N,T).....: [N]
+                  Uses serial ports (Y,N,1,2)..........: [Y]
+                  Requires floppy diskette.............: [N]
+
+                      Change a Program Advanced Options
+
+ System Memory (in K).......:   0   Maximum Program Memory Size (in K)..:
+
+ Script Buffer Size.......:  1000   Maximum Expanded Memory Size (in K):   16
+
+ Text Pages: 2  Graphics Pages: 0   Initial Mode:        Interrupts: 00 to FF
+------------------------------------------------------------------------------
+ Window Position:
+    Maximum Height:  25       Starting Height:  25       Starting Row...:   0
+    Maximum Width.:  80       Starting Width.:  80       Starting Column:   0
+------------------------------------------------------------------------------
+                                Shared Program
+ Pathname..:
+ Data......:
+------------------------------------------------------------------------------
+ Close on exit (Y,N,blank)......: [ ]  Uses its own colors..............: [Y]
+ Allow Close Window command.....: [N]  Runs in background (Y,N,blank)...: [N]
+ Uses math coprocessor..........: [Y]  Keyboard conflict (0-F)..........: [0]
+ Share CPU when foreground......: [Y]  Share EGA when foreground/zoomed.: [Y]
+ Can be swapped out (Y,N,blank).: [Y]  Protection level (0-3)...........: [0]
+
+  The Maximum Expanded Memory setting of 16 allows the VCPI detection to
+work. You can set this to 0 if you need to, or 9999 if you want INFOPLUS to
+detect it all (INFOPLUS does not actually use EMS at present.) The Maximum
+Program Size can also be varied if you wish.
+
+  This version of INFOPLUS was compiled using the following equipment:
+
+  Hardware:
+    Gateway 2000 4DX2-66V (Micronics MX30 motherboard w/ 256K cache)
+    16 Meg RAM
+    Western Digital Caviar 420M IDE
+    Fujitsu 2624T 513M IDE
+    NEC CDR-84-1 Multi-Spin CD-ROM
+    Jumbo 250 tape backup
+    ATI Graphics Ultra Pro VLB w/ 2M RAM and 24-bit DAC
+    ProAudio Spectrum 16 Rev C
 
 
-Personal info:
+  Software:
+    OS/2 2.1
+    MS-DOS 6.00 Rev A
+    QEMM 7.01
+    4DOS 4.02 Rev B
+    Hyperdisk 4.65
+    Turbo Pascal 6.0
+    Turbo Assembler 2.0
+    Turbo Debugger 2.0
+    KEDIT 5.00D1
+    Windows 3.10
 
-     My computer is a Gateway 2000 386/25 running MS-DOS 4.01, Windows 3,
-     an ESDI drive, and an ATI VGA Wonder card.
-     Compiled under Turbo Pascal 5.5 and Turbo Assembler 2.00.
-     Much of the additional info came from Ray Duncan's "Advanced MSDOS
-     Programming" second edition (a must get book for anyone interested
-     in low-level stuff.) Also, additional information on the DOS 4 boot
-     sector format came from "The Norton Troubleshooter." A book that
-     comes with The Norton Utilities 4.5. Even more information comes from
-     Ralf Brown's interrupt list, which lists hundreds of goodies. It's
-     available via BBS's, and resides on SIMTEL20 and many other public
-     access UNIX sites.
-       Additional information on XMS and DPMI came from the book 'Extending
-     DOS' by Ray Duncan (and others.)
-       Information on additional partition values came from numerous people
-     of which I never wrote down their names!!
-       Information on detecting VGA chipsets came from "Advanced Programmer's
-     Guide to Super VGAs" by George Sutty and Steve Blair. Published by Brady.
-       Information on reading the CMOS came from a program posted by Mark
-     Aitchison on USENET.
+  My primary sources of ideas in INFOPLUS were Ray Duncans "Advanced MS-DOS"
+and Terry Dettman's "DOS Programmer's Reference."  The ideas of Prakash
+Chandra,Terje Mathisen,Bob Smith, and others appear in various places.  Also
+James Howard, John Levine, Mark Aitchison, Jay Caplan, David Tay, Heribert
+Eisele, Matthias Heidbrink.
 
-     Andrew Rossmann
-     Wheeling, IL
+  Some of the techniques INFOPLUS uses are not documented or officially
+supported by either IBM or Microsoft.  Where possible I have followed the
+undocumented routine with a comment describing my source for the technique.
 
-     Infoplus BBS, 1-708-537-0247 (1200/2400)
-     RCS Defender BBS, 1-708-390-6603 (1200/2400, 2 lines)
-     Beacon BBS, 1-708-615-0845 (1200/2400)
-     DDSW1 BBS, 1-708-808-7300 (6 lines),
-                1-708-808-7306 (Telebit PEP only!!)
+  Much of the additional info came from Ray Duncan's "Advanced MSDOS
+Programming" second edition (a must get book for anyone interested in
+low-level stuff.)  Also, additional information on the DOS 4 boot sector
+format came from "The Norton Troubleshooter."  A book that comes with The
+Norton Utilities 4.5.
 
-     Unix Mail:
-     andyross@ddsw1.MCS.COM, or <well-connected>!ddsw1!andyross
-     gargoyle!igloo!infopls!andyross
+  Even more information comes from Ralf Brown's interrupt list, which lists
+hundreds of goodies.  It's available via BBS's, and resides on SIMTEL20 and
+many other public access UNIX sites.  It's also available on the Infoplus
+BBS.  The name is INTERxxy.ZIP, where xx is the version, and y is the part
+letter. (This version of INFOPLUS used INTER32.)
+
+  Additional information on XMS and DPMI came from the book 'Extending DOS'
+by Ray Duncan (and others.)
+
+  Information on additional partition values came from numerous people of
+which I never wrote down their names!!
+
+  Information on detecting VGA chipsets came from "Advanced Programmer's
+Guide to Super VGAs" by George Sutty and Steve Blair.  Published by Brady.
+(NOTE!  Beware of bugs in the detection routines in the above book!!)
+
+  Some extra VGA chipset detection help came for the source code for
+Fractint 16.11.
+
+  Information on reading the CMOS came from a program posted by Mark
+Aitchison on USENET.
+
+  Information on detecting UART types came from David Tay and David Nugent
+(david@csource.oz.au)
+
+  More information on VGA chipsets came from "Programmer's Guide to the EGA
+and VGA Cards, Second Edition" by Richard F. Ferraro.  Published by
+Addison-Wesley.
+
+  Information about how dangerous it is to pass too many flags, and info
+about OS/2 came from Heribert Eisele (heribert@caen.engin.umich.edu)
+
+  How to detect the Tandy 1000, and some models digital sound, came from
+Frank Durda IV (uhclem@nemesis.lonestar.org)
+
+  Information about a bug in the LONGCALL routine came from Michael Holin
+(HIMH%DCZTU1.BITNET@cunyvm.cuny.edu).
+
+  Information about problems with Trident VGA chipsets came from MANY
+people.
+
+  Information on the Gravis UltraSound came from Tran of Renaissance and
+Joshua Jensen.
 
 From Steve Grant:
      Both the source and object code of SYSID are hereby released into the
@@ -101,4 +279,3 @@ From Steve Grant:
      Steve Grant
      Long Beach, CA
      January 13, 1989
-

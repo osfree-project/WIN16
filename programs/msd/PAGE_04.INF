@@ -1,0 +1,25 @@
+  On this page, INFOPLUS displays the programs currently in memory.
+
+  All programs that are resident, or currently running, have a small
+signature in memory.  If a program uses DOS to allocate data blocks, they
+will also show up here.  This signature gives the name of the program (in
+most cases), and the memory it is using.
+
+MCB:    Memory Control Block, the segment where the program is.
+
+PSP:    Program Segment Prefix, holds specific information about the
+        program. Various important vectors, pointer to the environment, and
+        the commands you pass onto the program (like /h).
+
+Parent: This is the segment that 'owns' the program. In other words the
+        program that called it.
+
+Env:    A block will show here if that memory block is the environment to
+        a program.
+
+Owner:  The programs name, or it's owners name.
+
+Interrupts: A list of interrupts (in hexadecimal) that the program appears
+            to have taken over, or at least point into the memory being
+            used by the program.
+

@@ -1,0 +1,48 @@
+  This page gives low-level information about your current drive, and all
+real drives in your system.
+
+  INFOPLUS will read the boot sector of the current drive. This gives
+information about that drive:
+
+Media: The type of drive (RAMdisks may show up as anything.)
+
+Sectors/cluster: The number of sectors that make up a cluster, the unit
+                 that DOS allocates disk space in.
+
+Bytes/sector: How big those sectors are.
+
+Reserved sectors: How many sectors are set aside for special use.
+
+FATs: File Allocation Tables. DOS uses these tables to keep track of which
+      clusters are currently in use, free, or bad. Most disks have 2.
+
+Sectors/FAT: How many sectors are needed to hold all the FAT information
+             for each copy of the FAT.
+
+Root directory entries: How many files can be put in the root directory of
+                        the disk. Hard drives usually have 512.
+
+Heads: How many read/write heads are on the disk.
+
+Total sectors: The number of sectors on the drive.
+
+Sectors/track: How many sectors are are on a track. In other words, the
+               number of pie wedges.
+
+OEM name: A string that is usually in the boot record. Tells which version
+          of DOS formatted the disk.
+
+Extended boot record: DOS 4 and newer supports an extended record that
+                      contains the volume lable, the serial number, and a
+                      FAT type string.
+
+For each physical drive in the system, you can <DnArw> to get information
+on all the drives. Most of the information is the same as the above, with
+some extra information:
+
+DPB valid: This lets you know if this information is any good.
+
+Device header: The address of the driver for this disk.
+
+Root directory sector: The sector where the root directory begins.
+

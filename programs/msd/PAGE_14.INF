@@ -1,0 +1,9 @@
+  This page gives information about floppies and hard disks as given by the
+computer's BIOS.
+
+  Floppies are numbered from 0 to 127, and hard drives from 128 to 255. A
+PC/XT or clone may not give any information for floppies here. Most of the
+information is self explanatory. There may appear to be more hard drives
+shown than there actually is. This is normal. Many BIOS's support several
+drives, and unused ones will have garbage data displayed.
+

@@ -1,0 +1,31 @@
+       This page display extra information for some Memory Managers.
+
+       Currently, only QEMM 4.23 or newer is supported on this page.
+
+For QEMM:
+
+  The first few lines display pretty much the same information as found on
+page 18.  You get the version number, the current mode, the address of the
+API entry point (needed to find all this information) and the current
+Stealth information (QEMM 6 or newer.)
+
+  The next section displays the types of memory that QEMM found when it
+started.  (NOTE on Top Memory:  Some computers place the 384K of RAM that
+would be in the ROM address space at the top of the 16M address.  The BIOS
+can optionally 'swap' some of this memory down and use it for shadowing.
+You are better off turning BIOS shadowing off, and letting QEMM use all of
+it.)
+
+  The next section displays what QEMM is using the memory for. The numbers
+shown should be similar to what you see with Manifest, but may differ
+slightly. Manifest rounds it's numbers to the nearest K, and calculates
+totals in K, and not bytes. The 'Unassigned' value may differ by up to 1K
+(1024 bytes.) Infoplus is simply more accurate.
+
+  After hitting <DOWN-ARROW> you should see another screen. This one maps
+out all of the memory in a 16x16 grid. Each 'point' represents a 4K page of
+memory. This is the smallest amount of memory that the 386 can remap. The
+entries are similar to Manifest, but is 'upside-down' in comparison. Also,
+the Memory type and Memory Access information is displayed together.
+Stealth information details which addresses are Stealthed.
+

@@ -1,0 +1,28 @@
+  This page displays information abot the environment space.
+
+  The environment space is used to hold information for programs to use. It
+is controlled by using the DOS command SET.
+
+  Some commonly used variables:
+
+COMSPEC: This is the program that controls the DOS prompt. It is also used
+         when you 'Shell to DOS' from programs.
+
+PATH:    These are the directories DOS will search when you type a command
+         it doesn't internally know. It first searches the current
+         directory, then all of the ones listed on the PATH. It tries each
+         directory by looking for a file with a .COM, .EXE, or .BAT
+         extention, in that order.
+
+PROMPT:  This is used to display the prompt.
+
+TEMP:    Used by many programs and DOS 5. Should point to a directory or,
+         more commonly, a RAMDISK, and is used by programs for temporary
+         storage.
+
+  Many programs use environment variables to hold information, such as
+where their startup files are, and startup commands. INFOPLUS supports an
+environment variable. If used, it contains the directory where INFOPLUS's
+INFOPLUS.HLP file is located. If the .HLP file is in the same directory as
+INFOPLUS.EXE, then you don't really need the environment variable.
+

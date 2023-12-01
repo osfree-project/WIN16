@@ -1,0 +1,99 @@
+  This page lets you know how you can contact me.
+
+  If you have any questions, bug reports, or suggestions, I can be
+reached at the following places:
+
+Internet       : andyross@infopls.chi.il.us
+Unix           : uunet!infopls!andyross
+CompuServe     : >INTERNET:andyross@infopls.chi.il.us
+
+Infoplus BBS   : (708)537-0247 (14400/9600/2400/1200 v32bis/v42bis/MNP)
+  This is my own BBS. You can always get the latest version here. Just log
+in as INFOPLUS, and follow the instructions on screen.
+
+Beacon         : (708)615-0845 (2400/1200)
+
+  This version of INFOPLUS was compiled using the following equipment:
+
+  Hardware:
+    Gateway 2000 386/25 (Micronics ASIC motherboard w/ 64K cache)
+    4 Meg RAM
+    Microscience 110M ESDI, 3.5" HH
+    Ultrastor 12F ESDI controller w/ 32K cache
+    Seagate ST251 40M MFM
+    Seagate ST21R controller
+    ATI Graphics Ultra Pro ISA w/ 2M RAM
+    ProAudio Spectrum 16
+
+  Software:
+    MS-DOS 6.00
+    QEMM 6.00
+    4DOS 4.02 Rev B
+    Hyperdisk 4.60
+    Turbo Pascal 6.0
+    Turbo Assembler 2.0
+    Turbo Debugger 2.0
+    KEDIT 5.00D1
+    Windows 3.10
+    Desqview 2.40
+
+  My primary sources of ideas in INFOPLUS were Ray Duncans "Advanced MS-DOS"
+and Terry Dettman's "DOS Programmer's Reference."  The ideas of Prakash
+Chandra,Terje Mathisen,Bob Smith, and others appear in various places.  Also
+James Howard, John Levine, Mark Aitchison, Jay Caplan, David Tay, Heribert
+Eisele, Matthias Heidbrink.
+
+  Some of the techniques INFOPLUS uses are not documented or officially
+supported by either IBM or Microsoft.  Where possible I have followed the
+undocumented routine with a comment describing my source for the technique.
+
+  Much of the additional info came from Ray Duncan's "Advanced MSDOS
+Programming" second edition (a must get book for anyone interested in
+low-level stuff.)  Also, additional information on the DOS 4 boot sector
+format came from "The Norton Troubleshooter."  A book that comes with The
+Norton Utilities 4.5.
+
+  Even more information comes from Ralf Brown's interrupt list, which lists
+hundreds of goodies.  It's available via BBS's, and resides on SIMTEL20 and
+many other public access UNIX sites.  It's also available on the Infoplus
+BBS.  The name is INTERxxy.ZIP, where xx is the version, and y is the part
+letter. (This version of Infoplus used INTER28.)
+
+  Additional information on XMS and DPMI came from the book 'Extending DOS'
+by Ray Duncan (and others.)
+
+  Information on additional partition values came from numerous people of
+which I never wrote down their names!!
+
+  Information on detecting VGA chipsets came from "Advanced Programmer's
+Guide to Super VGAs" by George Sutty and Steve Blair.  Published by Brady.
+(NOTE!  Beware of bugs in the detection routines in the above book!!)
+
+  Some extra VGA chipset detection help came for the source code for
+Fractint 16.11.
+
+  Information on reading the CMOS came from a program posted by Mark
+Aitchison on USENET.
+
+  Information on detecting UART types came from David Tay and David Nugent
+(david@csource.oz.au)
+
+  More information on VGA chipsets came from "Programmer's Guide to the EGA
+and VGA Cards, Second Edition" by Richard F. Ferraro.  Published by
+Addison-Wesley.
+
+  Information about how dangerous it is to pass too many flags, and info
+about OS/2 came from Heribert Eisele (heribert@caen.engin.umich.edu)
+
+  How to detect the Tandy 1000, and some models digital sound, came from
+Frank Durda IV (uhclem@nemesis.lonestar.org)
+
+  Information about a bug in the LONGCALL routine came from Michael Holin
+(HIMH%DCZTU1.BITNET@cunyvm.cuny.edu).
+
+  Information about problems with Trident VGA chipsets came from MANY
+people.
+
+  Information on the UltraSound came from Tran of Renaissance and Josua
+Jensen.
+

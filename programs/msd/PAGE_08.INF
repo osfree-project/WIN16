@@ -1,0 +1,45 @@
+  This page gives information on the printer and serial ports, along with
+various sound cards.
+
+  Up to 3 printer ports will be shown.  The ports are found in a special
+table in the BIOS data area.  The Busy, ACK, Paper out, Selected, I/O
+error, and Timed out values are what the printer is reporting.  If you set
+your printer off-line, and re-display the page, the Selected line should
+change.
+
+  Up to 4 serial ports will be shown.  The port addresses are found in a
+special table in the BIOS data area.
+
+  The interface between the serial device and the computer is called a UART
+(Univeral Asynchronous Receiver/Transmitter.)  There are several types
+typcially used in a PC.  The 8250 is usually found in PC/XT's, and internal
+modems.  The 16450 typically in AT/386/486's.
+
+  A newer type is the 16550.  There are several versions.  The most common
+is the 16550A/16550AN/16550AFN.  These versions contain a 16 byte buffer
+that lets incoming data build up before the computer must read it.
+
+  If a program (such as Desqview) has set the port to 0, then INFOPLUS has
+been denied access to it.  This is often done to prevent programs from
+interfering with each other.
+
+  INFOPLUS can detect several sound cards, including the Adlib, Sound
+Blaster, Roland MPU-401, and Gravis UltraSound.
+
+  The Adlib is used by many games, and is cloned by the Sound Blaster.  It
+offers several sound and rhythm voices for music and games.  There is also
+a special SOUND.COM driver that offers an interface to play music.
+INFOPLUS checks to see if this driver is loaded.
+
+  The Sound Blaster, in addition to it's AdLib capabilities, also has a
+digital channel and stereo capabilities.  The port shown if found is the
+one used to access the digital capabilities, and is selectable by a jumper
+on the card.
+
+  The Roland MPU-401 is actually a MIDI controller.
+
+  The Gravis UltraSound uses true digital synthesis to generate sound. It
+has on-board memory (up to 1024K) to hold instrument samples. It can
+emulate an AdLib or SoundBlaster through software adapters. INFOPLUS will
+display it's base port, and the amount of memory on the card.
+

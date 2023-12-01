@@ -1,0 +1,131 @@
+Resident programs and drivers: Some programs let you detect and get
+information from them.
+
+4DOS: A shareware program that replaces COMMAND.COM. It offers many
+      enhancements and reduced memory requirements. 4DOS 4.01 reports
+      itself as 4.00.
+
+KSTACK.COM: Part of 4DOS 4.0 and newer. A utility to fake keystrokes.
+
+NDOS: A licensed version of 4DOS that is part of Norton Utilities 6.
+
+WildUnix: A resident program that lets you use things like DEL *X.* to
+          delete any filename ending in X. (DOS would delete everything!)
+
+ANARKEY: A program that lets you re-define the keyboard.
+
+DOS/16M: A protected mode interface that lets DOS programs access more than
+         1Meg of memory on AT's and 386/486s. Used by many major
+         programs.
+
+Phar Lap DOS Extender: Similar to DOS/16M.
+
+QEMM: Quarterdeck's memory manager.
+
+Manifest: A system analyzer by Quarterdeck. It has a resident mode that
+          let's you get information while a program is running.
+
+VIDRAM: A program by Quarterdeck that lets you use some of the EGA/VGA
+        display memory for DOS. This comes at the expense of graphics
+        modes, (CGA graphics allowed if NOEGA specified.)
+
+386^MAX: A memory manager by Qualitas.
+
+MICEMM: Micronics Memory Manager. Comes with many computers that use the
+        Micronics motherboard. Gateway 2000 is a big customer.
+        NOTE: I have version 4F, and the detection does NOT work.
+
+EMM386: Microsoft's memory manager. Comes as part of DOS or Windows. OK
+        for being 'FREE', but it isn't very efficient. It slows computer
+        performance much more than QEMM or 386^Max. EMM386 must be
+        providing EMS memory for it to be found.
+
+VDS: Virtual DMA Specification is a controlled way for programs to transfer
+     memory to and from some hardware devices. SCSI controllers are one
+     example that need to use VDS under memory managers or Windows.
+
+Desqview: Quarterdeck's multi-tasking program. If found, information about
+          available memory and screen modes/size is given.
+
+DOS task switcher: DOS 5 & 6's DOSSHELL has a task switching option. You can
+                   can run several programs at once, but only one at a
+                   time. It is swapped in and out of memory. The switcher
+                   also is detected as Windows in real/standard mode.
+
+DRDOS TaskMax: A task switcher that comes with DR-DOS 6. It's equivalent to
+               DOS 5's DOSSHELL.
+
+TAME: A shareware program that monitors DOS programs when running under
+      multi-tasking programs. If a program is doing nothing, it forces the
+      program to give up it's time slice, giving more to other programs.
+
+Windows: This is the program by Microsoft. When version 3.x is in enhanced
+         mode, alot of extra information is given. The number of colors
+         given is what Windows itself it using. You'll typically see either
+         16 or 20. To find out the real number of colors, you need to look
+         at the bits/pixel and bit planes numbers.
+
+Norton NCACHE: Disk Cache. Part of Nortons version 5 or newer.
+
+Norton Diskreet: An encoded/secure 'drive'. Part of Nortons version 5 or
+                 newer.
+
+Norton DiskMon: Monitors disk activity. Part of Nortons version 5 or newer.
+
+Norton FileSave/EraseProtect: Places deleted files in a safe place. Part of
+                              Nortons version 5 or newer.
+
+F-PROT: F-PROT is a shareware package of programs by Fridrik Skulason used
+        to protect a computer from viruses.
+
+TBScanX: A resident virus scanner. Usable by other programs to check
+         themselves.
+
+Flu_Shot+: A commerical virus protection program.
+
+CAM-SCSI: A SCSI interface standard.
+
+CMC Int. SCSI driver: A SCSI driver.
+
+SMARTDRV: Microsoft's disk cache. Some other cache programs may also use
+          this interface.
+          If you use Super PCKwik's PCKWIN.SYS program, the IOCTL read will
+          fail under DOS, but work under Windows 3 enhanced.
+          Norton's NCACHE will show up here, as it emulates SMARTDRV 3.x's
+          interface.
+
+HyperDisk: A shareware disk cache program. The Internal Data Version number
+           is not the same as the program version number.
+
+Stacker: A program that automatically compresses data, pretending it's
+         a disk drive.
+
+DBLSPACE: A part of DOS 6 that let's you create a new 'drive' that contains
+          your data, but compresses it.
+
+pcAnywhere: A program that lets you operate a computer via the serial port.
+
+Disk Spool II: A printer spooling program.
+
+Microsoft/LANtastic: The network programs.
+
+PC/TCP: A packet driver interface standard.
+
+Inset: A program that integrates text and graphics.
+
+Microsoft CD-ROM extensions: A standard for accessing CD-ROMs under DOS.
+
+Fossil: A TSR or device driver for using the serial ports. Many BBS
+        programs use them.
+
+Video Fossil: An extension of Fossil for working with video.
+
+Advanced Power Management Spec.: Used for checking and controlling the
+                                 power usage of many laptops and portables.
+
+Norton Guides: A TSR that pops up screens of information related to various
+               programs.
+
+After Dark for DOS: A screen blanker that comes with After Dark for
+                    Windows.
+

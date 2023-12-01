@@ -1,0 +1,31 @@
+  This page gives various information about the current drive, as given by
+DOS.
+
+  LASTDRIVE is the letter typically given as the LASTDRIVE= command from
+your CONFIG.SYS.  The default is E, unless you have more than 5 drives
+defined, including floppies (a single floppy counts as 2), hard drives
+(each partition is one letter), special drivers (such as Stacker or
+Diskreet), and RAMdisks. Specifying extra letters allows you to use the
+SUBST command effectively.
+
+  Logical drives are real drives, those created by the SUBST command, and
+those created by special drivers.
+
+  The settings shown for the Diskette drives is for the last used floppy.
+If a floppy has not been used since the last reboot, the data shown may not
+be valid.
+
+  For the current drive, the drive type may not always be correct. There is
+no standard way of telling if a drive is actually a RAMdisk or similar.
+
+  A door lock is used by high density drives to let DOS know if a floppy
+has been removed. Some removable hard drives may also use this.
+
+  JOIN lets a drive act as if it was a subdirectory of another disk.
+
+  SUBST lets a subdirectory act as if it was a separate drive.
+
+  A cluster is what DOS uses to keep track of data on the disk. A cluster
+consists of several actual sectors of data. A standard hard disk will have
+4 sectors in each cluster (2K of data.)
+

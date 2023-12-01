@@ -1,0 +1,66 @@
+  On this page,  INFOPLUS displays how your RAM is being used.
+
+Total conventional memory: This is the type of memory typically used by DOS
+                           and programs.
+
+Free conventional memory:  This is the amount of memory left after DOS,
+                           drivers, and TSRs take some. INFOPLUS does not
+                           count itself as using any.
+
+Extended memory: This is the amount of memory on a 286/386/486 that is
+                 above the 1 Meg mark. This may not be the total amount.
+                 Some programs that use extended memory subtract what they
+                 use, and report that to INFOPLUS. Also, programs such as
+                 QEMM and HIMEM.SYS will 'steal' all of it because they
+                 want to manage it in a way that allows different programs
+                 to share it. If you use a memory manager, this will
+                 probably be 0K.
+
+XMS driver: One of the major problems with extended memory is that there
+            was no correct way of accessing it. There were major problems
+            with programs interfering with each other. XMS stands for
+            eXtended Memory Specification. It's a standard interface for
+            programs to access extended memory.
+
+            HMA stands for High Memory Area. On a 286/386/486, it's
+            possible to access the first 64K of extended memory without
+            going into a special CPU mode. Access to that area is done by
+            enabling or disabling A20 (address line 20.) Some versions
+            of DOS are capable of placing some of their code and BUFFERS in
+            the HMA. Infoplus tell you if it is using it, and how much is
+            left over (or being wasted, depending on your point of view!)
+
+            The XMS driver also handles Upper Memory Blocks (UMBs).
+            Infoplus will display if any area is available, and how big the
+            largest block is.
+
+DPMI driver: With the growing complexity of programs, some need more than
+             the normal 640K of memory to run. DPMI stands for DOS
+             Protected Mode Interface. It allows programs to run in
+             protected mode, yet still access regular DOS functions. It was
+             introduced with Windows 3, and offers greater protection from
+             interference by other programs than VCPI. DPMI is available on
+             286/386/486 computers.
+
+Expanded memory: Expanded memory was one of the first ways of getting more
+                 than 640K in a computer. It does this by taking the extra
+                 memory and breaking it up into 16K 'pages.' It puts up to
+                 4 of these at a time in a 64K window in an unused area of
+                 memory accessible to the CPU (called the page frame.)
+                 Expanded memory is often called EMS (Expanded Memory
+                 Specification.)
+
+                 All EMS drivers have an internal driver name of EMMXXXX0.
+                 The latest specification is 4.0. Unfortunately, 4.0
+                 requires some hardware specifics for FULL compliance. Many
+                 4.0 drivers are not hardware compliant. Their hardware is
+                 in compliance with the older standard, version 3.2.
+
+                 Some EMS drivers also support VCPI (Virtual Control
+                 Program Interface.) This was the first standard to allow
+                 programs to run in protected mode, yet still access DOS
+                 functions. Unfortunately, it's too easy for programs to
+                 interfere with each other, or unncessarily block another
+                 VCPI program from working. VCPI is only available on
+                 386/486 computers.
+

@@ -1,0 +1,17 @@
+  This page displays standard information found in AT/386/486 computers's
+CMOS memory.
+
+  The CMOS is a small amount of memory that is used by many computers to
+hold important information. It also is the clock/calender used to set the
+time/date on bootup.
+
+  Most of the information is self-explanatory. You can change this
+information by using your computer's SETUP program or special keystroke
+combination.
+
+  Some computers automatically set the math co-processor bit themselves, or
+may even use it for something else. It's not uncommon for this to be wrong.
+
+NOTE!! 386 based PS/2's appear to have a non-standard format. Ignore
+erroneous information and 'bad checksum' message.
+

@@ -1,0 +1,27 @@
+  This page displays programs that use the Alternate Multiplex Interrupt.
+
+  The Alternate Multiplex Interrupt is a standard created by Ralf Brown as
+an alternative to the older Int 2Fh Multiplex.  The AMI uses Int 2Dh
+instead.
+
+  Programs chain into the interrupt looking for a 'signature' byte to be
+passed in one or more CPU registers.  If they are correct, a resident
+program can act on it.  If not, it's supposed to continue and call the
+program that was previously in the chain.  Unfortunately, no real standard
+was set up, and with only 255 values possible, conflicts often happen.
+Even worse, with more and more programs hooking into the interrupt,
+execution speed could be seriously affected.
+
+  Ralf Brown (who oversees the Interrupt Listing, and is the author of
+several PD/shareware programs) created this alternate format with strict
+controls in mind.  Programs are required to search for a free signature
+byte, and some commands are standardized.  Also, some data structures are
+standardized to make detection and information gathering easier.
+
+  Some programs now use the Multiplex interrupt only for detection, and
+return an address to call to actually do anything.  The AMI also
+standardizes this.
+
+  There aren't too many programs using the AMI yet.  Most are currently
+PD/Shareware programs.
+

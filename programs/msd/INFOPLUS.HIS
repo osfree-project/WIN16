@@ -1,3 +1,274 @@
+Changes by Andrew Rossmann v1.58 alpha (9/17/93)
+Page 1  : Added several new machine configuration details.
+Page 9  : Added more countries.
+Page 17 : 2.88M floppy setting should work correctly.
+          Added power status check and diagnostics byte.
+          Disk type, century and checksum should work on PS/2's.
+          Added display of hard drive hardware settings.
+          Date and time displays should work if the clock chip is set to
+           hex or BCD, and if it's in 24 or 12 hour mode.
+Page 18 : Corrected MSCDEX version number.
+          Added more VDS products.
+          Corrected Hyperdisk internal version number.
+
+Changes by Andrew Rossmann v1.57 (6/26/93)
+Page 3  : Corrected HMA usage report under DOS 6.
+Page 6  : Some work on the ATI cards.
+Page 9  : Corrected Printer Echo and Buffer count under DOS 6.
+Page 14 : Won't display drive info if the Drives parameter is 0.
+Page 18 : Corrected SmartDrive version number.
+          Corrected MSCDEX detection.
+          SmartDrive also lists if a drive is a DBLSPACE drive.
+          Added detection and information for DBLSPACE drives.
+          Expanded information for Quarterdeck's VIDRAM.
+
+Changes by Andrew Rossmann v1.56 (12/30/92)
+All    : The AP command now accepts a filename for automatic output.
+         Added an NP command switch. When specified, INFOPLUS will not
+          attempt to read the partition table from the hard disk. This
+          a problem on some SCSI drives or controllers.
+         Added an F command switch. This tell Infoplus to leave 16550
+          FIFO's enabled.
+         Reduced potential conflict with CBIS PowerLAN redirector when
+          checking for the true DOS version (since DOS 5 can change it.)
+         Reduced chances of false data being returned by some pages when
+          running in an OS/2 DOS session.
+Page 1 : Added detection of HP 95LX.
+Page 3 : Unless Windows 3 enhanced mode is detected, will now check for
+          both VCPI and DPMI.
+Page 6 : VESA will try the next mode even if no information is returned
+          from the current one. (Thanks to Joerg.Prust@gmd.de for finding
+          this one.)
+Page 7 : Added extra information about the mouse, primarily if you have
+          Microsoft Mouse driver version 7.00 or newer, or compatible.
+Page 8 : Changed the Serial Port detection method. Also, 16550 FIFO's
+          are disabled unless the 'F' command is given on the command
+          line.
+         Modified the Sound Blaster detection to restore modified
+          ports. Should fix 'lost mouse' problems.
+         Added Gravis UltraSound detection. (untested)
+Page 9 : If DOS 5 is detected, INFOPLUS will display the revision letter,
+          and if DOS is using the HMA, or is based in ROM.
+Page 10: CDROM detection should work, but higher risk of false detection.
+Page 15: Added several partition type names.
+Page 18: Added Advanced Power Managment Specification.
+         Corrected 386^Max Windows support info.
+         Added extra information about Hyperdisk for versions 4.50 or
+          newer.
+         If Stacker is found, will display drive letters used, and what
+         drive letters have been swapped, if any.
+Page 19: Added display of what interrupts an AMIS TSR has hooked.
+
+Changes by Andrew Rossmann v1.55 (4/21/92)
+All   : Added an AP command switch. When specified, all pages will be
+        sent to a file or printer. You will be asked the standard
+        screenprint questions before the first page.
+Page 1: Added detection of many newer IBM PS/2 and PS/1 computers.
+        Added detection of HP Vectra series.
+        For AT's and up, will display if a special keyboard function
+         is supported.
+        For AT and up Phoenix BIOS's, display the version number.
+Page 3: Reduced chances of non-AT's showing extended memory.
+Page 4: Under MSDOS 5, DOS blocks show if code or data.
+Page 7: Mouse version number should display correctly for Microsoft
+         version 8 and newer.
+        Mouse Systems and Logitech drivers are detected. Some show
+         additional information.
+        No longer reset the mouse hardware. Should retrieve mouse
+         information much faster.
+Page 8: Removed detection of Tandy digital sound, which wasn't reliable.
+        NOTE: Under Windows 3.1, if you have the SoundBlaster drivers
+         enabled, you'll get a warning box from Windows, and Infoplus
+         will be unable to detect it. This is normal.
+Page 9: The country represented by the country code is displayed.
+Page 18:SMARTDRV detection should now work, including the new 4.0.
+        VDS information now recognizes more memory manager products.
+        Added detection of 386^Max version 6.01+.
+        Re-arranged screens by program types.
+        Added detection of EMM386 v4.20+.
+        Added detection of MICEMM (Micronics EMM) NOTE: I have version
+         4F, and it isn't detected on my system.
+Page 19:NEW! This page displays programs using the Alternate Multiplex
+        Interrupt. This is a new standard, and not too many programs
+        use it yet.
+Page 20:NEW! This page displays extra information about Memory Managers.
+        Currently, only QEMM 4.23 or newer is detected. You get information
+        about the various memory sizes used, and a memory map.
+Page 21:Former page 19.
+
+Changes by Andrew Rossmann v1.50 (1/1/92)
+All:    Added command line switches B, D, M, C, NV, H and '?'.
+        Added on-line help by pressing F1.
+        No longer reset the screen on exit unless you start in 40 column
+         mode, or a non-standard mode.
+Page 1: Added detection of Tandy 3000.
+        Added detection of Tandy 1000 series.
+Page 3: Having more than 64K of available UMB space will display
+         the correct byte size (the K size was correct.)
+Page 6: Added additional information for ATI cards, and support for
+         newer versions.
+        Detect Tseng ET4000/HiColor DAC combo.
+        Only display Tseng memory size if it's an ET4000.
+        Hopefully corrected Trident problems. Also, tell true video
+         memory for 8900 series.
+        Hopefully corrected Cirrus problems.
+        Added detection of Oak chipset.
+        VGA chipset detections can be disabled by using the NV startup
+         switch.
+Page 8: Modified sound card detections to reduce possible problems with
+         other cards using the same IO ports.
+        Added detection of Tandy 1000/2500 digital sound.
+Page 9: A second 'page' that lists all currently open files, and lots
+         of information about each of them. Most useful under Windows
+         or Desqview.
+Page 18:Detect and give information about SMARTDRV, and possibly other
+         caches.
+        Display version of QEMM (if newer than 5.10).
+        Detect JP Software's KSTACK.COM.
+        Detect Norton NCHACHE, Diskreet, DiskMon, FileSave/EraseProtect.
+        Added detection of Stacker.
+INFOPLUS.ASM: Corrected bug in LONGCALL. It was restoring the wrong old DS
+              and SI!! (Thanks to Michael Holin for noticing that!)
+
+
+Changes by Andrew Rossmann v 1.47 (8/2/91)
+All:    Several pages should work better under OS/2.
+        Corrected bug that caused lockups under Desqview. Could also
+         fix other unusual bugs. It appears to have fixed the occasional
+         'slow screen' bug, too.
+Page 2: If an i386 is found, check for the POPAD bug. (This is a minor
+        bug that is nothing to worry about.)
+        If a 387 is 'found' with a 286 CPU, then it's identified as a
+         287XL.
+Page 3: Tell if HMA is free or in use.
+        Detect if UMB (Upper Memory Blocks) are available, and report
+         size of the largest available.
+        Tell if DOS 5 is using the HMA, and how much is being used.
+Page 9: Minor corrections to work properly with DOS 5 and OS/2.
+Page 10:Added detection of DOS 5's DOSKEY.
+        If DOS 5's SETVER is loaded, the version list will be displayed.
+        Added a generic DOS extender check (new 'standard')
+Page 13:Minor corrections to work properly with DOS 5 and OS/2.
+Page 18:Added detection of Norton's NDOS (4DOS in disguise)
+        Added detection of Phar Lap DOS Extenders.
+        Added detection of the DOS 5 Task Swapper (which also identifies
+         itself as Windows in real/standard mode!!)
+        Added detection of HyperDisk 4.20 or newer.
+INFOPLUS.ASM:   New subroutine added for POPAD bug test.
+                Modified ALTINTR and LONGCALL to only pass the Overflow,
+                 Sign, Zero, Aux Carry, Parity and Carry flags TO the called
+                 interrupt/subroutine from the Flags variable in the
+                 Registers record. The standard TP Intr doesn't pass ANY
+                 flags! I need the ability for several detection routines.
+                 The full Flags register will be passed back when the
+                 interrupt/subroutine returns. This is what fixed the
+                 Desqview problem. (Thanks to Heribert Eisele -
+                 heribert@caen.engin.umich.edu for pointing this out!)
+
+Changes by Andrew Rossmann v 1.46 (5/29/91)
+Page 2: If an i486 is found without a coprocessor, then an i486SX will
+        be assumed. An i486SX w/ 487 will show as an i486.
+Page 6: Most of the VGA chipsets will return more information.
+Page 18:NEW PAGE (sort of).
+        Moved the TSR and drivers section of page 10 here.
+        Corrected VDS product version number display. Also tell if
+         VDS's BIOS data bit is set ($40:$7B, bit 5)
+        Added detection of TBScanX (a virus scanner)
+        Added detection of WildUnix (a Unix-like wildcard expander)
+        Added detection of DOS/16M (a protected mode interface)
+        Added detection of Inset (a text/graphics program)
+        Added detection of Microsoft CD-ROM extensions (MSCDEX)
+        Added detection of Fossil drivers
+        Added detection of Video Fossil drivers
+WARNING! Page 18 could lock up under Desqview. I'm still investigating.
+Page 19:Former page 18 (Thank you page.)
+
+
+Changes by Andrew Rossmann v 1.45 (2/11/91)
+All:    If Desqview is detected, all screen output will be done using
+        the BIOS, allowing INFOPLUS to work in a window even on
+        non-386's. This may affect screen printing.
+Page 1: Detailed info will only be shown on an AT or better (as told by
+        the machine byte at $FFFF:$E.)
+        Added detection of several computers, including Toshiba
+        T5200/100 and T1200/XE, IBM model 90's, and the PS/1.
+Page 6: Added detection of XGA (MicroChannel systems only for now.)
+Page 8: 16450 UART now detected (was shown as 8250 before.)
+        Added detection of AdLib, SoundBlaster, and Roland MPU-401.
+        If AdLib detected, it checks if the SOUND.COM driver is loaded
+        and tells you the version and interface address if found.
+        If COM port is at address $0000 (Desqview giving no access)
+        it shows N/A for address, and gives no other info.
+        Ports at address above $FFF should display correctly.
+Page 9: DR-DOS should be detected.
+        Under DOS 5, will tell if UMBs are part of DOS memory chain.
+        Under DOS 4+, tell if BUFFERS are in EMS, and their handle.
+Page 10:If Windows 3 in enhanced mode is detected, information about
+        the display is given.
+        If Desqview is detected, extra video and memory info given.
+        Added detection of TAME.
+        Added detection of QEMM/QRAM, MANIFEST (resident), and VIDRAM.
+        Added detection of pcAnywhere.
+        Added detection of Disk Spool II.
+        Added detection of DOS 4 GRAPHICS.COM.
+        Added detection of Win 3's EGA.SYS.
+        Added detection of DRIVER.SYS (note: DOS 4 appears to support
+        some of it's functions, so it may show yes.)
+        Added detection of the F-PROT package.
+        Added detection of ANARKEY.
+        Added detection of Virtual DMA Specification (VDS) [NOTE: Is
+        supported by QEMM!!]
+        Added detection of Common Access Method SCSI drivers.
+        Added detection of PC/TCP Packet drivers.
+Page 16:You can use the up and down arrow keys to look at the BPB
+        information for all drives.
+Page 17:CMOS info will only show for an AT or better (as told by the
+        machine byte at $FFFF:$E.)
+        NOTE: It seems as if 386 based PS/2's have non-standard CMOS
+        tables. Ignore warnings about bad CMOS checksum.
+Tech:   Program re-organized into Units.
+        Source code distributed separately.
+        Added information pages that you can print out.
+NOTE!!->I'm having problems running under Desqview. I'm still trying to
+        figure out what's happening. Be aware that the program could
+        lock up at any time.
+
+
+Changes by Andrew Rossmann v 1.41 (12/8/90)
+All:    Re-compiled under Turbo Pascal 6. No special features used.
+Page 6: Check for Tseng chips should no longer cause problems if you
+        really have a Tseng chipset.
+Page 8: Corrected bug in UART detection.
+Page 16:When reading Boot info, no longer tries looking at the drive
+        that is one below the current default. (ie: B: if C: was the
+        default.) This primarily affects DOS 3.30 and 3.31 users only.
+Technical: .INC files renamed to .PAS for easier use under the new IDE.
+
+Changes by Andrew Rossmann v 1.40 (11/12/90)
+All:    New Command! Alt-P will pop up a window in which you can send a
+        copy of the data part of the screen to a file or the printer.
+        You can have any non-standard characters converted into Normal
+        ASCII. You can also have an extra line added to the printout.
+        You can use it to identify the computer, or whatever.
+Page 6: Display 'Checking for xxxx' before trying to detect video
+        types and chipsets.
+        Paradise information checking now reads the chips directly,
+        instead of relying on the BIOS, which seemed to be causing
+        problems with some boards. It seems as if some may not be
+        detected.
+        Corrected ZyMOS detection.
+        CTI chips will only be detected if a CTI BIOS is found. Direct
+        chip detection caused problems with some other boards.
+Page 8: Serial port info now displays the type of UART found. The
+        16450 (found on many AT's) will be listed as an 8250. The
+        16550AFN and 16550AN will display as 16550AN.
+Page 9: No longer gets stuck in an infinite loop when trying to
+        determine STACKS on some computers.
+Page 11:The environments' location, size, amount used, and free
+        space are now shown.
+Page 17:Day of Week no longer shown since most BIOS's do not set it.
+
+
 Changes by Andrew Rossmann v 1.35 (10/7/90)
 All:    If using <ENTER> to jump to a page, and you enter something illegal,
         the page name will be restored on the bottom line.
@@ -293,4 +564,3 @@ files have been loaded (e.g. APPEND/ASSIGN)?
 4)      The error beep sometimes fails to sound when you press PgDn
 while on the last page (or PgUp while on the first page).  I have no
 idea why. (!!corrected in version 4.5)
-

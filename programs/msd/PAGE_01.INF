@@ -1,0 +1,47 @@
+   On this page, INFOPLUS will attempt to identify the type of computer you
+have, and the ROM (Read Only Memory) that it contains.
+
+NOTE!!: If you are using QEMM 6, and are using the Stealth option, some
+        ROMs may not be identified.
+
+Machine Type:   This uses a byte in the BIOS ROM, and, on some machines,
+                some extra information to determine the computer type, and
+                in some cases, the exact model. If your computer is an AT
+                or a 386/486, you get some extra information telling you
+                about other hardware aspects of the computer. If you have
+                a PC/XT type computer, and you see information about DMA
+                channel 3 being used or not, you can probably disregard the
+                information, as some clones don't properly support the
+                function call used.
+
+BIOS source:    INFOPLUS scans the computers main ROM BIOS, looking for a
+                copyright message, which it displays.
+
+BIOS version:   If you have a Phoenix BIOS in an AT or better, you'll
+                find out the version.
+
+BIOS date:      INFOPLUS displays what should be the date at a specific
+                location in the ROM BIOS.
+
+BIOS extensions:Some add-in cards have ROM BIOS's of their own to handle
+                special functions, and to extend the features of the
+                computer. The most common are for the video and hard disk
+                controller boards.
+
+                Video BIOS's are found in all video cards except those that
+                only support CGA or Monochrome graphics. It typcially
+                starts at C000. (NOTE: I've noticed that some VGA cards lie
+                about their size. If your VGA card supports extended modes
+                such as 800x600, but the size shown is only 24K, then you
+                might have problems with programs like QEMM and Windows 3.
+                The BIOS's on these cards are really 32K. For QEMM, add the
+                line X=C000-C7FF or ROM=C000-C7FF.)
+
+                Unless you have an AT with an MFM or IDE controller, you'll
+                probably have a hard disk BIOS at C800. Other common
+                addresses are D800, and DC00. Some hard disk controllers
+                have what seems like two BIOSs. One part is only needed at
+                boot-up and for formatting the disk. The other is used to
+                hold the 'real' parameters of the disk, and translate
+                cylinder, head and sector counts into something else.
+

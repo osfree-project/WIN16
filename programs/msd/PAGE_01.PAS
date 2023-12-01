@@ -1,0 +1,481 @@
+unit page_01;
+
+interface
+
+uses Crt, Dos, ifpglobl, ifpcomon;
+
+procedure page01;
+
+implementation
+
+procedure page01;
+  const
+    BIOScseg = $C000;
+    BIOSext = $AA55;
+    PCROMseg = $F000;
+    dells: array [2..$11] of string[5] = ('200', '300', '?', '220', '310', '325',
+             '?', '310A', '316', '220E', '210', '316SX', '316LT', '320LX',
+             '?', '425E');
+    dellnums: set of 0..$FF = [2, 3, 5..7, 9..$0F, $11];
+    searchstr = '**Searching for Copyright message**';
+
+  var
+    xbool : boolean;
+    xbyte : byte;
+    xchar : char;
+    xlong : longint;
+    xword1 : word;
+    xword2 : word;
+    s: string;
+    ROMDate: string[8];
+    ROMInfoSeg, ROMInfoOfs: word;
+
+  function BIOSscan(a, b, c: word; var d: word): boolean;
+    const
+      max = 3;
+      notice : array[1..max] of string = ('(C)', 'COPR.', 'COPYRIGHT');
+
+    var
+      i : 1..max;
+      len : byte;
+      target : string;
+      xbool : boolean;
+      xlong : longint;
+      xword : word;
+      OldX, OldY, oldattr: byte;
+
+    function scan(a: string; b, c, d: word; var e: word): boolean;
+      var
+        i : longint;
+        j : byte;
+        len : byte;
+        xbool1 : boolean;
+        xbool2 : boolean;
+
+      begin
+      i:=c;
+      len:=Length(a);
+      xbool1:=false;
+      repeat
+        if i <= longint(d) - len + 1 then
+          begin
+          j:=0;
+          xbool2:=false;
+          repeat
+            if j < len then
+              if UpCase(Chr(Mem[b : i + j])) = a[j + 1] then
+                Inc(j)
+              else
+                begin
+                xbool2:=true;
+                Inc(i)
+                end
+            else
+              begin
+              xbool2:=true;
+              xbool1:=true;
+              e:=i;
+              scan:=true
+              end
+          until xbool2
+          end
+        else
+          begin
+          xbool1:=true;
+          scan:=false
+          end
+      until xbool1
+      end; {scan}
+
+    begin (* function BIOSscan *)
+    xlong:=c;
+    xbool:=false;
+    OldX:=WhereX;
+    OldY:=WhereY;
+    oldattr:=TextAttr;
+    TextColor(LightRed + Blink);
+    Write(searchstr);
+    for i:=1 to max do
+      begin
+      target:=notice[i];
+      len:=Length(target);
+      if xbool then
+        xlong:=longint(xword) - 2 + len;
+      if (xlong >= b) and (xlong <= c) and (scan(target, a, b, xlong, xword))
+        then
+          xbool:=true
+      end;
+    if xbool then
+      begin
+      while (xword > b) and (Chr(Mem[a : xword - 1]) in pchar) do
+        Dec(xword);
+      d:=xword
+      end;
+    GotoXY(OldX, OldY);
+    TextAttr:=oldattr;
+    for len:=1 to Length(searchstr) do
+      Write(' ');
+    GotoXY(OldX, OldY);
+    BIOSscan:=xbool
+    end; {biosscan}
+
+  procedure showBIOS(a, b: word);
+    var
+      xbool : boolean;
+      xchar : char;
+
+    begin
+    xbool:=false;
+    repeat
+      xchar:=Chr(Mem[a : b]);
+      if xchar in pchar then
+        begin
+        Write(xchar);
+        if b < $FFFF then
+          Inc(b)
+        else
+          xbool:=true
+        end
+      else
+        xbool:=true
+    until xbool;
+    Writeln
+    end; {showbios}
+
+  begin (* procedure page01 *)
+  Caption2('Machine type');
+  if UpCase(Chr(Mem[$F000:$E076])) = 'D' then
+    begin
+    s:='';
+    for xword1:=$E077 to $E079 do
+      s:=s + UpCase(Chr(Mem[$F000:xword1]));
+    if s = 'ELL' then
+      begin
+      Write('Dell ');
+      xbool:=true;
+      xbyte:=Mem[$F000:$E845];
+      if xbyte in dellnums then
+        Write(dells[xbyte])
+      else
+        begin
+        Write('(unknown - ID is ', Hex(xbyte, 2));
+        xbool:=false
+        end;
+      if xbool then
+        begin
+        Caption3('BIOS Revision');
+        for xword1:=$E845 to $E847 do
+          Write(Chr(Mem[$F000:xword1]))
+        end;
+      Writeln;
+      Caption2('Standard BIOS call says');
+      Writeln
+      end
+    end;
+  ROMDate:='';
+  for xword1:=$FFF5 to $FFFC do
+    ROMDate:=ROMDate + Chr(Mem[$F000:xword1]);
+  with regs do
+    begin
+    AX:=$6F00;
+    BX:=0;
+    Flags:=Flags and FCarry;
+    Intr($16, regs);
+    if nocarry(regs) and (BX = $4850) then
+      begin
+      Writeln('HP Vectra series');
+      Caption2('Standard BIOS call says');
+      end;
+    end;
+  with regs do
+    begin
+    AX:=$4DD4;
+    BX:=0;
+    Intr($15, regs);
+    if BX = $4850 then
+      begin
+      Writeln('HP 95LX');
+      Caption2('Standard BIOS call says');
+      end;
+    end;
+  with regs do
+    begin
+    AH:=$C0;
+    ES:=0;
+    BX:=0;
+    Flags:=Flags and FCarry;
+    Intr($15, regs);
+{    if ((ES <> 0) and (BX <> 0)) and (Mem[$FFFF:$E] < $FD) and nocarry(regs) then}
+    if nocarry(regs) and (AH = 0) then
+      begin
+      ROMInfoSeg:=ES;
+      ROMInfoOfs:=BX;
+      xword1:=MemW[ES : BX + 2];
+      xbyte:=Mem[ES:BX + 4];
+      case xword1 of
+        $00FC:        if xbyte = 1 then
+                        Writeln('PC-AT 2x9, 6MHz')
+                      else
+                        Writeln('Industrial AT 7531/2');
+        $01FC:        case xbyte of
+                        $00: begin
+                             if ROMDate = '11/15/85' then
+                               Writeln('PC-AT 319 or 339, 8MHz')
+                             else
+                               if ROMDate = '01/15&88' then
+                                 Writeln('Toshiba T5200/100')
+                               else
+                                 if ROMDate = '12/26*89' then
+                                   Writeln('Toshiba T1200/XE')
+                                 else
+                                   if ROMDate = '07/24&90' then
+                                     Writeln('Toshiba T5200/200')
+                                   else
+                                     if ROMDate = '09/17/87' then
+                                       Writeln('Tandy 3000')
+                                     else
+                                       Writeln('AT clone');
+                             end;
+                        $30: Writeln('Tandy 3000NL')
+                      else
+                        Writeln('Compaq 286/386 or clone');
+                      end;
+        $02FC:        Writeln('PC-XT/286');
+        $04FC:        if xbyte = 3 then
+                        Writeln('PS/2 Model 50Z 10MHz 286')
+                      else
+                        Writeln('PS/2 Model 50 10MHz 286');
+        $05FC:        Writeln('PS/2 Model 60 10MHz 286');
+        $06FC:        Writeln('7552 Gearbox');
+        $09FC:        if xbyte = 2 then
+                        Writeln('PS/2 Model 30-286')
+                      else
+                        Writeln('PS/2 Model 25-286');
+        $0BFC:        Writeln('PS/1 Model 2011 10MHz 286');
+        $42FC:        Writeln('Olivetti M280');
+        $45FC:        Writeln('Olivetti M380 (XP1, 3, or 5)');
+        $48FC:        Writeln('Olivetti M290');
+        $4FFC:        Writeln('Olivetti M250');
+        $50FC:        Writeln('Olivetti M380 (XP7)');
+        $51FC:        Writeln('Olivetti PCS286');
+        $52FC:        Writeln('Olivetti M300');
+        $81FC:        Writeln('AT clone with Phoenix 386 BIOS');
+        $00FB:        if xbyte = 1 then
+                        Writeln('PC-XT w/ Enh kbd, 3.5" support')
+                      else
+                        Writeln('PC-XT');
+        $01FB:        Writeln('PC-XT/2');
+        $4CFB:        Writeln('Olivetti M200');
+        $00FA:        Writeln('PS/2 Model 30');
+        $01FA:        Writeln('PS/2 Model 25/25L');
+        $4EFA:        Writeln('Olivetti M111');
+        $00F9:        Writeln('PC-Convertible');
+        $00F8:        Writeln('PS/2 Model 80 16MHz 386');
+        $01F8:        Writeln('PS/2 Model 80 20MHz 386');
+        $04F8:        Writeln('PS/2 Model 70 20MHz 386');
+        $09F8:        Writeln('PS/2 Model 70 16MHz 386');
+        $0BF8:        Writeln('PS/2 Model P70');
+        $0CF8:        Writeln('PS/2 Model 55SX 16MHz 386SX');
+        $0DF8:        Writeln('PS/2 Model 70 25MHz 386');
+        $11F8:        Writeln('PS/2 Model 90 25MHz 386');
+        $13F8:        Writeln('PS/2 Model 90 33MHz 386');
+        $14F8:        Writeln('PS/2 Model 90-AK9 25MHz 486');
+        $16F8:        Writeln('PS/2 Model 90-AKD 33MHz 486');
+        $19F8:        Writeln('PS/2 Model 35/35LS/40 20MHz 386SX');
+        $1BF8:        Writeln('PS/2 Model 70 25MHz 486');
+        $1CF8:        Writeln('PS/2 Model 65-121 16MHz 386SX');
+        $1EF8:        Writeln('PS/2 Model 55LS 16MHz 386SX');
+        $23F8:        Writeln('PS/2 Model L40 20MHz 386SX');
+        $25F8:        Writeln('PS/2 Model M57 20MHz 386SLC');
+        $26F8:        Writeln('PS/2 Model 57 20MHz 386SX');
+        $2AF8:        Writeln('PS/2 Model 95 50MHz 486');
+        $2BF8:        Writeln('PS/2 Model 90 50MHz 486');
+        $2CF8:        Writeln('PS/2 Model 95 20MHz 486SX');
+        $2DF8:        Writeln('PS/2 Model 90 20MHz 486SX');
+        $2EF8:        Writeln('PS/2 Model 95 20MHz 486SX+487SX');
+        $2FF8:        Writeln('PS/2 Model 90 20MHz 486SX+487SX');
+        $30F8:        Writeln('PS/1 Model 2121 16MHz 386SX');
+        $50F8:        Writeln('PS/2 Model P70 16MHz 386');
+        $52F8:        Writeln('PS/2 Model P75 33MHz 486');
+        $61F8:        Writeln('Olivetti P500');
+        $62F8:        Writeln('Olivetti P800');
+        $80F8:        Writeln('PS/2 Model 80 25 MHz 386');
+      else
+        unknown('machine - model/type word', xword1, 4);
+      end; {case}
+      Caption3('BIOS revision level');
+      Writeln(Mem[ES:BX + 4]);
+      xbyte:=Mem[ES:BX + 5];
+      Caption3('DMA channel 3 used by hard disk BIOS');
+      YesOrNo(xbyte and $80 = $80);
+      Caption3('Slave 8259 present');
+      YesOrNo(xbyte and $40 = $40);
+      Caption3('Real-time clock');
+      YesOrNo(xbyte and $20 = $20);
+      Caption3('Keyboard intercept available');
+      YesOrNo(xbyte and $10 = $10);
+      Caption3('Wait for external event available');
+      YesOrNo(xbyte and $08 = $08);
+      Caption3('Extended BIOS data area segment');
+      if xbyte and $04 = $04 then
+        begin
+        AH:=$C1;
+        intr($15, regs);
+        if nocarry(regs) then
+          Writeln(Hex(ES, 4))
+        else
+          dontknow
+        end
+      else
+        Writeln('(none)');
+      Caption3('Bus type');
+      if xbyte and 1 = 1 then
+        Writeln('Dual ISA/Micro Channel')
+      else
+        if xbyte and 2 = 2 then
+          Writeln('Micro Channel')
+        else
+          Writeln('ISA');
+      xbyte:=Mem[ES:BX + 6];
+      Caption3('Keyboard Int 16h/Func 9 support');
+      YesOrNo(xbyte and $40 = $40);
+      Caption3('Keyboard controller');
+      if xbyte and 4 = 4 then
+        Writeln('non-8042')
+      else
+        Writeln('8042');
+      Caption3('POS data supported');
+      YesOrNo(xbyte and $20 = $20);
+      Caption3('CPU enable/disable');
+      YesOrNo(xbyte and 8 = 8);
+      Caption3('Data streaming support');
+      YesOrNo(xbyte and 2 = 2);
+      xbyte:=Mem[ES:BX + 7];
+      Caption3('On-board SCSI');
+      YesOrNo(xbyte and 8 = 8);
+      Caption3('Info panel');
+      YesOrNo(xbyte and 4 = 4);
+      Caption3('IML system');
+      YesOrNo(xbyte and 2 = 2);
+      Caption3('IML supports SCSI');
+      YesOrNo(xbyte and 1 = 1);
+      Pause1;
+      ClrScr;
+      end
+    else
+      if Mem[$F000:$C000] = $21 then
+        Writeln('Tandy 1000')
+      else
+        begin
+        xbyte:=Mem[$FFFF : $000E];
+        case xbyte of
+          $FF : begin
+                if Mem[$F000:$FFFD] = $46 then
+                  Writeln('Olivetti M15')
+                else
+                  begin
+                  Write('PC ');
+                  if ROMDate = '04/24/81' then
+                    Write('(original)')
+                  else
+                    if ROMDate = '10/19/81' then
+                      Write('(revised BIOS)')
+                    else
+                      if ROMDate = '10/27/82' then
+                        Write('(HD, 640K, EGA supported)')
+                      else
+                        Write('clone');
+                  end;
+                Writeln;
+                end;
+          $FE : begin
+                if Mem[$F000:$FFFD] = $43 then
+                  Writeln('Olivetti M240')
+                else
+                  begin
+                  Write('PC-XT');
+                  if ROMDate = '11/08/82' then
+                    Write(' or Portable')
+                  else
+                    if ROMDate <> '08/16/82' then
+                      Write(' clone');
+                  Writeln;
+                  end;
+                end;
+          $FD : Writeln('PCjr');
+          $FC : Writeln('PC-AT');
+          $9A : Writeln('Compaq XT or Compaq Plus');
+          $30 : Writeln('Sperry PC');
+          $2D : Writeln('Compaq PC or Compaq Deskpro')
+          else
+            unknown('machine - model byte', xbyte, 2)
+        end
+        end
+  end;
+(*  Byte 12:12 p. 174  *)
+  Caption2('BIOS source');
+  if BIOSscan(PCROMseg, $C000, $FFFF, xword1) then
+    showBIOS(PCROMseg, xword1)
+  else
+    dontknow;
+  s:='';
+  for xword1:=ROMInfoOfs + $0D to ROMInfoOfs + $0F do
+    s:=s + Chr(Mem[ROMInfoSeg: xword1]);
+  if s = 'PTL' then
+    begin
+    Caption2('BIOS version');
+    Write(UnBCD(Mem[ROMInfoSeg:ROMInfoOfs + $B]), decimal,
+            AddZero(UnBCD(Mem[ROMInfoSeg:ROMInfoOfs + $C])));
+    Caption2(' last revision');
+    xword:=$FFDC;
+    repeat
+      Write(Chr(Mem[$F000:xword]));
+      Inc(xword, 2);
+    until xword = $FFEC;
+    Writeln;
+    end;
+  Caption2('BIOS date');
+  i:=$0005;
+  xbool:=false;
+  xchar:=Chr(Mem[$FFFF : i]);
+  while (i < $0010) and (xchar in pchar) do
+    begin
+    xbool:=true;
+    Write(xchar);
+    Inc(i);
+    xchar:=Chr(Mem[$FFFF : i])
+    end;
+  if xbool then
+    Writeln
+  else
+    dontknow;
+  Caption2('BIOS extensions');
+  xword1:=BIOScseg;
+  xbool:=false;
+  for i:=0 to 94 do
+    begin
+    if (MemW[xword1 : 0] = BIOSext) then
+      begin
+      if not xbool then
+        begin
+        Writeln;
+        Window(3, WhereY + Hi(WindMin), twidth, tlength - 2);
+        Caption1('Segment Size  Copyright notice');
+        Writeln;
+        xbool:=true
+        end;
+      pause2;
+      if endit then
+        Exit;
+      Write(Hex(xword1, 4), '    ', ((longint(512) * Mem[xword1: 2]) div 1024):3, 'K  ');
+      if BIOSscan(xword1, $0000, $1FFF, xword2) then
+        showBIOS(xword1, xword2)
+      else
+        dontknow
+      end;
+    Inc(xword1, $0080)
+    end;
+  if not xbool then
+    Writeln('(none)')
+  end;
+end.

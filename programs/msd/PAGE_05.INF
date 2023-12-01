@@ -1,0 +1,37 @@
+  On this page, you get some general information about your current video.
+
+Active video subsystem: The type of video system you are using that moment.
+
+Inactive video: If one system is a VGA, you can have an inactive board.
+
+Initial video mode: The mode the computer will boot up in. Often set by a
+                    DIP switch or CMOS setting.
+
+Current video mode: The current text mode.
+
+Current display page: There can be up to 8 pages of text (0 through 7).
+                      Most often, this will be 0.
+
+Video buffer offset and size: The amount of memory needed to display a page
+                              of text, and the address into the video
+                              segment where the page starts.
+
+Active display port: This is the port used to control the video.
+
+CRT mode register: A value used to setup the video controller.
+
+Current palette: Another value used by the controller.
+
+Colors: A block containing each of the 16 possible color values.
+
+Current colors: The colors that the BIOS is currently set to. (INFOPLUS
+                usually bypasses the BIOS, so the colors won't be the same
+                as what you see on the screen.)
+
+Text rows and columns: The current screen size.
+
+Scan lines/character: How many scan lines make up each character.
+
+Cursor scan lines: Which lines of the above count that are used for the
+                   cursor.
+

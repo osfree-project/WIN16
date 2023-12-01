@@ -1,0 +1,81 @@
+  This page gives you information about various programs that are typcially
+loaded into memory.
+
+  Some memory resident programs use a special interrupt to communicate with
+other programs. By giving a special 'signature' with the command, many
+programs can share this one interrupt.
+
+DOS:          Checks if DOS is readable!
+
+DRIVER.SYS:   This is used to add in extra floppies, or to redefine a drive
+              that is not normally supported. Also, DOS 4 and 5 support
+              some of it's functions, and will always display as yes.
+
+DISPLAY.SYS:  This is used when non-US display characters are needed.
+
+ANSI.SYS:     This lets you display color, control the cursor, and
+              re-define keys.
+
+              This check is supported by DOS 4 and newer ANSI.SYS, and the
+              5/91 (or newer) version of NNANSI. Other versions will
+              probably not be detected.
+
+EGA.SYS:      This is used by Windows 3 and some mouse drivers. Some of the
+              registers used to control the EGA are WRITE ONLY. EGA.SYS is
+              an interface that lets programs keep track of things easier.
+
+PRINT:        This is DOS's program that will send a file to the printer
+              while running in the background. If PRINT is found, INFOPLUS
+              will display information about it on the right side of the
+              screen.
+
+ASSIGN:       ASSIGN lets you redefine drive letters. ASSIGN A=B B=A will
+              reverse the drive letters used by your floppies. ASSIGN by
+              itself cancels all redefinitions.
+
+SHARE:        This is used to control access to files in network and
+              multi-tasking environments. Under DOS 4, it also prevents
+              problems when FCBs are used on large partitions.
+              Windows and OS/2 DOS sessions have SHARE support built-in.
+
+NLSFUNC:      This is used when non-US displays and keyboards are wanted.
+              Windows has NLSFUNC support built-in.
+
+GRAFTABL:     The CGA lets you redefine the upper 128 ASCII characters in
+              graphics mode. GRAFTABL loads the normal high-ASCII
+              characters for display. There are two entries, one for DOS 4
+              and older, the other for DOS 5 and newer.
+
+NETBIOS:      These are interfaces for networks.
+
+SHELLB:       This is part of DOS 4's DOSSHELL program.
+
+XMA2EMS:      This is a program for PS/2's that convert extended memory to
+              EMS memory.
+
+APPEND:       Append lets you specify a PATH that is used when a program
+              attempts to open a file. It works similar to the PATH command
+              used at the DOS prompt. If found, extra information will be
+              displayed on the right side of the screen.
+
+GRAPHICS.COM: This is a DOS program that lets the PrtScrn key print
+              graphics screen.
+
+Crit.err.handlr: When a critical error occurs, it's possible to have a
+                 special TSR handle things.
+
+CDROM:        Some CDROM's use this interface.
+
+Network:      This is supposed to be a generic Network information call.
+
+DOSKEY:       This is the command line editor for DOS 5.
+
+DOS Extender: This is a new standardized check for DOS extenders. DOS
+              extenders allow programs to run in protected mode, accessing
+              more than 1M of memory.
+
+SETVER list:  SETVER is a DOS 5 command that allows you to change the
+              version of DOS that a program sees. There are many programs
+              already set in the default configuration. You must re-boot
+              DOS to put any changes into effect.
+

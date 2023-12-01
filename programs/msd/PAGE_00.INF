@@ -1,0 +1,73 @@
+   This is the opening screen. It's meant to remind you as to which pages
+shows what information. Hitting the <HOME> key will always move you to this
+page.
+
+   The keys that are active on this page, and all others are:
+
+<F1>    This will display a help screen for the page you are on.
+          While displaying help:
+           <UpArrow> will move the display up 1 line.
+           <DnArrow> will move the display down 1 line.
+           <PgUp>    will move the display up 1 screen.
+           <PgDn>    will move the display down 1 screen.
+           <HOME>    will display the first page of help.
+           <END>     will display the last page of help.
+           <ESC>     will end the help session.
+
+<ESC>   This will abort INFOPLUS and return you to DOS.
+
+<ENTER> A prompt will appear on the bottom line asking which page you
+        want to go to. Type in the number, and then hit <ENTER> to jump
+        immediately to that page. If you don't type a number and hit
+        <ENTER>, Infoplus will re-start the current page.
+
+<PgUp>  This will move you back one page.
+
+<PgDn>  This will move you forward one page.
+
+<HOME>  This will move you to page 0.
+
+<END>   This will move you to that last page.
+
+<ALT+P> This is if you want to send a screen of data to the printer or to a
+        file on disk. Just follow the prompts on the screen. Pressing <ESC>
+        at any of these prompts will cancel the printscreen operation.
+
+        When asked about Normal or IBM ASCII: if you pick Normal, any
+        characters on screen that are not part of the standard ASCII set
+        (such as line drawing characters) will be converted into the
+        closest equivalent normal ASCII character.
+
+        The page is printed with a header at the top giving the Page
+        number, it's description, and the date and time. You may optionally
+        add a line of your own, which you could use to identify the
+        computer it's on, or similar.
+
+        Unlike using the PrtScr (or PrintScrn) key, only the data part of
+        the screen is printed. Not the very top and bottom lines.
+
+<DnArw> Some screens hold more information than can be shown at once. Press
+        the Down Arrow key to get the extra information.
+
+<UpArw> Some screens that are long let you go back to review already
+        displayed data.
+
+  When starting INFOPLUS, you can use some command-line parameters.
+
+Syntax:
+  INFOPLUS [B][D][M][C][F][NP][NV][AP[:filename]][H][?]
+where:
+  B  = Write to screen using BIOS (default under Desqview)
+  D  = Write directly to screen memory (default)
+  M  = Use monochrome colors (default under MODE BWxx)
+  C  = Use normal colors (default)
+  F  = Leave 16550 FIFO's enabled
+  NV = Do not perform VGA chipset detection
+  NP = Do not read Partition Table
+  AP = AutoPrint all screens, ask for setup
+  AP:filename = AutoPrint to a file or device
+  H or ? = This help screen
+
+ex: INFOPLUS B M NV
+      Run INFOPLUS using BIOS, monochrome colors, no VGA check.
+
