@@ -89,133 +89,106 @@ void checkparams(int argc, char* argv[])
 void init(int argc, char* argv[])
 {
   int xint;
-
+  struct videoconfig vc;
+  union REGPACK rp;
+  
   mono=FALSE;
-  vidmode=LastMode;
-  attrsave=TextAttr;
-  CheckBreak=FALSE;
+//  vidmode=LastMode;
+//  attrsave=TextAttr;
+//  CheckBreak=FALSE;
   resetvideo=FALSE;
   novgacheck=FALSE;
   ReadPartitionTable=TRUE;
   FifoOn=FALSE;
-  if (Lo(LastMode) = 0) or (Lo(LastMode) = 1) then
+//  if (Lo(LastMode) = 0) or (Lo(LastMode) = 1) then
+//  {
+//    textmode(LastMode + 2);
+//    resetvideo=TRUE;
+//  }
+
+  rp.h.ah=0x0f;
+  intr(0x10, &rp);
+  twidth=rp.h.ah;
+  vidpg=rp.h.bh;
+
+//  detectgraph(graphdriver, xint);
+  _getvideoconfig( &vc );
+  if ((vc.adapter == _EGA) || (vc.adapter == _MCGA) || (vc.adapter == _VGA) || (vc.adapter == _SVGA))
   {
-    textmode(LastMode + 2);
-    resetvideo=TRUE;
+      rp.w.ax=0x1130;
+      rp.h.bh=0x00;
+      intr(0x10, &rp);
+      tlength=rp.h.dl + 1;
+//      CheckSnow=FALSE;
   }
-  with regs do
-    begin
-    AH:=$0F;
-    intr($10, regs);
-    twidth:=AH;
-    vidpg:=BH
-    end;
-  detectgraph(graphdriver, xint);
-  if (graphdriver = EGA) or (graphdriver = MCGA) or (graphdriver = VGA) then
-    with regs do
-      begin
-      AX:=$1130;
-      BH:=$00;
-      intr($10, regs);
-      tlength:=DL + 1;
-      CheckSnow:=False;
-      end
   else
-    tlength:=25;
-  with regs do
-    begin
-    Intr($11, regs);
-    equip:=AX;
-    Intr($12, regs);
-    DOSmem:=longint(AX) shl 10;
-    AH:=$19;
-    MsDos(regs);
-    currdrv:=AL;
-    AH:=$34;
-    MsDos(regs);
-    DOScseg:=ES;
-    DOScofs:=BX
-    end;
-  SwapVectors;
-  for i:=$00 to $FF do
-    GetIntVec(i, intvec[i]);
-  SwapVectors;
-{
-  intvec[$00]:=saveint00;
-  intvec[$02]:=saveint02;
-  intvec[$1B]:=saveint1B;
-  intvec[$23]:=saveint23;
-  intvec[$24]:=saveint24;
-  intvec[$34]:=saveint34;
-  intvec[$35]:=saveint35;
-  intvec[$36]:=saveint36;
-  intvec[$37]:=saveint37;
-  intvec[$38]:=saveint38;
-  intvec[$39]:=saveint39;
-  intvec[$3A]:=saveint3A;
-  intvec[$3B]:=saveint3B;
-  intvec[$3C]:=saveint3C;
-  intvec[$3D]:=saveint3D;
-  intvec[$3E]:=saveint3E;
-  intvec[$3F]:=saveint3F;
-  intvec[$75]:=saveint75;
-}
-  with regs do
-    begin
-    AX:=$3700;
-    MsDos(regs);
-    switchar:=Chr(DL)
-    end;
-  dirsep:=['\'];
-  if switchar <> '/' then
-    dirsep:=dirsep + ['/'];
-  with regs do
-    begin
-    AH:=$52;
-    MsDos(regs);
-    devseg:=ES;
-    devofs:=BX
-    end;
-  lastdrv:=Mem[devseg:devofs + $0021];
-  if (Lo(LastMode) = 2) or (Lo(LastMode) = 7) then
-    mono:=true;
-  with regs do
-    begin
-    AX:=$2B01;
-    CX:=$4445; {DE}
-    DX:=$5351; {SQ}
-    MsDos(regs);
-    if AL <> $FF then
-//      DirectVideo:=False;
-    end;
-  if ParamCount > 0 then
-    checkparams;
-  Textcolor(LightGreen);
-  TextBackground(Blue);
-  Clrscr;
-  Write('INFO+');
-  Textcolor(lightgray);
-  Write(' - Information on all computer functions');
+    tlength=25;
+
+  intr(0x11, &rp);
+  equip=rp.w.ax;
+  intr(0x12, &rp);
+  DOSmem=((long)(rp.w.ax)) << 10;
+  rp.h.ah=0x19;
+  intr(0x21, &rp);
+  currdrv=rp.h.al;
+  rp.h.ah=0x34;
+  intr(0x21, &rp);
+  DOScseg=rp.w.es;
+  DOScofs=rp.w.bx;
+
+//  SwapVectors;
+  for(i=0;i<0x100;i++) intvec[i]=_dos_getvect(i);
+//  SwapVectors;
+
+  rp.w.ax=0x3700;
+  intr(0x21, &rp);
+  switchar=(char)rp.h.dl;
+
+//  dirsep:=['\'];
+//  if switchar <> '/' then
+//    dirsep:=dirsep + ['/'];
+
+  rp.h.ah=0x52;
+  intr(0x21, &rp);
+  devseg=rp.w.es;
+  devofs=rp.w.bx;
+
+  lastdrv=*(BYTE far *) MK_FP(devseg, devofs + 0x0021);
+
+//  if (Lo(LastMode) = 2) or (Lo(LastMode) = 7) mono=TRUE;
+
+//  rp.w.ax=0x2B01;
+//  rp.w.cx=0x4445; //{DE}
+//  rp.w.dx=0x5351; //{SQ}
+//  intr(0x21, &rp);
+//  if (rp.h.al!=0xff) DirectVideo:=False;
+
+  if (argc > 0) checkparams(argc, argv);
+
+  textcolor(LIGHTGREEN);
+  textbackground(BLUE);
+  clrscr();
+  printf("INFO+");
+  textcolor(LIGHTGRAY);
+  printf(" - Information on all computer functions");
   rjustify(qversion);
-  Writeln;
-  border(#223);
-  GotoXY(1, tlength - 1);
-  border(#220);
-  Write('Page ');
-  x1:=wherex;
-  Textcolor(Lightgreen);
-  rjustify('F1 Enter PgUp PgDn Home End Esc Alt-P');
-  pg:=0;
-  endit:=false;
-  if osmajor >= 3 then
-    with regs do
-      begin
-      AX:=$3800;
-      DS:=seg(country);
-      DX:=ofs(country);
-      MsDos(regs);
-      ccode:=BX;
-      decimal:=Chr(country[9]);
-      end;
-  end; {init}
-#endif
+  printf("\n\r");
+  border((char)223);
+  gotoxy(1, tlength - 1);
+  border((char)220);
+  printf("Page ");
+  x1=wherex();
+  textcolor(LIGHTGREEN);
+  rjustify("F1 Enter PgUp PgDn Home End Esc Alt-P");
+  pg=0;
+  endit=FALSE;
+  if (_osmajor >= 3) 
+  {
+      rp.w.ax=0x3800;
+      rp.w.ds=FP_SEG(country);
+      rp.w.dx=FP_OFF(country);
+      intr(0x21, &rp);
+      ccode=rp.w.bx;
+      decimal=(char)(country[9]);
+  }
+}
