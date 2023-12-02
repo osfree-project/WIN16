@@ -1,12 +1,22 @@
-#define qversion "Version 1.58à"
+// Versions up to 1.58a is a Turbo Pascal source code
+// Version from 1.58c is a Open Watcom C version
+
+#define qversion "Version 1.58c"
 #define qdate "September 17, 1993"
-#define vernum "1.58à"
+#define vernum "1.58c"
 #define helpversion 157
 #define BIOSdseg 0x0040
 #define pgmax 21
 //#define pchar = [' '..'~'];
 #define secsiz 2048
 #define tick1 1193180
+
+#define WORD unsigned short
+#define BYTE unsigned char
+#define BOOLEAN BYTE
+#define FALSE 0
+#define TRUE 1
+
 /*
   pgnames: array [0..pgmax] of string[32] = (
              'Table of Contents',
@@ -47,34 +57,34 @@ WORD DOScofs;
 WORD DOScseg;
 //  DOSmem : longint;
 WORD equip;
-  graphdriver : integer;
-  i : word;
-  intvec : array[$00..$FF] of pointer;
-  lastdrv : byte;
-  osmajor : byte;
-  osminor : byte;
-  pg : 0..pgmax;
-  regs : registers;
-  switchar : char;
-  tlength : byte;
-  twidth : byte;
-  vidpg : byte;
-  x1 : byte;
-  x2 : byte;
-  xbool1 : boolean;
-  xbool2 : boolean;
-  xchar1 : char;
-  xchar2 : char;
-  xword : word;
-  gotcountry: boolean;
-  c2: char2;
-  quiet, endit: boolean;
-  ccode: word;
-  vidmode: word;
-  decimal: char;
-  mono: boolean;
-  resetvideo: boolean;
-  novgacheck: boolean;
-  ReadPartitionTable: boolean;
-  FifoOn: boolean;
+//  graphdriver : integer;
+WORD i;
+//  intvec : array[$00..$FF] of pointer;
+BYTE lastdrv;
+//  osmajor : byte;
+//  osminor : byte;
+//  pg : 0..pgmax;
+//  regs : registers;
+char switchar;
+BYTE tlength;
+BYTE twidth;
+BYTE vidpg ;
+BYTE x1;
+BYTE x2;
+BOOLEAN xbool1;
+BOOLEAN xbool2;
+char xchar1;
+char xchar2;
+WORD xword;
+BOOLEAN gotcountry;
+//  c2: char2;
+BOOLEAN quiet, endit;
+WORD ccode;
+WORD vidmode;
+char decimal;
+BOOLEAN mono;
+BOOLEAN resetvideo;
+BOOLEAN novgacheck;
+BOOLEAN ReadPartitionTable;
+BOOLEAN FifoOn;
 

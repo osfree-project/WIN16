@@ -1,9 +1,12 @@
-//uses ifpglobl, ifpcomon, ifpinit, ifpscrpt, ifphelp,
+#include "ifpglobl.ic"
+#include "ifpcomon.ic"
+#include "ifpinit.ic"
+//, ifpscrpt, ifphelp,
 //  page_00, page_01, page_02, page_03, page_04, page_05, page_06, page_07,
 //  page_08, page_09, page_10, page_11, page_12, page_13, page_14, page_15,
 //  page_16, page_17, page_18, page_19, page_20, page_21;
 
-void runit(void)
+void runit(int argc, char* argv[])
 {
   union REGPACK rp;
   
@@ -11,36 +14,37 @@ void runit(void)
 
   intr(0x21, &rp);
 
-  if ((rp.h.al==0x06) && ((rp.h.bh<100) && (rp.h.bl>=5))){};
+/* because of the conflict from the CBIS redirector,
+  programs should check whether BH is less than 100 (64h)
+  and BL is at least 5 before accepting the returned BX as the true
+  version number; however, even this is not entirely reliable when
+  that redirector is loaded */
+  if ((rp.h.al==0x06) && ((rp.h.bh<100) && (rp.h.bl>=5)))
+  {
+    _osmajor=rp.h.bl;
+    _osminor=rp.h.bh;
+  };
 
   if (_osmajor>=3)
   {
+    init(argc, argv);
+    xbool1=FALSE;
+    do
+    {
+      gotoxy(x1, tlength);
+    } while (!xbool1);
+    textattr(attrsave);
+    if (resetvideo) textmode(vidmode);
+    clrscr();
   } else {
     printf("\n\r");
-    decimal=".";
+    decimal='.';
     printf("INFOPLUS requires DOS version 3.0 or later\n\r");
     printf("Your DOS version is ");
-    showvers
-
+    showvers();
   };
 
 #if 0
-  with regs do
-    begin
-    AX:=$3306;
-    MsDos(regs);
-	/* because of the conflict from the CBIS redirector (see next
-	  entry), programs should check whether BH is less than 100 (64h)
-	  and BL is at least 5 before accepting the returned BX as the true
-	  version number; however, even this is not entirely reliable when
-	  that redirector is loaded */
-    if (AL = $06) and (BH < 100) and (BL >= 5) then
-      xword:=BX
-    else
-      xword:=DosVersion;
-    end;
-  osmajor:=Lo(xword);
-  osminor:=Hi(xword);
   if osmajor >= 3 then
     begin
     init;

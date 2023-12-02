@@ -1,0 +1,221 @@
+//IFPScrPt;
+
+void rjustify(char * a)
+{
+  short r1, c1, r2, c2;
+  _gettextwindow( &r1, &c1, &r2, &c2 );
+  gotoxy(1 + c2 - strlen(a), wherey());
+  x2=wherex();
+  printf(a);
+}
+
+void border(char ch)
+{
+  BYTE i;
+  textcolor(LIGHTCYAN);
+  for (i=0;i<twidth;i++) printf("%c", ch);
+  textcolor(LIGHTGRAY);
+}
+
+char * deletejunk(char * s)
+{
+    int i;
+
+    while (isspace (*s)||(*s=='-')||(*s=='/')) s++;   // skip left side white spaces
+    for (i = strlen (s) - 1; (isspace (s[i])); i--) ;   // skip right side white spaces
+    s[i + 1] = '\0';
+    return strupr(s);
+}  
+
+void checkparams(int argc, char* argv[])
+{
+   char * s;
+   WORD parm;
+
+   for(parm=0; parm<argc; parm++)
+   {
+      s=deletejunk(argv[parm]);
+//      if (!strcmp(s, "B")) DirectVideo=FALSE;
+//      if (!strcmp(s, "D")) DirectVideo=TRUE;
+      if (!strcmp(s, "M")) mono=TRUE;
+      if (!strcmp(s, "C")) mono=FALSE;
+      if (!strcmp(s, "F")) FifoOn=TRUE;
+      if (!strcmp(s, "NP")) ReadPartitionTable=FALSE;
+      if (!strcmp(s, "NV")) novgacheck=TRUE;
+      if (!strncmp(s, "AP", 2))
+      {
+        PrinterRec.Mode='A';
+        if (!strncmp(s, "AP:", 3))
+	{
+            PrinterRec.Destination='F';
+            PrinterRec.Filename=deletejunk(s+3);
+            PrinterRec.HiStrip=TRUE;
+            PrinterRec.HeaderStr="";
+            if (tlength == 25) PrinterRec.ScreensPerPage=2;
+            else PrinterRec.ScreensPerPage=1;
+            PrinterRec.ScreenCount=0;
+         }
+      }
+      if (!strcmp(s, "?") || !strcmp(s, "H"))
+	{
+//        Assign(output, '');
+//        ReWrite(output);
+//        Assign(input, '');
+//        Reset(input);
+        printf("INFOPLUS %s  Compiled: %s'\n\r", qversion, qdate);
+        printf("\n\r");
+        printf("Syntax:\n\r");
+        printf("  INFOPLUS [M][C][F][NP][NV][AP[:filename]][H][?]\n\r"); //[B][D]
+        printf("where:\n\r");
+//        printf("  B  = Write to screen using BIOS (default under Desqview)\n\r");
+//        printf("  D  = Write directly to screen memory (default)\n\r");
+        printf("  M  = Use monochrome colors (default under MODE BWxx)\n\r");
+        printf("  C  = Use normal colors (default)\n\r");
+        printf("  F  = Leave 16550 FIFO''s enabled\n\r");
+        printf("  NV = Do not perform VGA chipset detection\n\r");
+        printf("  NP = Do not read Partition Table\n\r");
+        printf("  AP = AutoPrint all screens, ask for setup\n\r");
+        printf("  AP:filename = AutoPrint to a file or device\n\r");
+        printf("  H or ? = This help screen\n\r");
+        printf("\n\r");
+        printf("ex: INFOPLUS B M NV\n\r");
+        printf("      Run infoplus using BIOS, monochrome colors, no VGA check.\n\r");
+        printf("\n\r");
+        exit(0);
+        }
+     }
+}
+
+void init(int argc, char* argv[])
+{
+  int xint;
+
+  mono=FALSE;
+  vidmode=LastMode;
+  attrsave=TextAttr;
+  CheckBreak=FALSE;
+  resetvideo=FALSE;
+  novgacheck=FALSE;
+  ReadPartitionTable=TRUE;
+  FifoOn=FALSE;
+  if (Lo(LastMode) = 0) or (Lo(LastMode) = 1) then
+  {
+    textmode(LastMode + 2);
+    resetvideo=TRUE;
+  }
+  with regs do
+    begin
+    AH:=$0F;
+    intr($10, regs);
+    twidth:=AH;
+    vidpg:=BH
+    end;
+  detectgraph(graphdriver, xint);
+  if (graphdriver = EGA) or (graphdriver = MCGA) or (graphdriver = VGA) then
+    with regs do
+      begin
+      AX:=$1130;
+      BH:=$00;
+      intr($10, regs);
+      tlength:=DL + 1;
+      CheckSnow:=False;
+      end
+  else
+    tlength:=25;
+  with regs do
+    begin
+    Intr($11, regs);
+    equip:=AX;
+    Intr($12, regs);
+    DOSmem:=longint(AX) shl 10;
+    AH:=$19;
+    MsDos(regs);
+    currdrv:=AL;
+    AH:=$34;
+    MsDos(regs);
+    DOScseg:=ES;
+    DOScofs:=BX
+    end;
+  SwapVectors;
+  for i:=$00 to $FF do
+    GetIntVec(i, intvec[i]);
+  SwapVectors;
+{
+  intvec[$00]:=saveint00;
+  intvec[$02]:=saveint02;
+  intvec[$1B]:=saveint1B;
+  intvec[$23]:=saveint23;
+  intvec[$24]:=saveint24;
+  intvec[$34]:=saveint34;
+  intvec[$35]:=saveint35;
+  intvec[$36]:=saveint36;
+  intvec[$37]:=saveint37;
+  intvec[$38]:=saveint38;
+  intvec[$39]:=saveint39;
+  intvec[$3A]:=saveint3A;
+  intvec[$3B]:=saveint3B;
+  intvec[$3C]:=saveint3C;
+  intvec[$3D]:=saveint3D;
+  intvec[$3E]:=saveint3E;
+  intvec[$3F]:=saveint3F;
+  intvec[$75]:=saveint75;
+}
+  with regs do
+    begin
+    AX:=$3700;
+    MsDos(regs);
+    switchar:=Chr(DL)
+    end;
+  dirsep:=['\'];
+  if switchar <> '/' then
+    dirsep:=dirsep + ['/'];
+  with regs do
+    begin
+    AH:=$52;
+    MsDos(regs);
+    devseg:=ES;
+    devofs:=BX
+    end;
+  lastdrv:=Mem[devseg:devofs + $0021];
+  if (Lo(LastMode) = 2) or (Lo(LastMode) = 7) then
+    mono:=true;
+  with regs do
+    begin
+    AX:=$2B01;
+    CX:=$4445; {DE}
+    DX:=$5351; {SQ}
+    MsDos(regs);
+    if AL <> $FF then
+//      DirectVideo:=False;
+    end;
+  if ParamCount > 0 then
+    checkparams;
+  Textcolor(LightGreen);
+  TextBackground(Blue);
+  Clrscr;
+  Write('INFO+');
+  Textcolor(lightgray);
+  Write(' - Information on all computer functions');
+  rjustify(qversion);
+  Writeln;
+  border(#223);
+  GotoXY(1, tlength - 1);
+  border(#220);
+  Write('Page ');
+  x1:=wherex;
+  Textcolor(Lightgreen);
+  rjustify('F1 Enter PgUp PgDn Home End Esc Alt-P');
+  pg:=0;
+  endit:=false;
+  if osmajor >= 3 then
+    with regs do
+      begin
+      AX:=$3800;
+      DS:=seg(country);
+      DX:=ofs(country);
+      MsDos(regs);
+      ccode:=BX;
+      decimal:=Chr(country[9]);
+      end;
+  end; {init}
+#endif
