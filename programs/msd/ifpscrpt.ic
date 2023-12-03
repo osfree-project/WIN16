@@ -1,0 +1,408 @@
+//uses Crt, Dos, IFPGlobl, IFPComon;
+
+typedef
+   struct tagTPrinterRec
+{
+char Mode;
+char Destination;
+char * Filename;
+BOOLEAN HiStrip;
+char * HeaderStr;
+BYTE ScreensPerPage;
+BYTE ScreenCount;
+} TPrinterRec;
+
+TPrinterRec PrinterRec;
+
+#if 0
+procedure ScreenPrint(Pg: byte; PgName, VerNum: string);
+
+implementation
+
+const
+  ESC = #27;
+
+type
+  CharSet = set of char;
+
+function GetKey(CS: CharSet): char;
+  var
+    c, x: char;
+
+  begin
+  repeat
+    C:=UpCase(ReadKey);
+    if KeyPressed and (c = #0) then
+      x:=ReadKey;
+  until c in CS;
+  if Ord(c) > 31 then
+    Writeln(c);
+  GetKey:=c
+  end;
+
+function Today: string;
+  const
+    DOWName: array[0..6] of string[3] = ('Sun', 'Mon', 'Tue', 'Wed', 'Thu',
+                                         'Fri', 'Sat');
+    MonthName: array[1..12] of string[3] = ('Jan', 'Feb', 'Mar', 'Apr', 'May',
+                                            'Jun', 'Jul', 'Aug', 'Sep', 'Oct',
+                                            'Nov', 'Dec');
+  var
+    Regs: Registers;
+    DayForm, Year, Month, Day, DOW: word;
+    YearStr, DayStr: string[5];
+    CInfo: array[0..$21] of byte;
+    temp: string;
+
+  begin
+  GetDate(Year, Month, Day, DOW);
+  with Regs do
+    begin
+    AH:=$38;
+    AL:=0;
+    DS:=Seg(CInfo);
+    DX:=Ofs(CInfo);
+    MsDos(Regs);
+    Dayform:=CInfo[0] + (word(256) * CInfo[1]);
+    end;
+  Str(Day, Daystr);
+  Str(Year, Yearstr);
+  case DayForm of
+    0,3..$FFFF: temp:=Monthname[Month] + ' ' + DayStr + ', ' + YearStr;
+    1: temp:=DayStr + ' ' + Monthname[Month] + ', ' + YearStr;
+    2: temp:=YearStr + ' ' + Monthname[Month] + ' ' + DayStr;
+  end;
+  Today:=DOWName[DOW] + ', ' + temp
+  end; {Today}
+
+function Time: string;
+  var
+    Regs: Registers;
+    Hour, Min, Sec, sec100: word;
+    HourStr, MinStr, SecStr: string[2];
+    Cinfo: array[0..$21] of byte;
+    TForm: byte;
+    TSep: char;
+    temp: string[11];
+
+  begin
+  GetTime(Hour, Min, Sec, Sec100);
+  with Regs do
+    begin
+    AH:=$38;
+    AL:=0;
+    DS:=Seg(CInfo);
+    DX:=Ofs(CInfo);
+    MsDos(Regs);
+    TForm:=CInfo[$11];
+    TSep:=Chr(CInfo[$D]);
+    end;
+  Str(Hour, HourStr);
+  if (Hour > 12) and (TForm and 1 = 0) then
+    Str(Hour - 12, HourStr);
+  if (Hour = 0) and (TForm and 1 = 0) then
+     HourStr:='12';
+  Str(Min, MinStr);
+  if Length(MinStr) = 1 then
+    MinStr:='0' + MinStr;
+  Str(Sec, Secstr);
+  if Length(SecStr) = 1 then
+    SecStr:='0' + SecStr;
+  temp:=HourStr + TSep + MinStr + TSep + SecStr;
+  if (TForm and 1 = 0) then
+    if Hour > 11 then
+      temp:=temp + ' pm'
+    else
+      temp:=temp + ' am';
+  Time:=temp
+  end; {Time}
+
+procedure ScreenPrint(Pg: byte; PgName, VerNum: string);
+  const
+    LoChars: array[#0..#$1F] of char = ' abcdefghijklmno' +
+                                       'pqrstuvwxyz<+>^v';
+
+    HiChars: array[#$80..#$FF] of char = 'cueaaaaceeeiiiAA' +
+                                  {90h}  'EaAooouuyOUcLYPf' +
+                                  {A0h}  'aiounNao?++24i<>' +
+                                  {B0h}  '.oO|++++++|+++++' +
+                                  {C0h}  '++++-++++++++-++' +
+                                  {D0h}  '++++++++++++_||~' +
+                                  {E0h}  'aBr#Eout00^o80EU' +
+                                  {F0h}  '=+><fj-~oOojn2O ';
+    Dashes: string[79] = '----------------------------------------' +
+                         '---------------------------------------';
+
+  var
+    ScrBuf: array[0..9599] of char;
+    VidMode, VidLength, VidPg, OldAttr, OldX, OldY: byte;
+    VidSize, Position, VidWidth, x, y, BytesPerLine, BytesPerScreen, CharCount, first, last: word;
+    OldWindMin, OldWindMax: word;
+    Regs: Registers;
+    OutFile: text;
+    FileName: PathStr;
+    MonoScrn: array[0..3999] of char absolute $B000:0;
+    ColorScrn: array[0..9599] of char absolute $B800:0;
+    c: char;
+    StripHi: boolean;
+    ExtraStr: string;
+    FirstRun: boolean;
+    SingleScreen: boolean;
+
+  procedure Cleanup;
+    var
+      x, y: word;
+
+    begin
+    Position:=0;
+    if DirectVideo then
+      if VidMode = 7 then
+        Move(ScrBuf, MonoScrn, VidSize)
+      else
+        Move(ScrBuf, ColorScrn, VidSize)
+    else
+      for y:=0 to VidLength - 1 do
+        for x:=0 to VidWidth -1 do
+          with Regs do
+            begin
+            AH:=2;
+            BH:=VidPg;
+            DH:=y;
+            DL:=x;
+            Intr($10, Regs);
+            AH:=9;
+            AL:=Ord(ScrBuf[Position]);
+            BH:=VidPg;
+            BL:=Ord(ScrBuf[Position + 1]);
+            CX:=1;
+            Intr($10, Regs);
+            Inc(Position, 2);
+            end;
+    TextAttr:=OldAttr;
+    WindMin:=OldWindMin;
+    WindMax:=OldWindMax;
+    GotoXY(OldX, OldY);
+    end;
+
+  begin
+  if (PrinterRec.Mode = 'A') and (PrinterRec.Destination = '?') then
+    FirstRun:=true
+  else
+    FirstRun:=false;
+  if PrinterRec.Mode <> 'A' then
+    SingleScreen:=true
+  else
+    SingleScreen:=false;
+  OldAttr:=TextAttr;
+  OldWindMin:=WindMin;
+  OldWindMax:=WindMax;
+  OldX:=WhereX;
+  OldY:=WhereY;
+  ModeInfo(VidMode, VidLength, VidPg, VidWidth);
+  VidSize:=(VidWidth * VidLength) * 2;
+  Position:=0;
+  if DirectVideo then
+    if VidMode = 7 then
+      Move(MonoScrn, ScrBuf, VidSize)
+    else
+      Move(ColorScrn, ScrBuf, VidSize)
+  else
+    for y:=0 to VidLength - 1 do
+      for x:=0 to VidWidth - 1 do
+        with Regs do
+          begin
+          AH:=2;
+          BH:=VidPg;
+          DH:=y;
+          DL:=x;
+          Intr($10, Regs);
+          AH:=8;
+          BH:=VidPg;
+          Intr($10, Regs);
+          ScrBuf[Position]:=Chr(AL);
+          ScrBuf[Position + 1]:=Chr(AH);
+          Inc(Position, 2);
+          end;
+  if FirstRun or SingleScreen then
+    begin
+    TextColor(White);
+    TextBackground(Blue);
+    Window(5, (VidLength div 2) - 5, 75, (VidLength div 2) + 5);
+    box;
+    TextBackground(LightGray);
+    TextColor(Black);
+    ClrScr;
+    Write('Dump screen to a <F>ile or the <P>rinter.=>');
+    c:=GetKey([ESC, 'F', 'P']);
+    if c = ESC then
+      begin
+      Cleanup;
+      PrinterRec.Mode:='S';
+      Exit
+      end;
+    end
+  else
+    c:=PrinterRec.Destination;
+  if c = 'P' then
+    begin
+    Assign(OutFile, 'PRN');
+    ReWrite(OutFile);
+    if not SingleScreen then
+      PrinterRec.Destination:='P'
+    end
+  else
+    begin
+    if FirstRun or SingleScreen then
+      begin
+      Write('Filename to use.=>');
+      Readln(FileName);
+      if FileName = '' then
+        begin
+        Cleanup;
+        Exit
+        end;
+      end
+    else
+      FileName:=PrinterRec.Filename;
+    FileName:=FExpand(FileName);
+    Assign(OutFile, FileName);
+    {$I-} Reset(OutFile); {$I+}
+    if IOResult = 0 then
+      begin
+      if FirstRun or SingleScreen then
+        begin
+        Write(FileName, ' exists! <O>verwrite, <A>ppend, <Q>uit.=>');
+        c:=GetKey([ESC, 'O', 'A', 'Q']);
+        end
+      else
+        c:='A';
+      case c of
+        ESC, 'Q': begin
+                  Close(OutFile);
+                  Cleanup;
+                  PrinterRec.Mode:='S';
+                  Exit
+                  end;
+        'A': begin
+             Close(OutFile);
+             Append(OutFile)
+             end;
+        'O': begin
+             Close(OutFile);
+             ReWrite(OutFile)
+             end
+      end
+      end
+    else
+      ReWrite(OutFile);
+    if not SingleScreen then
+      PrinterRec.Destination:='F';
+    if FirstRun then
+      PrinterRec.Filename:=FileName;
+    end;
+  if SingleScreen or FirstRun then
+    begin
+    Write('<N>ormal ASCII or <I>BM ASCII.=>');
+    c:=GetKey([ESC, 'N', 'I']);
+    if c = ESC then
+      begin
+      Cleanup;
+      PrinterRec.Mode:='S';
+      Exit
+      end;
+    if c = 'N' then
+      StripHi:=true
+    else
+      StripHi:=false;
+    if FirstRun then
+      PrinterRec.HiStrip:=StripHi;
+    end
+  else
+    StripHi:=PrinterRec.HiStrip;
+  if FirstRun or SingleScreen then
+    begin
+    Write('Do you wish to add an extra header line? <Y> or <N>.=>');
+    c:=GetKey([ESC, 'Y', 'N']);
+    if c = ESC then
+      begin
+      Cleanup;
+      PrinterRec.Mode:='S';
+      Exit
+      end;
+    ExtraStr:='';
+    if c = 'Y' then
+      begin
+      Write('Header>');
+      Readln(ExtraStr);
+      if FirstRun then
+        PrinterRec.HeaderStr:=ExtraStr;
+      end;
+    end
+  else
+    ExtraStr:=PrinterRec.HeaderStr;
+  if FirstRun then
+      begin
+      Write('Number of Screens per page (0=no form feed).=> ');
+      Readln(PrinterRec.ScreensPerPage);
+      end;
+  BytesPerLine:=VidWidth * 2;
+  BytesPerScreen:=BytesPerLine * VidLength;
+  {0 is top, print from line 2 to VidLength-2}
+  CharCount:=0;
+  first:=BytesPerLine * 2;
+  last:=BytesPerScreen - (BytesPerLine * 2) - 1;
+  Writeln(OutFile, Dashes);
+  if Length(ExtraStr) > 0 then
+    Writeln(OutFile, ExtraStr);
+  Writeln(OutFile, 'Infoplus ', VerNum, '   Page ', Pg, ' - ', PgName);
+  Writeln(OutFile, 'Generated: ', Today, ' at ', Time);
+  Writeln(OutFile, Dashes);
+  x:=first;
+  repeat
+    c:=ScrBuf[x];
+    if Ord(c) < 31 then
+      c:=LoChars[c];
+    if StripHi and (Ord(c) > 127) then
+      c:=HiChars[c];
+    Write(OutFile, c);
+    Inc(CharCount);
+    if CharCount = 80 then
+      begin
+      Writeln(OutFile);
+      CharCount:=0;
+      end;
+    Inc(x, 2);
+  until x >= last;
+  Writeln(OutFile);
+  if not SingleScreen then
+    with PrinterRec do
+      begin
+      if ScreensPerPage <> 0 then
+        Inc(ScreenCount);
+      if (ScreenCount < ScreensPerPage) or (ScreensPerPage = 0) then
+        Writeln(OutFile)
+      else
+        begin
+        Writeln(OutFile, ^L);
+        ScreenCount:=0;
+        end
+      end
+  else
+    Writeln(OutFile, ^L);
+  Close(OutFile);
+  Cleanup;
+  end;
+
+begin
+with PrinterRec do
+  begin
+  Mode:='S';
+  Destination:='?';
+  Filename:='';
+  HiStrip:=true;
+  HeaderStr:='';
+  ScreensPerPage:=2;
+  ScreenCount:=0;
+  end;
+end.
+#endif

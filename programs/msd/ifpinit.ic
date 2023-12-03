@@ -1,4 +1,4 @@
-//IFPScrPt;
+#include "ifpscrpt.ic"
 
 void rjustify(char * a)
 {

@@ -2,34 +2,20 @@
 
 
 //uses ifpscrpt, ifphelp;
-#if 0
-function getkey2: char2;
-  var
-    c: char;
-    c2: char2;
 
-  begin
-  c:=ReadKey;
-  if c = #0 then
-    getkey2:=c + ReadKey
-  else
-    getkey2:=c;
-  end; {getkey2}
+/* ^Make sure number entered, not any letters */
+WORD getnum(void)
+{
+  char inpchar;
+  char number_string[2];
+  WORD temp, position, code;
+  BYTE row, col;
+  BOOLEAN finish;
 
-{^Make sure number entered, not any letters}
-function getnum: word;
-  var
-    inpchar: char;
-    number_string: string[2];
-    temp, position, code: word;
-    row, col: byte;
-    finish: boolean;
-
-  begin
-  row:=WhereY;
-  col:=WhereX;
+  row=wherey();
+  col=wherex();
   Write(' ':3);
-  GotoXY(col, row);
+  gotoxy(col, row);
   temp:=99;
   finish:=false;
   position:=0;
@@ -68,7 +54,22 @@ function getnum: word;
   else
     temp:=999;
   getnum:=temp
-  end; {getnum}
+};
+
+#if 0
+function getkey2: char2;
+  var
+    c: char;
+    c2: char2;
+
+  begin
+  c:=ReadKey;
+  if c = #0 then
+    getkey2:=c + ReadKey
+  else
+    getkey2:=c;
+  end; {getkey2}
+
 
 procedure caption1(a: string);
   begin

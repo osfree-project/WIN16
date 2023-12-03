@@ -1,7 +1,7 @@
 #include "ifpglobl.ic"
 #include "ifpcomon.ic"
 #include "ifpinit.ic"
-//, ifpscrpt, ifphelp,
+//, ifphelp,
 //  page_00, page_01, page_02, page_03, page_04, page_05, page_06, page_07,
 //  page_08, page_09, page_10, page_11, page_12, page_13, page_14, page_15,
 //  page_16, page_17, page_18, page_19, page_20, page_21;
@@ -31,8 +31,176 @@ void runit(int argc, char* argv[])
     xbool1=FALSE;
     do
     {
+      pagenameclr();
       gotoxy(x1, tlength);
+      textcolor(LIGHTGRAY);
+      printf("%02d - ", pg);
+      printf("%s", pgnames[pg]);
+      window(1, 3, twidth, tlength - 2);
+      clrscr();
+      switch (pg)
+      {
+	case 0: page00();
+		break;
+	case 1 : page01();
+		break;
+	case 2 : page02();
+		break;
+	case 3 : page03();
+		break;
+	case 4 : page04();
+		break;
+	case 5 : page05();
+		break;
+	case 6 : page06();
+		break;
+	case 7 : page07();
+		break;
+	case 8 : page08();
+		break;
+	case 9 : page09();
+		break;
+	case 10 : page10();
+		break;
+	case 11 : page11();
+		break;
+	case 12 : page12();
+		break;
+	case 13 : page13();
+		break;
+	case 14 : page14();
+		break;
+	case 15 : page15();
+		break;
+	case 16 : page16();
+		break;
+	case 17 : page17();
+		break;
+	case 18 : page18();
+		break;
+        case 19 : page19();
+		break;
+        case 20 : page20();
+		break;
+        case 21 : page21();
+		break;
+      };
+      xbool2=FALSE;
+      do
+      {
+        window(1, 1, twidth, tlength);
+        gotoxy(x2 - 1, tlength);
+        quiet=FALSE;
+        if (PrinterRec.Mode != 'A')
+          {
+
+          if (!endit) 
+            {
+              do {} while (!kbhit);
+              xchar1=getch();
+              if (kbhit)
+                xchar2=getch();
+              else
+                xchar2=0;
+            }
+          else
+            {
+              endit=FALSE;
+              xchar1=c2[1];
+              if (strlen(c2) == 1) 
+                xchar2=0;
+              else
+                xchar2=c2[2];
+            };
+
+          }
+        else
+          {
+            ScreenPrint(pg, pgnames[pg], vernum);
+            xchar1=0;
+            if (pg == pgmax)
+            {
+              PrinterRec.Mode='S';
+              xchar2=71;
+            }
+            else
+              xchar2=81;
+          };
+
+        if ((xchar1 == 27) && (xchar2 == 0))
+          {
+          xbool2=TRUE;
+          xbool1=TRUE;
+          };
+
+        if ((xchar1 == 13) && (xchar2 == 0))
+          {
+            pagenameclr;
+            gotoxy(x1, tlength);
+            textcolor(WHITE);
+            printf("Go to page no.=> ");
+            i=getnum();
+            if ((i >= 0 ) && (i <= pgmax))
+            {
+              pg=i;
+              xbool2=TRUE;
+            };
+
+            if (i == 999) xbool2=TRUE;
+            pagenameclr;
+            gotoxy(x1, tlength);
+            textcolor(LIGHTGRAY);
+            printf("%02d - %s", pgnames[pg]);
+          };
+
+        if (xchar1 == 0)
+          switch (xchar2)
+          {
+            case 71: {
+                 xbool2=TRUE;
+                 pg=0;
+                 break;
+		};
+            case 73: if (pg > 0)
+                   {
+                   xbool2=TRUE;
+                   pg--;
+                   };
+		break;
+            case 79: {
+                 xbool2=TRUE;
+                 pg=pgmax;
+		break;
+                 };
+            case 81: if (pg < pgmax)
+                   {
+                   xbool2=TRUE;
+                   pg++;
+                   break;
+		};
+            case 25: {
+                 screenprint(pg, pgnames[pg], vernum);
+                 xbool2=FALSE;
+                 quiet=TRUE;
+                 break;
+		};
+            case 59: {
+                 helpscreen(pg, helpversion);
+                 xbool2=FALSE;
+                 quiet=TRUE;
+                 break;
+		}
+          };
+
+      if ((!xbool2)&&(!quiet))
+        {
+//          Sound(220);
+//          Delay(100);
+//          NoSound;
+        }
+      } while (!xbool2);
     } while (!xbool1);
+
     textattr(attrsave);
     if (resetvideo) textmode(vidmode);
     clrscr();

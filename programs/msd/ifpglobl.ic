@@ -17,31 +17,28 @@
 #define FALSE 0
 #define TRUE 1
 
-/*
-  pgnames: array [0..pgmax] of string[32] = (
-             'Table of Contents',
-             'Machine & ROM Identification',
-             'CPU Identification',
-             'RAM Identification',
-             'Memory Block Listing',
-             'Video Identification',
-             'Video Information',
-             'Keyboard & Mouse Information',
-             'Parallel/Serial/Sound Ports',
-             'DOS Information',
-         {10}'Multiplex Programs',
-             'Environment Variables',
-             'Device Drivers',
-             'DOS Drive Information',
-             'BIOS Drive Information',
-             'Partition Table Listing',
-             'Boot & DOS drive parameters',
-             'CMOS information',
-             'TSR''s and Drivers',
-             'Alternate Multiplex',
-         {20}'Memory Managers',
-             'Thanks');
-*/
+char * pgnames[pgmax+1]={"Table of Contents",
+             "Machine & ROM Identification",
+             "CPU Identification",
+             "RAM Identification",
+             "Memory Block Listing",
+             "Video Identification",
+             "Video Information",
+             "Keyboard & Mouse Information",
+             "Parallel/Serial/Sound Ports",
+             "DOS Information",
+       /*10*/"Multiplex Programs",
+             "Environment Variables",
+             "Device Drivers",
+             "DOS Drive Information",
+             "BIOS Drive Information",
+             "Partition Table Listing",
+             "Boot & DOS drive parameters",
+             "CMOS information",
+             "TSR's and Drivers",
+             "Alternate Multiplex",
+       /*20*/"Memory Managers",
+             "Thanks"};
 
 //type
 //  char2 = string[2];
@@ -76,7 +73,7 @@ char xchar1;
 char xchar2;
 WORD xword;
 BOOLEAN gotcountry;
-//  c2: char2;
+char c2[2];
 BOOLEAN quiet, endit;
 WORD ccode;
 WORD vidmode;

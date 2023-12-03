@@ -10,6 +10,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <dos.h>
+#include <conio.h>
 
 #define VIDPAGE    (*((unsigned char far *)0x0462))
 #define textmode _setvideomode

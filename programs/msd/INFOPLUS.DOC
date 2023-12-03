@@ -1,16 +1,18 @@
 INFOPLUS
 
+Version 1.58 in C Released to the public domain.
+
+By Yuri Prokushev, 01/01/2024
+
 Version 1.58 alpha Released to the public domain.
 
-By Andrew Rossmann, 9/17/1993
+Originally based on Andrew Rossmann's Public Domain INFOPLUS 1.58 alpha.
 
 Originally based on Steve Grant's Public Domain SYSID 4.44.
 
 Syntax:
-  INFOPLUS [B][D][M][C][F][NP][NV][AP[:filename]][H][?]
+  INFOPLUS [M][C][F][NP][NV][AP[:filename]][H][?]
 where:
-  B  = Write to screen using BIOS (default under Desqview)
-  D  = Write directly to screen memory (default)
   M  = Use monochrome colors (default under MODE BWxx)
   C  = Use normal colors (default)
   F  = Leave 16550 FIFO's enabled
@@ -24,7 +26,7 @@ ex: INFOPLUS B M NV
       Run INFOPLUS using BIOS, monochrome colors, no VGA check.
 
   A system description for DOS-based PC/XT/AT- and PS/2-class machines.
-INFOPLUS generates 18 screens of information about the host system and runs
+INFOPLUS generates 21 screens of information about the host system and runs
 under DOS versions 3.0 and later.
 
   My primary sources of ideas in INFOPLUS were Ray Duncans "Advanced MS-DOS"
