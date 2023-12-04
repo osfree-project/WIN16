@@ -7,53 +7,67 @@
 WORD getnum(void)
 {
   char inpchar;
-  char number_string[2];
+  char number_string[3];
   WORD temp, position, code;
   BYTE row, col;
   BOOLEAN finish;
 
   row=wherey();
   col=wherex();
-  Write(' ':3);
+  printf("   ");
   gotoxy(col, row);
-  temp:=99;
-  finish:=false;
-  position:=0;
-  number_string:='';
-  TextColor(LightGray);
-  repeat
-    inpchar:=ReadKey;
-    case inpchar of
-      '0'..'9':if position < 2 then
-        begin
-        Inc(position);
-        Inc(number_string[0]);
-        number_string[position]:=inpchar;
-        Write(inpchar)
-        end;
-      #8: if position > 0 then
-        begin
-        Dec(position);
-        Dec(number_string[0]);
-        Write(^H' '^H)
-        end;
-      #27: if number_string = '' then
-          finish:=true
+  temp=99;
+  finish=FALSE;
+  position=0;
+  number_string[0]=0;
+  textcolor(LIGHTGRAY);
+  do {
+    inpchar=getch();
+    switch (inpchar)
+	{
+      case '0':
+	  case '1':
+	  case '2':
+	  case '3':
+	  case '4':
+	  case '5':
+	  case '6':
+	  case '7':
+	  case '8':
+	  case '9': if (position < 2)
+        {
+        number_string[position]=inpchar;
+        position++;
+        number_string[position]=0;
+        printf("%c", inpchar);
+        };
+		break;
+      case 8: if (position > 0)
+        {
+        position--;
+        number_string[position]=0;
+        printf("\0x8 \0x8");
+        };
+		break;
+      case 27: if (!strlen(number_string))
+          finish=TRUE;
         else
-          begin
-          number_string:='';
-          GotoXY(col, row);
-          ClrEol;
-          position:=0
-          end;
-      #13: finish:=true
-    end {case}
-  until finish;
-  if number_string <> '' then
-    Val(number_string, temp, code)
+          {
+          number_string[0]=0;
+          gotoxy(col, row);
+          clreol;
+          position=0;
+          };
+		  break;
+      case 13: finish=TRUE;
+	  break;
+    };
+  } while (!finish);
+  if (strlen(number_string))
+    temp=atoi(number_string);
   else
-    temp:=999;
-  getnum:=temp
+    temp=999;
+  return temp;
 };
 
 #if 0

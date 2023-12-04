@@ -179,7 +179,7 @@ void runit(int argc, char* argv[])
                    break;
 		};
             case 25: {
-                 screenprint(pg, pgnames[pg], vernum);
+                 ScreenPrint(pg, pgnames[pg], vernum);
                  xbool2=FALSE;
                  quiet=TRUE;
                  break;
