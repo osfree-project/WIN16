@@ -70,6 +70,21 @@ WORD getnum(void)
   return temp;
 };
 
+void pagenameclr(void)
+{
+  BYTE xbyte1;
+  BYTE xbyte2;
+
+  xbyte1=_gettextcolor();
+  xbyte2=_getbkcolor();
+  window(x1, tlength, x2 - 1, tlength);
+  _settextcolor((_gettextcolor() & 0x70));
+  clrscr();
+  _settextcolor(xbyte1);
+  _setbkcolor(xbyte2);
+  window(1, 1, twidth, tlength);
+}
+
 #if 0
 function getkey2: char2;
   var

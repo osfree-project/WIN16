@@ -2,7 +2,8 @@
 #include "ifpcomon.ic"
 #include "ifpinit.ic"
 //, ifphelp,
-//  page_00, page_01, page_02, page_03, page_04, page_05, page_06, page_07,
+#include "page_00.ic"
+//  page_01, page_02, page_03, page_04, page_05, page_06, page_07,
 //  page_08, page_09, page_10, page_11, page_12, page_13, page_14, page_15,
 //  page_16, page_17, page_18, page_19, page_20, page_21;
 
@@ -42,6 +43,7 @@ void runit(int argc, char* argv[])
       {
 	case 0: page00();
 		break;
+#if 0
 	case 1 : page01();
 		break;
 	case 2 : page02();
@@ -78,14 +80,16 @@ void runit(int argc, char* argv[])
 		break;
 	case 18 : page18();
 		break;
-        case 19 : page19();
+    case 19 : page19();
 		break;
-        case 20 : page20();
+    case 20 : page20();
 		break;
-        case 21 : page21();
+    case 21 : page21();
 		break;
+#endif
       };
       xbool2=FALSE;
+	exit(0);
       do
       {
         window(1, 1, twidth, tlength);
@@ -116,7 +120,7 @@ void runit(int argc, char* argv[])
           }
         else
           {
-            ScreenPrint(pg, pgnames[pg], vernum);
+            //ScreenPrint(pg, pgnames[pg], vernum);
             xchar1=0;
             if (pg == pgmax)
             {
@@ -179,13 +183,13 @@ void runit(int argc, char* argv[])
                    break;
 		};
             case 25: {
-                 ScreenPrint(pg, pgnames[pg], vernum);
+                 //ScreenPrint(pg, pgnames[pg], vernum);
                  xbool2=FALSE;
                  quiet=TRUE;
                  break;
 		};
             case 59: {
-                 helpscreen(pg, helpversion);
+                 //helpscreen(pg, helpversion);
                  xbool2=FALSE;
                  quiet=TRUE;
                  break;

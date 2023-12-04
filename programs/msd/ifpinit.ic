@@ -4,7 +4,7 @@ void rjustify(char * a)
 {
   short r1, c1, r2, c2;
   _gettextwindow( &r1, &c1, &r2, &c2 );
-  gotoxy(1 + c2 - strlen(a), wherey());
+  gotoxy(c2 - strlen(a), wherey());
   x2=wherex();
   printf(a);
 }
@@ -118,7 +118,7 @@ void init(int argc, char* argv[])
       rp.w.ax=0x1130;
       rp.h.bh=0x00;
       intr(0x10, &rp);
-      tlength=rp.h.dl + 1;
+      tlength=rp.h.dl;
 //      CheckSnow=FALSE;
   }
   else
@@ -167,14 +167,14 @@ void init(int argc, char* argv[])
 
   textcolor(LIGHTGREEN);
   textbackground(BLUE);
-  clrscr();
+  _clearscreen(_GWINDOW);
+  gotoxy(0,0);
   printf("INFO+");
   textcolor(LIGHTGRAY);
   printf(" - Information on all computer functions");
   rjustify(qversion);
-  printf("\n\r");
   border((char)223);
-  gotoxy(1, tlength - 1);
+  gotoxy(0, tlength - 1);
   border((char)220);
   printf("Page ");
   x1=wherex();

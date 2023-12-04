@@ -87,14 +87,19 @@ int wherex(void)
 {
 	struct rccoord xy;
 	xy = _gettextposition();
-	return xy.col;
+	return xy.col-1;
 }
 
 int wherey(void)
 {
-	struct rccoord xy;
-	xy = _gettextposition();
-	return xy.row;
+    union REGS regs;
+
+    setbuf(stdout, NULL);
+    regs.h.bh = VIDPAGE;
+    regs.h.ah = 3;
+    int86(0x10, &regs, &regs);
+
+	return regs.h.dh;
 }
 
 #define FAR far

@@ -1,0 +1,44 @@
+void center(char * s)
+{
+    gotoxy((twidth / 2) - (strlen(s) / 2), wherey());
+    printf("%s\n\r", s);
+}
+
+void page00(void)
+{
+    WORD x, y;
+
+  textcolor(LIGHTGREEN);
+  window((twidth / 2) - 16, 2, (twidth /2 ) + 17, 7);
+  _outtext("ллллл  л   л  ллллл  ллллл       \n\r");
+  _outtext("  л    лл  л  л      л   л    л  \n\r");
+  _outtext("  л    л л л  ллл    л   л  ллллл\n\r");
+  _outtext("  л    л  лл  л      л   л    л  \n\r");
+  _outtext("ллллл  л   л  л      ллллл       \n\r");
+  window(1, (tlength / 2) - 5, twidth, (tlength / 2) - 4);
+  textcolor(LIGHTCYAN);
+  for (x=0; x<twidth; x++) _outtext("\xdc");
+  window(1, (tlength / 2) - 4, (twidth / 2) - 1, tlength - 3);
+  textcolor(WHITE);
+  for(x=0;x<=9;x++) printf("Page %d  - %s\n\r", x, pgnames[x]);
+  printf("Page 10 - %s\n\r", pgnames[10]);
+  window((twidth / 2) + 1, (tlength / 2) - 4, twidth, tlength - 3);
+  for(x=11;x<=20;x++) printf("Page %d  - %s\n\r", x, pgnames[x]);
+  printf("Page 21 - %s\n\r", pgnames[21]);
+  window(1, (tlength / 2) + 7, twidth, (tlength / 2) + 8);
+  textcolor(LIGHTCYAN);
+  for (x=0; x<twidth; x++) _outtext("\xdc");
+  window(1, 1, twidth, tlength);
+  x=(twidth / 2)-1;
+  for(y=((tlength / 2) - 3);y<((tlength / 2) + 8);y++)
+  {
+    gotoxy(x, y-1);
+    _outtext("\xdb");
+  };
+  window(1, tlength - 5, twidth, tlength - 1);
+  textcolor(YELLOW);
+  printf("\n\r");
+  center("INFOPLUS - "  qversion  " by Andrew Rossmann, "  qdate);
+  center("Based on SYSID 4.44, by Steve Grant");
+  center("Released to the Public Domain");
+}
