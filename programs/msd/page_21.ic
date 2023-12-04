@@ -1,0 +1,24 @@
+void page21(void)
+{
+  BYTE xbyte;
+
+  textcolor(WHITE);
+  gotoxy((twidth / 2) - 15, 1);
+  _outtext("Thank You for using INFOPLUS!!\n\r");
+  _outtext("\n\r");
+  _outtext("\n\r");
+  textcolor(LIGHTCYAN);
+  _outtext("  This is my final version of Infoplus. It''s not 100% complete, which\n\r");
+  _outtext("is why it''s an alpha. The help screens have not been updated, and I\n\r");
+  _outtext("didn''t make all the changes I wanted to.\n\r");
+  _outtext("\n\r");
+  _outtext("  As of September 17th, 1993, I have no e-mail address. The Infoplus BBS\n\r");
+  _outtext("has also been shut down.\n\r");
+  window(1, tlength - 2, twidth, tlength - 2);
+  //xbyte=TextAttr;
+  textcolor(WHITE);
+  textbackground(BROWN);
+  clrscr();
+  _outtext("INFOPLUS " qversion ", by Andrew Rossmann, "  qdate);
+  textattr(xbyte);
+}

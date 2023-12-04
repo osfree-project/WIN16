@@ -33,7 +33,7 @@ void page00(void)
   for(y=((tlength / 2) - 3);y<((tlength / 2) + 8);y++)
   {
     gotoxy(x, y-1);
-    _outtext("\xdb");
+    printf("\xdb");
   };
   window(1, tlength - 5, twidth, tlength - 1);
   textcolor(YELLOW);

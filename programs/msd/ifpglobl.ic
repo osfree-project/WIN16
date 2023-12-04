@@ -2,7 +2,7 @@
 // Version from 1.58c is a Open Watcom C version
 
 #define qversion "Version 1.58c"
-#define qdate "September 17, 1993"
+#define qdate "January 1, 2024"
 #define vernum "1.58c"
 #define helpversion 157
 #define BIOSdseg 0x0040
@@ -57,8 +57,6 @@ WORD equip;
 WORD i;
 void far * intvec[0x100];
 BYTE lastdrv;
-//  osmajor : byte;
-//  osminor : byte;
 int pg;
 //  regs : registers;
 char switchar;
@@ -83,4 +81,3 @@ BOOLEAN resetvideo;
 BOOLEAN novgacheck;
 BOOLEAN ReadPartitionTable;
 BOOLEAN FifoOn;
-

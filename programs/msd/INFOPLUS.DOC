@@ -26,7 +26,7 @@ ex: INFOPLUS B M NV
       Run INFOPLUS using BIOS, monochrome colors, no VGA check.
 
   A system description for DOS-based PC/XT/AT- and PS/2-class machines.
-INFOPLUS generates 21 screens of information about the host system and runs
+INFOPLUS generates 20 screens of information about the host system and runs
 under DOS versions 3.0 and later.
 
   My primary sources of ideas in INFOPLUS were Ray Duncans "Advanced MS-DOS"

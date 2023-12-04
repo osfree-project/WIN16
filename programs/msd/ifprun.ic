@@ -5,7 +5,8 @@
 #include "page_00.ic"
 //  page_01, page_02, page_03, page_04, page_05, page_06, page_07,
 //  page_08, page_09, page_10, page_11, page_12, page_13, page_14, page_15,
-//  page_16, page_17, page_18, page_19, page_20, page_21;
+//  page_16, page_17, page_18, page_19, page_20, 
+#include "page_21.ic"
 
 void runit(int argc, char* argv[])
 {
@@ -84,9 +85,9 @@ void runit(int argc, char* argv[])
 		break;
     case 20 : page20();
 		break;
+#endif
     case 21 : page21();
 		break;
-#endif
       };
       xbool2=FALSE;
 	exit(0);
