@@ -1,0 +1,160 @@
+void showNDP(char * a, WORD b)
+{
+  _outtext(a);
+  _outtext("\n\r");
+  caption2("  Infinity");
+  switch (b & 0x1000)
+  {
+    case 0x0000: _outtext("projective\n\r");
+		break;
+    case 0x1000: _outtext("affine\n\r");
+		break;
+  };
+  
+  caption2("  Rounding");
+  switch (b & 0x0C00)
+  {
+    case 0x0000 : _outtext("to nearest or even\n\r");
+		break;
+    case 0x0400 : _outtext("down\n\r");
+		break;
+    case 0x0800 : _outtext("up\n\r");
+		break;
+    case 0x0C00 : _outtext("chop\n\r");
+		break;
+  }
+
+  caption2("  Precision");
+  switch (b & 0x0300)
+  {
+    case 0x0000 : _outtext("24 bits\n\r");
+		break;
+    case 0x0100 : _outtext("(reserved)\n\r");
+		break;
+    case 0x0200 : _outtext("53 bits\n\r");
+		break;
+    case 0x0300 : _outtext("64 bits\n\r");
+		break;
+  }
+}
+
+void page02(void)
+{
+  cpu_info_t cpu_info;
+  BYTE save_cpu_type;
+
+  caption2("CPU");
+  cpu_info.test_type='C';
+  CPUID(cpu_info);
+    switch (cpu_info.cpu_type)
+	{
+      case 0 : _outtext("8088\n\r");
+			break;
+      case 1 : _outtext("8086\n\r");
+			break;
+      case 2 : _outtext("V20\n\r");
+			break;
+      case 3 : _outtext("V30\n\r");
+			break;
+      case 4 : _outtext("80188\n\r");
+			break;
+      case 5 : _outtext("80186\n\r");
+			break;
+      case 6 : _outtext("80286\n\r");
+			break;
+      case 7 : {
+            _outtext("i386");
+            if (bugtst() != 0)
+              _outtext(" - Contains POPAD bug (DON''T WORRY! Most 386''s have this. Hit F1 key)\n\r");
+            else
+              _outtext("\n\r");
+
+			break;
+			}
+      case 8 : {
+            cpu_info.test_type='N';
+            CPUID(cpu_info);
+
+            if (cpu_info.ndp_type == 0)
+              _outtext("i486SX\n\r");
+            else
+              _outtext("i486\n\r");
+
+			break;
+			}
+      default:
+        unknown("CPU", cpu_info.cpu_type, 2);
+    }
+    save_cpu_type=cpu_info.cpu_type;
+    switch (cpu_info.cpu_type)
+	{
+      case 6:
+	  case 7:
+	  case 8: {
+                 caption3("Machine Status Word");
+                 _outtext(itox(cpu_info.MSW));
+                 caption3("  Bit 0 - Protected mode     ");
+                 yesorno((cpu_info.MSW & 1) == 1);
+                 caption3("  Bit 1 - Monitor Coprocessor");
+                 yesorno((cpu_info.MSW & 2) == 2);
+                 caption3("  Bit 2 - Emulate Coprocessor");
+                 yesorno((cpu_info.MSW & 4) == 4);
+                 caption3("Global Descriptor Table   ");
+                 for (i=0; i<6; i++) 
+				 {
+				   _outtext(itox(cpu_info.GDT[i]));
+				   _outtext(" ");
+				 }
+                 _outtext("\n\r");
+                 caption3("Interrupt Descriptor Table");
+                 for (i=0; i<6; i++) 
+				 {
+				   _outtext(itox(cpu_info.IDT[i]));
+				   _outtext(" ");
+				 }
+                 _outtext("\n\r");
+                 };
+    };
+    caption3("Interrupts acknowledged immediately after segment register change");
+    yesorno(cpu_info.intflag);
+    caption2("Coprocessor");
+    cpu_info.test_type='N';
+    CPUID(cpu_info);
+    switch (cpu_info.ndp_type)
+	{
+      case 0: _outtext("none\n\r");
+		break;
+      case 1: showNDP("8087", cpu_info.ndp_cw);
+		break;
+      case 2: showNDP("80287", cpu_info.ndp_cw);
+		break;
+      case 3: if (save_cpu_type == 8) {
+              showNDP("(built-in)", cpu_info.ndp_cw); //{'486 has coprocessor built in}
+            } else {
+              if (save_cpu_type==6)
+                showNDP("80287XL", cpu_info.ndp_cw);
+              else
+                showNDP("80387", cpu_info.ndp_cw);
+			}
+		break;
+    default:
+      unknown("coprocessor", cpu_info.ndp_type, 4);
+    };
+  
+  caption2("BIOS coprocessor flag set");
+  yesorno((equip & 0x0002) == 0x0002);
+  caption2("BIOS Weitek coprocessor flag set");
+    if ((save_cpu_type == 7) || (save_cpu_type == 8))
+      {
+      cpu_info.test_type='W';
+      CPUID(cpu_info);
+      yesorno((cpu_info.weitek & 1) == 1);
+      if ((cpu_info.weitek & 1) == 1)
+        {
+        caption3("Weitek addressable in real mode");
+        yesorno((cpu_info.weitek & 0x80) == 0x80);
+        }
+      }
+    else
+      _outtext("Not Applicable\n\r");
+}

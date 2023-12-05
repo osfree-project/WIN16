@@ -174,6 +174,18 @@ void clreol(void)
       scroll(0, 0, GetCurAtr(), row, col, row, SCREENCOLS);
 }
 
+char * itox(int i) 
+{
+  char hexdigits[] = "0123456789ABCDEF";
+  static char buf[12]={0};
+  char *p = buf + sizeof(buf)-1;
+  do {
+    *--p = hexdigits[i % 16];
+    i /= 16;
+  } while (i != 0);
+  return p;
+}
+
 #include "ifprun.ic"
 
 void main(int argc, char* argv[])

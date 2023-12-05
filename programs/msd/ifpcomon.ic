@@ -85,6 +85,51 @@ void pagenameclr(void)
   window(1, 1, twidth, tlength);
 }
 
+void caption1(char * a)
+{
+  textcolor(LIGHTGRAY);
+  _outtext(a);
+  textcolor(LIGHTCYAN);
+}
+
+#define capterm ": "
+
+void caption2(char * a)
+{
+  BYTE i;
+  BOOLEAN xbool;
+  char cap[80];
+
+  for (i = strlen(a) - 1; (isspace(a[i])); i--) ;   // skip right side white spaces
+  a[i]=0;
+  strcpy(cap, a);
+  strcat(cap, capterm);
+  caption1(cap);
+}
+
+void caption3(char * a)
+{
+  char cap[80];
+  strcpy(cap, "  ");
+  strcat(cap, a);
+  caption2(cap);
+}
+
+void unknown(char * a, WORD b, BYTE c)
+{
+  _outtext("(unknown ");
+  _outtext(a);
+  _outtext(" ");
+  _outtext(itox(b));
+  _outtext(")\n\r");
+}
+
+void yesorno(BOOLEAN a)
+{
+  if (a) _outtext("yes\n\r");
+  else _outtext("no\n\r");
+}
+
 #if 0
 function getkey2: char2;
   var

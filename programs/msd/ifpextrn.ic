@@ -1,0 +1,69 @@
+typedef
+  struct tagcpu_info_t
+  {
+    BYTE cpu_type;
+    WORD MSW;
+    BYTE GDT[6];
+    BYTE IDT[6];
+    BOOLEAN intflag;
+    BYTE ndp_type;
+    WORD ndp_cw;
+    BYTE weitek;
+    char test_type;
+  } cpu_info_t;
+
+extern void CPUID(cpu_info_t a);
+extern BYTE bugtst(void);
+
+#if 0
+procedure CPUID(var a: cpu_info_t);
+
+function diskread(drive: byte; starting_sector: longint;
+  number_of_sectors: word; var buffer): word;
+
+procedure longcall(addr: longint; var regs: registers);
+
+function ATIinfo(data_in: byte; register: word): byte;
+
+procedure AltIntr(intno: byte; var regs: registers);
+
+procedure AltMsDos(var regs: registers);
+
+function CTICK: byte;
+
+function TsengCK: byte;
+
+function ZyMOSCK: byte;
+
+function CirrusCK: byte;
+
+function bugtst: byte;
+
+implementation
+{$L INFOPLUS}
+
+{$F+}
+
+
+function diskread(drive: byte; starting_sector: longint;
+  number_of_sectors: word; var buffer): word; external;
+
+procedure longcall(addr: longint; var regs: registers); external;
+
+function ATIinfo(data_in: byte; register: word): byte; external;
+
+procedure AltIntr(intno: byte; var regs: registers); external;
+
+procedure AltMsDos(var regs: registers); external;
+
+function CTICK: byte; external;
+
+function TsengCK: byte; external;
+
+function ZyMOSCK: byte; external;
+
+function CirrusCK: byte; external;
+
+function bugtst: byte; external;
+
+#endif
