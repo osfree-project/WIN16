@@ -4,7 +4,7 @@
 #include "ifpextrn.ic"
 //, ifphelp,
 #include "page_00.ic"
-//  page_01, 
+#include "page_01.ic"
 #include "page_02.ic"
 //, page_03, page_04, page_05, page_06, page_07,
 //  page_08, page_09, page_10, page_11, page_12, page_13, page_14, page_15,
