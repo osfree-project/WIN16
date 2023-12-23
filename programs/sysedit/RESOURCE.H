@@ -51,4 +51,3 @@
 #define IDM_HELPTS			5003
 #define IDM_HELPABOUT                   5004
 
-

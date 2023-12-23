@@ -78,8 +78,8 @@ int PASCAL WinMain( HANDLE hInstance, HANDLE hPrevInstance, LPSTR lpszCmdLine, i
 	return 0;
 
     // initialize 3-D support
-    Ctl3dRegister( hInstance );
-    Ctl3dAutoSubclass( hInstance );
+    //Ctl3dRegister( hInstance );
+    //Ctl3dAutoSubclass( hInstance );
 
     if (!InitializeInstance ( lpszCmdLine, nCmdShow ))
 	return 0;
@@ -373,7 +373,7 @@ LONG FAR PASCAL __export MPFrameWndProc ( HWND hwnd, UINT msg, WPARAM wParam, LP
 	    pd.hDevMode = 0;
 	}
 
-	    Ctl3dUnregister( hInst );
+	    //Ctl3dUnregister( hInst );
 	    PostQuitMessage ( 0 );
 	    break;
 
@@ -1987,4 +1987,3 @@ void WritePrivateProfileInt(char *szSection, char *szItem, int nValue)
 	WritePrivateProfileString( szSection, szItem, szBuffer, szIniName );
 }
 
-

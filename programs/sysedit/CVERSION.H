@@ -7,7 +7,7 @@
 // ---------------------------------------------------------
 
 #include <ver.h>					// Version resource definitions from DDK
-#include <maxnames.h>
+//#include <maxnames.h>
 
 #define VER_MODULE					11
 #define VER_MODULE_STR				"011"

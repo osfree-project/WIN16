@@ -127,4 +127,3 @@ void BuildTools( void );
 void DestroyTools( void );
 extern LONG FAR PASCAL __export ControlBarWndProc(HWND,UINT,WPARAM,LPARAM);
 
-
