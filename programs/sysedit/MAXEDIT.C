@@ -167,7 +167,7 @@ BOOL PASCAL InitializeApplication( void )
 
     if (!RegisterClass(&wc))
 	return FALSE;
-
+/*
     wc.style	     = CS_HREDRAW | CS_VREDRAW | CS_BYTEALIGNCLIENT;
     wc.lpfnWndProc   = ControlBarWndProc ;
     wc.cbClsExtra    = 0 ;
@@ -181,7 +181,7 @@ BOOL PASCAL InitializeApplication( void )
 
     if (!RegisterClass (&wc))
 	return (FALSE);
-
+*/
     return TRUE;
 }
 
@@ -211,7 +211,7 @@ BOOL PASCAL InitializeInstance( LPSTR lpCmdLine, WORD nCmdShow )
 	return FALSE;
 
     // initialize the toolbar
-    BuildTools ( );
+//    BuildTools ( );
 
     pd.hwndOwner = hwndFrame;
 
@@ -224,7 +224,7 @@ BOOL PASCAL InitializeInstance( LPSTR lpCmdLine, WORD nCmdShow )
     UpdateWindow (hwndFrame);
 
     // display the toolbar window
-    ShowWindow( hwndToolbar, SW_SHOW );
+//    ShowWindow( hwndToolbar, SW_SHOW );
 
     /* Add the MDI windows */
 
@@ -294,8 +294,8 @@ LONG FAR PASCAL __export MPFrameWndProc ( HWND hwnd, UINT msg, WPARAM wParam, LP
 	{
 	    CLIENTCREATESTRUCT ccs;
 
-	    wIconWidth = 28;
-	    wIconHeight = 36;
+//	    wIconWidth = 28;
+//	    wIconHeight = 36;
 
 	    /* Find window menu where children will be listed */
 	    ccs.hWindowMenu = GetSubMenu (GetMenu(hwnd), WINDOWMENU);
@@ -329,8 +329,7 @@ LONG FAR PASCAL __export MPFrameWndProc ( HWND hwnd, UINT msg, WPARAM wParam, LP
 		wWidth	= LOWORD (lParam);
 		wHeight = HIWORD (lParam);
 
-		MoveWindow( hwndMDIClient, 0, TOOLBAR_HEIGHT, wWidth, wHeight - TOOLBAR_HEIGHT, TRUE );
-		MoveWindow ( hwndToolbar, 0, 0, wWidth, TOOLBAR_HEIGHT, TRUE );
+		MoveWindow( hwndMDIClient, 0, 0, wWidth, wHeight, TRUE );
 	    }
 	    break;
 
@@ -360,7 +359,7 @@ LONG FAR PASCAL __export MPFrameWndProc ( HWND hwnd, UINT msg, WPARAM wParam, LP
 
 	case WM_DESTROY:
 
-	DestroyTools();
+//	DestroyTools();
 
 	    // free the PrintDlg allocated memory.
 	if (pd.hDevNames) {

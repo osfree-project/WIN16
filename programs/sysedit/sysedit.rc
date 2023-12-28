@@ -41,16 +41,13 @@ IDMAXEDIT MENU DISCARDABLE
 BEGIN
     POPUP "&File"
     BEGIN
-        MENUITEM "&New",                        IDM_FILENEW
-        MENUITEM "&Open...",                    IDM_FILEOPEN
         MENUITEM "&Save",                       IDM_FILESAVE
-        MENUITEM "Save &As...",                 IDM_FILESAVEAS
-        MENUITEM "Open QMAX.INI",               IDM_EDITINI
         MENUITEM SEPARATOR
         MENUITEM "&Print",                      IDM_FILEPRINT
         MENUITEM "Printer Se&tup...",           IDM_FILESETUP
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                       IDM_FILEEXIT
+        MENUITEM "&About...",                   IDM_HELPABOUT
     END
     POPUP "&Edit"
     BEGIN
@@ -75,15 +72,6 @@ BEGIN
         MENUITEM "&Cascade",                    IDM_WINDOWCASCADE
         MENUITEM "Arrange &Icons",              IDM_WINDOWICONS
         MENUITEM "Close &All",                  IDM_WINDOWCLOSEALL
-    END
-    POPUP "&Help"
-    BEGIN
-        MENUITEM "&Overview",                   IDM_HELPHELP
-        MENUITEM "&Search for Help on...",      IDM_HELPSEARCH
-        MENUITEM SEPARATOR
-        MENUITEM "&Technical Support",          IDM_HELPTS
-        MENUITEM SEPARATOR
-        MENUITEM "&About MAXedit...",           IDM_HELPABOUT
     END
 END
 
@@ -166,8 +154,8 @@ BEGIN
 
     IDS_CLIENTTITLE         "Qualitas MAXedit .INI Editor, Version 0.9"
     IDS_UNTITLED            "Untitled"
-    IDS_APPNAME             "MAXedit"
-    IDS_PRINTJOB            "MAXedit - "
+    IDS_APPNAME             "System Configuration Editor"
+    IDS_PRINTJOB            "System Configuration Editor - "
     IDS_PRINTERROR          "Cannot print %s!"
 END
 

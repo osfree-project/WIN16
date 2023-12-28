@@ -52,20 +52,20 @@
 #define ATTR_FILES	0x0000		/* find ordinary files	       */
 #define PROP_FILENAME	szPropertyName	/* name of property for dialog */
 
-
+#if 0
 // Toolbar defines
     #define ONE_UNIT		  nOneUnit
     #define BUTTON_HEIGHT	  wIconHeight/2
     #define BUTTON_WIDTH	  wIconWidth
     #define BUTTON_BORDER	  ONE_UNIT * 2
 
-//    #define BUTTONBAR_OFFSET	    (wIconWidth*2)
+    #define BUTTONBAR_OFFSET	    (wIconWidth*2)
 #define BUTTONBAR_OFFSET      8
     #define SPACE_BETWEEN_BUTTONS ONE_UNIT*4
     #define TOOLBAR_BORDER	  ONE_UNIT*2
     #define TOOLBAR_HEIGHT	  BUTTON_HEIGHT + TOOLBAR_BORDER * 2 + BUTTON_BORDER * 2 + 1
     #define NUMTOOLS		  13
-
+#endif
     // hIcon is the bitmap that will represent the button
     // The command ID is the command that will be generated if the
     // button is clicked.

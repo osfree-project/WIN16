@@ -7,7 +7,8 @@ PROJ  = sysedit1
 PROJ1 = sysedit
 TRGT = $(PROJ1).exe
 DESC = Windows System Editor
-srcfiles = $(p)maxedit$(e) $(p)toolbar$(e)
+srcfiles = $(p)maxedit$(e) # $(p)toolbar$(e)
+DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 
 # defines additional options for C compiler
 ADD_COPT = -sg -DDEBUG=1
