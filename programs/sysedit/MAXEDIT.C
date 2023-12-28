@@ -487,7 +487,7 @@ LONG FAR PASCAL __export MPMDIChildWndProc ( HWND hwnd, UINT msg, WPARAM wParam,
 		case IDM_FILESAVE:
 
 		    /* If empty or unchanged file, ignore save */
-		    if ((GetWindowWord(hwnd, GWW_UNTITLED)) && (!ChangeFile(hwnd)))
+		    if ((GetWindowWord(hwnd, GWW_UNTITLED)) /*&& (!ChangeFile(hwnd))*/)
 			break;
 
 		    /* Save the contents of the edit control and reset the
@@ -1505,7 +1505,8 @@ int PASCAL LoadFile (HWND hwnd, char *pName)
     lpB = (LPSTR)GlobalLock( hGlobal );
 
     /* The file has a title, so reset the UNTITLED flag. */
-    SetWindowWord(hwnd, GWW_UNTITLED, FALSE);
+//    SetWindowWord(hwnd, GWW_UNTITLED, FALSE);
+    SetWindowText(hwnd, pName);
 
     fh = _lopen (pName, READ | OF_SHARE_DENY_WRITE );
 
@@ -1532,7 +1533,7 @@ int PASCAL LoadFile (HWND hwnd, char *pName)
 
     _lclose (fh);
 
-    SetWindowText(hwnd, pName);
+//    SetWindowText(hwnd, pName);
 
     return TRUE;
 }
@@ -1608,10 +1609,10 @@ VOID PASCAL SaveFile( HWND hwnd )
     hwndEdit = GetWindowWord ( hwnd, GWW_HWNDEDIT);
     GetWindowText (hwnd, szFile, sizeof(szFile));
 
-    if (lstrcmpi(szFile, "Untitled") == 0) {
-	ChangeFile(hwnd);
-	GetWindowText (hwnd, szFile, sizeof(szFile));
-    }
+//    if (lstrcmpi(szFile, "Untitled") == 0) {
+	//ChangeFile(hwnd);
+//	GetWindowText (hwnd, szFile, sizeof(szFile));
+//    }
 
     fh = OpenFile (szFile, &of, OF_WRITE | OF_CREATE | OF_SHARE_DENY_WRITE );
 
