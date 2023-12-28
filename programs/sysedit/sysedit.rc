@@ -16,23 +16,6 @@ IDMAXEDIT               ICON    DISCARDABLE     "maxedit.ico"
 IDCHILDICO              ICON    DISCARDABLE     "meicon.ico"
 
 
-TBNEW      ICON  "tnew.ico"
-TBOPEN     ICON  "topen.ico"
-TBSAVE     ICON  "tsave.ico"
-TBPRINT    ICON  "tprint.ico"
-
-TBUNDO     ICON  "tundo.ico"
-TBCUT      ICON  "tcut.ico"
-TBCOPY     ICON  "tcopy.ico"
-TBPASTE    ICON  "tpaste.ico"
-
-TBCASC     ICON  "tcascade.ico"
-TBTILE     ICON  "ttile.ico"
-TBINI      ICON  "tini.ico"
-
-TBEXIT     ICON  "texit.ico"
-TBHELP     ICON  "thelp.ico"
-
 //
 // Menu
 //
