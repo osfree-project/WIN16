@@ -629,7 +629,6 @@ VOID PASCAL InitializeMenu ( register HANDLE hmenu )
     EnableMenuItem (hmenu, IDM_WINDOWTILE, status);
     EnableMenuItem (hmenu, IDM_WINDOWCASCADE, status);
     EnableMenuItem (hmenu, IDM_WINDOWICONS, status);
-    EnableMenuItem (hmenu, IDM_WINDOWCLOSEALL, status);
 }
 
 
@@ -798,18 +797,6 @@ VOID PASCAL CommandHandler ( register HWND hwnd, register WORD wParam )
 	case IDM_WINDOWICONS:
 	    /* Auto - arrange MDI icons */
 	    SendMessage (hwndMDIClient, WM_MDIICONARRANGE, 0, 0L);
-	    break;
-
-	case IDM_WINDOWCLOSEALL:
-	    /* Abort operation if something is not saved */
-	    if (!QueryCloseAllChildren())
-		break;
-
-	    CloseAllChildren();
-
-	    /* Show the window since CloseAllChilren() hides the window
-	     * for fewer repaints. */
-	    ShowWindow( hwndMDIClient, SW_SHOW);
 	    break;
 
 	default:
@@ -1484,7 +1471,7 @@ HWND PASCAL AddFile( char *pName )
     if (pName) {
 	if (!LoadFile(hwnd, pName)){
 		/* File couldn't be loaded -- close window */
-		SendMessage(hwndMDIClient, WM_MDIDESTROY, (WORD) hwnd, 0L);
+//		SendMessage(hwndMDIClient, WM_MDIDESTROY, (WORD) hwnd, 0L);
 	}
     }
 

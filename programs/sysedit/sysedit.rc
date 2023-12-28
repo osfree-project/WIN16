@@ -71,7 +71,6 @@ BEGIN
         MENUITEM "&Tile",                       IDM_WINDOWTILE
         MENUITEM "&Cascade",                    IDM_WINDOWCASCADE
         MENUITEM "Arrange &Icons",              IDM_WINDOWICONS
-        MENUITEM "Close &All",                  IDM_WINDOWCLOSEALL
     END
 END
 
