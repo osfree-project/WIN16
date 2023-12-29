@@ -78,8 +78,8 @@ BOOLEAN BIOSscan(WORD a, WORD b, WORD c, WORD * d)
 
     if (xbool)
     {
-      while ((xword > b) && *(char far *)(MK_FP(a, xword - 1) in pchar) xword--;
-      d=xword;
+      while ((xword > b) && *(char far *)(MK_FP(a, xword - 1))) xword--;
+      *d=xword;
     };
     gotoxy(OldX, OldY);
     textattr(oldattr);
@@ -91,13 +91,15 @@ BOOLEAN BIOSscan(WORD a, WORD b, WORD c, WORD * d)
 void showBIOS(WORD a, WORD b)
 {
   BOOLEAN xbool;
-  char xchar;
+  char xchar[2];
+
+  xchar[1]=0;
 
     xbool=FALSE;
     do
     {
-      xchar=*(char far *)MK_FP(a, b);
-      if xchar in pchar then
+      xchar[0]=*(char far *)MK_FP(a, b);
+      if (xchar[0])
         {
         _outtext(xchar);
         if (b < 0xFFFF)
@@ -105,6 +107,7 @@ void showBIOS(WORD a, WORD b)
           b++;
         }else {
           xbool=TRUE;
+        }
         }
       else
         xbool=TRUE;
@@ -134,11 +137,11 @@ void page01(void)
 
 
 
-  Caption2("Machine type");
+  caption2("Machine type");
   if (toupper((char)(char far *)MK_FP(0xF000,0xE076)) == 'D')
   {
-    s[0]=0";
-    for(xword1=0xE077;xword1<=0xE079;i++) strcat(s, toupper((char)(char * far)MK_FP(0xF000,xword1));
+    s[0]=0;
+    for(xword1=0xE077;xword1<=0xE079;i++) strcat(s, toupper((char)(char * far)MK_FP(0xF000,xword1)));
     if (!strcmp(s, "ELL"))
     {
       _outtext("Dell ");
@@ -153,12 +156,12 @@ void page01(void)
         };
       if (xbool)
         {
-        Caption3("BIOS Revision");
+        caption3("BIOS Revision");
         for xword1:=$E845 to $E847 do
           Write(Chr(Mem[$F000:xword1]))
         };
       _outtext("\n\r");
-      Caption2("Standard BIOS call says");
+      caption2("Standard BIOS call says");
       _outtext("\n\r");
       }
     };
@@ -175,7 +178,7 @@ void page01(void)
     if nocarry(regs) and (BX = $4850) then
       begin
       Writeln("HP Vectra series");
-      Caption2("Standard BIOS call says");
+      caption2("Standard BIOS call says");
       end;
     end;
   with regs do
@@ -186,7 +189,7 @@ void page01(void)
     if BX = $4850 then
       begin
       Writeln("HP 95LX");
-      Caption2("Standard BIOS call says");
+      caption2("Standard BIOS call says");
       end;
     end;
   with regs do
