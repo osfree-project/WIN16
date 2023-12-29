@@ -30,8 +30,7 @@ To send email to the maintainer of the Willows Twin Libraries.
 
 
 #include "windows.h"
-#include "kerndef.h"
-#include "Hunter.h"
+//#include "kerndef.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -40,8 +39,8 @@ To send email to the maintainer of the Willows Twin Libraries.
  * clone of compress/expand from microsoft SDK
  *
  *	single source for both compression and expansion 
- *	cl lzc.c 			to get compression program
- *	cl -Felze -DEXPAND lzc.c	to get expansion program
+ *	cc -o lzc          lzc.c 	to get compression program
+ *	cc -o lze -DEXPAND lzc.c	to get expansion program
  *
  *	missing the prompting for input and output files 
  *	when not given on the command line...
@@ -407,11 +406,11 @@ int main(int argc, char *argv[])
 		printf("??? %s\n", s);  return EXIT_FAILURE;
 	}
 
-	printf("Hunter Systems (R) File %s Utility %s\n", 
+	printf("Willows Software (R) File %s Utility %s\n", 
 		szexestr,"Version 1.00");
 
 	printf("Copyright (C) %s %s All rights reserved.\n\n",
-		"Hunter Systems",
+		"Willows Software",
 		"1990-1992.");
 	printf("%s %s to %s.\n",
 		szopstr,argv[1],argv[2]);

@@ -6,18 +6,13 @@
 PROJ  = expand
 TRGT = $(PROJ).exe
 DESC = Windows clock
-srcfiles = $(p)expand$(e)
+srcfiles = $(p)lzc$(e)
 
 # defines additional options for C compiler
-#ADD_COPT = -0 -sg -zw -bw -bg -d3 -db -hw -ml -od #-pl
-ADD_COPT = -sg -DDEBUG=1
-#DEBUG    = watcom
+ADD_COPT = -sg -DEXPAND -I$(%WATCOM)$(SEP)h$(SEP)win
 
-#           GETCURRENTDIRECTORY WINSMSG.20
-#RESOURCE = $(PATH)rsrc.res
-CLEAN_ADD = *.mbr
 
-!include $(%ROOT)tools/mk/appsw16.mk
+!include $(%ROOT)tools/mk/appsdos.mk
 
 TARGETS = $(PATH)$(PROJ).exe
 
