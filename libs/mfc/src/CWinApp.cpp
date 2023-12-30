@@ -70,6 +70,7 @@ CWinApp::CWinApp()
 	g_pWinApp   = this;
 	m_pTemplate = NULL;
 	m_pMainWnd  = NULL;
+	m_nCmdShow  = 0;
 }
 
 BOOL CWinApp::InitInstance()
@@ -167,6 +168,8 @@ int WINAPI WinMain(
     int       nShowWindow
 ) {
 	CWinApp* pApp = AfxGetApp();
+
+	pApp->m_nCmdShow = nShowWindow;
 
 	if ( intRegisterClasses(hThisInstance) ) {
 		if ( pApp->InitInstance() ) {

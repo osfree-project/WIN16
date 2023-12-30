@@ -66,6 +66,9 @@ public:
 
 	CWnd* m_pMainWnd;
 
+	//https://learn.microsoft.com/ru-ru/cpp/mfc/reference/cwinapp-class?view=msvc-170#m_ncmdshow
+	int m_nCmdShow;
+
 	//https://learn.microsoft.com/en-us/cpp/mfc/reference/cwinapp-class?view=msvc-170#domessagebox
 	virtual int DoMessageBox(LPCTSTR lpszPrompt, UINT nType, UINT nIDPrompt);
 protected:

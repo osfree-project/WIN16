@@ -58,11 +58,36 @@ IMPLEMENT_DYNCREATE(CFrameWnd, CWnd)
 	END_MESSAGE_MAP()
 #undef TARG_CLASS
 
+
 CFrameWnd::~CFrameWnd()
 {
 	// If we are the main window, say goodbye to everybody!
 	if (AfxGetApp()->m_pMainWnd == this)
 		PostQuitMessage(0);
+}
+
+const RECT CFrameWnd::rectDefault = { CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT };
+
+BOOL CFrameWnd::Create(
+	LPCTSTR lpszClassName,
+	LPCTSTR lpszWindowName,
+	DWORD dwStyle,
+	const RECT &rect,
+	CWnd *pParentWnd,
+	LPCTSTR lpszMenuName,
+	DWORD dwExStyle,
+	CCreateContext *pContext
+) {
+	HMENU hMenu = ::LoadMenu(AfxGetResourceHandle(), lpszMenuName);
+	if (!CreateEx(dwExStyle, lpszClassName, lpszWindowName, dwStyle, rect.left, rect.top,
+                      rect.right-rect.left, rect.bottom-rect.top,
+                      pParentWnd->GetSafeHwnd(), hMenu, pContext))
+	{
+		return (FALSE);
+	}
+	m_bAutoDelete = TRUE;
+	ShowWindow(SW_SHOWNORMAL);
+	return( TRUE );
 }
 
 BOOL CFrameWnd::LoadFrame(

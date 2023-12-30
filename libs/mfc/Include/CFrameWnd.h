@@ -55,6 +55,16 @@ class CFrameWnd : public CWnd {
 protected:
 	CView* m_pView;
 public:
+	static const RECT rectDefault;
+
+	virtual BOOL Create(LPCTSTR lpszClassName,
+			LPCTSTR lpszWindowName,
+			DWORD dwStyle = WS_OVERLAPPEDWINDOW,
+			const RECT &rect = rectDefault,
+			CWnd *pParentWnd = NULL,
+			LPCTSTR lpszMenuName = NULL,
+			DWORD dwExStyle = 0,
+			CCreateContext *pContext = NULL );
 	virtual BOOL LoadFrame(UINT nIDResource,DWORD dwDefStyle,
 		CWnd* pwndParent,CCreateContext* pContext);
 

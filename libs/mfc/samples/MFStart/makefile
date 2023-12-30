@@ -3,11 +3,11 @@
 # (c) osFree project,
 #
 
-PROJ  = mfhello1
-PROJ1 = mfhello
+PROJ  = mfstart1
+PROJ1 = mfstart
 TRGT = $(PROJ1).exe
-DESC = OFC Hello
-srcfiles = $(p)MFHello$(e) &
+DESC = OFC Start
+srcfiles = $(p)MFStart$(e) &
 		$(p)CArchive$(e) &
 		$(p)CCmdTarget$(e) &
 		$(p)CCmdUI$(e) &
