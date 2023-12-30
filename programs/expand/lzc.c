@@ -30,7 +30,6 @@ To send email to the maintainer of the Willows Twin Libraries.
 
 
 #include "windows.h"
-//#include "kerndef.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -59,12 +58,11 @@ To send email to the maintainer of the Willows Twin Libraries.
  *
  ****************************************************************
  *
- *	still don't know all the fields in the 14 byte header
- *	as far as I can tell
- *
- *	0-3 	are SZDD some kind of signature 
- *	4-9	are 6 bytes of ????
- *	10-13   are the file size 
+ * SZDD header format Offset	Length	Description
+ * 0x00	8	"SZDD" signature: 0x53,0x5A,0x44,0x44,0x88,0xF0,0x27,0x33
+ * 0x08	1	Compression mode: only "A" (0x41) is valid here
+ * 0x09	1	The character missing from the end of the filename (0=unknown)
+ * 0x0A	4	The integer length of the file when unpacked
  *
  */
  
@@ -91,10 +89,10 @@ char *szopcmd  = "expands";
 #include <string.h>
 #include <ctype.h>
 
-#define N		4096	/* size of ring buffer */
+#define LZSS_WINDOW_SIZE	4096	/* size of ring buffer */
 #define F		16	/* 18 upper limit for match_length */
 #define THRESHOLD	2       /* minimum character length to compress */
-#define NIL		N	/* index for root of binary search trees */
+#define NIL		LZSS_WINDOW_SIZE	/* index for root of binary search trees */
 
 unsigned long 
 		textsize = 0,	/* text size counter */
@@ -103,13 +101,13 @@ unsigned long
    ring buffer of size N, with extra F-1 bytes to facilitate string 
    comparison of longest match.  These are set by InsertNode()
 **********************************************************************/
-BYTE 	text_buf[N + F - 1];	
+BYTE 	text_buf[LZSS_WINDOW_SIZE + F - 1];	
 
 /**********************************************************************
 	left & right children & parents
 ***********************************************************************/
 int	match_position, match_length,  
-	lson[N + 1], rson[N + 257], dad[N + 1];  
+	lson[LZSS_WINDOW_SIZE + 1], rson[LZSS_WINDOW_SIZE + 257], dad[LZSS_WINDOW_SIZE + 1];  
 
 /**********************************************************************
 	input & output files
@@ -141,8 +139,8 @@ void InitTree(void)  /* initialize trees */
 	   for strings that begin with character i.  These are initialized
 	   to NIL.  Note there are 256 trees. */
 
-	for (i = N + 1; i <= N + 256; i++) rson[i] = NIL;
-	for (i = 0; i < N; i++) dad[i] = NIL;
+	for (i = LZSS_WINDOW_SIZE + 1; i <= LZSS_WINDOW_SIZE + 256; i++) rson[i] = NIL;
+	for (i = 0; i < LZSS_WINDOW_SIZE; i++) dad[i] = NIL;
 }
 
 void InsertNode(int r)
@@ -156,7 +154,7 @@ void InsertNode(int r)
 	int  i, p, cmp;
 	BYTE  *key;
 
-	cmp = 1;  key = &text_buf[r];  p = N + 1 + key[0];
+	cmp = 1;  key = &text_buf[r];  p = LZSS_WINDOW_SIZE + 1 + key[0];
 	rson[r] = lson[r] = NIL;  match_length = 0;
 	for ( ; ; ) {
 		if (cmp >= 0) {
@@ -233,7 +231,7 @@ void Encode(void)
 
 	code_buf_ptr = mask = 1;
 
-	s = 0;  r = N - F;
+	s = 0;  r = LZSS_WINDOW_SIZE - F;
 	/* Clear the buffer with any character that will appear often. */
 	for (i = s; i < r; i++) text_buf[i] = ' ';  
 
@@ -296,14 +294,14 @@ void Encode(void)
 				(c = getc(infile)) != EOF; i++) {
 			DeleteNode(s);		/* Delete old strings and */
 			text_buf[s] = c;	/* read new bytes */
-			if (s < F - 1) text_buf[s + N] = c;  
+			if (s < F - 1) text_buf[s + LZSS_WINDOW_SIZE] = c;  
 
 			/**************************************************
 			 If the position is near the end of buffer, extend 
 			   the buffer to make string comparison easier. 
 			***************************************************/
 
-			s = (s + 1) & (N - 1);  r = (r + 1) & (N - 1);
+			s = (s + 1) & (LZSS_WINDOW_SIZE - 1);  r = (r + 1) & (LZSS_WINDOW_SIZE - 1);
 				/* Since this is a ring buffer, increment the 
 				   position modulo N. */
 
@@ -315,7 +313,7 @@ void Encode(void)
 		while (i++ < last_match_length) {	
 			/* no need to read, but */
 			DeleteNode(s);					
-			s = (s + 1) & (N - 1);  r = (r + 1) & (N - 1);
+			s = (s + 1) & (LZSS_WINDOW_SIZE - 1);  r = (r + 1) & (LZSS_WINDOW_SIZE - 1);
 
 			/* buffer may not be empty. */
 			if (--len) InsertNode(r);		
@@ -350,8 +348,8 @@ void Decode(void)
 	for (i=0;i<14;i++)
 		c = getc(infile);
 
-	for (i = 0; i < N - F; i++) text_buf[i] = ' ';
-	r = N - F;  flags = 0;
+	for (i = 0; i < LZSS_WINDOW_SIZE - F; i++) text_buf[i] = ' ';
+	r = LZSS_WINDOW_SIZE - F;  flags = 0;
 
 	for ( ; ; ) {
 		phase = 0;			
@@ -369,7 +367,7 @@ void Decode(void)
 				break;
 
 			putc(c, outfile);  
-			text_buf[r++] = c;  r &= (N - 1);
+			text_buf[r++] = c;  r &= (LZSS_WINDOW_SIZE - 1);
 		} else {
 			phase = 2;
 			if ((i = getc(infile)) == EOF) break;
@@ -382,10 +380,10 @@ void Decode(void)
 			i |= ((j & 0xf0) << 4);  j = (j & 0x0f) + THRESHOLD;
 
 			for (k = 0; k <= j; k++) {
-				c = text_buf[(i + k) & (N - 1)];
+				c = text_buf[(i + k) & (LZSS_WINDOW_SIZE - 1)];
 
 				putc(c, outfile);  
-				text_buf[r++] = c;  r &= (N - 1);
+				text_buf[r++] = c;  r &= (LZSS_WINDOW_SIZE - 1);
 			}
 		}
 	}
@@ -397,7 +395,7 @@ int main(int argc, char *argv[])
 	int i;
 	
 	if (argc != 3) {
-		printf("%s:file1 file2 [%s file1 into file2].\n",
+		printf("%s: file1 file2 [%s file1 into file2].\n",
 			argv[0],szopcmd);
 		return EXIT_FAILURE;
 	}
