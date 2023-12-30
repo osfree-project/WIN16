@@ -13,11 +13,11 @@ srcfiles = $(p)hello$(e) &
 		$(p)CCmdUI$(e) &
 		$(p)CDocTemplate$(e) &
 		$(p)CDocument$(e) &
+		$(p)CObject$(e) &
 		$(p)CException$(e) &
 		$(p)CFile$(e) &
 		$(p)CFrameWnd$(e) &
 		$(p)CGdiObject$(e) &
-		$(p)CObject$(e) &
 		$(p)CObjFromHandle$(e) &
 		$(p)CPoint$(e) &
 		$(p)CRect$(e) &
@@ -31,7 +31,7 @@ srcfiles = $(p)hello$(e) &
 #$(p)Debug$(e) &
 
 # defines additional options for C compiler
-ADD_COPT = -od -xs -i=..$(SEP)..$(SEP)Include -i=c:\watcom\h
+ADD_COPT = -ml -ox-w3 -bt=windows -k -zws -xs -i=..$(SEP)..$(SEP)Include -i=c:\watcom\h
 ADD_LINKOPT = LIB commdlg.lib, ole2disp.lib
 
 HEAPSIZE = 18k

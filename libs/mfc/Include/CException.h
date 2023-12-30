@@ -44,7 +44,7 @@ mm-dd-yy  ver   who  what
  ------------------------------------------------------------------------
  Copyright (c) 2000-04 by The Open Foundation Classes
  Copyright (c) 2003-04 by William D. Herndon
-/************************************************************************/
+ ************************************************************************/
 
 #ifndef CEXCEPTION_H
 #define CEXCEPTION_H

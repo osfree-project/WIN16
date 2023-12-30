@@ -43,7 +43,7 @@ mm-dd-yy  ver   who  what
  ------------------------------------------------------------------------
   Copyright (c) 2000-03 Open Foundation Classes
   Copyright (c) 2003 William D. Herndon
-/************************************************************************/
+ ************************************************************************/
 
 inline void CCmdTarget::BeginWaitCursor() {
 	// If this assert is thrown, EndWaitCursor() has been called

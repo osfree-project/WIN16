@@ -46,7 +46,7 @@ mm-dd-yy  ver   who  what
  ------------------------------------------------------------------------
   Copyright (c) 2000-04 Open Foundation Classes
   Copyright (c) 2004 William D. Herndon
-/************************************************************************/
+ ************************************************************************/
 #include <afxwin.h>
 
 IMPLEMENT_DYNCREATE(CFrameWnd, CWnd)

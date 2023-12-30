@@ -46,7 +46,7 @@ mm-dd-yy  ver   who  what
  ------------------------------------------------------------------------
   Copyright (c) 2000-2004 Open Foundation Classes
   Copyright (c) 2004 William D. Herndon
-/************************************************************************/
+ ************************************************************************/
 #ifndef CARCHIVE_INLINE_H
 #define CARCHIVE_INLINE_H
 

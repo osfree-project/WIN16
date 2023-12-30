@@ -50,7 +50,7 @@ mm-dd-yy  ver   who  what
  ------------------------------------------------------------------------
  Copyright (c) 2000-04 by The Open Foundation Classes
  Copyright (c) 2003-04 by William D. Herndon
-/************************************************************************/
+ ************************************************************************/
 
 #ifndef COBJECT_H
 #define COBJECT_H
@@ -70,6 +70,7 @@ public: \
 	static CRuntimeClass rtc##className; \
 	virtual CRuntimeClass* GetRuntimeClass() const;
 // End of DECLARE_DYNAMIC
+
 
 // DECLARE_DYNCREATE() is like DECLARE_DYNAMIC(), but is for CObjects
 // that are constructed using the runtime class
@@ -125,7 +126,7 @@ class CObject {
 	DECLARE_DYNAMIC(CObject)
 	virtual ~CObject() { };
 
-protected:
+//protected:
 	CObject() { };
 public:
 	BOOL IsSerializable() const;

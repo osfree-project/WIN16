@@ -60,7 +60,7 @@ wdh = William D. Herndon (shadowdog@users.sourceforge.net)
  ------------------------------------------------------------------------
   Copyright (c) 2000-04 The Open Foundation Classes
   Copyright (c) 2000 Carsten Breuer
-/************************************************************************/
+ ************************************************************************/
 #include <afxwin.h>
 
 CPoint::CPoint()

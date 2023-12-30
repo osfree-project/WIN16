@@ -47,7 +47,7 @@ mm-dd-yy  ver   who  what
  ------------------------------------------------------------------------
   Copyright (c) 2000-04 Open Foundation Classes
   Copyright (c) 2003-04 William D. Herndon
-/************************************************************************/
+ ************************************************************************/
 #include <afxwin.h>
 
     HINSTANCE g_hOfcResourceHandle = NULL;

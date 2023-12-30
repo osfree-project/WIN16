@@ -49,7 +49,7 @@ mm-dd-yy  who  ver   What
  ------------------------------------------------------------------------
   Copyright (c) 2000-04 Open Foundation Classes
   Copyright (c) 2003-04 William D. Herndon
-/************************************************************************/
+ ************************************************************************/
 #include <afxwin.h>
 
 	char g_szCObject[] = "CObject";
@@ -117,10 +117,10 @@ CObject* CRuntimeClass::CreateObject()
 	BOOL  bSuccess = FALSE;
 
 	// No exceptions.
-	TRY {
+//	TRY {
 		(*m_pfnConstruct)(&pRet);
-	} CATCH_ALL(e) {
-	} END_CATCH_ALL
+//	} CATCH_ALL(e) {
+//	} END_CATCH_ALL
 
 	return( (CObject*)pRet );
 }

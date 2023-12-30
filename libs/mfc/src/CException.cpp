@@ -47,11 +47,12 @@ mm-dd-yy  ver   who  what
  ------------------------------------------------------------------------
   Copyright (c) 2003 Open Foundation Classes
   Copyright (c) 2003 William D. Herndon
-/************************************************************************/
+ ************************************************************************/
 
 #include <afxwin.h>
 //#include <errno.h>
 
+	CException g_e;
 	CMemoryException g_eMemory;
 	CNotSupportedException g_eNotSupported;
 	CUserException g_eUserException;

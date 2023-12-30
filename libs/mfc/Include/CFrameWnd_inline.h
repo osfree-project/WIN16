@@ -45,7 +45,7 @@ mm-dd-yy  ver   who  what
  ------------------------------------------------------------------------
   Copyright (c) 2000-2004 Open Foundation Classes
   Copyright (c) 2004 William D. Herndon
-/************************************************************************/
+ ************************************************************************/
 #ifndef CFRAMEWND_INLINE_H
 #define CFRAMEWND_INLINE_H
 
