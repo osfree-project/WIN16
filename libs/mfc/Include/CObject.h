@@ -126,7 +126,7 @@ class CObject {
 	DECLARE_DYNAMIC(CObject)
 	virtual ~CObject() { };
 
-//protected:
+protected:
 	CObject() { };
 public:
 	BOOL IsSerializable() const;

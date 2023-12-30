@@ -117,10 +117,10 @@ CObject* CRuntimeClass::CreateObject()
 	BOOL  bSuccess = FALSE;
 
 	// No exceptions.
-//	TRY {
+	TRY {
 		(*m_pfnConstruct)(&pRet);
-//	} CATCH_ALL(e) {
-//	} END_CATCH_ALL
+	} CATCH_ALL(e) {
+	} END_CATCH_ALL
 
 	return( (CObject*)pRet );
 }
