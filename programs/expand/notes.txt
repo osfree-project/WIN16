@@ -1,3 +1,4 @@
+https://github.com/kyz/libmspack/tree/master
 
 COMPRESS.EXE file formats: SZDD and KWAJ
 
