@@ -62,7 +62,7 @@ IMPLEMENT_DYNCREATE(CWinApp, CCmdTarget)
 	BEGIN_MESSAGE_MAP(CWinApp, CCmdTarget)
 	END_MESSAGE_MAP()
 
-CWinApp::CWinApp()
+CWinApp::CWinApp(LPCTSTR lpszAppName)
 {
 	// If this assert is thrown, you have
 	// two or more instances of CWinApp.
@@ -138,7 +138,7 @@ BOOL CWinApp::ProcessShellCommand(CCommandLineInfo& rCmdInfo)
 	return( TRUE );
 }
 
-	//https://learn.microsoft.com/en-us/cpp/mfc/reference/cwinapp-class?view=msvc-170#domessagebox
+//https://learn.microsoft.com/en-us/cpp/mfc/reference/cwinapp-class?view=msvc-140#domessagebox
 int CWinApp::DoMessageBox(LPCSTR lpszPrompt, UINT nType, UINT nIDPrompt)
 {
 	if ((nType & MB_ICONMASK)==0)
@@ -161,6 +161,22 @@ int CWinApp::DoMessageBox(LPCSTR lpszPrompt, UINT nType, UINT nIDPrompt)
 	return ::MessageBox(0, lpszPrompt, NULL, nType);
 }
 
+//https://learn.microsoft.com/en-us/cpp/mfc/run-member-function?view=msvc-140
+//https://learn.microsoft.com/en-us/cpp/mfc/onidle-member-function?view=msvc-140
+//@todo onidle call
+int CWinApp::Run()
+{
+	MSG  msg;
+	while ( ::GetMessage(&msg, NULL, 0, 0) ) {
+		::TranslateMessage(&msg);
+		::DispatchMessage(&msg);
+	}
+
+	return AfxGetApp()->ExitInstance();;
+}
+
+// Main OFC Entry Point.
+// @todo Add InitApplication
 int WINAPI WinMain(
     HINSTANCE hThisInstance,
     HINSTANCE hPrevInstance,
@@ -173,11 +189,7 @@ int WINAPI WinMain(
 
 	if ( intRegisterClasses(hThisInstance) ) {
 		if ( pApp->InitInstance() ) {
-			MSG  msg;
-			while ( ::GetMessage(&msg, NULL, 0, 0) ) {
-				::TranslateMessage(&msg);
-				::DispatchMessage(&msg);
-			}
+			return pApp->Run();
 		}
 	}
 	return( pApp->ExitInstance() );

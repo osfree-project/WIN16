@@ -66,7 +66,7 @@ CFrameWnd::~CFrameWnd()
 		PostQuitMessage(0);
 }
 
-const RECT CFrameWnd::rectDefault = { CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT };
+const RECT CFrameWnd::rectDefault = { CW_USEDEFAULT, CW_USEDEFAULT, 0, 0 };
 
 BOOL CFrameWnd::Create(
 	LPCTSTR lpszClassName,
@@ -78,7 +78,7 @@ BOOL CFrameWnd::Create(
 	DWORD dwExStyle,
 	CCreateContext *pContext
 ) {
-	HMENU hMenu = ::LoadMenu(AfxGetResourceHandle(), lpszMenuName);
+	HMENU hMenu = LoadMenu(AfxGetResourceHandle(), lpszMenuName);
 	if (!CreateEx(dwExStyle, lpszClassName, lpszWindowName, dwStyle, rect.left, rect.top,
                       rect.right-rect.left, rect.bottom-rect.top,
                       pParentWnd->GetSafeHwnd(), hMenu, pContext))
@@ -110,13 +110,13 @@ BOOL CFrameWnd::LoadFrame(
 		return( FALSE );
 	}
 	m_bAutoDelete = TRUE;
-	ShowWindow(SW_SHOWNORMAL);
-	return( TRUE );
+	ShowWindow(SW_SHOWNORMAL);
+	return( TRUE );
 }
 
 int CFrameWnd::OnCreate(LPCREATESTRUCT pCS)
-{
-	CCreateContext* pContext = (CCreateContext*)pCS->lpCreateParams;
+{
+	CCreateContext* pContext = (CCreateContext*)pCS->lpCreateParams;
 	m_pView = NULL;
 
 	// If we have an associated view, create it.
