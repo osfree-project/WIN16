@@ -93,6 +93,7 @@ char *szopcmd  = "expands";
 #define F		16	/* 18 upper limit for match_length */
 #define THRESHOLD	2       /* minimum character length to compress */
 #define NIL		LZSS_WINDOW_SIZE	/* index for root of binary search trees */
+#define LZSS_WINDOW_FILL	0x20
 
 unsigned long 
 		textsize = 0,	/* text size counter */
@@ -348,7 +349,7 @@ void Decode(void)
 	for (i=0;i<14;i++)
 		c = getc(infile);
 
-	for (i = 0; i < LZSS_WINDOW_SIZE - F; i++) text_buf[i] = ' ';
+	for (i = 0; i < LZSS_WINDOW_SIZE - F; i++) text_buf[i] = LZSS_WINDOW_FILL;
 	r = LZSS_WINDOW_SIZE - F;  flags = 0;
 
 	for ( ; ; ) {
