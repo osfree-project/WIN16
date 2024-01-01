@@ -25,3 +25,6 @@
 [submodule "programs/winmine"]
 	path = programs/winmine
 	url = https://github.com/osfree-project/minesweeper
+[submodule "programs/expand"]
+	path = programs/expand
+	url = https://github.com/osfree-project/expand
