@@ -28,3 +28,6 @@
 [submodule "programs/expand"]
 	path = programs/expand
 	url = https://github.com/osfree-project/expand
+[submodule "programs/sysedit"]
+	path = programs/sysedit
+	url = https://github.com/osfree-project/sysedit
