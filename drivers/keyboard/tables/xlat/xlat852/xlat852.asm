@@ -1,6 +1,6 @@
 code	segment
 	org	0h
-
+start:
 tablesize	dw	tableend - tablestart
 
 tablestart:
@@ -14,4 +14,4 @@ tableend:
 
 code	ends
 
-end
+end start

@@ -64,8 +64,8 @@ MakeDialogBox(HINSTANCE hInstance, HWND hwndOwner, LPCSTR lpTemplateName,
 	if ( !(hInst = GetModuleHandle("COMMDLG")) )
 		hInst = LoadLibrary("COMMDLG");
 	
-	if ( bEnableTemplateHandle ) ;
 /*@ todo
+	if ( bEnableTemplateHandle ) 
 		return InternalDlgIndirectParam(hInst, hInstance, hwndOwner,
 					lpfnDlgProc, (LPARAM)lpCommDlgStruct);
 */
