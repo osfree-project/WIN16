@@ -4,11 +4,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-#define WIN32_NO_STATUS
-#include <windef.h>
-#include <winbase.h>
-#include <wingdi.h>
-#include <winuser.h>
+#include <windows.h>
 
 #define CARDLIBPROC __stdcall
 
@@ -106,5 +102,17 @@ typedef void (CARDLIBPROC *pButtonProc)		(CardButton &pButton);
 typedef bool (CARDLIBPROC *pDebugClickProc) (CardRegion &stackobj);
 void CardLib_SetStackClickProc(pDebugClickProc proc);
 #endif
+
+#define GlobalPtrHandle(lp) \
+  ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))
+
+#define     GlobalUnlockPtr(lp)      \
+                GlobalUnlock(GlobalPtrHandle(lp))
+
+#define GlobalFreePtr(lp) \
+  (GlobalUnlockPtr(lp),(BOOL)GlobalFree(GlobalPtrHandle(lp)))
+
+#define GlobalAllocPtr(flags, cb) \
+  (GlobalLock(GlobalAlloc((flags), (cb))))
 
 #endif /* CARDLIB_INCLUDED */

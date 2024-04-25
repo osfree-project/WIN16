@@ -12,7 +12,7 @@ void     RestorePalette(HDC, HPALETTE);
 
 void PaintRect(HDC hdc, RECT *rect, COLORREF colour);
 
-CardButton::CardButton(CardWindow &parent, int Id, TCHAR *szText, UINT Style, bool visible,
+CardButton::CardButton(CardWindow &parent, int Id, char *szText, UINT Style, bool visible,
                         int x, int y, int width, int height)
 
  : parentWnd(parent), id(Id), uStyle(Style), fVisible(visible), ButtonCallback(0)
@@ -331,7 +331,7 @@ int CardButton::OnLButtonUp(HWND hwnd, int x, int y)
 
 //#define _countof(array) (sizeof(array)/sizeof(array[0]))
 
-CardButton *CardWindow::CreateButton(int id, TCHAR *szText, UINT uStyle, bool fVisible, int x, int y, int width, int height)
+CardButton *CardWindow::CreateButton(int id, char *szText, UINT uStyle, bool fVisible, int x, int y, int width, int height)
 {
     CardButton *cb;
 
@@ -356,7 +356,7 @@ CardButton *CardWindow::CreateButton(int id, TCHAR *szText, UINT uStyle, bool fV
     return cb;
 }
 
-void CardButton::SetText(TCHAR *lpszFormat, ...)
+void CardButton::SetText(char *lpszFormat, ...)
 {
     int count;
 

@@ -30,7 +30,7 @@ public:
 
 	operator HWND() { return m_hWnd; }
 
-	CardButton *CreateButton (int id, TCHAR *szText, UINT uStyle, bool fVisible, int x, int y, int width, int height);
+	CardButton *CreateButton (int id, char *szText, UINT uStyle, bool fVisible, int x, int y, int width, int height);
 	CardRegion *CreateRegion (int id, bool fVisible, int x, int y, int xoffset, int yoffset);
 
 	CardButton *CardButtonFromId(int id);

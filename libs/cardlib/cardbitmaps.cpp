@@ -87,11 +87,11 @@ void LoadCardBitmaps(void)
     //If Windows NT/2000/XP
     if(GetVersion() < 0x80000000)
     {
-        hCardDll = LoadLibrary(TEXT("cards.dll"));
+        hCardDll = LoadLibrary("cards.dll");
 
         if(hCardDll == 0)
         {
-            MessageBox(0, TEXT("Error loading cards.dll (32bit)"), TEXT("Shed"), MB_OK | MB_ICONEXCLAMATION);
+            MessageBox(0, "Error loading cards.dll (32bit)", "Shed", MB_OK | MB_ICONEXCLAMATION);
             PostQuitMessage(0);
             return;
         }
@@ -145,7 +145,7 @@ static void DrawCheckedRect(HDC hdc, RECT *rect, COLORREF fg, COLORREF bg)
 
     //UnrealizeObject(hbr);
 
-    SetBrushOrgEx(hdc, rect->left, rect->top, 0);
+    SetBrushOrg(hdc, rect->left, rect->top);
 
     hbrold = (HBRUSH)SelectObject(hdc, hbr);
 
@@ -259,8 +259,7 @@ HPALETTE MakePaletteFromCols(COLORREF cols[], int nNumColours)
     HPALETTE    hPalette;
 
     //    Allocate memory for the logical palette
-    lp = (LOGPALETTE *)HeapAlloc(
-        GetProcessHeap(), 0, sizeof(LOGPALETTE) + sizeof(PALETTEENTRY) * nNumColours);
+    lp = (LOGPALETTE *)GlobalAllocPtr(GPTR, sizeof(LOGPALETTE) + sizeof(PALETTEENTRY) * nNumColours);
 
     lp->palNumEntries = (WORD)nNumColours;
     lp->palVersion    = 0x300;
@@ -274,7 +273,7 @@ HPALETTE MakePaletteFromCols(COLORREF cols[], int nNumColours)
     // create palette!
     hPalette = CreatePalette(lp);
 
-    HeapFree(GetProcessHeap(), 0, lp);
+    GlobalFreePtr(lp);
 
     return hPalette;
 }

@@ -41,10 +41,10 @@ static LONG  uCardBitmapRef = 0;
 
 void RegisterCardWindow()
 {
-    WNDCLASSEX wc;
+    WNDCLASS wc;
 
     //Window class for the main application parent window
-    wc.cbSize            = sizeof(wc);
+    //wc.cbSize            = sizeof(wc);
     wc.style            = CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW;
     wc.lpfnWndProc        = CardWindow::CardWndProc;
     wc.cbClsExtra        = 0;
@@ -55,9 +55,9 @@ void RegisterCardWindow()
     wc.hbrBackground    = 0;
     wc.lpszMenuName        = 0;
     wc.lpszClassName    = szCardName;
-    wc.hIconSm            = 0;
+    //wc.hIconSm            = 0;
 
-    RegisterClassEx(&wc);
+    RegisterClass(&wc);
 }
 
 CardWindow::CardWindow() : m_hWnd(0)
