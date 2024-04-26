@@ -56,12 +56,16 @@ CardRegion::CardRegion(CardWindow &parent, int Id, bool visible, int x, int y, i
 
     fMouseDragging = false;
 
+	#if 0
     mxlock = CreateMutex(0, FALSE, 0);
+	#endif
 }
 
 CardRegion::~CardRegion()
 {
+	#if 0
     CloseHandle(mxlock);
+	#endif
 }
 
 void CardRegion::SetBackColor(COLORREF cr)
@@ -551,6 +555,7 @@ int CardRegion::NumCards() const
 
 bool CardRegion::Lock()
 {
+	#if 0
     DWORD dw = WaitForSingleObject(mxlock, 0);
 
     if(dw == WAIT_OBJECT_0)
@@ -564,10 +569,14 @@ bool CardRegion::Lock()
         return false;
     }
     return false;
+	#else
+		return true;
+	#endif
 }
 
 bool CardRegion::UnLock()
 {
+	#if 0
     if(ReleaseMutex(mxlock))
     {
         //TRACE("Unlocking stack\n");
@@ -578,6 +587,9 @@ bool CardRegion::UnLock()
         //TRACE("Unlocking stack failed\n");
         return false;
     }
+	#else
+		return true;
+	#endif
 }
 
 bool CardRegion::PlayCard(CardRegion *pDestStack, int value, int num)

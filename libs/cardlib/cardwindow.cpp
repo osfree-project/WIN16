@@ -81,7 +81,7 @@ CardWindow::CardWindow() : m_hWnd(0)
 
     // If uCardBitmapRef was previously zero, then
     // load the card bitmaps
-    if(1 == InterlockedIncrement(&uCardBitmapRef))
+    if(1 == uCardBitmapRef++/*InterlockedIncrement(&uCardBitmapRef)*/)
     {
         LoadCardBitmaps();
 
@@ -135,7 +135,7 @@ CardWindow::~CardWindow()
 
     DeleteAll();
 
-    if(0 == InterlockedDecrement(&uCardBitmapRef))
+    if(0 == uCardBitmapRef--/*InterlockedDecrement(&uCardBitmapRef)*/)
     {
         FreeCardBitmaps();
 
@@ -269,7 +269,7 @@ CardRegion* CardWindow::CardRegionFromPoint(int x, int y)
 //
 LRESULT CALLBACK CardWindow::CardWndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
-    CardWindow *cw = (CardWindow *)GetWindowLongPtr(hwnd, 0);
+    CardWindow *cw = (CardWindow *)GetWindowLong(hwnd, 0);
     return cw->WndProc(hwnd, iMsg, wParam, lParam);
 }
 
@@ -360,7 +360,7 @@ LRESULT CALLBACK CardWindow::WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM
         //
         // associate this class with the window
         //
-        SetWindowLongPtr(hwnd, 0, (LONG_PTR)cs->lpCreateParams);
+        SetWindowLong(hwnd, 0, (LONG)cs->lpCreateParams);
 
         return 1;
 
@@ -781,6 +781,7 @@ void CardWindow::PaintCardRgn(HDC hdc, int dx, int dy, int width, int height, in
 
             CombineRgn(hr3, hr1, hr2, RGN_DIFF);
 
+/*
             GetClipRgn(hdc, hr4);
 
             CombineRgn(hr3, hr4, hr3, RGN_AND);
@@ -793,7 +794,7 @@ void CardWindow::PaintCardRgn(HDC hdc, int dx, int dy, int width, int height, in
 
             // Clean up
             SelectClipRgn(hdc, hr4);
-
+*/
             DeleteObject(hr1);
             DeleteObject(hr2);
             DeleteObject(hr3);

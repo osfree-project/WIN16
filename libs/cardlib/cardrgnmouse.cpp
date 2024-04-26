@@ -8,6 +8,7 @@
 #include "cardlib.h"
 
 #include <math.h>
+#include <dos.h>
 
 #if 1
 #define TRACE(s)
@@ -143,6 +144,7 @@ bool CardRegion::CanDragCards(int iNumCards)
     if(iNumCards <= 0) return false;
     if(nThreedCount > 1 && iNumCards > 1) return false;
 
+	#if 0
     if(WaitForSingleObject(mxlock, 0) != WAIT_OBJECT_0)
     {
 //        TRACE("Failed to gain access to card stack\n");
@@ -150,6 +152,7 @@ bool CardRegion::CanDragCards(int iNumCards)
     }
 
     ReleaseMutex(mxlock);
+	#endif
 
     switch(uDragRule)
     {
@@ -184,13 +187,15 @@ bool CardRegion::CanDragCards(int iNumCards)
 
 bool CardRegion::CanDropCards(CardStack &cards)
 {
+	#if 0
     if(WaitForSingleObject(mxlock, 0) != WAIT_OBJECT_0)
     {
         return false;
     }
 
     ReleaseMutex(mxlock);
-
+	#endif
+	
     switch(uDropRule)
     {
     case CS_DROP_ALL:
@@ -546,7 +551,7 @@ void ZoomCard(HDC hdc, int xpos, int ypos, CARDSTACK *dest)
         //dx *= 1.2;
         //dy *= 1.2;
 
-        Sleep(10);
+        sleep(10);
     }
 }
 #else
@@ -640,7 +645,7 @@ void CardRegion::ZoomCard(HDC hdc, int xpos, int ypos, CardRegion *pDestStack)
         //dx *= 1.2;
         //dy *= 1.2;
 
-        Sleep(10);
+        sleep(10);
     }
     TRACE ( "EXIT ZoomCard()\n" );
 }

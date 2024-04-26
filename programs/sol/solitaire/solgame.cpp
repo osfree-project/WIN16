@@ -6,8 +6,8 @@
 #define TRACE(s) printf("%s(%i): %s",__FILE__,__LINE__,s)
 #endif
 
-extern TCHAR MsgWin[128];
-extern TCHAR MsgDeal[128];
+extern char MsgWin[128];
+extern char MsgDeal[128];
 
 CardStack activepile;
 int VisiblePileCards;

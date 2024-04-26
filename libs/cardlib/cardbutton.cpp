@@ -33,14 +33,18 @@ CardButton::CardButton(CardWindow &parent, int Id, char *szText, UINT Style, boo
     SetText(szText);
     Move(x, y, width, height);
 
+	#if 0
     mxlock = CreateMutex(0, FALSE, 0);
+	#endif
 
     hFont = 0;
 }
 
 CardButton::~CardButton()
 {
+	#if 0
     CloseHandle(mxlock);
+	#endif
 }
 
 void CardButton::DrawRect(HDC hdc, RECT *rect, bool fNormal)
@@ -118,11 +122,11 @@ void CardButton::Draw(HDC hdc, bool fNormal)
     if(fVisible == 0) return;
 
     if(hFont == 0)
-        SelectObject(hdc, GetStockObject(DEFAULT_GUI_FONT));
+        SelectObject(hdc, GetStockObject(SYSTEM_FONT));
     else
         SelectObject(hdc, hFont);
 
-    GetTextExtentPoint32(hdc, szText, lstrlen(szText), &textsize);
+    GetTextExtentPoint(hdc, szText, lstrlen(szText), &textsize);
 
     if(hIcon)
     {
@@ -199,7 +203,8 @@ void CardButton::Draw(HDC hdc, bool fNormal)
     if(hIcon)
     {
         HBRUSH hbr = CreateSolidBrush(MAKE_PALETTERGB(crBack));
-        DrawIconEx(hdc, ix, iy, hIcon, 32, 32, 0, hbr, 0);
+        //DrawIconEx(hdc, ix, iy, hIcon, 32, 32, 0, hbr, 0);
+		DrawIcon(hdc, ix, iy, hIcon/*, 32, 32, 0, hbr, 0*/);
         DeleteObject(hbr);
     }
 
@@ -256,6 +261,7 @@ int CardButton::OnLButtonDown(HWND hwnd, int x, int y)
         return 0;
 
     //make sure that the user is allowed to do something
+	#if 0
     if(WaitForSingleObject(mxlock, 0) != WAIT_OBJECT_0)
     {
         return 0;
@@ -264,7 +270,7 @@ int CardButton::OnLButtonDown(HWND hwnd, int x, int y)
     {
         ReleaseMutex(mxlock);
     }
-
+    #endif
     fMouseDown = true;
     fButtonDown = true;
 
@@ -321,7 +327,7 @@ int CardButton::OnLButtonUp(HWND hwnd, int x, int y)
             else
             {
                 HWND hwnd = (HWND)parentWnd;
-                SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(id, BN_CLICKED), (LONG_PTR)hwnd);
+                SendMessage(GetParent(hwnd), WM_COMMAND, /*MAKEWPARAM(id,*/ BN_CLICKED/*)*/, (LONG)hwnd);
             }
         }
     }
@@ -457,20 +463,28 @@ void CardButton::SetButtonProc(pButtonProc proc)
 
 bool CardButton::Lock()
 {
+	#if 0
     DWORD dw = WaitForSingleObject(mxlock, 0);
 
     if(dw == WAIT_OBJECT_0)
         return true;
     else
         return false;
+	#else
+		return true;
+	#endif
 }
 
 bool CardButton::UnLock()
 {
+	#if 0
     if(ReleaseMutex(mxlock))
         return true;
     else
         return false;
+	#else
+		return true;
+	#endif
 }
 
 void CardButton::SetStyle(UINT style)

@@ -4,7 +4,7 @@
 #include <cardlib.h>
 
 extern CardWindow SolWnd;
-extern TCHAR szAppName[];
+extern char szAppName[];
 extern bool fGameStarted;
 
 #define OPTION_SHOW_STATUS       4
@@ -28,7 +28,7 @@ extern DWORD dwWasteTreshold;
 extern DWORD dwPrevMode;
 extern long lScore;
 extern HWND hwndMain;
-extern UINT_PTR PlayTimer;
+extern UINT PlayTimer;
 
 #define IDT_PLAYTIMER 1000
 

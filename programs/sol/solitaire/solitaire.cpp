@@ -1,12 +1,15 @@
 #include "solitaire.h"
 
-#include <winreg.h>
-#include <commctrl.h>
-#include <tchar.h>
+#include <string.h>
+#include <stdio.h>
+
+//#include <winreg.h>
+//#include <commctrl.h>
+//#include <tchar.h>
 
 #include "resource.h"
 
-TCHAR szHelpPath[MAX_PATH];
+char szHelpPath[_MAX_PATH];
 
 DWORD        dwAppStartTime;
 HWND        hwndMain;
@@ -14,13 +17,13 @@ HWND        hwndStatus;
 HINSTANCE    hInstance;
 HMENU        hGameMenu;
 
-TCHAR szAppName[128];
-TCHAR szScore[64];
-TCHAR szTime[64];
-TCHAR MsgQuit[128];
-TCHAR MsgAbout[128];
-TCHAR MsgWin[128];
-TCHAR MsgDeal[128];
+char szAppName[128];
+char szScore[64];
+char szTime[64];
+char MsgQuit[128];
+char MsgAbout[128];
+char MsgWin[128];
+char MsgDeal[128];
 DWORD dwOptions = OPTION_THREE_CARDS;
 
 DWORD dwTime;
@@ -28,7 +31,7 @@ DWORD dwWasteCount;
 DWORD dwWasteTreshold;
 DWORD dwPrevMode;
 long lScore;
-UINT_PTR PlayTimer = 0;
+UINT PlayTimer = 0;
 
 CardWindow SolWnd;
 
@@ -36,16 +39,16 @@ typedef struct _CardBack
 {
     HWND hSelf;
     WNDPROC hOldProc;
-    INT hdcNum;
-    INT imgNum;
+    int hdcNum;
+    int imgNum;
     BOOL bSelected;
 } CARDBACK, *PCARDBACK;
 
 LRESULT CALLBACK WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam);
 
-void MakePath(TCHAR *szDest, UINT nDestLen, const TCHAR *szExt)
+void MakePath(char *szDest, UINT nDestLen, const char *szExt)
 {
-    TCHAR *ptr;
+    char *ptr;
 
     ptr = szDest + GetModuleFileName(GetModuleHandle(0), szDest, nDestLen) - 1;
     while(*ptr-- != '.');
@@ -54,6 +57,7 @@ void MakePath(TCHAR *szDest, UINT nDestLen, const TCHAR *szExt)
 
 VOID LoadSettings(VOID)
 {
+/*
     DWORD dwDisposition;
     DWORD dwSize;
     DWORD dwBack;
@@ -88,10 +92,12 @@ VOID LoadSettings(VOID)
     SolWnd.SetBackCardIdx(dwBack);
 
     RegCloseKey(hKey);
+	*/
 }
 
 VOID SaveSettings(VOID)
 {
+	/*
     DWORD dwDisposition;
     DWORD dwBack;
     HKEY hKey;
@@ -123,6 +129,7 @@ VOID SaveSettings(VOID)
                   sizeof(DWORD));
 
     RegCloseKey(hKey);
+	*/
 }
 
 // Returns 0 for no points, 1 for Standard and 2 for Vegas
@@ -148,24 +155,24 @@ int GetScoreMode(void)
 
 void UpdateStatusBar(void)
 {
-    TCHAR szStatusText[128];
-    TCHAR szTempText[64];
+    char szStatusText[128];
+    char szTempText[64];
 
-    ZeroMemory(szStatusText, sizeof(szStatusText));
+    memset(szStatusText, 0, sizeof(szStatusText));
 
     if (GetScoreMode() != SCORE_NONE)
     {
-        _stprintf(szStatusText, szScore, lScore);
-        _tcscat(szStatusText, _T("   "));
+        sprintf(szStatusText, szScore, lScore);
+        strcat(szStatusText, "   ");
     }
 
     if (dwOptions & OPTION_SHOW_TIME)
     {
-        _stprintf(szTempText, szTime, dwTime);
-        _tcscat(szStatusText, szTempText);
+        sprintf(szTempText, szTime, dwTime);
+        strcat(szStatusText, szTempText);
     }
 
-    SendMessage(hwndStatus, SB_SETTEXT, 0 | SBT_NOBORDERS, (LPARAM)(LPTSTR)szStatusText);
+    //SendMessage(hwndStatus, SB_SETTEXT, 0 /*| SBT_NOBORDERS*/, (LPARAM)(LPSTR)szStatusText);
 }
 
 void SetPlayTimer(void)
@@ -194,12 +201,12 @@ void SetUndoMenuState(bool enable)
 //
 //    Main entry point
 //
-int WINAPI _tWinMain(HINSTANCE hInst, HINSTANCE hPrev, LPTSTR szCmdLine, int iCmdShow)
+int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR szCmdLine, int iCmdShow)
 {
     HWND        hwnd;
     MSG            msg;
     WNDCLASS    wndclass;
-    INITCOMMONCONTROLSEX ice;
+    //INITCOMMONCONTROLSEX ice;
     HACCEL        hAccelTable;
 
     hInstance = hInst;
@@ -212,8 +219,8 @@ int WINAPI _tWinMain(HINSTANCE hInst, HINSTANCE hPrev, LPTSTR szCmdLine, int iCm
     LoadString(hInst, IDS_SOL_WIN, MsgWin, sizeof(MsgWin) / sizeof(MsgWin[0]));
     LoadString(hInst, IDS_SOL_DEAL, MsgDeal, sizeof(MsgDeal) / sizeof(MsgDeal[0]));
 
-    LoadString(hInst, IDS_SOL_SCORE, szScore, sizeof(szScore) / sizeof(TCHAR));
-    LoadString(hInst, IDS_SOL_TIME, szTime, sizeof(szTime) / sizeof(TCHAR));
+    LoadString(hInst, IDS_SOL_SCORE, szScore, sizeof(szScore) / sizeof(char));
+    LoadString(hInst, IDS_SOL_TIME, szTime, sizeof(szTime) / sizeof(char));
 
     //Window class for the main application parent window
     wndclass.style            = 0;//CS_HREDRAW | CS_VREDRAW;
@@ -229,9 +236,9 @@ int WINAPI _tWinMain(HINSTANCE hInst, HINSTANCE hPrev, LPTSTR szCmdLine, int iCm
 
     RegisterClass(&wndclass);
 
-    ice.dwSize = sizeof(ice);
-    ice.dwICC = ICC_BAR_CLASSES;
-    InitCommonControlsEx(&ice);
+    //ice.dwSize = sizeof(ice);
+    //ice.dwICC = ICC_BAR_CLASSES;
+    //InitCommonControlsEx(&ice);
 
     srand((unsigned)GetTickCount());//timeGetTime());
 
@@ -242,7 +249,7 @@ int WINAPI _tWinMain(HINSTANCE hInst, HINSTANCE hPrev, LPTSTR szCmdLine, int iCm
     dwPrevMode = GetScoreMode();
 
     //Construct the path to our help file
-    MakePath(szHelpPath, MAX_PATH, _T(".hlp"));
+    MakePath(szHelpPath, _MAX_PATH, ".hlp");
 
     hwnd = CreateWindow(szAppName,        // window class name
                 szAppName,                // window caption
@@ -285,7 +292,7 @@ int WINAPI _tWinMain(HINSTANCE hInst, HINSTANCE hPrev, LPTSTR szCmdLine, int iCm
 }
 
 
-INT_PTR CALLBACK OptionsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+int CALLBACK OptionsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     HWND hCtrl;
 
@@ -298,17 +305,17 @@ INT_PTR CALLBACK OptionsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
         CheckRadioButton(hDlg, IDC_OPT_DRAWONE, IDC_OPT_DRAWTHREE,
                          (dwOptions & OPTION_THREE_CARDS) ? IDC_OPT_DRAWTHREE : IDC_OPT_DRAWONE);
 
-        CheckDlgButton(hDlg,
-                       IDC_OPT_STATUSBAR,
-                       (dwOptions & OPTION_SHOW_STATUS) ? BST_CHECKED : BST_UNCHECKED);
+   //     CheckDlgButton(hDlg,
+                       //IDC_OPT_STATUSBAR,
+                       //(dwOptions & OPTION_SHOW_STATUS) ? BST_CHECKED : BST_UNCHECKED);
 
-        CheckDlgButton(hDlg,
-                       IDC_OPT_SHOWTIME,
-                       (dwOptions & OPTION_SHOW_TIME) ? BST_CHECKED : BST_UNCHECKED);
+        //CheckDlgButton(hDlg,
+          //             IDC_OPT_SHOWTIME,
+            //           (dwOptions & OPTION_SHOW_TIME) ? BST_CHECKED : BST_UNCHECKED);
 
-        CheckDlgButton(hDlg,
-                       IDC_OPT_KEEPSCORE,
-                       (dwOptions & OPTION_KEEP_SCORE) ? BST_CHECKED : BST_UNCHECKED);
+        //CheckDlgButton(hDlg,
+          //             IDC_OPT_KEEPSCORE,
+            //           (dwOptions & OPTION_KEEP_SCORE) ? BST_CHECKED : BST_UNCHECKED);
 
         hCtrl = GetDlgItem(hDlg, IDC_OPT_KEEPSCORE);
 
@@ -344,39 +351,39 @@ INT_PTR CALLBACK OptionsDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 
         case IDOK:
             dwOptions &= ~OPTION_THREE_CARDS;
-            if (IsDlgButtonChecked(hDlg, IDC_OPT_DRAWTHREE) == BST_CHECKED)
-                dwOptions |= OPTION_THREE_CARDS;
+            //if (IsDlgButtonChecked(hDlg, IDC_OPT_DRAWTHREE) == BST_CHECKED)
+              //  dwOptions |= OPTION_THREE_CARDS;
 
-            if (IsDlgButtonChecked(hDlg, IDC_OPT_STATUSBAR) == BST_CHECKED)
-                dwOptions |= OPTION_SHOW_STATUS;
-            else
-                dwOptions &= ~OPTION_SHOW_STATUS;
+            //if (IsDlgButtonChecked(hDlg, IDC_OPT_STATUSBAR) == BST_CHECKED)
+                //dwOptions |= OPTION_SHOW_STATUS;
+            //else
+                //dwOptions &= ~OPTION_SHOW_STATUS;
 
-            if (IsDlgButtonChecked(hDlg, IDC_OPT_SHOWTIME) == BST_CHECKED)
-                dwOptions |= OPTION_SHOW_TIME;
-            else
-                dwOptions &= ~OPTION_SHOW_TIME;
+            //if (IsDlgButtonChecked(hDlg, IDC_OPT_SHOWTIME) == BST_CHECKED)
+                //dwOptions |= OPTION_SHOW_TIME;
+            //else
+                //dwOptions &= ~OPTION_SHOW_TIME;
 
-            if (IsDlgButtonChecked(hDlg, IDC_OPT_KEEPSCORE) == BST_CHECKED)
-                dwOptions |= OPTION_KEEP_SCORE;
-            else
-                dwOptions &= ~OPTION_KEEP_SCORE;
+            //if (IsDlgButtonChecked(hDlg, IDC_OPT_KEEPSCORE) == BST_CHECKED)
+                //dwOptions |= OPTION_KEEP_SCORE;
+            //else
+                //dwOptions &= ~OPTION_KEEP_SCORE;
 
-            if (IsDlgButtonChecked(hDlg, IDC_OPT_STANDARD) == BST_CHECKED)
-            {
-                dwOptions |= OPTION_SCORE_STD;
-                dwOptions &= ~OPTION_SCORE_VEGAS;
-            }
-            else if (IsDlgButtonChecked(hDlg, IDC_OPT_VEGAS) == BST_CHECKED)
-            {
-                dwOptions |= OPTION_SCORE_VEGAS;
-                dwOptions &= ~OPTION_SCORE_STD;
-            }
-            else if (IsDlgButtonChecked(hDlg, IDC_OPT_NOSCORE) == BST_CHECKED)
-            {
-                dwOptions |= OPTION_SCORE_VEGAS;
-                dwOptions |= OPTION_SCORE_STD;
-            }
+            //if (IsDlgButtonChecked(hDlg, IDC_OPT_STANDARD) == BST_CHECKED)
+            //{
+                //dwOptions |= OPTION_SCORE_STD;
+                //dwOptions &= ~OPTION_SCORE_VEGAS;
+            //}
+            //else if (IsDlgButtonChecked(hDlg, IDC_OPT_VEGAS) == BST_CHECKED)
+            //{
+                //dwOptions |= OPTION_SCORE_VEGAS;
+                //dwOptions &= ~OPTION_SCORE_STD;
+            //}
+            //else if (IsDlgButtonChecked(hDlg, IDC_OPT_NOSCORE) == BST_CHECKED)
+            //{
+                //dwOptions |= OPTION_SCORE_VEGAS;
+                //dwOptions |= OPTION_SCORE_STD;
+            //}
 
             UpdateStatusBar();
 
@@ -444,7 +451,7 @@ CardImageWndProc(HWND hwnd,
                  WPARAM wParam,
                  LPARAM lParam)
 {
-    PCARDBACK pCardBack = (PCARDBACK)GetWindowLongPtr(hwnd,
+    PCARDBACK pCardBack = (PCARDBACK)GetWindowLong(hwnd,
                                                       GWLP_USERDATA);
     static WNDPROC hOldProc = NULL;
 
@@ -469,7 +476,7 @@ CardImageWndProc(HWND hwnd,
         }
         else
         {
-            DWORD Face = GetSysColor(COLOR_3DFACE);
+            DWORD Face = GetSysColor(COLOR_WINDOW);
             hPen = CreatePen(PS_SOLID, 2, Face);
         }
 

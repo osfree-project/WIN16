@@ -11,7 +11,8 @@ srcfiles = $(p)solcreate$(e) $(p)solgame$(e) $(p)solundo$(e) $(p)solitaire$(e)
 
 # defines additional options for C compiler
 #ADD_COPT = -0 -sg -zw -bw -bg -d3 -db -hw -ml -od #-pl
-ADD_COPT =  -dDEBUG=0
+ADD_COPT =  -dDEBUG=0 -I=..\..\..\libs\cardlib
+ADD_LINKOPT = lib cards.lib
 #DEBUG    = watcom
 #IMPORTS  = CHOOSEFONT     COMMDLG.15
 
