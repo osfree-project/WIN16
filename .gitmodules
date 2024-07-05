@@ -1,33 +1,42 @@
 [submodule "tests"]
-	path = tests
-	url = https://github.com/osfree-project/win16test.git
+        path = tests
+        url = https://github.com/osfree-project/win16test.git
 [submodule "drivers/mouse"]
-	path = drivers/mouse
-	url = https://github.com/stsp/win31-mouse-driver
+        path = drivers/mouse
+        url = https://github.com/stsp/win31-mouse-driver
 [submodule "programs/clock"]
-	path = programs/clock
-	url = https://github.com/osfree-project/clock
+        path = programs/clock
+        url = https://github.com/osfree-project/clock
+        branch = main
 [submodule "programs/notepad"]
-	path = programs/notepad
-	url = https://github.com/osfree-project/notepad
+        path = programs/notepad
+        url = https://github.com/osfree-project/notepad
+        branch = main
 [submodule "programs/clipbrd"]
-	path = programs/clipbrd
-	url = https://github.com/osfree-project/clipbrd
+        path = programs/clipbrd
+        url = https://github.com/osfree-project/clipbrd
+        branch = main
 [submodule "programs/winver"]
-	path = programs/winver
-	url = https://github.com/osfree-project/winver
+        path = programs/winver
+        url = https://github.com/osfree-project/winver
+        branch = main
 [submodule "programs/pifedit"]
-	path = programs/pifedit
-	url = https://github.com/osfree-project/pifedit
+        path = programs/pifedit
+        url = https://github.com/osfree-project/pifedit
+        branch = main
 [submodule "programs/taskman"]
-	path = programs/taskman
-	url = https://github.com/osfree-project/taskman
+        path = programs/taskman
+        url = https://github.com/osfree-project/taskman
+        branch = main
 [submodule "programs/winmine"]
-	path = programs/winmine
-	url = https://github.com/osfree-project/minesweeper
+        path = programs/winmine
+        url = https://github.com/osfree-project/minesweeper
+        branch = main
 [submodule "programs/expand"]
-	path = programs/expand
-	url = https://github.com/osfree-project/expand
+        path = programs/expand
+        url = https://github.com/osfree-project/expand
+        branch = main
 [submodule "programs/sysedit"]
-	path = programs/sysedit
-	url = https://github.com/osfree-project/sysedit
+        path = programs/sysedit
+        url = https://github.com/osfree-project/sysedit
+        branch = main
