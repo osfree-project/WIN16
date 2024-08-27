@@ -1,0 +1,48 @@
+diff -urwN fastopen/v4.0/src/CMD/FASTOPEN/FASTINIT.ASM newfastopen/v4.0/src/CMD/FASTOPEN/FASTINIT.ASM
+--- fastopen/v4.0/src/CMD/FASTOPEN/FASTINIT.ASM	Tue Aug 27 15:42:32 2024
++++ newfastopen/v4.0/src/CMD/FASTOPEN/FASTINIT.ASM	Tue Aug 27 15:31:28 2024
+@@ -2,6 +2,8 @@
+ 
+ TITLE	FASTINIT - initialization code for FASTOPEN  (May 13, 1988)
+ 
++    OPTION RENAMEKEYWORD:<invoke>=_invoke
++
+ ;ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+ ; The entire Fastopen component is divided into 5 modules.  They are:
+ ; Fastopen initialization routine-1, Fastopen initialization routine-2,
+diff -urwN fastopen/v4.0/src/CMD/FASTOPEN/FASTOPEN.ASM newfastopen/v4.0/src/CMD/FASTOPEN/FASTOPEN.ASM
+--- fastopen/v4.0/src/CMD/FASTOPEN/FASTOPEN.ASM	Tue Aug 27 15:42:32 2024
++++ newfastopen/v4.0/src/CMD/FASTOPEN/FASTOPEN.ASM	Tue Aug 27 15:30:21 2024
+@@ -1,5 +1,8 @@
+ 	Page 84,132 ;
+ Title	FASTOPEN
++
++    OPTION RENAMEKEYWORD:<invoke>=_invoke
++
+ ;Date: May 13,1988
+ ;==============================================================================
+ ;		 EQUATES
+diff -urwN fastopen/v4.0/src/CMD/FASTOPEN/FASTP.ASM newfastopen/v4.0/src/CMD/FASTOPEN/FASTP.ASM
+--- fastopen/v4.0/src/CMD/FASTOPEN/FASTP.ASM	Tue Aug 27 15:42:32 2024
++++ newfastopen/v4.0/src/CMD/FASTOPEN/FASTP.ASM	Tue Aug 27 15:32:48 2024
+@@ -87,7 +87,7 @@
+ 	    %OUT    COMPONENT=fastopen, MODULE=fastp.asm...
+ 	ENDIF				;					;AN000;
+ ; =  =	=  =  =  =  =  =  =  =	=  =
+-	HEADER	<MACRO DEFINITION>	;					;AN000;
++	SUBTTL	<MACRO DEFINITION>	;					;AN000;
+ ; =  =	=  =  =  =  =  =  =  =	=  =
+ 
+ HEADER	MACRO	TEXT			;;					;AN000;
+diff -urwN fastopen/v4.0/src/CMD/FASTOPEN/FASTSEEK.ASM newfastopen/v4.0/src/CMD/FASTOPEN/FASTSEEK.ASM
+--- fastopen/v4.0/src/CMD/FASTOPEN/FASTSEEK.ASM	Tue Aug 27 15:42:32 2024
++++ newfastopen/v4.0/src/CMD/FASTOPEN/FASTSEEK.ASM	Tue Aug 27 15:30:46 2024
+@@ -1,6 +1,8 @@
+ 	Page 84,132 ;
+ Title	FASTOPEN
+ 
++    OPTION RENAMEKEYWORD:<invoke>=_invoke
++
+ ;--------------- INCLUDE FILES -----------------
+ .xcref
+ .xlist
