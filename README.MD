@@ -29,23 +29,24 @@ First goal is to correctly start simple program like WinVer or something like th
 This means KERNEL must correctly load and initialise drivers (system, mouse, keyboard)
 and GDI.EXE with USER.EXE.
 
+Target Windows version is 3.0
+
 ### Dirs
 
 
     resources	Icons, bitmaps, cursors from TWIN, fonts from Wine
     dlls		Standard Windows DLLs
     doc			Some documentation. Mostly outdated and for reference only.
-    dosx		286 DOS Extender
-    drivers		Standard Windows drivers
-    include		Include files. For reference only.
+    dosx		286 DOS Extender (not implemented yet, but HXDOS as base)
+    drivers		Standard Windows/DOS drivers
+    include		Include files. For reference only. OpenWatcom header is used.
     kernel		KERNEL.EXE/KRNL286.EXE/KRNL386.EXE - new kernel
     mmsystem
     multimedia
     pal			Platform Abstration Layer - drivers for X11 (not used, for reference only)
-    programs	Standard Windows programs. Mix of TWIN, Wine sources, as well as MS File Manager
+    programs	Standard Windows programs. Mix of TWIN, Wine, ReactOS sources, as well as MS File Manager
     samples		Various Sample programs
     tests		WIN16 unit tests
-    tools		various tools
     user    USER.EXE
     utilities
     win			WIN.COM - Windows loader

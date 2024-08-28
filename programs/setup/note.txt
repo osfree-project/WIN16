@@ -1,2 +1,2 @@
 Stage 1 is a DOS based part binded instead of stub
-Stage 2 if a Win16 based pard
+Stage 2 if a Win16 based part

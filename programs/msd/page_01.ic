@@ -141,7 +141,7 @@ void page01(void)
   if (toupper((char)(char far *)MK_FP(0xF000,0xE076)) == 'D')
   {
     s[0]=0;
-    for(xword1=0xE077;xword1<=0xE079;i++) strcat(s, toupper((char)(char * far)MK_FP(0xF000,xword1)));
+    for(xword1=0xE077;xword1<=0xE079;i++) strcat(s, toupper(*(char * far)MK_FP(0xF000,xword1)));
     if (!strcmp(s, "ELL"))
     {
       _outtext("Dell ");
