@@ -1,3 +1,25 @@
+----------
+WININI.TXT
+----------
+
+
+  NOTE: This is the first of two files that contain
+        information about WIN.INI. The second file, named
+        WININI2.TXT, is a continuation of the information
+        presented here.
+
+INTRODUCTION
+------------
+
+FORMAT
+------
+
+HOW TO READ LISTINGS IN THIS DOCUMENT
+-------------------------------------
+
+WHAT IS IN WIN.INI?
+-------------------
+
 ##############################################################################
 #
 #	WIN.INI

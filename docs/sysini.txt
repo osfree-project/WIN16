@@ -1,0 +1,13 @@
+----------
+SYSINI.TXT
+----------
+
+
+  NOTE: This is the first of three files that contain
+        information about SYSTEM.INI. The other files,
+        SYSINI2.TXT and SYSINI3.TXT, are continuations of
+        the information presented here.
+
+
+INTRODUCTION
+------------

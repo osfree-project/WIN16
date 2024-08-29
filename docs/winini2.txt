@@ -1,0 +1,18 @@
+-----------
+WININI2.TXT
+-----------
+
+
+  NOTE: This is the second of two files containing
+        information about the WIN.INI file. For general
+        information about WIN.INI and the listings in this
+        file, read the introductory material in the
+        WININI.TXT file.
+
+  CAUTION: Changing a WIN.INI setting can lead to
+           undesirable results when you run Windows. Before
+           changing any setting, read "Changing Settings"
+           later in this document.
+
+CHANGING SETTINGS
+-----------------

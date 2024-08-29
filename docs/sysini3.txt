@@ -1,0 +1,15 @@
+-----------
+SYSINI3.TXT
+-----------
+
+
+  NOTE: This is the third of three files containing
+        information about the SYSTEM.INI file. For general
+        information about SYSTEM.INI and the listings in
+        this file, read the introductory material in the
+        SYSINI.TXT file.
+
+  WARNING: If you change a setting incorrectly in
+           SYSTEM.INI, you might disable your system. Before
+           changing any setting, read "Changing Settings"
+           in the SYSINI.TXT file.
