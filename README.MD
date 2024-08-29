@@ -36,12 +36,12 @@ Target Windows version is 3.0
     applications	Standard Windows applications. Mix of TWIN, Wine, ReactOS sources, as well as MS File Manager
     resources		Icons, bitmaps, cursors from TWIN, fonts from Wine
     dlls		Standard Windows DLLs
-    doc			Some documentation. Mostly outdated and for reference only.
-    dosx		286 DOS Extender (not implemented yet, but HXDOS as base)
+    docs		Documentation which comes with distibution
+    dosx		286 DPMI Host and Extender (not implemented yet, but HXDOS as base)
     drivers		Standard Windows/DOS drivers
     include		Include files. For reference only. OpenWatcom header is used.
     kernel		KERNEL.EXE/KRNL286.EXE/KRNL386.EXE - new kernel
-    multimedia		Multimedia related part
+    MME			Multimedia Extensions
     pal			Platform Abstration Layer - drivers for X11 (not used, for reference only)
     samples		Various Sample programs
     tests		WIN16 unit tests
