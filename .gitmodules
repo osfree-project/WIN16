@@ -4,39 +4,39 @@
 [submodule "drivers/mouse"]
         path = drivers/mouse
         url = https://github.com/stsp/win31-mouse-driver
-[submodule "programs/clock"]
-        path = programs/clock
+[submodule "applications/clock"]
+        path = applications/clock
         url = https://github.com/osfree-project/clock
         branch = main
-[submodule "programs/notepad"]
-        path = programs/notepad
+[submodule "applications/notepad"]
+        path = applications/notepad
         url = https://github.com/osfree-project/notepad
         branch = main
-[submodule "programs/clipbrd"]
-        path = programs/clipbrd
+[submodule "applications/clipbrd"]
+        path = applications/clipbrd
         url = https://github.com/osfree-project/clipbrd
         branch = main
-[submodule "programs/winver"]
-        path = programs/winver
+[submodule "applications/winver"]
+        path = applications/winver
         url = https://github.com/osfree-project/winver
         branch = main
-[submodule "programs/pifedit"]
-        path = programs/pifedit
+[submodule "applications/pifedit"]
+        path = applications/pifedit
         url = https://github.com/osfree-project/pifedit
         branch = main
-[submodule "programs/taskman"]
-        path = programs/taskman
+[submodule "applications/taskman"]
+        path = applications/taskman
         url = https://github.com/osfree-project/taskman
         branch = main
-[submodule "programs/winmine"]
-        path = programs/winmine
+[submodule "applications/winmine"]
+        path = applications/winmine
         url = https://github.com/osfree-project/minesweeper
         branch = main
-[submodule "programs/expand"]
-        path = programs/expand
+[submodule "applications/expand"]
+        path = applications/expand
         url = https://github.com/osfree-project/expand
         branch = main
-[submodule "programs/sysedit"]
-        path = programs/sysedit
+[submodule "applications/sysedit"]
+        path = applications/sysedit
         url = https://github.com/osfree-project/sysedit
         branch = main
