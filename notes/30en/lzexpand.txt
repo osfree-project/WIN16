@@ -1,0 +1,97 @@
+Open Watcom Executable Image Dump Utility Version 1.9
+Portions Copyright (c) 1984-2002 Sybase, Inc. All Rights Reserved.
+Source code is available under the Sybase Open Watcom Public License.
+See http://www.openwatcom.org/ for details.
+
+                                DOS EXE Header                                
+==============================================================================
+length of load module mod 200H                       =     0034H
+number of 200H pages in load module                  =     000CH
+number of relocation items                           =     0000H
+size of header in paragraphs                         =     0004H
+minimum number of paragraphs required above load mod =     0000H
+maximum number of paragraphs required above load mod =     FFFFH
+offset of stack segment in load module               =     0000H
+initial value of SP                                  =     00B8H
+checksum                                             =     0000H
+initial value of IP                                  =     0000H
+offset of code segment within load module (segment)  =     0000H
+file offset of first relocation item                 =     0040H
+overlay number                                       =     0000H
+load module length                                   = 00001634H
+
+                       New EXE Header (OS/2 or Windows)                       
+==============================================================================
+file offset = 00000080H
+
+link version                                         =     0105H
+offset of entry table                                =     0073H
+length of entry table                                =     0023H
+32-bit chksum                                        = B49576D4H
+module flag                                          =     8301H
+segment number of auto data segment                  =     0002H
+initial size of local heap added to auto data seg    =     0400H
+initial size of stack to be added to auto data seg   =     0000H
+initial value of IP on entry                         =     0000H
+initial segment number for setting CS on entry       =     0000H
+initial value of SP on entry                         =     0000H
+segment number for setting SS on entry               =     0000H
+number of entries in segment table                   =     0002H
+number of entries in module reference table          =     0002H
+number of bytes in nonresident names table           =     0058H
+offset of beg of segment table (rel NH)              =     0040H
+offset of beg of resource table                      =     0050H
+offset of beg of resident names table                =     0050H
+offset of beg of module reference table              =     0062H
+offset of beg of imported names table                =     0066H
+offset of nonresident names table (rel file)         = 00000116H
+number of movable entry points listed in entry table =     0001H
+alignment shift count (0 => 9)                       =     0004H
+number of resource segments (OS/2 only)              =     0000H
+target OS (1==OS/2, 2==Windows, 3==DOS4, 4==Win386)  =       02H
+other flags                                          =       08H
+offset of gangload area  (Windows only)              =     0018H
+length of gangload area  (Windows only)              =     0160H
+swap area                (Windows only)              =     0000H
+expected Windows version (Windows only)              =     0300H
+Module Flag Word = LIBRARY | WINDOWAPI | SINGLEDATA
+
+                                Segment Table                                 
+==============================================================================
+seg  fileoff  len  alloc prior priv flag
+==== ======== ==== ====  ====  ==== ====
+0001 000001A0 136F 136F  0000  0003 0D40
+  CODE|FIXED|NOSHARE|PRELOAD|EXECREAD|RELOCS
+0002 000015A0 01C4 01C4  0000  0003 0D71
+  DATA|MOVABLE|SHARE|PRELOAD|READWRITE|RELOCS
+
+                             Resident Names Table                             
+==============================================================================
+LZEXPAND unknown ordinal 0000
+WEP.7 seg 0001 off 08CD parm 0000 EXPORTED|SHAREDATA
+
+                            Module Reference Table                            
+==============================================================================
+KERNEL
+USER
+
+                              Entry Point Table                               
+==============================================================================
+.9 seg 0002 off 0000 parm 0000
+.7 seg 0001 off 08CD parm 0000 EXPORTED|SHAREDATA
+.6 seg 0001 off 0858 parm 0000 EXPORTED|SHAREDATA
+.5 seg 0001 off 0752 parm 0000 EXPORTED|SHAREDATA
+.4 seg 0001 off 053F parm 0000 EXPORTED|SHAREDATA
+.3 seg 0001 off 00BF parm 0000 EXPORTED|SHAREDATA
+.2 seg 0001 off 007B parm 0000 EXPORTED|SHAREDATA
+.1 seg 0001 off 0010 parm 0000 EXPORTED|SHAREDATA
+
+                           Nonresident Names Table                            
+==============================================================================
+LZ file decompression DLL unknown ordinal 0000
+LZREAD.5 seg 0001 off 0752 parm 0000 EXPORTED|SHAREDATA
+LZCOPY.1 seg 0001 off 0010 parm 0000 EXPORTED|SHAREDATA
+LZCLOSE.6 seg 0001 off 0858 parm 0000 EXPORTED|SHAREDATA
+LZINIT.3 seg 0001 off 00BF parm 0000 EXPORTED|SHAREDATA
+LZSEEK.4 seg 0001 off 053F parm 0000 EXPORTED|SHAREDATA
+LZOPENFILE.2 seg 0001 off 007B parm 0000 EXPORTED|SHAREDATA

@@ -1,0 +1,101 @@
+Open Watcom Executable Image Dump Utility Version 1.9
+Portions Copyright (c) 1984-2002 Sybase, Inc. All Rights Reserved.
+Source code is available under the Sybase Open Watcom Public License.
+See http://www.openwatcom.org/ for details.
+
+                                DOS EXE Header                                
+==============================================================================
+length of load module mod 200H                       =     008EH
+number of 200H pages in load module                  =     0006H
+number of relocation items                           =     0000H
+size of header in paragraphs                         =     0020H
+minimum number of paragraphs required above load mod =     0000H
+maximum number of paragraphs required above load mod =     FFFFH
+offset of stack segment in load module               =     0007H
+initial value of SP                                  =     0100H
+checksum                                             =     4065H
+initial value of IP                                  =     0000H
+offset of code segment within load module (segment)  =     0000H
+file offset of first relocation item                 =     0040H
+overlay number                                       =     0000H
+load module length                                   = 00000A8EH
+
+                       New EXE Header (OS/2 or Windows)                       
+==============================================================================
+file offset = 00000400H
+
+link version                                         =     0105H
+offset of entry table                                =     0062H
+length of entry table                                =     0029H
+32-bit chksum                                        = 4FF9788BH
+module flag                                          =     8300H
+segment number of auto data segment                  =     0000H
+initial size of local heap added to auto data seg    =     0000H
+initial size of stack to be added to auto data seg   =     0000H
+initial value of IP on entry                         =     01F2H
+initial segment number for setting CS on entry       =     0001H
+initial value of SP on entry                         =     0000H
+segment number for setting SS on entry               =     0000H
+number of entries in segment table                   =     0001H
+number of entries in module reference table          =     0001H
+number of bytes in nonresident names table           =     00FBH
+offset of beg of segment table (rel NH)              =     0040H
+offset of beg of resource table                      =     0048H
+offset of beg of resident names table                =     0048H
+offset of beg of module reference table              =     0058H
+offset of beg of imported names table                =     005AH
+offset of nonresident names table (rel file)         = 0000048BH
+number of movable entry points listed in entry table =     0000H
+alignment shift count (0 => 9)                       =     0004H
+number of resource segments (OS/2 only)              =     0000H
+target OS (1==OS/2, 2==Windows, 3==DOS4, 4==Win386)  =       02H
+other flags                                          =       08H
+offset of gangload area  (Windows only)              =     005AH
+length of gangload area  (Windows only)              =     0054H
+swap area                (Windows only)              =     0000H
+expected Windows version (Windows only)              =     0300H
+Module Flag Word = LIBRARY | WINDOWAPI
+
+                                Segment Table                                 
+==============================================================================
+seg  fileoff  len  alloc prior priv flag
+==== ======== ==== ====  ====  ==== ====
+0001 000005C0 04DD 04DD  0000  0003 0D40
+  CODE|FIXED|NOSHARE|PRELOAD|EXECREAD|RELOCS
+
+                             Resident Names Table                             
+==============================================================================
+SYSTEM unknown ordinal 0000
+WEP.10 seg 0001 off 01A3 parm 0000 EXPORTED
+
+                            Module Reference Table                            
+==============================================================================
+KERNEL
+
+                              Entry Point Table                               
+==============================================================================
+.20 seg 0001 off 019D parm 0000 EXPORTED
+.10 seg 0001 off 01A3 parm 0000 EXPORTED
+.9 seg 0001 off 0191 parm 0000 EXPORTED
+.8 seg 0001 off 0185 parm 0000 EXPORTED
+.7 seg 0001 off 0180 parm 0000 EXPORTED
+.6 seg 0001 off 03F7 parm 0000 EXPORTED
+.5 seg 0001 off 042D parm 0000 EXPORTED
+.4 seg 0001 off 0401 parm 0000 EXPORTED
+.3 seg 0001 off 049C parm 0000 EXPORTED
+.2 seg 0001 off 044A parm 0000 EXPORTED
+.1 seg 0001 off 0019 parm 0000 EXPORTED
+
+                           Nonresident Names Table                            
+==============================================================================
+Microsoft Windows System configuration module for IBM/PC/XT/AT unknown ordinal 0000
+A20_PROC.20 seg 0001 off 019D parm 0000 EXPORTED
+CREATESYSTEMTIMER.2 seg 0001 off 044A parm 0000 EXPORTED
+INQUIRESYSTEM.1 seg 0001 off 0019 parm 0000 EXPORTED
+SAVE80X87STATE.8 seg 0001 off 0185 parm 0000 EXPORTED
+KILLSYSTEMTIMER.3 seg 0001 off 049C parm 0000 EXPORTED
+GET80X87SAVESIZE.7 seg 0001 off 0180 parm 0000 EXPORTED
+GETSYSTEMMSECCOUNT.6 seg 0001 off 03F7 parm 0000 EXPORTED
+RESTORE80X87STATE.9 seg 0001 off 0191 parm 0000 EXPORTED
+ENABLESYSTEMTIMERS.4 seg 0001 off 0401 parm 0000 EXPORTED
+DISABLESYSTEMTIMERS.5 seg 0001 off 042D parm 0000 EXPORTED

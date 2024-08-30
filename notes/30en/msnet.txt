@@ -1,0 +1,162 @@
+Open Watcom Executable Image Dump Utility Version 1.9
+Portions Copyright (c) 1984-2002 Sybase, Inc. All Rights Reserved.
+Source code is available under the Sybase Open Watcom Public License.
+See http://www.openwatcom.org/ for details.
+
+                                DOS EXE Header                                
+==============================================================================
+length of load module mod 200H                       =     0058H
+number of 200H pages in load module                  =     000DH
+number of relocation items                           =     0000H
+size of header in paragraphs                         =     0020H
+minimum number of paragraphs required above load mod =     0000H
+maximum number of paragraphs required above load mod =     FFFFH
+offset of stack segment in load module               =     0007H
+initial value of SP                                  =     0100H
+checksum                                             =     4065H
+initial value of IP                                  =     0000H
+offset of code segment within load module (segment)  =     0000H
+file offset of first relocation item                 =     0040H
+overlay number                                       =     0000H
+load module length                                   = 00001858H
+
+                       New EXE Header (OS/2 or Windows)                       
+==============================================================================
+file offset = 00000400H
+
+link version                                         =     0105H
+offset of entry table                                =     00B4H
+length of entry table                                =     00F4H
+32-bit chksum                                        = 06DE390DH
+module flag                                          =     8301H
+segment number of auto data segment                  =     0006H
+initial size of local heap added to auto data seg    =     0000H
+initial size of stack to be added to auto data seg   =     0000H
+initial value of IP on entry                         =     0000H
+initial segment number for setting CS on entry       =     0001H
+initial value of SP on entry                         =     0000H
+segment number for setting SS on entry               =     0000H
+number of entries in segment table                   =     0006H
+number of entries in module reference table          =     0002H
+number of bytes in nonresident names table           =     01A2H
+offset of beg of segment table (rel NH)              =     0040H
+offset of beg of resource table                      =     0070H
+offset of beg of resident names table                =     0094H
+offset of beg of module reference table              =     00A3H
+offset of beg of imported names table                =     00A7H
+offset of nonresident names table (rel file)         = 000005A8H
+number of movable entry points listed in entry table =     0027H
+alignment shift count (0 => 9)                       =     0004H
+number of resource segments (OS/2 only)              =     0000H
+target OS (1==OS/2, 2==Windows, 3==DOS4, 4==Win386)  =       02H
+other flags                                          =       08H
+offset of gangload area  (Windows only)              =     0076H
+length of gangload area  (Windows only)              =     005CH
+swap area                (Windows only)              =     0000H
+expected Windows version (Windows only)              =     0300H
+Module Flag Word = LIBRARY | WINDOWAPI | SINGLEDATA
+
+                                Segment Table                                 
+==============================================================================
+seg  fileoff  len  alloc prior priv flag
+==== ======== ==== ====  ====  ==== ====
+0001 00000780 042A 042A  0001  0007 1D50
+  CODE|MOVABLE|NOSHARE|PRELOAD|EXECREAD|RELOCS|DISCARDABLE
+0002 00000D20 0127 0127  0001  0007 1D10
+  CODE|MOVABLE|NOSHARE|LOADONCALL|EXECREAD|RELOCS|DISCARDABLE
+0003 00000E90 0218 0219  0001  0007 1D10
+  CODE|MOVABLE|NOSHARE|LOADONCALL|EXECREAD|RELOCS|DISCARDABLE
+0004 000010D0 0148 0149  0001  0007 1D10
+  CODE|MOVABLE|NOSHARE|LOADONCALL|EXECREAD|RELOCS|DISCARDABLE
+0005 00001250 0631 0632  0001  0007 1D10
+  CODE|MOVABLE|NOSHARE|LOADONCALL|EXECREAD|RELOCS|DISCARDABLE
+0006 00000C20 00AA 00AA  0000  0003 0D71
+  DATA|MOVABLE|SHARE|PRELOAD|READWRITE|RELOCS
+
+                                Resource Table                                
+==============================================================================
+resource shift count: 4
+ Dialog-box template
+ # 1 resource id: 100
+ file offset 00001910H len 00000100 flag MOVABLE|SHARE|LOADONCALL Prior 1
+ # 2 resource id: 101
+ file offset 00001A10H len 000000F0 flag MOVABLE|SHARE|LOADONCALL Prior 1
+
+                             Resident Names Table                             
+==============================================================================
+MSNET unknown ordinal 0000
+WEP.3 seg 0001 off 0023 parm 0000 EXPORTED|SHAREDATA
+
+                            Module Reference Table                            
+==============================================================================
+KERNEL
+USER
+
+                              Entry Point Table                               
+==============================================================================
+.517 seg 0005 off 0188 parm 0000
+.516 seg 0001 off 02D5 parm 0000
+.515 seg 0001 off 0285 parm 0000
+.514 seg 0003 off 00B7 parm 0000
+.513 seg 0001 off 0190 parm 0000
+.512 seg 0001 off 00AA parm 0000
+.511 seg 0001 off 01BA parm 0000
+.510 seg 0003 off 01F8 parm 0000
+.509 seg 0003 off 01AF parm 0000
+.508 seg 0001 off 0116 parm 0000
+.507 seg 0001 off 0206 parm 0000
+.506 seg 0003 off 0066 parm 0000
+.505 seg 0003 off 0027 parm 0000
+.504 seg 0003 off 018B parm 0000
+.503 seg 0002 off 00F5 parm 0000
+.502 seg 0002 off 0024 parm 0000 EXPORTED|SHAREDATA
+.501 seg 0001 off 02F6 parm 0000 EXPORTED|SHAREDATA
+.22 seg 0001 off 0426 parm 0000 EXPORTED|SHAREDATA
+.21 seg 0001 off 0422 parm 0000 EXPORTED|SHAREDATA
+.20 seg 0001 off 0416 parm 0000 EXPORTED|SHAREDATA
+.19 seg 0001 off 0410 parm 0000 EXPORTED|SHAREDATA
+.18 seg 0004 off 0076 parm 0000 EXPORTED|SHAREDATA
+.17 seg 0004 off 0000 parm 0000 EXPORTED|SHAREDATA
+.16 seg 0001 off 0052 parm 0000 EXPORTED|SHAREDATA
+.15 seg 0001 off 040A parm 0000 EXPORTED|SHAREDATA
+.14 seg 0002 off 00C1 parm 0000 EXPORTED|SHAREDATA
+.13 seg 0001 off 0028 parm 0000 EXPORTED|SHAREDATA
+.12 seg 0004 off 009C parm 0000 EXPORTED|SHAREDATA
+.11 seg 0005 off 0334 parm 0000 EXPORTED|SHAREDATA
+.10 seg 0005 off 0258 parm 0000 EXPORTED|SHAREDATA
+.9 seg 0001 off 03B0 parm 0000 EXPORTED|SHAREDATA
+.8 seg 0001 off 035F parm 0000 EXPORTED|SHAREDATA
+.7 seg 0001 off 0404 parm 0000 EXPORTED|SHAREDATA
+.6 seg 0001 off 03FE parm 0000 EXPORTED|SHAREDATA
+.5 seg 0001 off 03F8 parm 0000 EXPORTED|SHAREDATA
+.4 seg 0001 off 03F2 parm 0000 EXPORTED|SHAREDATA
+.3 seg 0001 off 0023 parm 0000 EXPORTED|SHAREDATA
+.2 seg 0005 off 009E parm 0000 EXPORTED|SHAREDATA
+.1 seg 0005 off 0000 parm 0000 EXPORTED|SHAREDATA
+
+                           Nonresident Names Table                            
+==============================================================================
+Windows Network Driver unknown ordinal 0000
+WNETCANCELCONNECTION.18 seg 0004 off 0076 parm 0000 EXPORTED|SHAREDATA
+WNETRELEASEJOB.5 seg 0001 off 03F8 parm 0000 EXPORTED|SHAREDATA
+WNETBROWSEDIALOG.15 seg 0001 off 040A parm 0000 EXPORTED|SHAREDATA
+WNETOPENJOB.1 seg 0005 off 0000 parm 0000 EXPORTED|SHAREDATA
+WNETHOLDJOB.4 seg 0001 off 03F2 parm 0000 EXPORTED|SHAREDATA
+WNETGETERROR.19 seg 0001 off 0410 parm 0000 EXPORTED|SHAREDATA
+WNETGETCONNECTION.12 seg 0004 off 009C parm 0000 EXPORTED|SHAREDATA
+WNETDISABLE.22 seg 0001 off 0426 parm 0000 EXPORTED|SHAREDATA
+WNETDEVICEMODE.14 seg 0002 off 00C1 parm 0000 EXPORTED|SHAREDATA
+WNETLOCKQUEUEDATA.10 seg 0005 off 0258 parm 0000 EXPORTED|SHAREDATA
+WNETCANCELJOB.6 seg 0001 off 03FE parm 0000 EXPORTED|SHAREDATA
+WNETENABLE.21 seg 0001 off 0422 parm 0000 EXPORTED|SHAREDATA
+WNETADDCONNECTION.17 seg 0004 off 0000 parm 0000 EXPORTED|SHAREDATA
+WNETUNWATCHQUEUE.9 seg 0001 off 03B0 parm 0000 EXPORTED|SHAREDATA
+TIMERPROC.501 seg 0001 off 02F6 parm 0000 EXPORTED|SHAREDATA
+WNETGETCAPS.13 seg 0001 off 0028 parm 0000 EXPORTED|SHAREDATA
+WNETGETUSER.16 seg 0001 off 0052 parm 0000 EXPORTED|SHAREDATA
+WNETSETJOBCOPIES.7 seg 0001 off 0404 parm 0000 EXPORTED|SHAREDATA
+WNETWATCHQUEUE.8 seg 0001 off 035F parm 0000 EXPORTED|SHAREDATA
+DEVICEMODEDIALOG.502 seg 0002 off 0024 parm 0000 EXPORTED|SHAREDATA
+WNETUNLOCKQUEUEDATA.11 seg 0005 off 0334 parm 0000 EXPORTED|SHAREDATA
+WNETCLOSEJOB.2 seg 0005 off 009E parm 0000 EXPORTED|SHAREDATA
+WNETGETERRORTEXT.20 seg 0001 off 0416 parm 0000 EXPORTED|SHAREDATA

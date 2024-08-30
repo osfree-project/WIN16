@@ -1,0 +1,331 @@
+Open Watcom Executable Image Dump Utility Version 1.9
+Portions Copyright (c) 1984-2002 Sybase, Inc. All Rights Reserved.
+Source code is available under the Sybase Open Watcom Public License.
+See http://www.openwatcom.org/ for details.
+
+                                DOS EXE Header                                
+==============================================================================
+length of load module mod 200H                       =     01B1H
+number of 200H pages in load module                  =     0063H
+number of relocation items                           =     0000H
+size of header in paragraphs                         =     0020H
+minimum number of paragraphs required above load mod =     0000H
+maximum number of paragraphs required above load mod =     FFFFH
+offset of stack segment in load module               =     0007H
+initial value of SP                                  =     0100H
+checksum                                             =     4065H
+initial value of IP                                  =     0000H
+offset of code segment within load module (segment)  =     0000H
+file offset of first relocation item                 =     0040H
+overlay number                                       =     0000H
+load module length                                   = 0000C5B1H
+
+                       New EXE Header (OS/2 or Windows)                       
+==============================================================================
+file offset = 00000400H
+
+link version                                         =     0105H
+offset of entry table                                =     0464H
+length of entry table                                =     00CFH
+32-bit chksum                                        = BE8D7E4DH
+module flag                                          =     8301H
+segment number of auto data segment                  =     000AH
+initial size of local heap added to auto data seg    =     0000H
+initial size of stack to be added to auto data seg   =     0000H
+initial value of IP on entry                         =     0391H
+initial segment number for setting CS on entry       =     0004H
+initial value of SP on entry                         =     0000H
+segment number for setting SS on entry               =     0000H
+number of entries in segment table                   =     000AH
+number of entries in module reference table          =     0002H
+number of bytes in nonresident names table           =     01F0H
+offset of beg of segment table (rel NH)              =     0040H
+offset of beg of resource table                      =     0090H
+offset of beg of resident names table                =     0444H
+offset of beg of module reference table              =     044FH
+offset of beg of imported names table                =     0453H
+offset of nonresident names table (rel file)         = 00000933H
+number of movable entry points listed in entry table =     0012H
+alignment shift count (0 => 9)                       =     0004H
+number of resource segments (OS/2 only)              =     0000H
+target OS (1==OS/2, 2==Windows, 3==DOS4, 4==Win386)  =       02H
+other flags                                          =       08H
+offset of gangload area  (Windows only)              =     00B4H
+length of gangload area  (Windows only)              =     07C4H
+swap area                (Windows only)              =     0000H
+expected Windows version (Windows only)              =     0300H
+Module Flag Word = LIBRARY | WINDOWAPI | SINGLEDATA
+
+                                Segment Table                                 
+==============================================================================
+seg  fileoff  len  alloc prior priv flag
+==== ======== ==== ====  ====  ==== ====
+0001 00000B60 2CAF 2CAF  0000  0003 0D60
+  CODE|FIXED|SHARE|PRELOAD|EXECREAD|RELOCS
+0002 00008780 2D76 2D76  0000  0003 0D20
+  CODE|FIXED|SHARE|LOADONCALL|EXECREAD|RELOCS
+0003 0000B520 1FEA 1FEA  0000  0003 0D20
+  CODE|FIXED|SHARE|LOADONCALL|EXECREAD|RELOCS
+0004 00003880 0430 0430  0001  0007 1D70
+  CODE|MOVABLE|SHARE|PRELOAD|EXECREAD|RELOCS|DISCARDABLE
+0005 00003D40 03AC 03AC  0001  0007 1D70
+  CODE|MOVABLE|SHARE|PRELOAD|EXECREAD|RELOCS|DISCARDABLE
+0006 0000D540 1184 1184  0001  0007 1D30
+  CODE|MOVABLE|SHARE|LOADONCALL|EXECREAD|RELOCS|DISCARDABLE
+0007 0000E6E0 0288 0288  0001  0007 1D30
+  CODE|MOVABLE|SHARE|LOADONCALL|EXECREAD|RELOCS|DISCARDABLE
+0008 0000E990 05F6 05F6  0001  0007 1D30
+  CODE|MOVABLE|SHARE|LOADONCALL|EXECREAD|RELOCS|DISCARDABLE
+0009 0000EFB0 1E98 1E98  0001  0007 1D30
+  CODE|MOVABLE|SHARE|LOADONCALL|EXECREAD|RELOCS|DISCARDABLE
+000A 00004120 01C8 01C8  0000  0003 0D61
+  DATA|FIXED|SHARE|PRELOAD|READWRITE|RELOCS
+
+                                Resource Table                                
+==============================================================================
+resource shift count: 4
+ Nametable
+ # 1 resource id: 1
+ file offset 00010E80H len 00000040 flag MOVABLE|SHARE|LOADONCALL Prior 1
+
+ Cursor group header
+ # 1 resource id: 32512
+ file offset 00004320H len 00000020 flag FIXED|SHARE|PRELOAD Prior 0
+ # 2 resource id: 32514
+ file offset 00004360H len 00000020 flag FIXED|SHARE|PRELOAD Prior 0
+ # 3 resource id: 32642
+ file offset 000043A0H len 00000020 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 4 resource id: 32643
+ file offset 000043E0H len 00000020 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 5 resource id: 32644
+ file offset 00004420H len 00000020 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 6 resource id: 32645
+ file offset 00004460H len 00000020 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 7 resource id: 32513
+ file offset 000044A0H len 00000020 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 8 resource id: 32516
+ file offset 000044E0H len 00000020 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 9 resource id: 32641
+ file offset 00004520H len 00000020 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 10 resource id: 32515
+ file offset 00010EC0H len 00000020 flag MOVABLE|SHARE|LOADONCALL Prior 1
+ # 11 resource id: 32640
+ file offset 00010EE0H len 00000020 flag MOVABLE|SHARE|LOADONCALL Prior 1
+
+ Icon group header
+ # 1 resource id: 32513
+ file offset 00004560H len 00000030 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 2 resource id: 32514
+ file offset 000045A0H len 00000030 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 3 resource id: 32515
+ file offset 000045E0H len 00000030 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 4 resource id: 32516
+ file offset 00004620H len 00000030 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 5 resource id: 32512
+ file offset 00010F00H len 00000020 flag MOVABLE|SHARE|LOADONCALL Prior 1
+
+ Bitmap
+ # 1 resource id: 32755
+ file offset 00010F20H len 00000060 flag MOVABLE|SHARE|LOADONCALL Prior 0
+ # 2 resource id: 32757
+ file offset 00010F80H len 00000060 flag MOVABLE|SHARE|LOADONCALL Prior 0
+ # 3 resource id: 32756
+ file offset 00010FE0H len 00000060 flag MOVABLE|SHARE|LOADONCALL Prior 0
+ # 4 resource id: 32763
+ file offset 00011040H len 00000050 flag MOVABLE|SHARE|LOADONCALL Prior 0
+ # 5 resource id: 32762
+ file offset 00011090H len 00000050 flag MOVABLE|SHARE|LOADONCALL Prior 0
+ # 6 resource id: 32765
+ file offset 000110E0H len 00000050 flag MOVABLE|SHARE|LOADONCALL Prior 0
+ # 7 resource id: 32764
+ file offset 00011130H len 00000050 flag MOVABLE|SHARE|LOADONCALL Prior 0
+ # 8 resource id: 32767
+ file offset 00011180H len 000000D0 flag MOVABLE|SHARE|LOADONCALL Prior 0
+ # 9 resource id: 32747
+ file offset 00004660H len 00000120 flag MOVABLE|SHARE|PRELOAD Prior 0
+ # 10 resource id: 32744
+ file offset 000047A0H len 00000140 flag MOVABLE|SHARE|PRELOAD Prior 0
+ # 11 resource id: 32749
+ file offset 00004900H len 00000120 flag MOVABLE|SHARE|PRELOAD Prior 0
+ # 12 resource id: 32746
+ file offset 00004A40H len 00000140 flag MOVABLE|SHARE|PRELOAD Prior 0
+ # 13 resource id: 32748
+ file offset 00004BA0H len 00000120 flag MOVABLE|SHARE|PRELOAD Prior 0
+ # 14 resource id: 32745
+ file offset 00004CE0H len 00000140 flag MOVABLE|SHARE|PRELOAD Prior 0
+ # 15 resource id: 32751
+ file offset 00004E40H len 00000110 flag MOVABLE|SHARE|PRELOAD Prior 0
+ # 16 resource id: 32741
+ file offset 00004F60H len 00000110 flag MOVABLE|SHARE|PRELOAD Prior 0
+ # 17 resource id: 32750
+ file offset 00005080H len 00000110 flag MOVABLE|SHARE|PRELOAD Prior 0
+ # 18 resource id: 32740
+ file offset 000051A0H len 00000110 flag MOVABLE|SHARE|PRELOAD Prior 0
+ # 19 resource id: 32753
+ file offset 000052C0H len 00000110 flag MOVABLE|SHARE|PRELOAD Prior 0
+ # 20 resource id: 32743
+ file offset 000053E0H len 00000110 flag MOVABLE|SHARE|PRELOAD Prior 0
+ # 21 resource id: 32752
+ file offset 00005500H len 00000110 flag MOVABLE|SHARE|PRELOAD Prior 0
+ # 22 resource id: 32742
+ file offset 00005620H len 00000140 flag MOVABLE|SHARE|PRELOAD Prior 0
+ # 23 resource id: 32754
+ file offset 00005780H len 000001B0 flag MOVABLE|SHARE|PRELOAD Prior 0
+ # 24 resource id: 32760
+ file offset 00005940H len 00000050 flag MOVABLE|SHARE|PRELOAD Prior 0
+ # 25 resource id: 32761
+ file offset 000059A0H len 00000050 flag MOVABLE|SHARE|PRELOAD Prior 0
+ # 26 resource id: 32766
+ file offset 00005A00H len 00000050 flag MOVABLE|SHARE|PRELOAD Prior 0
+ # 27 resource id: 32759
+ file offset 00005A60H len 00000150 flag MOVABLE|SHARE|PRELOAD Prior 0
+ # 28 resource id: 32758
+ file offset 00005BC0H len 00000040 flag MOVABLE|SHARE|PRELOAD Prior 0
+ # 29 resource id: 32738
+ file offset 00005C20H len 00000060 flag MOVABLE|SHARE|PRELOAD Prior 0
+ # 30 resource id: 32739
+ file offset 00005CA0H len 00000060 flag MOVABLE|SHARE|PRELOAD Prior 0
+
+ Cursor
+ # 1 resource id: 1
+ file offset 00005D20H len 00000140 flag FIXED|SHARE|PRELOAD Prior 0
+ # 2 resource id: 2
+ file offset 00005E80H len 00000140 flag FIXED|SHARE|PRELOAD Prior 0
+ # 3 resource id: 3
+ file offset 00005FE0H len 00000140 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 4 resource id: 4
+ file offset 00006140H len 00000140 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 5 resource id: 5
+ file offset 000062A0H len 00000140 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 6 resource id: 6
+ file offset 00006400H len 00000140 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 7 resource id: 7
+ file offset 00006560H len 00000140 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 8 resource id: 8
+ file offset 000066C0H len 00000140 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 9 resource id: 9
+ file offset 00006820H len 00000140 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 10 resource id: 10
+ file offset 00011250H len 00000140 flag MOVABLE|SHARE|LOADONCALL Prior 1
+ # 11 resource id: 11
+ file offset 00011390H len 00000140 flag MOVABLE|SHARE|LOADONCALL Prior 1
+
+ Icon
+ # 1 resource id: 12
+ file offset 00006980H len 000002F0 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 2 resource id: 13
+ file offset 00006C80H len 00000130 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 3 resource id: 14
+ file offset 00006DC0H len 000002F0 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 4 resource id: 15
+ file offset 000070C0H len 000002F0 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 5 resource id: 16
+ file offset 000073C0H len 00000130 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 6 resource id: 17
+ file offset 00007500H len 000002F0 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 7 resource id: 18
+ file offset 00007800H len 000002F0 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 8 resource id: 19
+ file offset 00007B00H len 00000130 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 9 resource id: 20
+ file offset 00007C40H len 000002F0 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 10 resource id: 21
+ file offset 00007F40H len 000002F0 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 11 resource id: 22
+ file offset 00008240H len 00000130 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 12 resource id: 23
+ file offset 00008380H len 000002F0 flag MOVABLE|SHARE|PRELOAD Prior 1
+ # 13 resource id: 24
+ file offset 000114D0H len 00000430 flag MOVABLE|SHARE|LOADONCALL Prior 1
+
+ Type number: 28678
+ # 1 resource id: 1
+ file offset 00008680H len 00000070 flag MOVABLE|SHARE|PRELOAD Prior 0
+ # 2 resource id: 3
+ file offset 00008700H len 00000050 flag MOVABLE|SHARE|PRELOAD Prior 0
+ # 3 resource id: 2
+ file offset 00011900H len 000000D0 flag MOVABLE|SHARE|LOADONCALL Prior 0
+
+                             Resident Names Table                             
+==============================================================================
+DISPLAY unknown ordinal 0000
+
+                            Module Reference Table                            
+==============================================================================
+KEYBOARD
+KERNEL
+
+                              Entry Point Table                               
+==============================================================================
+.502 seg 0006 off 1156 parm 0000
+.501 seg 0009 off 133A parm 0000
+.500 seg 0001 off 2B8E parm 0000 EXPORTED|SHAREDATA
+.403 seg 0003 off 0000 parm 0000 EXPORTED|SHAREDATA
+.402 seg 0003 off 000B parm 0000 EXPORTED|SHAREDATA
+.401 seg 0002 off 0000 parm 0000 EXPORTED|SHAREDATA
+.400 seg 0002 off 000B parm 0000 EXPORTED|SHAREDATA
+.104 seg 0001 off 25DA parm 0000 EXPORTED|SHAREDATA
+.103 seg 0001 off 2530 parm 0000 EXPORTED|SHAREDATA
+.102 seg 0001 off 249C parm 0000 EXPORTED|SHAREDATA
+.101 seg 0005 off 037E parm 0000 EXPORTED|SHAREDATA
+.92 seg 0001 off 1992 parm 0000 EXPORTED|SHAREDATA
+.91 seg 0008 off 0040 parm 0000 EXPORTED|SHAREDATA
+.90 seg 0006 off 0072 parm 0000 EXPORTED|SHAREDATA
+.21 seg 0009 off 0E30 parm 0000 EXPORTED|SHAREDATA
+.20 seg 0009 off 00F0 parm 0000 EXPORTED|SHAREDATA
+.19 seg 0009 off 0000 parm 0000 EXPORTED|SHAREDATA
+.18 seg 0005 off 0378 parm 0000 EXPORTED
+.17 seg 0001 off 2866 parm 0000 EXPORTED|SHAREDATA
+.16 seg 0005 off 0373 parm 0000 EXPORTED
+.15 seg 0001 off 277C parm 0000 EXPORTED
+.14 seg 0001 off 1968 parm 0000 EXPORTED|SHAREDATA
+.13 seg 0005 off 03A6 parm 0000 EXPORTED
+.12 seg 0005 off 004C parm 0000 EXPORTED|SHAREDATA
+.11 seg 0001 off 196D parm 0000 EXPORTED|SHAREDATA
+.10 seg 0001 off 1F3C parm 0000 EXPORTED|SHAREDATA
+.9 seg 0007 off 0088 parm 0000 EXPORTED|SHAREDATA
+.8 seg 0001 off 1972 parm 0000 EXPORTED|SHAREDATA
+.7 seg 0005 off 024E parm 0000 EXPORTED|SHAREDATA
+.6 seg 0005 off 0248 parm 0000 EXPORTED|SHAREDATA
+.5 seg 0004 off 01E2 parm 0000 EXPORTED|SHAREDATA
+.4 seg 0004 off 02BE parm 0000 EXPORTED|SHAREDATA
+.3 seg 0005 off 031E parm 0000 EXPORTED|SHAREDATA
+.2 seg 0001 off 22C4 parm 0000 EXPORTED|SHAREDATA
+.1 seg 0001 off 07F2 parm 0000 EXPORTED|SHAREDATA
+
+                           Nonresident Names Table                            
+==============================================================================
+DISPLAY : 100, 96, 96 : IBM Personal System/2 Model 50 Color Display unknown ordinal 0000
+SAVESCREENBITMAP.92 seg 0001 off 1992 parm 0000 EXPORTED|SHAREDATA
+DISABLE.4 seg 0004 off 02BE parm 0000 EXPORTED|SHAREDATA
+DEVICEMODE.13 seg 0005 off 03A6 parm 0000 EXPORTED
+BITBLT.1 seg 0001 off 07F2 parm 0000 EXPORTED|SHAREDATA
+SETCURSOR.102 seg 0001 off 249C parm 0000 EXPORTED|SHAREDATA
+REALIZEOBJECT.10 seg 0001 off 1F3C parm 0000 EXPORTED|SHAREDATA
+CREATEBITMAP.20 seg 0009 off 00F0 parm 0000 EXPORTED|SHAREDATA
+GETCHARWIDTH.15 seg 0001 off 277C parm 0000 EXPORTED
+EXTTEXTOUT.14 seg 0001 off 1968 parm 0000 EXPORTED|SHAREDATA
+DO_SCANLINES.91 seg 0008 off 0040 parm 0000 EXPORTED|SHAREDATA
+DIBSCREENBLT.21 seg 0009 off 0E30 parm 0000 EXPORTED|SHAREDATA
+INQUIRE.101 seg 0005 off 037E parm 0000 EXPORTED|SHAREDATA
+ENUMOBJ.7 seg 0005 off 024E parm 0000 EXPORTED|SHAREDATA
+STRBLT.11 seg 0001 off 196D parm 0000 EXPORTED|SHAREDATA
+ENABLE.5 seg 0004 off 01E2 parm 0000 EXPORTED|SHAREDATA
+DEVICEBITMAP.16 seg 0005 off 0373 parm 0000 EXPORTED
+FASTBORDER.17 seg 0001 off 2866 parm 0000 EXPORTED|SHAREDATA
+CONTROL.3 seg 0005 off 031E parm 0000 EXPORTED|SHAREDATA
+OUTPUT.8 seg 0001 off 1972 parm 0000 EXPORTED|SHAREDATA
+PIXEL.9 seg 0007 off 0088 parm 0000 EXPORTED|SHAREDATA
+SCANLR.12 seg 0005 off 004C parm 0000 EXPORTED|SHAREDATA
+COLORINFO.2 seg 0001 off 22C4 parm 0000 EXPORTED|SHAREDATA
+ENUMDFONTS.6 seg 0005 off 0248 parm 0000 EXPORTED|SHAREDATA
+CHECKCURSOR.104 seg 0001 off 25DA parm 0000 EXPORTED|SHAREDATA
+PEXTTEXTOUT.400 seg 0002 off 000B parm 0000 EXPORTED|SHAREDATA
+REXTTEXTOUT.402 seg 0003 off 000B parm 0000 EXPORTED|SHAREDATA
+USERREPAINTDISABLE.500 seg 0001 off 2B8E parm 0000 EXPORTED|SHAREDATA
+SETATTRIBUTE.18 seg 0005 off 0378 parm 0000 EXPORTED
+PSTRBLT.401 seg 0002 off 0000 parm 0000 EXPORTED|SHAREDATA
+RSTRBLT.403 seg 0003 off 0000 parm 0000 EXPORTED|SHAREDATA
+DO_POLYLINES.90 seg 0006 off 0072 parm 0000 EXPORTED|SHAREDATA
+DEVICEBITMAPBITS.19 seg 0009 off 0000 parm 0000 EXPORTED|SHAREDATA
+MOVECURSOR.103 seg 0001 off 2530 parm 0000 EXPORTED|SHAREDATA

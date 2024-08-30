@@ -1,0 +1,470 @@
+Open Watcom Executable Image Dump Utility Version 1.9
+Portions Copyright (c) 1984-2002 Sybase, Inc. All Rights Reserved.
+Source code is available under the Sybase Open Watcom Public License.
+See http://www.openwatcom.org/ for details.
+
+                                DOS EXE Header                                
+==============================================================================
+length of load module mod 200H                       =     0140H
+number of 200H pages in load module                  =     0087H
+number of relocation items                           =     0000H
+size of header in paragraphs                         =     0020H
+minimum number of paragraphs required above load mod =     0000H
+maximum number of paragraphs required above load mod =     0000H
+offset of stack segment in load module               =     000DH
+initial value of SP                                  =     0080H
+checksum                                             =     C91EH
+initial value of IP                                  =     0000H
+offset of code segment within load module (segment)  =     0000H
+file offset of first relocation item                 =     0040H
+overlay number                                       =     0000H
+load module length                                   = 00010D40H
+
+                       New EXE Header (OS/2 or Windows)                       
+==============================================================================
+file offset = 00000400H
+
+link version                                         =     0105H
+offset of entry table                                =     006AH
+length of entry table                                =     037DH
+32-bit chksum                                        = 02805FEFH
+module flag                                          =     8001H
+segment number of auto data segment                  =     0004H
+initial size of local heap added to auto data seg    =     0200H
+initial size of stack to be added to auto data seg   =     0000H
+initial value of IP on entry                         =     91A8H
+initial segment number for setting CS on entry       =     0001H
+initial value of SP on entry                         =     0000H
+segment number for setting SS on entry               =     0000H
+number of entries in segment table                   =     0004H
+number of entries in module reference table          =     0000H
+number of bytes in nonresident names table           =     0B4FH
+offset of beg of segment table (rel NH)              =     0040H
+offset of beg of resource table                      =     0060H
+offset of beg of resident names table                =     0060H
+offset of beg of module reference table              =     006AH
+offset of beg of imported names table                =     006AH
+offset of nonresident names table (rel file)         = 000007E7H
+number of movable entry points listed in entry table =     0038H
+alignment shift count (0 => 9)                       =     0004H
+number of resource segments (OS/2 only)              =     0000H
+target OS (1==OS/2, 2==Windows, 3==DOS4, 4==Win386)  =       02H
+other flags                                          =       00H
+offset of gangload area  (Windows only)              =     0000H
+length of gangload area  (Windows only)              =     0000H
+swap area                (Windows only)              =     0000H
+expected Windows version (Windows only)              =     0000H
+Module Flag Word = LIBRARY | SINGLEDATA
+
+                                Segment Table                                 
+==============================================================================
+seg  fileoff  len  alloc prior priv flag
+==== ======== ==== ====  ====  ==== ====
+0001 00001340 BC22 BC22  0000  0003 0D40
+  CODE|FIXED|NOSHARE|PRELOAD|EXECREAD|RELOCS
+0002 0000CFE0 2589 2589  0001  0007 1D50
+  CODE|MOVABLE|NOSHARE|PRELOAD|EXECREAD|RELOCS|DISCARDABLE
+0003 0000F790 126E 1270  0001  0007 1D50
+  CODE|MOVABLE|NOSHARE|PRELOAD|EXECREAD|RELOCS|DISCARDABLE
+0004 00010B20 0220 0220  0000  0003 0C21
+  DATA|FIXED|SHARE|LOADONCALL|READWRITE
+
+                             Resident Names Table                             
+==============================================================================
+KERNEL unknown ordinal 0000
+
+                              Entry Point Table                               
+==============================================================================
+.211 seg 0002 off 0FCC parm 0000
+.210 seg 0003 off 0248 parm 0000
+.209 seg 0002 off 079A parm 0000
+.208 seg 0003 off 0021 parm 0000
+.207 seg 0002 off 00DF parm 0000
+.206 seg 0001 off 18C6 parm 0000 EXPORTED
+.205 seg 0001 off 6EAC parm 0000 EXPORTED
+.204 seg 0003 off 04D0 parm 0000 EXPORTED
+.203 seg 0001 off 6E89 parm 0000 EXPORTED
+.202 seg 0003 off 0E56 parm 0000 EXPORTED
+.201 seg 0001 off 7085 parm 0000 EXPORTED
+.200 seg 0001 off 283A parm 0000 EXPORTED
+.199 seg 0001 off 1260 parm 0000 EXPORTED
+.198 seg 0001 off 0B6E parm 0000 EXPORTED
+.197 seg 0001 off 0B64 parm 0000 EXPORTED
+.196 seg 0001 off 19A0 parm 0000 EXPORTED
+.195 seg 00FE off C000 parm 0000 EXPORTED
+.194 seg 00FE off F000 parm 0000 EXPORTED
+.193 seg 00FE off 0040 parm 0000 EXPORTED
+.192 seg 0001 off 19BD parm 0000 EXPORTED
+.191 seg 0001 off 19A5 parm 0000 EXPORTED
+.190 seg 00FE off E000 parm 0000 EXPORTED
+.189 seg 0001 off 199B parm 0000 EXPORTED
+.188 seg 0001 off 1993 parm 0000 EXPORTED
+.187 seg 0001 off 1973 parm 0000 EXPORTED
+.186 seg 0001 off 195F parm 0000 EXPORTED
+.185 seg 0001 off 0A57 parm 0000 EXPORTED
+.184 seg 0001 off 091B parm 0000 EXPORTED
+.183 seg 00FE off 0000 parm 0000 EXPORTED
+.182 seg 00FE off B800 parm 0000 EXPORTED
+.181 seg 00FE off B000 parm 0000 EXPORTED
+.180 seg 0001 off 191E parm 0000 EXPORTED
+.179 seg 00FE off D000 parm 0000 EXPORTED
+.178 seg 00FE off 0000 parm 0000 EXPORTED
+.177 seg 0001 off 18D0 parm 0000 EXPORTED
+.176 seg 0001 off 18CB parm 0000 EXPORTED
+.175 seg 0001 off 18BD parm 0000 EXPORTED
+.174 seg 00FE off A000 parm 0000 EXPORTED
+.173 seg 00FE off F000 parm 0000 EXPORTED
+.172 seg 0001 off 18AC parm 0000 EXPORTED
+.171 seg 0001 off 18AC parm 0000 EXPORTED
+.170 seg 0001 off 18AC parm 0000 EXPORTED
+.169 seg 0001 off 0E45 parm 0000 EXPORTED
+.168 seg 0001 off 5F8E parm 0000 EXPORTED
+.167 seg 0001 off 38CA parm 0000 EXPORTED
+.166 seg 0002 off 01E2 parm 0000 EXPORTED
+.165 seg 0001 off 17C5 parm 0000 EXPORTED
+.164 seg 0001 off 0D6A parm 0000 EXPORTED
+.163 seg 0001 off 0D5F parm 0000 EXPORTED
+.162 seg 0002 off 257C parm 0000 EXPORTED
+.161 seg 0002 off 254F parm 0000 EXPORTED
+.160 seg 0001 off 7C6D parm 0000 EXPORTED
+.159 seg 0001 off 0B51 parm 0000 EXPORTED
+.158 seg 0001 off 5564 parm 0000 EXPORTED
+.157 seg 0001 off 3038 parm 0000 EXPORTED
+.156 seg 0001 off 2FBC parm 0000 EXPORTED
+.155 seg 0001 off 0D45 parm 0000 EXPORTED
+.154 seg 0001 off 0D1E parm 0000 EXPORTED
+.152 seg 0003 off 0EA6 parm 0000 EXPORTED
+.151 seg 0003 off 0E1F parm 0000 EXPORTED
+.150 seg 0001 off 542A parm 0000 EXPORTED
+.141 seg 0001 off 5668 parm 0000 EXPORTED
+.140 seg 0003 off 0464 parm 0000 EXPORTED
+.139 seg 0001 off 49DF parm 0000 EXPORTED
+.138 seg 0002 off 1C00 parm 0000 EXPORTED
+.137 seg 0001 off 4870 parm 0000 EXPORTED
+.136 seg 0003 off 044D parm 0000 EXPORTED
+.135 seg 0003 off 0D84 parm 0000 EXPORTED
+.134 seg 0003 off 0D30 parm 0000 EXPORTED
+.133 seg 0001 off 3846 parm 0000 EXPORTED
+.132 seg 0003 off 0DF4 parm 0000 EXPORTED
+.131 seg 0003 off 0E92 parm 0000 EXPORTED
+.130 seg 0003 off 0E59 parm 0000 EXPORTED
+.129 seg 0003 off 0C96 parm 0000 EXPORTED
+.128 seg 0003 off 0C48 parm 0000 EXPORTED
+.127 seg 0003 off 0C06 parm 0000 EXPORTED
+.126 seg 0001 off 1CFF parm 0000 EXPORTED
+.125 seg 0001 off 1724 parm 0000 EXPORTED
+.124 seg 0001 off 1792 parm 0000 EXPORTED
+.123 seg 0001 off 2FF0 parm 0000 EXPORTED
+.122 seg 0001 off 5862 parm 0000 EXPORTED
+.121 seg 0001 off 6848 parm 0000 EXPORTED
+.120 seg 0001 off 4A34 parm 0000 EXPORTED
+.119 seg 0001 off 54DF parm 0000 EXPORTED
+.118 seg 0001 off 54D3 parm 0000 EXPORTED
+.117 seg 0001 off 5474 parm 0000 EXPORTED
+.116 seg 0002 off 2306 parm 0000 EXPORTED
+.115 seg 0001 off 6F77 parm 0000 EXPORTED
+.114 seg 00FE off 1000 parm 0000 EXPORTED
+.113 seg 00FE off 000C parm 0000 EXPORTED
+.112 seg 0001 off 0C7B parm 0000 EXPORTED
+.111 seg 0001 off 0BF3 parm 0000 EXPORTED
+.110 seg 0001 off 5297 parm 0000 EXPORTED
+.109 seg 0001 off 0DFB parm 0000 EXPORTED
+.108 seg 0001 off 0D7D parm 0000 EXPORTED
+.107 seg 0003 off 0DD8 parm 0000 EXPORTED
+.106 seg 0001 off 1D39 parm 0000 EXPORTED
+.105 seg 0003 off 0E12 parm 0000 EXPORTED
+.104 seg 0001 off 3309 parm 0000 EXPORTED
+.103 seg 0001 off 18A9 parm 0000 EXPORTED
+.102 seg 0001 off 18A6 parm 0000 EXPORTED
+.101 seg 0001 off 18A2 parm 0000 EXPORTED
+.100 seg 0002 off 2588 parm 0000 EXPORTED
+.99 seg 0001 off 0635 parm 0000 EXPORTED
+.98 seg 0001 off 476A parm 0000 EXPORTED
+.97 seg 0003 off 0375 parm 0000 EXPORTED
+.96 seg 0002 off 0A07 parm 0000 EXPORTED
+.95 seg 0002 off 1343 parm 0000 EXPORTED
+.94 seg 0003 off 01BE parm 0000 EXPORTED
+.93 seg 0001 off 334B parm 0000 EXPORTED
+.92 seg 0003 off 0317 parm 0000 EXPORTED
+.91 seg 0002 off 21FA parm 0000 EXPORTED
+.90 seg 0001 off 5910 parm 0000 EXPORTED
+.89 seg 0001 off 594F parm 0000 EXPORTED
+.88 seg 0001 off 5940 parm 0000 EXPORTED
+.87 seg 0001 off 595D parm 0000 EXPORTED
+.86 seg 0001 off 07E5 parm 0000 EXPORTED
+.85 seg 0001 off 0776 parm 0000 EXPORTED
+.84 seg 0001 off 07C6 parm 0000 EXPORTED
+.83 seg 0001 off 077A parm 0000 EXPORTED
+.82 seg 0001 off 07E9 parm 0000 EXPORTED
+.81 seg 0001 off 07B3 parm 0000 EXPORTED
+.80 seg 0001 off 5993 parm 0000 EXPORTED
+.79 seg 0001 off 5990 parm 0000 EXPORTED
+.78 seg 0001 off 5996 parm 0000 EXPORTED
+.77 seg 0001 off 5999 parm 0000 EXPORTED
+.76 seg 0003 off 02C4 parm 0000 EXPORTED
+.75 seg 0003 off 02CC parm 0000 EXPORTED
+.74 seg 0001 off 41D2 parm 0000 EXPORTED
+.73 seg 0001 off 379C parm 0000 EXPORTED
+.72 seg 0001 off 37BA parm 0000 EXPORTED
+.71 seg 0001 off 3773 parm 0000 EXPORTED
+.70 seg 0001 off 360B parm 0000 EXPORTED
+.69 seg 0001 off 360E parm 0000 EXPORTED
+.68 seg 0003 off 0210 parm 0000 EXPORTED
+.67 seg 0003 off 114D parm 0000 EXPORTED
+.66 seg 0001 off 5FFC parm 0000 EXPORTED
+.65 seg 0001 off 6390 parm 0000 EXPORTED
+.64 seg 0001 off 6194 parm 0000 EXPORTED
+.63 seg 0001 off 62FA parm 0000 EXPORTED
+.62 seg 0001 off 6228 parm 0000 EXPORTED
+.61 seg 0001 off 640E parm 0000 EXPORTED
+.60 seg 0003 off 11C8 parm 0000 EXPORTED
+.59 seg 0003 off 09A7 parm 0000 EXPORTED
+.58 seg 0003 off 05BC parm 0000 EXPORTED
+.57 seg 0003 off 0568 parm 0000 EXPORTED
+.56 seg 0003 off 0F07 parm 0000 EXPORTED
+.55 seg 0003 off 0EB2 parm 0000 EXPORTED
+.54 seg 0002 off 04AE parm 0000 EXPORTED
+.53 seg 0001 off 357F parm 0000 EXPORTED
+.52 seg 0003 off 0178 parm 0000 EXPORTED
+.51 seg 0003 off 0098 parm 0000 EXPORTED
+.50 seg 0002 off 02D5 parm 0000 EXPORTED
+.49 seg 0002 off 03D6 parm 0000 EXPORTED
+.48 seg 0002 off 0458 parm 0000 EXPORTED
+.47 seg 0002 off 0357 parm 0000 EXPORTED
+.46 seg 0002 off 0A07 parm 0000 EXPORTED
+.45 seg 0002 off 137E parm 0000 EXPORTED
+.42 seg 0001 off 1670 parm 0000 EXPORTED
+.41 seg 0001 off 15C0 parm 0000 EXPORTED
+.38 seg 0001 off 54ED parm 0000 EXPORTED
+.37 seg 0003 off 0010 parm 0000 EXPORTED
+.36 seg 0001 off 59F2 parm 0000 EXPORTED
+.35 seg 0001 off 54C9 parm 0000 EXPORTED
+.34 seg 0001 off 550B parm 0000 EXPORTED
+.33 seg 0001 off 584A parm 0000 EXPORTED
+.32 seg 0001 off 5518 parm 0000 EXPORTED
+.31 seg 0001 off 54BE parm 0000 EXPORTED
+.30 seg 0001 off 53EC parm 0000 EXPORTED
+.29 seg 0001 off 5459 parm 0000 EXPORTED
+.28 seg 0001 off 0D38 parm 0000 EXPORTED
+.26 seg 0001 off 0AB8 parm 0000 EXPORTED
+.25 seg 0001 off 0C9A parm 0000 EXPORTED
+.24 seg 0001 off 0B6E parm 0000 EXPORTED
+.23 seg 0001 off 0B64 parm 0000 EXPORTED
+.22 seg 0001 off 0BC8 parm 0000 EXPORTED
+.21 seg 0001 off 0B5F parm 0000 EXPORTED
+.20 seg 0001 off 0B78 parm 0000 EXPORTED
+.19 seg 0001 off 0BE7 parm 0000 EXPORTED
+.18 seg 0001 off 0BD9 parm 0000 EXPORTED
+.17 seg 0001 off 0A57 parm 0000 EXPORTED
+.16 seg 0001 off 0966 parm 0000 EXPORTED
+.15 seg 0001 off 0935 parm 0000 EXPORTED
+.14 seg 0002 off 240E parm 0000 EXPORTED
+.13 seg 0001 off 681F parm 0000 EXPORTED
+.12 seg 0001 off 67A0 parm 0000 EXPORTED
+.11 seg 0001 off 6804 parm 0000 EXPORTED
+.10 seg 0001 off 6789 parm 0000 EXPORTED
+.9 seg 0001 off 67DD parm 0000 EXPORTED
+.8 seg 0001 off 67B9 parm 0000 EXPORTED
+.7 seg 0001 off 6763 parm 0000 EXPORTED
+.6 seg 0001 off 65FA parm 0000 EXPORTED
+.5 seg 0001 off 6578 parm 0000 EXPORTED
+.4 seg 0002 off 2425 parm 0000 EXPORTED
+.3 seg 0003 off 0DFF parm 0000 EXPORTED
+.2 seg 0001 off 1816 parm 0000 EXPORTED
+.1 seg 0001 off 6E84 parm 0000 EXPORTED
+
+                           Nonresident Names Table                            
+==============================================================================
+Microsoft Windows Kernel Interface Version 3.00 unknown ordinal 0000
+__ROMBIOS.173 seg 00FE off F000 parm 0000 EXPORTED
+GLOBALUNLOCK.19 seg 0001 off 0BE7 parm 0000 EXPORTED
+GLOBALDOSALLOC.184 seg 0001 off 091B parm 0000 EXPORTED
+GETPRIVATEPROFILEINT.127 seg 0003 off 0C06 parm 0000 EXPORTED
+WINEXEC.166 seg 0002 off 01E2 parm 0000 EXPORTED
+ISTASKLOCKED.122 seg 0001 off 5862 parm 0000 EXPORTED
+GETLPERRMODE.99 seg 0001 off 0635 parm 0000 EXPORTED
+LSTRCPY.88 seg 0001 off 5940 parm 0000 EXPORTED
+_LCLOSE.81 seg 0001 off 07B3 parm 0000 EXPORTED
+ALLOCDSTOCSALIAS.171 seg 0001 off 18AC parm 0000 EXPORTED
+ALLOCCSTODSALIAS.170 seg 0001 off 18AC parm 0000 EXPORTED
+FATALAPPEXIT.137 seg 0001 off 4870 parm 0000 EXPORTED
+__0000H.183 seg 00FE off 0000 parm 0000 EXPORTED
+GLOBALLOCK.18 seg 0001 off 0BD9 parm 0000 EXPORTED
+LOCALCOUNTFREE.161 seg 0002 off 254F parm 0000 EXPORTED
+__0040H.193 seg 00FE off 0040 parm 0000 EXPORTED
+DISABLEDOS.42 seg 0001 off 1670 parm 0000 EXPORTED
+GLOBALUNFIX.198 seg 0001 off 0B6E parm 0000 EXPORTED
+UNDEFDYNLINK.120 seg 0001 off 4A34 parm 0000 EXPORTED
+GLOBALHANDLENORIP.159 seg 0001 off 0B51 parm 0000 EXPORTED
+_LOPEN.85 seg 0001 off 0776 parm 0000 EXPORTED
+INITTASK1.141 seg 0001 off 5668 parm 0000 EXPORTED
+GLOBALLRUNEWEST.164 seg 0001 off 0D6A parm 0000 EXPORTED
+FILECDR.130 seg 0003 off 0E59 parm 0000 EXPORTED
+CATCH.55 seg 0003 off 0EB2 parm 0000 EXPORTED
+GLOBALFREEALL.26 seg 0001 off 0AB8 parm 0000 EXPORTED
+GETPRIVATEPROFILESTRING.128 seg 0003 off 0C48 parm 0000 EXPORTED
+RESERVED1.77 seg 0001 off 5999 parm 0000 EXPORTED
+RESERVED2.78 seg 0001 off 5996 parm 0000 EXPORTED
+NOHOOKDOSCALL.101 seg 0001 off 18A2 parm 0000 EXPORTED
+RESERVED3.79 seg 0001 off 5990 parm 0000 EXPORTED
+_LCREAT.83 seg 0001 off 077A parm 0000 EXPORTED
+PATCHCODEHANDLE.110 seg 0001 off 5297 parm 0000 EXPORTED
+RESERVED4.80 seg 0001 off 5993 parm 0000 EXPORTED
+RESERVED5.87 seg 0001 off 595D parm 0000 EXPORTED
+CALLPROCINSTANCE.53 seg 0001 off 357F parm 0000 EXPORTED
+MEMORYFREED.126 seg 0001 off 1CFF parm 0000 EXPORTED
+A20PROC.165 seg 0001 off 17C5 parm 0000 EXPORTED
+MAKEPROCINSTANCE.51 seg 0003 off 0098 parm 0000 EXPORTED
+SETERRORMODE.107 seg 0003 off 0DD8 parm 0000 EXPORTED
+SWAPRECORDING.204 seg 0003 off 04D0 parm 0000 EXPORTED
+ISWINOLDAPTASK.158 seg 0001 off 5564 parm 0000 EXPORTED
+_LLSEEK.84 seg 0001 off 07C6 parm 0000 EXPORTED
+LOCKCURRENTTASK.33 seg 0001 off 584A parm 0000 EXPORTED
+GETCODEHANDLE.93 seg 0001 off 334B parm 0000 EXPORTED
+FREEPROCINSTANCE.52 seg 0003 off 0178 parm 0000 EXPORTED
+GETNUMTASKS.152 seg 0003 off 0EA6 parm 0000 EXPORTED
+LOCALFREE.7 seg 0001 off 6763 parm 0000 EXPORTED
+LOCALSIZE.10 seg 0001 off 6789 parm 0000 EXPORTED
+GLOBALPAGEUNLOCK.192 seg 0001 off 19BD parm 0000 EXPORTED
+GLOBALLRUOLDEST.163 seg 0001 off 0D5F parm 0000 EXPORTED
+GLOBALCOMPACT.25 seg 0001 off 0C9A parm 0000 EXPORTED
+SIZEOFRESOURCE.65 seg 0001 off 6390 parm 0000 EXPORTED
+LOCALLOCK.8 seg 0001 off 67B9 parm 0000 EXPORTED
+LOCALSHRINK.121 seg 0001 off 6848 parm 0000 EXPORTED
+GETEXEVERSION.105 seg 0003 off 0E12 parm 0000 EXPORTED
+ENABLEKERNEL.124 seg 0001 off 1792 parm 0000 EXPORTED
+LOCALCOMPACT.13 seg 0001 off 681F parm 0000 EXPORTED
+EXITKERNEL.2 seg 0001 off 1816 parm 0000 EXPORTED
+LOCALHEAPSIZE.162 seg 0002 off 257C parm 0000 EXPORTED
+DELETEPATHNAME.76 seg 0003 off 02C4 parm 0000 EXPORTED
+LOCALINIT.4 seg 0002 off 2425 parm 0000 EXPORTED
+GETDOSENVIRONMENT.131 seg 0003 off 0E92 parm 0000 EXPORTED
+WAITEVENT.30 seg 0001 off 53EC parm 0000 EXPORTED
+OLDYIELD.117 seg 0001 off 5474 parm 0000 EXPORTED
+VALIDATECODESEGMENTS.100 seg 0002 off 2588 parm 0000 EXPORTED
+GETCURRENTTASK.36 seg 0001 off 59F2 parm 0000 EXPORTED
+GETWINDOWSDIRECTORY.134 seg 0003 off 0D30 parm 0000 EXPORTED
+WRITEPRIVATEPROFILESTRING.129 seg 0003 off 0C96 parm 0000 EXPORTED
+PRESTOCHANGOSELECTOR.177 seg 0001 off 18D0 parm 0000 EXPORTED
+GETCODEINFO.104 seg 0001 off 3309 parm 0000 EXPORTED
+LOADLIBRARY.95 seg 0002 off 1343 parm 0000 EXPORTED
+GLOBALFIX.197 seg 0001 off 0B64 parm 0000 EXPORTED
+GLOBALPAGELOCK.191 seg 0001 off 19A5 parm 0000 EXPORTED
+GLOBALSIZE.20 seg 0001 off 0B78 parm 0000 EXPORTED
+GETLASTDISKCHANGE.98 seg 0001 off 476A parm 0000 EXPORTED
+LOCALUNLOCK.9 seg 0001 off 67DD parm 0000 EXPORTED
+LOCKSEGMENT.23 seg 0001 off 0B64 parm 0000 EXPORTED
+VALIDATEFREESPACES.200 seg 0001 off 283A parm 0000 EXPORTED
+GETTASKQUEUE.35 seg 0001 off 54C9 parm 0000 EXPORTED
+GLOBALFLAGS.22 seg 0001 off 0BC8 parm 0000 EXPORTED
+GETFREESPACE.169 seg 0001 off 0E45 parm 0000 EXPORTED
+WRITEPROFILESTRING.59 seg 0003 off 09A7 parm 0000 EXPORTED
+GETSELECTORLIMIT.188 seg 0001 off 1993 parm 0000 EXPORTED
+GLOBALWIRE.111 seg 0001 off 0BF3 parm 0000 EXPORTED
+DOS3CALL.102 seg 0001 off 18A6 parm 0000 EXPORTED
+GETCURRENTPDB.37 seg 0003 off 0010 parm 0000 EXPORTED
+LONGPTRADD.180 seg 0001 off 191E parm 0000 EXPORTED
+OPENFILE.74 seg 0001 off 41D2 parm 0000 EXPORTED
+SETPRIORITY.32 seg 0001 off 5518 parm 0000 EXPORTED
+REGISTERPTRACE.202 seg 0003 off 0E56 parm 0000 EXPORTED
+WINOLDAPCALL.151 seg 0003 off 0E1F parm 0000 EXPORTED
+GLOBALUNWIRE.112 seg 0001 off 0C7B parm 0000 EXPORTED
+THROW.56 seg 0003 off 0F07 parm 0000 EXPORTED
+FREELIBRARY.96 seg 0002 off 0A07 parm 0000 EXPORTED
+INITATOMTABLE.68 seg 0003 off 0210 parm 0000 EXPORTED
+SETTASKQUEUE.34 seg 0001 off 550B parm 0000 EXPORTED
+GETHEAPSPACES.138 seg 0002 off 1C00 parm 0000 EXPORTED
+GETMODULEHANDLE.47 seg 0002 off 0357 parm 0000 EXPORTED
+GETTEMPDRIVE.92 seg 0003 off 0317 parm 0000 EXPORTED
+DIRECTEDYIELD.150 seg 0001 off 542A parm 0000 EXPORTED
+SETSELECTORLIMIT.189 seg 0001 off 199B parm 0000 EXPORTED
+SETHANDLECOUNT.199 seg 0001 off 1260 parm 0000 EXPORTED
+__AHINCR.114 seg 00FE off 1000 parm 0000 EXPORTED
+GETATOMNAME.72 seg 0001 off 37BA parm 0000 EXPORTED
+DOSIGNAL.139 seg 0001 off 49DF parm 0000 EXPORTED
+OUTPUTDEBUGSTRING.115 seg 0001 off 6F77 parm 0000 EXPORTED
+GLOBALMASTERHANDLE.28 seg 0001 off 0D38 parm 0000 EXPORTED
+__AHSHIFT.113 seg 00FE off 000C parm 0000 EXPORTED
+GETEXPWINVER.167 seg 0001 off 38CA parm 0000 EXPORTED
+GETPROFILESTRING.58 seg 0003 off 05BC parm 0000 EXPORTED
+SETTASKSIGNALPROC.38 seg 0001 off 54ED parm 0000 EXPORTED
+REPLACEINST.201 seg 0001 off 7085 parm 0000 EXPORTED
+ACCESSRESOURCE.64 seg 0001 off 6194 parm 0000 EXPORTED
+LIMITEMSPAGES.156 seg 0001 off 2FBC parm 0000 EXPORTED
+GETPROCADDRESS.50 seg 0002 off 02D5 parm 0000 EXPORTED
+__A000H.174 seg 00FE off A000 parm 0000 EXPORTED
+LSTRLEN.90 seg 0001 off 5910 parm 0000 EXPORTED
+DIRECTRESALLOC.168 seg 0001 off 5F8E parm 0000 EXPORTED
+GETSYSTEMDIRECTORY.135 seg 0003 off 0D84 parm 0000 EXPORTED
+GETTEMPFILENAME.97 seg 0003 off 0375 parm 0000 EXPORTED
+GETWINFLAGS.132 seg 0003 off 0DF4 parm 0000 EXPORTED
+__B000H.181 seg 00FE off B000 parm 0000 EXPORTED
+LOADMODULE.45 seg 0002 off 137E parm 0000 EXPORTED
+GLOBALDOSFREE.185 seg 0001 off 0A57 parm 0000 EXPORTED
+DEBUGBREAK.203 seg 0001 off 6E89 parm 0000 EXPORTED
+LOCALREALLOC.6 seg 0001 off 65FA parm 0000 EXPORTED
+LOCALHANDLE.11 seg 0001 off 6804 parm 0000 EXPORTED
+LSTRCAT.89 seg 0001 off 594F parm 0000 EXPORTED
+GLOBALHANDLE.21 seg 0001 off 0B5F parm 0000 EXPORTED
+__C000H.195 seg 00FE off C000 parm 0000 EXPORTED
+__B800H.182 seg 00FE off B800 parm 0000 EXPORTED
+_LWRITE.86 seg 0001 off 07E5 parm 0000 EXPORTED
+LOCALALLOC.5 seg 0001 off 6578 parm 0000 EXPORTED
+CVWBREAK.205 seg 0001 off 6EAC parm 0000 EXPORTED
+GETVERSION.3 seg 0003 off 0DFF parm 0000 EXPORTED
+KBDRST.123 seg 0001 off 2FF0 parm 0000 EXPORTED
+SWITCHSTACKBACK.109 seg 0001 off 0DFB parm 0000 EXPORTED
+GETTASKDS.155 seg 0001 off 0D45 parm 0000 EXPORTED
+__D000H.179 seg 00FE off D000 parm 0000 EXPORTED
+GETINSTANCEDATA.54 seg 0002 off 04AE parm 0000 EXPORTED
+GETATOMHANDLE.73 seg 0001 off 379C parm 0000 EXPORTED
+DELETEATOM.71 seg 0001 off 3773 parm 0000 EXPORTED
+DISABLEKERNEL.125 seg 0001 off 1724 parm 0000 EXPORTED
+__E000H.190 seg 00FE off E000 parm 0000 EXPORTED
+SETRESOURCEHANDLER.67 seg 0003 off 114D parm 0000 EXPORTED
+LOADRESOURCE.61 seg 0001 off 640E parm 0000 EXPORTED
+ALLOCSELECTOR.175 seg 0001 off 18BD parm 0000 EXPORTED
+INITTASK.91 seg 0002 off 21FA parm 0000 EXPORTED
+SETSIGHANDLER.140 seg 0003 off 0464 parm 0000 EXPORTED
+GETDRIVETYPE.136 seg 0003 off 044D parm 0000 EXPORTED
+__F000H.194 seg 00FE off F000 parm 0000 EXPORTED
+GETPROFILEINT.57 seg 0003 off 0568 parm 0000 EXPORTED
+FREEMODULE.46 seg 0002 off 0A07 parm 0000 EXPORTED
+FINDATOM.69 seg 0001 off 360E parm 0000 EXPORTED
+SETSWAPAREASIZE.106 seg 0001 off 1D39 parm 0000 EXPORTED
+LOCALNOTIFY.14 seg 0002 off 240E parm 0000 EXPORTED
+SELECTORACCESSRIGHTS.196 seg 0001 off 19A0 parm 0000 EXPORTED
+GETEXEPTR.133 seg 0001 off 3846 parm 0000 EXPORTED
+GETCURPID.157 seg 0001 off 3038 parm 0000 EXPORTED
+LOCKRESOURCE.62 seg 0001 off 6228 parm 0000 EXPORTED
+POSTEVENT.31 seg 0001 off 54BE parm 0000 EXPORTED
+GLOBALREALLOC.16 seg 0001 off 0966 parm 0000 EXPORTED
+GLOBALFREE.17 seg 0001 off 0A57 parm 0000 EXPORTED
+GETSELECTORBASE.186 seg 0001 off 195F parm 0000 EXPORTED
+ENABLEDOS.41 seg 0001 off 15C0 parm 0000 EXPORTED
+FATALEXIT.1 seg 0001 off 6E84 parm 0000 EXPORTED
+NETBIOSCALL.103 seg 0001 off 18A9 parm 0000 EXPORTED
+INITLIB.116 seg 0002 off 2306 parm 0000 EXPORTED
+OPENPATHNAME.75 seg 0003 off 02CC parm 0000 EXPORTED
+GETMODULEFILENAME.49 seg 0002 off 03D6 parm 0000 EXPORTED
+FREERESOURCE.63 seg 0001 off 62FA parm 0000 EXPORTED
+LOCALFLAGS.12 seg 0001 off 67A0 parm 0000 EXPORTED
+EMSCOPY.160 seg 0001 off 7C6D parm 0000 EXPORTED
+ADDATOM.70 seg 0001 off 360B parm 0000 EXPORTED
+ALLOCRESOURCE.66 seg 0001 off 5FFC parm 0000 EXPORTED
+GLOBALNOTIFY.154 seg 0001 off 0D1E parm 0000 EXPORTED
+FREESELECTOR.176 seg 0001 off 18CB parm 0000 EXPORTED
+ALLOCALIAS.172 seg 0001 off 18AC parm 0000 EXPORTED
+SETSELECTORBASE.187 seg 0001 off 1973 parm 0000 EXPORTED
+UNLOCKSEGMENT.24 seg 0001 off 0B6E parm 0000 EXPORTED
+ALLOCSELECTORARRAY.206 seg 0001 off 18C6 parm 0000 EXPORTED
+__WINFLAGS.178 seg 00FE off 0000 parm 0000 EXPORTED
+SWITCHSTACKTO.108 seg 0001 off 0D7D parm 0000 EXPORTED
+GLOBALALLOC.15 seg 0001 off 0935 parm 0000 EXPORTED
+YIELD.29 seg 0001 off 5459 parm 0000 EXPORTED
+GETMODULEUSAGE.48 seg 0002 off 0458 parm 0000 EXPORTED
+GETTASKQUEUEDS.118 seg 0001 off 54D3 parm 0000 EXPORTED
+DEFINEHANDLETABLE.94 seg 0003 off 01BE parm 0000 EXPORTED
+_LREAD.82 seg 0001 off 07E9 parm 0000 EXPORTED
+GETTASKQUEUEES.119 seg 0001 off 54DF parm 0000 EXPORTED
+FINDRESOURCE.60 seg 0003 off 11C8 parm 0000 EXPORTED

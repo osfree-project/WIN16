@@ -1,0 +1,121 @@
+Open Watcom Executable Image Dump Utility Version 1.9
+Portions Copyright (c) 1984-2002 Sybase, Inc. All Rights Reserved.
+Source code is available under the Sybase Open Watcom Public License.
+See http://www.openwatcom.org/ for details.
+
+                                DOS EXE Header                                
+==============================================================================
+length of load module mod 200H                       =     01C5H
+number of 200H pages in load module                  =     0007H
+number of relocation items                           =     0000H
+size of header in paragraphs                         =     0020H
+minimum number of paragraphs required above load mod =     0000H
+maximum number of paragraphs required above load mod =     FFFFH
+offset of stack segment in load module               =     0007H
+initial value of SP                                  =     0100H
+checksum                                             =     4065H
+initial value of IP                                  =     0000H
+offset of code segment within load module (segment)  =     0000H
+file offset of first relocation item                 =     0040H
+overlay number                                       =     0000H
+load module length                                   = 00000DC5H
+
+                       New EXE Header (OS/2 or Windows)                       
+==============================================================================
+file offset = 00000400H
+
+link version                                         =     0105H
+offset of entry table                                =     0071H
+length of entry table                                =     0047H
+32-bit chksum                                        = 45DE4008H
+module flag                                          =     8301H
+segment number of auto data segment                  =     0003H
+initial size of local heap added to auto data seg    =     0000H
+initial size of stack to be added to auto data seg   =     0000H
+initial value of IP on entry                         =     0000H
+initial segment number for setting CS on entry       =     0000H
+initial value of SP on entry                         =     0000H
+segment number for setting SS on entry               =     0000H
+number of entries in segment table                   =     0003H
+number of entries in module reference table          =     0001H
+number of bytes in nonresident names table           =     0138H
+offset of beg of segment table (rel NH)              =     0040H
+offset of beg of resource table                      =     0058H
+offset of beg of resident names table                =     0058H
+offset of beg of module reference table              =     0067H
+offset of beg of imported names table                =     0069H
+offset of nonresident names table (rel file)         = 000004B8H
+number of movable entry points listed in entry table =     0000H
+alignment shift count (0 => 9)                       =     0004H
+number of resource segments (OS/2 only)              =     0000H
+target OS (1==OS/2, 2==Windows, 3==DOS4, 4==Win386)  =       02H
+other flags                                          =       08H
+offset of gangload area  (Windows only)              =     0060H
+length of gangload area  (Windows only)              =     0014H
+swap area                (Windows only)              =     0000H
+expected Windows version (Windows only)              =     0300H
+Module Flag Word = LIBRARY | WINDOWAPI | SINGLEDATA
+
+                                Segment Table                                 
+==============================================================================
+seg  fileoff  len  alloc prior priv flag
+==== ======== ==== ====  ====  ==== ====
+0001 00000740 068C 068C  0000  0003 0D00
+  CODE|FIXED|NOSHARE|LOADONCALL|EXECREAD|RELOCS
+0002 00000620 0093 0093  0000  0003 0D40
+  CODE|FIXED|NOSHARE|PRELOAD|EXECREAD|RELOCS
+0003 000006E0 002C 002C  0000  0003 0D61
+  DATA|FIXED|SHARE|PRELOAD|READWRITE|RELOCS
+
+                             Resident Names Table                             
+==============================================================================
+SOUND unknown ordinal 0000
+WEP.19 seg 0002 off 003B parm 0000 EXPORTED
+
+                            Module Reference Table                            
+==============================================================================
+KERNEL
+
+                              Entry Point Table                               
+==============================================================================
+.19 seg 0002 off 003B parm 0000 EXPORTED
+.18 seg 0001 off 000A parm 0000 EXPORTED|SHAREDATA
+.17 seg 0002 off 0041 parm 0000 EXPORTED
+.16 seg 0001 off 037C parm 0000 EXPORTED|SHAREDATA
+.15 seg 0001 off 035B parm 0000 EXPORTED|SHAREDATA
+.14 seg 0001 off 0338 parm 0000 EXPORTED|SHAREDATA
+.13 seg 0001 off 03F5 parm 0000 EXPORTED|SHAREDATA
+.12 seg 0001 off 041F parm 0000 EXPORTED
+.11 seg 0001 off 03A9 parm 0000 EXPORTED|SHAREDATA
+.10 seg 0001 off 00BC parm 0000 EXPORTED|SHAREDATA
+.9 seg 0001 off 0095 parm 0000 EXPORTED|SHAREDATA
+.8 seg 0001 off 0286 parm 0000 EXPORTED|SHAREDATA
+.7 seg 0001 off 0422 parm 0000 EXPORTED
+.6 seg 0001 off 0427 parm 0000 EXPORTED
+.5 seg 0001 off 02C2 parm 0000 EXPORTED
+.4 seg 0001 off 018D parm 0000 EXPORTED|SHAREDATA
+.3 seg 0001 off 0110 parm 0000 EXPORTED|SHAREDATA
+.2 seg 0001 off 00DB parm 0000 EXPORTED|SHAREDATA
+.1 seg 0002 off 0000 parm 0000 EXPORTED|SHAREDATA
+
+                           Nonresident Names Table                            
+==============================================================================
+Windows Sound Driver unknown ordinal 0000
+WAITSOUNDSTATE.11 seg 0001 off 03A9 parm 0000 EXPORTED|SHAREDATA
+SETVOICEACCENT.5 seg 0001 off 02C2 parm 0000 EXPORTED
+SETVOICEQUEUESIZE.3 seg 0001 off 0110 parm 0000 EXPORTED|SHAREDATA
+SETVOICESOUND.8 seg 0001 off 0286 parm 0000 EXPORTED|SHAREDATA
+STOPSOUND.10 seg 0001 off 00BC parm 0000 EXPORTED|SHAREDATA
+GETTHRESHOLDEVENT.14 seg 0001 off 0338 parm 0000 EXPORTED|SHAREDATA
+SETVOICENOTE.4 seg 0001 off 018D parm 0000 EXPORTED|SHAREDATA
+SETSOUNDNOISE.7 seg 0001 off 0422 parm 0000 EXPORTED
+STARTSOUND.9 seg 0001 off 0095 parm 0000 EXPORTED|SHAREDATA
+SETVOICETHRESHOLD.16 seg 0001 off 037C parm 0000 EXPORTED|SHAREDATA
+CLOSESOUND.2 seg 0001 off 00DB parm 0000 EXPORTED|SHAREDATA
+DOBEEP.17 seg 0002 off 0041 parm 0000 EXPORTED
+COUNTVOICENOTES.13 seg 0001 off 03F5 parm 0000 EXPORTED|SHAREDATA
+SETVOICEENVELOPE.6 seg 0001 off 0427 parm 0000 EXPORTED
+OPENSOUND.1 seg 0002 off 0000 parm 0000 EXPORTED|SHAREDATA
+SYNCALLVOICES.12 seg 0001 off 041F parm 0000 EXPORTED
+GETTHRESHOLDSTATUS.15 seg 0001 off 035B parm 0000 EXPORTED|SHAREDATA
+MYOPENSOUND.18 seg 0001 off 000A parm 0000 EXPORTED|SHAREDATA
