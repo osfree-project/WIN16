@@ -40,3 +40,7 @@
         path = applications/sysedit
         url = https://github.com/osfree-project/sysedit
         branch = main
+[submodule "applications/fastopen"]
+	path = applications/fastopen
+	url = https://github.com/osfree-project/fastopen
+	branch = main
