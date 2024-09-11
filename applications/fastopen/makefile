@@ -3,7 +3,7 @@
 # (c) osFree project,
 #
 
-PROJ = FASTOPEN
+PROJ = fastopen
 TRGT = $(PROJ).exe
 DESC = File cache
 #defines object file names in format $(p)objname$(e)
