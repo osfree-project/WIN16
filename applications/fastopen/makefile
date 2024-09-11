@@ -19,6 +19,7 @@ JWASM = 1
 
 ADD_COPT = -i=$(PORT_BASE)v4.0$(SEP)src$(SEP)H
 ADD_ASMOPT = -Zm -Zg -I=$(PORT_BASE)v4.0$(SEP)src$(SEP)INC
+ADD_LINKOPT = op nocase
 
 .c: $(PORT_BASE)v4.0$(SEP)src$(SEP)CMD$(SEP)FASTOPEN
 .asm: $(PORT_BASE)v4.0$(SEP)src$(SEP)CMD$(SEP)FASTOPEN
