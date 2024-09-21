@@ -60,21 +60,6 @@ UINT WINAPI GetSystemDirectory(LPSTR path, UINT count)
     return len;
 }
 
-#if 0
-_lopen proc far pascal
-	@loadbx
-	push ds
-	@loadparm 0,al
-	@loadparm 2,dx
-	@loadparm 4,ds
-	@OpenFil
-	jnc @F
-	mov ax,-1
-@@:
-	pop ds
-	@return 6
-_lopen endp
-#endif
 
 void WINAPI Dos3Call();
 
@@ -85,136 +70,111 @@ void WINAPI Dos3Call();
 #define MOV_AL(x) __asm {mov al, byte ptr x}
 #define MOV_AH_CONST(x) __asm {mov ah, x}
 
-#pragma aux _lopen modify [DS];
-
-HFILE WINAPI _lopen(LPCSTR f, int a)
+/* Safe AniToOem version */
+void WINAPI SafeAnsiToOem(LPCSTR s, LPSTR d)
 {
-// @todo AnsiToOem filename
+  //@todo check is keyboard driver present, if present, then use normal AnsiToOem, if not, just copy string.
+  lstrcpy(d, s);
+}
+
+
+#pragma disable_message(107);
+HFILE WINAPI _lopen(LPCSTR lpPathName, int iReadWrite)
+{
+	char Buf[128];
 	FUNCTIONSTART;
-//	MOV_AL(a);
-//	MOV_DX(f);
-//	MOV_DS(f+2);
-//	MOV_AH_CONST(0x3d);
+	SafeAnsiToOem(lpPathName, Buf);	
+	__asm {
+		push ds
+		mov ax, iReadWrite
+		mov dx, word ptr Buf
+		mov ds, word ptr Buf+2
+		mov ah, 3dh
+	}
 	Dos3Call();
 	__asm {
-	jnc exit
-	mov ax,-1
+		int 21h
+		jnc lopenexit
+		mov ax,-1
+lopenexit:
+		pop ds
+	}
+	FUNCTIONEND;
+}
+#pragma enable_message(107);
+
+
+#pragma disable_message(107);
+HFILE WINAPI _lcreat(LPCSTR lpPathName, int a)
+{
+	char Buf[128];
+	FUNCTIONSTART;
+	SafeAnsiToOem(lpPathName, Buf);	
+	__asm {
+		push ds
+		mov cx, a
+		mov dx, word ptr Buf
+		mov ds, word ptr Buf+2
+		mov ax, 3ch
+	}
+	Dos3Call();
+	__asm {
+		pop ds
+		jnc exit
+		mov ax,-1
 exit:
 	}
 	FUNCTIONEND;
 }
-
-#if 0
-_lcreat proc far pascal
-	@loadbx
-	push ds
-	@loadparm 0,al
-	@loadparm 2,dx
-	@loadparm 4,ds
-	@MakFil
-	jnc @F
-	mov ax,-1
-@@:
-	pop ds
-	@return 6
-_lcreat endp
-#endif
+#pragma enable_message(107);
 
 
-HFILE WINAPI _lcreat(LPCSTR f, int a)
-{
-// @todo AnsiToOem filename
-	FUNCTIONSTART;
-	MOV_CX(a);
-	MOV_DX(f);
-	MOV_DS(f+2);
-	MOV_AH_CONST(0x3c);
-	Dos3Call();
-	__asm {
-	jnc exit
-	mov ax,-1
-exit:
-	}
-	FUNCTIONEND;
-}
-
-#if 0
-_lclose proc far pascal
-	@loadbx
-	@loadparm 0,bx
-	@ClosFil
-	jnc @F
-	mov ax,-1
-@@:
-	@return 2
-_lclose endp
-#endif
-
+#pragma disable_message(107);
 HFILE WINAPI _lclose(HFILE h)
 {
 	FUNCTIONSTART;
-	MOV_BX(h);
-	MOV_AH_CONST(0x3e);
+	__asm {
+		mov bx, h
+		mov ah, 3eh
+	}
 	Dos3Call();
 	__asm {
-	jnc exit
-	mov ax,-1
+		mov ax,-1
+		jc exit
+		inc ax
 exit:
 	}
 	FUNCTIONEND;
 }
+#pragma enable_message(107);
 
-#if 0
-_lwrite proc far pascal
-	@loadbx
-	push ds
-	@loadparm 0,cx
-	@loadparm 2,dx
-	@loadparm 4,ds
-	@loadparm 6,bx
-	@Write
-	jnc @F
-	mov ax,-1
-@@:
-	pop ds
-	@return 8
-_lwrite endp
-#endif
 
 /***********************************************************************
  *           _lwrite   (KERNEL.86)
  */
+#pragma disable_message(107);
 UINT WINAPI _lwrite(HFILE hFile, const void __huge * buffer, UINT count )
 {
 	FUNCTIONSTART;
-	MOV_BX(hFile);
-	MOV_DX(buffer);
-	MOV_DS(buffer+2);
-	MOV_CX(count);
-	MOV_AH_CONST(0x40);
+	__asm {
+		push ds
+		mov bx, hFile
+		mov dx, word ptr buffer
+		mov ds, word ptr buffer+2
+		mov cx, count
+		mov ah, 40h
+	}
 	Dos3Call();
 	__asm {
-	jnc exit
-	mov ax,-1
+		pop ds
+		jnc exit
+		mov ax,-1
 exit:
 	}
 	FUNCTIONEND;
 }
+#pragma enable_message(107);
 
-#if 0
-_llseek proc far pascal
-	@loadbx
-	@loadparm 0,al
-	@loadparm 2,dx
-	@loadparm 4,cx
-	@loadparm 6,bx
-	@MovePtr
-	jnc @F
-	mov ax,-1
-@@:
-	@return 8
-_llseek endp
-#endif
 
 /***********************************************************************
  *           _llseek   (KERNEL.84)
@@ -224,59 +184,53 @@ _llseek endp
  *   but cause subsequent I/O operations to fail (cf. interrupt list)
  *
  */
+#pragma disable_message(107);
 LONG WINAPI _llseek( HFILE hFile, LONG lOffset, int nOrigin )
 {
 	FUNCTIONSTART;
-	MOV_BX(hFile);
-	MOV_DX(lOffset);             
-	MOV_CX(lOffset+2);
-	MOV_AL(nOrigin);
-	MOV_AH_CONST(0x42);
+	__asm {
+		mov bx, hFile
+		mov dx, word ptr lOffset
+		mov cs, word ptr lOffset
+		mov ax, nOrigin
+		mov ah, 42h
+	}
 	Dos3Call();
 	__asm {
-	jnc exit
-	mov ax,-1
+		jnc exit
+		mov ax,-1
 exit:
 	}
 	FUNCTIONEND;
 }
+#pragma enable_message(107);
 
-#if 0
-_lread proc far pascal
-	@loadbx
-	push ds
-	@loadparm 0,cx
-	@loadparm 2,dx
-	@loadparm 4,ds
-	@loadparm 6,bx
-	@Read
-	jnc @F
-	mov ax,-1
-@@:
-	pop ds
-	@return 8
-_lread endp
-#endif
 
 /***********************************************************************
  *           _lread (KERNEL.82)
  */
+#pragma disable_message(107);
 UINT WINAPI _lread(HFILE hFile, void __huge * buffer, UINT count )
 {
 	FUNCTIONSTART;
-	MOV_BX(hFile);
-	MOV_DX(buffer);
-	MOV_DS(buffer+2);
-	MOV_CX(count);
-	MOV_AH_CONST(0x3f);
+	__asm {
+		push ds
+		mov bx, hFile
+		mov dx, word ptr buffer
+		mov ds, word ptr buffer+2
+		mov cx, count
+		mov ah, 3fh
+	}
 	Dos3Call();
 	__asm {
-	jnc exit
-	mov ax,-1
+		pop ds
+		jnc exit
+		mov ax,-1
 exit:
 	}
 	FUNCTIONEND;
 }
+#pragma enable_message(107);
 
 #if 0
 /***********************************************************************
