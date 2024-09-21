@@ -5,7 +5,7 @@
 #
 
 
-DIRS = calc clipbrd clock expand notepad pifedit progman sysedit taskman winhelp winmine winver
+DIRS = calc clipbrd clock expand notepad pifedit progman sysedit taskman winhelp winmine winver fastopen
 
 !include $(%ROOT)tools/mk/all.mk
 
