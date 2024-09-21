@@ -78,21 +78,24 @@ _lopen endp
 
 void WINAPI Dos3Call();
 
-#define MOV_CX(x) __asm {mov dx, word ptr x}
-#define MOV_BX(x) __asm {mov dx, word ptr x}
+#define MOV_CX(x) __asm {mov cx, word ptr x}
+#define MOV_BX(x) __asm {mov bx, word ptr x}
 #define MOV_DX(x) __asm {mov dx, word ptr x}
 #define MOV_DS(x) __asm {mov ds, word ptr x}
 #define MOV_AL(x) __asm {mov al, byte ptr x}
 #define MOV_AH_CONST(x) __asm {mov ah, x}
 
+#pragma aux _lopen modify [DS];
+
 HFILE WINAPI _lopen(LPCSTR f, int a)
 {
+// @todo AnsiToOem filename
 	FUNCTIONSTART;
-	MOV_AL(a);
-	MOV_DX(f);
-	MOV_DS(f+2);
-	MOV_AH_CONST(0);
-    Dos3Call();
+//	MOV_AL(a);
+//	MOV_DX(f);
+//	MOV_DS(f+2);
+//	MOV_AH_CONST(0x3d);
+	Dos3Call();
 	__asm {
 	jnc exit
 	mov ax,-1
@@ -120,12 +123,13 @@ _lcreat endp
 
 HFILE WINAPI _lcreat(LPCSTR f, int a)
 {
+// @todo AnsiToOem filename
 	FUNCTIONSTART;
-	MOV_AL(a);
+	MOV_CX(a);
 	MOV_DX(f);
 	MOV_DS(f+2);
-	MOV_AH_CONST(0);
-    Dos3Call();
+	MOV_AH_CONST(0x3c);
+	Dos3Call();
 	__asm {
 	jnc exit
 	mov ax,-1
@@ -150,8 +154,8 @@ HFILE WINAPI _lclose(HFILE h)
 {
 	FUNCTIONSTART;
 	MOV_BX(h);
-	MOV_AH_CONST(0);
-    Dos3Call();
+	MOV_AH_CONST(0x3e);
+	Dos3Call();
 	__asm {
 	jnc exit
 	mov ax,-1
@@ -183,12 +187,12 @@ _lwrite endp
 UINT WINAPI _lwrite(HFILE hFile, const void __huge * buffer, UINT count )
 {
 	FUNCTIONSTART;
-	MOV_CX(hFile);
+	MOV_BX(hFile);
 	MOV_DX(buffer);
 	MOV_DS(buffer+2);
-	MOV_BX(count);
-	MOV_AH_CONST(0);
-    Dos3Call();
+	MOV_CX(count);
+	MOV_AH_CONST(0x40);
+	Dos3Call();
 	__asm {
 	jnc exit
 	mov ax,-1
@@ -216,19 +220,19 @@ _llseek endp
  *           _llseek   (KERNEL.84)
  *
  * FIXME:
- *   Seeking before the start of the file should be allowed for _llseek16,
+ *   Seeking before the start of the file should be allowed for _llseek,
  *   but cause subsequent I/O operations to fail (cf. interrupt list)
  *
  */
 LONG WINAPI _llseek( HFILE hFile, LONG lOffset, int nOrigin )
 {
 	FUNCTIONSTART;
-	MOV_AL(hFile);
-	MOV_DX(lOffset);
+	MOV_BX(hFile);
+	MOV_DX(lOffset);             
 	MOV_CX(lOffset+2);
-	MOV_BX(nOrigin);
-	MOV_AH_CONST(0);
-    Dos3Call();
+	MOV_AL(nOrigin);
+	MOV_AH_CONST(0x42);
+	Dos3Call();
 	__asm {
 	jnc exit
 	mov ax,-1
@@ -260,12 +264,12 @@ _lread endp
 UINT WINAPI _lread(HFILE hFile, void __huge * buffer, UINT count )
 {
 	FUNCTIONSTART;
-	MOV_CX(hFile);
+	MOV_BX(hFile);
 	MOV_DX(buffer);
 	MOV_DS(buffer+2);
-	MOV_BX(count);
-	MOV_AH_CONST(0);
-    Dos3Call();
+	MOV_CX(count);
+	MOV_AH_CONST(0x3f);
+	Dos3Call();
 	__asm {
 	jnc exit
 	mov ax,-1

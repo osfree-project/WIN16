@@ -18,7 +18,7 @@ $(p)winexec$(e)
 
 # 32BIT must be 1 here, but some files not added from HXDPMI yet
 ADD_ASMOPT = -D?32BIT=0 -D?DEBUG=1 -D?REAL=0 -I=$(MYDIR).. -I=$(MYDIR)..$(SEP)..$(SEP)..$(SEP)macrolib
-ADD_COPT = -ms -zt -s -3 -I=$(%WATCOM)$(SEP)h$(SEP)win
+ADD_COPT = -ms -zw -zt -s -3 -I=$(%WATCOM)$(SEP)h$(SEP)win
 JWASM = 1
 DEST        = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 
