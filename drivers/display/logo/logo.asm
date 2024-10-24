@@ -87,9 +87,12 @@ Init:		; Check is boot logo active
 			mov		ax, 4A32h
 			mov		bl, 0
 			int		2fh
-			cmp		ax, 0
-			je		exit
-			
+			cmp		ax, 0		; Is logo turned on?
+			je		exit		; do nothing
+			cmp		ax, 0ffffH	; is logo turned off?
+			je		turnon		; turn it on
+
+			; No Boot logo API
 			push	ds
 			push	cs
 			pop	ds
@@ -207,5 +210,13 @@ exit:
 			pop	ds
 			retf
 
+turnon:
+			; Turn on logo and exit
+			mov		ax, 4A32h
+			mov		bl, 4
+			int		2fh
+
+			jmp exit
+			
 code		ends
 			end strt
