@@ -32,15 +32,7 @@
         path = applications/winmine
         url = https://github.com/osfree-project/minesweeper
         branch = main
-[submodule "applications/expand"]
-        path = applications/expand
-        url = https://github.com/osfree-project/expand
-        branch = main
 [submodule "applications/sysedit"]
         path = applications/sysedit
         url = https://github.com/osfree-project/sysedit
         branch = main
-[submodule "applications/fastopen"]
-	path = applications/fastopen
-	url = https://github.com/osfree-project/fastopen
-	branch = main
