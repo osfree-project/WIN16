@@ -293,7 +293,7 @@ ShowLogo:
 
 ; Execute LOGO entry at DX
 CallLogo:
-	push	ds			; Store our data segment
+	push	ds			; Store our data segment (restored in NoLogo or LogoRet)
 
 	mov	ax, cs			; calc code segment of LOGO
 	lea	bx, LogoStart
@@ -315,7 +315,7 @@ CallLogo:
 	push	cs			; prepare return from ShowLogo
 	push	bx
 
-	push	ds			; LOGO code segment
+	push	ds			; LOGO code/data segment
 	push	dx			; Show logo entry
 	retf				; Simulate far jump to LogoStart:0004h
 
@@ -429,15 +429,15 @@ opNoVirtualHD	db	0
 opEMMExclide	db	0
 
 PanicMsg:
-	db	'Panic! Unrecoverable error!$'
+	db	'Panic! Unrecoverable error!',0dh,0ah,'$'
 NoMemMsg:
-	db	'Windows requires at least 256Kb of RAM$'
+	db	'Windows requires at least 256Kb of RAM',0dh,0ah,'$'
 NoKernelMsg:
-	db	'Windows kernel not found$'
+	db	'Windows kernel not found',0dh,0ah,'$'
 NoDOSXMsg:
-	db	'DOS Extender not found$'
+	db	'DOS Extender not found',0dh,0ah,'$'
 ExecErrMsg:
-	db	'Can''t execute Windows kernel$'
+	db	'Can''t execute Windows kernel',0dh,0ah,'$'
 HelpMsg:
 	db	'osFree Windows subsystem loader',0dh,0ah
 if SWITCHES_SUPPORT eq 0
