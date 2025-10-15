@@ -5,24 +5,25 @@
 #
 
 PROJ        = logo
-TRGT        = $(PROJ).com
+#TRGT        = $(PROJ).lgo
 srcfiles    = $(p)logo$(e)
 JWASM       = 1
-COM         = 1
+RAW         = 1
+EXT         = lgo
 NOLIBS      = 1
-INSTALL_ADD = 1
+#INSTALL_ADD = 1
 ADD_ASMOPT  = -I=$(MYDIR)..$(SEP)..$(SEP)..$(SEP)..$(SEP)macrolib
 DEST        = os2$(SEP)mdos$(SEP)winos2
 
 !include $(%ROOT)tools/mk/appsdos.mk
 
-.SUFFIXES: .lgo
+#.SUFFIXES: .lgo
 
-.lgo: $(PATH)
+#.lgo: $(PATH)
 
-install_add: .symbolic
- @$(SAY) INST     $(PROJ).lgo $(LOG)
- @$(CP) $(PATH)$(PROJ).com $(PATH)$(PROJ).lgo $(BLACKHOLE)
- @$(CP) $(PATH)$(PROJ).lgo $(DEST) $(BLACKHOLE)
+#install_add: .symbolic
+# @$(SAY) INST     $(PROJ).lgo $(LOG)
+# @$(CP) $(PATH)$(PROJ).com $(PATH)$(PROJ).lgo $(BLACKHOLE)
+# @$(CP) $(PATH)$(PROJ).lgo $(DEST) $(BLACKHOLE)
 
 #$(PATH)$(PROJ).exe: .symbolic

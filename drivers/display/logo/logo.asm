@@ -44,6 +44,7 @@
 			; MacroLib
 			include	bios.inc
 			include	dos.inc
+			include bmp.inc
 
 code		segment
 			org	0h
@@ -52,6 +53,7 @@ strt:
 			db	"LOGO"
 			jmp	near ptr Init
 ;			jmp	near ptr Done
+;SwitchToTextMsg     db 'Switching to text. Press a key.', 13, 10,'$'
 Done:		; Check is Boot Logo API active
 			mov		ax, 4A32h
 			mov		bl, 0
@@ -62,6 +64,8 @@ Done:		; Check is Boot Logo API active
 			je		dologo
 
 			; No Boot Logo API, use BIOS
+            ;@DispStr offset SwitchToTextMsg
+
 			@SetMode [CurrentVideoMode]
 			retf
 
@@ -80,13 +84,17 @@ CurrentVideoMode	db	?
 DeadSpace:
 
 ErrorMsg		db 'Error loading LOGO.BMP', 13, 10,'$'
+ErrorFormatMsg	db 'Incorrect LOGO.BMP format', 13, 10,'$'
+SwitchToGraphMsg	db 'Switching to graphics. Press a key.', 13, 10,'$'
 filename		db 'logo.bmp',0
 filehandle		dw ?
-Header			db 54 dup (0)
+FileHeader		BITMAPFILEHEADER <> ;db 14 dup (0)
+InfoHeader      BITMAPINFOHEADER <> ;db 40 dup (0)
 Palette			db 256*4 dup (0)
 ScrLine			db 320 dup (0)
 
-Init:		; Check is boot logo active
+Init:
+			; Check is boot logo active
 			mov		ax, 4A32h
 			mov		bl, 0
 			int		2fh
@@ -96,21 +104,34 @@ Init:		; Check is boot logo active
 			je		turnon		; turn it on
 
 			; No Boot logo API
-			push	ds
-			push	cs
+			push	ds          ; Save DS
+			push	cs          ; Set DS=CS
 			pop	ds
-			@GetMode
+			@GetMode            ; Get current video mode
 			mov	[CurrentVideoMode], al
 
+            ; @todo Try to find bitmap in memory first, it no, then try to load from file
 			; Open file
 			@OpenFil offset filename, 0
 			jc openerror
 			mov [filehandle], ax
 
-			; Read BMP file header, 54 bytes
-			@Read	Header, 54, [filehandle]
+			; Read BMP file header, 14 bytes
+			@Read	FileHeader, size BITMAPFILEHEADER, [filehandle]
+            cmp	word ptr FileHeader.bfType, 'MB'
+            jnz bmpformaterror
+
+			; Read BMP info header, 40 bytes
+            ;
+			@Read	InfoHeader, size BITMAPINFOHEADER, [filehandle]
+
+            ; @todo Seek to correct position using bfOffBits
 			; Read BMP file color palette, 256 colors * 4 bytes (400h)
 			@Read	Palette, 400h, [filehandle]
+
+            ; Switch to graphics
+            @DispStr offset SwitchToGraphMsg
+            @GetKey 0,0,1
 			@SetMode 13h		; 13h 40x25 320x200 256 colors VGA
 
 CopyPal:
@@ -191,9 +212,7 @@ PrintBMPLoop:
 
 			; Copy one line into video memory
 
-			cld 
-
-			; Clear direction flag, for movsb
+			cld			; Clear direction flag, for movsb
 
 			mov cx,320
 			mov si,offset ScrLine
@@ -205,7 +224,11 @@ PrintBMPLoop:
 			@ClosFil [filehandle]
 			jmp	exit
 
-			openerror:
+bmpformaterror:
+			@DispStr offset ErrorFormatMsg
+            jmp exit
+
+openerror:
 			@DispStr offset ErrorMsg
 
 exit:
