@@ -55,13 +55,13 @@ strt:
 ;			jmp	near ptr Done
 ;SwitchToTextMsg     db 'Switching to text. Press a key.', 13, 10,'$'
 Done:		; Check is Boot Logo API active
-			mov		ax, 4A32h
-			mov		bl, 0
-			int		2fh
-			cmp		ax, 0
-			je		dologo
-			cmp		ax, 0ffffh
-			je		dologo
+			;mov		ax, 4A32h
+			;mov		bl, 0
+			;int		2fh
+			;cmp		ax, 0
+			;je		dologo
+			;cmp		ax, 0ffffh
+			;je		dologo
 
 			; No Boot Logo API, use BIOS
             ;@DispStr offset SwitchToTextMsg
@@ -71,7 +71,7 @@ Done:		; Check is Boot Logo API active
 
 dologo:		; Restore text move via Boot Logo API
 			mov		ax, 4A32h
-			mov		bl, 0
+			mov		bl, 3
 			int		2fh
 			retf
 			
