@@ -27,7 +27,9 @@ TRACE		equ	1		; Turn trace on = 1, off = 0
 
 @Trace	MACRO szMsg
 if TRACE
+	push ax
 	@DispStr offset szMsg
+	pop ax
 endif
 	ENDM
 ;----------------------------------------------------------------
@@ -82,7 +84,7 @@ main:
 	; Tune stack
 	lea	sp, stackstart
 
-	; Prepare execution block
+	; Prepare execution blocks
 	mov	[seg1s], es
 	mov	[seg2s], es
 	mov	[seg3s], es
@@ -99,16 +101,16 @@ main:
 
 szTraceFreeMem db 'Free unused memory', 0dh, 0ah, '$'
 szTraceCheckMem db 'Check required free memory', 0dh, 0ah, '$'
-szTraceSearchKernel db 'Search KERNEL.EXE', 0dh, 0ah, '$'
-szTraceSearchKernel286 db 'Search KRNL286.EXE', 0dh, 0ah, '$'
-szTraceSearchKernel386 db 'Search KRNL386.EXE', 0dh, 0ah, '$'
+szTraceSearchKernel db 'Search KERNEL.EXE:$'
+szTraceSearchKernel286 db 'Search KRNL286.EXE:$'
+szTraceSearchKernel386 db 'Search KRNL386.EXE:$'
 szTraceKrnl386 db 'KRNL386.EXE selected', 0dh, 0ah, '$'
 szTraceKrnl286 db 'KRNL286.EXE selected', 0dh, 0ah, '$'
 szTraceKernel db 'KERNEL.EXE selected', 0dh, 0ah, '$'
-szTraceSearchDOSX db 'Search DOSX.EXE', 0dh, 0ah, '$'
+szTraceSearchDOSX db 'Search DOSX.EXE:$'
 szTraceExecDOSX db 'Execute DOSX.EXE', 0dh, 0ah, '$'
 szTraceExecKernel db 'Execute KERNEL.EXE', 0dh, 0ah, '$'
-szTraceSearchWIN386 db 'Search WIN386.EXE', 0dh, 0ah, '$'
+szTraceSearchWIN386 db 'Search WIN386.EXE:$'
 szTraceExecWIN386 db 'Execute WIN386.EXE', 0dh, 0ah, '$'
 szTraceDetectCPU db 'Detect CPU', 0dh, 0ah, '$'
 szTrace286CPU db '80286 or higher CPU detected', 0dh, 0ah, '$'
@@ -116,12 +118,12 @@ szTrace386CPU db '80386 or higher CPU detected', 0dh, 0ah, '$'
 szTraceRealMode db 'Real Mode selected', 0dh, 0ah, '$'
 szTraceStandardMode db 'Standard Mode selected', 0dh, 0ah, '$'
 szTraceEnhancedMode db 'Enhanced Mode selected', 0dh, 0ah, '$'
-szTraceShowLogo db 'Show logo', 0dh, 0ah, '$'
-szTraceHideLogo db 'Hide logo', 0dh, 0ah, '$'
-szTraceNoLogo db 'Logo not found', 0dh, 0ah, '$'
+szTraceShowLogo db 'Show logo:$'
+szTraceHideLogo db 'Hide logo:$'
+szTraceNotFound db ' not found', 0dh, 0ah, '$'
+szTraceFound db ' found', 0dh, 0ah, '$'
 
 skip:
-	@Trace	szTraceShowLogo
 	call	ShowLogo		; Returns in AX resident part of LOGO
 
 ; free unused memory
@@ -151,6 +153,10 @@ if WINVER eq 300
 
 	; Check extenders presense
 	call	CheckExtenders
+
+	; First, if CPU is 8086, then only real mode
+	cmp	[opCPU], 0		; if 8086, then use real mode
+	jz	RealModeKernel
 
 	; First, if switch predefined, then select initial mode
 	cmp	[opEnhanced], 1
@@ -252,7 +258,7 @@ CheckExt:
 
 	jmp	Exit
 RealModeKernel:
-endif
+endif	; WINVER eq 300
 	cmp	[opKERNEL], 1
 	jnz	NoKernel
 
@@ -278,17 +284,18 @@ KernelFound:
 ;
 ; exit from windows kernel
 Exit:
-	@Trace	szTraceHideLogo
 	call	HideLogo
 	@Exit	0			; die
 
 ; Call HideLogo
 HideLogo:
+	@Trace	szTraceHideLogo
 	mov	dx, 7
 	jmp	CallLogo
 
 ; Call ShowLogo
 ShowLogo:
+	@Trace	szTraceShowLogo
 	mov	dx, 4
 
 ; Execute LOGO entry at DX
@@ -311,23 +318,38 @@ CallLogo:
 	cmp	word ptr [bx+2], 'OG'
 	jne	NoLogo
 
+	; restore ds, write message, and set ds back
+	pop ax
+
+	push ds
+	mov ds,ax
+
+	push ax
+	push dx
+	@Trace	szTraceFound
+	pop dx
+	pop ax
+
+	pop ds
+	push ax
+
 	lea	bx, LogoRet
-	push	cs			; prepare return from ShowLogo
+	push	cs			; prepare return from ShowLogo/HideLogo
 	push	bx
 
 	push	ds			; LOGO code/data segment
-	push	dx			; Show logo entry
-	retf				; Simulate far jump to LogoStart:0004h
+	push	dx			; Show/Hide logo entry
+	retf				; Simulate far jump to LogoStart:BX
 
 NoLogo:
 	pop	ds			; Restore our data segment (stored in ShowLogo)
-	@Trace	szTraceNoLogo
-	retn
+	@Trace	szTraceNotFound
+	ret
 
 ; Return from LOGO
 LogoRet:
-	pop	ds			; Restore our data segment (stored in ShowLogo)
-	retn
+	pop	ds			; Restore our data segment (stored in CallLogo)
+	ret
 
 DetectCPU:
 	@Trace	szTraceDetectCPU
@@ -358,33 +380,68 @@ CheckKernels:
 ; search KERNEL.EXE
 	@Trace	szTraceSearchKernel
 	@GetFirst szKernel		; Find first file entry
-	jc	ChkKRNL286
+	jc	KERNELNotFound
+
+	@Trace	szTraceFound
 	mov	[opKERNEL], 1
+	jmp	ChkKRNL286
+
+KERNELNotFound:
+	@Trace	szTraceNotFound
+
 ; search KRNL286.EXE
 ChkKRNL286:
 	@Trace	szTraceSearchKernel286
 	@GetFirst szKernel286		; Find first file entry
-	jc	ChkKRNL386
+	jc	KRNL386NotFound
+
+	@Trace	szTraceFound
 	mov	[opKRNL286], 1
+	jmp	ChkKRNL386
+
+KRNL286NotFound:
+	@Trace	szTraceNotFound
+
 ; search KRNL386.EXE
 ChkKRNL386:
 	@Trace	szTraceSearchKernel386
 	@GetFirst szKernel386		; Find first file entry
-	jc	ExitCheckKernels
+	jc	KRNL386NotFound
+
+	@Trace	szTraceFound
 	mov	[opKRNL386], 1
+	jmp ExitCheckKernels
+
+KRNL386NotFound:
+	@Trace	szTraceNotFound
+
 ExitCheckKernels:
 	ret
 
 CheckExtenders:
 	@Trace	szTraceSearchWIN386
 	@GetFirst szWIN386		; Find first file entry
-	jc	CheckDOSX		; No Win386.exe, so only standard mode
+	jc	WIN386NotFound		; No Win386.exe, so only standard mode
+
+	@Trace	szTraceFound
 	mov	[opWIN386], 1
+	jmp	CheckDOSX
+
+WIN386NotFound:
+	@Trace	szTraceNotFound
+
 CheckDOSX:
 	@Trace	szTraceSearchDOSX
 	@GetFirst szDOSX		; Find first file entry
-	jc	ExitCheckExtenders
+	jc	DOSXNotFound
+
+	@Trace	szTraceFound
 	mov	[opDOSX], 1
+	jmp	ExitCheckExtenders
+
+DOSXNotFound:
+	@Trace	szTraceNotFound
+
 ExitCheckExtenders:
 	ret
 
@@ -520,24 +577,24 @@ Die:
 	push	dx
 	call	HideLogo
 
-	@SetMode		; Switch to video mode 3
+	@SetMode 3			; Switch to video mode 3
 	pop	dx
 
-	@DispStr dx		; Print message
+	@DispStr dx			; Print message
 
-	@Exit	0		; die
+	@Exit	0			; die
 
 ParseCmd:
-; Equates into command line
+	; Equates into command line
 
-;CmdLen	equ	byte ptr es:[80h] ; Command line length
+	;CmdLen	equ	byte ptr es:[80h] ; Command line length
 Cmd	equ	byte ptr es:[81h] ; Command line data
 
 
-; Okay, begin scanning and parsing the command line. Replace handled
-; switches by space.
+	; Okay, begin scanning and parsing the command line. Replace handled
+	; switches by space.
 
-	lea	si, Cmd		; Pointer to command line
+	lea	si, Cmd			; Pointer to command line
 	mov	al,[si-1]
 	lea	di, cmdline+1	; Pointer to command line
 	mov	[cmdline],al
