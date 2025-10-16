@@ -10,6 +10,16 @@
 ;
 ;*/
 
+;====================================================================
+; This file uset to produce WIN.CNF file, which later used to
+; build WIN.COM file by command:
+; COPY /B /Y WIN.CNF+LOGO.LGO WIN.COM
+; Depending on LOGO.LGO extra files can be added. For example,
+; Windows 3.x uses VGALOGO.RLE:
+; COPY /B /Y WIN.CNF+LOGO.LGO+VGALOGO.RLE WIN.COM
+; LOGO.LGO must be aligned on paragraph boundary
+;====================================================================
+
 .8086
 .model tiny
 
@@ -320,18 +330,16 @@ CallLogo:
 
 	; restore ds, write message, and set ds back
 	pop ax
+	push ax
 
 	push ds
 	mov ds,ax
 
-	push ax
 	push dx
 	@Trace	szTraceFound
 	pop dx
-	pop ax
 
 	pop ds
-	push ax
 
 	lea	bx, LogoRet
 	push	cs			; prepare return from ShowLogo/HideLogo
@@ -577,7 +585,7 @@ Die:
 	push	dx
 	call	HideLogo
 
-	@SetMode 3			; Switch to video mode 3
+	;@SetMode 3			; Switch to video mode 3
 	pop	dx
 
 	@DispStr dx			; Print message
