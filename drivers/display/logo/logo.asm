@@ -52,8 +52,8 @@ code		segment
 strt:
 			db	"LOGO"
 			jmp	near ptr Init
-;			jmp	near ptr Done
-;SwitchToTextMsg     db 'Switching to text. Press a key.', 13, 10,'$'
+			jmp	near ptr Done
+SwitchToTextMsg     db 'Switching to text. Press a key.', 13, 10,'$'
 Done:		; Check is Boot Logo API active
 			;mov		ax, 4A32h
 			;mov		bl, 0
@@ -64,7 +64,8 @@ Done:		; Check is Boot Logo API active
 			;je		dologo
 
 			; No Boot Logo API, use BIOS
-            ;@DispStr offset SwitchToTextMsg
+            @DispStr offset SwitchToTextMsg
+            @GetKey 0,0,1
 
 			@SetMode [CurrentVideoMode]
 			retf
