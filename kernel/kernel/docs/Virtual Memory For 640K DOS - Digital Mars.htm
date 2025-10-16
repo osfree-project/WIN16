@@ -1,0 +1,597 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "https://www.w3.org/TR/html4/strict.dtd">
+<html lang="en-US"><!--
+	Copyright (c) 2001-2018 by Digital Mars
+	All Rights Reserved
+	https://www.digitalmars.com
+  --><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Virtual Memory For 640K DOS - Digital Mars</title>
+<link rel="stylesheet" type="text/css" href="Virtual%20Memory%20For%20640K%20DOS%20-%20Digital%20Mars_files/style.css">
+<link rel="stylesheet" type="text/css" href="Virtual%20Memory%20For%20640K%20DOS%20-%20Digital%20Mars_files/print.css" media="print">
+</head>
+
+<body>
+<div id="heading">
+<a href="https://www.digitalmars.com/"><img src="Virtual%20Memory%20For%20640K%20DOS%20-%20Digital%20Mars_files/dmlogo.gif" alt="digitalmars.com" width="270" height="53" border="0"></a>
+
+
+&nbsp; <a href="https://www.digitalmars.com/" title="digitalmars.com"><img src="Virtual%20Memory%20For%20640K%20DOS%20-%20Digital%20Mars_files/home.png" border="0"></a>
+&nbsp; <a href="https://www.digitalmars.com/advancedsearch.html" title="Search Digital Mars web site"><img src="Virtual%20Memory%20For%20640K%20DOS%20-%20Digital%20Mars_files/search.png" border="0"></a>
+&nbsp; <a href="https://www.digitalmars.com/faq.html" title="FAQ"><img src="Virtual%20Memory%20For%20640K%20DOS%20-%20Digital%20Mars_files/faq.png" border="0"></a>
+&nbsp; <a href="https://www.digitalmars.com/NewsGroup.html" title="Forums"><img src="Virtual%20Memory%20For%20640K%20DOS%20-%20Digital%20Mars_files/news.png" border="0"></a>
+&nbsp; <a href="https://www.digitalmars.com/download/freecompiler.html" title="Download C++"><img src="Virtual%20Memory%20For%20640K%20DOS%20-%20Digital%20Mars_files/download.png" border="0"></a>
+&nbsp; <a href="https://www.digitalmars.com/shop.html" title="Get C++ System"><img src="Virtual%20Memory%20For%20640K%20DOS%20-%20Digital%20Mars_files/buy.png" border="0"></a>
+&nbsp; <a href="https://bugzilla.digitalmars.com/issues/buglist.cgi?quicksearch=." title="Bug reports"><img src="Virtual%20Memory%20For%20640K%20DOS%20-%20Digital%20Mars_files/bugs.png" border="0"></a>
+&nbsp; <a href="https://digitalmars.com/ctg/ctg.html" title="Compiler &amp; Tools Guide"><img src="Virtual%20Memory%20For%20640K%20DOS%20-%20Digital%20Mars_files/tools.png" border="0"></a>
+&nbsp; <a href="https://digitalmars.com/rtl/rtl.html" title="Runtime Library Reference"><img src="Virtual%20Memory%20For%20640K%20DOS%20-%20Digital%20Mars_files/library.png" border="0"></a>
+&nbsp; <a href="https://digitalmars.com/ugr/ugr.html" title="IDDE Reference"><img src="Virtual%20Memory%20For%20640K%20DOS%20-%20Digital%20Mars_files/idde.png" border="0"></a>
+&nbsp; <a href="https://digitalmars.com/stl/index.html" title="Standard Template Library"><img src="Virtual%20Memory%20For%20640K%20DOS%20-%20Digital%20Mars_files/stl.png" border="0"></a>
+&nbsp; <a href="https://www.digitalmars.com/d/" title="D programming language"><img src="Virtual%20Memory%20For%20640K%20DOS%20-%20Digital%20Mars_files/d.png" border="0"></a>
+
+	<div id="lastupdate">Last update Sun Mar  4 11:58:08 2018
+</div>
+</div>
+
+
+
+
+<div id="navigation">
+  
+    <div class="navblock">
+    <form method="get" action="https://www.google.com/search">
+    <input id="q" name="q" size="10" value="Search" onfocus='if(this.value == "Search"){this.value="";}'>
+    <input type="hidden" id="domains" name="domains" value="www.digitalmars.com">
+    <input type="hidden" id="sitesearch" name="sitesearch" value="www.digitalmars.com/ctg">
+    <input type="hidden" id="sourceid" name="sourceid" value="google-search">
+    <input type="submit" id="submit" name="submit" value="Go">
+    </form>
+    <div id="toctop">
+    <ul>
+    <li><a href="https://digitalmars.com/ctg/ctg.html" title="Compiler and Tools Guide">Compiler &amp; Tools Guide</a></li>
+    </ul>
+    </div>
+    </div>
+  
+    <div class="navblock">
+    <h2>Tools</h2>
+    <ul>
+    <li><a href="https://digitalmars.com/ctg/bcc.html" title="Convert Borland compiler commands">BCC</a></li>
+    <li><a href="https://digitalmars.com/ctg/chmod.html" title="Examine and change file attributes">CHMOD</a></li>
+    <li><a href="https://digitalmars.com/ctg/cl.html" title="Convert Microsoft compiler commands">CL</a></li>
+    <li><a href="https://digitalmars.com/ctg/coff2omf.html" title="Convert COFF .obj and .lib to OMF">COFF2OMF</a></li>
+    <li><a href="https://digitalmars.com/ctg/coffimplib.html" title="Convert COFF import library OMF">COFFIMPLIB</a></li>
+    <li><a href="https://digitalmars.com/ctg/sc.html" title="Compiler command">DMC</a></li>
+    <li><a href="https://digitalmars.com/ctg/diff.html" title="Compare files">DIFF</a></li>
+    <li><a href="https://digitalmars.com/ctg/diffdir.html" title="Compare directories">DIFFDIR</a></li>
+    <li><a href="https://digitalmars.com/ctg/dman.html" title="Display manual page">DMAN</a></li>
+    <li><a href="https://digitalmars.com/ctg/dump.html" title="Dump files in hex">DUMP</a></li>
+    <li><a href="https://digitalmars.com/ctg/dumpobj.html" title="Dump object files in hex">DUMPOBJ</a></li>
+    <li><a href="https://digitalmars.com/ctg/dumpexe.html" title="Dump exe files">DUMPEXE</a></li>
+    <li><a href="https://digitalmars.com/ctg/exe2bin.html" title="Create .com files">EXE2BIN</a></li>
+    <li><a href="https://digitalmars.com/ctg/flpyimg.html" title="Read/Write Floppy Image">FLPYIMG</a></li>
+    <li><a href="https://digitalmars.com/ctg/grep.html" title="Search files for string">GREP</a></li>
+    <li><a href="https://digitalmars.com/ctg/help-compiler.html" title="Creating Help Tools">HC</a></li>
+    <li><a href="https://www.digitalmars.com/d/2.0/htod.html" title="Convert C headers to D">HTOD</a></li>
+    <li><a href="https://digitalmars.com/ctg/implib.html" title="Build import libraries">IMPLIB</a></li>
+    <li><a href="https://digitalmars.com/ctg/lib.html" title="Object file librarian">LIB</a></li>
+    <li><a href="https://digitalmars.com/ctg/libunres.html" title="Analyze library and object files">LIBUNRES</a></li>
+    <li><a href="https://digitalmars.com/ctg/make.html" title="Simple make utility">MAKE</a></li>
+    <li><a href="https://digitalmars.com/ctg/makedep.html" title="Update makefile dependencies">MAKEDEP</a></li>
+    <li><a href="https://digitalmars.com/ctg/me.html" title="MicroEmacs Text Editor">ME</a></li>
+    <li><a href="https://digitalmars.com/ctg/obj2asm.html" title="Object file disassembler">OBJ2ASM</a></li>
+    <li><a href="https://digitalmars.com/ctg/patchobj.html" title="Patch object files">PATCHOBJ</a></li>
+    <li><a href="https://digitalmars.com/ctg/ctgRC.html" title="Microsoft Resource compiler">RC</a></li>
+    <li><a href="https://digitalmars.com/ctg/rcc.html" title="Digital Mars Resource compiler">RCC</a></li>
+    <li><a href="https://digitalmars.com/ctg/sc.html" title="Compiler command">SC</a></li>
+    <li><a href="https://digitalmars.com/ctg/shell.html" title="Shell scripts">SHELL</a></li>
+    <li><a href="https://digitalmars.com/ctg/smake.html" title="Manage complex projects">SMAKE</a></li>
+    <li><a href="https://digitalmars.com/ctg/touch.html" title="Set file timestamps">TOUCH</a></li>
+    <li><a href="https://digitalmars.com/ctg/unmangle.html" title="Format C++ mangled names">UNMANGLE</a></li>
+    <li><a href="https://digitalmars.com/ctg/whereis.html" title="Search for files">WHEREIS</a></li>
+    </ul>
+    </div>
+
+    <div class="navblock">
+    <h2>Compiling</h2>
+    <ul>
+    <li><a href="https://digitalmars.com/ctg/ctgCompilingCode.html">Compiling Code</a></li>
+    <li><a href="https://digitalmars.com/ctg/C-Language-Implementation.html">C Implementation</a></li>
+    <li><a href="https://digitalmars.com/ctg/CPP-Language-Implementation.html">C++ Implementation</a></li>
+    <li><a href="https://digitalmars.com/ctg/CPP0x-Language-Implementation.html">C++0x Implementation</a></li>
+    <li><a href="https://digitalmars.com/ctg/ctgLanguageImplementation.html">Language Extensions</a></li>
+    <li><a href="https://digitalmars.com/ctg/ctgMixingLanguages.html">Mixing Languages</a></li>
+    <li><a href="https://digitalmars.com/ctg/ctgAsm.html">Assembly Language</a></li>
+    <li><a href="https://digitalmars.com/ctg/ctgInlineAsm.html">Inline Assembler</a></li>
+    <li><a href="https://digitalmars.com/ctg/ctgOptimizer.html">Optimizing Code</a></li>
+    <li><a href="https://digitalmars.com/ctg/ctgNumerics.html">Numerics Programming</a></li>
+    <li><a href="https://digitalmars.com/ctg/regular.html">Regular Expressions</a></li>
+    <li><a href="https://digitalmars.com/ctg/acrtused.html">Acrtused</a></li>
+    <li><a href="https://digitalmars.com/ctg/pragmas.html">Pragmas</a></li>
+    <li><a href="https://digitalmars.com/ctg/precompiled.html">Precompiled Headers</a></li>
+    <li><a href="https://digitalmars.com/ctg/predefined.html">Predefined Macros</a></li>
+    <li><a href="https://digitalmars.com/ctg/warnings.html">Warning Messages</a></li>
+    <li><a href="https://digitalmars.com/ctg/ctgCompilerErrors.html">Error Messages</a></li>
+    <li><a href="https://digitalmars.com/ctg/runtime.html">Runtime Messages</a></li>
+    </ul>
+    </div>
+
+    <div class="navblock">
+    <h2>Linking</h2>
+    <ul>
+    <li><a href="https://digitalmars.com/ctg/optlink.html">Optlink</a></li>
+    <li><a href="https://digitalmars.com/ctg/ctgLinkSwitches.html">Switches</a></li>
+    <li><a href="https://digitalmars.com/ctg/ctgDefFiles.html">Module Definition Files</a></li>
+    <li><a href="https://digitalmars.com/ctg/ctgLinkOps.html">Operation and Design</a></li>
+    <li><a href="https://digitalmars.com/ctg/OptlinkErrorMessages.html">Error Messages</a></li>
+    </ul>
+    </div>
+
+    <div class="navblock">
+    <h2>Win32 Programming</h2>
+    <ul>
+    <li><a href="https://digitalmars.com/ctg/win32programming.html">Win32 Programming</a></li>
+    </ul>
+    </div>
+
+    <div class="navblock">
+    <h2>DOS and Win16 Programming</h2>
+    <ul>
+    <li><a href="https://digitalmars.com/ctg/ctgMemoryModel.html">Memory Models</a></li>
+    <li><a href="https://digitalmars.com/ctg/pointers16.html">16 Bit Pointer Types and Type Modifiers</a></li>
+    <li><a href="https://digitalmars.com/ctg/handle-pointers.html">Handle Pointers</a></li>
+    <li><a href="https://digitalmars.com/ctg/dos-programming.html">DOS</a></li>
+    <li><a href="https://digitalmars.com/ctg/dos32.html">DOS 32 (DOSX)</a></li>
+    <li><a href="https://digitalmars.com/ctg/win16-programming.html">Win16</a></li>
+    <li><a href="https://digitalmars.com/ctg/win16-dll-programming.html">Win16 DLLs</a></li>
+    <li><a href="https://digitalmars.com/ctg/windowspe.html">Win16 Prolog/Epilog</a></li>
+    <li><a href="https://digitalmars.com/ctg/vcm.html">Virtual Memory For 640Kb DOS</a></li>
+    </ul>
+    </div>
+
+    <div class="navblock">
+    <h2>C/C++ Extensions</h2>
+    <ul>
+    <li><a href="https://digitalmars.com/ctg/contract.html">Contract Programming</a></li>
+    <li><a href="https://digitalmars.com/ctg/debugstatement.html">__debug statement</a></li>
+    <li><a href="https://digitalmars.com/ctg/debugstatement.html#debugdeclaration">__debug declaration</a></li>
+    <li><a href="https://digitalmars.com/ctg/trace.html">Dynamic Profiling</a></li>
+    <li><a href="https://digitalmars.com/ctg/html.html">Embedding C in HTML</a></li>
+    </ul>
+    </div>
+
+    <div class="navblock">
+    <h2>Porting to DMC++</h2>
+    <ul>
+    <li><a href="https://digitalmars.com/ctg/switchtodigitalmars.html">Switching to DMC++</a></li>
+    <li><a href="https://digitalmars.com/ctg/fromMicrosoft.html">from Microsoft</a></li>
+    <li><a href="https://digitalmars.com/ctg/fromBorland.html">from Borland</a></li>
+    <li><a href="https://digitalmars.com/ctg/ctgPorting.html">Porting Guide</a></li>
+    </ul>
+    </div>
+
+    <div class="navblock">
+    <center><iframe style="width:120px;height:240px;" marginwidth="0" marginheight="0" scrolling="no" src="//ws-na.amazon-adsystem.com/widgets/q?ServiceVersion=20070822&amp;OneJS=1&amp;Operation=GetAdHtml&amp;MarketPlace=US&amp;source=ac&amp;ref=tf_til&amp;ad_type=product_link&amp;tracking_id=classicempire&amp;marketplace=amazon&amp;region=US&amp;placement=B0055COMG6&amp;asins=B0055COMG6&amp;linkId=GPBMDJNW4AUOBDFQ&amp;show_border=true&amp;link_opens_in_new_window=true" frameborder="0"></iframe></center>
+    <hr>
+    
+<script src="http://www.gmodules.com/ig/ifr?url=http://www.google.com/ig/modules/translatemypage.xml&amp;up_source_language=en&amp;w=160&amp;h=60&amp;title=&amp;border=&amp;output=js"></script>
+    <hr>
+    
+<script type="text/javascript"><!--
+/**/google_ad_client = "pub-5628673096434613";
+/**/google_alternate_color = "eeeeee";
+/**/google_ad_width = 120;
+/**/google_ad_height = 90;
+/**/google_ad_format = "120x90_0ads_al_s";
+/**/google_ad_channel ="3448066137";
+/**/google_color_border = "000000";
+/**/google_color_bg = "F0F0F0";
+/**/google_color_link = "0000FF";
+/**/google_color_url = "008000";
+/**/google_color_text = "000000";
+//--></script>
+<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+    </div>
+</div>
+<div id="content">
+  <h1><a name="vcm">Virtual Memory For 640K DOS</a></h1>
+  
+<blockquote><p>This article originally appeared in the July 1990 issue
+of <b>The C Users Journal</b>. It is reprinted here with the kind
+permission of the publisher.
+</p></blockquote>
+
+<blockquote><p>[Ed. Note: Zortech's newest release v2.1 includes a virtual code
+manager (VCM) which allows even 8088-based machines to ignore
+the 640K barrier. Here the implementor, Walter Bright, describes how
+the technology works.]</p></blockquote>
+
+<p>As time goes by, programs tend to steadily increase in size and complexity.
+There are many reasons for this. Customers want more features,
+unanticipated problems require more code to solve, programming
+in a high level language results in larger programs than assembler.
+As code size grows, so does the amount of data memory needed.
+Pretty soon you start bumping up against the
+notorious "640k barrier" that MS-DOS programmers have all learned to love.
+</p>
+
+<p>The solutions available are:</p>
+
+<dl>	<dt>Recode to reduce code size,</dt>
+	<dd>or "How I learned to stop worrying
+	and love assembler language".
+	This alternative may produce modest
+	decreases in program size, but is very costly in terms of schedule
+	slides.</dd>
+
+	<dt>Stop adding features.</dt>
+	<dd>Yeah, right!</dd>
+
+	<dt>Port to OS/2</dt>
+	<dd>- if you and all your customers can
+	afford the hardware and software costs.</dd>
+
+	<dt>Use a DOS Extender.</dt>
+	<dd>This approach works well, and is cheaper than
+	the OS/2 route, but requires a 286 or better, with lots of
+	extended memory.</dd>
+
+	<dt>Use overlays.</dt>
+	<dd>This traditional technique involves
+	swapping code off disk instead of keeping it resident in
+	memory all the time. Overlays will be discussed shortly.</dd>
+
+	<dt>Use VCM (Virtual Code Manager).</dt>
+	<dd>VCM is a technique whereby
+	virtual memory can be simulated, even on lowly 8088-based
+	machines. VCM, what it is and how it works, is the primary focus
+	of this article.</dd>
+</dl>
+
+<h2>Traditional Overlay Methods</h2>
+
+<p>Overlay schemes work by dividing up a program's code into
+a root segment and various overlay segments. The root segment is always
+resident in memory.
+The overlay segments are placed into a reserved
+section of memory, called the overlay region. An overlay is loaded
+only when the program calls a function in that overlay.
+When an
+overlay is loaded, it replaces any existing overlay in the overlay region.
+The size of the overlay region is the size of the largest overlay segment.
+The layout in memory of a typical program with three overlays is shown in
+Figure 1. Since Overlay <i>C</i> is the largest, it determines the size of
+the overlay region.
+</p>
+
+<img src="Virtual%20Memory%20For%20640K%20DOS%20-%20Digital%20Mars_files/figure1.gif">
+
+<p>The linker sets up overlays. A command to the linker
+to set up the overlays in Figure 1 is something like:
+</p>
+
+<pre class="console">LINK root1+root2+(ovla)+(ovlb)+(ovlc),prog;
+</pre>
+
+<p>The linker replaces all calls to functions in the overlays with calls
+to the overlay manager, which loads the appropriate overlay into the
+overlay region before jumping to the called function.
+</p>
+
+<p>The overlay process begins to break down when more than a few overlays
+are needed. It seems that every function called is in a different
+overlay, and that overlays therefore always need to be loaded in from
+disk. This is a condition known as "thrashing", and results in terrible
+performance. For a simplistic example, imagine the following code:
+</p>
+
+<pre class="ccode">for (i = 0; i &lt; 10; i++)  // in overlay A
+{   funcb();    // in overlay B
+    funcc();    // in overlay C
+}
+</pre>
+
+<p>Running this code will cause the disk drive light to come on, and stay
+on. One time through the loop will cause overlay A to be loaded 2 times,
+and overlay B and C to be overloaded once each. That seems rather silly
+when lots of memory might be available.
+</p>
+
+<p>More sophisticated overlay linkers try to deal with this problem by
+allowing overlay 'hierarchies', that is, the overlay structure looks
+like an inverted tree (see Figure 2). Here, overlay <i>B</i> can be in memory
+at the same time as overlay <i>B1</i>, and <i>B</i> at the same time as <i>B2</i>,
+and <i>C</i>
+at the same time as <i>C2</i>. But no other simultaneous combinations are
+possible. Some implementations don't even allow calls between leaves,
+that is, <i>B1</i> cannot call <i>C1</i>.
+Most programs simply don't decompose into such simple trees.
+</p>
+
+<img src="Virtual%20Memory%20For%20640K%20DOS%20-%20Digital%20Mars_files/figure2.gif">
+
+<p>It is important to remember that the overlays are <i>statically</i> located
+by the linker. They are loaded on demand into a fixed location in the
+program, regardless of what other memory is available.
+The program is organized into an overlay structure
+at compile/link time.
+There is no flexibility based on user usage patterns or memory available
+at run time.
+</p>
+
+<p>What's needed is a scheme with the following capabilities:</p>
+
+<ul>	<li>Overlay segments are loaded into whatever free memory might
+	be available.</li>
+	<li>As the demand for data memory increases (via calls to <i>malloc</i>),
+	the overlay manager discards overlay segments from memory, using
+	a least-recently-used (LRU) algorithm.</li>
+	<li>Decent performance on both 640K XT and AT machines.</li>
+	<li>Requires no special attention from programmers.</li>
+	<li>Works with pointers to functions (necessary to work with virtual
+	functions in C++).</li>
+	<li>Works with debuggers.</li>
+</ul>
+
+<p>VCM is a solution that meets these requirements. Instead of a fixed
+overlay region, when the VCM manager needs memory to load an
+overlay segment (or <i>vseg</i>, virtual code segment), it calls <i>malloc()</i> to
+get the memory. The <i>vseg</i> is then loaded from disk into this region.
+When <i>malloc()</i> runs out of free memory, it calls the VCM manager, which
+discards <i>vseg</i>s from memory until the request to <i>malloc()</i>
+can be satisfied.
+Thus, the layout of code in memory is dynamically adjusted to reflect the
+memory available and the usage pattern. Only under worst case conditions
+does the performance degrade to that of the traditional static overlay
+schemes (a buffer is set aside so that there is always room to load at
+least one <i>vseg</i>). The layout in memory of a VCM program at one particular
+instant is shown in Figure 3.
+</p>
+
+<img src="Virtual%20Memory%20For%20640K%20DOS%20-%20Digital%20Mars_files/figure3.gif">
+
+<p>How does VCM work? The 8088 does not support position-independent code.
+A <i>far</i> function call consists of 5 bytes:
+</p>
+
+<pre class="ccode">0x9A, offset-low, offset-high, seg-low, seg-high
+</pre>
+
+<p>With VCM, functions can't be invoked with <i>far</i> calls because
+we don't know at link time where a <i>vseg</i> will wind up.
+The possible cases are:
+</p>
+
+<ol>
+<li>Call from root to another function in the root. A <i>far</i>
+call will work;
+this is what the linker normally does anyway!
+</li>
+
+<li>Call from root to a function in a <i>vseg</i>;
+the <i>far</i> function calls are replaced with these 5 bytes:
+
+<pre class="ccode">INT     3Fh     ;call VCM manager
+db      vcsnum  ;number of virtual code segment
+dw      voffset ;offset within that code segment
+</pre>
+
+Note that this implies a maximum of 255 virtual code segments.
+If the <i>vseg</i> is resident, VCM jumps to the start of the <i>vseg</i> offset by
+the <i>voffset</i> word. If the <i>vseg</i> is not resident,
+VCM allocates space for it
+via <i>malloc</i>, loads it from disk, and jumps to it.
+</li>
+
+<li>Call from a <i>vseg</i> to another function in the same <i>vseg</i>.
+This is converted to a <i>near</i> function call:
+<pre class="ccode">push    CS      ;the function will do a far return
+call    near ptr function
+nop             ;to fill it out to 5 bytes
+</pre>
+Fortunately, <i>near</i> function calls <i>are</i> position independent.
+Note that a <i>vseg</i> has only one code segment, separate from any other
+segment, so <i>near</i> function calls never cross <i>vseg</i> boundaries.
+</li>
+
+<li>Call from a <i>vseg</i> to another function in a different <i>vseg</i>:
+Do the same thing as with case 2.
+</li>
+
+<li> Call from a <i>vseg</i> to a function in the root:
+Do the same thing as with case 1. However, since at link time can't
+know at what segment value the root will be loaded, when VCM
+loads a <i>vseg</i>, it must be relocated, much like <i>.EXE</i> files
+are relocated when loaded.
+</li>
+
+</ol>
+
+<h2>Other Problems</h2>
+
+<p>How about pointers to functions? A <i>far</i> function pointer is a
+32-bit value: the segment and offset. How can this address be fixed, when
+the code can move around at runtime? The trick here is to replace the
+address of the function with the address of a <i>thunk</i>. The thunk is a
+5-byte entity that the linker adds to the program. The thunk is always
+resident, and stays at a fixed address. The thunk consists of:
+</p>
+
+<pre class="ccode">INT     3Fh     ;call VCM manager
+db      vcsnum  ;number of virtual code segment
+dw      voffset ;offset within that code segment
+</pre>
+
+<p>These pointers to functions are converted to VCM calls using
+the same mechanism which converts direct function calls to
+VCM calls. The function pointer now points to this reload
+thunk. When the function pointer is called, control is actually
+transferred to the reload thunk, which calls the <i>VCM</i> manager to
+load the <i>vseg</i>, which then jumps to the actual function.
+</p>
+
+<p>So far, it's all fairly straightforward. Now comes the tricky part.
+Suppose the code in <i>vseg A</i> calls a function in <i>vseg B</i>.
+Now <i>B</i> calls <i>malloc()</i>
+a few times, and causes <i>vseg A</i> to get discarded from memory. The return
+address into <i>vseg A</i> is still on the stack, but now points into data!
+Returning from that function will cause a crash. Thus,
+when <i>vseg A</i> is discarded, the stack must be walked to find any return
+addresses into <i>vseg A</i>.
+Thse return addresses are then replaced with the addresses of reload
+thunks for <i>vseg A</i>. In order to walk the stack, and distinguish <i>far</i>
+return
+addresses from any other stuff that might be on the stack, some conventions
+must be carefully observed.
+A typical stack frame generated for a function looks like:
+</p>
+
+<pre class="ccode">func proc far
+    push  BP
+    mov   BP,SP
+    sub   SP,10 ;make space for local variables
+    ....
+    add   SP,10
+    pop   BP    ;get caller's BP
+    ret
+func endp
+</pre>
+
+<p>So the return address is always a fixed offset from <i>BP</i>, and <i>BP</i>
+can be used to find the stack frames as the stack is walked back
+wards. Since we must skip any <i>near</i> function calls (recall that
+the return addresses are position independent and no <i>near</i> calls
+could cross a <i>vseg</i> boundary), we must also find a way to distinguish
+a <i>near</i> call on the stack from a <i>far</i> one.
+</p>
+
+<p>The trick is to notice that the stack is always word aligned, that is,
+the least significant bit is always <i>0</i>. This bit can be used as a flag
+to indicate a <i>far</i> stack frame. The stack frame code is modified to:
+</p>
+<pre class="ccode">func proc far
+    inc   BP     ;indicate far return address on stack
+    push  BP
+    mov   BP,SP
+    sub   SP,10  ;make space for local variables
+    ....
+    add   SP,10
+    pop   BP     ;get caller's BP
+    dec   BP     ;counteract previous inc
+    ret
+func endp
+</pre>
+
+<p><i>near</i> functions would not have the <i>inc BP / dec BP</i> pair.
+The stack walker
+now looks at bit <i>0</i> of <i>BP</i>
+for each frame to see if the return address is
+<i>far</i> or <i>near</i>.
+</p>
+
+<p>The same syntax to the linker is used to specify <i>vseg</i> modules, as
+was used for the older overlay schemes, i.e.:
+</p>
+
+<pre class="console">BLINK root1+root2+(vcsa+vcsb)+(vcsc)+(vcsd),prog,,(mlib.lib);
+</pre>
+
+<p>Three <i>vseg</i>s are created (<i>vcsa</i> and <i>vcsb</i> are combined
+into one <i>vseg</i>).
+Enclosing the library <i>mlib</i> in parentheses tells the linker to place each
+module pulled in from the library in its own <i>vseg</i>. Interestingly, even
+<i>main()</i> can be put into a <i>vseg</i>! The only thing that cannot be put into
+a <i>vseg</i> is the C runtime library, because that contains the
+<i>VCM</i> initialization
+code, which had better not get discarded.
+</p>
+
+<p>That's how it works. There's one more problem, though. The compiler must
+be modified to produce the <i>inc BP / dec BP</i> pairs. The trouble is, if
+one module is linked to another, and one has the pairs and the other
+doesn't, mysterious and erratic program crashes may occur. The solution
+is to create a new memory model in addition to the standard T,S,C,M,L
+models, called the V model. All modules are compiled with the V model,
+and the VCM linker verifies that all were compiled with the V model.
+</p>
+
+<p>For assembler programmers, the linker cannot verify that the stack frame
+conventions are followed, so the responsibility rests with the programmer.
+The stack frame is required for any function that calls <i>malloc</i> or calls
+another function which might call <i>malloc</i> or exist in another <i>vseg</i>.
+When
+in doubt, put the stack frame on all functions which call other functions.
+</p>
+
+<p>All the information and <i>vseg</i> code needed by VCM is stored into the
+<i>.EXE</i> program
+file. It is disguised as a Microsoft-style overlay, so that various
+programs that fiddle around with <i>.EXE</i> files will not disturb it.
+Since the <i>vseg</i>s are loaded from the <i>.EXE</i> file,
+the runtime performance of
+VCM can be improved by running the program from a RAM disk.
+</p>
+
+<p>Typical debuggers cannot deal with code that moves around at runtime.
+Zortech's debugger was modified to work with VCM so debugging VCM programs
+is as easy as debugging regular programs.
+</p>
+
+<p>VCM does not overlay data. VCM helps make room for data by discarding
+code that is not in use, but it cannot swap data to disk.
+</p>
+
+<p>In conclusion, VCM is the ideal solution to a certain class of programming
+problems. It is well suited to programs that have large amounts of code,
+have widely varying amounts of data, and that must run on 8088 machines.
+A program fitting this criteria is a word processor. Word processing
+programs typically are loaded with features, each requiring significant
+code to implement. Different customers would use different features.
+The code to implement these features takes away from the memory needed
+for the data. With VCM, only those features which are actually being used
+have the code for them in memory. If there is not much data in the
+document being edited, the needed code is all resident in memory and
+the program runs at maximum speed. As the data grows in size, less
+frequently used code is discarded. Performance gets slower, and eventually
+reaches the worst case, which is that of the traditional static overlay
+scheme.
+</p>
+
+<p>Since VCM's worst case performance is that of static overlays, and typically
+will be far superior, VCM completely obsoletes those old overlay schemes.
+</p>
+
+
+  
+<!-- Google ad -->
+<script type="text/javascript"><!--
+/**/google_ad_client = "pub-5628673096434613";
+/**/google_ad_width = 728;
+/**/google_ad_height = 90;
+/**/google_ad_format = "728x90_as";
+/**/google_ad_type = "text_image";
+/**/google_ad_channel ="3448066137";
+/**/google_page_url = document.location;
+//--></script>
+<script type="text/javascript" src="Virtual%20Memory%20For%20640K%20DOS%20-%20Digital%20Mars_files/show_ads.js">
+</script>
+</div>
+
+
+
+<div id="footernav">
+<a href="https://www.digitalmars.com/" title="digitalmars.com">Home</a> |
+<a href="https://digitalmars.com/rtl/rtl.html" title="Runtime Library Reference">Runtime Library</a> |
+<a href="https://digitalmars.com/ugr/ugr.html" title="IDDE Reference">IDDE Reference</a> |
+<a href="https://digitalmars.com/stl/index.html" title="Standard Template Library">STL</a> |
+<a href="https://www.digitalmars.com/advancedsearch.html" title="Search Digital Mars web site">Search</a> |
+<a href="https://www.digitalmars.com//download/freecompiler.html" title="download C++">Download</a> |
+<a href="https://www.digitalmars.com/NewsGroup.html" title="Forums">Forums</a>
+</div>
+<div id="copyright">
+
+Copyright © 1999-2018 by Digital Mars ®, All Rights Reserved |
+Page generated by <a href="https://dlang.org/spec/ddoc.html">Ddoc</a>.
+</div>
+
+</body></html>

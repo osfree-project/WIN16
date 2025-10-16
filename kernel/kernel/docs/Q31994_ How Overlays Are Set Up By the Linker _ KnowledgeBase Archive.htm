@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en-US"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <link href="Q31994_%20How%20Overlays%20Are%20Set%20Up%20By%20the%20Linker%20_%20KnowledgeBase%20Archive_files/css.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="Q31994_%20How%20Overlays%20Are%20Set%20Up%20By%20the%20Linker%20_%20KnowledgeBase%20Archive_files/style.css">
+    <link rel="stylesheet" type="text/css" href="Q31994_%20How%20Overlays%20Are%20Set%20Up%20By%20the%20Linker%20_%20KnowledgeBase%20Archive_files/print.css" media="print">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- Begin Jekyll SEO tag v2.5.0 -->
+<title>Q31994: How Overlays Are Set Up By the Linker | KnowledgeBase Archive</title>
+<meta name="generator" content="Jekyll v3.8.5">
+<meta property="og:title" content="Q31994: How Overlays Are Set Up By the Linker">
+<meta property="og:locale" content="en_US">
+<meta name="description" content="An Archive of Early Microsoft KnowledgeBase Articles">
+<meta property="og:description" content="An Archive of Early Microsoft KnowledgeBase Articles">
+<link rel="canonical" href="http://jeffpar.github.io/kbarchive/kb/031/Q31994/">
+<meta property="og:url" content="http://jeffpar.github.io/kbarchive/kb/031/Q31994/">
+<meta property="og:site_name" content="KnowledgeBase Archive">
+<script async="" src="Q31994_%20How%20Overlays%20Are%20Set%20Up%20By%20the%20Linker%20_%20KnowledgeBase%20Archive_files/analytics.js"></script><script type="application/ld+json">
+{"headline":"Q31994: How Overlays Are Set Up By the Linker","url":"http://jeffpar.github.io/kbarchive/kb/031/Q31994/","description":"An Archive of Early Microsoft KnowledgeBase Articles","@type":"WebPage","@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+</head>
+
+<body>
+<div id="container">
+    <div class="inner">
+
+        <header>
+            <h1><a href="https://jeffpar.github.io/kbarchive">KnowledgeBase Archive</a></h1>
+            <h2>An Archive of Early Microsoft KnowledgeBase Articles</h2>
+        </header>
+        <section id="downloads" class="clearfix">
+            
+            
+            <a href="https://github.com/jeffpar/kbarchive" id="view-on-github" class="button"><span>View on GitHub</span></a>
+            
+        </section>
+        <hr>
+        <section id="main_content">
+                <div>
+        <h2 id="q31994-how-overlays-are-set-up-by-the-linker">Q31994: How Overlays Are Set Up By the Linker</h2>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Article: Q31994
+Product(s): See article
+Version(s): 3.x 4.06 4.07 5.01.20 5.01.21 5.03
+Operating System(s): MS-DOS
+Keyword(s): ENDUSER | | mspl13_basic
+Last Modified: 26-JAN-1990
+
+The overlay linker uses an interrupt to call in overlaid files. By
+default, the interrupt number used for passing control to overlays is
+63 (3f hex).
+
+The linker links the Microsoft overlay manager from the standard
+Microsoft language run-time libraries. The linker assigns segments to
+overlays based on the grouping you indicate. It replaces
+overlay-to-overlay far calls and root-to-overlay far calls with an
+interrupt sequence that calls the overlay manager. The overlay manager
+swaps overlays if necessary and returns control to the program.
+
+The linker replaces root-to-overlay and overlay-to-overlay far calls
+with the following sequence:
+
+   INT     3Fh         ; can change # with /OVERLAYINTERRUPT:#
+   DB      ?           ; target overlay segment number, where
+                       ; every non-root code segment is numbered
+                       ; starting at 1
+   DW      ?           ; target offset within segment
+
+The interrupt handler is set to the overlay manager code that swaps
+out the resident overlay if necessary and swaps in the target overlay,
+then jumps to the target address. The overlay manager does nothing
+unusual in servicing the interrupts; it does not disable interrupts.
+However, it may issue INT 21h calls to swap overlays.
+
+The overlay manager assumes that once your initialization code has
+been executed, DS and SS will always be the same. Furthermore, it
+assumes you will initialize DS and SS to the value of DGROUP (the
+default data segment defined by Microsoft languages). Note that your
+program also must have a stack segment.
+
+A more detailed description of the overlay manager can be found on
+Page 715 of the "MS-DOS Encyclopedia," "Article 20: The Microsoft
+Object Linker."
+</code></pre></div></div>
+
+
+        <p>
+            THE INFORMATION PROVIDED IN THE MICROSOFT KNOWLEDGE BASE IS
+            PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND.  MICROSOFT DISCLAIMS
+            ALL WARRANTIES, EITHER EXPRESS OR IMPLIED, INCLUDING THE WARRANTIES
+            OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  IN NO
+            EVENT SHALL MICROSOFT CORPORATION OR ITS SUPPLIERS BE LIABLE FOR
+            ANY DAMAGES WHATSOEVER INCLUDING DIRECT, INDIRECT, INCIDENTAL,
+            CONSEQUENTIAL, LOSS OF BUSINESS PROFITS OR SPECIAL DAMAGES, EVEN IF
+            MICROSOFT CORPORATION OR ITS SUPPLIERS HAVE BEEN ADVISED OF THE
+            POSSIBILITY OF SUCH DAMAGES.  SOME STATES DO NOT ALLOW THE EXCLUSION
+            OR LIMITATION OF LIABILITY FOR CONSEQUENTIAL OR INCIDENTAL DAMAGES
+            SO THE FOREGOING LIMITATION MAY NOT APPLY.
+        </p>
+        <p>Copyright Microsoft Corporation 1986-2002.</p>
+    </div>
+
+        </section>
+
+        <footer>
+            
+            KnowledgeBase Archive is maintained by <a href="https://www.pcjs.org/">PCjs</a>.<br>
+            
+            This page was generated by <a href="https://pages.github.com/">GitHub Pages</a>.
+        </footer>
+
+    </div>
+</div>
+
+
+<script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-49658648-3', 'auto');
+    ga('send', 'pageview');
+</script>
+
+
+</body></html>

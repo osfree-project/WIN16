@@ -82,24 +82,22 @@ void WINAPI SafeAnsiToOem(LPCSTR s, LPSTR d)
 HFILE WINAPI _lopen(LPCSTR lpPathName, int iReadWrite)
 {
 	char Buf[128];
-	FUNCTIONSTART;
-	SafeAnsiToOem(lpPathName, Buf);	
-	__asm {
-		push ds
-		mov ax, iReadWrite
+    __asm("push ds");
+//	FUNCTIONSTART;
+    SafeAnsiToOem(lpPathName, Buf);
+    __asm {
+		mov al, byte ptr iReadWrite
 		mov dx, word ptr Buf
 		mov ds, word ptr Buf+2
 		mov ah, 3dh
-	}
-	Dos3Call();
-	__asm {
-		int 21h
+        push cs                 /* make far call */
+        call Dos3Call
 		jnc lopenexit
 		mov ax,-1
-lopenexit:
-		pop ds
+    lopenexit:
+        pop ds
 	}
-	FUNCTIONEND;
+    //	FUNCTIONEND;
 }
 #pragma enable_message(107);
 

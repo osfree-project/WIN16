@@ -668,7 +668,7 @@ __AHINCR equ eINCR.wOfs
 	ENTRY <1,IsTaskLocked>		;122
 	ENTRY <1,KbdRst>		;123
 	ENTRY <1,EnableKernel>		;124
-	db 3,0				;124-126
+	db 2,0				;125-126
 	db 3,1
 	ENTRY <1,GetPrivateProfileInt>	;127
 	ENTRY <1,GetPrivateProfileString>	;128

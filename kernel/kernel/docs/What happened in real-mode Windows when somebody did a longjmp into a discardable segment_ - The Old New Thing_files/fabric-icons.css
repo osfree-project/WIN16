@@ -1,0 +1,19 @@
+@font-face {
+	font-family: "FabricIcons";
+	src: url('../fonts/FabricIcons.woff?1699358813') format('woff');
+	font-style: normal;
+	font-weight: normal;
+}
+
+.fabric-icon:before {
+	font-family: "FabricIcons";
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	font-style: normal;
+	font-variant: normal;
+	font-weight: normal;
+	/* speak: none; only necessary if not using the private unicode range (firstGlyph option) */
+	text-decoration: none;
+	text-transform: none;
+}
+.fabric-icon--ChevronDown:before {content: "\E70D";}.fabric-icon--Cancel:before {content: "\E711";}.fabric-icon--Link:before {content: "\E71B";}.fabric-icon--ChevronRight:before {content: "\E76C";}.fabric-icon--Edit:before {content: "\E70F";}.fabric-icon--Search:before {content: "\E721";}.fabric-icon--Delete:before {content: "\E74D";}.fabric-icon--Message:before {content: "\E8BD";}.fabric-icon--Reply:before {content: "\E97A";}.fabric-icon--Package:before {content: "\E7B8";}.fabric-icon--MixerLogo:before {content: "\F18B";}.fabric-icon--ChevronLeft:before {content: "\E76B";}.fabric-icon--ErrorBadge:before {content: "\EA39";}.fabric-icon--Lightbulb:before {content: "\EA80";}.fabric-icon--Warning:before {content: "\E7BA";}.fabric-icon--Info:before {content: "\E946";}.fabric-icon--ChevronRightSmall:before {content: "\E970";}.fabric-icon--Play:before {content: "\E768";}.fabric-icon--UserRemove:before {content: "\F69B";}.fabric-icon--SortUp:before {content: "\EE68";}.fabric-icon--Sunny:before {content: "\E9BD";}.fabric-icon--Copy:before {content: "\E8C8";}

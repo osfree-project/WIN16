@@ -1,0 +1,14 @@
+/* From learn.microsoft */
+.hljs-comment{color:green}.hljs-pscommand,.hljs-keyword,.hljs-selector-tag,.hljs-built_in,.hljs-name,.hljs-string .hljs-subst,.hljs-tag{color:#0101fd}.hljs-literal{color:#07704a}.hljs-string .hljs-subst,.hljs-attr{color:#0451a5}.hljs-string,.hljs-string .hljs-subst .hljs-string,.hljs-section,.hljs-template-tag,.hljs-template-variable,.hljs-deletion,.hljs-code{color:#a31515}.hljs-parameter,.hljs-type,.hljs-attribute,.hljs-title,.hljs-addition,.hljs-selector-attr,.hljs-selector-pseudo,.hljs-meta{color:#006881}.hljs-doctag{color:#666}.hljs-control{color:#af00db}.hljs-helper{color:#795e26}.hljs-symbol,.hljs-bullet,.hljs-link{color:#0064c8}.hljs-emphasis{font-style:italic}.hljs-strong{font-weight:600}.hljs-reserved,.hljs-constant{color:#cd3131}
+html[theme=dark] .line-highlight{background-color:#006400}
+html[theme=dark] .hljs-comment{color:#63b456}
+html[theme=dark] .hljs-number{color:#b5cea8}
+html[theme=dark] .hljs-pscommand, html[theme=dark] .hljs-keyword,html[theme=dark] .hljs-selector-tag, html[theme=dark] .hljs-built_in, html[theme=dark] .hljs-name, html[theme=dark] .hljs-tag, html[theme=dark] .hljs-literal{color:#569cd6}
+html[theme=dark] .hljs-title{color:#4ec9b0}
+html[theme=dark] .hljs-string .hljs-subst, html[theme=dark] .hljs-attr{color:#9cdcfe}
+html[theme=dark] .hljs-string, html[theme=dark] .hljs-string .hljs-subst .hljs-string, html[theme=dark] .hljs-section, html[theme=dark] .hljs-attribute, html[theme=dark] .hljs-template-tag, html[theme=dark] .hljs-template-variable, html[theme=dark] .hljs-deletion, html[theme=dark] .hljs-type, html[theme=dark] .hljs-code{color:#ce9178}
+html[theme=dark] .hljs-addition, html[theme=dark] .hljs-selector-attr, html[theme=dark] .hljs-selector-pseudo, html[theme=dark] .hljs-meta{color:#2b91af}
+html[theme=dark] .hljs-parameter, html[theme=dark] .hljs-type, html[theme=dark] .hljs-attribute, html[theme=dark] .hljs-title, html[theme=dark] .hljs-addition, html[theme=dark] .hljs-selector-attr, html[theme=dark] .hljs-selector-pseudo, html[theme=dark] .hljs-meta{color:#01cfff}
+html[theme=dark] .hljs-control{color:#c586c0}
+html[theme=dark] .hljs-helper{color:#dcdcaa}
+html[theme=dark] .hljs-doctag, html[theme=dark] .hljs-symbol, html[theme=dark] .hljs-bullet, html[theme=dark] .hljs-link{color:#a6a6a6} html[theme=dark] .hljs-reserved, html[theme=dark] .hljs-constant, .hljs-reserved{color:#f77777}

@@ -1,0 +1,380 @@
+body
+{
+	background: white;
+	color: black;
+	font-family: Arial, Helvetica, sans-serif;
+}
+.contents {
+	margin-top: 0;
+	margin-left: 0.5em;
+	padding-left: 0.5em;
+	font-size: smaller;
+}
+h1
+{
+	text-align: center;
+	text-decoration: underline;
+}
+blockquote
+{
+	font-size: smaller;
+	/*font-style: italic;*/
+	margin-left: 0;
+	margin-right: 0;
+	font-family: "courier new", courier, serif;
+	font-family: "Georgia", courier, serif;
+	background: #DEDEDE url("quote.gif") no-repeat top right;
+	margin: 0.5em;
+	padding: 0.5em;
+	padding-left: 1em;
+	padding-top: 1em;
+}
+
+caption
+{
+	padding: 0 0 10px;
+	font: bold 120% Arial, sans-serif;
+}
+
+pre
+{
+	border: 2px solid #cccccc;
+	background: #e7e7e7;
+	padding: 1ex;
+	margin-left: 3em;
+	color: #000066;
+	width: 640px;
+}
+.shrink
+{
+	margin-left: 0em;
+	width: 15em;
+}
+.bnf {
+	background-color: #fefefe;
+	color: #000066;
+}
+
+.ddoccode {
+	background-color: #dedede;
+	color: #000066;
+}
+
+.console {
+	background-color: #f7f7f7;
+	color: #181818;
+}
+
+.moddeffile {
+	background-color: #efeffe;
+	color: #010199;
+}
+
+.scini {
+	background-color: #feeffe;
+	color: #111199;
+}
+
+.dcode {
+	background-color: #e7e7e7;
+	color: #000066;
+}
+
+.d_code /* D code */
+{
+	background-color: #fcfcfc;
+	color: #000066;
+}
+
+/* Elements of D source code text */
+.d_comment { color: green; }
+.d_string { color: red; }
+.d_keyword { color: blue; }
+.d_psymbol { text-decoration: underline; }
+.d_param { font-style: italic; }
+
+.asmcode { /* Asm code */
+	background-color: #afcbde;
+	color: #000066;
+}
+
+.ccode {
+	background-color: #c5e7e7;
+	color: #000066;
+}
+
+body#toc
+{
+	background: #dddddd;
+	font-size: small;
+}
+
+div#tocheading
+{
+	border-bottom: 2px solid gray;
+	font-size: larger;
+	font-weight: bold;
+	text-align: center;
+	margin-bottom: 1ex;
+	padding-bottom: 1ex;
+}
+div#tocheading b
+{
+	color: red;
+	font-size: 36pt;
+	font-family: serif;
+}
+body#toc ul
+{
+	border-bottom: 2px solid gray;
+	list-style-type: none;
+	margin-left: 0;
+	margin-top: 0;
+	padding-bottom: 1ex;
+	padding-left: 0;
+}
+
+div#toccopyright
+{
+	font-size: smaller;
+	margin-bottom: 1ex;
+	padding-top: 3px;
+}
+
+div#heading
+{
+	border-bottom: 2px solid black;
+	padding-bottom: 1ex;
+}
+div#lastupdate
+{
+	font-size: smaller;
+	font-style: italic;
+}
+div#headingNav
+{
+	padding-bottom: 4px;
+}
+div#headingNav ul
+{
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	margin-bottom: 1px;
+	padding-bottom: 2ex;
+}
+div#headingNav li
+{
+	display: block;
+	float: right;
+	padding-right: 1ex;
+}
+div#headingNav a
+{
+	text-decoration: none;
+	display:block;
+	background-color: #c6c8eb;
+	color:black;
+	border-top: 1px solid #dddddd;
+	border-right: 1px solid #000000;
+	border-bottom: 2px solid #000000;
+	border-left: 1px solid #dddddd;
+	padding: 3px 12px 3px 8px;
+/*
+	padding: 0;
+	margin: 0;
+	height:0;
+*/
+}
+div#headingNav a:hover
+{
+	background-color: #ddddff;
+	border-top: 1px solid #000000;
+	border-left: 1px solid #000000;
+}
+
+div#searchbox
+{
+	padding-top: 3px;
+	text-align:center;
+}
+
+div#toctop
+{
+	font-size: larger;
+	/*text-align:center;*/
+}
+
+a#dlink
+{
+	color: red;
+	font-weight: bold;
+}
+/* For CSS based layout */
+div#navigation
+{
+	font-size: 0.8em;
+	float: left;
+	width: 15em;
+	/*background-color:#eeeeee;*/
+	/*border-right: 1px solid black;*/
+	padding-top: 1em;
+}
+.navblock
+{
+	background-color:#c6c8eb;
+	border: 1px solid black;
+	margin-top: 0;
+	margin-bottom: 1ex;
+	padding-top: 3px;
+	padding-left: 3px;
+}
+.navblock h2
+{
+	font-size: 120%;
+	padding-top: 0px;
+	margin-top: 0;
+	margin-bottom: 0px;
+}
+div#navigation ul
+{
+	list-style-type: none;
+	margin-top: 0px;
+	margin-left: 1ex;
+	margin-right: 1ex;
+	margin-bottom: 1ex;
+	padding:0;
+}
+div#navigation li
+{
+	margin:0;
+	padding: 3px 0 3px 8px;
+}
+div#navigation a
+{
+	text-decoration: none;
+	display:block;
+	margin: 0;
+	background-color: #c6c8eb;
+	color: black;
+	/*
+	border-top: 1px solid #dddddd;
+	border-right: 1px solid #333333;
+	border-bottom: 1px solid #333333;
+	border-left: 1px solid #dddddd;
+	*/
+}
+div#navigation a:hover
+{
+	background-color: #ddddff;
+}
+/*
+div#navigation a:active
+{
+	padding: 2px 13px 4px 7px;
+	background-color: #444444;
+	color: #eeeeee;
+	border-top: 1px solid #333333;
+	border-right: 1px solid #dddddd;
+	border-bottom: 1px solid #dddddd;
+	border-left: 1px solid #333333;
+	height:0;
+}
+*/
+
+
+div#content
+{
+	line-height: 1.4em;
+	margin-left: 15em;
+	margin-right: 1.5em;
+	/*border-left: 1px solid black;*/
+	padding-top: 1em;
+	padding-left: 1em;
+	text-align: justify;
+}
+
+div#content li
+{
+	padding-bottom: 0.5ex;
+}
+
+div#footernav
+{
+	background-color: #c6c8eb;
+	border-top: 1px;
+	border-bottom: 0px;
+	border-left: 1px;
+	border-right: 1px;
+	border-color: black;
+	border-style: solid;
+	padding-right: 7px;
+	text-align: right;
+}
+div#copyright
+{
+	border-top: 1px solid black;
+	font-size: smaller;
+	margin-bottom: 2ex;
+	padding-top: 3px;
+}
+
+/* --- The items below were added to V 0.133 --- */
+
+td.toc {  /* table of contents column <TD> */
+	background-color:#eeeeee;
+	border-left: 1px solid black;
+	border-right: 1px solid black;
+}
+td.compred {  /* comparison with D: "NO" */
+  background-color:#ff5555;
+  text-align:center;
+}
+td.compgreen {  /* comparison with D: "YES" */
+  background-color:#55ff55;
+  text-align:center;
+}
+
+table.table2 {
+	background-color:#e7e7e7;
+	color: #000066;
+	margin-left: 3em;
+}
+
+th.table2 {
+	background-color:#c6c6c6;
+}
+
+th.table3 {
+	background-color:#b5b5b5;
+}
+
+table.comp { /* "comparison with D": table */
+  background-color:#f0f0f0;
+}
+
+
+/*
+The following entries are currently disabled, but
+they might be needed (with color values adjusteded)
+if the doc pages' color scheme is changed.
+
+a:link {
+  color:#006666;
+}
+a:visited {
+  color:#660066;
+}
+a:active {
+  color:#660066;
+}
+*/
+
+dd
+{
+	padding: 1ex;
+	margin-left: 3em;
+	margin-bottom: 1em;
+}
+
+

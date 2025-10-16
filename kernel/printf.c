@@ -3,6 +3,10 @@
  *
  */
 
+#ifndef MK_FP
+#define MK_FP(seg,off) ((void far *)(((unsigned long)(seg) << 16) | (unsigned)(off)))
+#endif
+
 /* This function prints one char */
 extern  void putchar(char);
 #pragma aux putchar               = \
@@ -55,6 +59,12 @@ void putstr (const char *str)
     putchar (*str++);
 }
 
+void putstrfar (const char far *str)
+{
+  while (*str)
+    putchar (*str++);
+}
+
 extern void _cdecl printf (const char *format,...);
 
 void printf (const char *format,...)
@@ -86,6 +96,17 @@ void printf (const char *format,...)
           case 's':
             putstr ((char *) *(dataptr++));
             break;
+
+          case 'S':
+	  {
+/* Для far-указателя нужно получить сегмент и смещение */
+              unsigned int offset = *(dataptr++);
+              unsigned int segment = *(dataptr++);
+              /* Создаем far-указатель из сегмента и смещения */
+              char far *far_ptr = (char far *)MK_FP(segment, offset);
+              putstrfar (far_ptr);           
+	      break;
+          }
           }
     }
 }
