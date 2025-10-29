@@ -182,7 +182,6 @@ endif
 		include fixups.inc
 		include debug.inc
 		include debuger.inc
-		include version.inc
 
 
 ife ?EXTLOAD
@@ -371,8 +370,6 @@ PSystemTermProc DD 0
 if ?LOADDBGDLL
 szDbgout   db '.\DEBUGOUT.DLL',0
 endif
-
-versionstring textequ @CatStr(!",%?VERMAJOR,.,%?VERMINOR,.,%?VERMINOR2,!")
 
 szInitErr  db 'Error in initialization, loading aborted',lf,00
 szShrkErr  db 'memory shrink Error',lf,00

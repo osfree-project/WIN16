@@ -209,7 +209,6 @@ externdef pascal GetWinFlags: far
 	include fixups.inc
 	include debug.inc
 	include debuger.inc
-	include version.inc
 	include pusha.inc
 
 DGROUP group _TEXT,CCONST,_DATA
