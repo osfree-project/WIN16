@@ -1,0 +1,1039 @@
+
+[setup]
+    help   = setup.hlp
+
+;   place any programs here that should be run at the end of setup.
+;   these apps will be run in order of their appearance here
+[run]
+
+[dialog]
+    caption  = "Windows Setup"
+    exit     = "Exit Windows Setup"
+    title    = "Installing Windows 3.0"
+    options  = "In addition to installing Windows 3.0, you can:"
+
+[data]
+    ; Min hard disk space required for installation.
+    neededspace386 = 6300000
+    neededspace286 = 4500000
+    neededspaceNet = 200000
+    ;  Name of the Windows startup program
+    startup = WIN.COM
+    ;  Default dir for installing Win, MUST include a drive letter
+    defdir = C:\WINDOWS
+    ;	 -- screen messages --
+    ;  short name of the program
+    shortname = Windows
+    ;  long name of the program (including version)
+    welcome = "Microsoft Windows Version 3.00"
+    ;  Default language driver.
+    deflang = usa
+    ;  DefCodePage defines which translation table to use if we cannot get
+    ;  code page information from DOS ie we are not under 3.30 or newer.
+    defxlat = 437
+    ; this indicates what country you are in via the country keyboard
+    ; DLL.  we special case the usadll to see if we are in the USA
+    defkeydll = usadll
+    ;  Name of a program invoked after completing setup
+    exec    = "win.com"
+    execcmd = "/r /q:"
+    ; This is the logo data file that will be used in the case of
+      installation of a 2.X display driver.
+    2xlogodata = 2:cgalogo.rle
+    ; this is the cmd line that is executed for the online docs
+    readme = "notepad /.setup readme.txt"
+
+; Here are the names of the disks Setup can prompt for.
+; There must be a disk name for each disk number used
+;
+; The disk number '0' is reserved to represent the windows setup directory
+; the directory may be relative to the directory SETUP was run from.
+;
+; the format is:
+;
+; n = path,disk name,disk tag file
+;
+; n           disk "number"  1-9,A-Z (single char only!)
+; path        path of disk n
+; name        name of disk n
+; disk tag    a file on disk n (used to determine if disk is in drive)
+;
+[disks]
+    1 =. ,"Microsoft Windows 3.0 Disk #1",disk1
+    2 =. ,"Microsoft Windows 3.0 Disk #2",disk2
+    3 =. ,"Microsoft Windows 3.0 Disk #3",disk3
+    4 =. ,"Microsoft Windows 3.0 Disk #4",disk4
+    5 =. ,"Microsoft Windows 3.0 Disk #5",disk5
+
+; These files will be copied to the windows SYSTEM directory
+[windows.system]
+    1:kernel.exe
+    1:gdi.exe
+    1:user.exe
+    1:win.cnf
+
+; These files will be copied to the windows ROOT directory
+[windows]
+    1:setup.hlp
+    1:win.src         ,Net
+    1:system.src      ,Net
+    1:winhelp.exe
+    1:winhelp.hlp
+
+[shell]
+    progman.exe, "Windows Program Manager"
+
+[display]
+; The string following the driver description specifies the screen
+; resolution. It is used to match the system and OEM character sets
+; with the display selection.
+;
+;profile = driver,         Description of driver,                       resolution,    286 grabber,    logo code,       VDD,            386grabber,   ega.sys    logo data     
+;
+8514     = 1:8514.drv,     "8514/a",                                    "100,120,120", 3:vgacolor.gr2, 2:vgalogo.lgo,   4:vdd8514.386,  4:8514.gr3,,             2:vgalogo.rle
+cga      = 1:cga.drv,      "CGA",                                       "200,96,48",   3:cga.gr2,      2:cgalogo.lgo,   4:vddcga.386,   4:cga.gr3,,              2:cgalogo.rle
+plasma   = 1:plasma.drv,   "Compaq Portable Plasma",                    "100,96,96",   3:cga.gr2,      2:cgalogo.lgo,   4:vddcga.386,   4:plasma.gr3,,           2:cgalogo.rle
+egahires = 1:ega.drv,      "EGA",                                       "133,96,72",   3:egacolor.gr2, 2:egalogo.lgo,   x:*vddega,      4:ega.gr3,    3:ega.SYS, 2:egalogo.rle
+egahibw  = 1:egahibw.drv,  "EGA black and white (286 only)",            "133,96,72",   3:egacolor.gr2, 2:cgalogo.lgo,,,                               3:ega.SYS, 2:cgalogo.rle
+egamono  = 1:egamono.drv,  "EGA Monochrome (286 only)",                 "133,96,72",   3:egamono.gr2,  2:egamono.lgo,,,                               3:ega.SYS, 2:egamono.rle
+hercules = 1:hercules.drv, "Hercules Monochrome",                       "133,96,72",   3:hercules.gr2, 2:herclogo.lgo,  4:vddherc.386,  4:herc.gr3,,             2:herclogo.rle
+mcga	 = 1:vgamono.drv,  "IBM MCGA (286 only)",			"100,96,96",   3:vgacolor.gr2, 2:cgalogo.lgo,,,,					 2:cgalogo.rle
+olibw    = 1:olibw.drv,    "Olivetti/AT&T Monochrome or PVC Display",   "120,96,80",   3:oligrab.gr2,  2:cgalogo.lgo,   4:vddcga.386,   4:plasma.gr3,,           2:cgalogo.rle
+sv400a   = 1:sv400a.drv,   "Olivetti OEC Color Display or AT&T VDC750", "120,96,80",   3:sv400a.gr2,   2:egalogo.lgo,,,,			         	 2:egalogo.rle
+ct441    = 1:vga.drv,      "QuadVGA, ATI VIP VGA, 82C441 VGAs",         "100,96,96",   3:vgacolor.gr2, 2:vgalogo.lgo,   4:vddct441.386, 4:vga.gr3,,              2:vgalogo.rle
+vga      = 1:vga.drv,      "VGA",                                       "100,96,96",   3:vgacolor.gr2, 2:vgalogo.lgo,   x:*vddvga,      4:vga.gr3,,              2:vgalogo.rle
+vgamono  = 1:vgamono.drv,  "VGA with Monochrome display",               "100,96,96",   3:vgamono.gr2,  2:vgalogo.lgo,   x:*vddvga,      4:vgamono.gr3,,          2:vgalogo.rle
+v7vga    = 1:v7vga.drv,    "Video Seven VGA with 512K",                 "100,96,96",   3:vgacolor.gr2, 2:vgalogo.lgo,   x:*vddvga, 	4:v7vga.gr3,,            2:vgalogo.rle
+
+; copy these fonts depending on the 386 grabber being used
+[VGAMONO.GR3]
+4:CGA40WOA.FON,4:CGA40850.FON
+4:CGA80WOA.FON,4:CGA80850.FON
+4:EGA40WOA.FON,4:EGA40850.FON
+4:EGA80WOA.FON,4:EGA80850.FON
+
+[VGA.GR3]
+4:CGA40WOA.FON,4:CGA40850.FON
+4:CGA80WOA.FON,4:CGA80850.FON
+4:EGA40WOA.FON,4:EGA40850.FON
+4:EGA80WOA.FON,4:EGA80850.FON
+
+[V7VGA.GR3]
+4:CGA40WOA.FON,4:CGA40850.FON
+4:CGA80WOA.FON,4:CGA80850.FON
+4:EGA40WOA.FON,4:EGA40850.FON
+4:EGA80WOA.FON,4:EGA80850.FON
+
+[EGA.GR3]
+4:CGA40WOA.FON,4:CGA40850.FON
+4:CGA80WOA.FON,4:CGA80850.FON
+4:EGA40WOA.FON,4:EGA40850.FON
+4:EGA80WOA.FON,4:EGA80850.FON
+
+[8514.GR3]
+4:CGA40WOA.FON,4:CGA40850.FON
+4:CGA80WOA.FON,4:CGA80850.FON
+4:EGA40WOA.FON,4:EGA40850.FON
+4:EGA80WOA.FON,4:EGA80850.FON
+
+[PLASMA.GR3]
+4:EGA40WOA.FON,4:EGA40850.FON
+4:EGA80WOA.FON,4:EGA80850.FON
+
+[CGA.GR3]
+4:CGA40WOA.FON,4:CGA40850.FON
+4:CGA80WOA.FON,4:CGA80850.FON
+
+[HERC.GR3]
+4:HERCWOA.FON,4:HERC850.FON
+
+[keyboard.drivers]
+kbd      = 1:keyboard.drv
+kbdoli   = 1:kbdoli.drv
+kbdhp    = 1:kbdhp.drv
+
+[keyboard.types]
+; The drivers are more specific to the machine while the types listed here
+; are more specific to the type of keyboard. In the USA 
+; (if devkeydll == usadll) and the DLL field in not NULL the listed DLL 
+; must be installed. 
+t3s0alat  = "All AT type keyboards (84 - 86 keys)"             ,nodll
+t1s2at&t  = "AT&T '301' keyboard"                              ,nodll
+t1s4at&t  = "AT&T '302' keyboard"                              ,nodll
+t4s0enha  = "Enhanced 101 or 102 key US and Non US keyboards"  ,nodll
+t3s0hp1   = "Hewlett-Packard Vectra keyboard (DIN)"            ,nodll
+t4s40oliv = "Olivetti 101/102 A keyboard"                      ,nodll
+t1s0oliv  = "Olivetti 83 key keyboard"                         ,nodll
+t3s10oliv = "Olivetti 86 Key keyboard"                         ,nodll
+t2s1oliv  = "Olivetti M24 102 key keyboard"                    ,usadll
+t1s42oliv = "PC-XT 83 key keyboard"                            ,nodll
+t1s0pcxt  = "PC/XT - Type keyboard (84 keys)"                  ,nodll
+
+[keyboard.tables]
+; These are the dll that must be installed in system.ini for languages other
+; than english. For example, the entry in system.ini for a Belgium setup
+; would be keyboard.dll = kbdbe.dll. Also, US keyboards types 1,3, and 4 
+; do not require that a DLL be installed. Types 0,2,5, and 6 require that
+; the kbdus.dll table be installed in system.ini
+; Note: these should be sorted in alphabetical order according to the name
+;       that appears within the quotation marks.  These strings will appear
+;       in this order in Control Panel's International Dialog.  In addition,
+;       the two listings of "US" exist due to keyboard types.  Only 1 will
+;       appear in the combobox.
+beldll = 2:kbdbe.dll , "Belgian"
+bridll = 2:kbduk.dll , "British"
+dandll = 2:kbdda.dll , "Danish"
+dutdll = 2:kbdne.dll , "Dutch"
+findll = 2:kbdfi.dll , "Finnish"
+fredll = 2:kbdfr.dll , "French"
+candll = 2:kbdca.dll , "French Canadian"
+gerdll = 2:kbdgr.dll , "German"
+icedll = 2:kbdic.dll , "Icelandic"
+itadll = 2:kbdit.dll , "Italian"
+latdll = 2:kbdla.dll , "Latin American"
+nordll = 2:kbdno.dll , "Norwegian"
+pordll = 2:kbdpo.dll , "Portuguese"
+spadll = 2:kbdsp.dll , "Spanish"
+swedll = 2:kbdsw.dll , "Swedish"
+swfdll = 2:kbdsf.dll , "Swiss French"
+swgdll = 2:kbdsg.dll , "Swiss German"
+nodll  =             , "US"
+usadll = 2:kbdus.dll , "US"
+usddll = 2:kbddv.dll , "US-Dvorak"
+usxdll = 2:kbdusx.dll, "US-International"
+
+[codepages]
+;       Xlat Table    OEM Font     description.
+863 = 2:xlat863.bin, 2:vga863.fon, "French Canadian (863)"
+861 = 2:xlat861.bin, 2:vga861.fon, "Icelandic (861)"
+865 = 2:xlat865.bin, 2:vga865.fon, "Norway & Denmark (865)"
+850 = 2:xlat850.bin, 2:vga850.fon, "International (850)"
+860 = 2:xlat860.bin, 2:vga860.fon, "Portuguese (860)"
+437 =              ,             , "Standard (437)"
+
+[pointing.device]
+;profile = mouse driver,  description,                                    vmd,  dos mouse driver base name
+;
+hpmouse  = 1:hpmouse.drv, "HP Mouse (HP-HIL)",                            x:*vmd,mousehp
+lmouse   = 1:lmouse.drv,  "Logitech serial mouse",                        x:*vmd
+lmouse2  = 1:mouse.drv,   "Logitech bus or PS/2-style",                   x:*vmd,mouse
+ps2mouse = 1:mouse.drv,   "Microsoft, or IBM PS/2",                       x:*vmd,mouse
+msmouse1 = 1:msmouse1.drv,"Mouse Systems (or VisiOn) connected to COM1:", x:*vmd
+msmouse2 = 1:msmouse2.drv,"Mouse Systems (or VisiOn) connected to COM2:", x:*vmd
+nomouse  = 1:nomouse.drv, "No mouse or other pointing device",            x:*vmd
+kbdmouse = 1:kbdmouse.drv,"Olivetti/AT&T Keyboard Mouse",                 x:*vmd
+
+[dos.mouse.drivers]
+; Dos Mouse drivers.
+mouse.sys   = 4:mouse.SYS,     "MS Dos Mouse driver .SYS ver 7.XX"
+mouse.com   = 4:mouse.com,     "MS Dos Mouse driver .COM ver 7.XX"
+mousehp.sys = 4:mousehp.SYS,   "HP Dos Mouse driver .SYS ver 7.XX"
+mousehp.com = 4:mousehp.com,   "HP Dos Mouse driver .COM ver 7.XX"
+
+[network]
+;Prof       Driver,        Description,                                          HelpFile,OptFile,WininiSectName,SysiniSectName,VDD,VDD,n...
+;
+3comopen  = 2:msnet.drv   ,"3Com 3+Open LAN Manager (XNS only)",                             ,,,3Com_net,x:*vnetbios,x:*dosnet,4:lanman10.386
+3comshare = 2:msnet.drv   ,"3Com 3+Share",                                       ,,,3Com_net,x:*vnetbios,x:*dosnet
+banyan    = 2:msnet.drv   ,"Banyan VINES 4.0",                                   ,,,Banyan_net,x:*vnetbios,x:*dosnet,4:baninst.386
+lanman1x  = 2:msnet.drv   ,"LAN Manager 1.x (or 100% compatible)",               ,,,,x:*vnetbios,x:*dosnet,4:lanman10.386
+lanman2b  = 2:msnet.drv   ,"LAN Manager 2.0 Basic (or 100% compatible)",         ,,,,x:*vnetbios,x:*dosnet
+lanman    = 2:lanman.drv  ,"LAN Manager 2.0 Enhanced (or 100% compatible)",      4:lanman.hlp,,,,x:*vnetbios,x:*dosnet
+msnet     = 2:msnet.drv   ,"Microsoft Network (or 100% compatible)",             ,,,,x:*vnetbios,x:*dosnet
+nonet     =               ,"No Network Installed",                               ,,,,x:*vnetbios,x:*dosnet
+novell    = 2:netware.drv ,"Novell Netware 2.10 or above, or Novell Netware 386" ,4:netware.hlp,4:nwpopup.exe,Novell_net,,x:*vnetbios,4:vnetware.386,4:vipx.386
+ibmpclp   = 2:msnet.drv   ,"IBM PC LAN Program",                                           ,,,pclp,x:*vnetbios,x:*dosnet
+
+[pclp]
+386enh,InDOSPolling,TRUE
+
+[Novell_net]
+Windows,load,nwpopup.exe
+
+[Banyan_net]
+386enh,TimerCriticalSection,5000
+
+[3Com_net]
+386enh,TimerCriticalSection,10000
+386enh,UniqueDOSPSP,TRUE
+386enh,PSPIncrement,5
+
+; If a display adapter other than the one in system selection is selected
+; the font is chosen which matches the display resolution exactly.
+[sysfonts]
+1:egasys.fon,"EGA (640x350) resolution System Font", "133,96,72"
+1:cgasys.fon,"CGA (640x200) resolution System Font", "200,96,48"
+1:vgasys.fon,"VGA (640x480) resolution System Font", "100,96,96"
+1:8514sys.fon,"8514/a (1024x768) resolution System Font", "100,120,120"
+1:egasys.fon,"AT&T (640x400) resolution System Font", "120,96,80"
+
+[fixedfonts]
+1:egafix.fon,"EGA (640x350) resolution Fixed System Font", "133,96,72"
+1:cgafix.fon,"CGA (640x200) resolution Fixed System Font", "200,96,48"
+1:vgafix.fon,"VGA (640x480) resolution Fixed System Font", "100,96,96"
+1:8514fix.fon,"8514/a (1024x768) resolution Fixed System Font",  "100,120,120"
+1:egafix.fon,"AT&T (640x400) resolution Fixed System Font", "120,96,80"
+
+[oemfonts]
+1:egaoem.fon,"EGA (640x350) resolution Terminal Font (USA/Europe)", "133,96,72",1
+1:cgaoem.fon,"CGA (640x200) resolution Terminal Font (USA/Europe)", "200,96,48",1
+1:vgaoem.fon,"VGA (640x480) resolution Terminal Font (USA/Europe)", "100,96,96",1
+1:8514oem.fon,"8514 (1024x768) resolution Terminal Font (USA/Europe)", "100,120,120",1
+1:egaoem.fon,"AT&T (640x400) resolution Terminal Font (USA/Europe)","120,96,80",1
+
+;   The win.copy section is a list of files or sections to copy to the WINDOWS
+;   directoy.
+;
+;   FORMAT      from,to
+;
+;   IE
+;       1:foo.txt,  0:        copy foo.txt from disk 1 to the windows directory
+;       #386,       0:system  copy all files in the 386 SECTION to the
+
+[win.copy]
+; copy this section for setup on 286 machines
+	#net,       0:
+        #win.other, 0:system
+        #win.apps,  0:
+	#win.help,  0:
+ 	#win.bmps,  0:
+	#win.readme, 0:
+	#pwin286,   0:system
+
+[win.copy.net]
+; copy this section for network setup
+	#net,       0:
+
+[win.copy.win386]
+; copy this section for setup on 386 machines
+	#net,       0:
+        #win.other, 0:system
+        #win.apps,  0:
+	#win.help,  0:
+ 	#win.bmps,  0:
+	#win.readme, 0:
+	#pwin286,   0:system
+        #pwin386,   0:system
+
+[copy.himem]
+        3:HIMEM.SYS,		"Himem Driver"
+
+[net]
+	2:CONTROL.INI,		"Windows User Files"
+        2:SMARTDRV.SYS
+        2:RAMDRIVE.SYS
+	2:EMM386.SYS
+	2:WINVER
+
+[win.other]
+	2:WINOLDAP.MOD,		"Windows Drivers"
+        2:LZEXPAND.DLL
+        2:WIN87EM.dll
+	2:sysedit.exe
+
+[win.apps]
+        2:PROGMAN.EXE,          "Windows Program Manager"
+        2:TASKMAN.EXE,	        "Windows Task Manager"
+        2:WINFILE.EXE,          "Windows File Manager"
+        2:CALC.EXE,             "Windows Calculator"
+        2:CALENDAR.EXE,         "Windows Calendar"
+        2:CARDFILE.EXE,         "Windows Cardfile"
+        2:CLIPBRD.EXE,          "Windows Clipboard"
+        2:CLOCK.EXE,            "Windows Clock"
+	2:DIGITAL.FON, 	        "Windows Clock"
+        2:CONTROL.EXE,          "Windows Control Panel"
+        2:NOTEPAD.EXE,          "Windows Notepad"
+        2:PBRUSH.EXE,           "Windows Paintbrush"
+        2:PBRUSH.DLL,           "Windows Paintbrush"
+        2:PIFEDIT.EXE,          "Windows PIF Editor"
+        2:RECORDER.EXE,         "Windows Macro Recorder"
+        2:RECORDER.DLL,         "Windows Macro Recorder"
+        2:REVERSI.EXE,          "Windows Reversi"
+        2:PRINTMAN.EXE,		"Windows Print Manager"
+        2:SOL.EXE,              "Windows Solitaire"
+        2:TERMINAL.EXE,         "Windows Terminal"
+        2:WRITE.EXE,            "Windows Write"
+        2:MSDOS.EXE,            "MS-DOS Executive"
+
+[win.help]
+	3:CALC.HLP,		"Windows Calculator help"
+	3:CALENDAR.HLP,		"Windows Calendar help"
+	3:CARDFILE.HLP,		"Windows Cardfile help"
+	3:CLIPBRD.HLP,		"Windows Clipboard help"
+	3:CONTROL.HLP,		"Windows Control Panel help"
+        3:NOTEPAD.HLP,          "Windows Notepad help"
+	3:PBRUSH.HLP,		"Windows Paintbrush help"
+	3:PIFEDIT.HLP,		"Windows PIF Editor help"
+	3:PRINTMAN.HLP,		"Windows Print Manager help"
+	3:PROGMAN.HLP,		"Windows Program Manager help"
+  	3:RECORDER.HLP,		"Windows Recorder help"
+	3:REVERSI.HLP,		"Windows Reversi help"
+	3:SOL.HLP,		"Windows Solitaire help"
+	3:TERMINAL.HLP,		"Windows Terminal help"
+ 	3:WINFILE.HLP,		"Windows File Manager help"
+	3:WRITE.HLP,		"Windows Write help"
+
+[win.bmps]
+	3:PYRAMID.BMP,		"Background bitmaps"
+	3:CHESS.BMP
+	3:WEAVE.BMP
+	3:BOXES.BMP
+	3:PAPER.BMP
+	3:PARTY.BMP
+	3:RIBBONS.BMP
+
+[win.readme]
+	3:readme.txt,		"Readme files"
+	3:networks.txt
+	3:winini.txt
+	3:winini2.txt
+	3:sysini.txt
+	3:sysini2.txt
+        3:sysini3.txt
+	3:printers.txt
+	3:3270.txt
+
+[pwin286]
+        3:KRNL286.EXE,          "Standard Mode files"
+        3:WINOA286.MOD
+        3:DOSX.EXE
+
+
+[pwin386]
+        3:KRNL386.EXE,          "386 Enhanced Mode files"
+        3:WINOA386.MOD
+        3:WIN386.PS2
+        3:WIN386.EXE
+        3:SWAPFILE.EXE
+
+[fonts]
+	4:HELVA.FON, "Helv 8,10,12,14,18,24 (CGA res)", "200,96,48"
+	4:HELVB.FON, "Helv 8,10,12,14,18,24 (EGA res)", "133,96,72"
+	4:HELVC.FON, "Helv 8,10,12,14,18,24 (60 dpi)", "83,60,72"
+	4:HELVD.FON, "Helv 8,10,12,14,18,24 (120 dpi)", "167,120,72"
+	4:HELVE.FON, "Helv 8,10,12,14,18,24 (VGA res)", "100,96,96"
+ 	4:HELVF.FON, "Helv 8,10,12,14,18,24 (8514/a res)", "100,120,120"
+
+	4:COURA.FON, "Courier 10,12,15 (CGA res)", "200,96,48"
+	4:COURB.FON, "Courier 10,12,15 (EGA res)", "133,96,72"
+	4:COURC.FON, "Courier 10,12,15 (60 dpi)", "83,60,72"
+	4:COURD.FON, "Courier 10,12,15 (120 dpi)", "167,120,72"
+	4:COURE.FON, "Courier 10,12,15 (VGA res)", "100,96,96"
+ 	4:COURF.FON, "Courier 10,12,15 (8514/a res)", "100,120,120"
+
+	4:TMSRA.FON, "Tms Rmn 8,10,12,14,18,24 (CGA res)", "200,96,48"
+	4:TMSRB.FON, "Tms Rmn 8,10,12,14,18,24 (EGA res)", "133,96,72"
+	4:TMSRC.FON, "Tms Rmn 8,10,12,14,18,24 (60 dpi)", "83,60,72"
+	4:TMSRD.FON, "Tms Rmn 8,10,12,14,18,24 (120 dpi)", "167,120,72"
+	4:TMSRE.FON, "Tms Rmn 8,10,12,14,18,24 (VGA res)", "100,96,96"
+ 	4:TMSRF.FON, "Tms Rmn 8,10,12,14,18,24 (8514/a res)", "100,120,120"
+
+ 	4:SYMBOLA.FON, "Symbol 8,10,12,14,18,24 (CGA res)", "200,96,48"
+ 	4:SYMBOLB.FON, "Symbol 8,10,12,14,18,24 (EGA res)", "133,96,72"
+ 	4:SYMBOLE.FON, "Symbol 8,10,12,14,18,24 (VGA res)", "100,96,96"
+ 	4:SYMBOLF.FON, "Symbol 8,10,12,14,18,24 (8514/a res)", "100,120,120"
+
+	4:ROMAN.FON, "Roman (All res)",   "CONTINUOUSSCALING"
+	4:SCRIPT.FON, "Script (All res)", "CONTINUOUSSCALING"
+	4:MODERN.FON, "Modern (All res)", "CONTINUOUSSCALING"
+
+[progman.groups]
+Main,1
+Accessories
+Games
+
+[Main]
+"File Manager",         WINFILE.EXE
+"Control Panel",        CONTROL.EXE
+"Print Manager",        printman.exe
+"Clipboard",            CLIPBRD.EXE
+"DOS Prompt",           COMMAND.COM, PROGMAN.EXE, 1
+"Windows Setup",        SETUP.EXE
+
+[Accessories]
+"Write",		WRITE.EXE
+"Paintbrush",		PBRUSH.EXE
+"Terminal",		TERMINAL.EXE
+"Notepad", 		NOTEPAD.EXE
+"Recorder",		RECORDER.EXE
+"Cardfile",		CARDFILE.EXE
+"Calendar",		CALENDAR.EXE
+"Calculator",		CALC.EXE
+"Clock",		CLOCK.EXE
+"PIF Editor",		PIFEDIT.EXE
+
+[Games]
+"Solitaire",            SOL.EXE
+"Reversi",              REVERSI.EXE
+
+[pif]
+; description, exe, pifname, optional parameters, min mem, graphics, com, faste_paste, background bit set
+
+"Lotus 1-2-3",               123.COM,    123.PIF,    "", 256, g, n, p, n,3
+"Lotus 1-2-3",               123.EXE,    5:123.PIF
+"AutoCad",		     acad.exe,   acad.pif,   "", 512, g, n, n, n,6
+"PFS Access",                ACCESS.COM, ACCESS.PIF, "", 128, n, c, n, b,5
+"Lotus Agenda",		     agenda.exe, agenda.pif, "", 128, n, n, p, n,6
+"Brief",                     b.exe,      b.pif,      "", 128, n, n, y, n,2
+"Microsoft Basic",           BASIC.COM,  BASIC.PIF,  "",  64, g, c, n, n,6
+"Microsoft Advanced Basic ", BASICA.EXE, BASICA.PIF, "",  80, g, c, n, n,6
+"Microsoft Bookshelf",       BOOKS.EXE,  BOOKS.PIF, "",    128, g, n, n, n,6
+"Generic Cadd",              CADD.EXE,   CADD.PIF,   "", 384, g, n, n, n,6
+"Microsoft Chart",           CHART.COM,  CHART.PIF,  "", 256, g, n, n, n,6
+"Microsoft C Compiler",      cl.exe,     cl.pif,   "?",  128,n, n, n, n,6
+"MicroRim rBase Clout",      CLOUT.EXE,  CLOUT.PIF,  "", 128, n, n, n, n,4
+"Ashton Tate dBase",         DBASE.EXE,  DBASE.PIF,  "", 384, n, n, p, n,4
+"DataEase",		     dease.exe,  dease.pif,  "", 128, n, n, p, b,6
+"DisplayWrite 3",            DW3PG.COM,  DW3PG.PIF, ",user,d", 228, n, n, p, n,2
+"DisplayWrite 4",            Dw4.bat,    dw4.pif,    "",   128, n, n, p, n,2
+"DisplayWrite Assistant",    dwa.bat,    dwa.pif,    "",   128, n, n, p, n,6
+"IBM Professional Editor",   edit.exe,   edit.pif,   "",   128, n, n, n, n,2
+"XY Write",                  EDITOR.EXE, EDITOR.PIF, "",    96, n, n, n, n,2
+"IBM Filing Assistant",      FILE.EXE,   FILE.PIF,   "",   128, n, n, n, n,4
+"PFS: First Choice",         first.exe,  first.pif,  "",   128, n, n, n, n,6
+"Freelance",                 FL.COM,     FreeLanc.PIF, "-s", 384, g, n, n, n,6
+"Fortran Compiler",          fl.exe,     fl.pif,     "?",   128, n, n, n, n,6
+"FormTool",                  formtool.exe, formtool.pif, "", 128, n, n, n, n,2
+"Foxbase Plus",              foxplus.exe, foxplus.pif, "", 384, n, n, p, n,4
+"PFS: First Publisher",      fp.exe,      fp.pif,    "",   128, n, n, n, n,2
+"Framework",                 FW.EXE,      FW.PIF,    "",   384, n, c, p, b,6
+"IBM Graphing Assistant",    GRAPH.EXE,   GRAPH.PIF, "",   128, n, n, n, n,6
+"GraphWriter",               gw.com,      gw.pif,    "",   400, n, n, p, n,6
+"Harvard Graphics",          hg.exe,      hg.pif,    "",   384, g, n, n, n,6
+"Harvard Project Manager",   HTPM.EXE,    HTPM.PIF,  "",   384, n, n, n, n,6
+"LINK Utility",              link.exe,    link.pif,  "?", 128, n, n, n, n,6
+"Lotus Access System",       LOTUS.COM,   LOTUS.PIF, "",   256, g, n, p, n,3
+"Mail",                      MAIL.EXE,     MAIL.PIF, "", 128, n, n, p, n,5
+"Make utility",              make.exe,    make.pif,  "?", 128, n, n, p, n,6
+"Microsoft Macro Assembler", masm.exe,    masm.pif,  "?", 182, n, n, n, n,6
+"MultiMate",		     mm.exe,      mm.pif,    "",   128, n, n, p, n,2
+"Microsoft Multiplan",       MP.exe,      MP.PIF,    "",   208, n, n, n, n,3
+"Microsoft Multiplan",       MP.COM,      MP.PIF,    "",   208, n, n, n, n,3
+"Norton Advanced Utilities", NI.EXE,       ni.pif,   "",   128, n, n, n, n,6
+"Word Perfect Office",       shell.exe,    shell.pif, "",  200, n, n, n, b,6
+"Microsoft Online",          online.com,   online.pif, "", 128, n, c, p, b,5
+"Paradox",		     paradox2.exe, paradox2.pif, "", 128, n, n, p, n,4
+"Paradox",		     paradox3.exe, paradox3.pif, "", 128, n, n, p, n,4
+"IBM Personal Editor",	     pe.exe,     pe.pif,    "?",    128, n, n, n, n,2
+"PFS File",                  pf.exe,     pf.pif,    "",    128, n, n, p, n,2
+"Microsoft Pascal Compiler", pl.exe,     pl.pif,    "?",  128, n, n, n, n,6
+"PFS Plan",                  PLAN.EXE,   PLAN.PIF,   "",   128, n, n, p, n,6
+"PFS: Professional Network", pn.exe,     pn.pif,    "",    128, n, n, n, n,6
+"Procomm",		     procomm.exe, procomm.pif, "", 128, n, n, p, b,5
+"Procomm Plus",		     pcplus.exe, pcplus.pif, "",   256, n, c, p, b,5
+"Microsoft Project",         PROJ.COM,   PROJ.PIF,  "",    256, n, n, n, n,6
+"PFS: Professional Write",   PW.COM,     pw.pif,    "",    128, n, n, p, n,2
+"Quattro",		     q.exe,      q.pif,     "",    128, n, n, n, n,3
+"Q & A Report Writer",       qa.com,     qa.pif,    "",    384, n, n, n, n,4
+"Microsoft QuickBASIC",      QB.EXE,     QB.PIF,    "",    450, g, n, p, n,6
+"Microsoft Quick C",         qc.exe,     qc.pif,    "",    128, n, n, p, n,6
+"QModem",		     qmodem.exe, qmodem.pif, "",   384, n, c, p, b,5
+"Microsoft Quick Pascal",    qp.exe,     qp.pif,    "",  128, n, n, n, n,6
+"MicroRim rBase",            RBASE.EXE,  RBASE.PIF, "",    512, n, n, n, n,4
+"MicroRim rBase 5000",       RB5000.EXE, RB5000.PIF, "",   400, n, n, n, n,4
+"Relay",                     relay.com,  relay.pif, "",    128, n, c, n, b,5
+"Ready!",                    READY.EXE,  READY.PIF, "",    152, n, n, p , n,6
+"IBM Reporting Assistant",   REPORT.EXE, REPORT.PIF, "",   173, n, n, n, n,6
+"RightWriter",               right.exe,  right.pif,  "",   128, n, n, p, n,2
+"SuperCalc 4",               SC4.COM,    SC4.PIF, "",      128, n, n, p, b,6
+"SuperCalc 5",               sc5.com,    sc5.pif,    "",   300, n, n, p, b,6
+"Smartcom II",               SCOM.EXE,   SCOM.PIF, "",     128, n, c, n, b,5
+"Soft Kicker",               sk.bat,     softkick.pif, "", 512, g, n, n, n, 2
+"Sidekick",                  SK.COM,     SK.PIF,   "",     128, g, n, n, n,2
+"Autosketch",                sketch.exe, sketch.pif, "",   128, n, n, p, n,6
+"Sidekick Plus",             skplus.com, skplus.pif, "",   384, g, n, n, n,2
+"Microsoft Spell",           SPELL.COM,  SPELL.PIF,  "",    64, n, n, n, n,6
+"Lotus Symphony",            symphony.exe, symphony.pif, "", 320, g, c, n, b,3
+"Turbo Pascal",              TURBO.EXE,  TURBO.PIF,  "",   320, g, n, p, n,6
+"Ventura Publisher",         vp.bat,     vp.pif,     "",   512, g, n, n, n,2
+"Volkswriter 3",             vw3.exe,    vw3.pif,    "",   220, n, n, p, n,2
+"Microsoft Word",	     WORD.COM,   word.pif, "",     256, g, n, p, n,2
+"Microsoft Word",	     WORD.EXE,   word5.pif, "",    384, g, n, p, n,2
+"Microsoft Works",           WORKS.EXE,  WORKS.PIF, "",    384, g, c, p, n,6
+"WordPerfect",               WP.EXE,     WP.PIF,     "",   358, n, n, p, n,2
+"IBM Writing Assistant",     WRITE.COM,  WRITE.PIF, "",    196, n, n, n, n,2
+"WordStar 2000",             WS2.EXE,    WS2.PIF, "",   200, n, n, p, n,2
+"WordStar Professional",     ws.exe,     ws.pif,   "",    384, g, n, p, n,2
+"CrossTalk",                 XTALK.EXE,  XTALK.PIF, "",    256, n, c, p, b,5
+
+; If any of these drivers are found in the config.sys file, Setup removes them.
+[compatibility]
+        vdisk.sys
+        cache.sys
+        icache.sys
+	hpemm386.sys
+	hpemm486.sys
+        ramtype.sys
+        pcsx2ems.sys
+        xma2ems.sys
+
+; Lim 4.0 drivers that we know about and will replace if found.
+[lim]
+        cemm.sys
+        iemm.sys
+        ilim386.sys
+        386max.sys
+        qemm.sys
+	emm386.sys
+        pcsxmaem.sys
+        xmaem.sys
+
+; Disk Caching driver that we know about and will replace if found.
+[diskcache]
+        smartdrv.sys
+        cache.sys
+ 	ibmcache.sys
+        icache.sys
+
+; Virtual or Ram disk emulation drivers that we know about and will replace
+; if found.
+[ramdrive]
+        ramdrive.sys
+        vdisk.sys
+
+[wininiupdate]
+    extensions,pcx,"pbrush.exe ^.pcx"
+    extensions,bmp,"pbrush.exe ^.bmp"
+    extensions,rec,"recorder.exe ^.rec"
+    ports,FILE:,""
+    ports,LPT1.OS2:,""
+    ports,LPT2.OS2:,""
+    ports,COM3:,"9600,n,8,1"
+    ports,COM4:,"9600,n,8,1"
+    windows,device,""
+    windows,documents,"txt"
+
+
+[dontfind]
+calc.exe
+calendar.exe
+cardfile.exe
+clipbrd.exe
+clock.exe
+control.exe
+msdos.exe
+notepad.exe
+pbrush.exe
+pifedit.exe
+printman.exe
+progman.exe
+recorder.exe
+reversi.exe
+setup.exe
+sol.exe
+spooler.exe
+swapfile.exe
+sysedit.exe
+taskman.exe
+terminal.exe
+winfile.exe
+winhelp.exe
+winver.exe
+write.exe
+
+[blowaway]
+this line needed
+
+[country]
+"Australia",  "61!1!0!2!1!1!0!2!0!0!!!$!,!.!/!:!,!d/M/yy!d MMMM yyyy!ENG"
+"Austria",  "43!2!2!2!1!1!0!2!1!1!!!S!.!,!-!:!;!yyyy-MM-dd!dddd, dd. MMMM yyyy!GER"
+"Belgium (Dutch)",  "32!1!3!2!1!1!0!2!5!0!!!BF!.!,!/!:!;!d/M/yy!dddd d MMMM yyyy!DUT"
+"Belgium (French)",  "32!1!3!2!1!1!0!2!5!0!!!FB!.!,!/!:!;!d/M/yy!dddd d MMMM yyyy!FRN"
+"Brazil",  "55!1!2!2!1!1!0!2!0!0!!!Cr$!.!,!/!:!;!dd/MM/yy!dddd, d' de 'MMMM' de 'yyyy!POR"
+"Canada (English)",  "2!2!0!2!1!1!0!2!1!1!!hrs.!$!,!.!-!:!.!yy-MM-dd!MMMM. d, yyyy!ENG"
+"Canada (French)",  "2!2!3!2!1!1!0!2!1!1!!hrs.!$! !,!-!:!;!yy-MM-dd!d MMMM, yyyy!FRN"
+"Denmark",  "45!1!3!2!1!1!0!2!5!1!!!kr!.!,!-!.!;!dd-MM-yy!dd. MMMM yyyy!DAN"
+"Finland",  "358!1!3!2!1!1!0!2!5!0!!!mk! !,!.!.!;!d.M.yyyy!dd. MMMM yyyy!FIN"
+"France",  "33!1!3!2!1!1!0!2!5!1!!!F! !,!.!:!;!dd.MM.yy!dddd d MMMM yyyy!FRN"
+"Germany",  "49!1!0!2!1!1!0!2!1!1!!!DM!.!,!.!:!;!dd.MM.yyyy!dddd, d. MMMM yyyy!GER"
+"Iceland",  "354!1!3!2!1!1!0!2!5!0!!!kr!.!,!/!:!;!dd/MM/yyyy!dd MMMM yyyy!ICE"
+"Italy",   "39!1!2!2!1!1!0!0!2!0!!!L.!.!,!/!:!;!dd/MM/yy!dddd, dd MMMM yyyy!ITN"
+"Mexico",  "52!1!0!2!0!1!0!2!0!0!AM!PM!$!,!.!/!:!,!d/M/yy!dddd d' de 'MMMM' de 'yyyy!SPA"
+"Netherlands",  "31!1!2!2!1!1!0!2!2!0!!!f!.!,!/!:!;!d/M/yy!dddd d MMMM yyyy!DUT"
+"New Zealand",  "64!1!0!2!1!1!0!2!1!1!!!$!,!.!/!:!,!d/M/yy!dddd, d MMMM yyyy!ENG"
+"Norway",  "47!1!0!2!1!1!0!2!3!1!!!kr!.!,!.!:!;!d.MM.yy!dd. MMMM yyyy!NOR"
+"Portugal",  "351!1!0!2!1!1!0!2!2!0!!!!.!,!-!:!;!dd-MM-yyyy!dddd, d' de 'MMMM' de 'yyyy!POR"
+"South Korea",  "82!2!0!2!0!1!0!2!1!0!AM!PM!W!,!.!.!:!,!yy.M.d!yyyy.MM.dd!ENG"
+"Spain",  "34!1!2!2!1!1!0!0!5!0!!!Pts!.!,!/!:!;!d/M/yy!dddd d' de 'MMMM' de 'yyyy!SPA"
+"Sweden",  "46!2!3!2!1!1!0!2!5!1!!!kr!.!,!-!.!;!yy-MM-dd!dd MMMM yyyy!SWE"
+"Switzerland (French)",  "41!1!0!2!1!1!0!2!1!1!!!Fr.!'!.!.!,!;!d.M.yy!dddd, dd. MMMM yyyy!FRN"
+"Switzerland (German)",  "41!1!0!2!1!1!0!2!1!1!!!Fr.!'!.!.!,!;!d.M.yy!dddd, dd. MMMM yyyy!GER"
+"Switzerland (Italian)",  "41!1!0!2!1!1!0!2!1!1!!!Fr.!'!.!.!,!;!d.M.yy!dddd, dd. MMMM yyyy!ITN"
+"Taiwan",  "886!0!0!2!0!1!0!2!1!0!AM!PM!NT$!,!.!/!:!,!M/d/yy!dd' of 'MMMM, yyyy!ENG"
+"United Kingdom",  "44!1!0!2!1!1!0!2!1!1!!!£!,!.!/!:!,!dd/MM/yy!dd MMMM yyyy!ENG"
+"United States",  "1!0!0!2!0!1!1!2!0!0!AM!PM!$!,!.!/!:!,!M/d/yy!dddd, MMMM dd, yyyy!USA"
+"Other Country",  "1!0!0!2!0!1!1!2!0!0!AM!PM!$!,!.!/!:!,!M/d/yy!dddd, MMMM dd, yyyy!USA"
+
+[system]
+; The various SYSTEM.DRV, SOUND.DRV, COMM.DRV
+;
+; These	are the	drivers	which may vary from system to system,
+; but are selected only	by the [machine] menu -- they do not have
+; special menus	for their selection.
+system   =    1:system.drv
+sound    =    1:sound.drv
+comm     =    1:comm.drv
+hpsystem =    1:hpsystem.drv
+
+[machine]
+; This section defines default machine selections.  The	system
+; description from each	entry will appear in the initial machine
+; selection menu of Setup.
+;
+; Each entry contains a	descriptive line for the system-selection menu,
+; followed by the filenames of the drivers in fixed order.
+;
+; PLEASE READ THIS. Do not change MachineID's 1 - 5. Also do not enter a
+;                   new machine with an ID = 3 or 4. these are reserved 
+;                   by setup.
+;
+    "All 80386 and 80486 based AST machines","10"
+        system
+        kbd
+        t4s0enha
+        nomouse
+        egahires
+        sound
+        comm
+        nohimemswitch
+        ebios
+        "emmexclude=E000-EFFF"
+
+    "All 80386 based Zenith machines","6"
+        system
+        kbd
+        t4s0enha
+        nomouse
+        egahires
+        sound
+        comm
+        nohimemswitch
+        ebios
+        "emmexclude=E000-EFFF"
+
+    "All Hewlett-Packard machines","2"    ; !! DONT CHANGE THIS NUMBER !!
+        hpsystem
+        kbdhp
+        t4s0enha
+        hpmouse
+        egahires
+        sound
+        comm
+        nohimemswitch
+        hpebios
+   
+  "Everex Step 386/25","7"
+        system
+        kbd
+        t4s0enha
+        nomouse
+        egahires
+        sound
+        comm
+        nohimemswitch
+        ebios
+        "8042ReadCmd=A2,1,F"
+        "8042ReadCmd=A3,1,F"
+        "8042WriteCmd=B3,8,F"
+
+    "MS-DOS or PC-DOS System","1" ; !! DONT CHANGE THIS NUMBER !!
+        system
+        kbd
+        t4s0enha
+        nomouse
+        egahires
+        sound
+        comm
+        nohimemswitch            
+        ebios
+
+    "NCR PC386SX","8"
+        system
+        kbd
+        t4s0enha
+        nomouse
+        egahires
+        sound
+        comm
+        nohimemswitch
+        ebios
+        "emmexclude=E000-EFFF"
+        "emmexclude=C600-C7FF"
+
+    "NCR PC 925","11"
+        system
+        kbd
+        t4s0enha
+        nomouse
+        egahires
+        sound
+        comm
+        nohimemswitch
+        ebios
+
+    "NEC PowerMate SX Plus","9"
+        system       
+        kbd          
+        t4s0enha     
+        nomouse      
+        egahires     
+        sound        
+        comm         
+        nohimemswitch
+        ebios
+        "VirtualHDirq=NO"
+
+    "NEC ProSpeed 386","5"  ; !! DONT CHANGE THIS NUMBER !!
+        system       
+        kbd          
+        t4s0enha     
+        nomouse      
+        egahires     
+        sound        
+        comm         
+        nohimemswitch
+        ebios
+
+    "Toshiba 1600","12"
+        system
+        kbd
+        t4s0enha
+        nomouse
+        egahires
+        sound
+        comm
+        "TOSHIBA"      ; Needed for the Toshiba 1600.
+        ebios
+
+    "Toshiba 5200","13"
+        system       
+        kbd          
+        t4s0enha     
+        nomouse      
+        egahires     
+        sound        
+        comm         
+        nohimemswitch
+        ebios
+        "emmexclude=C000-C7FF"
+
+
+[io.device]
+; (printers, plotters, etc.)
+; The filename is followed by
+;
+; -- the descriptive string which will appear in Control Panel and
+;    which will	appear in WIN.INI
+; -- 1 or 2 strings indicating the scaling for this device
+;
+; There	may be more than one line for a	driver,	corresponding to different
+; printers.
+
+5:TTY.DRV,"Generic / Text Only","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Agfa 9000 Series PS [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Agfa Compugraphic 400PS [PostScript Printer]","DEVICESPECIFIC"
+5:HPPCL.DRV,"Agfa Compugraphic Genics [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Apple LaserWriter [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Apple LaserWriter II NT/NTX [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Apple LaserWriter Plus [PostScript Printer]","DEVICESPECIFIC"
+5:HPPCL.DRV,"Apricot Laser [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"AST TurboLaser/PS - R4081 [PostScript Printer]","DEVICESPECIFIC"
+5:HPPLOT.DRV,"AT&T 435","CONTINUOUSSCALING"
+5:CITOH.DRV,"AT&T 470/475","133,96,72","75,72,96"
+5:IBMGRX.DRV,"AT&T 473/478","167,120,72","60,72,120"
+5:CITOH.DRV,"C-Itoh 8510","133,96,72","75,72,96"
+5:LBP8II.DRV,"Canon LBP-8II","DEVICESPECIFIC"
+5:CANONIII.DRV,"Canon LBP-8III/LBP-4","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Dataproducts LZR-2665 [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Digital LN03R ScriptPrinter [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Digital LPS PrintServer 40 [PostScript Printer]","DEVICESPECIFIC"
+5:EPSON9.DRV,"Epson DFX-5000 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:HPPCL.DRV,"Epson EPL-6000 [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:EPSON9.DRV,"Epson EX-800/1000 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson FX-100 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson FX-100+ [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson FX-185/286 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson FX-80 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson FX-80+ [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson FX-85 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson FX-86e/286e [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson FX-850/1050 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:HPPCL.DRV,"Epson GQ-3500 [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:EPSON9.DRV,"Epson JX-80 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON24.DRV,"Epson L-750/1000 [Epson 24 pin]","100,180,180","67,120,180","150,180,120","200,360,180","50,180,360","100,120,120"
+5:EPSON24.DRV,"Epson LQ-500/510 [Epson 24 pin]","100,180,180","67,120,180","150,180,120","200,360,180","50,180,360","100,120,120"
+5:EPSON24.DRV,"Epson LQ-800/1000 [Epson 24 pin]","100,180,180","67,120,180","150,180,120","200,360,180","50,180,360","100,120,120"
+5:EPSON24.DRV,"Epson LQ-850/950/1050 [Epson 24 pin]","100,180,180","67,120,180","150,180,120","200,360,180","50,180,360","100,120,120"
+5:EPSON24.DRV,"Epson LQ-1500 [Epson 24 pin]","100,180,180","67,120,180","150,180,120","200,360,180","50,180,360","100,120,120"
+5:EPSON24.DRV,"Epson LQ-2500/2550 [Epson 24 pin]","100,180,180","67,120,180","150,180,120","200,360,180","50,180,360","100,120,120"
+5:EPSON9.DRV,"Epson LX-80 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson LX-86 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson LX-800/810 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson MX-100 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson MX-80/80F/T [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson RX-100 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson RX-80/80F/T [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON24.DRV,"Epson SQ-2500 [Epson 24 pin]","100,180,180","67,120,180","150,180,120","200,360,180","50,180,360","100,120,120"
+5:EPSON9.DRV,"Epson T-750 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson T-1000 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:FUJIMTRX.DRV,"Fujitsu DL 2400 [Fujitsu Dot Matrix]","167,120,72","60,72,120"
+5:FUJIMTRX.DRV,"Fujitsu DL 2600 [Fujitsu Dot Matrix]","167,120,72","60,72,120"
+5:FUJIMTRX.DRV,"Fujitsu DL 3300 [Fujitsu Dot Matrix]","167,120,72","60,72,120"
+5:FUJIMTRX.DRV,"Fujitsu DL 3400 [Fujitsu Dot Matrix]","167,120,72","60,72,120"
+5:FUJIMTRX.DRV,"Fujitsu DL 5600 [Fujitsu Dot Matrix]","167,120,72","60,72,120"
+5:FUJIMTRX.DRV,"Fujitsu DX 2200 [Fujitsu Dot Matrix]","167,120,72","60,72,120"
+5:FUJIMTRX.DRV,"Fujitsu DX 2300 [Fujitsu Dot Matrix]","167,120,72","60,72,120"
+5:FUJIMTRX.DRV,"Fujitsu DX 2400 [Fujitsu Dot Matrix]","167,120,72","60,72,120"
+5:FUJIMTRX.DRV,"Fujitsu DX 3100 [Fujitsu Dot Matrix]","167,120,72","60,72,120"
+5:TH760.DRV,"Hermes 820","100,120,120","100,60,60","100,240,240"
+5:HPPLOT.DRV,"HP 7470A [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP 7475A [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP 7550A [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP 7580A [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP 7580B [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP 7585A [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP 7585B [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP 7586B [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP ColorPro [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP ColorPro with GEC [HP Plotter]","CONTINUOUSSCALING"
+5:DESKJET.DRV,"HP DeskJet Family","100,300,300","100,300,300"
+5:HPPLOT.DRV,"HP DraftPro [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP DraftPro DXL [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP DraftPro EXL [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP DraftMaster I [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP DraftMaster II [HP Plotter]","CONTINUOUSSCALING"
+5:HPPCL.DRV,"HP LaserJet [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:HPPCL.DRV,"HP LaserJet IID [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:HPPCL.DRV,"HP LaserJet IIP [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:hppcl5a.drv,"HP LaserJet III","DEVICESPECIFIC"
+5:HPPCL.DRV,"HP LaserJet Plus [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:HPPCL.DRV,"HP LaserJet 500+ [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:HPPCL.DRV,"HP LaserJet Series II [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:HPPCL.DRV,"HP LaserJet 2000 [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:PAINTJET.DRV,"HP PaintJet Series","100,180,180","100,120,120"
+5:THINKJET.DRV,"HP ThinkJet (2225 C-D)","100,96,96"
+5:IBMCOLOR.DRV,"IBM Color Printer","167,140,84","60,84,140","167,120,72"
+5:IBMGRX.DRV,"IBM Graphics","167,120,72","60,72,120"
+5:ibm4019.drv,"IBM Laser Printer 4019","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"IBM Personal Pageprinter [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"IBM Personal Page Printer II-030 [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"IBM Personal Page Printer II-031 [PostScript Printer]","DEVICESPECIFIC"
+5:proprint.DRV,"IBM Proprinter [IBM Proprinters]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:proprint.DRV,"IBM Proprinter II [IBM Proprinters]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:proprint.DRV,"IBM Proprinter III [IBM Proprinters]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:proprn24.DRV,"IBM Proprinter X24 [IBM Proprinter 24]","100,180,180","67,120,180","150,180,120","200,360,180","50,180,360"
+5:proprn24.DRV,"IBM Proprinter X24e [IBM Proprinter 24]","100,180,180","67,120,180","150,180,120","200,360,180","50,180,360"
+5:proprint.DRV,"IBM Proprinter XL [IBM Proprinters]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:proprint.DRV,"IBM Proprinter XL II [IBM Proprinters]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:proprn24.DRV,"IBM Proprinter XL24 [IBM Proprinter 24]","100,180,180","67,120,180","150,180,120","200,360,180","50,180,360"
+5:proprn24.DRV,"IBM Proprinter XL24e [IBM Proprinter 24]","100,180,180","67,120,180","150,180,120","200,360,180","50,180,360"
+5:QWIII.DRV,"IBM QuietWriter III","100,120,120","100,60,60","100,240,240"
+5:HPPCL.DRV,"Kyocera F-Series [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Linotronic 100/300/500 [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"NEC Colormate PS [PostScript Printer]","DEVICESPECIFIC"
+5:NEC24pin.DRV,"NEC PinWriter CP6 [NEC Pinwriter]","100,360,360","100,120,120"
+5:NEC24pin.DRV,"NEC PinWriter CP7 [NEC Pinwriter]","100,360,360","100,120,120"
+5:NEC24pin.DRV,"NEC PinWriter P5 [NEC Pinwriter]","100,360,360","100,120,120"
+5:NEC24pin.DRV,"NEC PinWriter P5XL [NEC Pinwriter]","100,360,360","100,120,120"
+5:NEC24pin.DRV,"NEC PinWriter P6 [NEC Pinwriter]","100,360,360","100,120,120"
+5:NEC24pin.DRV,"NEC PinWriter P7 [NEC Pinwriter]","100,360,360","100,120,120"
+5:NEC24pin.DRV,"NEC PinWriter P9XL [NEC Pinwriter]","100,360,360","100,120,120"
+5:NEC24pin.DRV,"NEC PinWriter P2200 [NEC Pinwriter]","100,360,360","100,120,120"
+5:NEC24pin.DRV,"NEC PinWriter P5200 [NEC Pinwriter]","100,360,360","100,120,120"
+5:NEC24pin.DRV,"NEC PinWriter P5300 [NEC Pinwriter]","100,360,360","100,120,120"
+5:HPPCL.DRV,"NEC Silentwriter LC 860 [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:HPPCL.DRV,"NEC Silentwriter LC 860 Plus [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"NEC Silentwriter LC 890 [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"NEC Silentwriter LC 890XL [PostScript Printer]","DEVICESPECIFIC"
+5:IBMGRX.DRV,"Okidata 92/93-IBM","167,120,72","60,72,120"
+5:OKI9.DRV, "Okidata ML 192 [Okidata 9 Pin]","167,120,72","60,72,120"
+5:OKI9.DRV, "Okidata ML 193 [Okidata 9 Pin]","167,120,72","60,72,120"
+5:OKI9.DRV, "Okidata ML 320 [Okidata 9 Pin]","167,120,72","60,72,120"
+5:OKI9.DRV, "Okidata ML 321 [Okidata 9 Pin]","167,120,72","60,72,120"
+5:OKI9IBM.DRV, "Okidata ML 192-IBM [Okidata 9 Pin IBM]","167,120,72","60,72,120"
+5:OKI9IBM.DRV, "Okidata ML 193-IBM [Okidata 9 Pin IBM]","167,120,72","60,72,120"
+5:OKI9IBM.DRV, "Okidata ML 320-IBM [Okidata 9 Pin IBM]","167,120,72","60,72,120"
+5:OKI9IBM.DRV, "Okidata ML 321-IBM [Okidata 9 Pin IBM]","167,120,72","60,72,120"
+5:OKI24.DRV,"Okidata 390/391 [Okidata 24 pin]","100,180,180","67,120,180","100,120,120"
+5:OKI24.DRV,"Okidata 393 [Okidata 24 pin]","100,180,180","67,120,180","100,120,120"
+5:OKI24.DRV,"Okidata 393C [Okidata 24 pin]","100,180,180","67,120,180","100,120,120"
+5:HPPCL.DRV,"Okidata LaserLine 6 [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:OLIPRINT.DRV,"Olivetti DM 100/1 [Olivetti DM 100...590]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:OLIPRINT.DRV,"Olivetti DM 100/2 [Olivetti DM 100...590]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:OLIPRINT.DRV,"Olivetti DM 100/4 [Olivetti DM 100...590]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:OLIPRINT.DRV,"Olivetti DM 105 [Olivetti DM 100...590]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:OLIPRIN2.DRV,"Olivetti DM 250 [Olivetti DM 250/400]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:OLIPRINT.DRV,"Olivetti DM 280/282 [Olivetti DM 100...590]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:OLIPRINT.DRV,"Olivetti DM 286/296 [Olivetti DM 100...590]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:OLIPRINT.DRV,"Olivetti DM 290/292 [Olivetti DM 100...590]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:OLIPRIN2.DRV,"Olivetti DM 400 [Olivetti DM 250/400]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:OLIPRINT.DRV,"Olivetti DM 580 [Olivetti DM 100...590]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:OLIPRINT.DRV,"Olivetti DM 590 [Olivetti DM 100...590]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:DM600.DRV,"Olivetti DM 600","100,180,180","67,120,180","150,180,120","100,120,120"
+5:HPPCL.DRV,"Olivetti ETV 5000 [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:HPPCL.DRV,"Olivetti PG 108 [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:HPPCL.DRV,"Olivetti PG 208 M2 [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Olivetti PG 303 [PostScript Printer]","DEVICESPECIFIC"
+5:HPPCL.DRV,"Olivetti PG 308 HS [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Olivetti PG 308 HS [PostScript Printer]","DEVICESPECIFIC"
+5:OLIPRINT.DRV,"Olivetti PR 15B/17B [Olivetti PR 15/17/19]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:OLIPRINT.DRV,"Olivetti PR 19B [Olivetti PR 15/17/19]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:OLIPRIN2.DRV,"Olivetti PR 24","167,120,72","60,72,120","83,120,144","120,144,120"
+5:TH760.DRV,"Olivetti TH 760","100,120,120","100,60,60","100,240,240"
+5:PSCRIPT.DRV,"QMS ColorScript 100 [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"QMS-PS 800 [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"QMS-PS 800 Plus [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"QMS-PS 810 [PostScript Printer]","DEVICESPECIFIC"
+5:HPPCL.DRV,"QuadLaser I [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:HPPCL.DRV,"Tandy LP-1000 [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:HPPCL.DRV,"Tegra Genesis [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:TI850.DRV,"TI 850/855","167,120,72","60,72,120"
+5:PSCRIPT.DRV,"TI OmniLaser 2108 [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"TI OmniLaser 2115 [PostScript Printer]","DEVICESPECIFIC"
+5:TOSHIBA.DRV,"Toshiba P351","100,180,180"
+5:TOSHIBA.DRV,"Toshiba P1351","100,180,180"
+5:HPPCL.DRV,"Toshiba PageLaser12 [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Varityper VT-600 [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Wang LCS15 [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Wang LCS15 FontPlus [PostScript Printer]","DEVICESPECIFIC"
+5:HPPCL.DRV,"Wang LDP8 [PCL / HP LaserJet]","DEVICESPECIFIC"
+
+[io.dependent]
+  hppcl.drv=   5:finstall.dll, 5:finstall.hlp, 5:hppcl.hlp
+  deskjet.drv= 5:finstall.dll, 5:finstall.hlp, 5:deskjet.hlp
+  hppcl5a.drv= 5:finstall.dll, 5:finstall.hlp, 5:hppcl.hlp
+  pscript.drv= 5:pscript.hlp
+  ibm4019.drv= 5:sf4019.exe
+  tty.drv=  5:tty.hlp
+  paintjet.drv= 5:paintjet.hlp, 5:cr12rpa.pjf, 5:lg12rpa.pjf, 5:lg08rpa.pjf
+
+[special_adapter]
+eitherlink  = DMAbuffersize,32  ; Needed if EitherLink MC is detected.
+
+[ebios]
+ebios       = x:*ebios               ; Required for most 386 machines.
+hpebios     = 4:hpebios.386,x:*ebios ; Required for HP 386 machines.
+
+[language]
+; Language drivers, must be installed for non US installation.
+dan = 2:langsca.dll , "Danish"
+dut = 2:langdut.dll , "Dutch"
+usa =               , "English (American)"
+eng = 2:langeng.dll , "English (International)"
+fin = 2:langsca.dll , "Finnish"
+frn = 2:langfrn.dll , "French"
+fcf = 2:langeng.dll , "French Canadian"
+ger = 2:langger.dll , "German"
+ice = 2:langsca.dll , "Icelandic"
+itn = 2:langeng.dll , "Italian"
+nor = 2:langsca.dll , "Norwegian"
+por = 2:langeng.dll , "Portuguese"
+spa = 2:langspa.dll , "Spanish"
+swe = 2:langsca.dll , "Swedish"
+
+
+
+
+
+
+

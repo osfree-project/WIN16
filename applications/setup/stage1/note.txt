@@ -1,0 +1,5 @@
+system
+display
+kbd
+mouse
+далее по какой-то логике шрифты...
