@@ -419,6 +419,14 @@ extern void SetES( unsigned short );
 extern void SetCX( unsigned short );
 #pragma aux SetCX = parm [cx];
 
+extern void SaveDS(void);
+#pragma aux SaveDS               = \
+        "push ds";
+
+extern void RestoreDS(void);
+#pragma aux RestoreDS               = \
+        "pop ds";
+
 #define VALID_HANDLE(handle) (((handle)>>__AHSHIFT)<globalArenaSize)
 #define GET_ARENA_PTR(handle)  (pGlobalArena + ((handle) >> __AHSHIFT))
 

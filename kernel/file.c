@@ -82,8 +82,8 @@ void WINAPI SafeAnsiToOem(LPCSTR s, LPSTR d)
 HFILE WINAPI _lopen(LPCSTR lpPathName, int iReadWrite)
 {
 	char Buf[128];
-    __asm("push ds");
-//	FUNCTIONSTART;
+    SaveDS();
+    FUNCTIONSTART;
     SafeAnsiToOem(lpPathName, Buf);
     __asm {
 		mov al, byte ptr iReadWrite
@@ -95,9 +95,9 @@ HFILE WINAPI _lopen(LPCSTR lpPathName, int iReadWrite)
 		jnc lopenexit
 		mov ax,-1
     lopenexit:
-        pop ds
 	}
-    //	FUNCTIONEND;
+    RestoreDS();
+    FUNCTIONEND;
 }
 #pragma enable_message(107);
 
@@ -107,22 +107,23 @@ HFILE WINAPI _lcreat(LPCSTR lpPathName, int a)
 {
 	char Buf[128];
 	FUNCTIONSTART;
-	SafeAnsiToOem(lpPathName, Buf);	
+    SaveDS();
+    SafeAnsiToOem(lpPathName, Buf);
 	__asm {
 		push ds
 		mov cx, a
 		mov dx, word ptr Buf
 		mov ds, word ptr Buf+2
 		mov ax, 3ch
-	}
-	Dos3Call();
-	__asm {
+        push cs             /* far call */
+    	call Dos3Call
 		pop ds
 		jnc exit
 		mov ax,-1
-exit:
+    exit:
 	}
-	FUNCTIONEND;
+    RestoreDS();
+    FUNCTIONEND;
 }
 #pragma enable_message(107);
 

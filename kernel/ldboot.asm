@@ -16,6 +16,8 @@
 		; Kernel defines
 		include kernel.inc
 
+public pascal wVersion
+
 ;public BLKSIZE
 
 if ?DEBUG
@@ -257,7 +259,6 @@ _BSS segment
 ;*** global constants, initialized during start
 
 wCSlim		dw ?			;limit CS (=CSSIZE-1), size of loader segment incl. stack
-wVersion	dw ?			;DOS version major+minor
 if ?EXTLOAD
 dwMemHdl	dd ?			;DPMI memory handle for loader segment
 endif
@@ -360,6 +361,7 @@ SELTABLESTART	dd	?		; Смещение начала структуры SELTAB в
 
 ; Kernel specific data
 wKernelDS 	dw	?		; Kernel Data segment
+wVersion	dw ?			; DOS version major+minor
 
 KernelFlags DW 0, 0
 PMouseTermProc DD 0

@@ -210,7 +210,6 @@ void WINAPI StartProgman(void)
 
 	FUNCTIONSTART;
 
-	printf("getshell\r\n");
 	GetPrivateProfileString((LPCSTR)"boot", "shell", "", buffer, sizeof(buffer), "SYSTEM.INI");
 	printf("shell=%s\r\n", buffer);
 
@@ -234,7 +233,7 @@ void WINAPI KernelMain(void)
 
 	if (!probe_dosbox_id()) {
 		printf("DOSBox integration device not found\n");
-//		exit;//return 1;
+//		return 1;
 	}
 	dosbox_id_debug_message("DOSBox integration device found \n");
 

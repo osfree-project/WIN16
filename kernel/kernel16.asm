@@ -27,6 +27,7 @@ public GetExePtr
 public GetProcAddress
 public GetModuleHandle
 public Dos3Call
+
 ;externdef pascal SetWinFlags: far
 
 externdef pascal _lopen:far
@@ -158,6 +159,8 @@ externdef pascal Yield: far
 externdef pascal OldYield: far
 externdef pascal DirectedYield: far
 
+externdef pascal GetVersion:far
+
 ; Selectors
 externdef pascal AllocSelector: far
 externdef pascal FreeSelector: far
@@ -248,13 +251,6 @@ FatalExit proc far pascal
 	@Exit RC_FATAL
 FatalExit endp
 
-GetVersion proc far pascal
-	@GetVer
-	mov dx,ax
-	xchg dh,dl
-	mov ax,0A03h		; Windows 3.10
-	ret
-GetVersion endp
 
 WaitEvent proc far pascal hTask:word
 	ret
