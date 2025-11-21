@@ -20,20 +20,20 @@ STRINGTABLE DISCARDABLE
 	IDS_PM,								"pm"
 }
 
-32512 CURSOR "res/idcarrow.cur"		; IDC_ARROW
-32513 CURSOR "res/idcibeam.cur"		; IDC_IBEAM
-32514 CURSOR "res/idcwait.cur"		; IDC_WAIT
-32515 CURSOR "res/idccross.cur"		; IDC_CROSS
-32516 CURSOR "res/idcuparr.cur"		; IDC_UPARROW
-32640 CURSOR "res/idcsize.cur"		; IDC_SIZE
-32641 CURSOR "res/idcicon.cur"		; IDC_ICON
-32642 CURSOR "res/idcsznw.cur"		; IDC_SIZENWSE
-32643 CURSOR "res/idcszne.cur"		; IDC_SIZENESW
-32644 CURSOR "res/idcszwe.cur"		; IDC_SIZEWE
-32645 CURSOR "res/idcszns.cur"		; IDC_SIZENS
-32646 CURSOR "res/idcsize.cur"		; IDC_SIZEALL
-32648 CURSOR "res/idcno.cur"		; IDC_NO
-32650 CURSOR "res/idcappst.cur"		; IDC_APPSTARTING
-32651 CURSOR "res/idchelp.cur"		; IDC_HELP
-"DRAGCURSOR" CURSOR "res/idcdrag.cur"	;
-"NULLCURSOR" CURSOR "res/idcnull.cur"	;
+IDC_ARROW CURSOR "res/idcarrow.cur"
+IDC_IBEAM CURSOR "res/idcibeam.cur"
+IDC_WAIT CURSOR "res/idcwait.cur"
+IDC_CROSS CURSOR "res/idccross.cur"
+IDC_UPARROW CURSOR "res/idcuparr.cur"
+IDC_SIZE CURSOR "res/idcsize.cur"
+IDC_ICON CURSOR "res/idcicon.cur"
+IDC_SIZENWSE CURSOR "res/idcsznw.cur"
+IDC_SIZENESW CURSOR "res/idcszne.cur"
+IDC_SIZEWE CURSOR "res/idcszwe.cur"
+IDC_SIZENS CURSOR "res/idcszns.cur"
+IDC_SIZEALL CURSOR "res/idcsize.cur"
+IDC_NO CURSOR "res/idcno.cur"
+IDC_APPSTARTING CURSOR "res/idcappst.cur"
+IDC_HELP CURSOR "res/idchelp.cur"
+"DRAGCURSOR" CURSOR "res/idcdrag.cur"
+"NULLCURSOR" CURSOR "res/idcnull.cur"

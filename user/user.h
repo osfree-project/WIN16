@@ -220,6 +220,7 @@ extern HDC tempHDC;
 #define FIXME
 #endif
 
+/* Resources */
 
 #define IDS_WINDOWS 0x00					// Windows
 #define IDS_TYPEAHEAD 0x07					// TypeAhead
@@ -238,6 +239,39 @@ extern HDC tempHDC;
 #define IDS_AM 0x5c							// am
 #define IDS_PM 0x5d							// pm
 
+#ifdef __WATCOMC__
+#undef IDC_ARROW
+#undef IDC_IBEAM
+#undef IDC_WAIT
+#undef IDC_CROSS
+#undef IDC_UPARROW
+#undef IDC_SIZE
+#undef IDC_ICON
+#undef IDC_SIZENWSE
+#undef IDC_SIZENESW
+#undef IDC_SIZEWE
+#undef IDC_SIZENS
+#undef IDC_SIZEALL
+#undef IDC_NO
+#undef IDC_APPSTARTING
+#undef IDC_HELP
+#endif
+
+#define IDC_ARROW 32512
+#define IDC_IBEAM 32513
+#define IDC_WAIT 32514
+#define IDC_CROSS 32515
+#define IDC_UPARROW 32516
+#define IDC_SIZE 32640
+#define IDC_ICON 32641
+#define IDC_SIZENWSE 32642
+#define IDC_SIZENESW 32643
+#define IDC_SIZEWE 32644
+#define IDC_SIZENS 32645
+#define IDC_SIZEALL 32646
+#define IDC_NO 32648
+#define IDC_APPSTARTING 32650
+#define IDC_HELP 32651
 
 /* Varoius undocumented protos */
 HANDLE WINAPI FarGetOwner( HGLOBAL handle );
