@@ -4,7 +4,7 @@
 # author, date
 #
 
-PROJ     = user1
+PROJ     = user
 PROJ1    = user
 TRGT     = $(PROJ1).exe
 DESC     = Windows USER.EXE
