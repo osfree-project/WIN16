@@ -278,7 +278,8 @@ TARGETS = $(PATH)$(PROJ1).exe
 
 .ico: $(MYDIR)res
 
+#@$(CP) $(PATH)$(PROJ).dll $(PATH)$(PROJ1).exe $(BLACKHOLE)
+
 $(PATH)$(PROJ1).exe: $(PATH)$(PROJ).dll $(MYDIR)$(PROJ1).rc
- @$(CP) $(PATH)$(PROJ).dll $(PATH)$(PROJ1).exe $(BLACKHOLE)
  @$(SAY) RESCMP   $^. $(LOG)
  @wrc -q -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win
