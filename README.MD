@@ -1,5 +1,7 @@
 ## osFree Windows Kernel
 
+WIN16 Kernel for Windows 3.0 Compatibility - A part of the osFree OS/2 project. This is an open-source reimplementation of the Windows 3.0 kernel.
+
 This is attempt to reimplement 16-bit Windows kernel for usage in VDM.
 It is heavely reuses TWIN, WINE and HX-DOS. As well as Mett Pietrek
 "Windows Internals" and Andrew Schulman "Undocumented Windows" book
