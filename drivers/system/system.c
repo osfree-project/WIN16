@@ -16,86 +16,154 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+/**
+ * @file system.c
+ * @brief SYSTEM.DRV implementation for Windows 3.x
+ * @author Wine project
+ * @license GNU LGPL v2.1+
+ * @date 2025-08-14
+ * @source wine-8.9/dlls/system.drv/system.c
+ * 
+ * @note Added BIOS debug output for critical functions
  */
 
-//#include <stdarg.h>
+/* Data Types */
+#define FAR         __far
+#define NEAR        __near
+typedef unsigned short WORD;
+typedef unsigned long DWORD;
+typedef int BOOL;
+typedef void (interrupt far *FARPROC)();
+typedef unsigned int HANDLE;
+typedef void FAR        *LPVOID;
+#define WINAPI      __far __pascal
 
-//#define NONAMELESSUNION
 
-#include <windows.h>
+/* Constants */
+#define TRUE 1
+#define FALSE 0
+#define NB_SYS_TIMERS 8
+#define SYS_TIMER_RATE 54925  /* 54.925 ms (18.2 Hz) */
+#define BIOS_DEBUG 1          /* Enable BIOS debug output */
+#ifndef NULL
+    #define NULL        0
+#endif
 
-typedef struct
-{
-    FARPROC         callback;
-    long             rate;
-    long             ticks;
+/* Timer Structure */
+typedef struct {
+    FARPROC callback;  /* Callback function */
+    long rate;         /* Timer interval in microseconds */
+    long ticks;        /* Countdown to next trigger */
 } SYSTEM_TIMER;
 
-#define NB_SYS_TIMERS   8
-#define SYS_TIMER_RATE  54925
+/* Global Variables */
+static DWORD clockTick;               /* System uptime in microseconds */
+static SYSTEM_TIMER SYS_Timers[NB_SYS_TIMERS]; /* Active timers */
+static int SYS_NbTimers;              /* Number of active timers */
+static BOOL SYS_timers_disabled;      /* Timer processing flag */
+static void interrupt (*PrevTimerIntHandler)(); /* Original INT 8 handler */
 
-static DWORD clockTick = 0;
-static SYSTEM_TIMER SYS_Timers[NB_SYS_TIMERS];
-static int SYS_NbTimers = 0;
-static HANDLE SYS_timer;
-static HANDLE SYS_thread;
-static BOOL SYS_timers_disabled;
-void interrupt (*PrevTimerIntHandler)(void);
-
+/* Interrupt Helpers */
 extern  void    disable( void );
-#pragma aux     disable = 0xfa;
+#pragma aux disable = "cli";
 
 extern  void    enable( void );
-#pragma aux     enable = 0xfb;
+#pragma aux enable = "sti";
 
 extern  void (__interrupt far *getvect( int ax ))();
 #pragma aux getvect = \
-            "mov ah,35h"    \
-            "int 21h"       \
-        __parm      [__ax] \
-        __value     [__es __bx]
+    "mov ah, 35h" \
+    "int 21h" \
+    __parm [__ax] __value [__es __bx]
+
 
 extern  void setvect( int, void (__interrupt far *)());
 #pragma aux setvect = \
-            "push ds"           \
-            "mov ds,cx"         \
-            "mov ah,25h"        \
-            "int 21h"           \
-            "pop ds"            \
-        __parm __caller [__ax] [__cx __dx]
+    "push ds" \
+    "mov ds, cx" \
+    "mov ah, 25h" \
+    "int 21h" \
+    "pop ds" \
+    __parm __caller [__ax] [__cx __dx]
 
-static void interrupt SYSTEM_TimerTick(void)
-{
-    int i;
-
-
-    if (!SYS_timers_disabled) 
-    {
-      clockTick=clockTick+SYS_TIMER_RATE/1000;
-      for (i = 0; i < NB_SYS_TIMERS; i++)
-      {
-          if (!SYS_Timers[i].callback) continue;
-          if ((SYS_Timers[i].ticks -= SYS_TIMER_RATE) <= 0)
-          {
-              FARPROC proc = SYS_Timers[i].callback;
-  
-              SYS_Timers[i].ticks += SYS_Timers[i].rate;
-  
-          }
-      }
+/**
+ * @brief BIOS Debug Output
+ * @param str Null-terminated string to display
+ * 
+ * @note Uses INT 10h/0Eh to print to screen in real mode.
+ *       Preserves all registers.
+ */
+static void debug_print(const char near * sstr) {
+//label loop;
+//label test;
+    #if BIOS_DEBUG
+    _asm {
+        push ax
+        push bx
+        push si
+        mov  ah, 0Eh     ; BIOS teletype function
+        xor  bh, bh       ; Page 0
+        mov  si, sstr      ; Load string pointer
+        jmp  @test
+@loop:
+        lodsb             ; Load next char into AL
+        int  10h          ; Print character
+@test:
+        cmp  byte ptr [si], 0
+        jne  @loop
+        pop  si
+        pop  bx
+        pop  ax
     }
-    (*PrevTimerIntHandler)(); /* Call the call the original interrupt handler */
+    #endif
 }
 
-
-/**********************************************************************
- *           SYSTEM_StartTicks
- *
- * Start the system tick timer.
+/**
+ * @brief Timer Interrupt Handler (INT 8h)
+ * 
+ * Processes system timers and maintains time reference.
+ * Chains to original BIOS timer handler.
  */
-static void SYSTEM_StartTicks(void)
-{
+static void interrupt far SYSTEM_TimerTick(void) {
+    int i;
+    
+    if (!SYS_timers_disabled) {
+      clockTick=clockTick+SYS_TIMER_RATE/1000;
+        
+        for (i = 0; i < NB_SYS_TIMERS; i++) {
+            if (!SYS_Timers[i].callback) continue;
+            
+            SYS_Timers[i].ticks -= SYS_TIMER_RATE;
+            if (SYS_Timers[i].ticks <= 0) {
+                SYS_Timers[i].ticks += SYS_Timers[i].rate;
+                /* Debug: Show timer activation */
+                #if BIOS_DEBUG
+                _asm {
+                    push ax
+                    push bx
+                    mov  ah, 0Eh
+                    mov  al, '.'      ; Show timer tick
+                    xor  bh, bh
+                    int  10h
+                    pop  bx
+                    pop  ax
+                }
+                #endif
+                SYS_Timers[i].callback();
+            }
+        }
+    }
+    
+    /* Chain to original handler */
+    (*PrevTimerIntHandler)();
+}
+
+/**
+ * @brief Install custom timer handler
+ */
+static void SYSTEM_StartTicks(void) {
     disable();
+    debug_print("SYS: Installing timer handler\r\n");
     PrevTimerIntHandler = getvect(8);
     setvect(8, SYSTEM_TimerTick);
     enable();
@@ -106,10 +174,11 @@ static void SYSTEM_StartTicks(void)
  *           SYSTEM_StopTicks
  *
  * Stop the system tick timer.
+ * @brief Restore original timer handler
  */
-static void SYSTEM_StopTicks(void)
-{
+static void SYSTEM_StopTicks(void) {
     disable();
+    debug_print("SYS: Restoring timer handler\r\n");
     setvect(8, PrevTimerIntHandler);
     enable();
 }
@@ -150,21 +219,43 @@ DWORD WINAPI InquireSystem( WORD code, WORD arg )
 
 /***********************************************************************
  *           CreateSystemTimer   (SYSTEM.2)
+ *
+ * @brief Create a system timer
+ * @param rate Timer interval in milliseconds
+ * @param proc Callback function
+ * @return Timer ID (1-8) or 0 on failure
+ * 
+ * @note Minimum effective rate is 55ms due to hardware limitations
  */
-WORD WINAPI CreateSystemTimer( WORD rate, FARPROC proc )
-{
+WORD WINAPI CreateSystemTimer(WORD rate, FARPROC proc) {
     int i;
-    for (i = 0; i < NB_SYS_TIMERS; i++)
-        if (!SYS_Timers[i].callback)  /* Found one */
-        {
-            SYS_Timers[i].rate = (UINT)rate * 1000;
-            if (SYS_Timers[i].rate < SYS_TIMER_RATE)
-                SYS_Timers[i].rate = SYS_TIMER_RATE;
-            SYS_Timers[i].ticks = SYS_Timers[i].rate;
-            SYS_Timers[i].callback = proc;
-            if (++SYS_NbTimers == 1) SYSTEM_StartTicks();
-            return i + 1;  /* 0 means error */
+    
+    if (!proc) return 0;
+    
+    for (i = 0; i < NB_SYS_TIMERS; i++) {
+        if (SYS_Timers[i].callback) continue;
+        
+        SYS_Timers[i].rate = (unsigned int)rate * 1000;
+        if (SYS_Timers[i].rate < SYS_TIMER_RATE) {
+            SYS_Timers[i].rate = SYS_TIMER_RATE;
         }
+        SYS_Timers[i].ticks = SYS_Timers[i].rate;
+        SYS_Timers[i].callback = proc;
+        
+        if (SYS_NbTimers++ == 0) SYSTEM_StartTicks();
+        
+        /* Debug output */
+        #if BIOS_DEBUG
+        {
+            char buf[40];
+//            sprintf(buf, "SYS: Timer %d created @ %d ms\r\n", i+1, rate);
+            debug_print("SYS: Timer created\r\n"/*buf*/);
+        }
+        #endif
+        
+        return i + 1;
+    }
+    debug_print("SYS: Timer creation failed!\r\n");
     return 0;
 }
 
@@ -173,86 +264,125 @@ WORD WINAPI CreateSystemTimer( WORD rate, FARPROC proc )
  *           KillSystemTimer   (SYSTEM.3)
  *
  * Note: do not confuse this function with USER.182
+ *
+ * @brief Destroy a system timer
+ * @param timer Timer ID to destroy
+ * @return 1 on success, 0 on failure
  */
-WORD WINAPI KillSystemTimer( WORD timer )
-{
-    if ( !timer || timer > NB_SYS_TIMERS || !SYS_Timers[timer-1].callback )
-        return timer;  /* Error */
-    SYS_Timers[timer-1].callback = 0;
-    if (!--SYS_NbTimers) SYSTEM_StopTicks();
-    return 0;
+WORD WINAPI KillSystemTimer(WORD timer) {
+    int idx;
+    
+    if (timer < 1 || timer > NB_SYS_TIMERS) return 0;
+    idx = timer - 1;
+    
+    if (!SYS_Timers[idx].callback) return 0;
+    
+    SYS_Timers[idx].callback = NULL;
+    
+    if (--SYS_NbTimers == 0) SYSTEM_StopTicks();
+    
+    /* Debug output */
+    #if BIOS_DEBUG
+    {
+        char buf[30];
+        //sprintf(buf, "SYS: Timer %d killed\r\n", timer);
+        debug_print("SYS: Timer killed\r\n"/*buf*/);
+    }
+    #endif
+    
+    return 1;
 }
 
-
+/**
 /***********************************************************************
+ * @brief Enable timer processing
  *           EnableSystemTimers   (SYSTEM.4)
  */
-void WINAPI EnableSystemTimers(void)
-{
+void WINAPI EnableSystemTimers(void) {
+    debug_print("SYS: Timers enabled\r\n");
     SYS_timers_disabled = FALSE;
 }
 
-
-/***********************************************************************
+/**
+ * @brief Disable timer processing
  *           DisableSystemTimers   (SYSTEM.5)
  */
-void WINAPI DisableSystemTimers(void)
-{
+void WINAPI DisableSystemTimers(void) {
+    debug_print("SYS: Timers disabled\r\n");
     SYS_timers_disabled = TRUE;
 }
 
-
-/***********************************************************************
+/**
+ * @brief Get system uptime in milliseconds
  *           GetSystemMSecCount (SYSTEM.6)
  */
-DWORD WINAPI GetSystemMSecCount(void)
-{
+DWORD WINAPI GetSystemMSecCount(void) {
     return clockTick;
 }
 
 
-/***********************************************************************
- *           Get80x87SaveSize   (SYSTEM.7)
- */
+
+/* FPU Functions (80287/80387) */
 WORD WINAPI Get80x87SaveSize(void)
 {
-    return 94;
+     return 94;
+
 }
 
+void WINAPI Save80x87State(char *buffer) {
+    _asm {
+        les bx, buffer
+        fsave es:[bx]
+    }
+}
+
+void WINAPI Restore80x87State(const char *buffer) {
+    _asm {
+        les bx, buffer
+        frstor es:[bx]
+    }
+}
+
+/**
+ * @brief A20 line management (stub)
+ * @note Not implemented for PC/XT systems
+ */
+void WINAPI A20_Proc(WORD action) {
+    debug_print("SYS: A20_Proc called (stub)\r\n");
+}
 
 /***********************************************************************
- *           Save80x87State   (SYSTEM.8)
+ *           Driver Entry Point
+ **********************************************************************/
+
+/**
+ * @brief Driver initialization
+ * @param hinstDLL DLL instance handle
+ * @param fdwReason Reason for call (process attach/detach)
+ * @param lpvReserved Reserved
+ * @return TRUE on success
  */
-void WINAPI Save80x87State( LPSTR pptr )
-{
-  _asm {
-	les	bx,pptr
-	fsave	es:[bx]
-  }
-}
-
-
-/***********************************************************************
- *           Restore80x87State   (SYSTEM.9)
- */
-void WINAPI Restore80x87State( LPCSTR pptr )
-{
-   _asm {
-	les	bx,pptr
-	frstor	es:[bx]
-   }
-}
-
-
-/***********************************************************************
- *           A20_Proc  (SYSTEM.20)
- */
-void WINAPI A20_Proc( WORD unused )
-{
-    /* this is also a NOP in Windows */
-}
-
-BOOL WINAPI LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-	return TRUE;
+BOOL WINAPI LibMain(HANDLE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
+    int i;
+_asm{
+        mov  ah, 0Eh     ; BIOS teletype function
+        xor  bh, bh       ; Page 0
+	mov al, '#'
+	int 10h
+}    
+    if (fdwReason == 1) {  /* DLL_PROCESS_ATTACH */
+        debug_print("SYSTEM.DRV initializing\r\n");
+        
+        for (i = 0; i < NB_SYS_TIMERS; i++) {
+            SYS_Timers[i].callback = 0;
+            SYS_Timers[i].rate = 0;
+            SYS_Timers[i].ticks = 0;
+        }
+        SYS_NbTimers = 0;
+        clockTick = 0;
+        SYS_timers_disabled = FALSE;
+        
+        debug_print("SYS: Ready\r\n");
+    }
+    return TRUE;
 }
