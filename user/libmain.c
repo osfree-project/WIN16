@@ -42,9 +42,9 @@ VOID CreateQueue(int QueueSize)
 	lpQueue->Size=QueueSize;
 	//lpQueue->ReadPtr=???;
 	//lpQueue->WritePtr=???;
-	//lpQueue->ExpWinVersion=GetExeVersion();
-	//lpQueue->WakeBits=QS_SMPARAMSFREE;
-	//lpQueue->flags=QF_INIT;
+	lpQueue->ExpWinVersion=GetExeVersion();
+	lpQueue->WakeBits=QS_SMPARAMSFREE;
+	lpQueue->flags=QF_INIT;
 
 	SetTaskQueue(0, (HGLOBAL)lpQueue);
 
@@ -210,23 +210,41 @@ BOOL WINAPI MakeObjectPrivate(HANDLE hObject, BOOL bPrivate);
 #define GetStockBrush(i) ((HBRUSH)GetStockObject(i))
 
 #pragma off (unreferenced);
-BOOL PASCAL LibMain( HINSTANCE hInstance/*, WORD wDataSegment, WORD wHeapSize, LPSTR lpszCmdLine*/ )
+BOOL PASCAL LibMain( HINSTANCE hInstance )
 #pragma on (unreferenced);
 {
+        HPEN hPenBlue;
+        HBRUSH hBrushRed;
 	RECT rect = {0,0,100,100};
 	HDC desktop;
 
 	FUNCTION_START
 	TRACE("inst=%04x", hInstance);
-
+ 
+        // Save the module and instance handles away in global vars
 	USER_HeapSel=hInstance;
+	HModuleWin = GetModuleHandle(NULL, hInstance);
 
+	// Loads USER strings variables
+        // from resources
 	LW_LoadSomeStrings();
 
-	CBEntries=UT_GetIntFromProfile(IDS_TYPEAHEAD, 0x3c);
+        // Get the number of entries in the system message queue and mul to 2
+	CBEntries=UT_GetIntFromProfile(IDS_TYPEAHEAD, 0x3c) << 1;
+        // Get the default number of messages in a task queue
 	DefQueueSize=UT_GetIntFromProfile(IDS_DEFAULTQUEUESIZE, 8);
 
+        // Create an application message
+        // queue. This is needed to
+        // create windows.
 	CreateQueue(DefQueueSize);
+
+	// Get the default border width for a window. Default is 3.
+	ClBorder = UT_GetIntFromProfile(IDS_BORDER, 3);
+	if (ClBorder < 1) // Make sure it'~ got a reasonable
+            ClBorder = 1; // value.
+        if (ClBorder > 0x32 )
+            ClBorder = 0x32;
 
 	LW_RegisterWindows(USER_HeapSel);
 
@@ -255,6 +273,13 @@ BOOL PASCAL LibMain( HINSTANCE hInstance/*, WORD wDataSegment, WORD wHeapSize, L
 	TRACE("Create display context");
 	tempHDC=CreateDC(DISPLAY, NULL, NULL, NULL);
 	TRACE("Create display context done");
+	SetPixel(tempHDC, 10, 10, RGB(255, 0, 0));
+        hPenBlue=CreatePen(PS_SOLID, 5, RGB(0, 0, 255));
+        SelectObject(tempHDC, hPenBlue);
+        hBrushRed=CreateSolidBrush(RGB(255, 0, 0));
+        SelectObject(tempHDC, hBrushRed);
+        Rectangle(tempHDC, 200, 200, 400, 400);
+for(;;);
 	DeleteDC(tempHDC);
 	TRACE("3");
 	TRACE("4");

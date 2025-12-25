@@ -176,7 +176,9 @@ extern char szNo[0x14];
 extern char szAm[0x14];
 extern char szPm[0x14];
 
+extern int  ClBorder;
 extern int CBEntries;
+extern HMODULE HModuleWin;
 extern int DefQueueSize;
 
 extern char DISPLAY[];
@@ -184,6 +186,8 @@ extern HDC tempHDC;
 
 
 #ifdef DEBUG
+extern void _cdecl printf (const char *format,...);
+#define OutputDebugString printf
 #define FUNCTION_START \
 {\
 	OutputDebugString(__FUNCTION__ " start\r\n");\
@@ -194,11 +198,11 @@ extern HDC tempHDC;
 }
 
 
+//wsprintf(DebugBuffer, __VA_ARGS__); \	OutputDebugString(DebugBuffer); \		OutputDebugString("\r\n"); 
+
 #define TRACE(...) \
 	{ \
-		wsprintf(DebugBuffer, __VA_ARGS__); \
-		OutputDebugString(DebugBuffer); \
-		OutputDebugString("\r\n"); \
+             printf(__VA_ARGS__);		\
 	}
 
 #define WARN(...) \
@@ -224,6 +228,7 @@ extern HDC tempHDC;
 
 #define IDS_WINDOWS 0x00					// Windows
 #define IDS_TYPEAHEAD 0x07					// TypeAhead
+#define IDS_BORDER 0x0f                                         // Border
 #define IDS_DEFAULTQUEUESIZE 0x0f			// DefaultQueueSize
 #define IDS_SYSTEMERROR 0x4b				// System Error
 #define IDS_DIVIDEBYZERO 0x4c				// Divede By Zero or Overflow Error
@@ -290,6 +295,7 @@ WORD WINAPI LocalHeapSize();
 
 #define GlobalAllocPtr(flags, cb) \
   (GlobalLock(GlobalAlloc((flags), (cb))))
+WORD WINAPI GetExeVersion(void);
 
 
 void far * _fmemcpy(void far * s1, void const far * s2, unsigned length);
