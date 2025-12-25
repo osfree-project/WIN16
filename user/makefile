@@ -283,4 +283,4 @@ TARGETS = $(PATH)$(PROJ).exe
 
 $(PATH)$(PROJ).exe: $(PATH)$(PROJ).dll $(MYDIR)$(PROJ).rc
  @$(SAY) RESCMP   $^. $(LOG)
- @wrc -q -30 -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win
+ @$(RC) -q -30 -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win

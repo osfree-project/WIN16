@@ -31,4 +31,4 @@ TARGETS = $(PATH)$(PROJ1).dll
 
 $(PATH)$(PROJ1).dll: $(PATH)$(PROJ).dll $(MYDIR)cards.rc
  @$(SAY) RESCMP   $^. $(LOG)
- @wrc -dCARDSTYLE_DEFAULT -q -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win
+ @$(RC) -dCARDSTYLE_DEFAULT -q -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win
