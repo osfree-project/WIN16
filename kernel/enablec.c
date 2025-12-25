@@ -23,19 +23,6 @@
 
 #include "win_private.h"
 
-void WINAPI EnableDOS(void)
-{
-	FUNCTIONSTART;
-	FUNCTIONEND;
-	return ;
-}
-
-void WINAPI DisableDOS(void)
-{
-	FUNCTIONSTART;
-	FUNCTIONEND;
-	return ;
-}
 
 void WINAPI KbdRst(void)
 {

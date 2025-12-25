@@ -3,6 +3,7 @@
  *
  * Copyright 1993 John Burton
  * Copyright 1996 Alexandre Julliard
+ * Copyright 2025 Yuri Prokushev
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -30,9 +31,9 @@
  */
 UINT WINAPI GetWindowsDirectory( LPSTR path, UINT count )
 {
-	FUNCTIONSTART;
+    FUNCTIONSTART;
     lstrcpyn(path, "C:\\WINDOWS", count);
-	FUNCTIONEND;
+    FUNCTIONEND;
     return lstrlen(path);
 }
 
@@ -46,7 +47,7 @@ UINT WINAPI GetSystemDirectory(LPSTR path, UINT count)
     char windir[255]; //MAX_PATH
     UINT len;
 
-	FUNCTIONSTART;
+    FUNCTIONSTART;
 
     len = GetWindowsDirectory(windir, sizeof(windir) - sizeof(system16) + 1) + sizeof(system16);
     if (count >= len)
@@ -56,12 +57,10 @@ UINT WINAPI GetSystemDirectory(LPSTR path, UINT count)
         len--;  /* space for the terminating zero is not included on success */
     }
 
-	FUNCTIONEND;
+    FUNCTIONEND;
     return len;
 }
 
-
-void WINAPI Dos3Call();
 
 #define MOV_CX(x) __asm {mov cx, word ptr x}
 #define MOV_BX(x) __asm {mov bx, word ptr x}
@@ -78,72 +77,80 @@ void WINAPI SafeAnsiToOem(LPCSTR s, LPSTR d)
 }
 
 
+/***********************************************************************
+ *           _lopen   (KERNEL.85)
+ */
 #pragma disable_message(107);
 HFILE WINAPI _lopen(LPCSTR lpPathName, int iReadWrite)
 {
-	char Buf[128];
-    SaveDS();
+    char Buf[128];
+
     FUNCTIONSTART;
+    SaveDS();
     SafeAnsiToOem(lpPathName, Buf);
-    __asm {
-		mov al, byte ptr iReadWrite
-		mov dx, word ptr Buf
-		mov ds, word ptr Buf+2
-		mov ah, 3dh
-        push cs                 /* make far call */
-        call Dos3Call
-		jnc lopenexit
-		mov ax,-1
-    lopenexit:
-	}
+    _asm {
+        mov al, byte ptr iReadWrite
+        mov dx, word ptr Buf
+        mov ds, word ptr Buf+2
+        mov ah, 3dh
+    }
+    Dos3Call();
+    _asm {
+        jnc exit
+        mov ax,-1
+    exit:
+    }
     RestoreDS();
     FUNCTIONEND;
 }
 #pragma enable_message(107);
 
-
+/***********************************************************************
+ *           _lcreat   (KERNEL.83)
+ */
 #pragma disable_message(107);
 HFILE WINAPI _lcreat(LPCSTR lpPathName, int a)
 {
-	char Buf[128];
-	FUNCTIONSTART;
+    char Buf[128];
+    FUNCTIONSTART;
     SaveDS();
     SafeAnsiToOem(lpPathName, Buf);
-	__asm {
-		push ds
-		mov cx, a
-		mov dx, word ptr Buf
-		mov ds, word ptr Buf+2
-		mov ax, 3ch
-        push cs             /* far call */
-    	call Dos3Call
-		pop ds
-		jnc exit
-		mov ax,-1
+    _asm {
+        mov cx, a
+        mov dx, word ptr Buf
+        mov ds, word ptr Buf+2
+        mov ax, 3ch
+    }
+    Dos3Call();
+    _asm {
+        jnc exit
+        mov ax,-1
     exit:
-	}
+    }
     RestoreDS();
     FUNCTIONEND;
 }
 #pragma enable_message(107);
 
-
+/***********************************************************************
+ *           _lclose   (KERNEL.81)
+ */
 #pragma disable_message(107);
 HFILE WINAPI _lclose(HFILE h)
 {
-	FUNCTIONSTART;
-	__asm {
-		mov bx, h
-		mov ah, 3eh
-	}
-	Dos3Call();
-	__asm {
-		mov ax,-1
-		jc exit
-		inc ax
-exit:
-	}
-	FUNCTIONEND;
+    FUNCTIONSTART;
+    _asm {
+        mov bx, h
+        mov ah, 3eh
+    }
+    Dos3Call();
+    _asm {
+        mov ax,-1
+        jc exit
+        inc ax
+    exit:
+    }
+    FUNCTIONEND;
 }
 #pragma enable_message(107);
 
@@ -154,53 +161,48 @@ exit:
 #pragma disable_message(107);
 UINT WINAPI _lwrite(HFILE hFile, const void __huge * buffer, UINT count )
 {
-	FUNCTIONSTART;
-	__asm {
-		push ds
-		mov bx, hFile
-		mov dx, word ptr buffer
-		mov ds, word ptr buffer+2
-		mov cx, count
-		mov ah, 40h
-	}
-	Dos3Call();
-	__asm {
-		pop ds
-		jnc exit
-		mov ax,-1
+    FUNCTIONSTART;
+    SaveDS();
+    _asm {
+        mov bx, hFile
+        mov dx, word ptr buffer
+        mov ds, word ptr buffer+2
+        mov cx, count
+        mov ah, 40h
+    }
+    Dos3Call();
+    _asm {
+        jnc exit
+        mov ax,-1
 exit:
-	}
-	FUNCTIONEND;
+    }
+    RestoreDS();
+    FUNCTIONEND;
 }
 #pragma enable_message(107);
 
 
 /***********************************************************************
  *           _llseek   (KERNEL.84)
- *
- * FIXME:
- *   Seeking before the start of the file should be allowed for _llseek,
- *   but cause subsequent I/O operations to fail (cf. interrupt list)
- *
  */
 #pragma disable_message(107);
 LONG WINAPI _llseek( HFILE hFile, LONG lOffset, int nOrigin )
 {
-	FUNCTIONSTART;
-	__asm {
-		mov bx, hFile
-		mov dx, word ptr lOffset
-		mov cs, word ptr lOffset
-		mov ax, nOrigin
-		mov ah, 42h
-	}
-	Dos3Call();
-	__asm {
-		jnc exit
-		mov ax,-1
+    FUNCTIONSTART;
+    _asm {
+        mov bx, hFile
+        mov dx, word ptr lOffset
+        mov cx, word ptr lOffset
+        mov ax, nOrigin
+        mov ah, 42h
+    }
+    Dos3Call();
+    _asm {
+        jnc exit
+        mov ax,-1
 exit:
-	}
-	FUNCTIONEND;
+    }
+    FUNCTIONEND;
 }
 #pragma enable_message(107);
 
@@ -211,23 +213,23 @@ exit:
 #pragma disable_message(107);
 UINT WINAPI _lread(HFILE hFile, void __huge * buffer, UINT count )
 {
-	FUNCTIONSTART;
-	__asm {
-		push ds
-		mov bx, hFile
-		mov dx, word ptr buffer
-		mov ds, word ptr buffer+2
-		mov cx, count
-		mov ah, 3fh
-	}
-	Dos3Call();
-	__asm {
-		pop ds
-		jnc exit
-		mov ax,-1
+    FUNCTIONSTART;
+    SaveDS();
+    _asm {
+        mov bx, hFile
+        mov dx, word ptr buffer
+        mov ds, word ptr buffer+2
+        mov cx, count
+        mov ah, 3fh
+    }
+    Dos3Call();
+    _asm {
+        jnc exit
+        mov ax,-1
 exit:
-	}
-	FUNCTIONEND;
+    }
+    RestoreDS();
+    FUNCTIONEND;
 }
 #pragma enable_message(107);
 

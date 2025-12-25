@@ -12,7 +12,7 @@
 ;-- if neither 41 nor 14 are set, output is to DOS
 
 _USEINT41_		 = 0	;0 1=use Int 41h for debug output
-_USEINT14_		 = 0	;0 1=use Int 14h for debug output
+_USEINT14_		 = 1	;0 1=use Int 14h for debug output
 
 _DBGOUT_		 = 0	;0 1=route normal msgs to debug terminal
 
@@ -31,9 +31,9 @@ _INT03RETEXEC_	 = 0	;0 1=int 03 after int 21h, ax=4B00h
 _INT03NAMEIMP_	 = 0	;0 1=int 03 on a "reference by name"
 _INT03JMPPM_	 = 0	;0 1=int 03 after initial switch to protected mode
 _INT03REALLOC_	 = 0	;0 1=int 03 on realloc memory block
-_TESTIMPORT_	 = 0	;0 1=display debug msg on relocation fixups
+_TESTIMPORT_	 = 1	;0 1=display debug msg on relocation fixups
 
-_PORT_			 = 2	;2 COM#  for Int 14h debug msgs
+_PORT_			 = 1	;2 COM#  for Int 14h debug msgs
 
 ;********** Macros **********
 

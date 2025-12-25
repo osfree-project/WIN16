@@ -26,7 +26,10 @@ public pascal eWinFlags
 public GetExePtr
 public GetProcAddress
 public GetModuleHandle
-public Dos3Call
+
+; DOS API
+externdef pascal Dos3Call:far
+externdef pascal NetBiosCall:far
 
 ;externdef pascal SetWinFlags: far
 
@@ -359,16 +362,6 @@ externdef doscall: near
 NoHookDOSCall proc far pascal
 	call doscall
 NoHookDOSCall endp
-
-Dos3Call proc far pascal
-	int 21h
-	ret
-Dos3Call endp
-
-NetBiosCall proc far pascal
-	int 5ch
-	ret
-NetBiosCall endp
 
 SetErrorMode proc far pascal
 	pop cx

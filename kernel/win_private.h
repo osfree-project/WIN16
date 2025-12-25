@@ -427,6 +427,9 @@ extern void RestoreDS(void);
 #pragma aux RestoreDS               = \
         "pop ds";
 
+extern void WINAPI Dos3Call();
+extern void WINAPI NetBiosCall();
+
 #define VALID_HANDLE(handle) (((handle)>>__AHSHIFT)<globalArenaSize)
 #define GET_ARENA_PTR(handle)  (pGlobalArena + ((handle) >> __AHSHIFT))
 

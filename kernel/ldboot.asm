@@ -16,9 +16,14 @@
 		; Kernel defines
 		include kernel.inc
 
+; public variables
 public pascal wVersion
-
-;public BLKSIZE
+public pascal wCurPSP
+public pascal szPgmName
+public TH_HGLOBALHEAP
+public TH_PGLOBALHEAP
+public TH_LOCKTDB
+public pascal wKernelDS
 
 if ?DEBUG
 ?EXTLOAD		 = 0	;0 dont move loader in extended memory
@@ -171,9 +176,11 @@ extern errstr41: near
 extern errstr42: near
 extern errstr43: near
 
-;externals
+;external functions
 
 extern pascal KernelMain:far
+extern pascal Copyright: far
+
 ife ?REAL
 extern SwitchToPMode_: near
 endif
@@ -264,8 +271,6 @@ endif
 wlError		dw ?			;error code (for function 4B00h)
 
 ;*** std variables, initialization ensured/not required
-public pascal wCurPSP
-public pascal szPgmName
 ife ?MULTPSP
 wCurPSP	label word
 endif
@@ -337,12 +342,6 @@ ID_STACKBOTTOM	dw	?		; 0E /* Bottom of the stack */
 
 ; THHOOK structure. Offset is same as in Windows 3.0
 
-public TH_HGLOBALHEAP
-public TH_PGLOBALHEAP
-public TH_LOCKTDB
-public pascal wKernelDS
-
-
 TH_HGLOBALHEAP	dw	?		;  /* 00 (handle BURGERMASTER) */
 TH_PGLOBALHEAP	dw	?		;  /* 02 (selector BURGERMASTER) */
 TH_HEXEHEAD	dw	?		;  /* 04 hFirstModule */
@@ -374,7 +373,6 @@ endif
 szInitErr  db 'Error in initialization, loading aborted',lf,00
 szShrkErr  db 'memory shrink Error',lf,00
 errstr8    db 'Filename missing or invalid',lf,00
-szLoader	db 'DPMILDR=',0
 if ?DOSEMUSUPP
 szDosEmuDate db "02/25/93"
 endif
@@ -402,16 +400,14 @@ endoflowcode label byte
 ;
 
 BootStrap:
+	cld
+	push es				; Save PSP/PDB segment
+
 if	?DEBUG
 	jmp short skipdbg
 szEntryHello:
 	db	"Windows Kernel Entry", 13, 10, 0
 skipdbg:
-endif
-	cld
-	push es				; Save PSP/PDB segment
-
-if	?DEBUG
 
 ;
 ;INT 68 - MS Windows debugging kernel - OUTPUT STRING
@@ -443,23 +439,10 @@ if	?DEBUG
 	push es
 endif
 
-; Original Windows kernel loaded via DOS MZ STUB,
-; but we just construct NE structures in memory,
-; so no need DOS STUB communication protocol
-
-if 0
-	cmp ax, "KO"			; "OK"
-	jz  @F
-	xor ax, ax
-	retf
-@@:
-endif
-
 	push cs
 	pop ds
 	mov cs:wKernelDS,cs		; Store for future usage
 
-	externdef pascal Copyright: far
 	call Copyright
 
 	mov es,[ds:ENVIRON]		; get environment
@@ -7101,15 +7084,15 @@ endif
 
 setvec21 proc
 	@push_a
-	mov bl,21h
 	mov cx,cs
 if ?32BIT
 	mov edx, offset int21proc
 else
 	mov dx, offset int21proc
 endif
-	mov ax,0205h			;set Int 21 PM vector
-	call dpmicall
+;	mov ax,0205h
+;	call dpmicall
+	@DPMI_SetPMIntVec 21h		;set Int 21 PM vector
 	@pop_a
 	ret
 setvec21 endp

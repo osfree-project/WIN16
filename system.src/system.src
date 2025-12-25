@@ -1,0 +1,54 @@
+[boot]           
+shell	     = 
+display.drv  = 
+system.drv   = 
+comm.drv     = 
+network.drv  = 
+oemfonts.fon = 
+fonts.fon    = 
+fixedfon.fon = 
+386grabber   = 
+286grabber   = 
+mouse.drv    = 
+keyboard.drv = 
+sound.drv    = 
+language.dll =
+
+[keyboard]
+type         =
+subtype      =
+keyboard.dll =
+oemansi.bin  =
+
+[boot.description]
+
+[386Enh]
+display=*vddvga
+keyboard=*vkd
+mouse=*vmd
+network=*vnetbios, *dosnet
+device=*vpicd
+device=*vtd
+device=*reboot
+device=*vdmad
+device=*vsd
+device=*v86mmgr
+device=*pageswap
+device=*dosmgr
+device=*vmpoll
+device=*wshell
+device=*vhd
+device=*vfd
+device=*vpd
+device=*parity
+device=*biosxlat
+device=*vcd
+device=*vmcpd
+device=*combuff
+device=*cdpscsi
+local=CON
+FileSysChange=off
+
+[standard]
+
+[NonWindowsApp]

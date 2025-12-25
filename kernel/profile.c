@@ -147,7 +147,7 @@ int FAR PASCAL GetPrivateProfileString(LPCSTR lpszSection, LPCSTR lpszEntry,
     /* Validate parameters */
     if (!retBuffer || bufSize == 0) return 0;
     retBuffer[0] = '\0';
-    printf("%d section=%S entry=%S default=%S filename=%S\n\r", sizeof(LPCSTR),lpszSection, lpszEntry, lpszDefault, lpszFilename);
+//    printf("%d section=%S entry=%S default=%S filename=%S\n\r", sizeof(LPCSTR),lpszSection, lpszEntry, lpszDefault, lpszFilename);
 
     /* Allocate buffer using GlobalAlloc */
     hBuffer = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, BUFFER_SIZE);
