@@ -6,7 +6,7 @@ STRINGTABLE DISCARDABLE
 	IDS_TYPEAHEAD,						"TypeAhead"
 	IDS_DEFAULTQUEUESIZE,				"DefaultQueueSize"
 	IDS_SYSTEMERROR,					"System Error"
-	IDS_DIVIDEBYZERO,					"Divede By Zero or Overflow Error"
+	IDS_DIVIDEBYZERO,					"Divide By Zero or Overflow Error"
 	IDS_UNTITLED,						"Untitled"
 	IDS_ERROR,							"Error"
 	IDS_OK,								"Ok"

@@ -4,9 +4,9 @@
 # author, date
 #
 
-PROJ     = user1
+PROJ     = user
 PROJ1    = user
-TRGT     = $(PROJ1).exe
+TRGT     = $(PROJ).exe
 DESC     = Windows USER.EXE
 srcfiles = $(p)libentry$(e) $(p)smallcode$(e) $(p)GlobalData1$(e) $(p)hook$(e) $(p)dialog$(e) $(p)Time$(e) $(p)Atoms$(e) $(p)InitApp$(e) $(p)comm$(e) $(p)Caret$(e) $(p)DrawText$(e) $(p)network$(e) $(p)SysMetrics$(e) $(p)Listbox$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Resources$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)libmain$(e) #$(p)StringFunc$(e)
 ADD_COPT = -zW -s -zc -2 -DDEBUG=1 # optimize prolog, no stack checks, put constants in code segment 
@@ -269,15 +269,14 @@ IMPORTS = GETEXEVERSION KERNEL.105, &
 # GETPRIVATEPROFILEINT KERNEL.127, &
 #          __AHSHIFT KERNEL.113
 
-#OPTIONS = heapsize=0
 DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 
 !include $(%ROOT)tools/mk/appsw16.mk
 
-TARGETS = $(PATH)$(PROJ1).exe
+TARGETS = $(PATH)$(PROJ).exe
 
-$(PATH)$(PROJ1).exe: $(PATH)$(PROJ).dll $(MYDIR)$(PROJ1).rc
- @$(CP) $(PATH)$(PROJ).dll $(PATH)$(PROJ1).exe $(BLACKHOLE)
+$(PATH)$(PROJ).exe: $(PATH)$(PROJ).dll $(MYDIR)$(PROJ).rc
+ @$(CP) $(PATH)$(PROJ).dll $(PATH)$(PROJ).exe $(BLACKHOLE)
  @$(SAY) RESCMP   $^. $(LOG)
- @wrc -q -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win
+ @$(RC) -q -bt=windows -30 $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win
 

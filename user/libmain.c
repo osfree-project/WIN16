@@ -209,9 +209,9 @@ BOOL WINAPI MakeObjectPrivate(HANDLE hObject, BOOL bPrivate);
 
 #define GetStockBrush(i) ((HBRUSH)GetStockObject(i))
 
-#pragma off (unreferenced);
-BOOL PASCAL LibMain( HINSTANCE hInstance/*, WORD wDataSegment, WORD wHeapSize, LPSTR lpszCmdLine*/ )
-#pragma on (unreferenced);
+//#pragma off (unreferenced);
+BOOL PASCAL LibMain( HINSTANCE hInstance)
+//#pragma on (unreferenced);
 {
 	RECT rect = {0,0,100,100};
 	HDC desktop;
