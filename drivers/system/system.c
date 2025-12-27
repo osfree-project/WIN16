@@ -38,6 +38,10 @@ typedef unsigned int HANDLE;
 typedef void FAR        *LPVOID;
 #define WINAPI      __far __pascal
 
+#define LONG            long
+
+#define MAKELONG( low, high )   ((LONG)(((WORD)(low)) | (((DWORD)((WORD)(high))) << 16)))
+
 
 /* Constants */
 #define TRUE 1
