@@ -4,7 +4,7 @@
 # author, date
 #
 
-PROJ     = system1
+PROJ     = system
 PROJ1    = system
 TRGT     = $(PROJ1).drv
 DESC     = Windows keyboard driver

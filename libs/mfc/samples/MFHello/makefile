@@ -46,4 +46,4 @@ TARGETS = $(PATH)$(PROJ1).exe
 
 $(PATH)$(PROJ1).exe: $(PATH)$(PROJ).exe 
  @$(SAY) RESCMP   $^. $(LOG)
- @wrc -q -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win
+ @$(RC) -q -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win

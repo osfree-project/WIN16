@@ -16,7 +16,14 @@
 		; Kernel defines
 		include kernel.inc
 
-;public BLKSIZE
+; public variables
+public pascal wVersion
+public pascal wCurPSP
+public pascal szPgmName
+public TH_HGLOBALHEAP
+public TH_PGLOBALHEAP
+public TH_LOCKTDB
+public pascal wKernelDS
 
 if ?DEBUG
 ?EXTLOAD		 = 0	;0 dont move loader in extended memory
@@ -108,6 +115,8 @@ endif
 
 extern pascal eWinFlags: ENTRY
 
+; NLS
+
 extern szTerm: near
 extern szErr31: near
 extern szErr311: near
@@ -166,6 +175,12 @@ extern nullstr: near
 extern errstr41: near
 extern errstr42: near
 extern errstr43: near
+
+;external functions
+
+extern pascal KernelMain:far
+extern pascal Copyright: far
+
 ife ?REAL
 extern SwitchToPMode_: near
 endif
@@ -174,7 +189,6 @@ endif
 		include fixups.inc
 		include debug.inc
 		include debuger.inc
-		include version.inc
 
 
 ife ?EXTLOAD
@@ -251,15 +265,12 @@ _BSS segment
 ;*** global constants, initialized during start
 
 wCSlim		dw ?			;limit CS (=CSSIZE-1), size of loader segment incl. stack
-wVersion	dw ?			;DOS version major+minor
 if ?EXTLOAD
 dwMemHdl	dd ?			;DPMI memory handle for loader segment
 endif
 wlError		dw ?			;error code (for function 4B00h)
 
 ;*** std variables, initialization ensured/not required
-public pascal wCurPSP
-public pascal szPgmName
 ife ?MULTPSP
 wCurPSP	label word
 endif
@@ -295,24 +306,6 @@ wRelTmp		dw ?			;buffer pointer for relocations
 
 _BSS ends
 
-_TEXT segment
-
-if ?LOADDBGDLL
-szDbgout   db '.\DEBUGOUT.DLL',0
-endif
-
-versionstring textequ @CatStr(!",%?VERMAJOR,.,%?VERMINOR,.,%?VERMINOR2,!")
-
-szInitErr  db 'Error in initialization, loading aborted',lf,00
-szShrkErr  db 'memory shrink Error',lf,00
-errstr8    db 'Filename missing or invalid',lf,00
-szLoader	db 'DPMILDR=',0
-if ?DOSEMUSUPP
-szDosEmuDate db "02/25/93"
-endif
-
-_TEXT ends
-
 CCONST segment
 
 defdgrp  dw 0,0,SF_DATA or SF_MOVABL,0	;default segment flags for dgroup
@@ -329,16 +322,15 @@ CCONST ends
 
 _TEXT segment
 
-externdef pascal KernelMain:far
-
 ; In original loader here is overlay support. In osFree Windows Kernel
-; here is a data segment start. Segment structure (offsets in hex:
+; here is a data segment start. Segment structure (offsets in hex):
 ;
 ; 00 INSTANCEDATA
 ; 10 THHOOK structure
-; ?? wKernelDS - address of Kernel DS
+; ?? kernel specific variables
 
 ; INSTANCEDATA structure, same for each task
+
 ID_NULL		dw	0		; 00 /* Always 0 */
 ID_OLDSP	dw	?		; 02 /* Stack pointer; used by SwitchTaskTo() */
 ID_OLDSS	dw	?		; 04 
@@ -349,10 +341,7 @@ ID_STACKMIN	dw	?		; 0C /* Lowest stack address used so far */
 ID_STACKBOTTOM	dw	?		; 0E /* Bottom of the stack */
 
 ; THHOOK structure. Offset is same as in Windows 3.0
-public TH_HGLOBALHEAP
-public TH_PGLOBALHEAP
-public TH_LOCKTDB
-public pascal wKernelDS
+
 TH_HGLOBALHEAP	dw	?		;  /* 00 (handle BURGERMASTER) */
 TH_PGLOBALHEAP	dw	?		;  /* 02 (selector BURGERMASTER) */
 TH_HEXEHEAD	dw	?		;  /* 04 hFirstModule */
@@ -370,11 +359,24 @@ SELTABLESTART	dd	?		; Смещение начала структуры SELTAB в
 
 ; Kernel specific data
 wKernelDS 	dw	?		; Kernel Data segment
+wVersion	dw ?			; DOS version major+minor
 
 KernelFlags DW 0, 0
 PMouseTermProc DD 0
 PKeyboardTermProc DD 0
 PSystemTermProc DD 0
+
+if ?LOADDBGDLL
+szDbgout   db '.\DEBUGOUT.DLL',0
+endif
+
+szInitErr  db 'Error in initialization, loading aborted',lf,00
+szShrkErr  db 'memory shrink Error',lf,00
+errstr8    db 'Filename missing or invalid',lf,00
+if ?DOSEMUSUPP
+szDosEmuDate db "02/25/93"
+endif
+
 
 if _COPY2PSP_
 psp_rou:
@@ -398,16 +400,14 @@ endoflowcode label byte
 ;
 
 BootStrap:
+	cld
+	push es				; Save PSP/PDB segment
+
 if	?DEBUG
 	jmp short skipdbg
 szEntryHello:
 	db	"Windows Kernel Entry", 13, 10, 0
 skipdbg:
-endif
-	cld
-	push es				; Save PSP/PDB segment
-
-if	?DEBUG
 
 ;
 ;INT 68 - MS Windows debugging kernel - OUTPUT STRING
@@ -439,23 +439,10 @@ if	?DEBUG
 	push es
 endif
 
-; Original Windows kernel loaded via DOS MZ STUB,
-; but we just construct NE structures in memory,
-; so no need DOS STUB communication protocol
-
-if 0
-	cmp ax, "KO"			; "OK"
-	jz  @F
-	xor ax, ax
-	retf
-@@:
-endif
-
 	push cs
 	pop ds
 	mov cs:wKernelDS,cs		; Store for future usage
 
-	externdef pascal Copyright: far
 	call Copyright
 
 	mov es,[ds:ENVIRON]		; get environment
@@ -528,8 +515,10 @@ endif	; not ?REAL
 	CTRL_C_CK 6
 	mov bEnvFlgs, 0
 
+ife ?REAL
 	call InitProtMode	;init vectors, alloc internal selectors
 	jc main_err6		;--->
+endif	; not ?REAL
 
 	; @todo Here we must prepare WOAname string
 
@@ -728,7 +717,7 @@ else
 	@trace_w EXCSP
 endif
 	@trace_s <" ***",lf>
-	@PUSHC	0
+	@PushC	0
 	pop es
 	mov ax,cs
 	and al,03
@@ -1703,7 +1692,7 @@ ife ?32BIT
 	cmp al,es:[bx]
 	jnz @B
 	inc bx
-	@PUSHC	0
+	@PushC	0
 	mov ax,es
 	pop es
 notos2:
@@ -4823,7 +4812,7 @@ done:
 	@trace_s lf
 	mov si,word ptr es:[NEHDR.MEMHDL+0] ;now do MD itself
 	mov di,word ptr es:[NEHDR.MEMHDL+2]
-	@PUSHC	0
+	@PushC	0
 	mov bx,es
 	pop es						  ;clear es before dpmi call
 	mov ax,0001
@@ -7095,15 +7084,15 @@ endif
 
 setvec21 proc
 	@push_a
-	mov bl,21h
 	mov cx,cs
 if ?32BIT
 	mov edx, offset int21proc
 else
 	mov dx, offset int21proc
 endif
-	mov ax,0205h			;set Int 21 PM vector
-	call dpmicall
+;	mov ax,0205h
+;	call dpmicall
+	@DPMI_SetPMIntVec 21h		;set Int 21 PM vector
 	@pop_a
 	ret
 setvec21 endp

@@ -176,7 +176,9 @@ extern char szNo[0x14];
 extern char szAm[0x14];
 extern char szPm[0x14];
 
+extern int  ClBorder;
 extern int CBEntries;
+extern HMODULE HModuleWin;
 extern int DefQueueSize;
 
 extern char DISPLAY[];
@@ -184,6 +186,8 @@ extern HDC tempHDC;
 
 
 #ifdef DEBUG
+extern void _cdecl printf (const char *format,...);
+#define OutputDebugString printf
 #define FUNCTION_START \
 {\
 	OutputDebugString(__FUNCTION__ " start\r\n");\
@@ -194,11 +198,11 @@ extern HDC tempHDC;
 }
 
 
+//wsprintf(DebugBuffer, __VA_ARGS__); \	OutputDebugString(DebugBuffer); \		OutputDebugString("\r\n"); 
+
 #define TRACE(...) \
 	{ \
-		wsprintf(DebugBuffer, __VA_ARGS__); \
-		OutputDebugString(DebugBuffer); \
-		OutputDebugString("\r\n"); \
+             printf(__VA_ARGS__);		\
 	}
 
 #define WARN(...) \
@@ -220,9 +224,12 @@ extern HDC tempHDC;
 #define FIXME
 #endif
 
+/* Resources */
 
 #define IDS_WINDOWS 0x00					// Windows
+#define IDS_COLORS 0x01					// Colors
 #define IDS_TYPEAHEAD 0x07					// TypeAhead
+#define IDS_BORDER 0x0e                                         // Border
 #define IDS_DEFAULTQUEUESIZE 0x0f			// DefaultQueueSize
 #define IDS_SYSTEMERROR 0x4b				// System Error
 #define IDS_DIVIDEBYZERO 0x4c				// Divede By Zero or Overflow Error
@@ -238,6 +245,39 @@ extern HDC tempHDC;
 #define IDS_AM 0x5c							// am
 #define IDS_PM 0x5d							// pm
 
+#ifdef __WATCOMC__
+#undef IDC_ARROW
+#undef IDC_IBEAM
+#undef IDC_WAIT
+#undef IDC_CROSS
+#undef IDC_UPARROW
+#undef IDC_SIZE
+#undef IDC_ICON
+#undef IDC_SIZENWSE
+#undef IDC_SIZENESW
+#undef IDC_SIZEWE
+#undef IDC_SIZENS
+#undef IDC_SIZEALL
+#undef IDC_NO
+#undef IDC_APPSTARTING
+#undef IDC_HELP
+#endif
+
+#define IDC_ARROW 32512
+#define IDC_IBEAM 32513
+#define IDC_WAIT 32514
+#define IDC_CROSS 32515
+#define IDC_UPARROW 32516
+#define IDC_SIZE 32640
+#define IDC_ICON 32641
+#define IDC_SIZENWSE 32642
+#define IDC_SIZENESW 32643
+#define IDC_SIZEWE 32644
+#define IDC_SIZENS 32645
+#define IDC_SIZEALL 32646
+#define IDC_NO 32648
+#define IDC_APPSTARTING 32650
+#define IDC_HELP 32651
 
 /* Varoius undocumented protos */
 HANDLE WINAPI FarGetOwner( HGLOBAL handle );
@@ -256,6 +296,54 @@ WORD WINAPI LocalHeapSize();
 
 #define GlobalAllocPtr(flags, cb) \
   (GlobalLock(GlobalAlloc((flags), (cb))))
+WORD WINAPI GetExeVersion(void);
+
+
+/* Extra (undocumented) queue wake bits - see "Undoc. Windows" */
+#define QS_SMRESULT      0x8000  /* Queue has a SendMessage() result */
+#define QS_SMPARAMSFREE  0x4000  /* SendMessage() parameters are available */
+
+typedef
+struct tagKBINFO {
+  char kbRanges[4]; //Far East ranges for KANJI
+  WORD kbStateSize; //#bytes of state info maintained by TOASCII
+} KBINFO;
+
+KBINFO KbInfo;
+
+typedef
+struct tagCURSORINFO {
+	WORD dpXRate;		//horizontal mickey/pixel ratio
+	WORD dpYRate;		//vertical mickey/pixel ratio
+} CURSORINFO;
+
+CURSORINFO CursorInfo;
+
+WORD WINAPI InquireKeyboard(KBINFO FAR *KbInfo);
+
+typedef
+struct tagMOUSEINFO {
+	BYTE msExists;	// true => mouse exists
+	BYTE msRelative;  // true => relative coordinate
+	WORD msNumButtons; // number of buttons on the mouse
+	WORD msRate; // maximum rate of mouse input events
+	WORD msXThresh; // threshold before acceleration
+	WORD msYThresh;
+	WORD msXRes;// x resolution
+	WORD msYRes;// y resolution
+} MOUSEINFO;
+
+MOUSEINFO MouseInfo;
+
+WORD WINAPI InquireMouse(MOUSEINFO FAR *MouseInfo);
+
+WORD WINAPI InquireDisplay(CURSORINFO FAR *CursorInfo);
+
+HANDLE WINAPI SetObjectOwner(HANDLE hObject, HANDLE hTask);
+
+BOOL WINAPI MakeObjectPrivate(HANDLE hObject, BOOL bPrivate);
+
+#define GetStockBrush(i) ((HBRUSH)GetStockObject(i))
 
 
 void far * _fmemcpy(void far * s1, void const far * s2, unsigned length);
@@ -272,3 +360,8 @@ char far *uitoa(unsigned int i);
 char far *itox(int m);
 
 
+
+
+#ifndef MK_FP
+#define MK_FP(seg,off) ((void far *)(((unsigned long)(seg) << 16) | (unsigned)(off)))
+#endif

@@ -1,0 +1,350 @@
+/*
+
+THIS FILE IS OVERWRITTEN EVERY TIME YOU UPDATE THE PLUGIN.
+USE THE CUSTOM CSS OPTION IN THE SUBSCRIPTION SETTING PANEL FOR YOUR
+CUSTOM CSS RULES.
+
+*/
+
+div.tnp-subscription,
+form.tnp-subscription, form.tnp-profile {
+    display: block;
+    margin: 1em auto;
+    max-width: 500px;
+    width: 100%;
+}
+
+div.tnp-profile {
+    display: block;
+    margin: 1em 0;
+    max-width: 500px;
+    /*width: 100%;*/
+}
+
+/* Generic field wrapper */
+.tnp-subscription div.tnp-field,
+.tnp-profile div.tnp-field
+{
+    margin-bottom: .7em;
+    border: 0;
+    padding: 0;
+}
+
+.tnp-subscription label,
+.tnp-profile label
+{
+    display: block;
+    color: inherit;
+    font-weight: normal;
+    line-height: normal;
+    padding: 0;
+    margin: 0;
+    margin-bottom: .25em;
+    font-size: .9em;
+}
+
+.tnp-subscription .tnp-field-checkbox label,
+.tnp-profile .tnp-field-checkbox label
+{
+    display: inline-block;
+}
+
+.tnp-subscription input[type=text],
+.tnp-subscription input[type=email],
+.tnp-subscription input[type=submit],
+.tnp-subscription select,
+.tnp-subscription textarea,
+.tnp-profile input[type=text],
+.tnp-profile input[type=email],
+.tnp-profile input[type=submit],
+.tnp-profile select,
+.tnp-profile textarea
+{
+    width: 100%;
+    padding: .7em;
+    display: block;
+    border: 1px;
+    color: #444;
+    border-color: #ddd;
+    background-color: #f4f4f4;
+    background-image: none;
+    text-shadow: none;
+    font-size: 1em;
+    margin: 0;
+    line-height: normal;
+    box-sizing: border-box;
+}
+
+.tnp-subscription input[type=checkbox],
+.tnp-widget input[type=radio],
+.tnp-profile input[type=checkbox]
+{
+    /* Fixes some bad themes CSS */
+    max-width: 1em;
+    display: inline-block;
+    margin-right: .5em;
+}
+
+/* Antireset - http://www.satollo.net/css-and-select-space-between-the-options-and-the-arrow */
+.tnp-subscription select option,
+.tnp-profile select option
+{
+    margin-right: .75em;
+}
+
+.tnp-subscription input.tnp-submit,
+.tnp-profile input.tnp-submit,
+.tnp-unsubscribe button.tnp-submit,
+.tnp-reactivate button.tnp-submit
+{
+    background-color: #444;
+    color: #fff;
+    width: auto;
+    height: auto;
+    margin: 0;
+    display: inline-block;
+}
+
+@media all and (max-width: 480px) {
+    .tnp-subscription input[type=submit],
+    .tnp-profile input[type=submit] {
+        width: 100%;
+    }
+}
+
+.tnp-widget {
+    width: 100%;
+    display: block;
+    box-sizing: border-box;
+}
+
+.tnp-widget .tnp-field {
+    margin-bottom: 10px;
+    border: 0;
+    padding: 0;
+}
+
+.tnp-widget label {
+    display: block;
+    color: inherit;
+    font-size: 14px;
+}
+
+.tnp-widget input[type=text], .tnp-widget input[type=email], .tnp-widget input[type=submit], .tnp-widget select {
+    width: 100%;
+    padding: 10px;
+    display: block;
+    border: 1px solid #ddd ;
+    border-color: #ddd;
+    background-color: #f4f4f4;
+    background-image: none;
+    text-shadow: none;
+    color: #444;
+    font-size: 14px;
+    line-height: normal;
+    box-sizing: border-box;
+    height: auto;
+}
+
+.tnp-widget input[type=checkbox], .tnp-widget input[type=radio] {
+    width: auto;
+    display: inline-block;
+}
+
+/* Antireset - http://www.satollo.net/css-and-select-space-between-the-options-and-the-arrow */
+.tnp-widget select option {
+    margin-right: 10px;
+}
+
+.tnp-widget input.tnp-submit {
+    background-color: #444;
+    background-image: none;
+    text-shadow: none;
+    color: #fff;
+    margin: 0;
+}
+
+.tnp-field input[type="submit"] {
+    position: inherit;
+}
+
+.tnp-field label {
+
+}
+
+/* Newsletter Widget Minimal */
+
+.tnp-widget-minimal {
+    width: 100%;
+}
+
+.tnp-widget-minimal form {
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.tnp-widget-minimal input.tnp-email {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    display: inline-block;
+    border: 1px solid #ddd;
+    background-color: #f4f4f4;
+    color: #444;
+    font-size: 14px;
+}
+
+.tnp-widget-minimal input.tnp-submit {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    display: inline-block;
+    border: 1px;
+    border-color: #ddd;
+    background-color: #444;
+    background-image: none;
+    text-shadow: none;
+    color: #fff;
+    font-size: 14px;
+    line-height: normal;
+    border-radius: 0px;
+    height: auto;
+    margin: 0;
+}
+
+/* The minimal form */
+
+.tnp-subscription-minimal {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 10px 0;
+}
+
+.tnp-subscription-minimal form {
+    width: auto;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    white-space: nowrap;
+}
+
+.tnp-subscription-minimal input.tnp-email,
+.tnp-subscription-minimal input.tnp-name
+{
+    width: 70%;
+    max-width: 300px;
+    box-sizing: border-box;
+    padding: 10px;
+    display: inline-block;
+    border: 1px solid #ddd;
+    background-color: #f4f4f4;
+    color: #444;
+    font-size: 14px;
+    line-height: 20px;
+    border-radius: 0px;
+    margin-right: 10px;
+}
+
+.tnp-subscription-minimal.with-name input.tnp-email,
+.tnp-subscription-minimal.with-name input.tnp-name
+{
+    width: 31%;
+}
+
+.tnp-subscription-minimal .tnp-privacy-field {
+    margin-top: 10px;
+}
+
+/* Some of these styles are overridden by theme styles... */
+.tnp-subscription-minimal input.tnp-submit {
+    width: 29%;
+    box-sizing: border-box;
+    display: inline-block;
+    padding: 10px;
+    border: 1px;
+    border-color: #ddd;
+    background-color: #444;
+    background-image: none;
+    text-shadow: none;
+    color: #fff;
+    font-size: 14px;
+    line-height: 20px;
+    border-radius: 0px;
+    margin: 0;
+}
+
+.tnp-subscription-posts {
+    margin-top: 2em;
+    margin-bottom: 2em;
+    padding: 2rem;
+}
+
+.tnp-subscription-posts .tnp-subscription {
+    max-width: auto;
+    margin: 0;
+}
+
+@media all and (max-width: 525px) {
+    .tnp-subscription-minimal.with-name input.tnp-email,
+    .tnp-subscription-minimal.with-name input.tnp-name,
+    .tnp-subscription-minimal input.tnp-submit
+    {
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        display: block;
+        margin-bottom: .5rem;
+    }
+}
+
+/* Single button forms */
+.tnp-button-form button.tnp-submit {
+    box-sizing: border-box;
+    padding: 10px;
+    display: inline-block;
+    border: 1px;
+    border-color: #ddd;
+    background-color: #444;
+    background-image: none;
+    text-shadow: none;
+    color: #fff;
+    font-size: 14px;
+    line-height: normal;
+    border-radius: 0px;
+    height: auto;
+    margin: 0;
+}
+
+/* Comments Extension */
+.tnp-comments {
+    clear: both;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+.tnp-comments label {
+    display: block;
+}
+
+.tnp-comments input[type=checkbox] {
+    display: inline-block;
+    width: auto!important;
+}
+
+
+/* Locked Content Extension */
+.tnp-lock {
+    clear: both;
+    display: block;
+    box-sizing: border-box;
+    box-shadow: none;
+    margin: 20px;
+    padding: 15px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+}
+
+.tnp-nl-checkout {
+    margin-bottom: 1em;
+}

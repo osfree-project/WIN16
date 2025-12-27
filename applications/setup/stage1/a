@@ -1,0 +1,4564 @@
+Среда сборки OpenWatcom 1.9. !!!!!!Стандарт Си C89!!!!!! Целевая платформа DOS 16-bit. 
+Только исправляем ошибки. Ни в коем случае не урезаем функционал и интерфейс пользователя. 
+Представленный setup.inf достаточный и рабочий для безошибочной установки оригинальным установщиком Windows 3.0 
+Модули, которые не изменяем не показаны, но для них есть интерфейсные файлы. В OpenWatcom есть функция stat.
+!!!!!Выводить полный исходный код исправленных файлов!!!!! 
+section_list.h: 
+#ifndef SECTION_LIST_H
+#define SECTION_LIST_H
+
+/* Section list operations */
+int inf_section_find(const char far *section_name, char far * far * *lines, int *line_count);
+void inf_sections_free_all(void);
+
+/* INF file loading */
+void load_inf_file(const char far *filename);
+
+/* Section removal function */
+int inf_section_remove(const char far *section_name);
+
+#endif
+section_list.c: 
+не меняем 
+file_list.h: 
+#ifndef FILE_LIST_H
+#define FILE_LIST_H
+
+/* File copy entry structure */
+typedef struct FileCopyEntry {
+    char disk;  /* -1 for full path source */
+    char *source_name;
+    char *dest_dir; 
+    char *dest_name;
+    struct FileCopyEntry *next;
+} FileCopyEntry;
+
+/* File list operations */
+void file_list_add_entry(char disk, const char *source_name, const char *dest_dir, const char *dest_name);
+FileCopyEntry *file_list_get_entries_by_disk(char disk);
+void file_list_free_all(void);
+void file_list_free_entries(FileCopyEntry *entries);
+
+/* Disk management */
+int file_list_get_unique_disks(char *disks, int max_disks);
+
+/* Debug functions */
+void file_list_dump(void);
+
+#endif
+file_list.c: 
+не меняем 
+disk_list.h: 
+#ifndef DISK_LIST_H
+#define DISK_LIST_H
+
+typedef struct DiskInfo {
+    int disk;
+    char far *path;
+    char far *label;
+    char far *tag;
+    struct DiskInfo *next;
+} DiskInfo;
+
+/* Disk list operations */
+void disk_list_add(int disk, const char* path, const char* label, const char* tag);
+DiskInfo* disk_list_find(int disk);
+void disk_list_free_all(void);
+
+/* Disk information getters */
+char* get_disk_path(int disk);
+char* get_disk_label(int disk);
+char* get_disk_tag(int disk);
+
+#endif
+disk_list.c: 
+не меняем 
+machine_list.h: 
+#ifndef MACHINE_LIST_H
+#define MACHINE_LIST_H
+
+
+typedef struct {
+    char far *description;
+    char far *machine_id;
+    char far *system_drv;
+    char far *kbd_drv;
+    char far *kbd_type;
+    char far *mouse_drv;
+    char far *disp_drv;
+    char far *sound_drv;
+    char far *comm_drv;
+    char far *himem_switch;
+    char far *ebios;
+    char far *cookies[10];
+    int cookie_count;
+} MachineEntry;
+
+/* Dynamic machine list structure */
+typedef struct MachineListNode {
+    MachineEntry entry;
+    struct MachineListNode *next;
+} MachineListNode;
+
+/* Machine list operations */
+void machine_list_init(void);
+void machine_list_add(const MachineEntry *entry);
+MachineEntry* machine_list_get(int index);
+int machine_list_count(void);
+void machine_list_clear(void);
+void machine_list_free(void);
+
+#endif
+machine_list.c: 
+не меняем 
+display_list.h: 
+#ifndef DISPLAY_LIST_H
+#define DISPLAY_LIST_H
+
+typedef struct DisplayEntry {
+    char far *name;
+    char far *driver_file;
+    char far *description;
+    char far *resolution;
+    char far *grabber_286;
+    char far *logo_code;
+    char far *vdd_file;
+    char far *grabber_386;
+    char far *ega_sys;
+    char far *logo_data;
+    struct DisplayEntry *next;
+} DisplayEntry;
+
+/* Display list operations */
+void display_list_init(void);
+void display_list_add(const char* name, const char* driver_file, const char* description,
+                     const char* resolution, const char* grabber_286, const char* logo_code,
+                     const char* vdd_file, const char* grabber_386, const char* ega_sys,
+                     const char* logo_data);
+DisplayEntry* display_list_find(const char* name);
+int display_list_count(void);
+void display_list_free(void);
+
+#endif
+display_list.c: 
+не меняем 
+mouse_list.h: 
+#ifndef MOUSE_LIST_H
+#define MOUSE_LIST_H
+
+typedef struct MouseEntry {
+    char far *name;
+    char far *driver_file;
+    char far *description;
+    char far *vmd;
+    char far *dos_driver;
+    struct MouseEntry *next;
+} MouseEntry;
+
+/* Mouse list operations */
+void mouse_list_init(void);
+void mouse_list_add(const char* name, const char* driver_file, const char* description,
+                   const char* vmd, const char* dos_driver);
+MouseEntry* mouse_list_find(const char* name);
+int mouse_list_count(void);
+void mouse_list_clear(void);
+void mouse_list_free(void);
+
+#endif
+mouse_list.c: 
+не меняем 
+kbdtype_list.h: 
+#ifndef KBDTYPE_LIST_H
+#define KBDTYPE_LIST_H
+
+typedef struct KbdTypeEntry {
+    char far *name;
+    char far *description;
+    char far *dll;
+    struct KbdTypeEntry *next;
+} KbdTypeEntry;
+
+/* Keyboard type list operations */
+void kbdtype_list_init(void);
+void kbdtype_list_add(const char* name, const char* description, const char* dll);
+KbdTypeEntry* kbdtype_list_find(const char* name);
+int kbdtype_list_count(void);
+void kbdtype_list_clear(void);
+void kbdtype_list_free(void);
+
+#endif
+kbdtype_list.c: 
+не меняем 
+kbdtable_list.h: 
+#ifndef KBDTABLE_LIST_H
+#define KBDTABLE_LIST_H
+
+typedef struct KbdTableEntry {
+    char far *name;
+    char far *dll;
+    char far *description;
+    struct KbdTableEntry *next;
+} KbdTableEntry;
+
+/* Keyboard table list operations */
+void kbdtable_list_init(void);
+void kbdtable_list_add(const char* name, const char* dll, const char* description);
+KbdTableEntry* kbdtable_list_find(const char* name);
+int kbdtable_list_count(void);
+void kbdtable_list_clear(void);
+void kbdtable_list_free(void);
+
+#endif
+kbdtable_list.c: 
+не меняем 
+language_list.h: 
+#ifndef LANGUAGE_LIST_H
+#define LANGUAGE_LIST_H
+
+typedef struct LanguageEntry {
+    char far *name;
+    char far *dll;
+    char far *description;
+    struct LanguageEntry *next;
+} LanguageEntry;
+
+/* Language list operations */
+void language_list_init(void);
+void language_list_add(const char* name, const char* dll, const char* description);
+LanguageEntry* language_list_find(const char* name);
+int language_list_count(void);
+void language_list_clear(void);
+void language_list_free(void);
+
+#endif
+language_list.c: 
+не меняем 
+network_list.h: 
+#ifndef NETWORK_LIST_H
+#define NETWORK_LIST_H
+
+#define MAX_VDD_COUNT 10  /* Максимальное количество VDD драйверов */
+
+typedef struct NetworkEntry {
+    char far *name;
+    char far *driver_file;
+    char far *description;
+    char far *help_file;
+    char far *opt_file;
+    char far *winini_sect_name;
+    char far *sysini_sect_name;
+    char far *vdd_list[MAX_VDD_COUNT];  /* Массив для VDD драйверов */
+    int vdd_count;                      /* Фактическое количество VDD драйверов */
+    struct NetworkEntry *next;
+} NetworkEntry;
+
+/* Network list operations */
+void network_list_init(void);
+void network_list_add(const char* name, const char* driver_file, const char* description,
+                     const char* help_file, const char* opt_file, const char* winini_sect_name,
+                     const char* sysini_sect_name, char* vdd_array[], int vdd_count);
+NetworkEntry* network_list_find(const char* name);
+int network_list_count(void);
+void network_list_clear(void);
+void network_list_free(void);
+
+#endif
+network_list.c: 
+не меняем 
+inf_parser.h: 
+#ifndef INF_PARSER_H
+#define INF_PARSER_H
+
+#include "machine_list.h"
+#include "setup_core.h"
+
+/* Machine list operations */
+void machine_list_init(void);
+void machine_list_add(const MachineEntry *entry);
+MachineEntry* machine_list_get(int index);
+int machine_list_count(void);
+void machine_list_clear(void);
+void machine_list_free(void);
+
+/* INF parsing functions */
+void preparse_inf_file(SetupConfig* config);
+void parse_inf_file(const SetupConfig* config);
+void parse_machine_section(void);
+void parse_mouse_section(void);
+void parse_kbdtype_section(void);
+void parse_language_section(void);
+void parse_network_section(void);
+
+#endif
+inf_parser.c: 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <malloc.h>
+#include "resources.h"
+#include "log.h"
+#include "inf_parser.h"
+#include "file_list.h"
+#include "section_list.h"
+#include "disk_list.h"
+#include "machine_list.h"
+#include "display_list.h"
+#include "mouse_list.h"
+#include "kbdtype_list.h"
+#include "kbdtable_list.h"
+#include "language_list.h"
+#include "network_list.h"
+
+void remove_disk_prefix(char *filename) {
+    char *colon_pos = strchr(filename, ':');
+    if (colon_pos != NULL) {
+        memmove(filename, colon_pos + 1, strlen(colon_pos + 1) + 1);
+    }
+}
+
+/* Helper function to trim whitespace and quotes from a string */
+static void trim_string(char *str) {
+    char *start = str;
+    char *end;
+    
+    if (!str || strlen(str) == 0) return;
+    
+    /* Trim leading spaces */
+    while (*start && isspace((unsigned char)*start)) start++;
+    
+    /* Trim trailing spaces */
+    end = start + strlen(start) - 1;
+    while (end > start && isspace((unsigned char)*end)) {
+        *end = '\0';
+        end--;
+    }
+    
+    /* Remove surrounding quotes if present */
+    if (start[0] == '"' && end[0] == '"' && end > start) {
+        memmove(start, start + 1, (end - start) - 1);
+        start[(end - start) - 1] = '\0';
+    }
+    
+    /* Move back to original if we trimmed leading spaces */
+    if (start != str) {
+        memmove(str, start, strlen(start) + 1);
+    }
+}
+
+/* NEW: Function to check if a line is a new machine entry */
+static int is_machine_start_line(const char *line) {
+    const char *temp = line;
+    const char *first_quote, *second_quote, *comma_pos, *third_quote, *fourth_quote;
+    
+    if (!line || line[0] != '"') return 0;
+    
+    /* Skip leading whitespace */
+    while (*temp && isspace((unsigned char)*temp)) temp++;
+    if (*temp != '"') return 0;
+    
+    first_quote = temp;
+    second_quote = strchr(first_quote + 1, '"');
+    if (!second_quote) return 0;
+    
+    /* Look for comma after second quote */
+    comma_pos = second_quote + 1;
+    while (*comma_pos && isspace((unsigned char)*comma_pos)) comma_pos++;
+    if (*comma_pos != ',') return 0;
+    
+    /* Look for third quote (start of ID) */
+    third_quote = comma_pos + 1;
+    while (*third_quote && isspace((unsigned char)*third_quote)) third_quote++;
+    if (*third_quote != '"') return 0;
+    
+    fourth_quote = strchr(third_quote + 1, '"');
+    if (!fourth_quote) return 0;
+    
+    return 1;
+}
+
+/* FIXED: Improved machine entry parser with better line detection */
+static int parse_machine_entry(char far * far *lines, int start_index, int line_count, MachineEntry* entry) {
+    int i;
+    char line_copy[512];
+    char *first_quote, *second_quote, *third_quote, *fourth_quote;
+    char *temp;
+    int desc_len;
+    int found_machine = 0;
+    int id_len;
+    char *comma_pos;
+    char *comment_pos;
+    char *end_ptr;
+    char near_desc[256];
+    char near_id[100];
+    int field_index;
+    unsigned int line_len;
+    
+    /* Initialize entry */
+    memset(entry, 0, sizeof(MachineEntry));
+    field_index = 0;
+    
+    for (i = start_index; i < line_count; i++) {
+        if (!lines[i]) continue;
+        
+        /* Safely copy far string to near buffer */
+        line_len = _fstrlen(lines[i]);
+        if (line_len >= sizeof(line_copy)) {
+            line_len = sizeof(line_copy) - 1;
+        }
+        _fstrncpy(line_copy, lines[i], line_len);
+        line_copy[line_len] = '\0';
+        
+        /* Skip empty lines and comments */
+        temp = line_copy;
+        while (*temp && isspace((unsigned char)*temp)) temp++;
+        if (*temp == '\0' || *temp == ';') continue;
+        
+        /* Check if this line starts a new machine entry */
+        if (is_machine_start_line(temp)) {
+            if (found_machine) {
+                /* We found a new machine, return current index */
+                return i;
+            }
+            
+            /* Parse machine description and ID */
+            first_quote = temp;
+            second_quote = strchr(first_quote + 1, '"');
+            
+            if (second_quote != NULL) {
+                /* Look for comma after second quote */
+                comma_pos = second_quote + 1;
+                while (*comma_pos && isspace((unsigned char)*comma_pos)) comma_pos++;
+                
+                if (*comma_pos == ',') {
+                    /* Now look for third quote (start of ID) */
+                    third_quote = comma_pos + 1;
+                    while (*third_quote && isspace((unsigned char)*third_quote)) third_quote++;
+                    
+                    if (*third_quote == '"') {
+                        fourth_quote = strchr(third_quote + 1, '"');
+                        
+                        if (fourth_quote != NULL) {
+                            /* We have a valid machine description line */
+                            desc_len = second_quote - (first_quote + 1);
+                            if (desc_len > 0 && desc_len < (int)sizeof(near_desc)) {
+                                strncpy(near_desc, first_quote + 1, desc_len);
+                                near_desc[desc_len] = '\0';
+                                trim_string(near_desc);
+                                
+                                /* Allocate far memory for description */
+                                entry->description = (char far*)_fmalloc(strlen(near_desc) + 1);
+                                if (entry->description) {
+                                    _fstrcpy(entry->description, near_desc);
+                                }
+                            }
+                            
+                            /* Extract machine ID */
+                            id_len = fourth_quote - (third_quote + 1);
+                            if (id_len > 0 && id_len < (int)sizeof(near_id)) {
+                                strncpy(near_id, third_quote + 1, id_len);
+                                near_id[id_len] = '\0';
+                                trim_string(near_id);
+                                
+                                /* Allocate far memory for machine ID */
+                                entry->machine_id = (char far*)_fmalloc(strlen(near_id) + 1);
+                                if (entry->machine_id) {
+                                    _fstrcpy(entry->machine_id, near_id);
+                                }
+                            }
+                            
+                            log_message("parse_machine_entry: Found machine '%s' with ID '%s'", 
+                                       near_desc, near_id);
+                            
+                            found_machine = 1;
+                            field_index = 0; /* Start with first field */
+                            continue; /* Move to next line for field data */
+                        }
+                    }
+                }
+            }
+        } else if (found_machine) {
+            /* This is a continuation line for current machine configuration */
+            temp = line_copy;
+            
+            /* Skip empty lines and comments in continuation */
+            while (*temp && isspace((unsigned char)*temp)) temp++;
+            if (*temp == '\0' || *temp == ';') continue;
+            
+            /* Remove comments from continuation lines */
+            comment_pos = strchr(temp, ';');
+            if (comment_pos) *comment_pos = '\0';
+            
+            /* Re-trim after comment removal */
+            temp = line_copy;
+            while (*temp && isspace((unsigned char)*temp)) temp++;
+            if (*temp == '\0') continue;
+            
+            /* Trim the line */
+            end_ptr = temp + strlen(temp) - 1;
+            while (end_ptr > temp && isspace((unsigned char)*end_ptr)) {
+                *end_ptr = '\0';
+                end_ptr--;
+            }
+            
+            /* Skip if empty after trimming */
+            if (strlen(temp) == 0) continue;
+            
+            /* Trim quotes if present */
+            trim_string(temp);
+            
+            if (strlen(temp) > 0) {
+                char far *far_value;
+                unsigned int temp_len = strlen(temp);
+                
+                /* Allocate far memory for the value */
+                far_value = (char far*)_fmalloc(temp_len + 1);
+                if (!far_value) {
+                    log_message("parse_machine_entry: Memory allocation failed for field %d", field_index);
+                    continue;
+                }
+                _fstrcpy(far_value, temp);
+                
+                /* Direct assignment to MachineEntry fields based on field index */
+                switch (field_index) {
+                    case 0: /* system_drv */
+                        if (strcmp(temp, "system") == 0) {
+                            if (entry->system_drv) _ffree(entry->system_drv);
+                            entry->system_drv = (char far*)_fmalloc(strlen("system.drv") + 1);
+                            if (entry->system_drv) _fstrcpy(entry->system_drv, "system.drv");
+                            _ffree(far_value);
+                        } else {
+                            entry->system_drv = far_value;
+                        }
+                        log_message("parse_machine_entry: system_drv = '%s'", temp);
+                        break;
+                    case 1: /* kbd_drv */
+                        entry->kbd_drv = far_value;
+                        log_message("parse_machine_entry: kbd_drv = '%s'", temp);
+                        break;
+                    case 2: /* kbd_type */
+                        entry->kbd_type = far_value;
+                        log_message("parse_machine_entry: kbd_type = '%s'", temp);
+                        break;
+                    case 3: /* mouse_drv */
+                        entry->mouse_drv = far_value;
+                        log_message("parse_machine_entry: mouse_drv = '%s'", temp);
+                        break;
+                    case 4: /* disp_drv */
+                        entry->disp_drv = far_value;
+                        log_message("parse_machine_entry: disp_drv = '%s'", temp);
+                        break;
+                    case 5: /* sound_drv */
+                        entry->sound_drv = far_value;
+                        log_message("parse_machine_entry: sound_drv = '%s'", temp);
+                        break;
+                    case 6: /* comm_drv */
+                        entry->comm_drv = far_value;
+                        log_message("parse_machine_entry: comm_drv = '%s'", temp);
+                        break;
+                    case 7: /* himem_switch */
+                        entry->himem_switch = far_value;
+                        log_message("parse_machine_entry: himem_switch = '%s'", temp);
+                        break;
+                    case 8: /* ebios */
+                        entry->ebios = far_value;
+                        log_message("parse_machine_entry: ebios = '%s'", temp);
+                        break;
+                    default: /* cookies */
+                        if (entry->cookie_count < 10) {
+                            entry->cookies[entry->cookie_count] = far_value;
+                            log_message("parse_machine_entry: cookie[%d] = '%s'", entry->cookie_count, temp);
+                            entry->cookie_count++;
+                        } else {
+                            _ffree(far_value); /* Free if we exceed cookie limit */
+                        }
+                        break;
+                }
+                field_index++;
+            }
+        }
+    }
+    
+    return line_count; /* Reached end of section */
+}
+
+/* FIXED: Parse disks section with proper disk character extraction */
+static void parse_disks_section(void) {
+    char far * far *lines;
+    int line_count;
+    int i;
+    char line_copy[256];
+    char disk_char;
+    char path[256];
+    char label[256];
+    char tag[256];
+    char *equal_pos;
+    char *comma1, *comma2;
+    unsigned int line_len;
+    char *temp;
+    char *disk_end;
+    
+    log_message("parse_disks_section: Starting disks section parsing");
+    
+    if (!inf_section_find("disks", &lines, &line_count)) {
+        log_message("parse_disks_section: No [disks] section found");
+        return;
+    }
+    
+    log_message("parse_disks_section: Found [disks] section with %d lines", line_count);
+    
+    for (i = 0; i < line_count; i++) {
+        if (!lines[i]) continue;
+        
+        /* Safely copy the line for processing */
+        line_len = _fstrlen(lines[i]);
+        if (line_len >= sizeof(line_copy)) {
+            line_len = sizeof(line_copy) - 1;
+        }
+        _fstrncpy(line_copy, lines[i], line_len);
+        line_copy[line_len] = '\0';
+        
+        log_message("parse_disks_section: Processing line: '%s'", line_copy);
+        
+        /* Skip empty lines and comments */
+        temp = line_copy;
+        while (*temp && isspace((unsigned char)*temp)) temp++;
+        if (*temp == '\0' || *temp == ';') continue;
+        
+        /* Find the equal sign separating disk number from the rest */
+        equal_pos = strchr(temp, '=');
+        if (!equal_pos) {
+            log_message("parse_disks_section: WARNING - no '=' found in line: %s", line_copy);
+            continue;
+        }
+        
+        /* Extract disk character (before '=') - get first non-space character */
+        *equal_pos = '\0';
+        
+        /* Find the last non-space character before '=' */
+        disk_end = equal_pos - 1;
+        while (disk_end > temp && isspace((unsigned char)*disk_end)) {
+            disk_end--;
+        }
+        
+        if (disk_end >= temp) {
+            disk_char = *disk_end;
+        } else {
+            log_message("parse_disks_section: WARNING - cannot extract disk character from: %s", line_copy);
+            continue;
+        }
+        
+        /* Validate disk character */
+        if (disk_char < '1' || disk_char > '9') {
+            log_message("parse_disks_section: WARNING - invalid disk character: '%c'", disk_char);
+            continue;
+        }
+        
+        /* Skip whitespace after '=' */
+        equal_pos++;
+        while (*equal_pos && isspace((unsigned char)*equal_pos)) equal_pos++;
+        
+        /* Now parse the three comma-separated values: path, label, tag */
+        comma1 = strchr(equal_pos, ',');
+        if (!comma1) {
+            log_message("parse_disks_section: WARNING - no comma found in line: %s", line_copy);
+            continue;
+        }
+        
+        *comma1 = '\0';
+        strncpy(path, equal_pos, sizeof(path) - 1);
+        path[sizeof(path) - 1] = '\0';
+        trim_string(path);
+        
+        comma1++;
+        while (*comma1 && isspace((unsigned char)*comma1)) comma1++;
+        
+        comma2 = strchr(comma1, ',');
+        if (!comma2) {
+            log_message("parse_disks_section: WARNING - only one comma found in line: %s", line_copy);
+            continue;
+        }
+        
+        *comma2 = '\0';
+        strncpy(label, comma1, sizeof(label) - 1);
+        label[sizeof(label) - 1] = '\0';
+        trim_string(label);
+        
+        comma2++;
+        while (*comma2 && isspace((unsigned char)*comma2)) comma2++;
+        strncpy(tag, comma2, sizeof(tag) - 1);
+        tag[sizeof(tag) - 1] = '\0';
+        trim_string(tag);
+        
+        log_message("parse_disks_section: Parsed disk '%c': path='%s', label='%s', tag='%s'", 
+                   disk_char, path, label, tag);
+        
+        /* Add to disk list */
+        disk_list_add(disk_char, path, label, tag);
+    }
+    
+    _ffree(lines);
+    
+    /* Remove disks section after parsing to free memory */
+    inf_section_remove("disks");
+    log_message("parse_disks_section: Disks section removed after processing");
+    
+    log_message("parse_disks_section: Disks section parsing completed");
+}
+
+/* FIXED: Parse machine section with proper continuation line handling */
+void parse_machine_section(void) {
+    char far * far *lines;
+    int line_count;
+    int i;
+    int j;
+    MachineEntry temp_entry;
+    int current_index = 0;
+    int machine_count = 0;
+    int next_index;
+    char desc_buffer[256];
+    char value_buffer[256];
+    
+    log_message("parse_machine_section: Starting machine section parsing");
+    
+    /* Initialize machine list */
+    machine_list_init();
+    
+    /* Use inf_section_find to get machine section */
+    if (!inf_section_find("machine", &lines, &line_count)) {
+        log_message("parse_machine_section: No [machine] section found");
+        return;
+    }
+    
+    log_message("parse_machine_section: Found [machine] section with %d lines", line_count);
+    
+    /* Parse machine entries */
+    current_index = 0;
+    while (current_index < line_count) {
+        /* Initialize temp_entry for each machine */
+        memset(&temp_entry, 0, sizeof(MachineEntry));
+        
+        next_index = parse_machine_entry(lines, current_index, line_count, &temp_entry);
+        
+        if (temp_entry.description != NULL) {
+            /* Add to machine list */
+            machine_list_add(&temp_entry);
+            machine_count++;
+            
+            /* Convert far string to near for logging */
+            if (temp_entry.description) {
+                unsigned int desc_len = _fstrlen(temp_entry.description);
+                if (desc_len >= sizeof(desc_buffer)) {
+                    desc_len = sizeof(desc_buffer) - 1;
+                }
+                _fstrncpy(desc_buffer, temp_entry.description, desc_len);
+                desc_buffer[desc_len] = '\0';
+            } else {
+                strcpy(desc_buffer, "NULL");
+            }
+            
+            log_message("parse_machine_section: Successfully added machine %d: '%s'", 
+                       machine_count, desc_buffer);
+        } else {
+            log_message("parse_machine_section: No machine found at index %d", current_index);
+            /* If no machine found and no progress, break to avoid infinite loop */
+            if (next_index <= current_index) {
+                break;
+            }
+        }
+        
+        if (next_index <= current_index) {
+            /* No progress made, break to avoid infinite loop */
+            log_message("parse_machine_section: No progress, breaking loop at index %d", current_index);
+            break;
+        }
+        current_index = next_index;
+    }
+    
+    _ffree(lines);
+    
+    /* Remove machine section after parsing to free memory */
+    inf_section_remove("machine");
+    log_message("parse_machine_section: Machine section removed after processing");
+    
+    /* Log parsing results */
+    log_message("parse_machine_section: Machine section parsing completed, found %d entries", 
+               machine_list_count());
+    
+    /* Log full details of each machine entry */
+    for (i = 0; i < machine_list_count(); i++) {
+        MachineEntry* entry = machine_list_get(i);
+        if (entry) {
+            /* Convert far strings to near for safe logging */
+            if (entry->description) {
+                unsigned int desc_len = _fstrlen(entry->description);
+                if (desc_len >= sizeof(desc_buffer)) {
+                    desc_len = sizeof(desc_buffer) - 1;
+                }
+                _fstrncpy(desc_buffer, entry->description, desc_len);
+                desc_buffer[desc_len] = '\0';
+            } else {
+                strcpy(desc_buffer, "NULL");
+            }
+            
+            log_message("  Machine %d: '%s'", i, desc_buffer);
+            
+            /* Log all fields */
+            if (entry->machine_id) {
+                unsigned int len = _fstrlen(entry->machine_id);
+                if (len >= sizeof(value_buffer)) len = sizeof(value_buffer) - 1;
+                _fstrncpy(value_buffer, entry->machine_id, len);
+                value_buffer[len] = '\0';
+                log_message("    machine_id: '%s'", value_buffer);
+            } else {
+                log_message("    machine_id: NULL");
+            }
+            
+            if (entry->system_drv) {
+                unsigned int len = _fstrlen(entry->system_drv);
+                if (len >= sizeof(value_buffer)) len = sizeof(value_buffer) - 1;
+                _fstrncpy(value_buffer, entry->system_drv, len);
+                value_buffer[len] = '\0';
+                log_message("    system_drv: '%s'", value_buffer);
+            } else {
+                log_message("    system_drv: NULL");
+            }
+            
+            if (entry->kbd_drv) {
+                unsigned int len = _fstrlen(entry->kbd_drv);
+                if (len >= sizeof(value_buffer)) len = sizeof(value_buffer) - 1;
+                _fstrncpy(value_buffer, entry->kbd_drv, len);
+                value_buffer[len] = '\0';
+                log_message("    kbd_drv: '%s'", value_buffer);
+            } else {
+                log_message("    kbd_drv: NULL");
+            }
+            
+            if (entry->kbd_type) {
+                unsigned int len = _fstrlen(entry->kbd_type);
+                if (len >= sizeof(value_buffer)) len = sizeof(value_buffer) - 1;
+                _fstrncpy(value_buffer, entry->kbd_type, len);
+                value_buffer[len] = '\0';
+                log_message("    kbd_type: '%s'", value_buffer);
+            } else {
+                log_message("    kbd_type: NULL");
+            }
+            
+            if (entry->mouse_drv) {
+                unsigned int len = _fstrlen(entry->mouse_drv);
+                if (len >= sizeof(value_buffer)) len = sizeof(value_buffer) - 1;
+                _fstrncpy(value_buffer, entry->mouse_drv, len);
+                value_buffer[len] = '\0';
+                log_message("    mouse_drv: '%s'", value_buffer);
+            } else {
+                log_message("    mouse_drv: NULL");
+            }
+            
+            if (entry->disp_drv) {
+                unsigned int len = _fstrlen(entry->disp_drv);
+                if (len >= sizeof(value_buffer)) len = sizeof(value_buffer) - 1;
+                _fstrncpy(value_buffer, entry->disp_drv, len);
+                value_buffer[len] = '\0';
+                log_message("    disp_drv: '%s'", value_buffer);
+            } else {
+                log_message("    disp_drv: NULL");
+            }
+            
+            if (entry->sound_drv) {
+                unsigned int len = _fstrlen(entry->sound_drv);
+                if (len >= sizeof(value_buffer)) len = sizeof(value_buffer) - 1;
+                _fstrncpy(value_buffer, entry->sound_drv, len);
+                value_buffer[len] = '\0';
+                log_message("    sound_drv: '%s'", value_buffer);
+            } else {
+                log_message("    sound_drv: NULL");
+            }
+            
+            if (entry->comm_drv) {
+                unsigned int len = _fstrlen(entry->comm_drv);
+                if (len >= sizeof(value_buffer)) len = sizeof(value_buffer) - 1;
+                _fstrncpy(value_buffer, entry->comm_drv, len);
+                value_buffer[len] = '\0';
+                log_message("    comm_drv: '%s'", value_buffer);
+            } else {
+                log_message("    comm_drv: NULL");
+            }
+            
+            if (entry->himem_switch) {
+                unsigned int len = _fstrlen(entry->himem_switch);
+                if (len >= sizeof(value_buffer)) len = sizeof(value_buffer) - 1;
+                _fstrncpy(value_buffer, entry->himem_switch, len);
+                value_buffer[len] = '\0';
+                log_message("    himem_switch: '%s'", value_buffer);
+            } else {
+                log_message("    himem_switch: NULL");
+            }
+            
+            if (entry->ebios) {
+                unsigned int len = _fstrlen(entry->ebios);
+                if (len >= sizeof(value_buffer)) len = sizeof(value_buffer) - 1;
+                _fstrncpy(value_buffer, entry->ebios, len);
+                value_buffer[len] = '\0';
+                log_message("    ebios: '%s'", value_buffer);
+            } else {
+                log_message("    ebios: NULL");
+            }
+            
+            /* Cookies */
+            log_message("    cookies: %d entries", entry->cookie_count);
+            for (j = 0; j < entry->cookie_count; j++) {
+                if (entry->cookies[j]) {
+                    unsigned int len = _fstrlen(entry->cookies[j]);
+                    if (len >= sizeof(value_buffer)) len = sizeof(value_buffer) - 1;
+                    _fstrncpy(value_buffer, entry->cookies[j], len);
+                    value_buffer[len] = '\0';
+                    log_message("      [%d]: '%s'", j, value_buffer);
+                } else {
+                    log_message("      [%d]: NULL", j);
+                }
+            }
+        } else {
+            log_message("  Machine %d: NULL entry", i);
+        }
+    }
+}
+
+/* NEW: Improved display section parser with proper field handling */
+static int parse_display_fields(char *line, char *fields[], int max_fields) {
+    int field_count = 0;
+    char *ptr = line;
+    int in_quotes = 0;
+    char *field_start = ptr;
+    
+    while (*ptr && field_count < max_fields) {
+        if (*ptr == '"') {
+            in_quotes = !in_quotes;
+        } else if (*ptr == ',' && !in_quotes) {
+            /* End of field */
+            *ptr = '\0';
+            fields[field_count++] = field_start;
+            field_start = ptr + 1;
+            
+            /* Skip whitespace after comma */
+            while (*field_start && isspace((unsigned char)*field_start)) {
+                field_start++;
+            }
+        }
+        ptr++;
+    }
+    
+    /* Add the last field */
+    if (field_count < max_fields && *field_start) {
+        fields[field_count++] = field_start;
+    }
+    
+    return field_count;
+}
+
+/* FIXED: Parse display section with proper field extraction and far pointers */
+void parse_display_section(void) {
+    char far * far *lines;
+    int line_count;
+    int i;
+    char line_copy[512];
+    char *equal_pos;
+    char *temp;
+    char display_name[100];
+    char *fields[9]; /* driver_file, description, resolution, grabber_286, logo_code, vdd_file, grabber_386, ega_sys, logo_data */
+    int field_count;
+    unsigned int line_len;
+    char driver_file[100];
+    char description[256];
+    char resolution[100];
+    char grabber_286[100];
+    char logo_code[100];
+    char vdd_file[100];
+    char grabber_386[100];
+    char ega_sys[100];
+    char logo_data[100];
+    
+    log_message("parse_display_section: Starting display section parsing");
+    
+    if (!inf_section_find("display", &lines, &line_count)) {
+        log_message("parse_display_section: No [display] section found");
+        return;
+    }
+    
+    log_message("parse_display_section: Found [display] section with %d lines", line_count);
+    
+    /* Initialize display list */
+    display_list_init();
+    
+    for (i = 0; i < line_count; i++) {
+        if (!lines[i]) continue;
+        
+        /* Safely copy far string to near buffer */
+        line_len = _fstrlen(lines[i]);
+        if (line_len >= sizeof(line_copy)) {
+            line_len = sizeof(line_copy) - 1;
+        }
+        _fstrncpy(line_copy, lines[i], line_len);
+        line_copy[line_len] = '\0';
+        
+        log_message("parse_display_section: Processing line: '%s'", line_copy);
+        
+        /* Skip empty lines and comments */
+        temp = line_copy;
+        while (*temp && isspace((unsigned char)*temp)) temp++;
+        if (*temp == '\0' || *temp == ';') continue;
+        
+        /* Find equal sign */
+        equal_pos = strchr(temp, '=');
+        if (!equal_pos) {
+            log_message("parse_display_section: WARNING - no '=' found in line: %s", line_copy);
+            continue;
+        }
+        
+        /* Extract display name (before '=') */
+        *equal_pos = '\0';
+        strncpy(display_name, temp, sizeof(display_name) - 1);
+        display_name[sizeof(display_name) - 1] = '\0';
+        trim_string(display_name);
+        
+        /* Parse fields after '=' */
+        temp = equal_pos + 1;
+        while (*temp && isspace((unsigned char)*temp)) temp++;
+        
+        /* Initialize fields */
+        memset(fields, 0, sizeof(fields));
+        field_count = parse_display_fields(temp, fields, 9);
+        
+        if (field_count < 9) {
+            log_message("parse_display_section: WARNING - expected 9 fields, got %d in line: %s", field_count, line_copy);
+            continue;
+        }
+        
+        /* Process each field */
+        driver_file[0] = '\0';
+        description[0] = '\0';
+        resolution[0] = '\0';
+        grabber_286[0] = '\0';
+        logo_code[0] = '\0';
+        vdd_file[0] = '\0';
+        grabber_386[0] = '\0';
+        ega_sys[0] = '\0';
+        logo_data[0] = '\0';
+        
+        /* Copy and trim each field */
+        if (fields[0]) {
+            strncpy(driver_file, fields[0], sizeof(driver_file) - 1);
+            driver_file[sizeof(driver_file) - 1] = '\0';
+            trim_string(driver_file);
+        }
+        
+        if (fields[1]) {
+            strncpy(description, fields[1], sizeof(description) - 1);
+            description[sizeof(description) - 1] = '\0';
+            trim_string(description);
+        }
+        
+        if (fields[2]) {
+            strncpy(resolution, fields[2], sizeof(resolution) - 1);
+            resolution[sizeof(resolution) - 1] = '\0';
+            trim_string(resolution);
+        }
+        
+        if (fields[3]) {
+            strncpy(grabber_286, fields[3], sizeof(grabber_286) - 1);
+            grabber_286[sizeof(grabber_286) - 1] = '\0';
+            trim_string(grabber_286);
+        }
+        
+        if (fields[4]) {
+            strncpy(logo_code, fields[4], sizeof(logo_code) - 1);
+            logo_code[sizeof(logo_code) - 1] = '\0';
+            trim_string(logo_code);
+        }
+        
+        if (fields[5]) {
+            strncpy(vdd_file, fields[5], sizeof(vdd_file) - 1);
+            vdd_file[sizeof(vdd_file) - 1] = '\0';
+            trim_string(vdd_file);
+        }
+        
+        if (fields[6]) {
+            strncpy(grabber_386, fields[6], sizeof(grabber_386) - 1);
+            grabber_386[sizeof(grabber_386) - 1] = '\0';
+            trim_string(grabber_386);
+        }
+        
+        if (fields[7]) {
+            strncpy(ega_sys, fields[7], sizeof(ega_sys) - 1);
+            ega_sys[sizeof(ega_sys) - 1] = '\0';
+            trim_string(ega_sys);
+        }
+        
+        if (fields[8]) {
+            strncpy(logo_data, fields[8], sizeof(logo_data) - 1);
+            logo_data[sizeof(logo_data) - 1] = '\0';
+            trim_string(logo_data);
+        }
+        
+        log_message("parse_display_section: Parsed display '%s':", display_name);
+        log_message("  driver_file: '%s'", driver_file);
+        log_message("  description: '%s'", description);
+        log_message("  resolution: '%s'", resolution);
+        log_message("  grabber_286: '%s'", grabber_286);
+        log_message("  logo_code: '%s'", logo_code);
+        log_message("  vdd_file: '%s'", vdd_file);
+        log_message("  grabber_386: '%s'", grabber_386);
+        log_message("  ega_sys: '%s'", ega_sys);
+        log_message("  logo_data: '%s'", logo_data);
+        
+        /* Add to display list - now uses far pointers internally */
+        display_list_add(display_name, driver_file, description, resolution,
+                       grabber_286, logo_code, vdd_file, grabber_386,
+                       ega_sys, logo_data);
+    }
+    
+    _ffree(lines);
+    
+    /* Remove display section after parsing to free memory */
+    inf_section_remove("display");
+    log_message("parse_display_section: Display section removed after processing");
+    
+    log_message("parse_display_section: Display section parsing completed");
+}
+
+/* NEW: Parse mouse section with proper field extraction */
+void parse_mouse_section(void) {
+    char far * far *lines;
+    int line_count;
+    int i;
+    char line_copy[512];
+    char *equal_pos;
+    char *temp;
+    char mouse_name[100];
+    char *fields[4]; /* driver_file, description, vmd, dos_driver */
+    int field_count;
+    unsigned int line_len;
+    char driver_file[100];
+    char description[256];
+    char vmd[100];
+    char dos_driver[100];
+    
+    log_message("parse_mouse_section: Starting mouse section parsing");
+    
+    if (!inf_section_find("pointing.device", &lines, &line_count)) {
+        log_message("parse_mouse_section: No [pointing.device] section found");
+        return;
+    }
+    
+    log_message("parse_mouse_section: Found [pointing.device] section with %d lines", line_count);
+    
+    /* Initialize mouse list */
+    mouse_list_init();
+    
+    for (i = 0; i < line_count; i++) {
+        if (!lines[i]) continue;
+        
+        /* Safely copy far string to near buffer */
+        line_len = _fstrlen(lines[i]);
+        if (line_len >= sizeof(line_copy)) {
+            line_len = sizeof(line_copy) - 1;
+        }
+        _fstrncpy(line_copy, lines[i], line_len);
+        line_copy[line_len] = '\0';
+        
+        log_message("parse_mouse_section: Processing line: '%s'", line_copy);
+        
+        /* Skip empty lines and comments */
+        temp = line_copy;
+        while (*temp && isspace((unsigned char)*temp)) temp++;
+        if (*temp == '\0' || *temp == ';') continue;
+        
+        /* Find equal sign */
+        equal_pos = strchr(temp, '=');
+        if (!equal_pos) {
+            log_message("parse_mouse_section: WARNING - no '=' found in line: %s", line_copy);
+            continue;
+        }
+        
+        /* Extract mouse name (before '=') */
+        *equal_pos = '\0';
+        strncpy(mouse_name, temp, sizeof(mouse_name) - 1);
+        mouse_name[sizeof(mouse_name) - 1] = '\0';
+        trim_string(mouse_name);
+        
+        /* Parse fields after '=' */
+        temp = equal_pos + 1;
+        while (*temp && isspace((unsigned char)*temp)) temp++;
+        
+        /* Initialize fields */
+        memset(fields, 0, sizeof(fields));
+        field_count = parse_display_fields(temp, fields, 4);
+        
+        if (field_count < 2) {
+            log_message("parse_mouse_section: WARNING - expected at least 2 fields, got %d in line: %s", field_count, line_copy);
+            continue;
+        }
+        
+        /* Process each field */
+        driver_file[0] = '\0';
+        description[0] = '\0';
+        vmd[0] = '\0';
+        dos_driver[0] = '\0';
+        
+        /* Copy and trim each field */
+        if (fields[0]) {
+            strncpy(driver_file, fields[0], sizeof(driver_file) - 1);
+            driver_file[sizeof(driver_file) - 1] = '\0';
+            trim_string(driver_file);
+        }
+        
+        if (fields[1]) {
+            strncpy(description, fields[1], sizeof(description) - 1);
+            description[sizeof(description) - 1] = '\0';
+            trim_string(description);
+        }
+        
+        if (fields[2]) {
+            strncpy(vmd, fields[2], sizeof(vmd) - 1);
+            vmd[sizeof(vmd) - 1] = '\0';
+            trim_string(vmd);
+        }
+        
+        if (fields[3]) {
+            strncpy(dos_driver, fields[3], sizeof(dos_driver) - 1);
+            dos_driver[sizeof(dos_driver) - 1] = '\0';
+            trim_string(dos_driver);
+        }
+        
+        log_message("parse_mouse_section: Parsed mouse '%s':", mouse_name);
+        log_message("  driver_file: '%s'", driver_file);
+        log_message("  description: '%s'", description);
+        log_message("  vmd: '%s'", vmd);
+        log_message("  dos_driver: '%s'", dos_driver);
+        
+        /* Add to mouse list */
+        mouse_list_add(mouse_name, driver_file, description, vmd, dos_driver);
+    }
+    
+    _ffree(lines);
+    
+    /* Remove mouse section after parsing to free memory */
+    inf_section_remove("pointing.device");
+    log_message("parse_mouse_section: Mouse section removed after processing");
+    
+    log_message("parse_mouse_section: Mouse section parsing completed, found %d entries", mouse_list_count());
+}
+
+/* NEW: Parse keyboard type section with proper field extraction */
+void parse_kbdtype_section(void) {
+    char far * far *lines;
+    int line_count;
+    int i;
+    char line_copy[512];
+    char *equal_pos;
+    char *temp;
+    char kbdtype_name[100];
+    char *fields[2]; /* description, dll */
+    int field_count;
+    unsigned int line_len;
+    char description[256];
+    char dll[100];
+    
+    log_message("parse_kbdtype_section: Starting keyboard type section parsing");
+    
+    if (!inf_section_find("keyboard.types", &lines, &line_count)) {
+        log_message("parse_kbdtype_section: No [keyboard.types] section found");
+        return;
+    }
+    
+    log_message("parse_kbdtype_section: Found [keyboard.types] section with %d lines", line_count);
+    
+    /* Initialize keyboard type list */
+    kbdtype_list_init();
+    
+    for (i = 0; i < line_count; i++) {
+        if (!lines[i]) continue;
+        
+        /* Safely copy far string to near buffer */
+        line_len = _fstrlen(lines[i]);
+        if (line_len >= sizeof(line_copy)) {
+            line_len = sizeof(line_copy) - 1;
+        }
+        _fstrncpy(line_copy, lines[i], line_len);
+        line_copy[line_len] = '\0';
+        
+        log_message("parse_kbdtype_section: Processing line: '%s'", line_copy);
+        
+        /* Skip empty lines and comments */
+        temp = line_copy;
+        while (*temp && isspace((unsigned char)*temp)) temp++;
+        if (*temp == '\0' || *temp == ';') continue;
+        
+        /* Find equal sign */
+        equal_pos = strchr(temp, '=');
+        if (!equal_pos) {
+            log_message("parse_kbdtype_section: WARNING - no '=' found in line: %s", line_copy);
+            continue;
+        }
+        
+        /* Extract keyboard type name (before '=') */
+        *equal_pos = '\0';
+        strncpy(kbdtype_name, temp, sizeof(kbdtype_name) - 1);
+        kbdtype_name[sizeof(kbdtype_name) - 1] = '\0';
+        trim_string(kbdtype_name);
+        
+        /* Parse fields after '=' */
+        temp = equal_pos + 1;
+        while (*temp && isspace((unsigned char)*temp)) temp++;
+        
+        /* Initialize fields */
+        memset(fields, 0, sizeof(fields));
+        field_count = parse_display_fields(temp, fields, 2);
+        
+        if (field_count < 1) {
+            log_message("parse_kbdtype_section: WARNING - expected at least 1 field, got %d in line: %s", field_count, line_copy);
+            continue;
+        }
+        
+        /* Process each field */
+        description[0] = '\0';
+        dll[0] = '\0';
+        
+        /* Copy and trim each field */
+        if (fields[0]) {
+            strncpy(description, fields[0], sizeof(description) - 1);
+            description[sizeof(description) - 1] = '\0';
+            trim_string(description);
+        }
+        
+        if (fields[1]) {
+            strncpy(dll, fields[1], sizeof(dll) - 1);
+            dll[sizeof(dll) - 1] = '\0';
+            trim_string(dll);
+        }
+        
+        log_message("parse_kbdtype_section: Parsed keyboard type '%s':", kbdtype_name);
+        log_message("  description: '%s'", description);
+        log_message("  dll: '%s'", dll);
+        
+        /* Add to keyboard type list */
+        kbdtype_list_add(kbdtype_name, description, dll);
+    }
+    
+    _ffree(lines);
+    
+    /* Remove keyboard type section after parsing to free memory */
+    inf_section_remove("keyboard.types");
+    log_message("parse_kbdtype_section: Keyboard type section removed after processing");
+    
+    log_message("parse_kbdtype_section: Keyboard type section parsing completed, found %d entries", kbdtype_list_count());
+}
+
+/* NEW: Parse keyboard table section with proper field extraction */
+void parse_kbdlay_section(void) {
+    char far * far *lines;
+    int line_count;
+    int i;
+    char line_copy[512];
+    char *equal_pos;
+    char *temp;
+    char kbdtable_name[100];
+    char *fields[2]; /* dll, description */
+    int field_count;
+    unsigned int line_len;
+    char dll[100];
+    char description[256];
+    
+    log_message("parse_kbdlay_section: Starting keyboard table section parsing");
+    
+    if (!inf_section_find("keyboard.tables", &lines, &line_count)) {
+        log_message("parse_kbdlay_section: No [keyboard.tables] section found");
+        return;
+    }
+    
+    log_message("parse_kbdlay_section: Found [keyboard.tables] section with %d lines", line_count);
+    
+    /* Initialize keyboard table list */
+    kbdtable_list_init();
+    
+    for (i = 0; i < line_count; i++) {
+        if (!lines[i]) continue;
+        
+        /* Safely copy far string to near buffer */
+        line_len = _fstrlen(lines[i]);
+        if (line_len >= sizeof(line_copy)) {
+            line_len = sizeof(line_copy) - 1;
+        }
+        _fstrncpy(line_copy, lines[i], line_len);
+        line_copy[line_len] = '\0';
+        
+        log_message("parse_kbdlay_section: Processing line: '%s'", line_copy);
+        
+        /* Skip empty lines and comments */
+        temp = line_copy;
+        while (*temp && isspace((unsigned char)*temp)) temp++;
+        if (*temp == '\0' || *temp == ';') continue;
+        
+        /* Find equal sign */
+        equal_pos = strchr(temp, '=');
+        if (!equal_pos) {
+            log_message("parse_kbdlay_section: WARNING - no '=' found in line: %s", line_copy);
+            continue;
+        }
+        
+        /* Extract keyboard table name (before '=') */
+        *equal_pos = '\0';
+        strncpy(kbdtable_name, temp, sizeof(kbdtable_name) - 1);
+        kbdtable_name[sizeof(kbdtable_name) - 1] = '\0';
+        trim_string(kbdtable_name);
+        
+        /* Parse fields after '=' */
+        temp = equal_pos + 1;
+        while (*temp && isspace((unsigned char)*temp)) temp++;
+        
+        /* Initialize fields */
+        memset(fields, 0, sizeof(fields));
+        field_count = parse_display_fields(temp, fields, 2);
+        
+        if (field_count < 1) {
+            log_message("parse_kbdlay_section: WARNING - expected at least 1 field, got %d in line: %s", field_count, line_copy);
+            continue;
+        }
+        
+        /* Process each field */
+        dll[0] = '\0';
+        description[0] = '\0';
+        
+        /* Copy and trim each field */
+        if (fields[0]) {
+            strncpy(dll, fields[0], sizeof(dll) - 1);
+            dll[sizeof(dll) - 1] = '\0';
+            trim_string(dll);
+        }
+        
+        if (fields[1]) {
+            strncpy(description, fields[1], sizeof(description) - 1);
+            description[sizeof(description) - 1] = '\0';
+            trim_string(description);
+        }
+        
+        log_message("parse_kbdlay_section: Parsed keyboard table '%s':", kbdtable_name);
+        log_message("  dll: '%s'", dll);
+        log_message("  description: '%s'", description);
+        
+        /* Add to keyboard table list */
+        kbdtable_list_add(kbdtable_name, dll, description);
+    }
+    
+    _ffree(lines);
+    
+    /* Remove keyboard table section after parsing to free memory */
+    inf_section_remove("keyboard.tables");
+    log_message("parse_kbdlay_section: Keyboard table section removed after processing");
+    
+    log_message("parse_kbdlay_section: Keyboard table section parsing completed, found %d entries", kbdtable_list_count());
+}
+
+/* NEW: Parse language section with proper field extraction */
+void parse_language_section(void) {
+    char far * far *lines;
+    int line_count;
+    int i;
+    char line_copy[512];
+    char *equal_pos;
+    char *temp;
+    char language_name[100];
+    char *fields[2]; /* dll, description */
+    int field_count;
+    unsigned int line_len;
+    char dll[100];
+    char description[256];
+    
+    log_message("parse_language_section: Starting language section parsing");
+    
+    if (!inf_section_find("language", &lines, &line_count)) {
+        log_message("parse_language_section: No [language] section found");
+        return;
+    }
+    
+    log_message("parse_language_section: Found [language] section with %d lines", line_count);
+    
+    /* Initialize language list */
+    language_list_init();
+    
+    for (i = 0; i < line_count; i++) {
+        if (!lines[i]) continue;
+        
+        /* Safely copy far string to near buffer */
+        line_len = _fstrlen(lines[i]);
+        if (line_len >= sizeof(line_copy)) {
+            line_len = sizeof(line_copy) - 1;
+        }
+        _fstrncpy(line_copy, lines[i], line_len);
+        line_copy[line_len] = '\0';
+        
+        log_message("parse_language_section: Processing line: '%s'", line_copy);
+        
+        /* Skip empty lines and comments */
+        temp = line_copy;
+        while (*temp && isspace((unsigned char)*temp)) temp++;
+        if (*temp == '\0' || *temp == ';') continue;
+        
+        /* Find equal sign */
+        equal_pos = strchr(temp, '=');
+        if (!equal_pos) {
+            log_message("parse_language_section: WARNING - no '=' found in line: %s", line_copy);
+            continue;
+        }
+        
+        /* Extract language name (before '=') */
+        *equal_pos = '\0';
+        strncpy(language_name, temp, sizeof(language_name) - 1);
+        language_name[sizeof(language_name) - 1] = '\0';
+        trim_string(language_name);
+        
+        /* Parse fields after '=' */
+        temp = equal_pos + 1;
+        while (*temp && isspace((unsigned char)*temp)) temp++;
+        
+        /* Initialize fields */
+        memset(fields, 0, sizeof(fields));
+        field_count = parse_display_fields(temp, fields, 2);
+        
+        if (field_count < 1) {
+            log_message("parse_language_section: WARNING - expected at least 1 field, got %d in line: %s", field_count, line_copy);
+            continue;
+        }
+        
+        /* Process each field */
+        dll[0] = '\0';
+        description[0] = '\0';
+        
+        /* Copy and trim each field */
+        if (fields[0]) {
+            strncpy(dll, fields[0], sizeof(dll) - 1);
+            dll[sizeof(dll) - 1] = '\0';
+            trim_string(dll);
+        }
+        
+        if (fields[1]) {
+            strncpy(description, fields[1], sizeof(description) - 1);
+            description[sizeof(description) - 1] = '\0';
+            trim_string(description);
+        }
+        
+        log_message("parse_language_section: Parsed language '%s':", language_name);
+        log_message("  dll: '%s'", dll);
+        log_message("  description: '%s'", description);
+        
+        /* Add to language list */
+        language_list_add(language_name, dll, description);
+    }
+    
+    _ffree(lines);
+    
+    /* Remove language section after parsing to free memory */
+    inf_section_remove("language");
+    log_message("parse_language_section: Language section removed after processing");
+    
+    log_message("parse_language_section: Language section parsing completed, found %d entries", language_list_count());
+}
+
+/* NEW: Parse network section with proper field extraction and variable VDD count */
+void parse_network_section(void) {
+    char far * far *lines;
+    int line_count;
+    int i;
+    char line_copy[512];
+    char *equal_pos;
+    char *temp;
+    char network_name[100];
+    char *fields[20]; /* Increased field count to accommodate variable VDDs */
+    int field_count;
+    unsigned int line_len;
+    char driver_file[100];
+    char description[256];
+    char help_file[100];
+    char opt_file[100];
+    char winini_sect_name[100];
+    char sysini_sect_name[100];
+    char *vdd_array[MAX_VDD_COUNT]; /* Array for VDD drivers */
+    int vdd_count = 0;
+    int j;
+    
+    log_message("parse_network_section: Starting network section parsing");
+    
+    if (!inf_section_find("network", &lines, &line_count)) {
+        log_message("parse_network_section: No [network] section found");
+        return;
+    }
+    
+    log_message("parse_network_section: Found [network] section with %d lines", line_count);
+    
+    /* Initialize network list */
+    network_list_init();
+    
+    for (i = 0; i < line_count; i++) {
+        if (!lines[i]) continue;
+        
+        /* Safely copy far string to near buffer */
+        line_len = _fstrlen(lines[i]);
+        if (line_len >= sizeof(line_copy)) {
+            line_len = sizeof(line_copy) - 1;
+        }
+        _fstrncpy(line_copy, lines[i], line_len);
+        line_copy[line_len] = '\0';
+        
+        log_message("parse_network_section: Processing line: '%s'", line_copy);
+        
+        /* Skip empty lines and comments */
+        temp = line_copy;
+        while (*temp && isspace((unsigned char)*temp)) temp++;
+        if (*temp == '\0' || *temp == ';') continue;
+        
+        /* Find equal sign */
+        equal_pos = strchr(temp, '=');
+        if (!equal_pos) {
+            log_message("parse_network_section: WARNING - no '=' found in line: %s", line_copy);
+            continue;
+        }
+        
+        /* Extract network name (before '=') */
+        *equal_pos = '\0';
+        strncpy(network_name, temp, sizeof(network_name) - 1);
+        network_name[sizeof(network_name) - 1] = '\0';
+        trim_string(network_name);
+        
+        /* Parse fields after '=' */
+        temp = equal_pos + 1;
+        while (*temp && isspace((unsigned char)*temp)) temp++;
+        
+        /* Initialize fields */
+        memset(fields, 0, sizeof(fields));
+        field_count = parse_display_fields(temp, fields, 20); /* Increased to 20 fields */
+        
+        if (field_count < 2) {
+            log_message("parse_network_section: WARNING - expected at least 2 fields, got %d in line: %s", field_count, line_copy);
+            continue;
+        }
+        
+        /* Process each field */
+        driver_file[0] = '\0';
+        description[0] = '\0';
+        help_file[0] = '\0';
+        opt_file[0] = '\0';
+        winini_sect_name[0] = '\0';
+        sysini_sect_name[0] = '\0';
+        
+        /* Clear VDD array */
+        memset(vdd_array, 0, sizeof(vdd_array));
+        vdd_count = 0;
+        
+        /* Copy and trim each field */
+        if (fields[0]) {
+            strncpy(driver_file, fields[0], sizeof(driver_file) - 1);
+            driver_file[sizeof(driver_file) - 1] = '\0';
+            trim_string(driver_file);
+        }
+        
+        if (fields[1]) {
+            strncpy(description, fields[1], sizeof(description) - 1);
+            description[sizeof(description) - 1] = '\0';
+            trim_string(description);
+        }
+        
+        if (fields[2]) {
+            strncpy(help_file, fields[2], sizeof(help_file) - 1);
+            help_file[sizeof(help_file) - 1] = '\0';
+            trim_string(help_file);
+        }
+        
+        if (fields[3]) {
+            strncpy(opt_file, fields[3], sizeof(opt_file) - 1);
+            opt_file[sizeof(opt_file) - 1] = '\0';
+            trim_string(opt_file);
+        }
+        
+        if (fields[4]) {
+            strncpy(winini_sect_name, fields[4], sizeof(winini_sect_name) - 1);
+            winini_sect_name[sizeof(winini_sect_name) - 1] = '\0';
+            trim_string(winini_sect_name);
+        }
+        
+        if (fields[5]) {
+            strncpy(sysini_sect_name, fields[5], sizeof(sysini_sect_name) - 1);
+            sysini_sect_name[sizeof(sysini_sect_name) - 1] = '\0';
+            trim_string(sysini_sect_name);
+        }
+        
+        /* Process VDD fields (fields 6 and beyond) */
+        for (j = 6; j < field_count && vdd_count < MAX_VDD_COUNT; j++) {
+            if (fields[j] && fields[j][0] != '\0') {
+                char vdd_temp[100];
+                strncpy(vdd_temp, fields[j], sizeof(vdd_temp) - 1);
+                vdd_temp[sizeof(vdd_temp) - 1] = '\0';
+                trim_string(vdd_temp);
+                
+                if (strlen(vdd_temp) > 0) {
+                    vdd_array[vdd_count] = (char*)malloc(strlen(vdd_temp) + 1);
+                    if (vdd_array[vdd_count]) {
+                        strcpy(vdd_array[vdd_count], vdd_temp);
+                        vdd_count++;
+                    }
+                }
+            }
+        }
+        
+        log_message("parse_network_section: Parsed network '%s':", network_name);
+        log_message("  driver_file: '%s'", driver_file);
+        log_message("  description: '%s'", description);
+        log_message("  help_file: '%s'", help_file);
+        log_message("  opt_file: '%s'", opt_file);
+        log_message("  winini_sect_name: '%s'", winini_sect_name);
+        log_message("  sysini_sect_name: '%s'", sysini_sect_name);
+        log_message("  vdd_count: %d", vdd_count);
+        for (j = 0; j < vdd_count; j++) {
+            log_message("  vdd[%d]: '%s'", j, vdd_array[j]);
+        }
+        
+        /* Add to network list */
+        network_list_add(network_name, driver_file, description, help_file, opt_file,
+                       winini_sect_name, sysini_sect_name, vdd_array, vdd_count);
+        
+        /* Free temporary VDD array memory */
+        for (j = 0; j < vdd_count; j++) {
+            if (vdd_array[j]) free(vdd_array[j]);
+        }
+    }
+    
+    _ffree(lines);
+    
+    /* Remove network section after parsing to free memory */
+    inf_section_remove("network");
+    log_message("parse_network_section: Network section removed after processing");
+    
+    log_message("parse_network_section: Network section parsing completed, found %d entries", network_list_count());
+}
+
+/* UPDATED: Preparse INF file function - added parse_network_section call */
+void preparse_inf_file(SetupConfig* config) {
+    log_message("preparse_inf_file: Starting INF file pre-parsing");
+    
+    if (!config) {
+        log_message("preparse_inf_file: ERROR - null config");
+        return;
+    }
+    
+    log_message("preparse_inf_file: Using INF file: %s", config->inf_filename);
+    
+    /* Parse disks section */
+    parse_disks_section();
+    
+    /* Parse machine section */
+    parse_machine_section();
+    
+    /* Parse display section */
+    parse_display_section();
+    
+    /* Parse mouse section */
+    parse_mouse_section();
+    
+    /* Parse keyboard type section */
+    parse_kbdtype_section();
+    
+    /* Parse keyboard table section */
+    parse_kbdlay_section();
+    
+    /* Parse language section */
+    parse_language_section();
+    
+    /* NEW: Parse network section */
+    parse_network_section();
+    
+    log_message("preparse_inf_file: INF file pre-parsing completed");
+}
+
+/* Helper function to check if file should be copied based on condition */
+static int should_copy_file(const char far *condition, const SetupConfig* config) {
+    unsigned int cond_len;
+    char *near_condition;
+    int result;
+
+    if (condition == NULL || condition[0] == '\0') {
+        return 1; /* No condition - always copy */
+    }
+    
+    /* Convert far condition to near string for comparison */
+    cond_len = _fstrlen(condition);
+    near_condition = (char*)malloc(cond_len + 1);
+    if (near_condition) {
+        _fstrcpy(near_condition, condition);
+    } else {
+        return 0; /* Out of memory - skip file */
+    }
+    
+    result = 0;
+    
+    if (strcmp(near_condition, "Net") == 0) {
+        /* Copy only for administrative setup */
+        result = config->admin_setup;
+        log_message("File condition 'Net': copying only for admin setup (admin_setup=%d)", config->admin_setup);
+    } else {
+        /* Copy if condition matches selected network */
+        result = (strcmp(near_condition, config->selected_network) == 0);
+        log_message("File condition '%s': copying only for network '%s' (selected_network=%s)", 
+                   near_condition, near_condition, config->selected_network);
+    }
+    
+    free(near_condition);
+    return result;
+}
+
+/* Simple parser for file copy sections */
+static void parse_file_copy_line(const char* line, char* source, char* condition) {
+    char line_copy[256];
+    char *comma_pos;
+    char *temp;
+    char *end_ptr;
+    
+    source[0] = '\0';
+    condition[0] = '\0';
+    
+    if (!line || strlen(line) == 0) return;
+    
+    /* Make a working copy */
+    strncpy(line_copy, line, sizeof(line_copy) - 1);
+    line_copy[sizeof(line_copy) - 1] = '\0';
+    
+    /* Skip empty lines and comments */
+    temp = line_copy;
+    while (*temp && isspace((unsigned char)*temp)) temp++;
+    if (*temp == '\0' || *temp == ';') return;
+    
+    /* Trim the line */
+    end_ptr = line_copy + strlen(line_copy) - 1;
+    while (end_ptr > line_copy && isspace((unsigned char)*end_ptr)) {
+        *end_ptr = '\0';
+        end_ptr--;
+    }
+    
+    /* Find comma separator for condition */
+    comma_pos = strchr(line_copy, ',');
+    
+    if (comma_pos) {
+        /* Split into source and condition */
+        *comma_pos = '\0';
+        
+        /* Trim source part */
+        temp = line_copy;
+        while (*temp && isspace((unsigned char)*temp)) temp++;
+        end_ptr = temp + strlen(temp) - 1;
+        while (end_ptr > temp && isspace((unsigned char)*end_ptr)) {
+            *end_ptr = '\0';
+            end_ptr--;
+        }
+        strcpy(source, temp);
+        
+        /* Trim condition part */
+        temp = comma_pos + 1;
+        while (*temp && isspace((unsigned char)*temp)) temp++;
+        end_ptr = temp + strlen(temp) - 1;
+        while (end_ptr > temp && isspace((unsigned char)*end_ptr)) {
+            *end_ptr = '\0';
+            end_ptr--;
+        }
+        strcpy(condition, temp);
+    } else {
+        /* No condition - just source */
+        temp = line_copy;
+        while (*temp && isspace((unsigned char)*temp)) temp++;
+        end_ptr = temp + strlen(temp) - 1;
+        while (end_ptr > temp && isspace((unsigned char)*end_ptr)) {
+            *end_ptr = '\0';
+            end_ptr--;
+        }
+        strcpy(source, temp);
+    }
+}
+
+void add_setup_files(const SetupConfig* config) {
+    log_message("add_setup_files: Adding setup files to copy list");
+    
+    if (!config) {
+        log_message("add_setup_files: ERROR - null config");
+        return;
+    }
+    
+    /* Add SETUP.EXE file - disk 1 */
+    file_list_add_entry('1', "SETUP.EXE", config->windowsDir, "SETUP.EXE");
+    
+    /* Add INF file - pseudo disk -1 with full source path */
+    file_list_add_entry(-1, config->inf_filename, config->systemDir, "SETUP.INF");
+    
+    log_message("add_setup_files: Setup files added to copy list");
+}
+
+void add_section_files(const char* section_name, const char* dest_dir, const SetupConfig* config) {
+    char far * far *lines;
+    int line_count;
+    int i;
+    char line_copy[256];
+    char source[256];
+    char condition[256];
+    char filename_only[256];
+    char dest_filename[256];
+    char disk_char;
+    unsigned int line_len;
+    
+    if (inf_section_find((const char far *)section_name, &lines, &line_count)) {
+        log_message("add_section_files: Adding files from [%s] section to %s directory", section_name, dest_dir);
+        for (i = 0; i < line_count; i++) {
+            if (!lines[i]) continue;
+            
+            /* Parse the line for file copy sections */
+            source[0] = '\0';
+            condition[0] = '\0';
+            
+            /* Safely copy far string to near buffer */
+            line_len = _fstrlen(lines[i]);
+            if (line_len >= sizeof(line_copy)) {
+                line_len = sizeof(line_copy) - 1;
+            }
+            _fstrncpy(line_copy, lines[i], line_len);
+            line_copy[line_len] = '\0';
+            
+            parse_file_copy_line(line_copy, source, condition);
+            
+            if (source[0] != '\0') {
+                /* Check condition */
+                if (condition[0] != '\0' && !should_copy_file((const char far*)condition, config)) {
+                    log_message("add_section_files: Skipping file due to condition '%s': %s", condition, source);
+                    continue; /* Skip file due to condition */
+                }
+                
+                /* Extract disk number and filename from source */
+                disk_char = '1'; /* Default disk */
+                strcpy(filename_only, source);
+                strcpy(dest_filename, source);
+                
+                /* Remove disk prefix from source and destination names */
+                remove_disk_prefix(filename_only);
+                remove_disk_prefix(dest_filename);
+                
+                /* Extract actual disk number if present */
+                if (strchr(source, ':') != NULL) {
+                    disk_char = source[0];
+                    if (disk_char < '0' || disk_char > '9') {
+                        disk_char = '1'; /* Invalid disk, use default */
+                    }
+                }
+                
+                /* Add to file list */
+                file_list_add_entry(disk_char, filename_only, dest_dir, dest_filename);
+                
+                log_message("add_section_files: Added file - disk: %c, source: '%s', dest: '%s'", 
+                           disk_char, filename_only, dest_filename);
+            }
+        }
+        _ffree(lines);
+        
+        /* Remove the section after processing to free memory */
+        inf_section_remove((const char far *)section_name);
+        log_message("add_section_files: Section [%s] removed after processing", section_name);
+    } else {
+        log_message("add_section_files: Warning: [%s] section not found in INF file", section_name);
+    }
+}
+
+void parse_inf_file(const SetupConfig* config) {
+    log_message("parse_inf_file: Starting INF file parsing");
+    
+    if (!config) {
+        log_message("parse_inf_file: ERROR - null config");
+        return;
+    }
+    
+    /* Add setup files to copy list */
+    add_setup_files(config);
+    
+    /* Add files from windows.system section */
+    add_section_files("windows.system", config->systemDir, config);
+    
+    /* Add files from windows section */
+    add_section_files("windows", config->windowsDir, config);
+    
+    /* Add CPU-specific sections for 386 */
+    if (config->cpu_type == 2) { /* CPU_386 */
+        add_section_files("windows.system.386", config->systemDir, config);
+    } else {
+        /* Remove windows.system.386 section if not 386 CPU to free memory */
+        log_message("parse_inf_file: Not 386 CPU, removing windows.system.386 section");
+        inf_section_remove("windows.system.386");
+    }
+    
+    /* Dump file list contents for verification */
+    file_list_dump();
+    
+    log_message("parse_inf_file: INF file parsing completed");
+}
+file_utils.h: 
+#ifndef FILE_UTILS_H
+#define FILE_UTILS_H
+
+#include <stdio.h>
+#include <sys/stat.h>
+
+#define MAX_PATH 80
+
+int is_source_file_newer(const char *source, const char *dest);
+int file_exists(const char *filename);
+long file_size(const char *filename);
+long get_free_disk_space(const char *path);
+void create_directory(const char *path);
+int copy_file(const char *source, const char *dest);
+int is_compressed_file(const char *filename);
+int expand_file(const char *source, const char *dest);
+
+#endif
+file_utils.c: 
+не меняем 
+system_info.h: 
+#ifndef SYSTEM_INFO_H
+#define SYSTEM_INFO_H
+
+int detect_cpu_type(void);
+long detect_memory(void);
+
+#endif
+system_info.c: 
+не меняем 
+setup_core.h: 
+#ifndef SETUP_CORE_H
+#define SETUP_CORE_H
+
+
+/* Configuration structure to encapsulate global state */
+typedef struct {
+    char windowsDir[80];
+    char systemDir[80];
+    char tempDir[80];
+    char sourcePath[80];
+    char logFile[80];
+    int cpu_type;
+    int setupMode;
+    char inf_filename[260];
+    char selected_network[50];
+    int network_installed;
+    
+    /* Command line flags */
+    int ignore_autodetect;
+    int network_setup;
+    int admin_setup;
+    int monochrome_setup;
+    int scan_incompatible;
+    char batch_file[80];
+    
+    /* Machine selection */
+    int selected_machine;
+    char machine_name[50];
+} SetupConfig;
+
+/* Initialize configuration with default values */
+void setup_config_init(SetupConfig* config);
+
+/* File operations with setup context */
+int copy_file_with_version_check(const char *source, const char *dest, int setupMode);
+
+/* System configuration */
+void update_autoexec_bat(const SetupConfig* config);
+void update_config_sys(void);
+void setup_directories(const SetupConfig* config);
+void detect_setup_mode(SetupConfig* config);
+void check_disk_space(const SetupConfig* config);
+void setup_configuration(const SetupConfig* config);
+
+/* File copying logic */
+int find_file_copy_section(FILE* file, const char* section_name);
+void remove_disk_prefix(char *str);
+void parse_line_with_condition(char *line, char **key, char **value, char **condition);
+int copy_files(const SetupConfig* config);
+
+/* Machine selection and configuration */
+void select_machine_type(SetupConfig* config);
+void copy_machine_files(const SetupConfig* config);
+
+#endif
+setup_core.c: 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <conio.h>
+#include <direct.h>
+#include <fcntl.h>
+#include <io.h>
+#include <sys/stat.h>
+#include <malloc.h>
+#include <dos.h>
+#include <stdarg.h>
+#include <process.h>
+#include "ui.h"
+#include "setup_core.h"
+#include "inf_parser.h"
+#include "file_utils.h"
+#include "resources.h"
+#include "log.h"
+#include "dialog.h"
+#include "section_list.h"
+#include "machine_list.h"  /* Use machine_list directly */
+
+/* FIXED: Helper function to parse a single line from raw section data */
+static void parse_section_line(const char* line, char** key, char** value, char** condition)
+{
+    char line_copy[256];
+    char *equal_sign;
+    char *comma_pos;
+    char *temp;
+    char *end_ptr;
+    char *second_comma;
+    
+    *key = NULL;
+    *value = NULL;
+    *condition = NULL;
+    
+    if (!line || strlen(line) == 0) return;
+    
+    /* Make a working copy */
+    strncpy(line_copy, line, sizeof(line_copy) - 1);
+    line_copy[sizeof(line_copy) - 1] = '\0';
+    
+    /* Skip empty lines and comments */
+    temp = line_copy;
+    while (*temp && isspace((unsigned char)*temp)) temp++;
+    if (*temp == '\0' || *temp == ';') return;
+    
+    /* Trim the line */
+    end_ptr = line_copy + strlen(line_copy) - 1;
+    while (end_ptr > line_copy && isspace((unsigned char)*end_ptr)) {
+        *end_ptr = '\0';
+        end_ptr--;
+    }
+    
+    equal_sign = strchr(line_copy, '=');
+    comma_pos = strchr(line_copy, ',');
+    
+    if (equal_sign) {
+        /* key = value format */
+        *equal_sign = '\0';
+        *key = line_copy;
+        *value = equal_sign + 1;
+        
+        /* Trim key and value */
+        while (**key && isspace((unsigned char)**key)) (*key)++;
+        end_ptr = *key + strlen(*key) - 1;
+        while (end_ptr > *key && isspace((unsigned char)*end_ptr)) {
+            *end_ptr = '\0';
+            end_ptr--;
+        }
+        
+        while (**value && isspace((unsigned char)**value)) (*value)++;
+        end_ptr = *value + strlen(*value) - 1;
+        while (end_ptr > *value && isspace((unsigned char)*end_ptr)) {
+            *end_ptr = '\0';
+            end_ptr--;
+        }
+        
+        /* Remove quotes from value if present */
+        if ((*value)[0] == '"' && (*value)[strlen(*value)-1] == '"') {
+            memmove(*value, *value + 1, strlen(*value) - 2);
+            (*value)[strlen(*value) - 2] = '\0';
+        }
+    }
+    else if (comma_pos) {
+        /* key, value, condition format */
+        *comma_pos = '\0';
+        *key = line_copy;
+        
+        second_comma = strchr(comma_pos + 1, ',');
+        if (second_comma) {
+            *second_comma = '\0';
+            *value = comma_pos + 1;
+            *condition = second_comma + 1;
+        } else {
+            *value = comma_pos + 1;
+            *condition = NULL;
+        }
+        
+        /* Trim all parts */
+        while (**key && isspace((unsigned char)**key)) (*key)++;
+        end_ptr = *key + strlen(*key) - 1;
+        while (end_ptr > *key && isspace((unsigned char)*end_ptr)) {
+            *end_ptr = '\0';
+            end_ptr--;
+        }
+        
+        while (**value && isspace((unsigned char)**value)) (*value)++;
+        end_ptr = *value + strlen(*value) - 1;
+        while (end_ptr > *value && isspace((unsigned char)*end_ptr)) {
+            *end_ptr = '\0';
+            end_ptr--;
+        }
+        
+        if (*condition) {
+            while (**condition && isspace((unsigned char)**condition)) (*condition)++;
+            end_ptr = *condition + strlen(*condition) - 1;
+            while (end_ptr > *condition && isspace((unsigned char)*end_ptr)) {
+                *end_ptr = '\0';
+                end_ptr--;
+            }
+        }
+    }
+    else {
+        /* Simple key-only format */
+        *key = line_copy;
+        *value = line_copy;
+        
+        while (**key && isspace((unsigned char)**key)) (*key)++;
+        end_ptr = *key + strlen(*key) - 1;
+        while (end_ptr > *key && isspace((unsigned char)*end_ptr)) {
+            *end_ptr = '\0';
+            end_ptr--;
+        }
+    }
+}
+
+void setup_config_init(SetupConfig* config) {
+    strcpy(config->windowsDir, "C:\\WINDOWS");
+    strcpy(config->systemDir, "C:\\WINDOWS\\SYSTEM");
+    strcpy(config->tempDir, "C:\\WINDOWS\\TEMP");
+    strcpy(config->sourcePath, "");
+    strcpy(config->logFile, "C:\\SETUP.LOG");
+    config->cpu_type = 0; /* CPU_8086 */
+    config->setupMode = 0;
+    strcpy(config->inf_filename, "");
+    strcpy(config->selected_network, "nonet");
+    config->network_installed = 0;
+    
+    /* Initialize command line flags */
+    config->ignore_autodetect = 0;
+    config->network_setup = 0;
+    config->admin_setup = 0;
+    config->monochrome_setup = 0;
+    config->scan_incompatible = 0;
+    config->batch_file[0] = '\0';
+    
+    /* Initialize machine selection */
+    config->selected_machine = -1;
+    config->machine_name[0] = '\0';
+}
+
+int copy_file_with_version_check(const char *source, const char *dest, int setupMode) {
+    /* If it's a new installation, always copy */
+    if (setupMode == 0) {
+        return copy_file(source, dest);
+    }
+    
+    /* For upgrade mode, check if destination exists */
+    if (!file_exists(dest)) {
+        log_message("New file in upgrade: %s", dest);
+        return copy_file(source, dest);
+    }
+    
+    /* Check if source is newer than destination */
+    if (is_source_file_newer(source, dest)) {
+        log_message("Upgrading file (source is newer): %s", dest);
+        return copy_file(source, dest);
+    } else {
+        log_message("Skipping file (destination is newer or same): %s", dest);
+        return 1; /* Skip copying but return success */
+    }
+}
+
+void update_autoexec_bat(const SetupConfig* config) {
+    FILE *autoexec;
+    char autoexec_path[80];
+    char line[256];
+    int path_updated = 0;
+    int temp_updated = 0;
+    int windir_updated = 0;
+    int i;
+    
+    /* Try multiple possible locations for AUTOEXEC.BAT */
+    const char* possible_paths[] = {
+        "C:\\AUTOEXEC.BAT",
+        "A:\\AUTOEXEC.BAT", 
+        "B:\\AUTOEXEC.BAT",
+        NULL
+    };
+    
+    for (i = 0; possible_paths[i] != NULL; i++) {
+        if (file_exists(possible_paths[i])) {
+            strcpy(autoexec_path, possible_paths[i]);
+            break;
+        }
+    }
+    
+    if (possible_paths[i] == NULL) {
+        strcpy(autoexec_path, "C:\\AUTOEXEC.BAT");
+    }
+    
+    /* First check if updates are already present */
+    autoexec = fopen(autoexec_path, "rt");
+    if (autoexec) {
+        while (fgets(line, sizeof(line), autoexec)) {
+            if (strstr(line, config->windowsDir)) path_updated = 1;
+            if (strstr(line, "TEMP=") && strstr(line, config->tempDir)) temp_updated = 1;
+            if (strstr(line, "WINDIR=") && strstr(line, config->windowsDir)) windir_updated = 1;
+        }
+        fclose(autoexec);
+    }
+    
+    autoexec = fopen(autoexec_path, "at");
+    if (autoexec) {
+        log_message("Updating AUTOEXEC.BAT at %s", autoexec_path);
+        
+        if (!path_updated) {
+            fprintf(autoexec, "\nSET PATH=%%PATH%%;%s;%s\n", config->windowsDir, config->systemDir);
+        }
+        if (!temp_updated) {
+            fprintf(autoexec, "SET TEMP=%s\n", config->tempDir);
+        }
+        if (!windir_updated) {
+            fprintf(autoexec, "SET WINDIR=%s\n", config->windowsDir);
+        }
+        
+        fclose(autoexec);
+    } else {
+        log_message("Warning: Cannot open AUTOEXEC.BAT for update at %s", autoexec_path);
+    }
+}
+
+void update_config_sys(void) {
+    FILE *config;
+    char config_path[80];
+    char line[256];
+    int files_updated = 0;
+    int buffers_updated = 0;
+    int stacks_updated = 0;
+    int i;
+    
+    /* Try multiple possible locations for CONFIG.SYS */
+    const char* possible_paths[] = {
+        "C:\\CONFIG.SYS",
+        "A:\\CONFIG.SYS",
+        "B:\\CONFIG.SYS",
+        NULL
+    };
+    
+    for (i = 0; possible_paths[i] != NULL; i++) {
+        if (file_exists(possible_paths[i])) {
+            strcpy(config_path, possible_paths[i]);
+            break;
+        }
+    }
+    
+    if (possible_paths[i] == NULL) {
+        strcpy(config_path, "C:\\CONFIG.SYS");
+    }
+    
+    /* First check if updates are already present */
+    config = fopen(config_path, "rt");
+    if (config) {
+        while (fgets(line, sizeof(line), config)) {
+            if (strstr(line, "FILES=")) files_updated = 1;
+            if (strstr(line, "BUFFERS=")) buffers_updated = 1;
+            if (strstr(line, "STACKS=")) stacks_updated = 1;
+        }
+        fclose(config);
+    }
+    
+    config = fopen(config_path, "at");
+    if (config) {
+        log_message("Updating CONFIG.SYS at %s", config_path);
+        
+        if (!files_updated) {
+            fprintf(config, "\nFILES=30\n");
+        }
+        if (!buffers_updated) {
+            fprintf(config, "BUFFERS=20\n");
+        }
+        if (!stacks_updated) {
+            fprintf(config, "STACKS=9,256\n");
+        }
+        
+        fclose(config);
+    } else {
+        log_message("Warning: Cannot open CONFIG.SYS for update at %s", config_path);
+    }
+}
+
+void setup_directories(const SetupConfig* config) {
+    log_message("Creating directories: %s, %s", config->windowsDir, config->systemDir);
+    create_directory(config->windowsDir);
+    create_directory(config->systemDir);
+    /* Don't create TEMP directory here - it will be created when needed */
+}
+
+void detect_setup_mode(SetupConfig* config) {
+    char win_com_path[80];
+    char win_ini_path[80];
+    
+    log_message("Checking setup mode for directory: %s", config->windowsDir);
+    
+    if (file_exists(config->windowsDir)) {
+        /* Check for WIN.COM first */
+        sprintf(win_com_path, "%s\\WIN.COM", config->windowsDir);
+        if (file_exists(win_com_path)) {
+            config->setupMode = 1; /* Upgrade mode */
+            log_message("Setup mode: Upgrade (WIN.COM exists)");
+            return;
+        }
+        
+        /* Also check for WIN.INI as backup */
+        sprintf(win_ini_path, "%s\\WIN.INI", config->windowsDir);
+        if (file_exists(win_ini_path)) {
+            config->setupMode = 1; /* Upgrade mode */
+            log_message("Setup mode: Upgrade (WIN.INI exists)");
+            return;
+        }
+        
+        /* Directory exists but no Windows files found */
+        config->setupMode = 0; /* New installation */
+        log_message("Setup mode: New installation (Windows directory exists but no Windows files found)");
+    } else {
+        config->setupMode = 0; /* New installation */
+        log_message("Setup mode: New installation (Windows directory doesn't exist)");
+    }
+}
+
+void check_disk_space(const SetupConfig* config) {
+    long requiredSpace = 0;
+    long freeSpace = get_free_disk_space(config->windowsDir);
+    char *minSpaceKey;
+    char *minSpace;
+
+    if (config->setupMode == 0) {
+        switch (config->cpu_type) {
+            case 2: /* CPU_386 */
+                minSpaceKey = "neededspace386";
+                break;
+            case 1: /* CPU_286 */
+                minSpaceKey = "neededspace286";
+                break;
+            case 0: /* CPU_8086 */
+            default:
+                minSpaceKey = "neededspace286";
+                break;
+        }
+    } else {
+        switch (config->cpu_type) {
+            case 2: /* CPU_386 */
+                requiredSpace = 3000000;
+                break;
+            case 1: /* CPU_286 */
+                requiredSpace = 2000000;
+                break;
+            case 0: /* CPU_8086 */
+            default:
+                requiredSpace = 1500000;
+                break;
+        }
+    }
+
+    if (config->setupMode == 0) {
+        minSpace = get_private_profile_string("data", minSpaceKey, NULL, config->inf_filename);
+        if (minSpace) {
+            requiredSpace = atol(minSpace);
+            free(minSpace);
+        } else {
+            switch (config->cpu_type) {
+                case 2: /* CPU_386 */
+                    requiredSpace = 6300000;
+                    break;
+                case 1: /* CPU_286 */
+                    requiredSpace = 4500000;
+                    break;
+                case 0: /* CPU_8086 */
+                default:
+                    requiredSpace = 4500000;
+                    break;
+            }
+        }
+    }
+
+    log_message("Disk space check - Required: %ld, Available: %ld", requiredSpace, freeSpace);
+
+    if (freeSpace < requiredSpace) {
+        char message[100];
+        sprintf(message, "Insufficient disk space. Required: %ld, Available: %ld", 
+                requiredSpace, freeSpace);
+        display_message(message);
+        log_message("Fatal: %s", message);
+        exit(1);
+    }
+}
+
+void setup_configuration(const SetupConfig* config) {
+    char wininiPath[80];
+    char systeminiPath[80];
+    FILE *winini, *systemini;
+    
+    /* Only create configuration files for new installations */
+    if (config->setupMode == 1) {
+        log_message("Skipping configuration file creation for upgrade mode");
+        return;
+    }
+    
+    sprintf(wininiPath, "%s\\WIN.INI", config->windowsDir);
+    winini = fopen(wininiPath, "w");
+    if (winini) {
+        log_message("Creating WIN.INI");
+        fprintf(winini, "[Windows]\n");
+        fprintf(winini, "load=\n");
+        fprintf(winini, "run=\n");
+        fprintf(winini, "Beep=yes\n");
+        fprintf(winini, "Spooler=yes\n");
+        fprintf(winini, "NullPort=None\n");
+        fprintf(winini, "BorderWidth=3\n");
+        fprintf(winini, "CursorBlinkRate=530\n");
+        fprintf(winini, "DoubleClickSpeed=452\n");
+        fprintf(winini, "Programs=com exe bat pif\n");
+        fprintf(winini, "Documents=\n");
+        fprintf(winini, "DeviceNotSelectedTimeout=15\n");
+        fprintf(winini, "TransmissionRetryTimeout=45\n");
+        fclose(winini);
+    } else {
+        log_message("Error: Cannot create WIN.INI");
+    }
+    
+    sprintf(systeminiPath, "%s\\SYSTEM.INI", config->windowsDir);
+    systemini = fopen(systeminiPath, "w");
+    if (systemini) {
+        log_message("Creating SYSTEM.INI");
+        fprintf(systemini, "[boot]\n");
+        fprintf(systemini, "shell=progman.exe\n");
+        
+        switch (config->cpu_type) {
+            case 2: /* CPU_386 */
+                fprintf(systemini, "display.drv=vga.drv\n");
+                fprintf(systemini, "keyboard.drv=keyboard.drv\n");
+                fprintf(systemini, "mouse.drv=mouse.drv\n");
+                fprintf(systemini, "fixedfon.fon=vgafix.fon\n");
+                fprintf(systemini, "fonts.fon=vgasys.fon\n");
+                fprintf(systemini, "oemfonts.fon=vgaoem.fon\n");
+                break;
+            case 1: /* CPU_286 */
+                fprintf(systemini, "display.drv=vga.drv\n");
+                fprintf(systemini, "keyboard.drv=keyboard.drv\n");
+                fprintf(systemini, "mouse.drv=mouse.drv\n");
+                fprintf(systemini, "fixedfon.fon=vgafix.fon\n");
+                fprintf(systemini, "fonts.fon=vgasys.fon\n");
+                fprintf(systemini, "oemfonts.fon=vgaoem.fon\n");
+                break;
+            case 0: /* CPU_8086 */
+            default:
+                fprintf(systemini, "display.drv=ega.drv\n");
+                fprintf(systemini, "keyboard.drv=keyboard.drv\n");
+                fprintf(systemini, "mouse.drv=mouse.drv\n");
+                fprintf(systemini, "fixedfon.fon=egafix.fon\n");
+                fprintf(systemini, "fonts.fon=egasys.fon\n");
+                fprintf(systemini, "oemfonts.fon=egaoem.fon\n");
+                break;
+        }
+        fclose(systemini);
+    } else {
+        log_message("Error: Cannot create SYSTEM.INI");
+    }
+}
+
+int find_file_copy_section(FILE* file, const char* section_name) {
+    char line[512];
+    char current_section[100] = "";
+    int in_target_section = 0;
+    char* end;
+    
+    fseek(file, 0, SEEK_SET);
+    
+    while (fgets(line, sizeof(line), file) != NULL) {
+        line[strcspn(line, "\r\n")] = 0;
+        
+        if (line[0] == '\0' || line[0] == ';') {
+            continue;
+        }
+        
+        if (line[0] == '[') {
+            end = strchr(line, ']');
+            if (end != NULL) {
+                *end = '\0';
+                strncpy(current_section, line + 1, sizeof(current_section)-1);
+                current_section[sizeof(current_section)-1] = '\0';
+                in_target_section = (strcmp(current_section, section_name) == 0);
+            } else {
+                in_target_section = 0;
+            }
+            continue;
+        }
+        
+        if (in_target_section) {
+            if (strchr(line, '=') != NULL) {
+                return 1; /* Found files in this section */
+            }
+        }
+    }
+    
+    return 0;
+}
+
+void select_network(SetupConfig* config) {
+    /* For now, default to nonet */
+    /* In full implementation, this would show a network selection dialog */
+    strcpy(config->selected_network, "nonet");
+    config->network_installed = 0;
+    log_message("Network selected: %s", config->selected_network);
+}
+
+void parse_line_with_condition(char *line, char **key, char **value, char **condition) {
+    char *first_comma = strchr(line, ',');
+    char *second_comma = NULL;
+    char *val_end;
+    char *key_end;
+    char *cond_end;
+    
+    *key = line;
+    *value = line;  // default: value = key
+    *condition = NULL;
+    
+    if (first_comma != NULL) {
+        *first_comma = '\0';
+        *value = first_comma + 1;
+        
+        second_comma = strchr(*value, ',');
+        if (second_comma != NULL) {
+            *second_comma = '\0';
+            *condition = second_comma + 1;
+            
+            // Trim condition
+            while (**condition && isspace((unsigned char)**condition)) (*condition)++;
+            cond_end = *condition + strlen(*condition) - 1;
+            while (cond_end > *condition && isspace((unsigned char)*cond_end)) {
+                *cond_end = '\0';
+                cond_end--;
+            }
+        }
+        
+        // Trim value
+        while (**value && isspace((unsigned char)**value)) (*value)++;
+        val_end = *value + strlen(*value) - 1;
+        while (val_end > *value && isspace((unsigned char)*val_end)) {
+            *val_end = '\0';
+            val_end--;
+        }
+    }
+    
+    // Trim key
+    while (**key && isspace((unsigned char)**key)) (*key)++;
+    key_end = *key + strlen(*key) - 1;
+    while (key_end > *key && isspace((unsigned char)*key_end)) {
+        *key_end = '\0';
+        key_end--;
+    }
+}
+
+/* FIXED: Use machine_list directly with proper bounds checking */
+void copy_machine_files(const SetupConfig* config) {
+    MachineEntry* machine_entry;
+    char source_path[80], dest_path[80];
+    char* filename;
+    
+    if (config->selected_machine == -1) {
+        log_message("No machine selected, skipping machine file copy");
+        return;
+    }
+    
+    log_message("Copying machine-specific files for: %s", config->machine_name);
+    
+    /* Get machine entry directly from machine_list with bounds checking */
+    if (config->selected_machine >= machine_list_count()) {
+        log_message("Error: Invalid machine index %d, machine list has %d entries", 
+                   config->selected_machine, machine_list_count());
+        return;
+    }
+    
+    machine_entry = machine_list_get(config->selected_machine);
+    if (!machine_entry) {
+        log_message("No machine configuration found for index: %d", config->selected_machine);
+        return;
+    }
+    
+    /* Copy only the system driver from machine configuration */
+    if (machine_entry->system_drv) {
+        /* Convert far string to near string for get_string */
+        unsigned int len = _fstrlen(machine_entry->system_drv);
+        char *near_system_drv = (char*)malloc(len + 1);
+        if (near_system_drv) {
+            _fstrcpy(near_system_drv, machine_entry->system_drv);
+            
+            /* Look up filename in system section */
+            filename = get_string("system", near_system_drv);
+            free(near_system_drv);
+        } else {
+            filename = NULL;
+        }
+        
+        if (filename) {
+            log_message("Found system driver filename for %s: %s", 
+                       machine_entry->system_drv, filename);
+            remove_disk_prefix(filename);
+            log_message("After removing disk prefix: %s", filename);
+            
+            sprintf(source_path, "%s\\%s", config->sourcePath, filename);
+            sprintf(dest_path, "%s\\%s", config->systemDir, filename);
+            
+            log_message("Copying system driver: %s -> %s", source_path, dest_path);
+            if (!copy_file_with_version_check(source_path, dest_path, config->setupMode)) {
+                log_message("Warning: Failed to copy system driver: %s", source_path);
+            } else {
+                log_message("Successfully copied system driver: %s", filename);
+            }
+            
+            free(filename);
+        } else {
+            log_message("Warning: No system file found for system driver: %s", 
+                       machine_entry->system_drv);
+        }
+    } else {
+        log_message("No system driver specified in machine configuration");
+    }
+    
+    /* Note: Other drivers (kbd, mouse, display, etc.) are handled by other parts of setup */
+    log_message("Machine-specific file copy completed for: %s", config->machine_name);
+}
+
+/* FIXED: Use machine_list directly */
+void select_machine_type(SetupConfig* config) {
+    char far * far *lines;
+    int line_count;
+    int i;
+    char** menu_items;
+    int item_count;
+    int choice;
+    char *line_key;
+    char *line_value;
+    char *line_condition;
+    char line_copy[256];
+    int menu_index;
+    
+    log_message("Selecting machine type");
+    
+    /* Use inf_section_find directly */
+    if (!inf_section_find("machine", &lines, &line_count) || line_count == 0) {
+        log_message("No machine section found, using default");
+        config->selected_machine = 0;
+        strcpy(config->machine_name, "MS-DOS or PC-DOS System");
+        return;
+    }
+    
+    /* Count valid machine entries by parsing raw lines */
+    item_count = 0;
+    for (i = 0; i < line_count; i++) {
+        if (lines[i]) {
+            _fstrncpy(line_copy, lines[i], sizeof(line_copy) - 1);
+            line_copy[sizeof(line_copy) - 1] = '\0';
+            
+            line_key = NULL;
+            line_value = NULL;
+            line_condition = NULL;
+            parse_section_line(line_copy, &line_key, &line_value, &line_condition);
+            
+            if (line_key && strlen(line_key) > 0) {
+                item_count++;
+            }
+            
+            if (line_key) free(line_key);
+            if (line_value) free(line_value);
+            if (line_condition) free(line_condition);
+        }
+    }
+    
+    _ffree(lines);
+    
+    if (item_count == 0) {
+        log_message("No machine entries found, using default");
+        config->selected_machine = 0;
+        strcpy(config->machine_name, "MS-DOS or PC-DOS System");
+        return;
+    }
+    
+    /* Create menu items */
+    menu_items = (char**)malloc(item_count * sizeof(char*));
+    if (!menu_items) {
+        log_message("Memory allocation failed for machine menu");
+        config->selected_machine = 0;
+        strcpy(config->machine_name, "MS-DOS or PC-DOS System");
+        return;
+    }
+    
+    /* Parse machine entries again to extract descriptions */
+    menu_index = 0;
+    /* Use inf_section_find directly */
+    if (inf_section_find("machine", &lines, &line_count)) {
+        for (i = 0; i < line_count && menu_index < item_count; i++) {
+            if (lines[i]) {
+                _fstrncpy(line_copy, lines[i], sizeof(line_copy) - 1);
+                line_copy[sizeof(line_copy) - 1] = '\0';
+                
+                line_key = NULL;
+                line_value = NULL;
+                line_condition = NULL;
+                parse_section_line(line_copy, &line_key, &line_value, &line_condition);
+                
+                if (line_key && strlen(line_key) > 0) {
+                    menu_items[menu_index] = (char*)malloc(strlen(line_key) + 1);
+                    if (menu_items[menu_index]) {
+                        strcpy(menu_items[menu_index], line_key);
+                    } else {
+                        menu_items[menu_index] = "Unknown Machine";
+                    }
+                    menu_index++;
+                }
+                
+                if (line_key) free(line_key);
+                if (line_value) free(line_value);
+                if (line_condition) free(line_condition);
+            }
+        }
+        _ffree(lines);
+    }
+    
+    /* Display machine selection menu */
+    display_header("Select Machine Type");
+    choice = display_menu(10, 5, 60, item_count, "Select your computer type:", menu_items, item_count);
+    
+    /* Free menu items */
+    for (i = 0; i < item_count; i++) {
+        free(menu_items[i]);
+    }
+    free(menu_items);
+    
+    if (choice >= 0 && choice < item_count) {
+        MachineEntry* machine_entry;
+        config->selected_machine = choice;
+        /* Get the machine name from the parsed machine entries */
+        machine_entry = machine_list_get(choice);
+        if (machine_entry && machine_entry->description) {
+            unsigned int len = _fstrlen(machine_entry->description);
+            if (len < sizeof(config->machine_name)) {
+                _fstrcpy(config->machine_name, machine_entry->description);
+            }
+        } else {
+            strcpy(config->machine_name, "MS-DOS or PC-DOS System");
+        }
+        log_message("Selected machine: %s", config->machine_name);
+    } else {
+        /* Default selection */
+        config->selected_machine = 0;
+        strcpy(config->machine_name, "MS-DOS or PC-DOS System");
+        log_message("Using default machine: %s", config->machine_name);
+    }
+}
+
+/* FIXED: Updated to use new file list system */
+int copy_files(const SetupConfig* config) {
+    log_message("copy_files: Starting file copy using new file list system");
+    
+    /* TODO: Implement file copying from file list */
+    
+    log_message("copy_files: File copy completed (stub - using new file list)");
+    return 1;
+}
+resources.h: 
+#ifndef RESOURCES_H
+#define RESOURCES_H
+
+#include <stdio.h>
+#include <stdarg.h>
+
+#define MAX_LANGUAGE_LENGTH 10
+
+#define CPU_8086 0
+#define CPU_286  1
+#define CPU_386  2
+
+typedef struct {
+    char far *key;
+    char far *value;
+    char far *condition;
+} StringResource;
+
+char* get_string(const char* section, const char* key);
+char* get_string_default(const char* section, const char* key, const char* default_value);
+char* get_string_for_cpu(const char* base_section, const char* key, int cpu_type);
+int get_int(const char* section, const char* key, int default_value);
+
+char* get_current_language(void);
+void free_resources(void);
+
+char* get_private_profile_string(const char* section, const char* key, const char* default_val, const char* filename);
+int get_private_profile_int(const char* section, const char* key, int default_val, const char* filename);
+
+#endif
+resources.c: 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <malloc.h>
+#include "resources.h"
+#include "log.h"
+#include "inf_parser.h"
+#include "section_list.h"
+#include "disk_list.h"
+#include "machine_list.h"
+#include "mouse_list.h"
+#include "kbdtype_list.h"
+#include "kbdtable_list.h"
+#include "language_list.h"  /* NEW: Include language list header */
+#include "network_list.h"  /* NEW: Include language list header */
+
+static char current_language[MAX_LANGUAGE_LENGTH] = "usa";
+
+static void parse_section_line(const char* line, char** key, char** value, char** condition) {
+    char line_copy[256];
+    char *equal_sign;
+    char *comma_pos;
+    char *temp;
+    char *end_ptr;
+    char *second_comma;
+    
+    *key = NULL;
+    *value = NULL;
+    *condition = NULL;
+    
+    if (!line || strlen(line) == 0) return;
+    
+    strncpy(line_copy, line, sizeof(line_copy) - 1);
+    line_copy[sizeof(line_copy) - 1] = '\0';
+    
+    temp = line_copy;
+    while (*temp && isspace((unsigned char)*temp)) temp++;
+    if (*temp == '\0' || *temp == ';') return;
+    
+    end_ptr = line_copy + strlen(line_copy) - 1;
+    while (end_ptr > line_copy && isspace((unsigned char)*end_ptr)) {
+        *end_ptr = '\0';
+        end_ptr--;
+    }
+    
+    equal_sign = strchr(line_copy, '=');
+    comma_pos = strchr(line_copy, ',');
+    
+    if (equal_sign) {
+        *equal_sign = '\0';
+        *key = line_copy;
+        *value = equal_sign + 1;
+        
+        while (**key && isspace((unsigned char)**key)) (*key)++;
+        end_ptr = *key + strlen(*key) - 1;
+        while (end_ptr > *key && isspace((unsigned char)*end_ptr)) {
+            *end_ptr = '\0';
+            end_ptr--;
+        }
+        
+        while (**value && isspace((unsigned char)**value)) (*value)++;
+        end_ptr = *value + strlen(*value) - 1;
+        while (end_ptr > *value && isspace((unsigned char)*end_ptr)) {
+            *end_ptr = '\0';
+            end_ptr--;
+        }
+        
+        if ((*value)[0] == '"' && (*value)[strlen(*value)-1] == '"') {
+            memmove(*value, *value + 1, strlen(*value) - 2);
+            (*value)[strlen(*value) - 2] = '\0';
+        }
+    }
+    else if (comma_pos) {
+        *comma_pos = '\0';
+        *key = line_copy;
+        
+        second_comma = strchr(comma_pos + 1, ',');
+        if (second_comma) {
+            *second_comma = '\0';
+            *value = comma_pos + 1;
+            *condition = second_comma + 1;
+        } else {
+            *value = comma_pos + 1;
+            *condition = NULL;
+        }
+        
+        while (**key && isspace((unsigned char)**key)) (*key)++;
+        end_ptr = *key + strlen(*key) - 1;
+        while (end_ptr > *key && isspace((unsigned char)*end_ptr)) {
+            *end_ptr = '\0';
+            end_ptr--;
+        }
+        
+        while (**value && isspace((unsigned char)**value)) (*value)++;
+        end_ptr = *value + strlen(*value) - 1;
+        while (end_ptr > *value && isspace((unsigned char)*end_ptr)) {
+            *end_ptr = '\0';
+            end_ptr--;
+        }
+        
+        if (*condition) {
+            while (**condition && isspace((unsigned char)**condition)) (*condition)++;
+            end_ptr = *condition + strlen(*condition) - 1;
+            while (end_ptr > *condition && isspace((unsigned char)*end_ptr)) {
+                *end_ptr = '\0';
+                end_ptr--;
+            }
+        }
+    }
+    else {
+        *key = line_copy;
+        *value = line_copy;
+        
+        while (**key && isspace((unsigned char)**key)) (*key)++;
+        end_ptr = *key + strlen(*key) - 1;
+        while (end_ptr > *key && isspace((unsigned char)*end_ptr)) {
+            *end_ptr = '\0';
+            end_ptr--;
+        }
+    }
+}
+
+char* get_string(const char* section, const char* key) {
+    return get_string_default(section, key, NULL);
+}
+
+char* get_string_default(const char* section, const char* key, const char* default_value) {
+    char far * far *lines;
+    int line_count;
+    int i;
+    char* result;
+    
+    /* Use inf_section_find directly instead of get_section_lines */
+    if (inf_section_find((const char far *)section, &lines, &line_count)) {
+        for (i = 0; i < line_count; i++) {
+            char *line_key;
+            char *line_value;
+            char *line_condition;
+            
+            parse_section_line((const char*)lines[i], &line_key, &line_value, &line_condition);
+            
+            if (line_key && strcmp(line_key, key) == 0) {
+                result = NULL;
+                if (line_value) {
+                    result = (char*)malloc(strlen(line_value) + 1);
+                    if (result) {
+                        strcpy(result, line_value);
+                    }
+                }
+                _ffree(lines);
+                return result;
+            }
+        }
+        _ffree(lines);
+    }
+    
+    if (default_value) {
+        result = (char*)malloc(strlen(default_value) + 1);
+        if (result) {
+            strcpy(result, default_value);
+        }
+        return result;
+    }
+    
+    return NULL;
+}
+
+char* get_string_for_cpu(const char* base_section, const char* key, int cpu_type) {
+    char section_name[100];
+    char* result;
+    
+    if (cpu_type == CPU_386) {
+        sprintf(section_name, "%s.win386", base_section);
+        result = get_string(section_name, key);
+        if (result) return result;
+        
+        sprintf(section_name, "%s.386", base_section);
+        result = get_string(section_name, key);
+        if (result) return result;
+    } else if (cpu_type == CPU_286) {
+        sprintf(section_name, "%s.286", base_section);
+        result = get_string(section_name, key);
+        if (result) return result;
+    }
+    
+    return get_string(base_section, key);
+}
+
+int get_int(const char* section, const char* key, int default_value) {
+    char* str_val;
+    int result;
+    
+    str_val = get_string(section, key);
+    if (str_val) {
+        result = atoi(str_val);
+        free(str_val);
+        return result;
+    }
+    return default_value;
+}
+
+char* get_current_language(void) {
+    char* result;
+    
+    result = (char*)malloc(strlen(current_language) + 1);
+    if (result) {
+        strcpy(result, current_language);
+    }
+    return result;
+}
+
+
+void free_resources(void) {
+    inf_sections_free_all();
+    machine_list_free();
+    disk_list_free_all();
+    mouse_list_free();
+    kbdtype_list_free();
+    kbdtable_list_free();
+    language_list_free();
+    network_list_free();  /* NEW: Free network list */
+}
+
+
+char* get_private_profile_string(const char* section, const char* key, 
+                                const char* default_val, const char* filename) {
+    return get_string_default(section, key, default_val);
+}
+
+int get_private_profile_int(const char* section, const char* key, 
+                           int default_val, const char* filename) {
+    char* str_val;
+    int result;
+    
+    str_val = get_private_profile_string(section, key, NULL, filename);
+    if (str_val) {
+        result = atoi(str_val);
+        free(str_val);
+        return result;
+    }
+    return default_val;
+}
+help.h: 
+#ifndef HELP_H
+#define HELP_H
+
+void display_help_screens(const char* topic);
+
+#endif
+help.c: 
+Не меняем 
+ui.h: 
+#ifndef UI_H
+#define UI_H
+
+#include "video.h"
+
+#define HEADER_BG LIGHTGRAY
+#define HEADER_FG BLACK
+#define MAIN_BG BLUE
+#define MAIN_FG LIGHTGRAY
+#define HIGHLIGHT_BG BLUE
+#define HIGHLIGHT_FG WHITE
+#define INPUT_BG LIGHTGRAY
+#define INPUT_FG BLACK
+#define HELP_BG LIGHTGRAY
+#define HELP_FG BLACK
+#define HELP_HEADER_BG LIGHTGRAY
+#define HELP_HEADER_FG BLUE
+#define HELP_FOOTER_BG BLUE
+#define HELP_FOOTER_FG LIGHTGRAY
+
+void init_ui(void);
+void draw_header_footer(void);
+void clear_screen(void);
+void draw_box(int x, int y, int width, int height);
+void center_text(int y, const char *text);
+void display_header(const char *title);
+void display_progress(int current, int total, const char *description);
+int display_menu(int x, int y, int width, int height, const char *title, char **items, int item_count);
+void setup_welcome(void);
+int setup_type_menu(void);
+void setup_directory_menu(char *directory);
+int prompt_for_disk(char disk);
+void setup_loading_screen(void);
+void display_help(const char* topic);
+void display_completion_screen(void);
+
+/* Новые функции для статичных элементов экранов */
+void draw_standard_header(void);
+void draw_standard_footer(void);
+void draw_main_content_area(void);
+
+#endif
+ui.c: 
+не меняем 
+dialog.h: 
+#ifndef DIALOG_H
+#define DIALOG_H
+
+int display_yesno(const char *question);
+void display_message(const char *message);
+int display_file_error(const char* filename);
+int display_error_dialog(const char* line1, const char* line2, const char* line3);
+int display_exit_confirmation(void);
+
+#endif
+dialog.c: 
+не меняем 
+screens.h: 
+#ifndef SCREENS_H
+#define SCREENS_H
+
+void setup_welcome(void);
+int setup_type_menu(void);
+void setup_directory_menu(char *directory);
+void display_configuration_confirmation(const char* windows_dir, const char* setup_type);
+void display_completion_screen(void);
+void setup_loading_screen(void);
+
+#endif
+screens.c: 
+не меняем 
+video.h: 
+#ifndef VIDEO_H
+#define VIDEO_H
+
+#define BLACK 0
+#define BLUE 1
+#define GREEN 2
+#define CYAN 3
+#define RED 4
+#define MAGENTA 5
+#define BROWN 6
+#define LIGHTGRAY 7
+#define DARKGRAY 8
+#define LIGHTBLUE 9
+#define LIGHTGREEN 10
+#define LIGHTCYAN 11
+#define LIGHTRED 12
+#define LIGHTMAGENTA 13
+#define YELLOW 14
+#define WHITE 15
+
+#define SCREEN_WIDTH 80
+#define SCREEN_HEIGHT 25
+
+struct ScreenChar {
+    unsigned char character;
+    unsigned char attribute;
+};
+
+/* Low-level video functions */
+void set_video_mode(int mode);
+void set_cursor_pos(int x, int y);
+int get_cursor_x(void);
+int get_cursor_y(void);
+void hide_cursor(void);
+void show_cursor(void);
+void put_char_at(int x, int y, char c, int color);
+void put_string_at(int x, int y, const char *str, int color);
+void save_screen_state(void);
+void restore_screen_state(void);
+void clear_screen_direct(void);
+
+/* New functions for saving/restoring screen areas */
+void save_screen_area(int x, int y, int width, int height, struct ScreenChar far *buffer);
+void restore_screen_area(int x, int y, int width, int height, struct ScreenChar far *buffer);
+
+#endif
+video.c: 
+не меняем 
+log.c: 
+не меняем.c 
+log.h: 
+#ifndef LOG_H
+#define LOG_H
+
+#include <stdio.h>
+#include <stdarg.h>
+
+void log_init(const char* filename);
+void log_message(const char* format, ...);
+void log_close(void);
+FILE* get_log_handle(void);
+
+#endif
+setup.c: 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include "setup_core.h"
+#include "resources.h"
+#include "system_info.h"
+#include "file_utils.h"
+#include "log.h"
+#include "ui.h"
+#include "dialog.h"
+#include "screens.h"
+#include "section_list.h"
+#include "inf_parser.h"
+
+int launch_stage2(const SetupConfig* config) {
+    char win_com_path[80];
+    char command[512];
+    
+    /* Only try to launch Windows, not setup again */
+    sprintf(win_com_path, "%s\\WIN.COM", config->windowsDir);
+    
+    if (file_exists(win_com_path)) {
+        log_message("Launching Windows: %s", win_com_path);
+        printf("\nSetup completed successfully. Launching Windows...\n");
+        
+        /* Use system call instead of spawn to avoid memory issues */
+        sprintf(command, "%s", win_com_path);
+        return system(command);
+    }
+    
+    /* If WIN.COM not found, just exit successfully */
+    log_message("Windows setup completed. WIN.COM not found, exiting.");
+    printf("\nWindows setup completed successfully.\n");
+    printf("You can now run Windows by typing WIN at the command prompt.\n");
+    return 0;
+}
+
+void display_command_line_help(void) {
+    printf("Windows Setup Command Line Switches:\n\n");
+    printf("/?      Display this help message\n");
+    printf("/i      Ignore automatic hardware detection\n");
+    printf("/n      Set up a shared copy of Windows from a network server\n");
+    printf("/a      Administrative Setup: copy all files to network server and mark as read-only\n");
+    printf("/b      Set up Windows with monochrome display attributes\n");
+    printf("/t      Search for incompatible software (for maintenance only)\n");
+    printf("/h:filename Run Batch Mode Setup using the specified system settings file\n");
+    printf("/o:filename Specify the SETUP.INF file\n");
+    printf("/s:filename Specify the path for Windows installation disks\n\n");
+}
+
+void parse_command_line(int argc, char *argv[], SetupConfig* config) {
+    int i;
+    
+    for (i = 1; i < argc; i++) {
+        if (argv[i][0] == '/' || argv[i][0] == '-') {
+            if (strlen(argv[i]) < 2) {
+                log_message("Warning: Invalid command line switch: %s", argv[i]);
+                continue;
+            }
+            
+            switch (tolower(argv[i][1])) {
+                case '?':
+                    display_command_line_help();
+                    exit(0);
+                    break;
+                    
+                case 'i':
+                    config->ignore_autodetect = 1;
+                    log_message("Command line: /i - Ignore automatic hardware detection");
+                    break;
+                    
+                case 'n':
+                    config->network_setup = 1;
+                    log_message("Command line: /n - Network setup");
+                    break;
+                    
+                case 'a':
+                    config->admin_setup = 1;
+                    log_message("Command line: /a - Administrative setup");
+                    break;
+                    
+                case 'b':
+                    config->monochrome_setup = 1;
+                    log_message("Command line: /b - Monochrome display");
+                    break;
+                    
+                case 't':
+                    config->scan_incompatible = 1;
+                    log_message("Command line: /t - Scan for incompatible software");
+                    break;
+                    
+                case 'h':
+                    if (strlen(argv[i]) > 3 && argv[i][2] == ':') {
+                        strncpy(config->batch_file, argv[i] + 3, 80 - 1);
+                        config->batch_file[80-1] = '\0';
+                        log_message("Command line: /h:%s - Batch mode setup", config->batch_file);
+                    } else {
+                        log_message("Warning: Invalid /h switch format: %s", argv[i]);
+                    }
+                    break;
+                    
+                case 'o':
+                    if (strlen(argv[i]) > 3 && argv[i][2] == ':') {
+                        strncpy(config->inf_filename, argv[i] + 3, 260 - 1);
+                        config->inf_filename[260-1] = '\0';
+                        log_message("Command line: /o:%s - Custom INF file", config->inf_filename);
+                    } else {
+                        log_message("Warning: Invalid /o switch format: %s", argv[i]);
+                    }
+                    break;
+                    
+                case 's':
+                    if (strlen(argv[i]) > 3 && argv[i][2] == ':') {
+                        strncpy(config->sourcePath, argv[i] + 3, 80 - 1);
+                        config->sourcePath[80-1] = '\0';
+                        log_message("Command line: /s:%s - Custom source path", config->sourcePath);
+                    } else {
+                        log_message("Warning: Invalid /s switch format: %s", argv[i]);
+                    }
+                    break;
+                    
+                default:
+                    log_message("Warning: Unknown command line switch: %s", argv[i]);
+                    break;
+            }
+        } else {
+            /* Если аргумент без ключа, считаем его путем к исходным файлам */
+            if (config->sourcePath[0] == '\0') {
+                strncpy(config->sourcePath, argv[i], 80 - 1);
+                config->sourcePath[80-1] = '\0';
+                log_message("Command line: source path = %s", config->sourcePath);
+            }
+        }
+    }
+}
+
+int main(int argc, char *argv[]) {
+    SetupConfig config;
+    int setup_type = 0;
+    char temp_dir[80];
+    
+    /* Initialize configuration */
+    setup_config_init(&config);
+    
+    /* Parse command line */
+    parse_command_line(argc, argv, &config);
+    
+    /* Initialize logging */
+    log_init(config.logFile);
+    
+    /* Initialize UI */
+    init_ui();
+    
+    /* Display welcome screen */
+    setup_welcome();
+
+    /* Load INF file */
+    if (config.inf_filename[0] == '\0') {
+        strcpy(config.inf_filename, "SETUP.INF");
+    }
+    load_inf_file(config.inf_filename);
+
+    /* Pre-parse SETUP.INF according config */
+    preparse_inf_file(&config);
+    
+    /* Detect hardware */
+    if (!config.ignore_autodetect) {
+        config.cpu_type = detect_cpu_type();
+        log_message("Detected CPU type: %d", config.cpu_type);
+    }
+    
+    /* Display setup type menu */
+    setup_type = setup_type_menu();
+    
+    /* Get installation directory */
+    setup_directory_menu(config.windowsDir);
+    
+    /* Update system directories based on windows directory */
+    sprintf(config.systemDir, "%s\\SYSTEM", config.windowsDir);
+    sprintf(config.tempDir, "%s\\TEMP", config.windowsDir);
+    
+    /* Select network if needed */
+    if (config.network_setup) {
+        select_network(&config);
+    }
+    
+    /* Detect setup mode */
+    detect_setup_mode(&config);
+    
+    /* Check disk space */
+    check_disk_space(&config);
+    
+    /* Display configuration confirmation */
+    display_configuration_confirmation(config.windowsDir, 
+                                      setup_type == 0 ? "Express" : 
+                                      setup_type == 1 ? "Custom" : "Minimum");
+    
+    /* Setup directories */
+    setup_directories(&config);
+    
+    /* Show loading screen */
+    setup_loading_screen();
+
+    /* parse SETUP.INF according config */
+    parse_inf_file(&config);
+    
+    /* Copy files */
+    if (!copy_files(&config)) {
+        log_message("File copy failed");
+        display_error_dialog("File copy failed.", "Please check the log file", "for details.");
+        return 1;
+    }
+    
+    /* Update configuration */
+    update_autoexec_bat(&config);
+    update_config_sys();
+    setup_configuration(&config);
+    
+    /* Display completion screen */
+    display_completion_screen();
+    
+    /* Launch stage 2 */
+    launch_stage2(&config);
+    
+    /* Cleanup */
+    free_resources();
+    log_close();
+    
+    return 0;
+}
+setup.inf: 
+
+[setup]
+    help   = setup.hlp
+
+;   place any programs here that should be run at the end of setup.
+;   these apps will be run in order of their appearance here
+[run]
+
+[dialog]
+    caption  = "Windows Setup"
+    exit     = "Exit Windows Setup"
+    title    = "Installing Windows 3.0"
+    options  = "In addition to installing Windows 3.0, you can:"
+
+[data]
+    ; Min hard disk space required for installation.
+    neededspace386 = 6300000
+    neededspace286 = 4500000
+    neededspaceNet = 200000
+    ;  Name of the Windows startup program
+    startup = WIN.COM
+    ;  Default dir for installing Win, MUST include a drive letter
+    defdir = C:\WINDOWS
+    ;	 -- screen messages --
+    ;  short name of the program
+    shortname = Windows
+    ;  long name of the program (including version)
+    welcome = "Microsoft Windows Version 3.00"
+    ;  Default language driver.
+    deflang = usa
+    ;  DefCodePage defines which translation table to use if we cannot get
+    ;  code page information from DOS ie we are not under 3.30 or newer.
+    defxlat = 437
+    ; this indicates what country you are in via the country keyboard
+    ; DLL.  we special case the usadll to see if we are in the USA
+    defkeydll = usadll
+    ;  Name of a program invoked after completing setup
+    exec    = "win.com"
+    execcmd = "/r /q:"
+    ; This is the logo data file that will be used in the case of
+      installation of a 2.X display driver.
+    2xlogodata = 2:cgalogo.rle
+    ; this is the cmd line that is executed for the online docs
+    readme = "notepad /.setup readme.txt"
+
+; Here are the names of the disks Setup can prompt for.
+; There must be a disk name for each disk number used
+;
+; The disk number '0' is reserved to represent the windows setup directory
+; the directory may be relative to the directory SETUP was run from.
+;
+; the format is:
+;
+; n = path,disk name,disk tag file
+;
+; n           disk "number"  1-9,A-Z (single char only!)
+; path        path of disk n
+; name        name of disk n
+; disk tag    a file on disk n (used to determine if disk is in drive)
+;
+[disks]
+    1 =. ,"Microsoft Windows 3.0 Disk #1",disk1
+    2 =. ,"Microsoft Windows 3.0 Disk #2",disk2
+    3 =. ,"Microsoft Windows 3.0 Disk #3",disk3
+    4 =. ,"Microsoft Windows 3.0 Disk #4",disk4
+    5 =. ,"Microsoft Windows 3.0 Disk #5",disk5
+
+; These files will be copied to the windows SYSTEM directory
+[windows.system]
+    1:kernel.exe
+    1:gdi.exe
+    1:user.exe
+    1:win.cnf
+
+; These files will be copied to the windows ROOT directory
+[windows]
+    1:setup.hlp
+    1:win.src         ,Net
+    1:system.src      ,Net
+    1:winhelp.exe
+    1:winhelp.hlp
+
+[shell]
+    progman.exe, "Windows Program Manager"
+
+[display]
+; The string following the driver description specifies the screen
+; resolution. It is used to match the system and OEM character sets
+; with the display selection.
+;
+;profile = driver,         Description of driver,                       resolution,    286 grabber,    logo code,       VDD,            386grabber,   ega.sys    logo data     
+;
+8514     = 1:8514.drv,     "8514/a",                                    "100,120,120", 3:vgacolor.gr2, 2:vgalogo.lgo,   4:vdd8514.386,  4:8514.gr3,,             2:vgalogo.rle
+cga      = 1:cga.drv,      "CGA",                                       "200,96,48",   3:cga.gr2,      2:cgalogo.lgo,   4:vddcga.386,   4:cga.gr3,,              2:cgalogo.rle
+plasma   = 1:plasma.drv,   "Compaq Portable Plasma",                    "100,96,96",   3:cga.gr2,      2:cgalogo.lgo,   4:vddcga.386,   4:plasma.gr3,,           2:cgalogo.rle
+egahires = 1:ega.drv,      "EGA",                                       "133,96,72",   3:egacolor.gr2, 2:egalogo.lgo,   x:*vddega,      4:ega.gr3,    3:ega.SYS, 2:egalogo.rle
+egahibw  = 1:egahibw.drv,  "EGA black and white (286 only)",            "133,96,72",   3:egacolor.gr2, 2:cgalogo.lgo,,,                               3:ega.SYS, 2:cgalogo.rle
+egamono  = 1:egamono.drv,  "EGA Monochrome (286 only)",                 "133,96,72",   3:egamono.gr2,  2:egamono.lgo,,,                               3:ega.SYS, 2:egamono.rle
+hercules = 1:hercules.drv, "Hercules Monochrome",                       "133,96,72",   3:hercules.gr2, 2:herclogo.lgo,  4:vddherc.386,  4:herc.gr3,,             2:herclogo.rle
+mcga	 = 1:vgamono.drv,  "IBM MCGA (286 only)",			"100,96,96",   3:vgacolor.gr2, 2:cgalogo.lgo,,,,					 2:cgalogo.rle
+olibw    = 1:olibw.drv,    "Olivetti/AT&T Monochrome or PVC Display",   "120,96,80",   3:oligrab.gr2,  2:cgalogo.lgo,   4:vddcga.386,   4:plasma.gr3,,           2:cgalogo.rle
+sv400a   = 1:sv400a.drv,   "Olivetti OEC Color Display or AT&T VDC750", "120,96,80",   3:sv400a.gr2,   2:egalogo.lgo,,,,			         	 2:egalogo.rle
+ct441    = 1:vga.drv,      "QuadVGA, ATI VIP VGA, 82C441 VGAs",         "100,96,96",   3:vgacolor.gr2, 2:vgalogo.lgo,   4:vddct441.386, 4:vga.gr3,,              2:vgalogo.rle
+vga      = 1:vga.drv,      "VGA",                                       "100,96,96",   3:vgacolor.gr2, 2:vgalogo.lgo,   x:*vddvga,      4:vga.gr3,,              2:vgalogo.rle
+vgamono  = 1:vgamono.drv,  "VGA with Monochrome display",               "100,96,96",   3:vgamono.gr2,  2:vgalogo.lgo,   x:*vddvga,      4:vgamono.gr3,,          2:vgalogo.rle
+v7vga    = 1:v7vga.drv,    "Video Seven VGA with 512K",                 "100,96,96",   3:vgacolor.gr2, 2:vgalogo.lgo,   x:*vddvga, 	4:v7vga.gr3,,            2:vgalogo.rle
+
+; copy these fonts depending on the 386 grabber being used
+[VGAMONO.GR3]
+4:CGA40WOA.FON,4:CGA40850.FON
+4:CGA80WOA.FON,4:CGA80850.FON
+4:EGA40WOA.FON,4:EGA40850.FON
+4:EGA80WOA.FON,4:EGA80850.FON
+
+[VGA.GR3]
+4:CGA40WOA.FON,4:CGA40850.FON
+4:CGA80WOA.FON,4:CGA80850.FON
+4:EGA40WOA.FON,4:EGA40850.FON
+4:EGA80WOA.FON,4:EGA80850.FON
+
+[V7VGA.GR3]
+4:CGA40WOA.FON,4:CGA40850.FON
+4:CGA80WOA.FON,4:CGA80850.FON
+4:EGA40WOA.FON,4:EGA40850.FON
+4:EGA80WOA.FON,4:EGA80850.FON
+
+[EGA.GR3]
+4:CGA40WOA.FON,4:CGA40850.FON
+4:CGA80WOA.FON,4:CGA80850.FON
+4:EGA40WOA.FON,4:EGA40850.FON
+4:EGA80WOA.FON,4:EGA80850.FON
+
+[8514.GR3]
+4:CGA40WOA.FON,4:CGA40850.FON
+4:CGA80WOA.FON,4:CGA80850.FON
+4:EGA40WOA.FON,4:EGA40850.FON
+4:EGA80WOA.FON,4:EGA80850.FON
+
+[PLASMA.GR3]
+4:EGA40WOA.FON,4:EGA40850.FON
+4:EGA80WOA.FON,4:EGA80850.FON
+
+[CGA.GR3]
+4:CGA40WOA.FON,4:CGA40850.FON
+4:CGA80WOA.FON,4:CGA80850.FON
+
+[HERC.GR3]
+4:HERCWOA.FON,4:HERC850.FON
+
+[keyboard.drivers]
+kbd      = 1:keyboard.drv
+kbdoli   = 1:kbdoli.drv
+kbdhp    = 1:kbdhp.drv
+
+[keyboard.types]
+; The drivers are more specific to the machine while the types listed here
+; are more specific to the type of keyboard. In the USA 
+; (if devkeydll == usadll) and the DLL field in not NULL the listed DLL 
+; must be installed. 
+t3s0alat  = "All AT type keyboards (84 - 86 keys)"             ,nodll
+t1s2at&t  = "AT&T '301' keyboard"                              ,nodll
+t1s4at&t  = "AT&T '302' keyboard"                              ,nodll
+t4s0enha  = "Enhanced 101 or 102 key US and Non US keyboards"  ,nodll
+t3s0hp1   = "Hewlett-Packard Vectra keyboard (DIN)"            ,nodll
+t4s40oliv = "Olivetti 101/102 A keyboard"                      ,nodll
+t1s0oliv  = "Olivetti 83 key keyboard"                         ,nodll
+t3s10oliv = "Olivetti 86 Key keyboard"                         ,nodll
+t2s1oliv  = "Olivetti M24 102 key keyboard"                    ,usadll
+t1s42oliv = "PC-XT 83 key keyboard"                            ,nodll
+t1s0pcxt  = "PC/XT - Type keyboard (84 keys)"                  ,nodll
+
+[keyboard.tables]
+; These are the dll that must be installed in system.ini for languages other
+; than english. For example, the entry in system.ini for a Belgium setup
+; would be keyboard.dll = kbdbe.dll. Also, US keyboards types 1,3, and 4 
+; do not require that a DLL be installed. Types 0,2,5, and 6 require that
+; the kbdus.dll table be installed in system.ini
+; Note: these should be sorted in alphabetical order according to the name
+;       that appears within the quotation marks.  These strings will appear
+;       in this order in Control Panel's International Dialog.  In addition,
+;       the two listings of "US" exist due to keyboard types.  Only 1 will
+;       appear in the combobox.
+beldll = 2:kbdbe.dll , "Belgian"
+bridll = 2:kbduk.dll , "British"
+dandll = 2:kbdda.dll , "Danish"
+dutdll = 2:kbdne.dll , "Dutch"
+findll = 2:kbdfi.dll , "Finnish"
+fredll = 2:kbdfr.dll , "French"
+candll = 2:kbdca.dll , "French Canadian"
+gerdll = 2:kbdgr.dll , "German"
+icedll = 2:kbdic.dll , "Icelandic"
+itadll = 2:kbdit.dll , "Italian"
+latdll = 2:kbdla.dll , "Latin American"
+nordll = 2:kbdno.dll , "Norwegian"
+pordll = 2:kbdpo.dll , "Portuguese"
+spadll = 2:kbdsp.dll , "Spanish"
+swedll = 2:kbdsw.dll , "Swedish"
+swfdll = 2:kbdsf.dll , "Swiss French"
+swgdll = 2:kbdsg.dll , "Swiss German"
+nodll  =             , "US"
+usadll = 2:kbdus.dll , "US"
+usddll = 2:kbddv.dll , "US-Dvorak"
+usxdll = 2:kbdusx.dll, "US-International"
+
+[codepages]
+;       Xlat Table    OEM Font     description.
+863 = 2:xlat863.bin, 2:vga863.fon, "French Canadian (863)"
+861 = 2:xlat861.bin, 2:vga861.fon, "Icelandic (861)"
+865 = 2:xlat865.bin, 2:vga865.fon, "Norway & Denmark (865)"
+850 = 2:xlat850.bin, 2:vga850.fon, "International (850)"
+860 = 2:xlat860.bin, 2:vga860.fon, "Portuguese (860)"
+437 =              ,             , "Standard (437)"
+
+[pointing.device]
+;profile = mouse driver,  description,                                    vmd,  dos mouse driver base name
+;
+hpmouse  = 1:hpmouse.drv, "HP Mouse (HP-HIL)",                            x:*vmd,mousehp
+lmouse   = 1:lmouse.drv,  "Logitech serial mouse",                        x:*vmd
+lmouse2  = 1:mouse.drv,   "Logitech bus or PS/2-style",                   x:*vmd,mouse
+ps2mouse = 1:mouse.drv,   "Microsoft, or IBM PS/2",                       x:*vmd,mouse
+msmouse1 = 1:msmouse1.drv,"Mouse Systems (or VisiOn) connected to COM1:", x:*vmd
+msmouse2 = 1:msmouse2.drv,"Mouse Systems (or VisiOn) connected to COM2:", x:*vmd
+nomouse  = 1:nomouse.drv, "No mouse or other pointing device",            x:*vmd
+kbdmouse = 1:kbdmouse.drv,"Olivetti/AT&T Keyboard Mouse",                 x:*vmd
+
+[dos.mouse.drivers]
+; Dos Mouse drivers.
+mouse.sys   = 4:mouse.SYS,     "MS Dos Mouse driver .SYS ver 7.XX"
+mouse.com   = 4:mouse.com,     "MS Dos Mouse driver .COM ver 7.XX"
+mousehp.sys = 4:mousehp.SYS,   "HP Dos Mouse driver .SYS ver 7.XX"
+mousehp.com = 4:mousehp.com,   "HP Dos Mouse driver .COM ver 7.XX"
+
+[network]
+;Prof       Driver,        Description,                                          HelpFile,OptFile,WininiSectName,SysiniSectName,VDD,VDD,n...
+;
+3comopen  = 2:msnet.drv   ,"3Com 3+Open LAN Manager (XNS only)",                             ,,,3Com_net,x:*vnetbios,x:*dosnet,4:lanman10.386
+3comshare = 2:msnet.drv   ,"3Com 3+Share",                                       ,,,3Com_net,x:*vnetbios,x:*dosnet
+banyan    = 2:msnet.drv   ,"Banyan VINES 4.0",                                   ,,,Banyan_net,x:*vnetbios,x:*dosnet,4:baninst.386
+lanman1x  = 2:msnet.drv   ,"LAN Manager 1.x (or 100% compatible)",               ,,,,x:*vnetbios,x:*dosnet,4:lanman10.386
+lanman2b  = 2:msnet.drv   ,"LAN Manager 2.0 Basic (or 100% compatible)",         ,,,,x:*vnetbios,x:*dosnet
+lanman    = 2:lanman.drv  ,"LAN Manager 2.0 Enhanced (or 100% compatible)",      4:lanman.hlp,,,,x:*vnetbios,x:*dosnet
+msnet     = 2:msnet.drv   ,"Microsoft Network (or 100% compatible)",             ,,,,x:*vnetbios,x:*dosnet
+nonet     =               ,"No Network Installed",                               ,,,,x:*vnetbios,x:*dosnet
+novell    = 2:netware.drv ,"Novell Netware 2.10 or above, or Novell Netware 386" ,4:netware.hlp,4:nwpopup.exe,Novell_net,,x:*vnetbios,4:vnetware.386,4:vipx.386
+ibmpclp   = 2:msnet.drv   ,"IBM PC LAN Program",                                           ,,,pclp,x:*vnetbios,x:*dosnet
+
+[pclp]
+386enh,InDOSPolling,TRUE
+
+[Novell_net]
+Windows,load,nwpopup.exe
+
+[Banyan_net]
+386enh,TimerCriticalSection,5000
+
+[3Com_net]
+386enh,TimerCriticalSection,10000
+386enh,UniqueDOSPSP,TRUE
+386enh,PSPIncrement,5
+
+; If a display adapter other than the one in system selection is selected
+; the font is chosen which matches the display resolution exactly.
+[sysfonts]
+1:egasys.fon,"EGA (640x350) resolution System Font", "133,96,72"
+1:cgasys.fon,"CGA (640x200) resolution System Font", "200,96,48"
+1:vgasys.fon,"VGA (640x480) resolution System Font", "100,96,96"
+1:8514sys.fon,"8514/a (1024x768) resolution System Font", "100,120,120"
+1:egasys.fon,"AT&T (640x400) resolution System Font", "120,96,80"
+
+[fixedfonts]
+1:egafix.fon,"EGA (640x350) resolution Fixed System Font", "133,96,72"
+1:cgafix.fon,"CGA (640x200) resolution Fixed System Font", "200,96,48"
+1:vgafix.fon,"VGA (640x480) resolution Fixed System Font", "100,96,96"
+1:8514fix.fon,"8514/a (1024x768) resolution Fixed System Font",  "100,120,120"
+1:egafix.fon,"AT&T (640x400) resolution Fixed System Font", "120,96,80"
+
+[oemfonts]
+1:egaoem.fon,"EGA (640x350) resolution Terminal Font (USA/Europe)", "133,96,72",1
+1:cgaoem.fon,"CGA (640x200) resolution Terminal Font (USA/Europe)", "200,96,48",1
+1:vgaoem.fon,"VGA (640x480) resolution Terminal Font (USA/Europe)", "100,96,96",1
+1:8514oem.fon,"8514 (1024x768) resolution Terminal Font (USA/Europe)", "100,120,120",1
+1:egaoem.fon,"AT&T (640x400) resolution Terminal Font (USA/Europe)","120,96,80",1
+
+;   The win.copy section is a list of files or sections to copy to the WINDOWS
+;   directoy.
+;
+;   FORMAT      from,to
+;
+;   IE
+;       1:foo.txt,  0:        copy foo.txt from disk 1 to the windows directory
+;       #386,       0:system  copy all files in the 386 SECTION to the
+
+[win.copy]
+; copy this section for setup on 286 machines
+	#net,       0:
+        #win.other, 0:system
+        #win.apps,  0:
+	#win.help,  0:
+ 	#win.bmps,  0:
+	#win.readme, 0:
+	#pwin286,   0:system
+
+[win.copy.net]
+; copy this section for network setup
+	#net,       0:
+
+[win.copy.win386]
+; copy this section for setup on 386 machines
+	#net,       0:
+        #win.other, 0:system
+        #win.apps,  0:
+	#win.help,  0:
+ 	#win.bmps,  0:
+	#win.readme, 0:
+	#pwin286,   0:system
+        #pwin386,   0:system
+
+[copy.himem]
+        3:HIMEM.SYS,		"Himem Driver"
+
+[net]
+	2:CONTROL.INI,		"Windows User Files"
+        2:SMARTDRV.SYS
+        2:RAMDRIVE.SYS
+	2:EMM386.SYS
+	2:WINVER
+
+[win.other]
+	2:WINOLDAP.MOD,		"Windows Drivers"
+        2:LZEXPAND.DLL
+        2:WIN87EM.dll
+	2:sysedit.exe
+
+[win.apps]
+        2:PROGMAN.EXE,          "Windows Program Manager"
+        2:TASKMAN.EXE,	        "Windows Task Manager"
+        2:WINFILE.EXE,          "Windows File Manager"
+        2:CALC.EXE,             "Windows Calculator"
+        2:CALENDAR.EXE,         "Windows Calendar"
+        2:CARDFILE.EXE,         "Windows Cardfile"
+        2:CLIPBRD.EXE,          "Windows Clipboard"
+        2:CLOCK.EXE,            "Windows Clock"
+	2:DIGITAL.FON, 	        "Windows Clock"
+        2:CONTROL.EXE,          "Windows Control Panel"
+        2:NOTEPAD.EXE,          "Windows Notepad"
+        2:PBRUSH.EXE,           "Windows Paintbrush"
+        2:PBRUSH.DLL,           "Windows Paintbrush"
+        2:PIFEDIT.EXE,          "Windows PIF Editor"
+        2:RECORDER.EXE,         "Windows Macro Recorder"
+        2:RECORDER.DLL,         "Windows Macro Recorder"
+        2:REVERSI.EXE,          "Windows Reversi"
+        2:PRINTMAN.EXE,		"Windows Print Manager"
+        2:SOL.EXE,              "Windows Solitaire"
+        2:TERMINAL.EXE,         "Windows Terminal"
+        2:WRITE.EXE,            "Windows Write"
+        2:MSDOS.EXE,            "MS-DOS Executive"
+
+[win.help]
+	3:CALC.HLP,		"Windows Calculator help"
+	3:CALENDAR.HLP,		"Windows Calendar help"
+	3:CARDFILE.HLP,		"Windows Cardfile help"
+	3:CLIPBRD.HLP,		"Windows Clipboard help"
+	3:CONTROL.HLP,		"Windows Control Panel help"
+        3:NOTEPAD.HLP,          "Windows Notepad help"
+	3:PBRUSH.HLP,		"Windows Paintbrush help"
+	3:PIFEDIT.HLP,		"Windows PIF Editor help"
+	3:PRINTMAN.HLP,		"Windows Print Manager help"
+	3:PROGMAN.HLP,		"Windows Program Manager help"
+  	3:RECORDER.HLP,		"Windows Recorder help"
+	3:REVERSI.HLP,		"Windows Reversi help"
+	3:SOL.HLP,		"Windows Solitaire help"
+	3:TERMINAL.HLP,		"Windows Terminal help"
+ 	3:WINFILE.HLP,		"Windows File Manager help"
+	3:WRITE.HLP,		"Windows Write help"
+
+[win.bmps]
+	3:PYRAMID.BMP,		"Background bitmaps"
+	3:CHESS.BMP
+	3:WEAVE.BMP
+	3:BOXES.BMP
+	3:PAPER.BMP
+	3:PARTY.BMP
+	3:RIBBONS.BMP
+
+[win.readme]
+	3:readme.txt,		"Readme files"
+	3:networks.txt
+	3:winini.txt
+	3:winini2.txt
+	3:sysini.txt
+	3:sysini2.txt
+        3:sysini3.txt
+	3:printers.txt
+	3:3270.txt
+
+[pwin286]
+        3:KRNL286.EXE,          "Standard Mode files"
+        3:WINOA286.MOD
+        3:DOSX.EXE
+
+
+[pwin386]
+        3:KRNL386.EXE,          "386 Enhanced Mode files"
+        3:WINOA386.MOD
+        3:WIN386.PS2
+        3:WIN386.EXE
+        3:SWAPFILE.EXE
+
+[fonts]
+	4:HELVA.FON, "Helv 8,10,12,14,18,24 (CGA res)", "200,96,48"
+	4:HELVB.FON, "Helv 8,10,12,14,18,24 (EGA res)", "133,96,72"
+	4:HELVC.FON, "Helv 8,10,12,14,18,24 (60 dpi)", "83,60,72"
+	4:HELVD.FON, "Helv 8,10,12,14,18,24 (120 dpi)", "167,120,72"
+	4:HELVE.FON, "Helv 8,10,12,14,18,24 (VGA res)", "100,96,96"
+ 	4:HELVF.FON, "Helv 8,10,12,14,18,24 (8514/a res)", "100,120,120"
+
+	4:COURA.FON, "Courier 10,12,15 (CGA res)", "200,96,48"
+	4:COURB.FON, "Courier 10,12,15 (EGA res)", "133,96,72"
+	4:COURC.FON, "Courier 10,12,15 (60 dpi)", "83,60,72"
+	4:COURD.FON, "Courier 10,12,15 (120 dpi)", "167,120,72"
+	4:COURE.FON, "Courier 10,12,15 (VGA res)", "100,96,96"
+ 	4:COURF.FON, "Courier 10,12,15 (8514/a res)", "100,120,120"
+
+	4:TMSRA.FON, "Tms Rmn 8,10,12,14,18,24 (CGA res)", "200,96,48"
+	4:TMSRB.FON, "Tms Rmn 8,10,12,14,18,24 (EGA res)", "133,96,72"
+	4:TMSRC.FON, "Tms Rmn 8,10,12,14,18,24 (60 dpi)", "83,60,72"
+	4:TMSRD.FON, "Tms Rmn 8,10,12,14,18,24 (120 dpi)", "167,120,72"
+	4:TMSRE.FON, "Tms Rmn 8,10,12,14,18,24 (VGA res)", "100,96,96"
+ 	4:TMSRF.FON, "Tms Rmn 8,10,12,14,18,24 (8514/a res)", "100,120,120"
+
+ 	4:SYMBOLA.FON, "Symbol 8,10,12,14,18,24 (CGA res)", "200,96,48"
+ 	4:SYMBOLB.FON, "Symbol 8,10,12,14,18,24 (EGA res)", "133,96,72"
+ 	4:SYMBOLE.FON, "Symbol 8,10,12,14,18,24 (VGA res)", "100,96,96"
+ 	4:SYMBOLF.FON, "Symbol 8,10,12,14,18,24 (8514/a res)", "100,120,120"
+
+	4:ROMAN.FON, "Roman (All res)",   "CONTINUOUSSCALING"
+	4:SCRIPT.FON, "Script (All res)", "CONTINUOUSSCALING"
+	4:MODERN.FON, "Modern (All res)", "CONTINUOUSSCALING"
+
+[progman.groups]
+Main,1
+Accessories
+Games
+
+[Main]
+"File Manager",         WINFILE.EXE
+"Control Panel",        CONTROL.EXE
+"Print Manager",        printman.exe
+"Clipboard",            CLIPBRD.EXE
+"DOS Prompt",           COMMAND.COM, PROGMAN.EXE, 1
+"Windows Setup",        SETUP.EXE
+
+[Accessories]
+"Write",		WRITE.EXE
+"Paintbrush",		PBRUSH.EXE
+"Terminal",		TERMINAL.EXE
+"Notepad", 		NOTEPAD.EXE
+"Recorder",		RECORDER.EXE
+"Cardfile",		CARDFILE.EXE
+"Calendar",		CALENDAR.EXE
+"Calculator",		CALC.EXE
+"Clock",		CLOCK.EXE
+"PIF Editor",		PIFEDIT.EXE
+
+[Games]
+"Solitaire",            SOL.EXE
+"Reversi",              REVERSI.EXE
+
+[pif]
+; description, exe, pifname, optional parameters, min mem, graphics, com, faste_paste, background bit set
+
+"Lotus 1-2-3",               123.COM,    123.PIF,    "", 256, g, n, p, n,3
+"Lotus 1-2-3",               123.EXE,    5:123.PIF
+"AutoCad",		     acad.exe,   acad.pif,   "", 512, g, n, n, n,6
+"PFS Access",                ACCESS.COM, ACCESS.PIF, "", 128, n, c, n, b,5
+"Lotus Agenda",		     agenda.exe, agenda.pif, "", 128, n, n, p, n,6
+"Brief",                     b.exe,      b.pif,      "", 128, n, n, y, n,2
+"Microsoft Basic",           BASIC.COM,  BASIC.PIF,  "",  64, g, c, n, n,6
+"Microsoft Advanced Basic ", BASICA.EXE, BASICA.PIF, "",  80, g, c, n, n,6
+"Microsoft Bookshelf",       BOOKS.EXE,  BOOKS.PIF, "",    128, g, n, n, n,6
+"Generic Cadd",              CADD.EXE,   CADD.PIF,   "", 384, g, n, n, n,6
+"Microsoft Chart",           CHART.COM,  CHART.PIF,  "", 256, g, n, n, n,6
+"Microsoft C Compiler",      cl.exe,     cl.pif,   "?",  128,n, n, n, n,6
+"MicroRim rBase Clout",      CLOUT.EXE,  CLOUT.PIF,  "", 128, n, n, n, n,4
+"Ashton Tate dBase",         DBASE.EXE,  DBASE.PIF,  "", 384, n, n, p, n,4
+"DataEase",		     dease.exe,  dease.pif,  "", 128, n, n, p, b,6
+"DisplayWrite 3",            DW3PG.COM,  DW3PG.PIF, ",user,d", 228, n, n, p, n,2
+"DisplayWrite 4",            Dw4.bat,    dw4.pif,    "",   128, n, n, p, n,2
+"DisplayWrite Assistant",    dwa.bat,    dwa.pif,    "",   128, n, n, p, n,6
+"IBM Professional Editor",   edit.exe,   edit.pif,   "",   128, n, n, n, n,2
+"XY Write",                  EDITOR.EXE, EDITOR.PIF, "",    96, n, n, n, n,2
+"IBM Filing Assistant",      FILE.EXE,   FILE.PIF,   "",   128, n, n, n, n,4
+"PFS: First Choice",         first.exe,  first.pif,  "",   128, n, n, n, n,6
+"Freelance",                 FL.COM,     FreeLanc.PIF, "-s", 384, g, n, n, n,6
+"Fortran Compiler",          fl.exe,     fl.pif,     "?",   128, n, n, n, n,6
+"FormTool",                  formtool.exe, formtool.pif, "", 128, n, n, n, n,2
+"Foxbase Plus",              foxplus.exe, foxplus.pif, "", 384, n, n, p, n,4
+"PFS: First Publisher",      fp.exe,      fp.pif,    "",   128, n, n, n, n,2
+"Framework",                 FW.EXE,      FW.PIF,    "",   384, n, c, p, b,6
+"IBM Graphing Assistant",    GRAPH.EXE,   GRAPH.PIF, "",   128, n, n, n, n,6
+"GraphWriter",               gw.com,      gw.pif,    "",   400, n, n, p, n,6
+"Harvard Graphics",          hg.exe,      hg.pif,    "",   384, g, n, n, n,6
+"Harvard Project Manager",   HTPM.EXE,    HTPM.PIF,  "",   384, n, n, n, n,6
+"LINK Utility",              link.exe,    link.pif,  "?", 128, n, n, n, n,6
+"Lotus Access System",       LOTUS.COM,   LOTUS.PIF, "",   256, g, n, p, n,3
+"Mail",                      MAIL.EXE,     MAIL.PIF, "", 128, n, n, p, n,5
+"Make utility",              make.exe,    make.pif,  "?", 128, n, n, p, n,6
+"Microsoft Macro Assembler", masm.exe,    masm.pif,  "?", 182, n, n, n, n,6
+"MultiMate",		     mm.exe,      mm.pif,    "",   128, n, n, p, n,2
+"Microsoft Multiplan",       MP.exe,      MP.PIF,    "",   208, n, n, n, n,3
+"Microsoft Multiplan",       MP.COM,      MP.PIF,    "",   208, n, n, n, n,3
+"Norton Advanced Utilities", NI.EXE,       ni.pif,   "",   128, n, n, n, n,6
+"Word Perfect Office",       shell.exe,    shell.pif, "",  200, n, n, n, b,6
+"Microsoft Online",          online.com,   online.pif, "", 128, n, c, p, b,5
+"Paradox",		     paradox2.exe, paradox2.pif, "", 128, n, n, p, n,4
+"Paradox",		     paradox3.exe, paradox3.pif, "", 128, n, n, p, n,4
+"IBM Personal Editor",	     pe.exe,     pe.pif,    "?",    128, n, n, n, n,2
+"PFS File",                  pf.exe,     pf.pif,    "",    128, n, n, p, n,2
+"Microsoft Pascal Compiler", pl.exe,     pl.pif,    "?",  128, n, n, n, n,6
+"PFS Plan",                  PLAN.EXE,   PLAN.PIF,   "",   128, n, n, p, n,6
+"PFS: Professional Network", pn.exe,     pn.pif,    "",    128, n, n, n, n,6
+"Procomm",		     procomm.exe, procomm.pif, "", 128, n, n, p, b,5
+"Procomm Plus",		     pcplus.exe, pcplus.pif, "",   256, n, c, p, b,5
+"Microsoft Project",         PROJ.COM,   PROJ.PIF,  "",    256, n, n, n, n,6
+"PFS: Professional Write",   PW.COM,     pw.pif,    "",    128, n, n, p, n,2
+"Quattro",		     q.exe,      q.pif,     "",    128, n, n, n, n,3
+"Q & A Report Writer",       qa.com,     qa.pif,    "",    384, n, n, n, n,4
+"Microsoft QuickBASIC",      QB.EXE,     QB.PIF,    "",    450, g, n, p, n,6
+"Microsoft Quick C",         qc.exe,     qc.pif,    "",    128, n, n, p, n,6
+"QModem",		     qmodem.exe, qmodem.pif, "",   384, n, c, p, b,5
+"Microsoft Quick Pascal",    qp.exe,     qp.pif,    "",  128, n, n, n, n,6
+"MicroRim rBase",            RBASE.EXE,  RBASE.PIF, "",    512, n, n, n, n,4
+"MicroRim rBase 5000",       RB5000.EXE, RB5000.PIF, "",   400, n, n, n, n,4
+"Relay",                     relay.com,  relay.pif, "",    128, n, c, n, b,5
+"Ready!",                    READY.EXE,  READY.PIF, "",    152, n, n, p , n,6
+"IBM Reporting Assistant",   REPORT.EXE, REPORT.PIF, "",   173, n, n, n, n,6
+"RightWriter",               right.exe,  right.pif,  "",   128, n, n, p, n,2
+"SuperCalc 4",               SC4.COM,    SC4.PIF, "",      128, n, n, p, b,6
+"SuperCalc 5",               sc5.com,    sc5.pif,    "",   300, n, n, p, b,6
+"Smartcom II",               SCOM.EXE,   SCOM.PIF, "",     128, n, c, n, b,5
+"Soft Kicker",               sk.bat,     softkick.pif, "", 512, g, n, n, n, 2
+"Sidekick",                  SK.COM,     SK.PIF,   "",     128, g, n, n, n,2
+"Autosketch",                sketch.exe, sketch.pif, "",   128, n, n, p, n,6
+"Sidekick Plus",             skplus.com, skplus.pif, "",   384, g, n, n, n,2
+"Microsoft Spell",           SPELL.COM,  SPELL.PIF,  "",    64, n, n, n, n,6
+"Lotus Symphony",            symphony.exe, symphony.pif, "", 320, g, c, n, b,3
+"Turbo Pascal",              TURBO.EXE,  TURBO.PIF,  "",   320, g, n, p, n,6
+"Ventura Publisher",         vp.bat,     vp.pif,     "",   512, g, n, n, n,2
+"Volkswriter 3",             vw3.exe,    vw3.pif,    "",   220, n, n, p, n,2
+"Microsoft Word",	     WORD.COM,   word.pif, "",     256, g, n, p, n,2
+"Microsoft Word",	     WORD.EXE,   word5.pif, "",    384, g, n, p, n,2
+"Microsoft Works",           WORKS.EXE,  WORKS.PIF, "",    384, g, c, p, n,6
+"WordPerfect",               WP.EXE,     WP.PIF,     "",   358, n, n, p, n,2
+"IBM Writing Assistant",     WRITE.COM,  WRITE.PIF, "",    196, n, n, n, n,2
+"WordStar 2000",             WS2.EXE,    WS2.PIF, "",   200, n, n, p, n,2
+"WordStar Professional",     ws.exe,     ws.pif,   "",    384, g, n, p, n,2
+"CrossTalk",                 XTALK.EXE,  XTALK.PIF, "",    256, n, c, p, b,5
+
+; If any of these drivers are found in the config.sys file, Setup removes them.
+[compatibility]
+        vdisk.sys
+        cache.sys
+        icache.sys
+	hpemm386.sys
+	hpemm486.sys
+        ramtype.sys
+        pcsx2ems.sys
+        xma2ems.sys
+
+; Lim 4.0 drivers that we know about and will replace if found.
+[lim]
+        cemm.sys
+        iemm.sys
+        ilim386.sys
+        386max.sys
+        qemm.sys
+	emm386.sys
+        pcsxmaem.sys
+        xmaem.sys
+
+; Disk Caching driver that we know about and will replace if found.
+[diskcache]
+        smartdrv.sys
+        cache.sys
+ 	ibmcache.sys
+        icache.sys
+
+; Virtual or Ram disk emulation drivers that we know about and will replace
+; if found.
+[ramdrive]
+        ramdrive.sys
+        vdisk.sys
+
+[wininiupdate]
+    extensions,pcx,"pbrush.exe ^.pcx"
+    extensions,bmp,"pbrush.exe ^.bmp"
+    extensions,rec,"recorder.exe ^.rec"
+    ports,FILE:,""
+    ports,LPT1.OS2:,""
+    ports,LPT2.OS2:,""
+    ports,COM3:,"9600,n,8,1"
+    ports,COM4:,"9600,n,8,1"
+    windows,device,""
+    windows,documents,"txt"
+
+
+[dontfind]
+calc.exe
+calendar.exe
+cardfile.exe
+clipbrd.exe
+clock.exe
+control.exe
+msdos.exe
+notepad.exe
+pbrush.exe
+pifedit.exe
+printman.exe
+progman.exe
+recorder.exe
+reversi.exe
+setup.exe
+sol.exe
+spooler.exe
+swapfile.exe
+sysedit.exe
+taskman.exe
+terminal.exe
+winfile.exe
+winhelp.exe
+winver.exe
+write.exe
+
+[blowaway]
+this line needed
+
+[country]
+"Australia",  "61!1!0!2!1!1!0!2!0!0!!!$!,!.!/!:!,!d/M/yy!d MMMM yyyy!ENG"
+"Austria",  "43!2!2!2!1!1!0!2!1!1!!!S!.!,!-!:!;!yyyy-MM-dd!dddd, dd. MMMM yyyy!GER"
+"Belgium (Dutch)",  "32!1!3!2!1!1!0!2!5!0!!!BF!.!,!/!:!;!d/M/yy!dddd d MMMM yyyy!DUT"
+"Belgium (French)",  "32!1!3!2!1!1!0!2!5!0!!!FB!.!,!/!:!;!d/M/yy!dddd d MMMM yyyy!FRN"
+"Brazil",  "55!1!2!2!1!1!0!2!0!0!!!Cr$!.!,!/!:!;!dd/MM/yy!dddd, d' de 'MMMM' de 'yyyy!POR"
+"Canada (English)",  "2!2!0!2!1!1!0!2!1!1!!hrs.!$!,!.!-!:!.!yy-MM-dd!MMMM. d, yyyy!ENG"
+"Canada (French)",  "2!2!3!2!1!1!0!2!1!1!!hrs.!$! !,!-!:!;!yy-MM-dd!d MMMM, yyyy!FRN"
+"Denmark",  "45!1!3!2!1!1!0!2!5!1!!!kr!.!,!-!.!;!dd-MM-yy!dd. MMMM yyyy!DAN"
+"Finland",  "358!1!3!2!1!1!0!2!5!0!!!mk! !,!.!.!;!d.M.yyyy!dd. MMMM yyyy!FIN"
+"France",  "33!1!3!2!1!1!0!2!5!1!!!F! !,!.!:!;!dd.MM.yy!dddd d MMMM yyyy!FRN"
+"Germany",  "49!1!0!2!1!1!0!2!1!1!!!DM!.!,!.!:!;!dd.MM.yyyy!dddd, d. MMMM yyyy!GER"
+"Iceland",  "354!1!3!2!1!1!0!2!5!0!!!kr!.!,!/!:!;!dd/MM/yyyy!dd MMMM yyyy!ICE"
+"Italy",   "39!1!2!2!1!1!0!0!2!0!!!L.!.!,!/!:!;!dd/MM/yy!dddd, dd MMMM yyyy!ITN"
+"Mexico",  "52!1!0!2!0!1!0!2!0!0!AM!PM!$!,!.!/!:!,!d/M/yy!dddd d' de 'MMMM' de 'yyyy!SPA"
+"Netherlands",  "31!1!2!2!1!1!0!2!2!0!!!f!.!,!/!:!;!d/M/yy!dddd d MMMM yyyy!DUT"
+"New Zealand",  "64!1!0!2!1!1!0!2!1!1!!!$!,!.!/!:!,!d/M/yy!dddd, d MMMM yyyy!ENG"
+"Norway",  "47!1!0!2!1!1!0!2!3!1!!!kr!.!,!.!:!;!d.MM.yy!dd. MMMM yyyy!NOR"
+"Portugal",  "351!1!0!2!1!1!0!2!2!0!!!!.!,!-!:!;!dd-MM-yyyy!dddd, d' de 'MMMM' de 'yyyy!POR"
+"South Korea",  "82!2!0!2!0!1!0!2!1!0!AM!PM!W!,!.!.!:!,!yy.M.d!yyyy.MM.dd!ENG"
+"Spain",  "34!1!2!2!1!1!0!0!5!0!!!Pts!.!,!/!:!;!d/M/yy!dddd d' de 'MMMM' de 'yyyy!SPA"
+"Sweden",  "46!2!3!2!1!1!0!2!5!1!!!kr!.!,!-!.!;!yy-MM-dd!dd MMMM yyyy!SWE"
+"Switzerland (French)",  "41!1!0!2!1!1!0!2!1!1!!!Fr.!'!.!.!,!;!d.M.yy!dddd, dd. MMMM yyyy!FRN"
+"Switzerland (German)",  "41!1!0!2!1!1!0!2!1!1!!!Fr.!'!.!.!,!;!d.M.yy!dddd, dd. MMMM yyyy!GER"
+"Switzerland (Italian)",  "41!1!0!2!1!1!0!2!1!1!!!Fr.!'!.!.!,!;!d.M.yy!dddd, dd. MMMM yyyy!ITN"
+"Taiwan",  "886!0!0!2!0!1!0!2!1!0!AM!PM!NT$!,!.!/!:!,!M/d/yy!dd' of 'MMMM, yyyy!ENG"
+"United Kingdom",  "44!1!0!2!1!1!0!2!1!1!!!Ј!,!.!/!:!,!dd/MM/yy!dd MMMM yyyy!ENG"
+"United States",  "1!0!0!2!0!1!1!2!0!0!AM!PM!$!,!.!/!:!,!M/d/yy!dddd, MMMM dd, yyyy!USA"
+"Other Country",  "1!0!0!2!0!1!1!2!0!0!AM!PM!$!,!.!/!:!,!M/d/yy!dddd, MMMM dd, yyyy!USA"
+
+[system]
+; The various SYSTEM.DRV, SOUND.DRV, COMM.DRV
+;
+; These	are the	drivers	which may vary from system to system,
+; but are selected only	by the [machine] menu -- they do not have
+; special menus	for their selection.
+system   =    1:system.drv
+sound    =    1:sound.drv
+comm     =    1:comm.drv
+hpsystem =    1:hpsystem.drv
+
+[machine]
+; This section defines default machine selections.  The	system
+; description from each	entry will appear in the initial machine
+; selection menu of Setup.
+;
+; Each entry contains a	descriptive line for the system-selection menu,
+; followed by the filenames of the drivers in fixed order.
+;
+; PLEASE READ THIS. Do not change MachineID's 1 - 5. Also do not enter a
+;                   new machine with an ID = 3 or 4. these are reserved 
+;                   by setup.
+;
+    "All 80386 and 80486 based AST machines","10"
+        system
+        kbd
+        t4s0enha
+        nomouse
+        egahires
+        sound
+        comm
+        nohimemswitch
+        ebios
+        "emmexclude=E000-EFFF"
+
+    "All 80386 based Zenith machines","6"
+        system
+        kbd
+        t4s0enha
+        nomouse
+        egahires
+        sound
+        comm
+        nohimemswitch
+        ebios
+        "emmexclude=E000-EFFF"
+
+    "All Hewlett-Packard machines","2"    ; !! DONT CHANGE THIS NUMBER !!
+        hpsystem
+        kbdhp
+        t4s0enha
+        hpmouse
+        egahires
+        sound
+        comm
+        nohimemswitch
+        hpebios
+   
+  "Everex Step 386/25","7"
+        system
+        kbd
+        t4s0enha
+        nomouse
+        egahires
+        sound
+        comm
+        nohimemswitch
+        ebios
+        "8042ReadCmd=A2,1,F"
+        "8042ReadCmd=A3,1,F"
+        "8042WriteCmd=B3,8,F"
+
+    "MS-DOS or PC-DOS System","1" ; !! DONT CHANGE THIS NUMBER !!
+        system
+        kbd
+        t4s0enha
+        nomouse
+        egahires
+        sound
+        comm
+        nohimemswitch            
+        ebios
+
+    "NCR PC386SX","8"
+        system
+        kbd
+        t4s0enha
+        nomouse
+        egahires
+        sound
+        comm
+        nohimemswitch
+        ebios
+        "emmexclude=E000-EFFF"
+        "emmexclude=C600-C7FF"
+
+    "NCR PC 925","11"
+        system
+        kbd
+        t4s0enha
+        nomouse
+        egahires
+        sound
+        comm
+        nohimemswitch
+        ebios
+
+    "NEC PowerMate SX Plus","9"
+        system       
+        kbd          
+        t4s0enha     
+        nomouse      
+        egahires     
+        sound        
+        comm         
+        nohimemswitch
+        ebios
+        "VirtualHDirq=NO"
+
+    "NEC ProSpeed 386","5"  ; !! DONT CHANGE THIS NUMBER !!
+        system       
+        kbd          
+        t4s0enha     
+        nomouse      
+        egahires     
+        sound        
+        comm         
+        nohimemswitch
+        ebios
+
+    "Toshiba 1600","12"
+        system
+        kbd
+        t4s0enha
+        nomouse
+        egahires
+        sound
+        comm
+        "TOSHIBA"      ; Needed for the Toshiba 1600.
+        ebios
+
+    "Toshiba 5200","13"
+        system       
+        kbd          
+        t4s0enha     
+        nomouse      
+        egahires     
+        sound        
+        comm         
+        nohimemswitch
+        ebios
+        "emmexclude=C000-C7FF"
+
+
+[io.device]
+; (printers, plotters, etc.)
+; The filename is followed by
+;
+; -- the descriptive string which will appear in Control Panel and
+;    which will	appear in WIN.INI
+; -- 1 or 2 strings indicating the scaling for this device
+;
+; There	may be more than one line for a	driver,	corresponding to different
+; printers.
+
+5:TTY.DRV,"Generic / Text Only","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Agfa 9000 Series PS [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Agfa Compugraphic 400PS [PostScript Printer]","DEVICESPECIFIC"
+5:HPPCL.DRV,"Agfa Compugraphic Genics [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Apple LaserWriter [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Apple LaserWriter II NT/NTX [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Apple LaserWriter Plus [PostScript Printer]","DEVICESPECIFIC"
+5:HPPCL.DRV,"Apricot Laser [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"AST TurboLaser/PS - R4081 [PostScript Printer]","DEVICESPECIFIC"
+5:HPPLOT.DRV,"AT&T 435","CONTINUOUSSCALING"
+5:CITOH.DRV,"AT&T 470/475","133,96,72","75,72,96"
+5:IBMGRX.DRV,"AT&T 473/478","167,120,72","60,72,120"
+5:CITOH.DRV,"C-Itoh 8510","133,96,72","75,72,96"
+5:LBP8II.DRV,"Canon LBP-8II","DEVICESPECIFIC"
+5:CANONIII.DRV,"Canon LBP-8III/LBP-4","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Dataproducts LZR-2665 [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Digital LN03R ScriptPrinter [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Digital LPS PrintServer 40 [PostScript Printer]","DEVICESPECIFIC"
+5:EPSON9.DRV,"Epson DFX-5000 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:HPPCL.DRV,"Epson EPL-6000 [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:EPSON9.DRV,"Epson EX-800/1000 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson FX-100 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson FX-100+ [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson FX-185/286 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson FX-80 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson FX-80+ [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson FX-85 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson FX-86e/286e [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson FX-850/1050 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:HPPCL.DRV,"Epson GQ-3500 [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:EPSON9.DRV,"Epson JX-80 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON24.DRV,"Epson L-750/1000 [Epson 24 pin]","100,180,180","67,120,180","150,180,120","200,360,180","50,180,360","100,120,120"
+5:EPSON24.DRV,"Epson LQ-500/510 [Epson 24 pin]","100,180,180","67,120,180","150,180,120","200,360,180","50,180,360","100,120,120"
+5:EPSON24.DRV,"Epson LQ-800/1000 [Epson 24 pin]","100,180,180","67,120,180","150,180,120","200,360,180","50,180,360","100,120,120"
+5:EPSON24.DRV,"Epson LQ-850/950/1050 [Epson 24 pin]","100,180,180","67,120,180","150,180,120","200,360,180","50,180,360","100,120,120"
+5:EPSON24.DRV,"Epson LQ-1500 [Epson 24 pin]","100,180,180","67,120,180","150,180,120","200,360,180","50,180,360","100,120,120"
+5:EPSON24.DRV,"Epson LQ-2500/2550 [Epson 24 pin]","100,180,180","67,120,180","150,180,120","200,360,180","50,180,360","100,120,120"
+5:EPSON9.DRV,"Epson LX-80 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson LX-86 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson LX-800/810 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson MX-100 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson MX-80/80F/T [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson RX-100 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson RX-80/80F/T [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON24.DRV,"Epson SQ-2500 [Epson 24 pin]","100,180,180","67,120,180","150,180,120","200,360,180","50,180,360","100,120,120"
+5:EPSON9.DRV,"Epson T-750 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:EPSON9.DRV,"Epson T-1000 [Epson 9 pin]","167,120,72","60,72,120","83,120,144","120,144,120","167,240,144","60,144,240"
+5:FUJIMTRX.DRV,"Fujitsu DL 2400 [Fujitsu Dot Matrix]","167,120,72","60,72,120"
+5:FUJIMTRX.DRV,"Fujitsu DL 2600 [Fujitsu Dot Matrix]","167,120,72","60,72,120"
+5:FUJIMTRX.DRV,"Fujitsu DL 3300 [Fujitsu Dot Matrix]","167,120,72","60,72,120"
+5:FUJIMTRX.DRV,"Fujitsu DL 3400 [Fujitsu Dot Matrix]","167,120,72","60,72,120"
+5:FUJIMTRX.DRV,"Fujitsu DL 5600 [Fujitsu Dot Matrix]","167,120,72","60,72,120"
+5:FUJIMTRX.DRV,"Fujitsu DX 2200 [Fujitsu Dot Matrix]","167,120,72","60,72,120"
+5:FUJIMTRX.DRV,"Fujitsu DX 2300 [Fujitsu Dot Matrix]","167,120,72","60,72,120"
+5:FUJIMTRX.DRV,"Fujitsu DX 2400 [Fujitsu Dot Matrix]","167,120,72","60,72,120"
+5:FUJIMTRX.DRV,"Fujitsu DX 3100 [Fujitsu Dot Matrix]","167,120,72","60,72,120"
+5:TH760.DRV,"Hermes 820","100,120,120","100,60,60","100,240,240"
+5:HPPLOT.DRV,"HP 7470A [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP 7475A [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP 7550A [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP 7580A [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP 7580B [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP 7585A [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP 7585B [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP 7586B [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP ColorPro [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP ColorPro with GEC [HP Plotter]","CONTINUOUSSCALING"
+5:DESKJET.DRV,"HP DeskJet Family","100,300,300","100,300,300"
+5:HPPLOT.DRV,"HP DraftPro [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP DraftPro DXL [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP DraftPro EXL [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP DraftMaster I [HP Plotter]","CONTINUOUSSCALING"
+5:HPPLOT.DRV,"HP DraftMaster II [HP Plotter]","CONTINUOUSSCALING"
+5:HPPCL.DRV,"HP LaserJet [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:HPPCL.DRV,"HP LaserJet IID [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:HPPCL.DRV,"HP LaserJet IIP [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:hppcl5a.drv,"HP LaserJet III","DEVICESPECIFIC"
+5:HPPCL.DRV,"HP LaserJet Plus [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:HPPCL.DRV,"HP LaserJet 500+ [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:HPPCL.DRV,"HP LaserJet Series II [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:HPPCL.DRV,"HP LaserJet 2000 [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:PAINTJET.DRV,"HP PaintJet Series","100,180,180","100,120,120"
+5:THINKJET.DRV,"HP ThinkJet (2225 C-D)","100,96,96"
+5:IBMCOLOR.DRV,"IBM Color Printer","167,140,84","60,84,140","167,120,72"
+5:IBMGRX.DRV,"IBM Graphics","167,120,72","60,72,120"
+5:ibm4019.drv,"IBM Laser Printer 4019","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"IBM Personal Pageprinter [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"IBM Personal Page Printer II-030 [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"IBM Personal Page Printer II-031 [PostScript Printer]","DEVICESPECIFIC"
+5:proprint.DRV,"IBM Proprinter [IBM Proprinters]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:proprint.DRV,"IBM Proprinter II [IBM Proprinters]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:proprint.DRV,"IBM Proprinter III [IBM Proprinters]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:proprn24.DRV,"IBM Proprinter X24 [IBM Proprinter 24]","100,180,180","67,120,180","150,180,120","200,360,180","50,180,360"
+5:proprn24.DRV,"IBM Proprinter X24e [IBM Proprinter 24]","100,180,180","67,120,180","150,180,120","200,360,180","50,180,360"
+5:proprint.DRV,"IBM Proprinter XL [IBM Proprinters]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:proprint.DRV,"IBM Proprinter XL II [IBM Proprinters]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:proprn24.DRV,"IBM Proprinter XL24 [IBM Proprinter 24]","100,180,180","67,120,180","150,180,120","200,360,180","50,180,360"
+5:proprn24.DRV,"IBM Proprinter XL24e [IBM Proprinter 24]","100,180,180","67,120,180","150,180,120","200,360,180","50,180,360"
+5:QWIII.DRV,"IBM QuietWriter III","100,120,120","100,60,60","100,240,240"
+5:HPPCL.DRV,"Kyocera F-Series [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Linotronic 100/300/500 [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"NEC Colormate PS [PostScript Printer]","DEVICESPECIFIC"
+5:NEC24pin.DRV,"NEC PinWriter CP6 [NEC Pinwriter]","100,360,360","100,120,120"
+5:NEC24pin.DRV,"NEC PinWriter CP7 [NEC Pinwriter]","100,360,360","100,120,120"
+5:NEC24pin.DRV,"NEC PinWriter P5 [NEC Pinwriter]","100,360,360","100,120,120"
+5:NEC24pin.DRV,"NEC PinWriter P5XL [NEC Pinwriter]","100,360,360","100,120,120"
+5:NEC24pin.DRV,"NEC PinWriter P6 [NEC Pinwriter]","100,360,360","100,120,120"
+5:NEC24pin.DRV,"NEC PinWriter P7 [NEC Pinwriter]","100,360,360","100,120,120"
+5:NEC24pin.DRV,"NEC PinWriter P9XL [NEC Pinwriter]","100,360,360","100,120,120"
+5:NEC24pin.DRV,"NEC PinWriter P2200 [NEC Pinwriter]","100,360,360","100,120,120"
+5:NEC24pin.DRV,"NEC PinWriter P5200 [NEC Pinwriter]","100,360,360","100,120,120"
+5:NEC24pin.DRV,"NEC PinWriter P5300 [NEC Pinwriter]","100,360,360","100,120,120"
+5:HPPCL.DRV,"NEC Silentwriter LC 860 [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:HPPCL.DRV,"NEC Silentwriter LC 860 Plus [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"NEC Silentwriter LC 890 [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"NEC Silentwriter LC 890XL [PostScript Printer]","DEVICESPECIFIC"
+5:IBMGRX.DRV,"Okidata 92/93-IBM","167,120,72","60,72,120"
+5:OKI9.DRV, "Okidata ML 192 [Okidata 9 Pin]","167,120,72","60,72,120"
+5:OKI9.DRV, "Okidata ML 193 [Okidata 9 Pin]","167,120,72","60,72,120"
+5:OKI9.DRV, "Okidata ML 320 [Okidata 9 Pin]","167,120,72","60,72,120"
+5:OKI9.DRV, "Okidata ML 321 [Okidata 9 Pin]","167,120,72","60,72,120"
+5:OKI9IBM.DRV, "Okidata ML 192-IBM [Okidata 9 Pin IBM]","167,120,72","60,72,120"
+5:OKI9IBM.DRV, "Okidata ML 193-IBM [Okidata 9 Pin IBM]","167,120,72","60,72,120"
+5:OKI9IBM.DRV, "Okidata ML 320-IBM [Okidata 9 Pin IBM]","167,120,72","60,72,120"
+5:OKI9IBM.DRV, "Okidata ML 321-IBM [Okidata 9 Pin IBM]","167,120,72","60,72,120"
+5:OKI24.DRV,"Okidata 390/391 [Okidata 24 pin]","100,180,180","67,120,180","100,120,120"
+5:OKI24.DRV,"Okidata 393 [Okidata 24 pin]","100,180,180","67,120,180","100,120,120"
+5:OKI24.DRV,"Okidata 393C [Okidata 24 pin]","100,180,180","67,120,180","100,120,120"
+5:HPPCL.DRV,"Okidata LaserLine 6 [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:OLIPRINT.DRV,"Olivetti DM 100/1 [Olivetti DM 100...590]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:OLIPRINT.DRV,"Olivetti DM 100/2 [Olivetti DM 100...590]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:OLIPRINT.DRV,"Olivetti DM 100/4 [Olivetti DM 100...590]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:OLIPRINT.DRV,"Olivetti DM 105 [Olivetti DM 100...590]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:OLIPRIN2.DRV,"Olivetti DM 250 [Olivetti DM 250/400]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:OLIPRINT.DRV,"Olivetti DM 280/282 [Olivetti DM 100...590]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:OLIPRINT.DRV,"Olivetti DM 286/296 [Olivetti DM 100...590]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:OLIPRINT.DRV,"Olivetti DM 290/292 [Olivetti DM 100...590]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:OLIPRIN2.DRV,"Olivetti DM 400 [Olivetti DM 250/400]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:OLIPRINT.DRV,"Olivetti DM 580 [Olivetti DM 100...590]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:OLIPRINT.DRV,"Olivetti DM 590 [Olivetti DM 100...590]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:DM600.DRV,"Olivetti DM 600","100,180,180","67,120,180","150,180,120","100,120,120"
+5:HPPCL.DRV,"Olivetti ETV 5000 [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:HPPCL.DRV,"Olivetti PG 108 [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:HPPCL.DRV,"Olivetti PG 208 M2 [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Olivetti PG 303 [PostScript Printer]","DEVICESPECIFIC"
+5:HPPCL.DRV,"Olivetti PG 308 HS [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Olivetti PG 308 HS [PostScript Printer]","DEVICESPECIFIC"
+5:OLIPRINT.DRV,"Olivetti PR 15B/17B [Olivetti PR 15/17/19]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:OLIPRINT.DRV,"Olivetti PR 19B [Olivetti PR 15/17/19]","167,120,72","60,72,120","83,120,144","120,144,120"
+5:OLIPRIN2.DRV,"Olivetti PR 24","167,120,72","60,72,120","83,120,144","120,144,120"
+5:TH760.DRV,"Olivetti TH 760","100,120,120","100,60,60","100,240,240"
+5:PSCRIPT.DRV,"QMS ColorScript 100 [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"QMS-PS 800 [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"QMS-PS 800 Plus [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"QMS-PS 810 [PostScript Printer]","DEVICESPECIFIC"
+5:HPPCL.DRV,"QuadLaser I [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:HPPCL.DRV,"Tandy LP-1000 [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:HPPCL.DRV,"Tegra Genesis [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:TI850.DRV,"TI 850/855","167,120,72","60,72,120"
+5:PSCRIPT.DRV,"TI OmniLaser 2108 [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"TI OmniLaser 2115 [PostScript Printer]","DEVICESPECIFIC"
+5:TOSHIBA.DRV,"Toshiba P351","100,180,180"
+5:TOSHIBA.DRV,"Toshiba P1351","100,180,180"
+5:HPPCL.DRV,"Toshiba PageLaser12 [PCL / HP LaserJet]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Varityper VT-600 [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Wang LCS15 [PostScript Printer]","DEVICESPECIFIC"
+5:PSCRIPT.DRV,"Wang LCS15 FontPlus [PostScript Printer]","DEVICESPECIFIC"
+5:HPPCL.DRV,"Wang LDP8 [PCL / HP LaserJet]","DEVICESPECIFIC"
+
+[io.dependent]
+  hppcl.drv=   5:finstall.dll, 5:finstall.hlp, 5:hppcl.hlp
+  deskjet.drv= 5:finstall.dll, 5:finstall.hlp, 5:deskjet.hlp
+  hppcl5a.drv= 5:finstall.dll, 5:finstall.hlp, 5:hppcl.hlp
+  pscript.drv= 5:pscript.hlp
+  ibm4019.drv= 5:sf4019.exe
+  tty.drv=  5:tty.hlp
+  paintjet.drv= 5:paintjet.hlp, 5:cr12rpa.pjf, 5:lg12rpa.pjf, 5:lg08rpa.pjf
+
+[special_adapter]
+eitherlink  = DMAbuffersize,32  ; Needed if EitherLink MC is detected.
+
+[ebios]
+ebios       = x:*ebios               ; Required for most 386 machines.
+hpebios     = 4:hpebios.386,x:*ebios ; Required for HP 386 machines.
+
+[language]
+; Language drivers, must be installed for non US installation.
+dan = 2:langsca.dll , "Danish"
+dut = 2:langdut.dll , "Dutch"
+usa =               , "English (American)"
+eng = 2:langeng.dll , "English (International)"
+fin = 2:langsca.dll , "Finnish"
+frn = 2:langfrn.dll , "French"
+fcf = 2:langeng.dll , "French Canadian"
+ger = 2:langger.dll , "German"
+ice = 2:langsca.dll , "Icelandic"
+itn = 2:langeng.dll , "Italian"
+nor = 2:langsca.dll , "Norwegian"
+por = 2:langeng.dll , "Portuguese"
+spa = 2:langspa.dll , "Spanish"
+swe = 2:langsca.dll , "Swedish"
+
+
+
+
+
+
+

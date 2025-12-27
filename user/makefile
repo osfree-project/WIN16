@@ -5,10 +5,10 @@
 #
 
 PROJ     = user
-PROJ1    = user
 TRGT     = $(PROJ).exe
 DESC     = Windows USER.EXE
-srcfiles = $(p)libentry$(e) $(p)smallcode$(e) $(p)GlobalData1$(e) $(p)hook$(e) $(p)dialog$(e) $(p)Time$(e) $(p)Atoms$(e) $(p)InitApp$(e) $(p)comm$(e) $(p)Caret$(e) $(p)DrawText$(e) $(p)network$(e) $(p)SysMetrics$(e) $(p)Listbox$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Resources$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)libmain$(e) #$(p)StringFunc$(e)
+#srcfiles = $(p)libentry$(e) $(p)smallcode$(e) $(p)GlobalData1$(e) $(p)hook$(e) $(p)dialog$(e) $(p)Time$(e) $(p)Atoms$(e) $(p)InitApp$(e) $(p)comm$(e) $(p)Caret$(e) $(p)DrawText$(e) $(p)network$(e) $(p)SysMetrics$(e) $(p)Listbox$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Resources$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)libmain$(e) #$(p)StringFunc$(e)
+srcfiles = $(p)smallcode$(e) $(p)libentry$(e) $(p)libmain$(e) $(p)GlobalData1$(e) $(p)hook$(e) $(p)dialog$(e) $(p)Time$(e) $(p)Atoms$(e) $(p)InitApp$(e) $(p)comm$(e) $(p)Caret$(e) $(p)DrawText$(e)  $(p)SysMetrics$(e) $(p)Listbox$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Resources$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)Resources$(e) $(p)printf$(e) # $(p)Desktop$(e)  $(p)StringFunc$(e) $(p)network$(e)
 ADD_COPT = -zW -s -zc -2 -DDEBUG=1 # optimize prolog, no stack checks, put constants in code segment 
 ADD_LINKOPT = SEGMENT CLASS DATA FIXED SHARE
 NOLIBS = 1 # Don't use default libentry
@@ -220,51 +220,52 @@ EXPORTS = &
 	AnsiNext .472, &
 	AnsiPrev .473, &
 	EnableScrollBar .482, &
-	SystemParametersInfo .483, &
-	WNetErrorText .499, &
-	WNetOpenJob .501, &
-	WNetCloseJob .502, &
-	WNetAbortJob .503, &
-	WNetHoldJob .504, &
-	WNetReleaseJob .505, &
-	WNetCancelJob .506, &
-	WNetSetJobCopies .507, &
-	WNetWatchQueue .508, &
-	WNetUnwatchQueue .509, &
-	WNetLockQueueData .510, &
-	WNetUnlockQueueData .511, &
-	WNetGetCaps .513, &
-	WNetDeviceMode .514, &
-	WNetBrowseDialog .515, &
-	WNetAddConnection .517, &
-	WNetCancelConnection .518, &
-	WNetGetError .519, &
-	WNetGetErrorText .520, &
-	WNetRestoreConnection .523, &
-	WNetWriteJob .524, &
-	WNetConnectDialog .525, &
-	WNetDisconnectDialog .526, &
-	WNetConnectionDialog .527, &
-	WNetViewQueueDialog .528, &
-	WNetPropertyDialog .529, &
-	WNetDirectoryNotify .531, &
-	WNetGetPropertyText .532
+	SystemParametersInfo .483#, &
+#	WNetErrorText .499, &
+#	WNetOpenJob .501, &
+#	WNetCloseJob .502, &
+#	WNetAbortJob .503, &
+#	WNetHoldJob .504, &
+#	WNetReleaseJob .505, &
+#	WNetCancelJob .506, &
+#	WNetSetJobCopies .507, &
+#	WNetWatchQueue .508, &
+#	WNetUnwatchQueue .509, &
+#	WNetLockQueueData .510, &
+#	WNetUnlockQueueData .511, &
+#	WNetGetCaps .513, &
+#	WNetDeviceMode .514, &
+#	WNetBrowseDialog .515, &
+#	WNetAddConnection .517, &
+#	WNetCancelConnection .518, &
+#	WNetGetError .519, &
+#	WNetGetErrorText .520, &
+#	WNetRestoreConnection .523, &
+#	WNetWriteJob .524, &
+#	WNetConnectDialog .525, &
+#	WNetDisconnectDialog .526, &
+#	WNetConnectionDialog .527, &
+#	WNetViewQueueDialog .528, &
+#	WNetPropertyDialog .529, &
+#	WNetDirectoryNotify .531, &
+#	WNetGetPropertyText .532
 
 
 IMPORTS = GETEXEVERSION KERNEL.105, &
-	GETEXEPTR KERNEL.133, &
-	LOCALCOUNTFREE KERNEL.161, &
-	LOCALHEAPSIZE KERNEL.162, &
-	FARSETOWNER KERNEL.403, &
-	FarGetOwner KERNEL.404, &
-	GetSystemMSecCount SYSTEM.6, &
-	Resurrection GDI.122, &
-	InquireMouse MOUSE.1, &
-	InquireKeyboard KEYBOARD.1, &
-	InquireDisplay DISPLAY.101, &
-	SetTaskQueue KERNEL.34, &
-	MakeObjectPrivate GDI.463, &
-	SetSpeed KEYBOARD.7
+  GETEXEPTR KERNEL.133, &
+  LOCALCOUNTFREE KERNEL.161, &
+  LOCALHEAPSIZE KERNEL.162, &
+  FARSETOWNER KERNEL.403, &
+  FarGetOwner KERNEL.404, &
+  GetSystemMSecCount SYSTEM.6, &
+  Resurrection GDI.122, &
+  InquireMouse MOUSE.1, &
+  InquireKeyboard KEYBOARD.1, &
+  InquireDisplay DISPLAY.101, &
+  SetTaskQueue KERNEL.34, &
+  MakeObjectPrivate GDI.463, &
+  SetSpeed KEYBOARD.7, &
+  EnableSystemTimers SYSTEM.4
 
 # GETPRIVATEPROFILEINT KERNEL.127, &
 #          __AHSHIFT KERNEL.113
@@ -275,8 +276,11 @@ DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 
 TARGETS = $(PATH)$(PROJ).exe
 
+.ico: $(MYDIR)res
+
+#@$(CP) $(PATH)$(PROJ).dll $(PATH)$(PROJ1).exe $(BLACKHOLE)
+
 $(PATH)$(PROJ).exe: $(PATH)$(PROJ).dll $(MYDIR)$(PROJ).rc
- @$(CP) $(PATH)$(PROJ).dll $(PATH)$(PROJ).exe $(BLACKHOLE)
  @$(SAY) RESCMP   $^. $(LOG)
  @$(RC) -q -bt=windows -30 $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win
 

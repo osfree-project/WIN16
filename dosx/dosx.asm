@@ -4,7 +4,7 @@
 ;*** 3. then start windows krnl386.exe
 
 		.286
-		.MODEL SMALL, stdcall
+		.MODEL tiny, stdcall
 		.dosseg
 
 		; MacroLib
@@ -55,7 +55,7 @@ prg3     db "SYSTEM\KRNL386.EXE",0
 szErr1	db "cannot launch SYSTEM\KRNL286.EXE",13,10,'$'
 szErr13	db "cannot launch SYSTEM\KRNL386.EXE",13,10,'$'
 szErr2	db "HDPMI16.EXE not found",13,10,'$'
-szHello	db "DOSX DOS Extender",13,10,'$'
+szHello	db "osFree DOSX DOS Extender",13,10,'$'
 
 		.data?
 
@@ -350,25 +350,27 @@ endif
 main    endp
 
 start:
-		mov ax,dgroup
+		mov ax,cs
 		mov ds,ax
+		push ax
 		@DispStr szHello
+		pop ax
 		mov cx,ss
 		sub cx,ax
 		shl cx,4
 		push ds
 		pop ss
-		add sp,cx
+
+		add sp, cx       ;SS=DS=CS
 		mov bx,ax
 		mov cx,es
 		sub bx,cx
 		mov cx,sp
 		shr cx,4
-;		inc cx
 		add bx,cx
-;		add bx,10h
 		@ModBlok
 		call main
 		@Exit
 
 		END start
+

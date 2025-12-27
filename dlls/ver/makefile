@@ -20,25 +20,6 @@ EXPORTS = &
 	VerLanguageName.10, &
 	VerQueryValue.11
 
-
-# not implemented yet
-#	DragAcceptFiles .9, &
-#	DragQueryFile   .11, &
-#	DragFinish      .12, &
-#	DragQueryPoint  .13, &
-#	ABOUTDLGPROC.33, &
-#	ExtractAssociatedIcon	.36, &
-#	INTERNALEXTRACTICON.39, &
-#	EXTRACTICONEX.40, &
-#	RegisterShellHook.102, &
-#	SHELLHOOKPROC.103, &
-#	RESTARTDIALOG.157, &
-#	DRIVETYPE.262, &
-#	SHFORMATDRIVE .400, &
-#	SHCHECKDRIVE .401
-  
-# WEP.8 Need this?
-
 OPTIONS = heapsize=32K lib lzexpand.lib 
 DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 #ADD_COPT=-pl

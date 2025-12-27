@@ -398,6 +398,19 @@ DWORD WINAPI GetCurrentPDBReal(void)
 	return MAKELONG(pTask->hPDB, TH_TOPPDB);
 }
 
+/***********************************************************************
+ *           GetDOSEnvironment     (KERNEL.131)
+ *
+ * FIXME!!! Here we must get environment of current task...
+ *
+ * Format of a 16-bit environment block:
+ * ASCIIZ   string 1 (xx=yy format)
+ * ...
+ * ASCIIZ   string n
+ * BYTE     0
+ * WORD     1
+ * ASCIIZ   program name (e.g. C:\WINDOWS\SYSTEM\KRNL386.EXE)
+ */
 LPSTR WINAPI GetDOSEnvironment(void)
 {
 	LPSTR lpEnv;
@@ -594,18 +607,18 @@ LoadModule endp
  *          LoadModule      (KERNEL.45)
  *
  * Note: HX-DOS expects in parameter block ASCIIZ cmdline. But not found (yet)
- * any real example of such paramblock. So fLoadMod flag removed.
+ * any real example of such paramblock. So fLoadMod flag removed. (May be in WinExec???)
  */
 HINSTANCE WINAPI LoadModule(LPCSTR lpszModuleName, LPVOID lpParameterBlock)
 {
 	FUNCTIONSTART;
+	SaveDS();
 	_asm {
-		push ds
 		lds dx, lpszModuleName
 		les bx, lpParameterBlock
 		mov ax, 4b00h
-		int 21h
-		pop ds
-	};
+	}
+	Dos3Call();
+	RestoreDS();
 	FUNCTIONEND;
 }

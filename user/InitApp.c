@@ -9,14 +9,20 @@ WORD WINAPI __loadds InitApp(HINSTANCE hInstance)
   char is_setup;
   LPQUEUE queuePtr;
 
-	FUNCTION_START
+  FUNCTION_START
 
-//    APISTR((LF_APICALL,"InitApp(HINSTANCE=%x)\n",hInstance));
-  if (first_program)
+  TRACE("InitApp(HINSTANCE=%x)\n\r",hInstance);
+  if (first_program)  // // Do onLy if the first task
   {
-//    SetTaskQueue(0, hwndDesktop.hQueue);
+	SetTaskQueue(0, hwndDesktop.hQueue);
+
+	// Plug the queue created for the desktop window with the
+	// current task and expected Win version for this task.
+	queuePtr = MK_FP( HWndDesktop, 0 );
+	queuePtr->hTask = GetCurrentTask();
+	queuePtr->ExpWinVersion = GetExeVefsion();
   }
 
-//    APISTR((LF_APIRET,"InitApp: returns WORD %d\n",1));
-    return 1;
+  TRACE("InitApp: returns WORD %d\n\r",1);
+  return 1;
 }

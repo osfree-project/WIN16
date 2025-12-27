@@ -9,7 +9,7 @@ if _TRACEUSED_
 ;--- _modnameout
 ;--- _stroutESI
 
-_USESTROUT_ = 0	;1 1=use string output for trace messages
+_USESTROUT_ = 1	;1 1=use string output for trace messages
 
 _TRACE_ = 1
 

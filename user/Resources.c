@@ -205,6 +205,6 @@ HANDLE WINAPI LoadImage(HINSTANCE hinst, LPCSTR name, UINT type, int cx, int cy,
  */
 HBITMAP WINAPI LoadBitmap(HINSTANCE hInstance, LPCSTR name)
 {
-    return 0;//return LoadImage( hInstance, name, IMAGE_BITMAP, 0, 0, 0 );
+  return 0;//    return LoadImage( hInstance, name, IMAGE_BITMAP, 0, 0, 0 );
 }
 

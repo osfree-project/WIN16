@@ -3,7 +3,9 @@
 STRINGTABLE DISCARDABLE 
 {
 	IDS_WINDOWS,						"Windows"
+	IDS_COLORS,						"Colors"
 	IDS_TYPEAHEAD,						"TypeAhead"
+        IDS_BORDER,                                             "BorderWidth"
 	IDS_DEFAULTQUEUESIZE,				"DefaultQueueSize"
 	IDS_SYSTEMERROR,					"System Error"
 	IDS_DIVIDEBYZERO,					"Divide By Zero or Overflow Error"
@@ -19,3 +21,21 @@ STRINGTABLE DISCARDABLE
 	IDS_AM,								"am"
 	IDS_PM,								"pm"
 }
+
+IDC_ARROW CURSOR FIXED "res/idcarrow.cur"
+IDC_IBEAM CURSOR FIXED "res/idcibeam.cur"
+IDC_WAIT CURSOR FIXED "res/idcwait.cur"
+IDC_CROSS CURSOR FIXED "res/idccross.cur"
+IDC_UPARROW CURSOR FIXED "res/idcuparr.cur"
+IDC_SIZE CURSOR FIXED "res/idcsize.cur"
+IDC_ICON CURSOR FIXED "res/idcicon.cur"
+IDC_SIZENWSE CURSOR FIXED "res/idcsznw.cur"
+IDC_SIZENESW CURSOR FIXED "res/idcszne.cur"
+IDC_SIZEWE CURSOR FIXED "res/idcszwe.cur"
+IDC_SIZENS CURSOR FIXED "res/idcszns.cur"
+IDC_SIZEALL CURSOR FIXED "res/idcsize.cur"
+IDC_NO CURSOR FIXED "res/idcno.cur"
+IDC_APPSTARTING CURSOR FIXED "res/idcappst.cur"
+IDC_HELP CURSOR FIXED "res/idchelp.cur"
+"DRAGCURSOR" CURSOR FIXED "res/idcdrag.cur"
+"NULLCURSOR" CURSOR FIXED "res/idcnull.cur"

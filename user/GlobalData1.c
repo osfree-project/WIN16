@@ -1,6 +1,8 @@
 #include "user.h"
 
 WORD USER_HeapSel = 0;  /* USER heap selector */
+HMODULE HModuleWin = 0;
+int  ClBorder;          /* Frame border width */
 char DebugBuffer[100];  /* Buffer for DEBUG messages */
 
 char szSysError[0x14];

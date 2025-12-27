@@ -1,0 +1,63 @@
+body, td, th
+{
+	font-family: serif;
+	font-size: 1em;
+}
+
+h1, h2, h3, h4, h5, h6
+{
+	font-family: Georgia, serif;
+}
+
+h3
+{
+	font-weight: bold;
+}
+
+pre
+{
+	border: none;
+}
+
+#heading, #navigation, #sidebar, #PostingTOC, #footer_ad
+{
+	display: none;
+}
+
+div#Posting
+{
+	border: none;
+
+	background-color: #FFFFFF;
+	color: #000000;
+}
+
+.PostingBody
+{
+	background-color: #FFFFFF;
+	color: #000000;
+	min-width: none;
+}
+
+.PostingQuote
+{
+	background-color: #FFFFFF;
+	color: #000000;
+	min-width: 40px;
+}
+
+div#content
+{
+	margin-left: 1.5em;
+	margin-right: 1.5em;
+}
+
+div#copyright
+{
+	border: none;
+}
+
+#copyright-navigation
+{
+	display: none;
+}

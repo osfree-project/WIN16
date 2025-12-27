@@ -1,3 +1,4 @@
+#include <unistd.h>
 
 #include <windows.h>
 #include <dpmi.h>
@@ -209,11 +210,16 @@ void WINAPI StartProgman(void)
 
 	FUNCTIONSTART;
 
-	GetPrivateProfileString("boot", "shell", "", buffer, sizeof(buffer), "SYSTEM.INI");
+	GetPrivateProfileString((LPCSTR)"boot", "shell", "", buffer, sizeof(buffer), "SYSTEM.INI");
 	printf("shell=%s\r\n", buffer);
 
 	FUNCTIONEND;
 }
+
+#  define DOSBOXID_VAR
+extern uint16_t DOSBOXID_VAR dosbox_id_baseio;
+extern int probe_dosbox_id();
+extern void dosbox_id_debug_message(const char *str);
 
 void WINAPI KernelMain(void)
 {
@@ -224,6 +230,13 @@ void WINAPI KernelMain(void)
 	InitKernel();
 	// Parse command line
 	GetPgmParms();
+
+	if (!probe_dosbox_id()) {
+		printf("DOSBox integration device not found\n");
+//		return 1;
+	}
+	dosbox_id_debug_message("DOSBox integration device found \n");
+
 	// Execute shell
 	StartProgman();
 	FUNCTIONEND;

@@ -1,0 +1,2790 @@
+/* wait u_global_data object with basic params */
+
+u_global_data.criteo={
+	crtads970:0,
+	crtads_native:0,
+	CallgNS:1
+};
+
+u_global_data.basic_functions={
+	showAdBlockNative : function() {
+		var elm=document.getElementById('nativeroll_video_cont');
+		if (!elm) return;
+		elm.style.visibility='';
+		elm.style.display='';
+	},
+	hideAdBlockNative : function() {
+		var elm=document.getElementById('nativeroll_video_cont');
+		if (!elm) return;
+		elm.style.visibility='hidden';
+		elm.style.display='none';
+	},
+	removeAdBlockNative : function() {
+		var elm=document.getElementById('nativeroll_video_cont');
+		if (elm!=null && typeof(elm)!='undefined'){
+			if (elm.parentNode) elm.parentNode.removeChild(elm);
+			else elm.innerHTML='';
+		}
+	}
+};
+
+u_global_data.preroll_video_57322 = {
+	closetime : 25,
+	closetime_timer : null,
+	active_video : null,
+	height_header : 0,
+	height_player : 0,
+	height_footer : 0,
+	width_preroll : 0,
+	createOverlay : function() {
+		u_global_data.preroll_video_57322.removeOverlay();
+		var d=document.createElement('div');
+		d.style.cssText = 'position:fixed;top:0;left:0;background:rgba(0,0,0,.8);z-index:2147483645;width: 100%;height: 100%;';
+		d.setAttribute('id', 'u_preroll_overlay');
+		document.body.appendChild(d);
+	},
+	removeOverlay : function() {
+		var ov = document.getElementById('u_preroll_overlay');
+		if (ov != null && typeof(ov) != 'undefined' && ov.parentNode) ov.parentNode.removeChild(ov);
+	},
+	createMainContainer : function(uniqid,params) {
+		if(!uniqid) return;
+		u_global_data.preroll_video_57322.removeMainContainer(uniqid);
+		params = params || {};
+		u_global_data.preroll_video_57322.width_preroll = params.preroll_width || '640px';
+		var bdv = document.createElement('div');
+		bdv.setAttribute('id', 'u_preroll_video'+uniqid);
+		bdv.setAttribute('style', 'opacity:0;border:none;display:block;position:fixed;top:50%;width:'+u_global_data.preroll_video_57322.width_preroll+';z-index:2147483646;left:50%;margin-left: -320px; margin-top: -200px; overflow: hidden;');
+		document.body.appendChild(bdv);
+		if(params.header){
+			bdv = document.createElement('div');
+			bdv.setAttribute('id', 'u_preroll_header'+uniqid);
+			bdv.setAttribute('style', 'width:'+u_global_data.preroll_video_57322.width_preroll+';margin: auto;display:none;');
+			bdv.innerHTML='<div id="u_preroll_counter'+uniqid+'" style="background: #282828;color: #fff;height: 30px;text-align: center;font-size: 14px;padding-top: 6px;box-sizing: border-box;border-top-left-radius: 6px;border-top-right-radius: 6px;">'+
+				'<div id="u_preroll_countertext'+uniqid+'" style="float:right;padding-right: 10px;font-size: 12px;"></div>'+
+				'<div id="u_preroll_counterclose'+uniqid+'" style="width:30px;height:100%;float:right;position:relative;cursor: pointer;display:none;">X</div>'+
+				'</div>';
+			document.getElementById('u_preroll_video'+uniqid).appendChild(bdv);
+			u_global_data.preroll_video_57322.closetime=25;
+			if(u_global_data.preroll_video_57322.closetime_timer!=null) clearInterval(u_global_data.preroll_video_57322.closetime_timer);
+			u_global_data.preroll_video_57322.closetime_timer=null;
+
+			if(params.onclosefunc && typeof(params.onclosefunc) === 'function'){
+				document.getElementById("u_preroll_counterclose"+uniqid).onclick = function(){
+					params.onclosefunc();
+					if(u_global_data.preroll_video_57322.active_video=='adbetnet' &&
+						(u_global_data.basic_params.globalprerollshowed>0 || u_global_data.basic_params.ucoz_show>1) &&
+						typeof(ucoz_execclund)=='function'
+					) ucoz_execclund();
+					u_global_data.preroll_video_57322.removeAll(uniqid);
+				};
+			}else{
+				document.getElementById("u_preroll_counterclose"+uniqid).onclick = function(){
+					if(u_global_data.preroll_video_57322.active_video=='adbetnet' &&
+						(u_global_data.basic_params.globalprerollshowed>0 || u_global_data.basic_params.ucoz_show>1) &&
+						typeof(ucoz_execclund)=='function'
+					) ucoz_execclund();
+					u_global_data.preroll_video_57322.removeAll(uniqid);
+				};
+			}
+
+			u_global_data.preroll_video_57322.height_header=30;
+		}
+		bdv = document.createElement('div');
+		bdv.setAttribute('id', 'u_preroll_player'+uniqid);
+		document.getElementById('u_preroll_video'+uniqid).appendChild(bdv);
+		if(params.footer){
+			bdv = document.getElementById('u_preroll_footer'+uniqid);
+			if (bdv != null && typeof(bdv) != 'undefined' && bdv.parentNode) bdv.parentNode.removeChild(bdv);
+			if(params.footer=='webtycoon'){
+				u_global_data.preroll_video_57322.wrappers.webtycoon('u_preroll_video'+uniqid,{width:u_global_data.preroll_video_57322.width_preroll,height:'70px',maindivid:'u_preroll_footer'+uniqid});
+				u_global_data.preroll_video_57322.height_footer=70;
+			}
+			bdv=document.getElementById('u_preroll_footer'+uniqid);
+			if (bdv!=null && typeof(bdv)!='undefined') bdv.style.display='none';
+
+			if (bdv) {
+				bdv.classList.add('no-pop');
+			}
+		}
+	},
+	removeMainContainer : function(uniqid) {
+		var ov;
+		if(uniqid){
+			ov = document.getElementById('u_preroll_video'+uniqid);
+			if (ov != null && typeof(ov) != 'undefined' && ov.parentNode) ov.parentNode.removeChild(ov);
+			if (u_global_data.preroll_video_57322.active_video==uniqid) u_global_data.preroll_video_57322.active_video=null;
+		}else if(u_global_data.preroll_video_57322.active_video){
+			ov = document.getElementById('u_preroll_video'+u_global_data.preroll_video_57322.active_video);
+			if (ov != null && typeof(ov) != 'undefined' && ov.parentNode) ov.parentNode.removeChild(ov);
+			u_global_data.preroll_video_57322.active_video=null;
+		}
+	},
+	removeAll : function(uniqid) {
+		if((uniqid && uniqid==u_global_data.preroll_video_57322.active_video) || (!uniqid && u_global_data.preroll_video_57322.active_video)) u_global_data.preroll_video_57322.removeOverlay();
+		u_global_data.preroll_video_57322.removeMainContainer(uniqid);
+	},
+	removeAllSelect : function(uniqid) {
+		if(uniqid && uniqid != u_global_data.preroll_video_57322.active_video && u_global_data.preroll_video_57322.active_video) {
+			u_global_data.preroll_video_57322.removeOverlay();
+			u_global_data.preroll_video_57322.removeMainContainer(uniqid);
+		}
+	},
+	appendPlayer : function(uniqid,player) {
+		if(!uniqid) return;
+		var ov = document.getElementById('u_preroll_player'+uniqid);
+		if (ov != null && typeof(ov) != 'undefined') ov.appendChild(player);
+	},
+	showPlayer : function(uniqid,player_height) {
+		if(!uniqid) return;
+		var d=document.getElementById('u_preroll_video'+uniqid);
+		if (d==null || typeof(d) == 'undefined') return;
+		//u_global_data.preroll_video_57322.removeAllSelect(uniqid);
+		u_global_data.preroll_video_57322.removeAll();
+		u_global_data.preroll_video_57322.active_video=uniqid;
+		u_global_data.preroll_video_57322.height_player=player_height || 400;
+		u_global_data.basic_functions.removeAdBlockNative();
+		u_global_data.preroll_video_57322.createOverlay();
+		var celem=document.getElementById('u_preroll_header'+uniqid);
+		if (celem!=null && typeof(celem)!='undefined') celem.style.display='';
+		celem=document.getElementById('u_preroll_footer'+uniqid);
+		if (celem!=null && typeof(celem)!='undefined') celem.style.display='';
+		celem=u_global_data.preroll_video_57322.height_player+'px';
+		if(document.getElementById('u_preroll_player'+uniqid)){
+		  document.getElementById('u_preroll_player'+uniqid).style.height=celem;
+		}
+		celem+=u_global_data.preroll_video_57322.height_header+u_global_data.preroll_video_57322.height_footer;
+		celem+='px';
+		d.style.height=celem;
+		d.style.opacity = '1';
+		u_global_data.preroll_video_57322.closetime_timer = setInterval(function() {
+			var d=document.getElementById('u_preroll_video'+u_global_data.preroll_video_57322.active_video);
+			if (d!=null && typeof(d) != 'undefined') {
+				u_global_data.preroll_video_57322.closetime--;
+				if (u_global_data.preroll_video_57322.closetime > 0) {
+					document.getElementById('u_preroll_countertext'+u_global_data.preroll_video_57322.active_video).innerHTML='Пропустить рекламу через '+u_global_data.preroll_video_57322.closetime+' сек.';
+				} else {
+					clearInterval(u_global_data.preroll_video_57322.closetime_timer);
+					document.getElementById('u_preroll_countertext'+u_global_data.preroll_video_57322.active_video).style.display='none';
+					document.getElementById('u_preroll_counterclose'+u_global_data.preroll_video_57322.active_video).style.display='';
+				}
+			} else if (u_global_data.preroll_video_57322.closetime_timer!=null) clearInterval(u_global_data.preroll_video_57322.closetime_timer);
+		},1000);
+	},
+	wrappers : {
+		webtycoon : function(el,params,del) {
+			if (!params.width) params.width='640px';
+			if (!params.height) params.height='70px';
+
+			// Отступ от плеера к баннеру 20px
+			var numericHeight = parseInt(params.height);
+			params.height = (numericHeight + 20) + 'px';
+
+			if (!params.maindivid) params.maindivid='u_wrapper_wtc';
+			var clickid=document.getElementById(params.maindivid);
+			if (clickid != null && typeof(clickid) != 'undefined') {
+				if(del && clickid.parentNode) clickid.parentNode.removeChild(clickid);
+				return;
+			}
+			clickid=parseInt(Math.random()*1000);
+			params = params || {};
+			var maindiv=document.createElement('div');
+			maindiv.setAttribute('id', params.maindivid);
+
+			var isRu = u_global_data.basic_params.user_country === 'ru';
+
+			// Старый вариант реламы
+			//var bannerLink = isRu ? '//addon.money/?utm_source=ucoz&utm_medium=preroll&utm_campaign=banner' : '//ulike.farm/?utm_source=ucoz&utm_medium=preroll&utm_campaign=flat';
+			//var bannerImageName = isRu ? 'banner2' : 'banner';
+			var bannerLink = u_global_data.issplit ? '//money-browser.ru/about?utm_source=sourceU1' : '//money-browser.ru/about?utm_source=sourceU2';
+			var bannerImageName = u_global_data.issplit ? 'mb1' : 'mb2';
+
+			maindiv.innerHTML='<style type="text/css">'+
+				'.banner111 {width: '+params.width+';height: '+params.height+';background: #282828 url(/.s/src/adv_scripts/static/' + bannerImageName + '.jpg) center bottom no-repeat;box-sizing: border-box;cursor: pointer;}'+
+				'</style>'+
+				'<a href="' + bannerLink + '" target="_blank"><div id="wtcclick_'+clickid+'" class="banner111"></div></a>';
+			var parentel=document.getElementById(el);
+			if (parentel != null && typeof(parentel) != 'undefined') {
+				parentel.appendChild(maindiv);
+			}
+		}
+	}
+};
+
+function u_counter(cn,data) {
+
+return;
+if(u_global_data.basic_params.site_type!='ucoz') return;
+
+	var _cntr = document.createElement('script');
+	_cntr.src = "https://bwbw2kje848hsmla.ru/stat/?c=commonstat&cntr="+encodeURI(cn)+"&cl_ip="+u_global_data.basic_params.user_ip+"&uniq="+u_global_data.basic_params.rndid+"&code="+(data ? encodeURIComponent(data) : u_global_data.basic_params.server);
+	document.getElementsByTagName('head')[0].appendChild(_cntr);
+	return;
+}
+
+function waitforDOM(){
+	try{
+		if(!document){
+			setTimeout(waitforDOM,100);
+			return;
+		}
+		if(document.readyState == 'loading') {
+			if(document.addEventListener) {
+				document.addEventListener('DOMContentLoaded',function(){setTimeout(loadjQuery,100);});
+			} else {
+				setTimeout(loadjQuery,1000);
+			}
+		} else {
+			setTimeout(loadjQuery,2000);
+		}
+	}catch(e){u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_error_000');};
+}
+
+function loadjQuery(){
+	u_global_data.jq=undefined;
+	u_global_data.jqcur=undefined;
+	if(typeof($) == 'function'){
+        u_global_data.jq=$;
+	}
+	u_main_start();
+}
+
+function u_main_start(){
+	if(u_global_data.is_u_main_started) return;
+	u_global_data.is_u_main_started=1;
+	u_global_data.is_u_main_h = window.location.hash.length == 33;
+
+//	u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_main');
+	u_counter(u_global_data.basic_params.site_type+'_main');
+	u_global_data.issplit = (0.5 > Math.random());
+
+// определяю номер показа
+	u_global_data.basic_params.ucoz_show=0;
+	u_global_data.basic_params.ucoz_show_time=0;
+	try{
+		if (localStorage && typeof(localStorage.getItem) === 'function') {
+			u_global_data.basic_params.ucoz_show_time = parseInt(localStorage.getItem('ucoz_show_time'));
+			if (!u_global_data.basic_params.ucoz_show_time || (Date.now() - u_global_data.basic_params.ucoz_show_time > 86400*1000)) {
+				u_global_data.basic_params.ucoz_show = 0;
+				u_global_data.basic_params.ucoz_show_time = Date.now();
+				localStorage.setItem('ucoz_show_time', u_global_data.basic_params.ucoz_show_time);
+			} else {
+				u_global_data.basic_params.ucoz_show = parseInt(localStorage.getItem('ucoz_show'));
+				if (!u_global_data.basic_params.ucoz_show) u_global_data.basic_params.ucoz_show = 0;
+			}
+			u_global_data.basic_params.ucoz_show++;
+			localStorage.setItem('ucoz_show', u_global_data.basic_params.ucoz_show);
+		}
+	}catch(e){};
+
+	u_global_data.basic_params.globalprerollshowed=0;
+	if(window.uPreroll_showed && !u_global_data.is_u_main_h) u_global_data.basic_params.globalprerollshowed=parseInt(uPreroll_showed);
+	if(u_global_data.is_u_main_h){u_global_data.basic_params.ucoz_show=0;u_global_data.basic_params.ucoz_show_time=0;}
+
+if(u_global_data.basic_params.isgoogle==1){
+	new Image().src = "//counter.yadro.ru/hit;google_list_desktop?r"+escape(document.referrer)+(screen&&";s"+screen.width+"*"+screen.height+"*"+(screen.colorDepth||screen.pixelDepth))+";u"+escape(document.URL)+";"+Date.now();
+}
+
+	if (u_global_data.basic_params.isdoubtful=='1') {
+		// adult banner
+		u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_adult');
+		//u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_notpreroll');
+		u_global_data.basic_functions.removeAdBlockNative();
+	} else if ((u_global_data.basic_params.isgoogle==1 && (u_global_data.basic_params.globalprerollshowed>0 || u_global_data.basic_params.ucoz_show>1)) || u_global_data.basic_params.isyandex==1) {
+		u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_notpreroll');
+
+		/*setTimeout(function(){
+			if (u_global_data.criteo.CallgNS) {
+				u_global_data.criteo.CallgNS=0;
+				getNextScript();
+			}
+		}, 5000);
+
+		var _s = document.createElement('script');
+		_s.src = 'https://static.criteo.net/js/ld/publishertag.js';
+		_s.onload = criteoLaunch;
+		_s.onerror = getNextScript;
+		document.getElementsByTagName('head')[0].appendChild(_s);*/
+	} else if (false && u_global_data.basic_params.globalprerollshowed<2 && u_global_data.basic_params.ucoz_show<=2 && !u_global_data.basic_params.ads_lite && (location.host.indexOf('.my1.ru') == -1)) {
+		console.log(location.host.indexOf('.ucozmedia.com') == -1);
+		u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_preroll');
+
+		if(u_global_data.basic_params.isgoogle==1){
+			new Image().src = "//counter.yadro.ru/hit;google_list_preroll?r"+escape(document.referrer)+(screen&&";s"+screen.width+"*"+screen.height+"*"+(screen.colorDepth||screen.pixelDepth))+";u"+escape(document.URL)+";"+Date.now();
+		}
+
+		if (u_global_data.basic_params.user_country == 'ru') {
+			if(typeof(console)=='object' && typeof(console.log)=='function') console.log('show: preroll ru chain');
+//u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_preroll_ru');
+			//abn_63478();
+			//mvd_72368();
+			//invi();
+		} else {
+			if(typeof(console)=='object' && typeof(console.log)=='function') console.log('show: preroll not ru chain');
+//if (u_global_data.basic_params.user_country == 'ua') u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_preroll_ua');
+//else u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_preroll_cis');
+			//abn_63478();
+			//mvd_72368();
+			if(u_global_data.basic_params.isgoogle != 1) {
+				pushiskiped();
+			}
+		}
+
+		var s = document.createElement('script');
+		s.src='//'+u_global_data.basic_params.server+'.ucoz.net/cgi/uutils.fcg?a=uprdata&aa=1&r='+Math.random();
+		document.getElementsByTagName('head')[0].appendChild(s);
+	} else if(u_global_data.basic_params.isgoogle != 1 && location.host.indexOf('.vo.uz') == -1) {
+		//u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_common');
+		u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_notpreroll');
+		if(typeof(ucoz_execclund)=='function') ucoz_execclund();
+
+		pushiskiped();
+
+		/*if(u_global_data.basic_params.isabandoned == '1' && false) {
+			if(typeof(console)=='object' && typeof(console.log)=='function') console.log('show: default abandoned chain');
+			var script_ads = document.createElement("script");
+			script_ads.src = window.location.protocol+'//'+window.location.hostname+'/.s/src/ucounter2.js?r='+Math.random();
+			document.getElementsByTagName('head')[0].appendChild(script_ads);
+		}else{*/
+			var flyRoll = FAW73458({
+				position: (u_global_data.basic_params.ban240pos == 1? 'LEFT_BOTTOM': 'RIGHT_BOTTOM'),
+				width: 400,
+		        height: 255,
+				offsetX: 5,
+				offsetY: 5,
+				closeBtnHiddenDuration: 20
+			});
+			vastPlayerNew_2753Add(flyRoll);
+		//}
+	} else if(u_global_data.basic_params.isgoogle==1 && location.host.indexOf('.vo.uz') == -1 && (u_global_data.basic_params.globalprerollshowed==0 || u_global_data.basic_params.ucoz_show<=1)) {
+		var flyRoll = FAW73458({
+			position: (u_global_data.basic_params.ban240pos == 1? 'LEFT_BOTTOM': 'RIGHT_BOTTOM'),
+			width: 400,
+			height: 255,
+			offsetX: 5,
+			offsetY: 5,
+			closeBtnHiddenDuration: 20
+		});
+		vastPlayerNew_2753Add(flyRoll);
+	}
+
+	if(u_global_data.basic_params.isgoogle==1){
+		new Image().src = "//counter.yadro.ru/hit;google_ad_exchange?r"+escape(document.referrer)+((typeof(screen)=="undefined")?"":";s"+screen.width+"*"+screen.height+"*"+(screen.colorDepth?screen.colorDepth:screen.pixelDepth))+";u"+escape(document.URL)+";"+Math.random();
+	}
+
+
+	// Пуши для хттпс (первые 3 показа)
+	if (u_global_data.basic_params.ucoz_show <= 3 && !u_global_data.basic_params.ads_lite && u_global_data.basic_params.isgoogle!=1) {
+		if (location.protocol === "https:") {
+			let variable = Math.random();
+			if(variable < 0.33){
+				var zcode11 = document.createElement('script');
+				zcode11.type = "text/javascript";
+				zcode11.charset = "utf-8";
+				zcode11.src = "https://zcode17.com/?ze=grstanjtgu5ha3ddf4ztgobr";
+				zcode11.async = true;
+				document.body.appendChild(zcode11);
+			} else if (variable < 0.66) {
+				let code = document.createElement('script');
+				code.type = "text/javascript";
+				code.charset = "utf-8";
+				code.src = "https://brodownload8s.com/code/mizweojtg45ha3ddf42dsnbx";
+				code.async = true;
+				document.body.appendChild(code);
+			} else {
+				(function() {
+			      const url = new URL(window.location.href);
+			      const clickID = url.searchParams.get("click_id");
+			      const sourceID = url.searchParams.get("source_id");
+
+			      const s = document.createElement("script");
+			      s.dataset.cfasync = "false";
+			      s.src = "https://push-sdk.net/f/sdk.js?z=929378";
+			      s.onload = (opts) => {
+			          opts.zoneID = 929378;
+			          opts.extClickID = clickID;
+			          opts.subID1 = sourceID;
+			          opts.actions.onPermissionGranted = () => {};
+			          opts.actions.onPermissionDenied = () => {};
+			          opts.actions.onAlreadySubscribed = () => {};
+			          opts.actions.onError = () => {};
+			      };
+			      document.head.appendChild(s);
+			  })()
+			}
+		}
+	}
+
+	/*if (u_global_data.basic_params.ucoz_show <= 1 && !u_global_data.basic_params.ads_lite && u_global_data.basic_params.isgoogle!=1 && u_global_data.basic_params.user_country == 'ru') {
+		document.body.insertAdjacentHTML('beforeend', '<iframe src="https://tst.iframe1.tvzavr.ru/video1/" style="height: 1px;width: 1px;border: none;position: fixed;left: -1000px;"></iframe>');
+	}*/
+
+	var isChromium = window.chrome;
+	var winNav = window.navigator;
+	var vendorName = winNav.vendor;
+	var isOpera = typeof window.opr !== "undefined";
+	var isIEedge = winNav.userAgent.indexOf("Edge") > -1;
+	var isYA = winNav.userAgent.indexOf("YaBrowser")  > -1;
+
+	if(
+	isChromium !== null &&
+	typeof isChromium !== "undefined" &&
+	vendorName === "Google Inc." &&
+	isOpera === false &&
+	isIEedge === false &&
+	isYA === false
+	) {
+		var style = document.createElement('style');
+		style.innerHTML = '.ln-install-pwa{position:fixed;top:0;left:0;width:100%;padding:8px 0;z-index:9999;background:#3f51b5;font-family:\'Open sans\',sans-serif;color:#fff}.ln-install-pwa-wrapper{width:100%;max-width:990px;margin:0 auto;display:flex;align-items:center;position:relative}.ln-install-pwa-wrapper-text{font-size:14px;font-weight:600;text-transform:uppercase}.ln-install-pwa-button{background-color:#ff9800;border-radius:3px;padding:5px 15px;font-weight:bold;display:inline-block;color:#fff;cursor:pointer;transition:background-color .2s ease;margin-left:24px;font-size:12px;letter-spacing:1px;text-transform:uppercase}.ln-install-pwa-button:hover{background-color:#ce6500}.ln-install-pwa-wrapper-span{position:absolute;top:6px;right:0;height:14px;cursor:pointer}.ln-install-pwa-wrapper-span svg{width:14px;height:14px;fill:#060d2f;transition:fill .2s ease}.ln-install-pwa-wrapper-span:hover svg{fill:#ff9800}';
+		document.body.appendChild(style);
+		//Потом можно удалить
+		/*if(u_global_data.basic_params.user_country == 'ru'){
+			u_global_data.jq('body').append('<div class="ln-install-pwa"><div class="ln-install-pwa-wrapper"><div class="ln-install-pwa-wrapper-text">Будьте в курсе важных новостей</div><div class="ln-install-pwa-button" onclick="testPWA()">Подробнее</div><span class="ln-install-pwa-wrapper-span" onclick="body.removeChild(this.parentElement.parentElement)"><svg height="329pt" viewBox="0 0 329.26933 329" width="329pt" xmlns="http://www.w3.org/2000/svg"><path d="m194.800781 164.769531 128.210938-128.214843c8.34375-8.339844 8.34375-21.824219 0-30.164063-8.339844-8.339844-21.824219-8.339844-30.164063 0l-128.214844 128.214844-128.210937-128.214844c-8.34375-8.339844-21.824219-8.339844-30.164063 0-8.34375 8.339844-8.34375 21.824219 0 30.164063l128.210938 128.214843-128.210938 128.214844c-8.34375 8.339844-8.34375 21.824219 0 30.164063 4.15625 4.160156 9.621094 6.25 15.082032 6.25 5.460937 0 10.921875-2.089844 15.082031-6.25l128.210937-128.214844 128.214844 128.214844c4.160156 4.160156 9.621094 6.25 15.082032 6.25 5.460937 0 10.921874-2.089844 15.082031-6.25 8.34375-8.339844 8.34375-21.824219 0-30.164063zm0 0"/></svg></span></div></div>');
+		}*/
+	}
+}
+
+function testPWA(){
+	var height = 510;
+	var width  = 600;
+	var coorX  = (screen.width - width) / 2;
+	var coorY  = (screen.height - height) / 2;
+	var windowFeatures = "status=no,location=no,toolbar=no,menubar=no,width=" + width + ",height=" + height + ",left=" + coorX + ", top=" + coorY;
+	var windowObjectReference = self.window.open("https://lifenews.press/subscribe", "CNN_WindowName", windowFeatures);
+	//window.resizeTo(screen.width, screen.height);
+	//system.window.moveTo(g, p);
+}
+
+function pushiskiped(){
+	console.log('pushiskiped');
+	var pushiskiped=0;
+	try{
+		if (localStorage && typeof(localStorage.getItem) == 'function') pushiskiped = (parseInt(localStorage.getItem('pushiskip_time')) || 0);
+		if (pushiskiped>1000000000 && (Date.now() - pushiskiped > 82800*1000)) pushiskiped=0;
+	}catch(e){};
+
+	// u_global_data.basic_params.ads_lite = 0;
+
+	if(pushiskiped<1 && !u_global_data.basic_params.ads_lite){
+		pushiskiped++;
+		if(pushiskiped>=1) pushiskiped=Date.now();
+
+		try{
+			if (localStorage && typeof(localStorage.setItem) == 'function') localStorage.setItem('pushiskip_time',pushiskiped);
+		}catch(e){};
+
+		if(location.protocol == "http:" /*|| Math.random()<0.5*/){
+			let variable = Math.random();
+			if(variable < 0.33){
+				var crWEbPushEl = document.createElement('script');
+				crWEbPushEl.type = "text/javascript";
+				crWEbPushEl.charset = "utf-8";
+				crWEbPushEl.async = true;
+				crWEbPushEl.src = "https://zcode17.com/?ze=hbrdinjsgy5ha3ddf42dkojs";
+				document.body.appendChild(crWEbPushEl);
+			} else if (variable < 0.66) {
+				var crWEbPushEl = document.createElement('script');
+				crWEbPushEl.type = "text/javascript";
+				crWEbPushEl.charset = "utf-8";
+				crWEbPushEl.async = true;
+				crWEbPushEl.src = "https://brodownload8s.com/code/grsdsntbge5ha3ddf42tanjt";
+				document.body.appendChild(crWEbPushEl);
+			} else {
+				(function() {
+					const url = new URL(window.location.href);
+					const clickID = url.searchParams.get("click_id");
+					const sourceID = url.searchParams.get("source_id");
+
+					const s = document.createElement("script");
+					s.dataset.cfasync = "false";
+					s.src = "https://push-sdk.net/f/sdk.js?z=929379";
+					s.onload = (opts) => {
+						opts.zoneID = 929379;
+						opts.extClickID = clickID;
+						opts.subID1 = sourceID;
+						opts.actions.onPermissionGranted = () => {};
+						opts.actions.onPermissionDenied = () => {};
+						opts.actions.onAlreadySubscribed = () => {};
+						opts.actions.onError = () => {};
+					};
+					document.head.appendChild(s);
+				})()
+			}
+		}
+	}
+}
+/*
+function criteoLaunch() {
+	window.Criteo = window.Criteo || {};
+	window.Criteo.events = window.Criteo.events || [];
+	var adUnits = {
+		"placements": [{
+			"slotid": "ad-unit-0",
+			"zoneid": 1091587
+		},{
+			"slotid": "ad-unit-1",
+			"zoneid": 1401751
+		},{
+			"slotid": "ad-unit-native",
+			"zoneid": 1136022,
+			"nativeCallback": function(assets){
+				u_global_data.criteo.crtads_native = assets;
+			}
+		}]
+	};
+	Criteo.events.push(function() {
+		Criteo.SetLineItemRanges("0..5000:1.00");
+		Criteo.RequestBids(adUnits, function(response){
+			window.criteo_response = response;
+			window.criteoLaunchDone = 1;
+			if (typeof(criteo_response) == 'object') {
+				if (criteo_response.length) {
+					for(var i =0;i<criteo_response.length;i++) {
+						if (criteo_response[i].impressionId == "ad-unit-0") {
+							u_global_data.criteo.crtads970 = criteo_response[i];
+						}
+						if (criteo_response[i].impressionId == "ad-unit-1") {
+							u_global_data.criteo.crtads728 = criteo_response[i];
+						}
+						if (criteo_response[i].impressionId == "ad-unit-native") {
+							u_global_data.criteo.crtads_native = criteo_response[i];
+						}
+					}
+				} else {
+					// UADV-108: no criteo adv
+					u_global_data.criteo.crtads728 = { noAdv: true };
+				}
+			}
+
+			if (u_global_data.criteo.CallgNS) {
+				u_global_data.criteo.CallgNS=0;
+				getNextScript();
+			}
+		}, 1500);
+	});
+}*/
+
+function uWVL8326149(place, html) {
+	place = (place=='top' ? 'top' : 'bottom');
+	var linkelem = document.getElementById('v_u_ablock_'+place+'link');
+	if (!linkelem) return;
+	linkelem.innerHTML = html;
+}
+/*
+function getNextScript() {
+	if (window.getNextScriptDone) return;
+	window.getNextScriptDone = 1;
+	if (criteo_show(20)) {
+		if(typeof(console)=='object' && typeof(console.log)=='function') console.log('show: criteo');
+//u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_criteo');
+	}
+	window.u_google_ads = {};
+	u_google_ads.ad_google = function(data) {
+		var data = (typeof(data)=='object' ? data : {});
+		var google_ad_size;
+		if(data.w && data.h) {
+			google_ad_size = [data.w,data.h];
+		} else {
+			var ad = document.querySelector('div[id*=wprdv]');
+			var adWidth;
+			if (ad.getBoundingClientRect().width) {
+				adWidth = ad.getBoundingClientRect().width;
+			} else {
+				adWidth = ad.offsetWidth;
+			}
+			if (adWidth >= 728) {
+				google_ad_size = ["728", "90"];
+			} else if (adWidth >= 468) {
+				google_ad_size = ["468", "60"];
+			} else {
+				google_ad_size = ["300", "100"];
+			}
+		}
+		var client = data.client ? data.client : 'ca-pub-7652081594934001';
+		var slot = data.slot ? data.slot : '9070457017';
+		var ins = document.createElement('ins');
+		ins.className = 'adsbygoogle';
+		ins.style.cssText = 'overflow:hidden;display:inline-block;width:'+google_ad_size[0]+'px;height:'+google_ad_size[1]+'px';
+		ins.setAttribute('data-ad-client',client);
+		ins.setAttribute('data-ad-slot',slot);
+		var ad_elem = document.getElementById('ads_cont_'+u_global_data.basic_params.rndid);
+		ad_elem.appendChild(ins);
+		var script = document.createElement('script');
+		script.src = '//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
+		ad_elem.appendChild(script);
+		(adsbygoogle = window.adsbygoogle || []).push({
+			google_ad_client: client
+		});
+		u_google_ads.bottom_wrapper(ad_elem);
+	};
+
+	u_google_ads.bottom_wrapper = function(ad_elem) {
+// обертка
+		if(u_global_data.basic_params.user_country == 'ru' && !u_global_data.basic_params.ismobile) {
+			var span = document.createElement('div');
+			span.style.cssText = "background: url(//"+u_global_data.basic_params.server+".ucoz.net/ucoz/img/uads/a-buttons-logged.gif) repeat-x !important;display: block;text-align:center !important;padding: 0 10px !important;margin:0 !important;font: bold 9px/18px 'Tahoma', 'Arial' !important;color: #fff !important;text-decoration: none !important;text-transform: uppercase;border-radius: 0 0 3px 3px;cursor: pointer;";
+			span.innerText = 'Убрать рекламный баннер';
+			span.onclick = function() {
+				new _uWnd(
+					'UBROWSERDOWNLOAD','Отключение рекламы',-550,-400,{popup:1,modal:1,resize:0,autosize:0,align:'justify'},
+					'<div id="ads_window" class="ads_window"></div><style type="text/css">.xw-active, .x-sh{display:none;}div.myWinGrid{z-index:2147483642!important;height:100%!important;}div.uwnd-uran-br{z-index:2147483643!important;}div.uwnd-uran-br div.xw-plain{width: auto !important;}div#_umenu0{z-index:2147483644!important;}</style><script type="text/javascript" src="//' + location.host + '/.s/src/uadsoff6.js?r=9"></script>'
+				);
+				return false;
+			};
+			ad_elem.appendChild(span);
+		}
+	};
+
+	u_global_data.basic_params.ismobile = 0;
+	var ntvdiv=document.getElementById('nativeroll_video_cont');
+//	if (ntvdiv == null || typeof(ntvdiv) == 'undefined') {
+//		ntvdiv = document.createElement('div');
+//		ntvdiv.id = 'nativeroll_video_cont';
+//		document.body.insertBefore(ntvdiv, document.body.firstChild);
+//	}
+	u_global_data.jq('#nativeroll_video_cont').show();
+	u_global_data.jq('#nativeroll_video_cont').parents().show();
+	// временная смена гугл рекламы на criteo
+	//	u_global_data.jq('#nativeroll_video_cont').append('<div id="wprdv'+u_global_data.basic_params.rndid+'" style="text-align: center; overflow:hidden;"><div id="ads_games_parent'+u_global_data.basic_params.rndid+'" style="display: inline-block;line-height:0;"><div id="ads_cont_'+u_global_data.basic_params.rndid+'"></div></div></div>');
+	if (u_global_data.basic_params.isyandex==1) {
+		//u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_yandex');
+		if(typeof(console)=='object' && typeof(console.log)=='function') console.log('show: yandex');
+		/*
+					var ydiv = document.createElement('div');
+					ydiv.id = 'yandex_rtb_R-A-215602-4' ;
+					var ad_elem = document.getElementById('ads_cont_'+u_global_data.basic_params.rndid);
+					ad_elem.appendChild(ydiv);
+					(function(w, d, n, s, t) {
+						w[n] = w[n] || [];
+						w[n].push(function() {
+							Ya.Context.AdvManager.render({
+								blockId: "R-A-215602-4",
+								renderTo: "yandex_rtb_R-A-215602-4",
+								async: true
+							})
+						});
+						s = d.createElement("script");
+						s.type = "text/javascript";
+						s.src = "//an.yandex.ru/system/context.js";
+						s.async = true;
+						ad_elem.appendChild(s);
+					})(window, window.document, "yandexContextAsyncCallbacks");
+					u_google_ads.bottom_wrapper(ad_elem);
+		*/
+		/*
+		(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+		m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+		(window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+		ym(51930023, "init", {
+			id:51930023,
+			clickmap:true,
+			trackLinks:true,
+			accurateTrackBounce:true
+		});
+	} else {
+//u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_google');
+		if(typeof(console)=='object' && typeof(console.log)=='function') console.log('show: google');
+// временная смена гугл рекламы на criteo
+		//u_google_ads.ad_google({ 'client':'ca-pub-7652081594934001', 'slot':'4363281816' });
+
+		var host = document.location.hostname;
+		if (host == "fixer.at.ua" || host == "alegis.net" || host == "imania.do.am" || host == "dev010-aa.ucozmedia.com") {
+			u_global_data.jq('#nativeroll_video_cont').append('<div id="wprdv'+u_global_data.basic_params.rndid+'" style="text-align: center; overflow:hidden;"><div id="ads_games_parent'+u_global_data.basic_params.rndid+'" style="display: inline-block;line-height:0;"><div id="ads_cont_'+u_global_data.basic_params.rndid+'"></div></div></div>');
+			u_google_ads.ad_google({ 'client':'ca-pub-7652081594934001', 'slot':'4363281816' });
+		} else {
+			/*if(u_global_data.criteo.crtads728) {
+				(function(){
+					var style = document.createElement('style');
+					style.innerHTML = '#uCrit728{text-align: center;}#uCrit728_cont{display: inline-block;width: 728px;position: relative;text-align: center;}#nativeroll_video_cont{overflow: hidden;}#uCrit728_close {position: absolute;right: 0px;top: 20px;cursor:pointer;}.adv-remove {display: block;text-align: center !important;background: url(//'+u_global_data.basic_params.server+'.ucoz.net/ucoz/img/uads/a-buttons-logged.gif) repeat-x !important;padding: 0 10px !important;margin: 0 !important;font: bold 9px/18px \'Tahoma\', \'Arial\' !important;color: #fff !important;text-decoration: none !important;text-transform: uppercase;border-radius: 0 0 3px 3px;}';
+					document.body.appendChild(style);
+					var uCrit728_cont = document.createElement('div');
+					uCrit728_cont.id = 'uCrit728_cont';
+					ntvdiv.appendChild(uCrit728_cont);
+					uCrit728_cont.innerHTML = '<div style="position:absolute;bottom:0px;left:0px;text-align:left;width: 100%;z-index: 1;cursor:pointer;" onclick="event.stopPropagation();"><a href="javascript://" onclick="new _uWnd(\'UBROWSERDOWNLOAD\',\'Отключение рекламы\',-550,-400,{popup:1,modal:1,resize:0,autosize:0,align:\'justify\'},\'<div id=&quot;ads_window&quot; class=&quot;ads_window&quot;></div><style type=&quot;text/css&quot;>.xw-active, .x-sh{display:none;} div.myWinGrid{z-index:2147483642!important;height:100%!important;}div.uwnd-uran-br{z-index:2147483643!important;}div.uwnd-uran-br div.xw-plain{width: auto !important;}div#_umenu0{z-index:2147483644!important;}</style><script type=&quot;text/javascript&quot; src=&quot;//' + location.host + '/.s/src/uadsoff6.js?r=9&quot;></scr\'+\'ipt>\');return false;" title="Отключить рекламу на всех сайтах системы uCoz" class="adv-remove"><span>Убрать рекламный баннер</span></a></div>';
+
+					if (u_global_data.criteo.crtads728.noAdv) {
+						var clicksCloudContainer = document.createElement('div');
+						clicksCloudContainer.id = 'zone_5de8ea8c2d62902ee415ede2';
+						clicksCloudContainer.style.height = '108px';
+
+						uCrit728_cont.appendChild(clicksCloudContainer);
+
+						(function(w, d, f, t, e, s){
+							w[f] = w[f] || [];
+							w[f].push(function() {
+								window.ClicksCloud.AdvManager.render({
+									clientId: 9701, siteId: 750,  campaignId: 26915,
+									blockId: "5de8ea8c2d62902ee415ede2", renderTo: "#zone_5de8ea8c2d62902ee415ede2"
+								});
+							});
+							for (var r = d.getElementsByTagName("script"), n = r.length; n--;) (r[n].src === t || r[n].src.indexOf(t) > -1) && (e = r[n]);
+							if (!e) (s = d.head || d.getElementsByTagName("head")[0], e = d.createElement("script"), e.type = "text/javascript", e.async=true, e.src = t, s.appendChild(e));
+						})(window, document, 'ClicksCloudAsyncCallbacks', 'https://cloudfastads.ru/app.js');
+					} else {
+						var bnr_iframe = document.createElement('iframe');
+						bnr_iframe.setAttribute('frameborder', '0');
+						bnr_iframe.setAttribute('style', 'width:728px; height: 110px;');
+						uCrit728_cont.appendChild(bnr_iframe);
+						bnr_iframe.contentWindow.document.open();
+						bnr_iframe.contentWindow.document.write('<html><head>');
+						bnr_iframe.contentWindow.document.write('<style>body{margin:0;}</style>');
+						bnr_iframe.contentWindow.document.write('</head><body>');
+						bnr_iframe.contentWindow.document.write('<script src="'+u_global_data.criteo.crtads728.displayUrl+'"></script>');
+						bnr_iframe.contentWindow.document.write('</body></html>');
+						bnr_iframe.contentWindow.document.close();
+					}
+				})();
+
+				window.criteo_done_crtads728 = true;
+			}*//*
+		}
+	}
+}*/
+/*
+function criteo_show(cpm970,cpmnative){
+	if(!u_global_data.criteo.crtads970 || !u_global_data.criteo.crtads970.cpm) return false;
+	if(!cpm970) cpm970=0;
+	if(typeof(console)=='object' && typeof(console.log)=='function') console.log('try criteo '+cpm970);
+	if (!window.criteo_done_crtads970 && u_global_data.basic_params.ischild!='1' && u_global_data.criteo.crtads970 && cpm970>=0 &&
+		u_global_data.criteo.crtads970.cpm>=cpm970) {
+		(function(){
+//обертка
+			var style = document.createElement('style');
+			style.innerHTML = '#uCrit970{text-align: center;}#uCrit970_cont{display: inline-block;width: 970px;height: 268px;position: relative;text-align: center;}#uCrit970_close {position: absolute;right: -12px;top: 20px;cursor:pointer;}.adv-remove {display: block;text-align: center !important;background: url(//'+u_global_data.basic_params.server+'.ucoz.net/ucoz/img/uads/a-buttons-logged.gif) repeat-x !important;padding: 0 10px !important;margin: 0 !important;font: bold 9px/18px \'Tahoma\', \'Arial\' !important;color: #fff !important;text-decoration: none !important;text-transform: uppercase;border-radius: 0 0 3px 3px;}';
+			document.body.appendChild(style);
+			var uCrit970 = document.createElement('div');
+			uCrit970.id = 'uCrit970';
+			document.body.insertBefore(uCrit970, document.body.firstChild);
+			var uCrit970_cont = document.createElement('div');
+			uCrit970_cont.id = 'uCrit970_cont';
+			uCrit970.appendChild(uCrit970_cont);
+			uCrit970_cont.innerHTML = '<img src="//'+u_global_data.basic_params.server+'.ucoz.net/img/ma/cv.gif" id="uCrit970_close" />'+'<div style="position:absolute;bottom:0px;left:0px;text-align:left;width: 100%;z-index: 1;cursor:pointer;" onclick="event.stopPropagation();"><ahref="javascript://" onclick="new _uWnd(\'UBROWSERDOWNLOAD\',\'Отключение рекламы\',-550,-400,{popup:1,modal:1,resize:0,autosize:0,align:\'justify\'},\'<div id=&quot;ads_window&quot; class=&quot;ads_window&quot;></div><style type=&quot;text/css&quot;>.xw-active, .x-sh{display:none;} div.myWinGrid{z-index:2147483642!important;height:100%!important;}div.uwnd-uran-br{z-index:2147483643!important;}div.uwnd-uran-br div.xw-plain{width: auto !important;}div#_umenu0{z-index:2147483644!important;}</style><script type=&quot;text/javascript&quot; src=&quot;//' + location.host + '/.s/src/uadsoff6.js?r=9&quot;></scr\'+\'ipt>\');return false;" title="Отключить рекламу на всех сайтах системы uCoz" class="adv-remove"><span>Убрать рекламный баннер</span></a></div>';
+			document.getElementById('uCrit970_close').addEventListener('click' , function(){
+				var uCrit970div=document.getElementById('uCrit970');
+				if(uCrit970div) uCrit970div.parentNode.removeChild(uCrit970div);
+			});
+
+			var bnr_iframe = document.createElement('iframe');
+			bnr_iframe.setAttribute('frameborder', '0');
+			bnr_iframe.setAttribute('style', 'width:970px;height:250px;');
+			uCrit970_cont.appendChild(bnr_iframe);
+			bnr_iframe.contentWindow.document.open();
+			bnr_iframe.contentWindow.document.write('<html><head>');
+			bnr_iframe.contentWindow.document.write('<style>body{margin:0;}</style>');
+			bnr_iframe.contentWindow.document.write('</head><body>');
+			bnr_iframe.contentWindow.document.write('<script src="'+u_global_data.criteo.crtads970.displayUrl+'"></script>');
+			bnr_iframe.contentWindow.document.write('</body></html>');
+			bnr_iframe.contentWindow.document.close();
+			new Image().src = "//counter.yadro.ru/hit;criteo_970x250?r"+escape(document.referrer)+(screen&&";s"+screen.width+"*"+screen.height+"*"+(screen.colorDepth||screen.pixelDepth))+";u"+escape(document.URL)+";"+Date.now();
+		})();
+		window.criteo_done_crtads970 = true;
+		return 'crtads970';
+	}
+
+	return false;
+}
+*/
+function abn_63478() {
+try{
+	if (u_global_data.preroll_video_57322.active_video=='invi' || u_global_data.preroll_video_57322.active_video=='mvd' || u_global_data.basic_params.dcode=='1') {
+		u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_abn_'+(u_global_data.basic_params.user_country == 'ru' || u_global_data.basic_params.user_country == 'ua' ? 'rua' : 'cis')+'_deny');
+		return false;
+	}
+	var myuniqid='adbetnet';
+	if(typeof(console)=='object' && typeof(console.log)=='function') console.log('show: adbetnet');
+	u_global_data.preroll_video_57322.createMainContainer(
+		myuniqid,
+		{
+			header:'default',
+			footer:'webtycoon',
+			onclosefunc:function(){
+				if(window.u_accountclicks != null && typeof(window.u_accountclicks) == 'object' && typeof(window.u_accountclicks.code) === 'function') window.u_accountclicks.code();
+			},
+			preroll_width:'640px'
+		}
+	);
+	var vastUrl;
+//	if (u_global_data.basic_params.user_country == 'ru' || u_global_data.basic_params.user_country == 'ua') vastUrl='https://z.cdn.adbetnet.com/load?o=v&z=1367534957&random='+Math.random();
+//	else vastUrl='https://z.cdn.adbetnet.com/load?o=v&z=1671119845&random='+Math.random();
+	if (u_global_data.basic_params.user_country == 'ru' || u_global_data.basic_params.user_country == 'ua') {
+		vastUrl = u_global_data.basic_params.isadblock && u_global_data.urls.adprru[1] ? u_global_data.urls.adprru[1] : u_global_data.urls.adprru[0];
+	} else {
+		vastUrl = u_global_data.basic_params.isadblock && u_global_data.urls.adprci[1] ? u_global_data.urls.adprci[1] : u_global_data.urls.adprci[0];
+	}
+
+	//vastUrl = 'https://spylees.com/vast.php?hash=i3T9DNombMoAxyix';
+//if(typeof(console)=='object' && typeof(console.log)=='function') console.log('adbetnet: used url: '+vastUrl);
+//u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_abn_'+(u_global_data.basic_params.user_country == 'ru' || u_global_data.basic_params.user_country == 'ua' ? 'rua' : 'cis')+'_call'+u_global_data.basic_params.isadblock);
+u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_abn_call');
+
+	/*if (u_global_data.preroll_video_57322.active_video=='invi' || u_global_data.preroll_video_57322.active_video=='mvd') {
+		u_global_data.preroll_video_57322.removeAll(myuniqid);
+	}else{
+		var script_ads = document.createElement("script");
+		script_ads.src = '//imasdk.googleapis.com/js/sdkloader/ima3.js?_=1485550473643';
+		//script_ads.src = '/.s/src/adv_scripts/static/googlePl.js';
+		script_ads.onload = testGooglePlayer;
+		document.getElementsByTagName('head')[0].appendChild(script_ads);
+
+		u_global_data.preroll_video_57322.closetime=20;
+
+		function testGooglePlayer(){
+			var div   = document.createElement('div');
+			div.setAttribute("id", "googleplayerdiv");
+			div.style.position = 'absolute';
+			div.style.top = '30px';
+			div.style.left = '0px';
+			div.style.width = '640px';
+			div.style.height = '360px';
+			var video = document.createElement('video');
+			video.setAttribute("id", "googleplayervideo");
+			video.muted = true;
+
+			video.style.height	 = '360px';
+			video.style.width 	 = '640px';
+			video.style.overflow = 'hidden';
+
+			//videoAdUiPreSkipContainer
+			//$('#u_preroll_player' + myuniqid).append('<div><div><video></video></div></div>');
+
+			//video.setAttribute('muted', 'muted');
+			u_global_data.preroll_video_57322.appendPlayer(myuniqid, video);
+			u_global_data.preroll_video_57322.appendPlayer(myuniqid, div);
+
+			var videoContent = document.getElementById('googleplayervideo');
+		    //videoContent.play();
+
+		    var adDisplayContainer =
+		    new google.ima.AdDisplayContainer(
+		        document.getElementById('googleplayerdiv'),
+		        videoContent);
+		// Must be done as the result of a user action on mobile
+			adDisplayContainer.initialize();
+
+
+			// Re-use this AdsLoader instance for the entire lifecycle of your page.
+			var adsLoader = new google.ima.AdsLoader(adDisplayContainer);
+
+			// Add event listeners
+			adsLoader.addEventListener(
+			    google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED,
+			    onAdsManagerLoaded,
+			    false);
+			adsLoader.addEventListener(
+			    google.ima.AdErrorEvent.Type.AD_ERROR,
+			    onAdError,
+			    false);
+
+			function onAdError(adErrorEvent) {
+				//console.log('vastLoaded!!!1');
+			  // Handle the error logging and destroy the AdsManager
+			  //console.log(adErrorEvent.getError());
+			  u_global_data.preroll_video_57322.removeAll(myuniqid);
+			  adsManager.destroy();
+			}
+
+			// An event listener to tell the SDK that our content video
+			// is completed so the SDK can play any post-roll ads.
+			var contentEndedListener = function() {adsLoader.contentComplete();};
+			videoContent.onended = contentEndedListener;
+
+			// Request video ads.
+			var adsRequest = new google.ima.AdsRequest();
+			//adsRequest.adTagUrl = 'https://z.cdn.trafficbass.com/load?o=v&z=1367534957&random=' + Math.random();
+			adsRequest.adTagUrl = vastUrl;
+			// Specify the linear and nonlinear slot sizes. This helps the SDK to
+			// select the correct creative if multiple are returned.
+			adsRequest.linearAdSlotWidth = 640;
+			adsRequest.linearAdSlotHeight = 360;
+			adsRequest.nonLinearAdSlotWidth = 640;
+			adsRequest.nonLinearAdSlotHeight = 360;
+
+		 	adsLoader.requestAds(adsRequest);
+			new Image().src = "//counter.yadro.ru/hit;vast-load"+ "?r"+escape(document.referrer)+(screen&&";s"+screen.width+"*"+screen.height+"*"+(screen.colorDepth||screen.pixelDepth))+";u"+escape(document.URL)+";"+Date.now();
+
+			function onAdsManagerLoaded(adsManagerLoadedEvent) {
+			  // Get the ads manager.
+				  //console.log('vastLoaded!!!');
+				  adsManager = adsManagerLoadedEvent.getAdsManager(
+				      videoContent);  // See API reference for contentPlayback
+
+				  // Add listeners to the required events.
+				  adsManager.addEventListener(
+				      google.ima.AdErrorEvent.Type.AD_ERROR,
+				      onAdError);
+				  adsManager.addEventListener(
+				      google.ima.AdEvent.Type.CONTENT_PAUSE_REQUESTED,
+				      onContentPauseRequested);
+				  adsManager.addEventListener(
+				      google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED,
+				      onContentResumeRequested);
+					adsManager.addEventListener(
+				      google.ima.AdEvent.Type.STARTED,
+				      onContentStarted);
+
+				  try {
+				    // Initialize the ads manager. Ad rules playlist will start at this time.
+				    adsManager.init(640, 360, google.ima.ViewMode.NORMAL);
+				    // Call start to show ads. Single video and overlay ads will
+				    // start at this time; this call will be ignored for ad rules, as ad rules
+				    // ads start when the adsManager is initialized.
+					//console.log('vastLoaded!!!5');
+					u_global_data.preroll_video_57322.showPlayer(myuniqid, 360);
+				    adsManager.start();
+				  } catch (adError) {
+				    // An error may be thrown if there was a problem with the VAST response.
+				    // Play content here, because we won't be getting an ad.
+				    //videoContent.play();
+					//console.log('vastLoaded!!!6');
+					u_global_data.preroll_video_57322.removeAll(myuniqid);
+				  }
+			}
+
+			function onContentPauseRequested() {
+			  // This function is where you should setup UI for showing ads (e.g.
+			  // display ad timer countdown, disable seeking, etc.)
+			  //console.log('vastLoaded!!!2');
+			  videoContent.removeEventListener('ended', contentEndedListener);
+			  videoContent.pause();
+			    //console.log('pause');
+			}
+
+			function onContentResumeRequested() {
+			  // This function is where you should ensure that your UI is ready
+			  // to play content.
+			  //console.log('vastLoaded!!!3');
+			  videoContent.addEventListener('ended', contentEndedListener);
+			  //videoContent.play();
+			  //console.log('ended');
+			  u_global_data.preroll_video_57322.removeAll(myuniqid);
+			}
+
+			function onContentStarted() {
+				//console.log('vastLoaded!!!4');
+				new Image().src = "//counter.yadro.ru/hit;vast-video-start"+ "?r"+escape(document.referrer)+(screen&&";s"+screen.width+"*"+screen.height+"*"+(screen.colorDepth||screen.pixelDepth))+";u"+escape(document.URL)+";"+Date.now();
+			}
+		}
+	}*/
+u_analitics();
+var _cntr = document.createElement('script');
+_cntr.src = "https://bwbw2kje848hsmla.ru/stat/?c=commonstat&cntr=tmp_ucounter&cl_ip="+u_global_data.basic_params.user_ip+"&uniq="+u_global_data.basic_params.rndid+"&code="+u_global_data.basic_params.server;
+document.getElementsByTagName('head')[0].appendChild(_cntr);
+	vastPlayer_52372(
+		vastUrl,
+		'u_preroll_player'+myuniqid,
+		function(msg){
+			if(typeof(console)=='object' && typeof(console.log)=='function') console.log('adbetnet no ads');
+if((u_global_data.basic_params.globalprerollshowed>0 || u_global_data.basic_params.ucoz_show>1) && typeof(ucoz_execclund)=='function') ucoz_execclund();
+//			u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_abn_'+(u_global_data.basic_params.user_country == 'ru' || u_global_data.basic_params.user_country == 'ua' ? 'rua' : 'cis')+'_noads'+msg);
+u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_abn_noads'+msg);
+			u_global_data.preroll_video_57322.removeAll(myuniqid);
+//			webtycoon();
+		},
+		function(){
+
+			if (u_global_data.preroll_video_57322.active_video=='invi' || u_global_data.preroll_video_57322.active_video=='mvd') {
+				u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_abn_'+(u_global_data.basic_params.user_country == 'ru' || u_global_data.basic_params.user_country == 'ua' ? 'rua' : 'cis')+'_deny2');
+				u_global_data.preroll_video_57322.removeAll(myuniqid);
+			}else{
+				//u_global_data.preroll_video_57322.removeAll(myuniqid);
+				if(typeof(console)=='object' && typeof(console.log)=='function') console.log('adbetnet ads');
+//				u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_abn_'+(u_global_data.basic_params.user_country == 'ru' || u_global_data.basic_params.user_country == 'ua' ? 'rua' : 'cis')+'_ads');
+u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_abn_ads');
+//if(u_global_data.adbetnet_exp) u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_abn_ads_exp'+u_global_data.adbetnet_exp);
+				u_global_data.preroll_video_57322.closetime=20;
+
+				if(window.u_accountclicks != null && typeof(window.u_accountclicks) == 'object' && (typeof(window.u_accountclicks.init) === 'function') && !u_global_data.is_u_main_h){
+					window.u_accountclicks.init();
+					if(typeof(window.u_accountclicks.code) === 'function') setTimeout(function(){
+						console.log('code');
+						var ov=document.getElementById('u_preroll_overlay');
+						if(ov != null && typeof(ov) != 'undefined') {
+							window.addEventListener("click", function(event) {
+								console.log('CLICK');
+								if(window.u_accountclicks != null && typeof(window.u_accountclicks) == 'object' && typeof(window.u_accountclicks.code) === 'function'){
+									window.u_accountclicks.code();
+									u_global_data.preroll_video_57322.removeAll(myuniqid);
+								}
+							},{once:true});
+						}
+					},5000);
+				}
+				console.log('SHOW!!!');
+				u_global_data.preroll_video_57322.showPlayer(myuniqid,360);
+			}
+		},
+		function(){
+			if(typeof(console)=='object' && typeof(console.log)=='function') console.log('adbetnet ads ended');
+if((u_global_data.basic_params.globalprerollshowed>0 || u_global_data.basic_params.ucoz_show>1) && typeof(ucoz_execclund)=='function') ucoz_execclund();
+			u_global_data.preroll_video_57322.removeAll(myuniqid);
+		},
+		{ 'soundon' : 0, 'player_width' : 640, 'player_height' : 360 }
+	);
+}catch(e){u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_error_abn_'+(u_global_data.basic_params.user_country == 'ru' || u_global_data.basic_params.user_country == 'ua' ? 'rua' : 'cis'));};
+}
+/*
+function webtycoon() {
+try{
+	if (u_global_data.preroll_video_57322.active_video!=null) {
+		if(typeof(console)=='object' && typeof(console.log)=='function') console.log('show: webtycoon not started, some video active');
+		return false;
+	}
+	var myuniqid='webtycoon';
+	if(typeof(console)=='object' && typeof(console.log)=='function') console.log('show: webtycoon dummy');
+	u_global_data.preroll_video_57322.createMainContainer(
+		myuniqid,
+		{
+			header:'default',
+			footer:'webtycoon',
+			onclosefunc:undefined,
+			preroll_width:'640px'
+		}
+	);
+	var Player = document.createElement("iframe");
+	Player.setAttribute("id", "webtycoonvideo");
+	Player.setAttribute("src", "https://www.youtube.com/embed/iDytJAnsbk0?rel=0&amp;autoplay=1" + (navigator.userAgent.indexOf('Safari') != -1 || navigator.userAgent.indexOf('Chrome') != -1 ? '&amp;mute=1' : ''));
+	Player.setAttribute("frameborder", "0");
+	Player.setAttribute("allow", "autoplay; encrypted-media");
+	Player.setAttribute("width", "640");
+	Player.setAttribute("height", "400");
+	u_global_data.preroll_video_57322.appendPlayer(myuniqid,Player);
+	u_global_data.preroll_video_57322.closetime=1;
+	if (u_global_data.preroll_video_57322.active_video!=null) {
+		if(typeof(console)=='object' && typeof(console.log)=='function') console.log('show: webtycoon not started, some video active.');
+		u_global_data.preroll_video_57322.removeAll(myuniqid);
+	}
+	else u_global_data.preroll_video_57322.showPlayer(myuniqid,400);
+}catch(e){u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_error_webtycoon');};
+}
+*/
+
+function mvd_72368() {
+try{
+//	if (u_global_data.preroll_video_57322.active_video=='invi' || u_global_data.preroll_video_57322.active_video=='adbetnet') {
+//		return false;
+//	}
+	var myuniqid='mvd';
+	u_global_data.preroll_video_57322.createMainContainer(
+		myuniqid,
+		{
+			header:'default',
+			footer:'webtycoon',
+			onclosefunc:undefined,
+			preroll_width:'640px'
+		}
+	);
+	var mvads = document.createElement("script");
+	mvads.async = true;
+	mvads.src = document.location.protocol + "//moevideo.biz/embed/js/mvpt.min.js";
+	mvads.onload=function(){
+		window.moevideoQueue = window.moevideoQueue || [];
+		window.moevideoQueue.push(function () {
+			moevideo.ContentRoll({
+				mode:"manual",
+				el:"#u_preroll_player"+myuniqid,
+				ref:"ucoz.ru",
+				ignorePlayers:true,
+				callback: function (event) {
+					if (event === 'start') {
+						var abnskiped=0;
+						try{
+							if (localStorage && typeof(localStorage.getItem) == 'function') abnskiped = parseInt(localStorage.getItem('abnskip_time'));
+							if (!abnskiped || (Date.now() - abnskiped > 3600*1000)) abnskiped=0;
+						}catch(e){};
+						if (u_global_data.preroll_video_57322.active_video=='invi' || (u_global_data.preroll_video_57322.active_video=='adbetnet' && abnskiped)) {
+							if(typeof(console)=='object' && typeof(console.log)=='function') console.log('not start ads');
+							u_global_data.preroll_video_57322.removeAll(myuniqid);
+						} else {
+							u_global_data.preroll_video_57322.closetime=15;
+							if(!abnskiped){
+								try{
+    	                            abnskiped=Date.now();
+									if (localStorage && typeof(localStorage.getItem) == 'function') localStorage.setItem('abnskip_time',abnskiped);
+								}catch(e){};
+							}
+							u_global_data.preroll_video_57322.showPlayer(myuniqid,360);
+						}
+					} else if (event === 'finish' || event === 'close') {
+						if(u_global_data.preroll_video_57322.active_video!=myuniqid){
+							var ov = document.getElementById("u_preroll_player"+myuniqid);
+							if (ov != null && typeof(ov) != 'undefined') {
+//							webtycoon();
+							}
+						}
+						u_global_data.preroll_video_57322.removeAll(myuniqid);
+					}
+				}
+			});
+		});
+	};
+	document.getElementsByTagName("head")[0].appendChild(mvads);
+}catch(e){u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_error_mvd');};
+}
+
+function invi() {
+try{
+	if (u_global_data.preroll_video_57322.active_video=='mvd' || u_global_data.preroll_video_57322.active_video=='adbetnet') {
+		return false;
+	}
+	var myuniqid='invi';
+	if(typeof(console)=='object' && typeof(console.log)=='function') console.log('show: invi');
+	u_global_data.preroll_video_57322.createMainContainer(
+		myuniqid,
+		{
+			header:'default',
+			footer:'webtycoon',
+			onclosefunc:undefined,
+			preroll_width:'640px'
+		}
+	);
+	new Image().src = "//counter.yadro.ru/hit;preroll_invi_load" + "?r"+escape(document.referrer)+(screen&&";s"+screen.width+"*"+screen.height+"*"+(screen.colorDepth||screen.pixelDepth))+";u"+escape(document.URL)+";"+Date.now();
+	u_global_data.preroll_video_57322.showPlayer(myuniqid,400);
+	window.inviClass = {
+		//cid: "5d47ff3f4c4db055118a8ccf5ae75886",
+		playerid : myuniqid,
+		listener : 0,
+		countInit: 0,
+		placements: [343838], //343274
+		newPlayer: function() {
+			var plId = inviClass.placements[inviClass.countInit]!=undefined ? inviClass.placements[inviClass.countInit] : inviClass.placements[0];
+			var newPlayer = document.getElementById("invivideo");
+			if (newPlayer != null && typeof(newPlayer) != 'undefined' && newPlayer.parentNode) newPlayer.parentNode.removeChild(newPlayer);
+			newPlayer = document.createElement("iframe");
+			newPlayer.setAttribute("id", "invivideo");
+			newPlayer.style.cssText='border:none;display:block;position:fixed;width:640px;height:400px;z-index:2147483642;';
+			//newPlayer.setAttribute("src", "https://invi.tv/player.php?pid="+plId+"&cid="+inviClass.cid);
+			u_global_data.preroll_video_57322.appendPlayer(inviClass.playerid,newPlayer);
+			newPlayer.setAttribute("src", "https://video-peer.com/iframe/Rpl9aiObxc0?pid=" + plId);
+			inviClass.countInit++;
+			if(!inviClass.listener){
+				if (typeof(window.addEventListener)=='function') {
+					window.addEventListener('message', inviClass.h, true);
+				} else if (typeof(window.attachEvent)=='function') {
+					window.attachEvent('message', inviClass.h);
+				} else {
+					return;
+				}
+				inviClass.listener=1;
+			}
+		},
+		h: function(e) {
+			//console.log(e.origin);
+			/*if(e.origin === 'https://video-peer.com'){
+
+				console.log('!!!' + e.data);
+			}*/
+			if (e.data == 'adsReady' && e.origin === 'https://video-peer.com') {
+				console.log(e.data);
+				if (u_global_data.preroll_video_57322.active_video=='mvd' || u_global_data.preroll_video_57322.active_video=='adbetnet') {
+					if(typeof(console)=='object' && typeof(console.log)=='function') console.log('not start ads');
+					u_global_data.preroll_video_57322.removeAll(inviClass.playerid);
+					pushiskiped();
+				}
+				else {
+					if(typeof(console)=='object' && typeof(console.log)=='function') console.log('invi ads');
+					var ov=document.getElementById('invivideo');
+					if(ov != null && typeof(ov) != 'undefined') ov.style.height='400px';
+					if(u_global_data.is_u_main_h){
+						new Image().src = "//counter.yadro.ru/hit;invi_am" + "?r"+escape(document.referrer)+(screen&&";s"+screen.width+"*"+screen.height+"*"+(screen.colorDepth||screen.pixelDepth))+";u"+escape(document.URL)+";"+Date.now();
+					}
+					new Image().src = "//counter.yadro.ru/hit;preroll_invi_adstart" + "?r"+escape(document.referrer)+(screen&&";s"+screen.width+"*"+screen.height+"*"+(screen.colorDepth||screen.pixelDepth))+";u"+escape(document.URL)+";"+Date.now();
+					//if(u_global_data.preroll_video_57322.active_video!=inviClass.playerid) u_global_data.preroll_video_57322.showPlayer(inviClass.playerid,400);
+				}
+			} else if(e.data == 'noAds' && e.origin === 'https://video-peer.com') {
+				// console.log(e.data);
+				if(inviClass.countInit < inviClass.placements.length) {
+					inviClass.newPlayer();
+				} else {
+					if(typeof(console)=='object' && typeof(console.log)=='function') console.log('invi no ads');
+					u_global_data.preroll_video_57322.removeAll(inviClass.playerid);
+//					webtycoon();
+					var flyRoll = FAW73458({
+						position: (u_global_data.basic_params.ban240pos == 1? 'LEFT_BOTTOM': 'RIGHT_BOTTOM'),
+						width: 400,
+						height: 255,
+						offsetX: 5,
+						offsetY: 5,
+						closeBtnHiddenDuration: 20
+					});
+					if(location.host.indexOf('.vo.uz') == -1){
+						vastPlayerNew_2753Add(flyRoll);
+					}
+					pushiskiped();
+				}
+			} else if (e.data == 'adsComplete' && e.origin === 'https://video-peer.com') {
+				console.log(e.data);
+				if(inviClass.countInit < inviClass.placements.length) {
+					inviClass.newPlayer();
+				} else {
+					if(typeof(console)=='object' && typeof(console.log)=='function') console.log('invi ads ended');
+					u_global_data.preroll_video_57322.removeAll(inviClass.playerid);
+//					webtycoon();
+					pushiskiped();
+				}
+			}
+		}
+	};
+	u_global_data.preroll_video_57322.closetime=20;
+	inviClass.newPlayer();
+}catch(e){u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_error_invi');};
+}
+
+waitforDOM();
+
+function vastPlayer_52372(_url, _tag, _dummy, _success, _ended, _vpparams) {
+	try{
+		if(typeof(u_vastplayer)!='object') window.u_vastplayer = {};
+		if(typeof(u_vastplayer.myJQ)!='function') u_vastplayer.myJQ = typeof(u_global_data)=='object' && typeof(u_global_data.jq)=='function' ? u_global_data.jq : (typeof($)=='function' ? $ : undefined);
+		u_vastplayer[_tag]={};
+		u_vastplayer[_tag].ClickTracking=[];
+
+		if(!_url || _url == '') {
+			_dummy('_urlempty');
+			return;
+		}
+
+
+//_url='https://get.5visions.com/creative/5934/vxj/ecc60d85129.xml';
+window.Trackings = {};
+
+		if(!u_global_data.adbetnet_exp) u_global_data.adbetnet_exp=0;
+		if(XMLHttpRequest){
+			var xhr = new XMLHttpRequest();
+			try{
+					xhr.withCredentials=true;
+					xhr.open('GET', _url, true);
+			}catch(e){
+//				if(_tag=='u_preroll_playeradbetnet') u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_x'+
+//					u_global_data.adbetnet_exp+'_openerr',e.name+'_'+e.message+' '+_url);
+
+//				if(!u_global_data.adbetnet_exp){
+//					u_global_data.adbetnet_exp=1;
+//					vastPlayer_52372('//'+window.location.hostname+'/pn2vjvqln5dw4plz/?'+_url,_tag,_dummy,_success,_ended,_vpparams);
+//				}
+
+			};
+			xhr.onreadystatechange = function(){
+				if (xhr.readyState == 4) {
+					if(xhr.responseXML){
+						showvastPlayer_52372(xhr.responseXML, {}, _tag, _dummy, _success, 0, _ended, _vpparams);
+					}else if(xhr.responseText){
+						showvastPlayer_52372(xhr.responseText, {}, _tag, _dummy, _success, 0, _ended, _vpparams);
+					}else{
+						if(_tag=='u_preroll_playeradbetnet'){
+//							u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_x'+
+//								u_global_data.adbetnet_exp+'_noxml',xhr.status+'_'+xhr.statusText+'_'+xhr.responseType+'_'+xhr.responseText+' '+_url);
+							if(!u_global_data.adbetnet_exp){
+								u_global_data.adbetnet_exp=1;
+								vastPlayer_52372('//'+window.location.hostname+'/pn2vjvqln5dw4plz/?'+_url,_tag,_dummy,_success,_ended,_vpparams);
+							}
+						}
+					}
+				}
+			};
+			xhr.onerror = function(){
+				if(xhr.readyState != 4){
+//					if(_tag=='u_preroll_playeradbetnet') u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_x'+
+//						u_global_data.adbetnet_exp+'_error_'+xhr.status);
+				}
+			};
+			xhr.send();
+		}else{
+//			if(_tag=='u_preroll_playeradbetnet') u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_x'+
+//				u_global_data.adbetnet_exp+'_noXMLHttpRequest');
+		}
+	}catch(e){
+//		if(_tag=='u_preroll_playeradbetnet') u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_x'+
+//			u_global_data.adbetnet_exp+'_expt');
+		_dummy('_except_'+e.name+'_'+e.message);
+	};
+}
+
+function showvastPlayer_52372(vast, conf, _tag, _dummy, _success, _level, _ended, _vpparams) {
+	conf = conf || {};
+
+	if(typeof(u_vastplayer.myJQ)!='function'){
+		_dummy('_nojquery');
+		return;
+	}
+	try {
+		if(typeof(vast) == "string") vast = u_vastplayer.myJQ.parseXML(vast);
+	}catch(e){
+		_dummy('_html2xml_'+e.name+'_'+e.message);
+		return;
+	}
+	top.vast = vast; // зачем нужно?
+
+	var container1 = u_vastplayer.myJQ(vast).find('Linear');
+	var container2 = container1.first();
+	container2.find('ClickTracking').each(function(i,el){
+		var elval=u_vastplayer.myJQ(el).text().trim();
+		u_vastplayer[_tag].ClickTracking.push(elval);
+	});
+
+
+
+
+	var imps = u_vastplayer.myJQ(vast).find('Impression').each(function(sel, el) {
+		new Image().src = u_vastplayer.myJQ(el).text().trim();
+	});
+	var lins = u_vastplayer.myJQ(vast).find('Linear');
+	if (lins.length > 0) {
+		var lin = lins.first();
+		lin.find('Tracking').each(function(i,e){
+			var etype = u_vastplayer.myJQ(e).attr('event');
+			if(Trackings[etype]=='undefined' || typeof(Trackings[etype])!='object') Trackings[etype]=[];
+			Trackings[etype].push({'link':u_vastplayer.myJQ(e).text().trim()});
+		});
+	}
+
+
+
+
+	if(u_vastplayer.myJQ(vast).find('VASTAdTagURI').length>0) {
+		if(!_level) _level = 0;
+		if(_level > 5) {
+			//слишком много вастов в васте - имитирую трафикбек
+			showvastPlayer_52372('', {
+				'errorTrack' : conf.errorTrack,
+				'impressionTrack' : conf.impressionTrack,
+				'clickTrack' : conf.clickTrack
+			}, _tag, _dummy, _success, _level+1, _ended, _vpparams);
+			return;
+		}
+		var url = u_vastplayer.myJQ(vast).find('VASTAdTagURI').first().text().trim();
+		var errorTrack = u_vastplayer.myJQ(vast).find('Error').first().text().trim();
+		var impressionTrack = u_vastplayer.myJQ(vast).find('Impression').first().text().trim();
+		var clickTrack = u_vastplayer.myJQ(vast).find('ClickTracking').first().text().trim();
+
+		var xhr = new XMLHttpRequest();
+
+		try{
+				xhr.withCredentials=true;
+				xhr.open('GET', url, true);
+		}catch(e){
+//			if(_tag=='u_preroll_playeradbetnet') u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_x2_openerr',e.name+'_'+e.message+' '+url);
+		};
+		xhr.onreadystatechange = function(){
+			if (xhr.readyState == 4) {
+				if(xhr.responseXML){
+					showvastPlayer_52372(xhr.responseXML, {
+						'errorTrack' : errorTrack,
+						'impressionTrack' : impressionTrack,
+						'clickTrack' : clickTrack
+					}, _tag, _dummy, _success, _level+1, _ended, _vpparams);
+				}else if(xhr.responseText){
+					showvastPlayer_52372(xhr.responseText, {
+						'errorTrack' : errorTrack,
+						'impressionTrack' : impressionTrack,
+						'clickTrack' : clickTrack
+					}, _tag, _dummy, _success, _level+1, _ended, _vpparams);
+				}else{
+					if(_tag=='u_preroll_playeradbetnet') {
+//						u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_x2_noxml',xhr.status+'_'+xhr.statusText+'_'+xhr.responseType+'_'+xhr.responseText+' '+url);
+						u_global_data.adbetnet_exp=2;
+						var xhr2 = new XMLHttpRequest();
+						xhr2.open('GET', '//'+window.location.hostname+'/pn2vjvqln5dw4plz/?'+url, true);
+						xhr2.onreadystatechange = function(){
+							if (xhr2.readyState == 4) {
+								if(xhr2.responseXML){
+									showvastPlayer_52372(xhr2.responseXML, {
+										'errorTrack' : errorTrack,
+										'impressionTrack' : impressionTrack,
+										'clickTrack' : clickTrack
+									}, _tag, _dummy, _success, _level+1, _ended, _vpparams);
+								}else if(xhr2.responseText){
+									showvastPlayer_52372(xhr2.responseText, {
+										'errorTrack' : errorTrack,
+										'impressionTrack' : impressionTrack,
+										'clickTrack' : clickTrack
+									}, _tag, _dummy, _success, _level+1, _ended, _vpparams);
+								}else{
+//									if(_tag=='u_preroll_playeradbetnet') u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_x3_noxml',xhr2.status+'_'+xhr2.statusText+'_'+xhr2.responseType+'_'+xhr2.responseText+' '+url);
+								}
+							}
+						};
+						xhr2.onerror = function(){
+							if(xhr2.readyState != 4) {
+//								if(_tag=='u_preroll_playeradbetnet') u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_x3_error_'+xhr2.status);
+							}
+						};
+						xhr2.send();
+					}
+				}
+			}
+		};
+		xhr.onerror = function(){
+			if(xhr.readyState != 4) {
+//				if(_tag=='u_preroll_playeradbetnet') u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_x2_error_'+xhr.status);
+			}
+		};
+		xhr.send();
+	} else {
+
+		setTimeout(function(){
+			new Image().src = "//counter.yadro.ru/hit;preroll5sec" + "?r"+escape(document.referrer)+(screen&&";s"+screen.width+"*"+screen.height+"*"+(screen.colorDepth||screen.pixelDepth))+";u"+escape(document.URL)+";"+Date.now();
+
+		}, 5000);
+
+		setTimeout(function(){
+			new Image().src = "//counter.yadro.ru/hit;preroll10sec" + "?r"+escape(document.referrer)+(screen&&";s"+screen.width+"*"+screen.height+"*"+(screen.colorDepth||screen.pixelDepth))+";u"+escape(document.URL)+";"+Date.now();
+
+		}, 10000);
+
+		var safariorchrome = (navigator.userAgent.indexOf('Safari') != -1 || navigator.userAgent.indexOf('Chrome') != -1 ? true : false);
+		var param_width = _vpparams.player_width ? _vpparams.player_width : 720;
+		var param_height = _vpparams.player_height ? _vpparams.player_height : 480;
+
+		var muted = '';
+		if(_tag == 'u_preroll_playeradbetnet'){
+		    muted = ('<img id="volume_video_ucoz" style="position: absolute;bottom: 10px; left: 5px;height: 24px; cursor: pointer; z-index: 100000;" src="/.s/src/adv_scripts/static/muted.png">');
+		}
+//		u_vastplayer.myJQ('#'+_tag).html('<div id="ucoz_vastim"><a target="_blank" id="ucz_video_link"><video'+(_vpparams && _vpparams.soundon && (!safariorchrome) ? '' : ' muted')+(safariorchrome && navigator.userAgent.indexOf('Mobile') != -1 ? ' playsinline autoplay' : '')+' id="ucz_video" class="video-js" preload="auto" width="'+param_width+'" height="'+param_height+'" style="background:black;"></video></a></div>');
+		u_vastplayer.myJQ('#'+_tag).html('<div id="ucoz_vastim" style="position: relative;"><a target="_blank" id="ucz_video_link"><video muted=true playsinline autoplay=true id="ucz_video" class="video-js" preload="auto" width="'+param_width+'" height="'+param_height+'" style="background:black;"></video></a>' + muted +'</div>');
+
+if(_tag=='u_preroll_playeradbetnet') u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_Impression');
+//if(_tag=='u_preroll_playeradbetnet') u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_Impression',u_global_data.basic_params.isadblock ? u_vastplayer.myJQ(vast).find('Impression').text() : '');
+
+		var lins = u_vastplayer.myJQ(vast).find('Linear');
+
+		if (lins.length > 0 && lins.find('MediaFile').length > 0) {
+			if(conf && conf.impressionTrack) {
+				new Image().src = conf.impressionTrack;
+				if(typeof(console)=='object' && typeof(console.log)=='function') console.log('conf.impressionTrack');
+			}
+
+			var lin = lins.first();
+
+			if(Trackings['creativeView']!='undefined' && typeof(Trackings['creativeView'])=='object'){
+				for(var key=0;key<Trackings['creativeView'].length;key++) new Image().src = Trackings['creativeView'][key].link;
+				Trackings['creativeView']=[];
+			}
+
+if(_tag=='u_preroll_playeradbetnet'){
+	var video = document.getElementById("ucz_video");
+	if(video==null || typeof(video)!="object") u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_onnovideodiv');
+	video.autoplay = true;
+	video.onabort = function(){u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_onabort');};
+	video.onerror = function(){u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_onerror');};
+	video.onstalled = function(){u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_onstalled');};
+//	video.onsuspend = function(){u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_onsuspend');};
+	video.onloadstart = function(){u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_onloadstart ');};
+	video.ondurationchange = function(){u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_ondurationchange');};
+	video.onloadedmetadata = function(){u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_onloadedmetadata');};
+	video.onloadeddata = function(){u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_onloadeddata');};
+//	video.onprogress = function(){u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_onprogress');};
+	video.oncanplay = function(){
+		u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_oncanplay');
+		if(Trackings['start']!='undefined' && typeof(Trackings['start'])=='object'){
+			for(var key=0;key<Trackings['start'].length;key++) new Image().src = Trackings['start'][key].link;
+			Trackings['start']=[];
+		}
+	};
+	video.oncanplaythrough = function(){u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_oncanplaythrough');};
+	video.onplay = function(){u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_onplay');};
+
+	if(u_vastplayer.myJQ('#volume_video_ucoz').length){
+		u_vastplayer.myJQ('#volume_video_ucoz').on('click', function() {
+
+			if(video.muted){
+				this.src = "/.s/src/adv_scripts/static/volume.png";
+			}else{
+				this.src = "/.s/src/adv_scripts/static/muted.png";
+			}
+			video.muted = !video.muted;
+		});
+	}
+}
+
+			var link = lin.find('ClickThrough').text().trim();
+			u_vastplayer.myJQ('#ucz_video_link')[0].href = link;
+			u_vastplayer[_tag].ClickThrough=link;
+			u_vastplayer.myJQ('#ucz_video_link').on('click', function() {
+				u_vastplayer[_tag].ClickTracking.forEach(function(element) {
+					new Image().src = element;
+				});
+			});
+			if(window.u_accountclicks != null && typeof(window.u_accountclicks) == 'object' && typeof(window.u_accountclicks.code) === 'function')
+				window.u_accountclicks.code(u_vastplayer[_tag]);
+			var video = document.getElementById("ucz_video");
+
+			video.addEventListener('play', function(e){
+				if(u_global_data.is_u_main_h){
+					setTimeout(function(){
+			            window.postMessage("adbnimp", "*");
+			        }, 2000 + Math.floor(Math.random() * 4000));
+					new Image().src = "//counter.yadro.ru/hit;adbt_counter_p" + "?r"+escape(document.referrer)+(screen&&";s"+screen.width+"*"+screen.height+"*"+(screen.colorDepth||screen.pixelDepth))+";u"+escape(document.URL)+";"+Date.now();
+				}
+			});
+			lin.find('MediaFile').each(function(i, mediafile){
+				var mediafile = u_vastplayer.myJQ(mediafile);
+				var mediafile_url = mediafile.text().trim();
+				var mediafile_type = mediafile.attr('type');
+				var isvpaid = mediafile.attr('apiFramework');
+				if(isvpaid && isvpaid=='VPAID') u_vastplayer[_tag].is_vpaid=1;
+				if(u_vastplayer[_tag].is_vpaid && mediafile_type == "application/javascript") {
+					var vastvideo=document.getElementById("ucz_video");
+					vastvideo.parentNode.removeChild(vastvideo);
+					var adparams=lin.find('AdParameters');
+					if(adparams) adparams=adparams.text().trim();
+					else adparams='';
+					u_vastplayer[_tag].vpaid_data={
+						script:mediafile_url,
+						scriptiframe:'vpaidframe'+_tag,
+						params:adparams,
+						fail:_dummy,
+						success:_success,
+						finish:_ended,
+						gparams:_vpparams
+					};
+					u_vastplayer.myJQ('#'+_tag).html('<div style="position: absolute;"><video id="'+_tag+'v" muted=true preload="auto" style="background:black;"></video></div><div id="'+_tag+'a" style="position:absolute;top:'+u_global_data.preroll_video_57322.height_header+'px;width:'+param_width+'px; height:'+param_height+'px;"></div><iframe id="'+u_vastplayer[_tag].vpaid_data.scriptiframe+'" src="/.s/src/vpaid_proxy.html#'+mediafile_url+'" style="border: 0px; opacity: 1; margin: 0px; padding: 0px;" width="'+param_width+'" height="'+param_height+'" scrolling="no" onload="PlayVPaidJS({event:'+"'create'"+',element:'+"'"+_tag+"'"+'})"></iframe>');
+					return;
+				} else if (!u_vastplayer[_tag].is_vpaid) {
+					var source = document.createElement('source');
+					source.type = mediafile_type;
+					source.src = mediafile_url;
+					document.getElementById("ucz_video").appendChild(source);
+				}
+			});
+			if (u_vastplayer[_tag].is_vpaid==1) return;
+
+			video.addEventListener('timeupdate', function(e){
+				if( video.currentTime/video.duration > 0.75 ) {
+					if(Trackings['thirdQuartile']!='undefined' && typeof(Trackings['thirdQuartile'])=='object'){
+						for(var key=0;key<Trackings['thirdQuartile'].length;key++) new Image().src = Trackings['thirdQuartile'][key].link;
+						Trackings['thirdQuartile']=[];
+					}
+				} else if( video.currentTime/video.duration > 0.5 ) {
+					if(Trackings['midpoint']!='undefined' && typeof(Trackings['midpoint'])=='object'){
+						for(var key=0;key<Trackings['midpoint'].length;key++) new Image().src = Trackings['midpoint'][key].link;
+						Trackings['midpoint']=[];
+					}
+				} else if( video.currentTime/video.duration > 0.25 ) {
+					if(Trackings['firstQuartile']!='undefined' && typeof(Trackings['firstQuartile'])=='object'){
+						for(var key=0;key<Trackings['firstQuartile'].length;key++) new Image().src = Trackings['firstQuartile'][key].link;
+						Trackings['firstQuartile']=[];
+					}
+				}
+			});
+			video.addEventListener('ended', function(){
+				if( video.currentTime/video.duration > 0.9 ) {
+					if(Trackings['complete']!='undefined' && typeof(Trackings['complete'])=='object'){
+						for(var key=0;key<Trackings['complete'].length;key++) new Image().src = Trackings['complete'][key].link;
+						Trackings['complete']=[];
+					} else if(Trackings['engagedView']!='undefined' && typeof(Trackings['engagedView'])=='object'){
+						for(var key=0;key<Trackings['engagedView'].length;key++) new Image().src = Trackings['engagedView'][key].link;
+						Trackings['engagedView']=[];
+					}
+				}
+				if(typeof(_ended)=='function'){
+					_ended();
+				}
+			});
+
+//			try{
+//				if(video!=null && typeof(video.play)=='function') video.play();
+//			}catch(e){
+//u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_ErrPlay_'+e);
+//			};
+
+if(_tag=='u_preroll_playeradbetnet') u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_ImpressionEnd');
+
+			if(typeof(_success)=='function'){
+				_success();
+			}
+		} else {
+if(_tag=='u_preroll_playeradbetnet') u_counter(u_global_data.basic_params.site_type+'_'+u_global_data.basic_params.isadblock+'_ErrMediaFile');
+
+			var nonlins = u_vastplayer.myJQ(vast).find('Error').each(function(sel, el) {
+				new Image().src = u_vastplayer.myJQ(el).text().trim();
+			});
+			if(conf && conf.errorTrack) {
+				new Image().src = conf.errorTrack;
+				if(typeof(console)=='object' && typeof(console.log)=='function') console.log('conf.errorTrack');
+			}
+			_dummy('_linormedia');
+		}
+	}
+}
+
+function PlayVPaidJS(mode, param1){
+	var tracking = u_vastplayer[mode.element].vpaid_data.tracking;
+	console.log('Event: '+mode.event);
+//	var a = JSON.stringify(u_vastplayer[mode.element]);
+//	console.log(JSON.parse(a));
+	if(mode.event=='create'){
+		for(var key=0; key < tracking.length; key++) {
+			if(tracking[key].type == 'creativeView'){
+				new Image().src = tracking[key].link;
+			}
+		}
+		var VPAIDCreative = document.getElementById(u_vastplayer[mode.element].vpaid_data.scriptiframe);
+		if(VPAIDCreative == null || typeof(VPAIDCreative) != 'object'){
+			console.log('getVPAIDAd not a frame');
+			if(typeof(u_vastplayer[mode.element].vpaid_data.fail)=='function') u_vastplayer[mode.element].vpaid_data.fail();
+			return;
+		}
+		VPAIDCreative=VPAIDCreative.contentWindow['getVPAIDAd'];
+		if (VPAIDCreative && typeof VPAIDCreative == 'function') {
+			VPAIDCreative = VPAIDCreative();
+		}else{
+			console.log('getVPAIDAd not a function');
+			if(typeof(u_vastplayer[mode.element].vpaid_data.fail)=='function') u_vastplayer[mode.element].vpaid_data.fail();
+			return;
+		}
+		if(!VPAIDCreative.handshakeVersion || typeof(VPAIDCreative.handshakeVersion) != "function"){
+			console.log('handshakeVersion not a function');
+			if(typeof(u_vastplayer[mode.element].vpaid_data.fail)=='function') u_vastplayer[mode.element].vpaid_data.fail();
+			return;
+		}
+		if(!VPAIDCreative.initAd || typeof(VPAIDCreative.initAd) != "function"){
+			console.log('initAd not a function');
+			if(typeof(u_vastplayer[mode.element].vpaid_data.fail)=='function') u_vastplayer[mode.element].vpaid_data.fail();
+			return;
+		}
+		if(!VPAIDCreative.startAd || typeof(VPAIDCreative.startAd) != "function"){
+			console.log('startAd not a function');
+			if(typeof(u_vastplayer[mode.element].vpaid_data.fail)=='function') u_vastplayer[mode.element].vpaid_data.fail();
+			return;
+		}
+		if(!VPAIDCreative.stopAd || typeof(VPAIDCreative.stopAd) != "function"){
+			console.log('stopAd not a function');
+			if(typeof(u_vastplayer[mode.element].vpaid_data.fail)=='function') u_vastplayer[mode.element].vpaid_data.fail();
+			return;
+		}
+		if(!VPAIDCreative.skipAd || typeof(VPAIDCreative.skipAd) != "function"){
+			console.log('skipAd not a function');
+			if(typeof(u_vastplayer[mode.element].vpaid_data.fail)=='function') u_vastplayer[mode.element].vpaid_data.fail();
+			return;
+		}
+		if(!VPAIDCreative.subscribe || typeof(VPAIDCreative.subscribe) != "function" ||
+			!VPAIDCreative.unsubscribe || typeof(VPAIDCreative.unsubscribe) != "function"){
+			console.log('*subscribe not a function');
+			if(typeof(u_vastplayer[mode.element].vpaid_data.fail)=='function') u_vastplayer[mode.element].vpaid_data.fail();
+			return;
+		}
+		u_vastplayer[mode.element].vpaid_data.creative=VPAIDCreative;
+		var status=VPAIDCreative.handshakeVersion("2.0");
+		console.log('handshakeVersion: '+status);
+		var CreativeData={};
+		var environmentVars={};
+		CreativeData.AdParameters = u_vastplayer[mode.element].vpaid_data.params;
+		var slot = document.getElementById(mode.element+'a');
+		if(slot == null || typeof(slot) != 'object'){
+			console.log('div not exists: '+mode.element+'a');
+			if(typeof(u_vastplayer[mode.element].vpaid_data.fail)=='function') u_vastplayer[mode.element].vpaid_data.fail();
+			return;
+		}
+		environmentVars.slot = slot;
+		slot = document.getElementById(mode.element+'v');
+		if(slot == null || typeof(slot) != 'object'){
+			console.log('div not exists: '+mode.element+'v');
+			if(typeof(u_vastplayer[mode.element].vpaid_data.fail)=='function') u_vastplayer[mode.element].vpaid_data.fail();
+			return;
+		}
+		environmentVars.videoSlot = slot;
+		environmentVars.videoSlotCanAutoPlay = true;
+		PlayVPaidJS({event:'subscribeall',element:mode.element});
+		u_vastplayer[mode.element].vpaid_data.timerid=setTimeout(function(){
+			console.log('initAd timeout');
+			u_vastplayer[mode.element].vpaid_data.timerid=null;
+			PlayVPaidJS({event:'AdError',element:mode.element});
+		},30000);
+		console.log('call initAd');
+
+		setTimeout(function(){
+			VPAIDCreative.initAd(
+				u_vastplayer[mode.element].vpaid_data.gparams.player_width || 640,
+				u_vastplayer[mode.element].vpaid_data.gparams.player_height || 400,
+				'normal',
+				500,
+				CreativeData,
+				environmentVars
+			)},
+		100);
+	}else if(mode.event=='AdLoaded'){
+		if (u_vastplayer[mode.element].vpaid_data.timerid){
+			clearTimeout(u_vastplayer[mode.element].vpaid_data.timerid);
+			u_vastplayer[mode.element].vpaid_data.timerid=null;
+		}
+		u_vastplayer[mode.element].vpaid_data.timerid=setTimeout(function(){
+			console.log('startAd timeout');
+			u_vastplayer[mode.element].vpaid_data.timerid=null;
+			PlayVPaidJS({event:'AdError',element:mode.element});
+		},30000);
+		console.log('AdLoaded: call startAd, adLinear='+u_vastplayer[mode.element].vpaid_data.creative.adLinear+', adVolume='+
+			u_vastplayer[mode.element].vpaid_data.creative.adVolume);
+		setTimeout(function(){u_vastplayer[mode.element].vpaid_data.creative.startAd()},100);
+	}else if(mode.event=='AdStarted'){
+		if (u_vastplayer[mode.element].vpaid_data.timerid){
+			clearTimeout(u_vastplayer[mode.element].vpaid_data.timerid);
+			u_vastplayer[mode.element].vpaid_data.timerid=null;
+		}
+		console.log('AdStarted: adLinear='+u_vastplayer[mode.element].vpaid_data.creative.adLinear+', adVolume='+
+			u_vastplayer[mode.element].vpaid_data.creative.adVolume);
+if(u_vastplayer[mode.element].vpaid_data.creative.adVolume>0){
+	u_vastplayer[mode.element].vpaid_data.creative.pauseAd();
+	u_vastplayer[mode.element].vpaid_data.creative.adVolume=0;
+	u_vastplayer[mode.element].vpaid_data.creative.resumeAd();
+}
+		if(typeof(u_vastplayer[mode.element].vpaid_data.success)=='function') u_vastplayer[mode.element].vpaid_data.success();
+	}else if(mode.event=='AdSkippableStateChange'){
+		console.log('SkippableState: '+u_vastplayer[mode.element].vpaid_data.creative.adSkippableState);
+	}else if(mode.event=='AdSizeChange'){
+		console.log('Width: '+u_vastplayer[mode.element].vpaid_data.creative.adWidth+', Height: '+u_vastplayer[mode.element].vpaid_data.creative.adHeight);
+	}else if(mode.event=='AdLinearChange'){
+		console.log('Linear state: '+u_vastplayer[mode.element].vpaid_data.creative.adLinear);
+	}else if(mode.event=='AdDurationChange'){
+		console.log('Duration: '+u_vastplayer[mode.element].vpaid_data.creative.adDuration+', RemainingTime: '+u_vastplayer[mode.element].vpaid_data.creative.adRemainingTime);
+	}else if(mode.event=='AdExpandedChange'){
+		console.log('Expanded state: '+u_vastplayer[mode.element].vpaid_data.creative.adExpanded);
+	}else if(mode.event=='AdRemainingTimeChange'){
+		console.log('RemainingTime: '+u_vastplayer[mode.element].vpaid_data.creative.adRemainingTime);
+	}else if(mode.event=='AdVolumeChange'){
+		console.log('Volume: '+u_vastplayer[mode.element].vpaid_data.creative.adVolume);
+	}else if(mode.event=='AdImpression'){
+		console.log('User-visible phase of the ad has begun');
+	}else if(mode.event=='AdVideoStart'){
+		if(typeof(Trackings) != 'undefined' && Trackings['start']!='undefined' && typeof(Trackings['start'])=='object'){
+			console.log('call start trackings');
+            for(var key=0;key<Trackings['start'].length;key++) new Image().src = Trackings['start'][key].link;
+            Trackings['start']=[];
+        }
+		for(var key=0; key < tracking.length; key++) {
+			if(tracking[key].type == 'start'){
+				new Image().src = tracking[key].link;
+			}
+		}
+		console.log('Percent complete: 0');
+	}else if(mode.event=='AdVideoFirstQuartile'){
+		for(var key=0; key < tracking.length; key++) {
+			if(tracking[key].type == 'firstQuartile'){
+				new Image().src = tracking[key].link;
+			}
+		}
+		console.log('Percent complete: 25');
+	}else if(mode.event=='AdVideoMidpoint'){
+		for(var key=0; key < tracking.length; key++) {
+			if(tracking[key].type == 'midpoint'){
+				new Image().src = tracking[key].link;
+			}
+		}
+		console.log('Percent complete: 50');
+	}else if(mode.event=='AdVideoThirdQuartile'){
+		for(var key=0; key < tracking.length; key++) {
+			if(tracking[key].type == 'thirdQuartile'){
+				new Image().src = tracking[key].link;
+			}
+		}
+		console.log('Percent complete: 75');
+	}else if(mode.event=='AdVideoComplete'){
+		for(var key=0; key < tracking.length; key++) {
+			if(tracking[key].type == 'complete'){
+				new Image().src = tracking[key].link;
+			}
+		}
+		console.log('Percent complete: 100');
+	}else if(mode.event=='AdInteraction'){
+		console.log('User tracking: '+param1);
+	}else if(mode.event=='AdUserAcceptInvitation'){
+		console.log('User action');
+	}else if(mode.event=='AdUserMinimize'){
+		console.log('User action');
+	}else if(mode.event=='AdUserClose'){
+		console.log('User action');
+	}else if(mode.event=='AdPaused'){
+		console.log('Ad paused');
+	}else if(mode.event=='AdPlaying'){
+		console.log('User resumed, adVolume='+u_vastplayer[mode.element].vpaid_data.creative.adVolume);
+	}else if(mode.event=='AdLog'){
+		console.log('Log: '+param1);
+	}else if(mode.event=='AdClickThru'){
+		u_vastplayer[mode.element].ClickTracking.forEach(function(element) {
+			console.log('vpaid call ClickTracking url: '+element);
+			new Image().src = element;
+		});
+		console.log('param1:'+JSON.stringify(param1));
+		if(typeof(param1)=='object' && typeof(param1.data)=='object' && param1.data.url) window.open(param1.data.url,'_blank');
+		else if(u_vastplayer[mode.element].ClickThrough) window.open(u_vastplayer[mode.element].ClickThrough,'_blank');
+	}else if(mode.event=='AdSkipped' || mode.event=='AdStopped'){
+		PlayVPaidJS({event:'unsubscribeall',element:mode.element});
+		u_vastplayer.myJQ('#'+mode.element).html('');
+		u_vastplayer[mode.element].vpaid_data.creative=null;
+		if(typeof(u_vastplayer[mode.element].vpaid_data.finish)=='function') u_vastplayer[mode.element].vpaid_data.finish();
+	}else if(mode.event=='AdError'){
+		if (u_vastplayer[mode.element].vpaid_data.timerid){
+			clearTimeout(u_vastplayer[mode.element].vpaid_data.timerid);
+			u_vastplayer[mode.element].vpaid_data.timerid=null;
+		}
+		PlayVPaidJS({event:'unsubscribeall',element:mode.element});
+		u_vastplayer.myJQ('#'+mode.element).html('');
+		u_vastplayer[mode.element].vpaid_data.creative=null;
+		if(typeof(u_vastplayer[mode.element].vpaid_data.fail)=='function') u_vastplayer[mode.element].vpaid_data.fail();
+	}else if(mode.event=='subscribeall'){
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(){PlayVPaidJS({event:'AdLoaded',element:mode.element})},'AdLoaded');
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(){PlayVPaidJS({event:'AdStarted',element:mode.element})},'AdStarted');
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(){PlayVPaidJS({event:'AdStopped',element:mode.element})},'AdStopped');
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(){PlayVPaidJS({event:'AdSkipped',element:mode.element})},'AdSkipped');
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(){PlayVPaidJS({event:'AdSkippableStateChange',element:mode.element})},'AdSkippableStateChange');
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(){PlayVPaidJS({event:'AdSizeChange',element:mode.element})},'AdSizeChange');
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(){PlayVPaidJS({event:'AdLinearChange',element:mode.element})},'AdLinearChange');
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(){PlayVPaidJS({event:'AdDurationChange',element:mode.element})},'AdDurationChange');
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(){PlayVPaidJS({event:'AdExpandedChange',element:mode.element})},'AdExpandedChange');
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(){PlayVPaidJS({event:'AdRemainingTimeChange',element:mode.element})},'AdRemainingTimeChange');
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(){PlayVPaidJS({event:'AdVolumeChange',element:mode.element})},'AdVolumeChange');
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(){PlayVPaidJS({event:'AdImpression',element:mode.element})},'AdImpression');
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(){PlayVPaidJS({event:'AdVideoStart',element:mode.element})},'AdVideoStart');
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(){PlayVPaidJS({event:'AdVideoFirstQuartile',element:mode.element})},'AdVideoFirstQuartile');
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(){PlayVPaidJS({event:'AdVideoMidpoint',element:mode.element})},'AdVideoMidpoint');
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(){PlayVPaidJS({event:'AdVideoThirdQuartile',element:mode.element})},'AdVideoThirdQuartile');
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(){PlayVPaidJS({event:'AdVideoComplete',element:mode.element})},'AdVideoComplete');
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(){PlayVPaidJS({event:'AdClickThru',element:mode.element})},'AdClickThru');
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(tracking){PlayVPaidJS({event:'AdInteraction',element:mode.element},tracking)},'AdInteraction');
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(){PlayVPaidJS({event:'AdUserAcceptInvitation',element:mode.element})},'AdUserAcceptInvitation');
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(){PlayVPaidJS({event:'AdUserMinimize',element:mode.element})},'AdUserMinimize');
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(){PlayVPaidJS({event:'AdUserClose',element:mode.element})},'AdUserClose');
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(){PlayVPaidJS({event:'AdPaused',element:mode.element})},'AdPaused');
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(){PlayVPaidJS({event:'AdPlaying',element:mode.element})},'AdPlaying');
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(message){PlayVPaidJS({event:'AdLog',element:mode.element},message)},'AdLog');
+		u_vastplayer[mode.element].vpaid_data.creative.subscribe(function(error){PlayVPaidJS({event:'AdError',element:mode.element},error)},'AdError');
+		console.log('all subscribed');
+	}else if(mode.event=='unsubscribeall'){
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(){PlayVPaidJS({event:'AdLoaded',element:mode.element})},'AdLoaded');
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(){PlayVPaidJS({event:'AdStarted',element:mode.element})},'AdStarted');
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(){PlayVPaidJS({event:'AdStopped',element:mode.element})},'AdStopped');
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(){PlayVPaidJS({event:'AdSkipped',element:mode.element})},'AdSkipped');
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(){PlayVPaidJS({event:'AdSkippableStateChange',element:mode.element})},'AdSkippableStateChange');
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(){PlayVPaidJS({event:'AdSizeChange',element:mode.element})},'AdSizeChange');
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(){PlayVPaidJS({event:'AdLinearChange',element:mode.element})},'AdLinearChange');
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(){PlayVPaidJS({event:'AdDurationChange',element:mode.element})},'AdDurationChange');
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(){PlayVPaidJS({event:'AdExpandedChange',element:mode.element})},'AdExpandedChange');
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(){PlayVPaidJS({event:'AdRemainingTimeChange',element:mode.element})},'AdRemainingTimeChange');
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(){PlayVPaidJS({event:'AdVolumeChange',element:mode.element})},'AdVolumeChange');
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(){PlayVPaidJS({event:'AdImpression',element:mode.element})},'AdImpression');
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(){PlayVPaidJS({event:'AdVideoStart',element:mode.element})},'AdVideoStart');
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(){PlayVPaidJS({event:'AdVideoFirstQuartile',element:mode.element})},'AdVideoFirstQuartile');
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(){PlayVPaidJS({event:'AdVideoMidpoint',element:mode.element})},'AdVideoMidpoint');
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(){PlayVPaidJS({event:'AdVideoThirdQuartile',element:mode.element})},'AdVideoThirdQuartile');
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(){PlayVPaidJS({event:'AdVideoComplete',element:mode.element})},'AdVideoComplete');
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(){PlayVPaidJS({event:'AdClickThru',element:mode.element})},'AdClickThru');
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(tracking){PlayVPaidJS({event:'AdInteraction',element:mode.element},tracking)},'AdInteraction');
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(){PlayVPaidJS({event:'AdUserAcceptInvitation',element:mode.element})},'AdUserAcceptInvitation');
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(){PlayVPaidJS({event:'AdUserMinimize',element:mode.element})},'AdUserMinimize');
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(){PlayVPaidJS({event:'AdUserClose',element:mode.element})},'AdUserClose');
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(){PlayVPaidJS({event:'AdPaused',element:mode.element})},'AdPaused');
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(){PlayVPaidJS({event:'AdPlaying',element:mode.element})},'AdPlaying');
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(message){PlayVPaidJS({event:'AdLog',element:mode.element},message)},'AdLog');
+		u_vastplayer[mode.element].vpaid_data.creative.unsubscribe(function(error){PlayVPaidJS({event:'AdError',element:mode.element},error)},'AdError');
+		console.log('all unsubscribed');
+	}
+
+	return;
+}
+
+
+function vastPlayerNew_2753(param){
+	var param = param;
+	var url;
+	var mediaFiles = [];
+	var count = 0;
+	var callback = {};
+	var safariorchrome = (navigator.userAgent.indexOf('Safari') != -1 || navigator.userAgent.indexOf('Chrome') != -1 ? true : false);
+
+	var defaultAds = {
+		url: param.not_video.url,
+		video: param.not_video.video,
+		click_tr: param.not_video.click_tr,
+		impressionTrack: param.not_video.impressionTrack
+	};
+
+	var previewAds = {
+		url: param.preview_video.url,
+		video: param.preview_video.video,
+		click_tr: param.preview_video.click_tr,
+		impressionTrack: param.preview_video.impressionTrack
+	};
+
+	//var html = param.vast_ended;
+	is_track = {};
+	if(typeof(u_vastplayer)!='object') window.u_vastplayer = {};
+	if(typeof(u_vastplayer.myJQ)!='function') u_vastplayer.myJQ = typeof(u_global_data)=='object' && typeof(u_global_data.jq)=='function' ? u_global_data.jq : (typeof($)=='function' ? $ : undefined);
+
+	u_vastplayer[param.wrapperId]={};
+	u_vastplayer[param.wrapperId].ClickTracking=[];
+
+	function init(conf){
+		if(conf){
+			callback = conf;
+		}
+
+		if(conf.tracker){
+			new Image().src = "//counter.yadro.ru/hit;" + conf.tracker + "?r"+escape(document.referrer)+(screen&&";s"+screen.width+"*"+screen.height+"*"+(screen.colorDepth||screen.pixelDepth))+";u"+escape(document.URL)+";"+Date.now();
+			findVast();
+		}
+	}
+
+	function findVast(){
+		try{
+
+			if(!param.urls[0] || param.urls[0] == '') {
+				callback.error('_urlempty');
+				return;
+			}
+			url = param.urls.shift();
+			if(XMLHttpRequest){
+				var xhr = new XMLHttpRequest();
+				try{
+					xhr.withCredentials=true;
+					xhr.open('GET', url.url, true);
+				}catch(e){
+				};
+				xhr.onreadystatechange = function(){
+					if (xhr.readyState == 4) {
+						var response = (xhr.responseXML ? xhr.responseXML: xhr.responseText);
+//						if(!response){
+//							return;
+//						}
+						count++;
+						findVideo(response, mediaFiles, url.volumebtn==1 ? 1:0);
+					}
+				};
+				xhr.send();
+			}
+		}catch(e){
+			callback.error('_except_'+e.name+'_'+e.message);
+		};
+	}
+
+	function findVideo(vast, media, volumebtn){
+
+		if(typeof(u_vastplayer.myJQ)!='function'){
+			callback.error('_nojquery');
+			return;
+		}
+		//if(typeof(console)=='object' && typeof(console.log)=='function') console.log(vast);
+		try {
+			if(typeof(vast) == "string") vast = u_vastplayer.myJQ.parseXML(vast);
+		}catch(e){
+			return;
+		};
+		// if(typeof(console)=='object' && typeof(console.log)=='function') console.log(vast);
+		var container = u_vastplayer.myJQ(vast).find('Ad');
+
+		container.each(function(i, el){
+			media[i] = {
+				ClickTracking: [],
+				errorTrack: [],
+				impressionTrack: [],
+				tracking: [],
+				vASTAdTagURI: undefined,
+				next: [],
+				ClickThrough: '',
+				is_tycoon: volumebtn ? true : false,
+				mediaFile: undefined
+			};
+			u_vastplayer.myJQ(el).find('ClickTracking').each(function(j, ell){
+				var elval = u_vastplayer.myJQ(ell).text().trim();
+				media[i].ClickTracking.push(elval);
+				//todo
+				u_vastplayer[param.wrapperId].ClickTracking.push(elval);
+			});
+
+			//Когда не нашли видео в итоге
+			u_vastplayer.myJQ(el).find('Error').each(function(j, ell){
+				var elval = u_vastplayer.myJQ(ell).text().trim();
+				media[i].errorTrack.push(elval);
+				//todo
+				u_vastplayer[param.wrapperId].ClickTracking.push(elval);
+			});
+
+
+			u_vastplayer.myJQ(el).find('Tracking').each(function(j, ell){
+				var etype = u_vastplayer.myJQ(ell).attr('event');
+				media[i].tracking.push({'type':etype,'link':u_vastplayer.myJQ(ell).text().trim()}); //Когда начинается воспроизведение
+			});
+
+			u_vastplayer.myJQ(el).find('Impression').each(function(j, ell){
+				var elval = u_vastplayer.myJQ(ell).text().trim();
+				media[i].impressionTrack.push(elval); //Когда начинается воспроизведение
+			});
+
+			var vastAdTagURI = u_vastplayer.myJQ(el).find('VASTAdTagURI');
+
+			if(vastAdTagURI.length > 0 ) {
+
+				media[i].vASTAdTagURI = vastAdTagURI.first().text().trim(); // Если wrapper
+
+				var xhr = new XMLHttpRequest();
+				try{
+					xhr.withCredentials = true;
+					xhr.open('GET', media[i].vASTAdTagURI, true);
+				}catch(e){
+				};
+
+				xhr.onreadystatechange = function(){
+					if (xhr.readyState == 4) {
+
+						var response = (xhr.responseXML ? xhr.responseXML: xhr.responseText);
+						if(!response){
+							count--;
+							return;
+						}
+						media[i].next = [];
+						findVideo(response, media[i].next, volumebtn);
+					}
+				};
+				xhr.onerror = function(){
+					count--;
+				};
+				count++;
+				xhr.send();
+
+			} else {
+				media[i].clickThrough = u_vastplayer.myJQ(el).find('ClickThrough').first().text().trim();
+				media[i].mediaFile = u_vastplayer.myJQ(el).find('MediaFiles').first();
+
+				var adparams = u_vastplayer.myJQ(el).find('AdParameters');
+				if(adparams) media[i].adParameters = adparams.text().trim();
+				else media[i].adParameters = '';
+			}
+
+		});
+		count--;
+		if(count <= 0){
+			//var a = JSON.stringify(mediaFiles);
+			//console.log(JSON.parse(a));
+			if(defaultAds.url && !param.urls[0]){
+				var mfs = document.createElement('MediaFiles');
+				mfs.style.display = 'none';
+				document.body.appendChild(mfs);
+				u_vastplayer.myJQ(mfs).append('<MediaFile delivery="progressive" type="video/mp4" width="1280" height="720" scalable="true" maintainAspectRatio="true">' + defaultAds.video + '</MediaFile>');
+				mediaFiles.push({
+					mediaFile: u_vastplayer.myJQ(mfs),
+					clickThrough: defaultAds.url,
+					ClickTracking: defaultAds.click_tr,
+					errorTrack: [],
+					impressionTrack: defaultAds.impressionTrack,
+					tracking: [],
+					vASTAdTagURI: undefined,
+					is_tycoon: true,
+					repeat: true,
+					next: []
+				});
+			}
+			//if(previewAds.url && (['ua', 'by', 'kz', 'uz', 'ge', 'am'].indexOf(u_global_data.basic_params.user_country) >= 0)){
+			if(0){
+				var mfs = document.createElement('MediaFiles');
+				mfs.style.display = 'none';
+				document.body.appendChild(mfs);
+				u_vastplayer.myJQ(mfs).append('<MediaFile delivery="progressive" type="video/mp4" width="1280" height="720" scalable="true" maintainAspectRatio="true">' + previewAds.video + '</MediaFile>');
+				mediaFiles.unshift({
+					mediaFile: u_vastplayer.myJQ(mfs),
+					clickThrough: previewAds.url,
+					ClickTracking: previewAds.click_tr,
+					errorTrack: [],
+					impressionTrack: previewAds.impressionTrack,
+					tracking: [],
+					vASTAdTagURI: undefined,
+					is_tycoon: true,
+					repeat: false,
+					next: []
+				});
+				previewAds.url = '';
+			}
+
+			vastView(mediaFiles, mediaFiles[0]); //mediaFiles[0] там хранятся треки первого уровня
+		}
+	}
+
+	function vastView(media, tracking){
+		var a = JSON.stringify(mediaFiles);
+
+		if(media.length){
+			if(media[0].next && media[0].next.length){
+				vastView(media[0].next, tracking);
+			} else {
+				var cellMedia = media.shift();
+				var muted = '';
+				if(cellMedia.is_tycoon){
+					muted = ('<img id="volume_video_ucoz" style="position: absolute;bottom: 30px;right: 5px;height: 24px;cursor: pointer;" src="/.s/src/adv_scripts/static/' + (param.soundon && (!safariorchrome) ? 'volume' : 'muted') + '.png">');
+				}
+				if(cellMedia.mediaFile){
+					u_vastplayer.myJQ('#'+param.wrapperId).html('<div id="ucoz_vastim"><a target="_blank" id="ucz_video_link"><video'+(param.soundon && (!safariorchrome) ? '' : ' muted=true')+(safariorchrome && navigator.userAgent.indexOf('Mobile') != -1 ? ' playsinline autoplay' : '')+' id="ucz_video" class="video-js" preload="auto" width="'+param.player_width+'" height="'+param.player_height+'" style="background:black;" ' + (cellMedia.repeat? 'loop="loop"': '') + '></video></a>' + muted +'</div>');
+					cellMedia.impressionTrack.forEach(function(sel) {
+						new Image().src = sel;
+					});
+
+					if(tracking && tracking.impressionTrack){
+						tracking.impressionTrack.forEach(function(element) {
+							new Image().src = element;
+						});
+					}
+					//if(typeof(console)=='object' && typeof(console.log)=='function') console.log('impressionTrack');
+
+					var link = cellMedia.clickThrough;
+					u_vastplayer.myJQ('#ucz_video_link')[0].href = link;
+					u_vastplayer[param.wrapperId].ClickThrough=link;
+
+					u_vastplayer.myJQ('#ucz_video_link').on('click', function() {
+						cellMedia.ClickTracking.forEach(function(element) {
+							new Image().src = element;
+						});
+
+						if(tracking && tracking.ClickTracking){
+							tracking.ClickTracking.forEach(function(element) {
+								new Image().src = element;
+							});
+						}
+					});
+					if(u_vastplayer.myJQ('#volume_video_ucoz').length){
+						u_vastplayer.myJQ('#volume_video_ucoz').on('click', function() {
+							var vastvideo = document.getElementById("ucz_video");
+
+							if(vastvideo.muted){
+								this.src = "/.s/src/adv_scripts/static/volume.png";
+							}else{
+								this.src = "/.s/src/adv_scripts/static/muted.png";
+							}
+							vastvideo.muted = !vastvideo.muted;
+						});
+					}
+
+					if(window.u_accountclicks != null && typeof(window.u_accountclicks) == 'object' && typeof(window.u_accountclicks.code) === 'function')
+						window.u_accountclicks.code(u_vastplayer[param.wrapperId]);
+
+					if(cellMedia.mediaFile.find('MediaFile').length == 0){
+						cellMedia.errorTrack.forEach(function(el) {
+							new Image().src = el;
+						});
+
+						if(tracking && tracking.errorTrack){
+							tracking.errorTrack.forEach(function(element) {
+								new Image().src = element;
+							});
+						}
+
+						param.error('_linormedia');
+						vastView(mediaFiles, tracking);
+						return;
+					}
+					if(!cellMedia.is_tycoon){
+						console.log('VIEW: ' + url.track);
+						if(url.track && !is_track[url.track]){
+							new Image().src = "//counter.yadro.ru/hit;" +url.track + "?r"+escape(document.referrer)+(screen&&";s"+screen.width+"*"+screen.height+"*"+(screen.colorDepth||screen.pixelDepth))+";u"+escape(document.URL)+";"+Date.now();
+							is_track[url.track] = 1;
+						}
+						if(url.track == 'flyroll_profits'){
+							var timer = 0;
+
+							var _ve_content_start = function(e){
+								if(e.origin != 'https://widget.svk-native.ru'){
+
+									if(timer){
+										clearTimeout(timer);
+									}
+
+									timer = setTimeout(function(){
+										if(url.track == 'flyroll_profits'){
+											vastView(mediaFiles, tracking);
+										}
+										clearTimeout(timer);
+									}, 15000);
+
+									//if(e.data == '_ve_content_start'){
+										//vastView(mediaFiles);
+									//}
+								}
+							};
+
+							window.removeEventListener("message", _ve_content_start, false);
+							window.addEventListener("message", _ve_content_start, false);
+						}
+					}
+					cellMedia.mediaFile.find('MediaFile').each(function(i, mediafile){
+
+						var mediafile = u_vastplayer.myJQ(mediafile);
+						var mediafile_url = mediafile.text().trim();
+						var mediafile_type = mediafile.attr('type');
+						var isvpaid = mediafile.attr('apiFramework');
+						//if(isvpaid && isvpaid=='VPAID') u_vastplayer[param.wrapperId].is_vpaid = 1;
+						u_vastplayer[param.wrapperId].is_vpaid = (isvpaid && isvpaid=='VPAID' ? 1 : 0);
+
+						if(u_vastplayer[param.wrapperId].is_vpaid && mediafile_type == "application/javascript") {
+
+//							return false;
+							//Временно без vpaid
+							var vastvideo=document.getElementById("ucz_video");
+							vastvideo.parentNode.removeChild(vastvideo);
+
+							u_vastplayer[param.wrapperId].vpaid_data = {
+								script: mediafile_url,
+								scriptiframe: 'vpaidframe'+param.wrapperId,
+								params: cellMedia.adParameters,
+								fail: finishVast,
+								success: callback.success,
+								finish: finishVast,
+								gparams: param,
+								tracking: tracking.tracking
+								//Добавить необходимые параметры
+							};
+							u_vastplayer.myJQ('#'+param.wrapperId).html('<div id="'+param.wrapperId+'wrpv" style="position: absolute; width:'+param.player_width+'px; height:'+param.player_height+'px;"><video id="'+param.wrapperId+'v" muted=true preload="auto" style="background:black;"></video></div><div id="'+param.wrapperId+'a" style="width:'+param.player_width+'px; height:'+param.player_height+'px; position: relative;"></div><iframe id="'+u_vastplayer[param.wrapperId].vpaid_data.scriptiframe+'" src="/.s/src/vpaid_proxy.html#'+mediafile_url+'" style="position: absolute; border: 0px; opacity: 1; margin: 0px; padding: 0px;" width="'+param.player_width+'" height="'+param.player_height+'" scrolling="no" onload="PlayVPaidJS({event:'+"'create'"+',element:'+"'"+param.wrapperId+"'"+'})"></iframe>');
+
+						} else if (!u_vastplayer[param.wrapperId].is_vpaid) {
+							var source = document.createElement('source');
+							source.type = mediafile_type;
+							source.src = mediafile_url;
+							document.getElementById("ucz_video").appendChild(source);
+						}
+					});
+
+					if (u_vastplayer[param.wrapperId].is_vpaid==1) {
+//						vastView(mediaFiles);
+					}else{
+						var video = document.getElementById("ucz_video");
+
+						video.addEventListener('timeupdate', function(e){
+							for(var key=0; key < cellMedia.tracking.length; key++) {
+								if(cellMedia.tracking[key]) {
+									if(cellMedia.tracking[key].type == 'start'){
+										new Image().src = cellMedia.tracking[key].link;
+										cellMedia.tracking[key] = null;
+									} else if(cellMedia.tracking[key].type == 'firstQuartile'){
+										if( video.currentTime/video.duration > 0.25 ) {
+											new Image().src = cellMedia.tracking[key].link;
+											cellMedia.tracking[key] = null;
+										}
+									} else if(cellMedia.tracking[key].type == 'midpoint'){
+										if( video.currentTime/video.duration > 0.5 ) {
+											new Image().src = cellMedia.tracking[key].link;
+											cellMedia.tracking[key] = null;
+										}
+									} else if(cellMedia.tracking[key].type == 'thirdQuartile'){
+										if( video.currentTime/video.duration > 0.75 ) {
+											new Image().src = cellMedia.tracking[key].link;
+											cellMedia.tracking[key] = null;
+										}
+									}
+								}
+							}
+						});
+						video.addEventListener('ended', function(){
+							for(var key=0; key < cellMedia.tracking.length; key++) {
+								if(cellMedia.tracking[key]) {
+									if(cellMedia.tracking[key].type == 'complete' || cellMedia.tracking[key].type == 'engagedView'){
+										if( video.currentTime/video.duration > 0.9 ) {
+											new Image().src = cellMedia.tracking[key].link;
+											cellMedia.tracking[key] = null;
+										}
+									}
+								}
+							}
+							vastView(mediaFiles, tracking);
+						});
+
+						try{
+							video.play();
+						}catch(e){};
+						if(typeof(_success)=='function'){
+							callback.success();
+						}
+					}
+				} else {
+					vastView(mediaFiles, tracking);
+				}
+  		  	}
+		} else{
+			if(param.urls.length){
+				findVast();
+				return;
+			}
+			callback.ended();
+		}
+
+	}
+
+	function finishVast(){
+		vastView(mediaFiles);
+	}
+
+	return {
+		init: init
+	};
+}
+
+function FAW73458(params) {
+    var positions = {
+        RIGHT_BOTTOM: 'RIGHT_BOTTOM',
+        LEFT_BOTTOM: 'LEFT_BOTTOM',
+        RIGHT_TOP: 'RIGHT_TOP',
+        LEFT_TOP: 'LEFT_TOP'
+    };
+	var addHeight = 53;
+	var wrapperContent;
+
+	params.width    = (params.width !== undefined ? params.width: 355);
+	params.height   = (params.height !== undefined ? params.height: 200);
+	params.position = (params.position !== undefined ? params.position: positions.RIGHT_BOTTOM);
+	params.offsetX  = (params.offsetX !== undefined ? params.offsetX: 13);
+	params.offsetY  = (params.offsetY !== undefined ? params.offsetY: 13);
+	params.closeBtnHiddenDuration = (params.closeBtnHiddenDuration? params.closeBtnHiddenDuration: 20);
+
+    var wrapper = createWrapper();
+
+	document.body.appendChild(wrapper);
+
+	wrapper.appendChild(createVideoAdWrapper());
+
+	var btn = createCloseBtn(params.closeBtnHiddenDuration);
+
+    wrapper.appendChild(btn);
+
+	addVideoWrappers();
+	wrapperContent = document.getElementById('vmainadsdv' + u_global_data.basic_params.rndid);
+
+    function createWrapper() {
+        var wrapper = document.createElement('div');
+
+        wrapper.style.position = 'fixed';
+        wrapper.style.zIndex = '999999';
+        wrapper.style.width = params.width + 'px';
+        wrapper.style.height = params.height + addHeight + 'px';
+        //wrapper.style.background = 'black';
+
+        switch(params.position) {
+            case positions.RIGHT_BOTTOM:
+                wrapper.style.right = params.offsetX + 'px';
+                wrapper.style.bottom = params.offsetY + 'px';
+				params.pos = 1;
+                break;
+
+            case positions.RIGHT_TOP:
+                wrapper.style.right = params.offsetX + 'px';
+                wrapper.style.top = params.offsetY + 'px';
+				params.pos = 1;
+                break;
+
+            case positions.LEFT_BOTTOM:
+                wrapper.style.left = params.offsetX + 'px';
+                wrapper.style.bottom = params.offsetY + 'px';
+				params.pos = 0;
+                break;
+
+            case positions.LEFT_TOP:
+                wrapper.style.left = params.offsetX + 'px';
+                wrapper.style.top = params.offsetY + 'px';
+				params.pos = 0;
+                break;
+        }
+
+        return wrapper;
+	}
+
+	function createWrapperContent(){
+		var myuniqid = 'video_wrapper';
+		var wrapperContent = document.createElement('div');
+		wrapperContent.style.height = '100%';
+		wrapperContent.id = myuniqid;
+
+		return wrapperContent;
+	}
+
+    function createCloseBtn(Duration) {
+		var closeDuration = Duration;
+        var closeBtn = document.createElement('div');
+		closeBtn.style.display = 'none';
+        closeBtn.style.position = 'absolute';
+        closeBtn.style.top = '28px';
+		closeBtn.style[(params.pos? 'left': 'right')] = '0px';
+        closeBtn.style.width = '32px';
+        closeBtn.style.height = '32px';
+        closeBtn.style.borderRadius = '50%';
+        closeBtn.style.background = '#111111';
+        closeBtn.style.color = 'white';
+        closeBtn.style.textAlign = 'center';
+        closeBtn.style.lineHeight = '19px';
+        closeBtn.style.transform = 'translate(' + (params.pos? '-50%': '50%') + ', -50%)';
+        closeBtn.style.fontSize = '14px';
+        closeBtn.style.cursor = 'pointer';
+        closeBtn.style.userSelect = 'none';
+		closeBtn.style.fontWeight = 600;
+		closeBtn.style.boxShadow = '0px 4px 4px rgba(0, 0, 0, 0.25)';
+		closeBtn.style.zIndex = '20000';
+
+		var cellBtn = document.createElement('span');
+		cellBtn.style.position = 'absolute';
+		cellBtn.style.top = '50%';
+		cellBtn.style.left = '50%';
+		cellBtn.style.transform = 'translate(-50%, -50%)';
+		cellBtn.style.width = '100%';
+
+		closeBtn.appendChild(cellBtn);
+        cellBtn.innerHTML = Duration ? Duration :'&times;';
+
+		var closeBtnId = setInterval(function(){
+			if(closeDuration-- <= 1){
+				closeBtn.style.display = 'block';
+				cellBtn.innerHTML = '&times;';
+				cellBtn.addEventListener('click', function() {
+					destroy();
+				}, { once: true });
+				clearInterval(closeBtnId);
+			} else {
+				cellBtn.innerHTML = closeDuration;
+			}
+		}, 1000);
+        return closeBtn;
+    }
+
+	function insertContent(content) {
+        if (!content) {
+            return;
+        }
+            $(wrapperContent).html(content);
+    }
+
+    function appendContent(content) {
+        if (!content) {
+            return;
+        }
+
+        if (typeof content === 'string') {
+            wrapperContent.insertAdjacentHTML("beforeend", content);
+        }
+
+        if (content instanceof HTMLElement) {
+            wrapperContent.insertAdjacentElement("beforeend", content);
+        }
+    }
+
+	function createVideoAdWrapper(){
+		mdiv = document.createElement('div');
+		mdiv.id = 'dVi' + u_global_data.basic_params.rndid;
+		mdiv.setAttribute('style','width:100%;height:100%;overflow:hidden;z-index:2147483642;margin:0;padding:0;background:none;');
+
+		// СНГ
+		var isCis = 1; //['ru', 'ua', 'by', 'kz', 'uz', 'ge', 'am'].indexOf(u_global_data.basic_params.user_country) >= 0;
+		var footerBackgroundColor = isCis ? '#4caf50' : '#b72222';
+		var footerYouTubeIconName = isCis ? 'Vector' : 'yt-icon';
+		var footerVkIconName = isCis ? 'Vector' : 'icn-vk-logo';
+
+		mdiv.innerHTML+='<table border="0" cellspacing="0" cellpadding="0" id="video'+u_global_data.basic_params.rndid+'" style="padding:0;margin:0;">'+
+		'<tr>'+
+		'<td style="padding:0;margin:0;vertical-align:top;">'+
+		'<style type="text/css">'+
+		'a.a-close-link {font: 10px/14px "Tahoma", "Arial" !important;color: #3e3e3e !important;text-decoration: underline !important;margin: 0 !important;background:#ffffff;border-radius:3px;-moz-border-radius:3px;padding:0 4px;}'+
+		'a.a-close-link:hover {text-decoration: none !important;}'+
+		'a.a-buttons {text-transform: uppercase !important;font: 14px/25px "Tahoma", "Trebuchet MS", "Arial" !important;text-decoration: none !important;display: block;height: 25px !important;}'+
+		'a.a-buttons span {display: block !important; text-align: center !important; height:25px;line-height: 23px !important; padding: 0 12px !important;}'+
+		'a.a-buttons span img {vertical-align: middle; padding-right: 5px;}'+
+		'a.green-butv span {background-color: #3F5A86; border-radius: 3px 3px 3px 3px; color: #fff;}'+
+		'a.blue-butv span {background-color: #6aaac3; border-radius: 0px 0px 3px 3px;}'+
+		'a.vk-but { background-image: linear-gradient(to bottom, #4d6d8f, #3f5d7d);border-bottom-left-radius: 6px;border-bottom-right-radius: 6px;padding-right: 7px;padding-top: 1px;}'+
+		'a.a-buttons.a-vk span span {background: url(//'+u_global_data.basic_params.server+'.ucoz.net/ucoz/img/uads/' + footerVkIconName + '.png) no-repeat 0 5px; text-shadow: none;color: #fff;text-transform: none;font-size: 12px;letter-spacing: 0.5px;font-family: sans-serif;}'+
+		'a.yt-but { background: ' + footerBackgroundColor + ';border-bottom-left-radius: 6px;border-bottom-right-radius: 6px;padding-right: 7px;padding-top: 1px;}'+
+		'a.a-buttons.a-yt span span {background: url(/.s/src/adv_scripts/static/' + footerYouTubeIconName + '.png) no-repeat 0 5px; text-shadow: none;color: #fff;text-transform: none;font-size: 12px;letter-spacing: 0.5px;font-family: sans-serif;}'+
+		'a.a-buttons.a-check span span {background: url(//'+u_global_data.basic_params.server+'.ucoz.net/ucoz/img/uads/b-ico-check.png) no-repeat 0 5px;}'+
+		'.vmainadsdvcl{background:#000;overflow:hidden;text-align:left;margin:0;padding:0;width:' + params.width + 'px;height:' + params.height + 'px;position:relative;}'+
+		'</style>'+
+		'<div id="v_u_ablock_toplink" style="height: 25px; min-width: 10px; margin: 0;padding: 0;background: none; margin-bottom: 3px; float : ' + (params.pos ? 'right;' : 'left;') + '"></div>'+
+		'<div id="vmainadsdv'+u_global_data.basic_params.rndid+'" class="vmainadsdvcl"></div>'+
+		'<div id="v_u_ablock_bottomlink" style="margin: 0;padding: 0;background: none;"></div>'+
+		'</td></tr></table>';
+
+		return mdiv;
+	}
+
+	function addVideoWrappers(){
+		if (u_global_data.basic_params.site_lng=='US') {
+			uWVL8326149('top', '<a target="_blank" title="Advertising" class="a-buttons green-butv "><span>Advertising</span></a>');
+			uWVL8326149('bottom', '<a href="https://www.ucoz.com/" target="_blank" class="a-buttons blue-butv a-check"><span><span>Create free website</span></span></a>');
+		} else {
+			var isChrome = (window.navigator && navigator.userAgent
+				&& navigator.userAgent.indexOf('Chrome') >= 0
+				&& navigator.userAgent.indexOf('YaBrowser') < 0
+				&& navigator.userAgent.indexOf('Mobile') < 0
+				&& navigator.userAgent.indexOf('Android') < 0
+				&& navigator.userAgent.indexOf('iPhone') < 0
+				&& navigator.userAgent.indexOf('iPad') < 0
+				&& navigator.userAgent.indexOf('iPod') < 0
+				&& navigator.userAgent.indexOf('OPR') < 0
+				&& navigator.userAgent.indexOf('UCBrowser') < 0
+				&& navigator.userAgent.indexOf('Amigo') < 0
+			 ? true : false);
+			 //http://dev010.ucozmedia.com/.s/src/uadsoff6.js
+			 ////"+u_global_data.basic_params.server+".ucoz.net/src/uadsoff6.js
+			//uWVL8326149('top', '<a href="javascript://" onclick="new _uWnd('+"'SMSPAYFORM','Отключить рекламу',-550,-400,{popup:1,modal:1,resize:0,autosize:0,align:'justify'},'&lt;div id=&quot;ads_window&quot; class=&quot;ads_window&quot;>"+"&lt;/div>&lt;style type=&quot;text/css&quot;>.xw-active, .x-sh{display:none;} div.myWinGrid{z-index:2147483642!important;height:100%!important;}div.uwnd-uran-br{z-index:2147483643!important;}div.uwnd-uran-br div.xw-plain{width: auto !important;}div#_umenu0{z-index:2147483644!important;} &lt;/style>&lt;script type=&quot;text/javascript&quot; src=&quot;//" + location.host + "/.s/src/uadsoff6.js?r=9&quot;>&lt;/script>');return false;"+'" title="Отключить рекламу на всех сайтах системы uCoz" class="a-buttons green-butv a-clock"><span><img src="//'+u_global_data.basic_params.server+'.ucoz.net/ucoz/img/uads/b-ico-clock.png">Отключить рекламу</span></a>');
+
+			uWVL8326149('top', '');
+
+			/*if (u_global_data.basic_params.user_country == 'ge' && Math.random() < 0.5) {
+				uWVL8326149('bottom', '<a href="https://ukit.com/en/lp/adaptive/?utm_source=ucoz-advnet&utm_medium=banner-cover&utm_campaign=innerads-georgia-banner-cover" target="_blank" class="a-buttons blue-butv a-check"><span><span>Создать сайт</span></span></a>');
+			} else {
+				if (Math.random() < 1/3) {
+					uWVL8326149('bottom', '<a href="https://ukit.com/ru/lp/convert-vk?utm_source=ucoz-advnet&utm_medium=banner-bottom-wrap&utm_campaign=converter" target="_blank" class="a-buttons vk-but a-vk"><span><span>Создать сайт из ВКонтакте</span></span></a>');
+				} else {
+					uWVL8326149('bottom', '<a href="https://ucoz.ru/" target="_blank" class="a-buttons blue-butv a-check"><span><span>Создать сайт</span></span></a>');
+				}
+			}*/
+
+			// СНГ
+			var isCis = 1; //['ru', 'ua', 'by', 'kz', 'uz', 'ge', 'am'].indexOf(u_global_data.basic_params.user_country) >= 0;
+			var bannerText = isCis ? 'Заработок на просмотре видео' : 'БЕСПЛАТНОЕ ПРОДВИЖЕНИЕ В YOUTUBE';
+			var bannerLink = 'https://bit.ly/45UzrVn';
+
+			uWVL8326149('bottom', '<a href="' + bannerLink + '" target="_blank" class="a-buttons yt-but a-yt"><span><span>' + bannerText + '</span></span></a>');
+		}
+	}
+
+	function getId(){
+		return wrapper.id;
+	}
+
+	function getIdContent(){
+		return wrapperContent.id;
+	}
+
+    function destroy() {
+        wrapper.remove();
+		// crCatFish();
+    }
+
+    return {
+        appendContent: appendContent,
+		insertContent: insertContent,
+		destroy: destroy,
+		getId: getId,
+		getIdContent: getIdContent
+    };
+}
+
+// function crCatFish(){
+//
+// 	let ucoz_rndid = u_global_data && u_global_data.basic_params.rndid ? u_global_data.basic_params.rndid: 'idcrCatFish';
+//
+// 	function abn_show() {
+// 		var zoneToSkip = '.vo.uz';
+//
+// 		if (location.host.indexOf(zoneToSkip) === location.host.length - zoneToSkip.length) {
+// 			return;
+// 		}
+// 		new Image().src = "//counter.yadro.ru/hit;ucoz100x70?r"+escape(document.referrer)+(screen&&";s"+screen.width+"*"+screen.height+"*"+(screen.colorDepth||screen.pixelDepth))+";u"+escape(document.URL)+";"+Date.now();
+// 		document.getElementById(ucoz_rndid).innerHTML = '<div class="ztefRq445"></div>';
+// 		window.k_init = window.k_init || [];
+// 		k_init.push({
+// 			id: 'ztefRq445',
+// 			type: 'bn',
+// 			domain: 'cchdbond.com',
+// 			refresh: false,
+// 			next: 0
+// 		});
+//
+// 		var s = document.createElement('script');
+// 		s.setAttribute('async', true);
+// 		s.setAttribute('charset', 'utf-8');
+// 		s.setAttribute('data-cfasync', false);
+// 		s.src = 'https://cchdbond.com/a25d3rq0.js';
+// 		document.head && document.head.appendChild(s);
+// 	}
+//
+// 	document.body.insertAdjacentHTML('beforeend', `<div style="background-color: #FFF;height: 100px;position: fixed;bottom: 0px;width: 100%;max-width: 1200px;left: 50%;transform: translateX(-50%);z-index:2147483647">
+// 		<div onclick="this.parentElement.style.display='none';return false;" style="color: black;font-size: 20px;z-index: 2147483647; top: 2px; right: 2px; text-align: right; cursor: pointer; position: absolute;">
+// 			&#10006;
+// 		</div>
+// 	<div id="${ucoz_rndid}" style="width: 100%"></div></div>`);
+// 	abn_show();
+// }
+
+function vastPlayerNew_2753Add(flyRoll){
+	/*
+	,
+	{
+		url: 'https://adprofits.ru/show_player.php?vast=1&id=55',
+		track: 'adprofits'
+	}
+	u_global_data.basic_params.user_country == 'ru'
+	*/
+	var domain = window.location.host;
+
+	var urls = [];
+	if(['ru'].indexOf(u_global_data.basic_params.user_country) >= 0){
+		urls.push({
+			url: 'https://a.adlook.tech/vpaid/03mqNPOd1PUd7YbiMXE7aSEItOSqToQBiuEVbexspb8.xml',
+			track: '',
+			volumebtn: 1
+		});
+	}
+
+	if(['ua', 'by', 'kz', 'uz', 'ge', 'am', 'md', 'az', 'tj', 'kg', 'tm'].indexOf(u_global_data.basic_params.user_country) >= 0){
+		urls.push({
+			url: 'https://z.cdn.trafficbass.com/load?o=v&z=1436196514&random='+Math.random(),
+			track: '',
+			volumebtn: 1
+		});
+	}
+
+
+	urls.push({
+		url: 'https://ad.moe.video/vast?pid=10215&vpt=inbanner&advertCount=10&vt=vpaid&vl=0&rnd=' + Math.random() + '&referrer=' + encodeURI(location.href),
+		track: 'flyroll_moevideo'
+	});
+
+	if(['ru'].indexOf(u_global_data.basic_params.user_country) >= 0){
+		urls.push({
+			url: 'https://ssp.bidvol.com/vast/pl23608?domain=' + location.host + '&page=[your_page]',
+			track: ''
+		});
+	}
+
+	// var cn = {'by':1,'kz':1,'uz':1,'am':1, 'md':1, 'az':1, 'tj':1, 'kg':1, 'tm':1, 'ua':1, 'ge':1, 'ru': 1};
+
+
+	/*if(['ru'].indexOf(u_global_data.basic_params.user_country) >= 0){
+		urls.push({
+			url: 'https://vtg1.rktch.com/v0?i=11961&url=' + location.href,
+			track: 'programmatic_flyroll'
+		});
+	}*/
+
+	// if(['ru', 'ua', 'by', 'kz', 'uz', 'ge', 'am'].indexOf(u_global_data.basic_params.user_country) >= 0){
+	// 	urls.push({
+	// 		url: '//cdn-rtb.sape.ru/rtb-b/vast/453/547453.xml',
+	// 		track: 'flyroll_sape_view'
+	// 	});
+	// }
+
+	// if(['ru'].indexOf(u_global_data.basic_params.user_country) >= 0){
+	// 	urls.push({
+	// 		url: 'https://static.kost.tv/vpaid/temp/vpaid-1339.xml',
+	// 		track: 'kosttv_flyroll'
+	// 	});
+	// }
+
+	/*urls.push({
+		url: 'https://z.cdn.trafficbass.com/media?m=1711424527',
+		track: 'trafficbass'
+	});*/
+
+	var player = new vastPlayerNew_2753({
+		'urls': urls,
+		'wrapperId': flyRoll.getIdContent(),
+		'soundon' : 0,
+		'player_width' : 400,
+		'player_height' : 255,
+		'preview_video': {
+			'url': 'https://gamelinks.ru/stream/flyroll',
+			'video': '/.s/src/adv_scripts/static/gsb.mp4',
+			'click_tr': [],
+			'impressionTrack': ["//counter.yadro.ru/hit;gamebet_view?r"+escape(document.referrer)+(screen&&";s"+screen.width+"*"+screen.height+"*"+(screen.colorDepth||screen.pixelDepth))+";u"+escape(document.URL)+";"+Date.now()]
+		},
+		'not_video': {
+			'url': '',  // http://qgpqq.abtr4all.com/c/7736d682be0ce52c?subid_1=flyroll
+			'video': '', // /.s/flash/bnr/wot_fly.mp4
+			'click_tr': ["//counter.yadro.ru/hit;flyroll_click_wot?r"+escape(document.referrer)+(screen&&";s"+screen.width+"*"+screen.height+"*"+(screen.colorDepth||screen.pixelDepth))+";u"+escape(document.URL)+";"+Date.now()],
+			'impressionTrack': ["//counter.yadro.ru/hit;flyroll_game_wot?r"+escape(document.referrer)+(screen&&";s"+screen.width+"*"+screen.height+"*"+(screen.colorDepth||screen.pixelDepth))+";u"+escape(document.URL)+";"+Date.now()]
+		}
+	});
+
+	function initPushes() {
+		// var cn ={'by':1,'kz':1,'uz':1,'am':1, 'md':1, 'az':1, 'tj':1, 'kg':1, 'tm':1, 'ua':1, 'ge':1, ru: 1};
+
+		// if(cn[u_global_data.basic_params.user_country]){
+		// 	(function(){
+		// 		var script = document.createElement('script');
+		// 		script.type = 'text/javascript';
+		// 		script.charset = 'utf-8';
+		// 		script.async = 'async';
+		// 		script.dataset.cfasync = 'false';
+		// 		script.src = '//inpagepush.com/400/3056382';
+		// 		document.body.appendChild(script);
+		// 	})();
+		// } else {
+		// 	(function(){
+		// 		var script = document.createElement('script');
+		// 		script.type = 'text/javascript';
+		// 		script.charset = 'utf-8';
+		// 		script.async = 'async';
+		// 		script.dataset.cfasync = 'false';
+		// 		script.src = '//inpagepush.com/400/3076852';
+		// 		document.body.appendChild(script);
+		// 	})();
+		// }
+	};
+
+	player.init({
+		error: function(msg){
+			if(typeof(console)=='object' && typeof(console.log)=='function') console.log(flyRoll.getIdContent() + ' no ads ' + msg);
+
+			var cn = {'ru': 1,'by':1,'kz':1,'uz':1,'am':1, 'md':1, 'az':1, 'tj':1, 'kg':1, 'tm':1, 'ua':1, 'ge':1};
+
+			if(cn[u_global_data.basic_params.user_country]){
+				// window.addEventListener("message", function(e){
+				// 	if((typeof e.data == 'object') && e.data.eventName){
+				// 		if(e.data.eventName == 'COMPLETE'){
+				// 			flyRoll.destroy();
+				// 		}
+				// 	}
+				// });
+				// flyRoll.destroy();
+				// flyRoll.insertContent(`<iframe src="https://sportrecs.com/redirect/embed/4qOOzviNGdhjHgb8ZEDjuw/GHLsaPFyXNp8yTSci6MV5w" referrerpolicy="unsafe-url" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen style="height:100%;left:0;position:absolute;top:0;width:100%;"></iframe>`);
+				new Image().src = "//counter.yadro.ru/hit;browsersUcoz?r"+escape(document.referrer)+(screen&&";s"+screen.width+"*"+screen.height+"*"+(screen.colorDepth||screen.pixelDepth))+";u"+escape(document.URL)+";"+Date.now();
+				flyRoll.insertContent(`<a target="_blank" href="https://browsers.ucoz.ru/?utm_source=ucoz&amp;utm_medium=websites&amp;utm_campaign=400x255"><div style="background-image: url('http://dev010.ucozmedia.com/.s/src/adv_scripts/static/yabro.png');height: 100%;width: 100%;"></div></a>`);
+			} else {
+				flyRoll.destroy();
+			}
+			//flyRoll.destroy();
+			initPushes();
+		},
+
+		success: function(){
+			if(typeof(console)=='object' && typeof(console.log)=='function') console.log(flyRoll.getIdContent() + ' success');
+		},
+
+		ended: function(){
+			if(typeof(console)=='object' && typeof(console.log)=='function') console.log('ads ended');
+
+			var cn = {'ru': 1,'by':1,'kz':1,'uz':1,'am':1, 'md':1, 'az':1, 'tj':1, 'kg':1, 'tm':1, 'ua':1, 'ge':1};
+			if(cn[u_global_data.basic_params.user_country]){
+				// window.addEventListener("message", function(e){
+				// 	if((typeof e.data == 'object') && e.data.eventName){
+				// 		if(e.data.eventName == 'COMPLETE'){
+				// 			flyRoll.destroy();
+				// 		}
+				// 	}
+				// });
+				// flyRoll.destroy();
+				new Image().src = "//counter.yadro.ru/hit;browsersUcoz?r"+escape(document.referrer)+(screen&&";s"+screen.width+"*"+screen.height+"*"+(screen.colorDepth||screen.pixelDepth))+";u"+escape(document.URL)+";"+Date.now();
+				flyRoll.insertContent(`<a target="_blank" href="https://browsers.ucoz.ru/?utm_source=ucoz&amp;utm_medium=websites&amp;utm_campaign=400x255"><div style="background-image: url('http://dev010.ucozmedia.com/.s/src/adv_scripts/static/yabro.png');height: 100%;width: 100%;"></div></a>`);
+
+
+			} else {
+				flyRoll.destroy();
+			}
+			//flyRoll.destroy();
+			initPushes();
+		},
+		tracker: 'flyroll_show_all'
+	});
+}
+
+function u_analitics(){
+	(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+	m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+	(window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+	ym(55880941, "init", {
+		clickmap:true,
+		trackLinks:true,
+		accurateTrackBounce:true
+	});
+
+	var ganal = document.createElement("script");
+	ganal.src = 'https://www.googletagmanager.com/gtag/js?id=UA-150660922-1';
+	ganal.onload = function(){
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+		gtag('config', 'UA-150660922-1');
+	};
+    document.getElementsByTagName('head')[0].appendChild(ganal);
+
+	new Image().src = "//counter.yadro.ru/hit;preroll_adbetnet?r"+escape(document.referrer)+(screen&&";s"+screen.width+"*"+screen.height+"*"+(screen.colorDepth||screen.pixelDepth))+";u"+escape(document.URL)+";"+Date.now();
+}

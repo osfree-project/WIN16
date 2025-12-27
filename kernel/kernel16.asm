@@ -26,7 +26,11 @@ public pascal eWinFlags
 public GetExePtr
 public GetProcAddress
 public GetModuleHandle
-public Dos3Call
+
+; DOS API
+externdef pascal Dos3Call:far
+externdef pascal NetBiosCall:far
+
 ;externdef pascal SetWinFlags: far
 
 externdef pascal _lopen:far
@@ -158,6 +162,8 @@ externdef pascal Yield: far
 externdef pascal OldYield: far
 externdef pascal DirectedYield: far
 
+externdef pascal GetVersion:far
+
 ; Selectors
 externdef pascal AllocSelector: far
 externdef pascal FreeSelector: far
@@ -206,7 +212,6 @@ externdef pascal GetWinFlags: far
 	include fixups.inc
 	include debug.inc
 	include debuger.inc
-	include version.inc
 	include pusha.inc
 
 DGROUP group _TEXT,CCONST,_DATA
@@ -248,13 +253,6 @@ FatalExit proc far pascal
 	@Exit RC_FATAL
 FatalExit endp
 
-GetVersion proc far pascal
-	@GetVer
-	mov dx,ax
-	xchg dh,dl
-	mov ax,0A03h		; Windows 3.10
-	ret
-GetVersion endp
 
 WaitEvent proc far pascal hTask:word
 	ret
@@ -364,16 +362,6 @@ externdef doscall: near
 NoHookDOSCall proc far pascal
 	call doscall
 NoHookDOSCall endp
-
-Dos3Call proc far pascal
-	int 21h
-	ret
-Dos3Call endp
-
-NetBiosCall proc far pascal
-	int 5ch
-	ret
-NetBiosCall endp
 
 SetErrorMode proc far pascal
 	pop cx
@@ -668,7 +656,7 @@ __AHINCR equ eINCR.wOfs
 	ENTRY <1,IsTaskLocked>		;122
 	ENTRY <1,KbdRst>		;123
 	ENTRY <1,EnableKernel>		;124
-	db 3,0				;124-126
+	db 2,0				;125-126
 	db 3,1
 	ENTRY <1,GetPrivateProfileInt>	;127
 	ENTRY <1,GetPrivateProfileString>	;128

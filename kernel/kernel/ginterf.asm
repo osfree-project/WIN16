@@ -31,14 +31,16 @@
 
 externdef pascal _hmemset:far
 externdef discardmem:near
-externdef eWinFlags:near
 externdef TH_HGLOBALHEAP:word
 externdef TH_PGLOBALHEAP:word
+externdef pascal eWinFlags:near
+externdef pascal GetFreeSpace:far
 
-?LARGEALLOC	equ 1	;1=allow more than 1 MB with GlobalAlloc/Realloc/Free
+?LARGEALLOC	equ 0	;1=allow more than 1 MB with GlobalAlloc/Realloc/Free
 
 _TEXT segment
 
+if 0
 GlobalSize proc far pascal
 	pop bx
 	pop cx
@@ -134,6 +136,7 @@ GlobalUnlock proc far pascal
 	push cx
 	@return
 GlobalUnlock endp
+endif
 
 ;--- GlobalAlloc(WORD flags, DWORD dwSize);
 ;--- according to win31 docs max size is 16 MB - 64 kB on a 80386
@@ -572,12 +575,16 @@ exit:
 
 GlobalReAlloc endp
 
+if 0
 GlobalUnfix proc far pascal
 GlobalUnfix endp
+endif
+
 GlobalFix proc far pascal
 	@return 2
 GlobalFix endp
 
+if 0
 GlobalHandle proc far pascal
 	pop cx
 	pop dx
@@ -587,7 +594,7 @@ GlobalHandle proc far pascal
 	mov dx,ax
 	@return
 GlobalHandle endp
-
+endif
 ;--- DWORD GlobalCompact(DWORD);
 ;--- returns the largest free memory object if dwMinFree != 0
 
@@ -610,6 +617,7 @@ GlobalCompact proc far pascal dwMinFree:DWORD
 	ret
 GlobalCompact endp
 
+if 0
 GetFreeSpace proc far pascal
 	push es
 	push di
@@ -644,12 +652,7 @@ exit:
 	ret
 GetFreeMemInfo endp
 
-GlobalMasterHandle proc far pascal uses ds
-	@SetKernelDS
-	mov	ax,TH_HGLOBALHEAP
-	mov	dx,TH_PGLOBALHEAP
-	ret
-GlobalMasterHandle endp
+endif
 
 _TEXT ends
 

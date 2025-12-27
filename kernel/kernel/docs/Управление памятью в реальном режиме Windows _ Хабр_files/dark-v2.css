@@ -1,0 +1,177 @@
+:root {
+  /* сделать это через переменные scss */
+  --alto: #ddd;
+  --alto-rgb: 221, 221, 221;
+  --romance-dark: #fff;
+  --romance-dark-rgb: 255, 255, 255;
+  --abbey: #4d4d4d;
+  --bermuda-gray: #6c8694;
+  --buccaneer: #603339;
+  --bunker: #171717;
+  --bunker-rgb: 23, 23, 23;
+  --cadillac: #c95e70;
+  --carnation: #ff7373;
+  --carnation-rgb: 255, 115, 115;
+  --cedar: #39181a;
+  --cod-gray: #080808;
+  --cod-gray-rgb: 8, 8, 8;
+  --curious-blue: #3193c4;
+  --curious-blue-rgb: 49, 147, 196;
+  --deepsky-blue: #4cb7eb;
+  --deepsky-blue-rgb: 76, 183, 235;
+  --elephant: #1a334d;
+  --firefly: #1a2328;
+  --fruit-salad: #3b9b5b;
+  --fruit-salad-rgb: 59, 155, 91;
+  --geraldine: #ff8f84;
+  --heliotrope: #f07ee6;
+  --hot-pink: #e064b7;
+  --hot-pink-rgb: 224, 100, 183;
+  --ironside-gray: #666;
+  --ironside-gray-rgb: 102, 102, 102;
+  --khaki: #e4e481;
+  --light-green: #7eec97;
+  --light-green-rgb: 126, 236, 151;
+  --lightsky-blue: #80d6ff;
+  --mantis: #91c15d;
+  --mantis-rgb: 145, 193, 93;
+  --pastel-green: #78da85;
+  --pink-flamingo: #d65aff;
+  --pink-flamingo-rgb: 214, 90, 255;
+  --pistachio: #84b300;
+  --pistachio-rgb: 132, 179, 0;
+  --portage: #5aacff;
+  --portage-rgb: 90, 172, 255;
+  --seagull: #89ccee;
+  --seagull-rgb: 134, 204, 238;
+  --seaweed: #222e14;
+  --shady-lady: #aaa;
+  --shady-lady-rgb: 170, 170, 170;
+  --spray: #00e2f7;
+  --spray-rgb: 0, 226, 247;
+  --sunglo: #f47676;
+  --sunglo-rgb: 244, 118, 118;
+  --sunshade: #ff9f40;
+  --sunshade-rgb: 255, 159, 64;
+  --thunder: #262626;
+  --waiouru: #313d14;
+  --wistful: #a0a1d7;
+  --wistful-rgb: 160, 161, 215;
+  --woodsmoke: #0d0d0d;
+  --woodsmoke-rgb: 13, 13, 13;
+  --bracken: #3e2704;
+  --mine-shaft: var(--alto);
+  --mine-shaft-rgb: var(--alto-rgb);
+
+  --mountain-mist: var(--shady-lady);
+  --silver: var(--abbey);
+  --romance: var(--bunker);
+  --romance-rgb: var(--bunker-rgb);
+  --horizon: var(--deepsky-blue);
+  --horizon-rgb: var(--deepsky-blue-rgb);
+  --astral: var(--lightsky-blue);
+  --fuzzy-wuzzy-brown: var(--carnation);
+  --fuzzy-wuzzy-brown-rgb: var(--carnation-rgb);
+  --christi: var(--pistachio);
+  --christi-rgb: var(--pistachio-rgb);
+  --vida-loca: var(--mantis);
+  --vida-loca-rgb: var(--mantis-rgb);
+  --asphalt: var(--romance-dark);
+  --asphalt-rgb: var(--romance-dark-rgb);
+  --shark: var(--cod-gray);
+  --shark-rgb: var(--cod-gray-rgb);
+  --limed-spruce: var(--woodsmoke);
+  --limed-spruce-rgb: var(--woodsmoke-rgb);
+  --seashell: var(--cod-gray);
+  --seashell-rgb: var(--cod-gray-rgb);
+  --desert-storm: var(--thunder);
+  --rolling-stone: var(--shady-lady);
+  --rolling-stone-rgb: var(--shady-lady-rgb);
+  --gull-gray: var(--ironside-gray);
+  --gull-gray-rgb: var(--ironside-gray-rgb);
+  --loblolly: var(--bermuda-gray);
+  --frost: var(--seaweed);
+  --linen: var(--cedar);
+  --aqua-haze: var(--firefly);
+  --header-footer-text: var(--romance-dark);
+  --header-footer-text-rgb: var(--romance-dark-rgb);
+  --my-comment: var(--bracken);
+  --gull-gray-line: rgba(var(--gull-gray-rgb), 0.4);
+
+  /* complexity */
+  --cerulean: var(--curious-blue);
+  --cerulean-rgb: var(--curious-blue-rgb);
+  --mandy: var(--cadillac);
+  --emerald: var(--fruit-salad);
+  --emerald-rgb: var(--fruit-salad-rgb);
+
+  /* comments */
+  --solitude: var(--elephant);
+  --misty-rose: var(--buccaneer);
+  --gossip: var(--waiouru);
+
+  /* megapost header */
+  --anakiwa: var(--seagull);
+  --mint-green: var(--pastel-green);
+  --lavender-rose: var(--heliotrope);
+  --mona-lisa: var(--geraldine);
+  --pale-canary: var(--khaki);
+
+  /* labels */
+  --dodger-blue: var(--portage);
+  --dodger-blue-rgb: var(--portage-rgb);
+  --sorbus: var(--sunshade);
+  --sorbus-rgb: var(--sunshade-rgb);
+  --scarlet: var(--sunglo);
+  --scarlet-rgb: var(--sunglo-rgb);
+  --apple: var(--light-green);
+  --apple-rgb: var(--light-green-rgb);
+  --deluge: var(--wistful);
+  --deluge-rgb: var(--wistful-rgb);
+  --dark-orchid: var(--pink-flamingo);
+  --dark-orchid-rgb: var(--pink-flamingo-rgb);
+  --mulberry: var(--hot-pink);
+  --mulberry-rgb: var(--hot-pink-rgb);
+  --pelorous: var(--spray);
+  --pelorous-rgb: var(--spray-rgb);
+
+  /* code */
+  --cm-name: rgba(var(--seagull-rgb), 0.82);
+
+  /* удалить после темной темы */
+  --text-light-foreground-base: var(--mountain-mist);
+  --text-normal-foreground-base: var(--mine-shaft);
+  --text-strong-foreground-base: var(--mine-shaft);
+  --formula-filter: invert(1);
+
+  /* Rt-dc Special */
+  --rt-dc-bg-banner: #0E5186;
+  --rt-dc-bg-card: #E7EEF3;
+  --rt-dc-bg-card-picked: #1F282D;
+  --rt-dc-bg-banner-gradient: linear-gradient(180deg, #5F2A9A -19%, #0E5186 75%);
+  --rt-dc-bg-main: #9552E0;
+  --rt-dc-bg-neutral: #fff;
+  --rt-dc-bg-button-main: var(--rt-dc-bg-main);
+  --rt-dc-bg-button-secondary: #201B24;
+  --rt-dc-bg-button-disabled: #105993;
+  --rt-dc-bg-button-main-hover: #5900bd;
+  --rt-dc-bg-button-secondary-hover: #151b1e;
+  --rt-dc-bg-card-level2: #D6E5F1;
+  --rt-dc-bg-card-picked-level2: #20384C;
+  --rt-dc-bg-card-level3: #ACD0ED;
+  --rt-dc-bg-card-picked-level3: #1E496C;
+  --rt-dc-text-main: #fff;
+  --rt-dc-text-secondary: #263137;
+  --rt-dc-text-tertiary: #c8d5fa;
+  --rt-dc-text-additional: #9e9e9e;
+  --rt-dc-text-button-disabled: #3B75A3;
+  --rt-dc-stroke: rgba(255, 255, 255, 0.3);
+  --rt-dc-stroke-secondary: #fff;
+  --rt-box-shadow-main:
+    0 0 128.135px 0 rgba(169, 98, 254, 0.5),
+    0 0 6.102px 0 #A962FE,
+    0 0 3.051px 0 #5B00C8;
+  --rt-box-shadow-secondary:
+    0 0 45px 0 rgba(255, 255, 255, 0.7),
+    0 0 2px 0 #fff;
+}
