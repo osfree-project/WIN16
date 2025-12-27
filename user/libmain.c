@@ -167,47 +167,6 @@ VOID WINAPI LW_RegisterWindows(HINSTANCE USER_HeapSel)
  *
  */
 
-typedef
-struct tagKBINFO {
-  char kbRanges[4]; //Far East ranges for KANJI
-  WORD kbStateSize; //#bytes of state info maintained by TOASCII
-} KBINFO;
-
-KBINFO KbInfo;
-
-typedef
-struct tagCURSORINFO {
-	WORD dpXRate;		//horizontal mickey/pixel ratio
-	WORD dpYRate;		//vertical mickey/pixel ratio
-} CURSORINFO;
-
-CURSORINFO CursorInfo;
-
-WORD WINAPI InquireKeyboard(KBINFO FAR *KbInfo);
-
-typedef
-struct tagMOUSEINFO {
-	BYTE msExists;	// true => mouse exists
-	BYTE msRelative;  // true => relative coordinate
-	WORD msNumButtons; // number of buttons on the mouse
-	WORD msRate; // maximum rate of mouse input events
-	WORD msXThresh; // threshold before acceleration
-	WORD msYThresh;
-	WORD msXRes;// x resolution
-	WORD msYRes;// y resolution
-} MOUSEINFO;
-
-MOUSEINFO MouseInfo;
-
-WORD WINAPI InquireMouse(MOUSEINFO FAR *MouseInfo);
-
-WORD WINAPI InquireDisplay(CURSORINFO FAR *CursorInfo);
-
-HANDLE WINAPI SetObjectOwner(HANDLE hObject, HANDLE hTask);
-
-BOOL WINAPI MakeObjectPrivate(HANDLE hObject, BOOL bPrivate);
-
-#define GetStockBrush(i) ((HBRUSH)GetStockObject(i))
 
 #pragma off (unreferenced);
 BOOL PASCAL LibMain( HINSTANCE hInstance )
@@ -223,7 +182,7 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
  
         // Save the module and instance handles away in global vars
 	USER_HeapSel=hInstance;
-	HModuleWin = GetModuleHandle(NULL, hInstance);
+	HModuleWin = GetModuleHandle(MK_FP(0, hInstance));
 
 	// Loads USER strings variables
         // from resources
