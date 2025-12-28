@@ -1,0 +1,52 @@
+[windows]
+load=
+run=
+Beep=yes
+Spooler=yes
+NullPort=None
+device=
+BorderWidth=3
+KeyboardSpeed=31
+CursorBlinkRate=530
+DoubleClickSpeed=452
+Programs=com exe bat pif
+Documents=
+DeviceNotSelectedTimeout=15
+TransmissionRetryTimeout=45
+swapdisk=
+
+[Desktop]
+Pattern=
+Wallpaper=(None)
+TileWallpaper=0
+GridGranularity=0
+
+[Extensions]
+cal=calendar.exe ^.cal
+crd=cardfile.exe ^.crd
+trm=terminal.exe ^.trm
+txt=notepad.exe ^.txt
+ini=notepad.exe ^.ini
+pcx=pbrush.exe ^.pcx
+bmp=pbrush.exe ^.bmp
+wri=write.exe ^.wri
+rec=recorder.exe ^.rec
+
+[intl]
+sCountry=United States
+
+[ports]
+; A line with [filename].PRN followed by an equal sign causes
+; [filename] to appear in the Control Panel's Printer Configuration dialog
+; box. A printer connected to [filename] directs its output into this file.
+LPT1:=
+LPT2:=
+LPT3:=
+COM1:=9600,n,8,1
+COM2:=9600,n,8,1
+COM3:=9600,n,8,1
+COM4:=9600,n,8,1
+EPT:=
+FILE:=
+LPT1.OS2=
+LPT2.OS2=
