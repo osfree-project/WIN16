@@ -1,13 +1,23 @@
 #include <user.h>
 
 /***********************************************************************
- *		mouse_event (USER.299)
+ *		keybd_event (USER.???)
  */
-void WINAPI mouse_event(VOID)
+int WINAPI keybd_event(VOID)
 {
 	FUNCTION_START
-//    mouse_event( LOWORD(context->Eax), LOWORD(context->Ebx), LOWORD(context->Ecx),
-//                 LOWORD(context->Edx), MAKELONG(context->Esi, context->Edi) );
+	// send event to System Message Queue
+	FUNCTION_END
+}
+
+/***********************************************************************
+ *		mouse_event (USER.299)
+ */
+int WINAPI mouse_event(VOID)
+{
+	FUNCTION_START
+	// send event to System Message Queue
+	FUNCTION_END
 }
 
 /***********************************************************************
@@ -15,9 +25,11 @@ void WINAPI mouse_event(VOID)
  */
 FARPROC WINAPI GetMouseEventProc(void)
 {
-    HMODULE hmodule = GetModuleHandle("USER");
+	HMODULE hmodule;
 	FUNCTION_START
-    return GetProcAddress( hmodule, "mouse_event" );
+
+	hmodule = GetModuleHandle("USER");
+	return GetProcAddress(hmodule, "mouse_event");
 }
 
 /***********************************************************************

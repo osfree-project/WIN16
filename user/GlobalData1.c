@@ -1,10 +1,14 @@
 #include "user.h"
 
-WORD USER_HeapSel = 0;  /* USER heap selector */
+WORD USER_HeapSel = 0;  /* USER heap selector (hinstance) */
 HMODULE HModuleWin = 0;
+HINSTANCE HInstanceDisplay;
+
 int  ClBorder;          /* Frame border width */
+
 char DebugBuffer[100];  /* Buffer for DEBUG messages */
 
+char szNullString[1]="";
 char szSysError[0x14];
 char szDivZero[0x14];
 char szUntitled[0x14];
@@ -22,7 +26,53 @@ char szPm[0x14];
 
 int CBEntries;
 int DefQueueSize;
+int IDelayMenuShow;
+int IDelayMenuHide;
+
+HICON HIconHand;
+HICON HIconQues;
+HICON HIconBang;
+HICON HIconNote;
+HICON HIconWindows;
+HICON HIconSample;
+
+HCURSOR HCursSizeAll;
+HCURSOR	HCursNormal;
+HCURSOR	HCursIBeam;
+HCURSOR	HCursUpArrow;
+HCURSOR	HCursSizeNWSE;
+HCURSOR	HCursSizeNESW;
+HCURSOR	HCursSizeNS;
+HCURSOR	HCursSizeWE;
+
+int FDragFullWindows;
+int FFastAltTab;
+int CXYGranularity;
+int CXScreen;
+int CYScreen;
+int defaultVal;
+
+HWND HWndFocus;
+HWND HWndDesktop;
+HWND HWndSwitch;
+HWND HWndRealPopup;
+
+HMENU HSysMenu;
+
+HGLOBAL MenuBase;
+HGLOBAL HMenuHeap;
+HGLOBAL MenuStringBase;
+HGLOBAL HMenuStringHeap;
+
+FARPROC LpSaveBitmap;
+FARPROC LpDisplayCriticalSection;
+
+KBINFO KbInfo;
+CURSORINFO CursorInfo;
+MOUSEINFO MouseInfo;
 
 char DISPLAY[]="DISPLAY";
 
+char RGBKeyState[0xff];
 HDC tempHDC;
+PDCE PDCEFirst;

@@ -1,21 +1,6 @@
 
 DGROUP group _NULL,_DATA,CONST,DATA,_BSS
 
-;public  pLocalHeap
-;public  pAtomTable
-;public  pStackTop
-;public  pStackMin
-;public  pStackBot
-
-;pLocalHeap      equ     0006H
-;pAtomTable      equ     0008H
-;pStackTop       equ     000AH
-;pStackMin       equ     000CH
-;pStackBot       equ     000EH
-
-; cloned from windows.inc
-GMEM_SHARE      equ     2000h
-
         .dosseg
 
 FAR_DATA segment byte public 'FAR_DATA'
@@ -54,35 +39,13 @@ assume cs:_TEXT
 ;        extrn   __AHSHIFT                   : word
 
         public  "C",_curbrk
-;        public  "C",_psp
-;        public  "C",_osmajor
-;        public  "C",_osminor
-;        public  "C",_osmode
-;        public  "C",_STACKLOW
-;        public  "C",_STACKTOP
         public  "C",_cbyte
-;        public  "C",_child
         public  __no87
-;        public  "C",_HShift
-;        public  __get_ovl_stack
-;        public  __restore_ovl_stack
-;        public  "C",__FPE_handler
-;        public  "C",_LpCmdLine
 
 __aaltstkovr dw -1              ; alternate stack overflow routine address
 _curbrk    dw 0                 ; top of usable memory
-;_psp       dw 0                 ; segment addr of program segment prefix
-;_osmajor   db 0                 ; major DOS version number
-;_osminor   db 0                 ; minor DOS version number
-;_osmode    db 0                 ; 0 => DOS real mode
-;_HShift    db 0                 ; Huge Shift value
 _cbyte     dw 0                 ; used by getch, getche
-;_child     dw 0                 ; non-zero => a spawned process is running
 __no87     dw 0                 ; always try to use the 8087
-;__get_ovl_stack dw 0,0          ; get overlay stack pointer
-;__restore_ovl_stack dw 0,0      ; restore overlay stack pointer
-;__FPE_handler dd 0              ; FPE handler
-;_LpCmdLine dw 0,0               ; lpCmdLine (for _argc, _argv processing)
            db 0                 ; slack byte
 
 _DATA ends
@@ -143,15 +106,6 @@ __DLLstart_:
 exit:
         ret
 LibEntry    endp
-
-;__null_FPE_rtn proc far
-;        ret                             ; return
-;__null_FPE_rtn endp
-
-;public  __GETDS
-;__GETDS proc    near
-;        ret                             ; return
-;__GETDS endp
 
 _TEXT   ends
         end     LibEntry

@@ -18,7 +18,7 @@ extern  void          SetDS( unsigned short );
 #define  SetGlobalTableDS() if (GlobalAtomTable_Selector) SetDS(GlobalAtomTable_Selector)
 
 // This is initialization of Global Atoms. This function must be called during USER.EXE initialization.
-void PASCAL GlobalInitAtom(void)
+VOID WINAPI GlobalInitAtom(void)
 {
 	FUNCTION_START
   PushDS();

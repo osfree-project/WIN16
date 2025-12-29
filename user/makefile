@@ -264,7 +264,9 @@ IMPORTS = GETEXEVERSION KERNEL.105, &
   SetTaskQueue KERNEL.34, &
   MakeObjectPrivate GDI.463, &
   SetSpeed KEYBOARD.7, &
-  EnableSystemTimers SYSTEM.4
+  EnableSystemTimers SYSTEM.4, &
+  KeyboardEnable KEYBOARD.2, &
+  MouseEnable MOUSE.2
 
 # GETPRIVATEPROFILEINT KERNEL.127, &
 #          __AHSHIFT KERNEL.113
@@ -276,8 +278,6 @@ DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 TARGETS = $(PATH)$(PROJ).exe
 
 .ico: $(MYDIR)res
-
-#@$(CP) $(PATH)$(PROJ).dll $(PATH)$(PROJ1).exe $(BLACKHOLE)
 
 $(PATH)$(PROJ).exe: $(PATH)$(PROJ).dll $(MYDIR)$(PROJ).rc
  @$(SAY) RESCMP   $^. $(LOG)

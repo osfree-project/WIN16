@@ -439,7 +439,7 @@ void WINAPI SetScrollRange( HWND hwnd, int nBar, int MinVal, int MaxVal, BOOL re
 {
 	FUNCTION_START
     /* Invalid range -> range is set to (0,0) */
-    if (MaxVal - MinVal > 0x7fff) MinVal = MaxVal = 0;
+//    if (MaxVal - MinVal > 0x7fff) MinVal = MaxVal = 0;
 //    SetScrollRange( WIN_Handle32(hwnd), nBar, MinVal, MaxVal, redraw );
 }
 

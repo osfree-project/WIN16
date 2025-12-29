@@ -1,3 +1,4 @@
+#define OEMRESOURCE
 #include <windows.h>
 
 // Message Queue structures. See Matt Pietrek for description.
@@ -50,6 +51,25 @@ typedef QUEUE FAR * LPQUEUE;
 #define HQUEUE HGLOBAL
 
 HQUEUE WINAPI SetTaskQueue(HTASK, HQUEUE);
+
+// See Undocumented windows
+typedef struct tagDCE {
+	HANDLE	hdceNext;
+	HWND	hwndCurr;
+	HDC	hDC;
+	BYTE	byFlags;
+	BYTE	byInUse;
+	BYTE	byDirty;
+	BYTE	by0A;
+	WORD	xOrigin;
+	WORD	yOrigin;
+	HWND	hwndTop;
+	HRGN	hVisRgn;
+} DCE;
+
+typedef DCE	*PDCE;
+typedef DCE NEAR *NPDCE;
+typedef DCE FAR	*LPDCE;
 
 typedef struct tagWNDCLASSEX {
 	UINT	cbSize;
@@ -159,8 +179,9 @@ typedef CLASSINFO NEAR	*NPCLASSINFO;
 typedef CLASSINFO FAR	*LPCLASSINFO;
 
 /* Global Data */
+
+extern char szNullString[1];
 extern char DebugBuffer[100];
-extern WORD USER_HeapSel;  /* USER heap selector */
 extern char szSysError[0x14];
 extern char szDivZero[0x14];
 extern char szUntitled[0x14];
@@ -175,15 +196,6 @@ extern char szNo[0x14];
 //char szClose[0x14]; not found in user.exe resources
 extern char szAm[0x14];
 extern char szPm[0x14];
-
-extern int  ClBorder;
-extern int CBEntries;
-extern HMODULE HModuleWin;
-extern int DefQueueSize;
-
-extern char DISPLAY[];
-extern HDC tempHDC;
-
 
 #ifdef DEBUG
 extern void _cdecl printf (const char *format,...);
@@ -202,7 +214,7 @@ extern void _cdecl printf (const char *format,...);
 
 #define TRACE(...) \
 	{ \
-             printf(__VA_ARGS__);		\
+             printf(__VA_ARGS__); printf("\r\n"); \
 	}
 
 #define WARN(...) \
@@ -227,24 +239,40 @@ extern void _cdecl printf (const char *format,...);
 /* Resources */
 
 #define IDS_WINDOWS 0x00					// Windows
-#define IDS_COLORS 0x01					// Colors
+#define IDS_COLORS 0x01						// Colors
+#define IDS_PATTERN 0x2						// Patterm
+#define IDS_FONTS 0x3						// Fonts
+#define IDS_CURSORBLINKRATE 0x4					// CursorBlinkRate
+#define IDS_SWAPMOUSEBUTTONS 0x5				// SwapMouseButtons
+#define IDS_DOUBLECLICKSPEED 0x6				// DoubleClickSpeed
 #define IDS_TYPEAHEAD 0x07					// TypeAhead
+#define IDS_GRIDGRANULARITY 0x08				// GridGranularity
+#define IDS_BEEP 0x09						// Beep
 #define IDS_BORDER 0x0e                                         // Border
-#define IDS_DEFAULTQUEUESIZE 0x0f			// DefaultQueueSize
-#define IDS_SYSTEMERROR 0x4b				// System Error
-#define IDS_DIVIDEBYZERO 0x4c				// Divede By Zero or Overflow Error
+#define IDS_DEFAULTQUEUESIZE 0x0f				// DefaultQueueSize
+#define IDS_SYSTEMERROR 0x4b					// System Error
+#define IDS_DIVIDEBYZERO 0x4c					// Divide By Zero or Overflow Error
 #define IDS_UNTITLED 0x4d					// Untitiled
 #define IDS_ERROR 0x4e						// Error
-#define IDS_OK 0x54							// Ok
+#define IDS_DESKTOP 0x50					// Desktop
+#define IDS_OK 0x54						// Ok
 #define IDS_CANCEL 0x55						// Cancel
 #define IDS_ABORT 0x56						// Abort
 #define IDS_RETRY 0x57						// Retry
 #define IDS_IGNORE 0x58						// Ignore
 #define IDS_YES 0x59						// Yes
-#define IDS_NO 0x5a							// No
-#define IDS_AM 0x5c							// am
-#define IDS_PM 0x5d							// pm
+#define IDS_NO 0x5a						// No
+#define IDS_AM 0x5c						// am
+#define IDS_PM 0x5d						// pm
+#define IDS_MENUSHOWDELAY 0x5e					// MenuShowDelay
+#define IDS_MENUHIDEDELAY 0x5f					// MenuHideDelay
+#define IDS_MENUDROPALIGNMENT 0x60				// MenuDropAlignment
+#define IDS_DOUBLECLICKWIDTH 0x61				// DoubleClickWidth
+#define IDS_DOUBLECLICKHEIGHT 0x62				// DoubleClickHeight
+#define IDS_DRAGFULLWINDOWS 0x6b				// DragFullWindows
+#define IDS_COOLSWITCH 0x6f					// CoolSwitch
 
+#if 0
 #ifdef __WATCOMC__
 #undef IDC_ARROW
 #undef IDC_IBEAM
@@ -278,6 +306,7 @@ extern void _cdecl printf (const char *format,...);
 #define IDC_NO 32648
 #define IDC_APPSTARTING 32650
 #define IDC_HELP 32651
+#endif
 
 /* Varoius undocumented protos */
 HANDLE WINAPI FarGetOwner( HGLOBAL handle );
@@ -309,15 +338,12 @@ struct tagKBINFO {
   WORD kbStateSize; //#bytes of state info maintained by TOASCII
 } KBINFO;
 
-KBINFO KbInfo;
-
 typedef
 struct tagCURSORINFO {
 	WORD dpXRate;		//horizontal mickey/pixel ratio
 	WORD dpYRate;		//vertical mickey/pixel ratio
 } CURSORINFO;
 
-CURSORINFO CursorInfo;
 
 WORD WINAPI InquireKeyboard(KBINFO FAR *KbInfo);
 
@@ -333,11 +359,73 @@ struct tagMOUSEINFO {
 	WORD msYRes;// y resolution
 } MOUSEINFO;
 
-MOUSEINFO MouseInfo;
+
+extern WORD USER_HeapSel;  /* USER heap selector */
+extern HMODULE HModuleWin;
+extern HINSTANCE HInstanceDisplay;
+
+extern int ClBorder;
+extern int CBEntries;
+extern int IDelayMenuShow;
+extern int IDelayMenuHide;
+extern int DefQueueSize;
+
+extern char DISPLAY[];
+extern HDC tempHDC;
+extern PDCE PDCEFirst;
+
+extern KBINFO KbInfo;
+extern CURSORINFO CursorInfo;
+extern MOUSEINFO MouseInfo;
+
+extern HICON HIconWindows;
+extern HICON HIconSample;
+extern HICON HIconHand;
+extern HICON HIconQues;
+extern HICON HIconBang;
+extern HICON HIconNote;
+
+extern HCURSOR HCursSizeAll;
+extern HCURSOR HCursNormal;
+extern HCURSOR HCursIBeam;
+extern HCURSOR HCursUpArrow;
+extern HCURSOR HCursSizeNWSE;
+extern HCURSOR HCursSizeNESW;
+extern HCURSOR HCursSizeNS;
+extern HCURSOR HCursSizeWE;
+
+extern int FDragFullWindows;
+extern int FFastAltTab;
+extern int CXYGranularity;
+extern int CXScreen;
+extern int CYScreen;
+extern int defaultVal;
+
+extern HWND HWndFocus;
+extern HWND HWndDesktop;
+extern HWND HWndSwitch;
+extern HWND HWndRealPopup;
+
+extern HMENU HSysMenu;
+
+extern HGLOBAL MenuBase;
+extern HGLOBAL HMenuHeap;
+extern HGLOBAL MenuStringBase;
+extern HGLOBAL HMenuStringHeap;
+
+extern FARPROC LpSaveBitmap;
+extern FARPROC LpDisplayCriticalSection;
 
 WORD WINAPI InquireMouse(MOUSEINFO FAR *MouseInfo);
+int WINAPI mouse_event(VOID);
+VOID WINAPI MouseEnable(FARPROC proc);
 
 WORD WINAPI InquireDisplay(CURSORINFO FAR *CursorInfo);
+
+int WINAPI keybd_event(VOID);
+extern char RGBKeyState[0xff];
+
+VOID WINAPI KeyboardEnable(FARPROC proc, LPBYTE lpKeyState);
 
 HANDLE WINAPI SetObjectOwner(HANDLE hObject, HANDLE hTask);
 
@@ -345,6 +433,7 @@ BOOL WINAPI MakeObjectPrivate(HANDLE hObject, BOOL bPrivate);
 
 #define GetStockBrush(i) ((HBRUSH)GetStockObject(i))
 
+VOID WINAPI GlobalInitAtom(void);
 
 void far * _fmemcpy(void far * s1, void const far * s2, unsigned length);
 void far * _fmemset (void far *start, int c, unsigned int len);
@@ -360,8 +449,16 @@ char far *uitoa(unsigned int i);
 char far *itox(int m);
 
 
-
+#define  UserLocalAlloc(tag, flags, size)   LocalAlloc(flags, size)
 
 #ifndef MK_FP
 #define MK_FP(seg,off) ((void far *)(((unsigned long)(seg) << 16) | (unsigned)(off)))
 #endif
+
+VOID WINAPI EnableSystemTimers();
+
+extern  unsigned short          GetDS( void );
+#pragma aux GetDS               = \
+        "mov    ax,ds"          \
+        value                   [ax];
+
