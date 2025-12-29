@@ -314,6 +314,7 @@ int WINAPI SetSpeed(int rate);
 VOID WINAPI Resurrection(HDC hdc, WORD w1, WORD w2, WORD w3, WORD w4, WORD w5, WORD w6);
 WORD WINAPI LocalCountFree();
 WORD WINAPI LocalHeapSize();
+
 #define GlobalPtrHandle(lp) \
   ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))
 
@@ -325,6 +326,8 @@ WORD WINAPI LocalHeapSize();
 
 #define GlobalAllocPtr(flags, cb) \
   (GlobalLock(GlobalAlloc((flags), (cb))))
+
+
 WORD WINAPI GetExeVersion(void);
 
 
@@ -462,3 +465,15 @@ extern  unsigned short          GetDS( void );
         "mov    ax,ds"          \
         value                   [ax];
 
+
+extern  void PushDS( void );
+#pragma aux PushDS = "push ds";
+
+extern  void PopDS( void );
+#pragma aux PopDS = "pop ds";
+
+/* This function sets current DS value */
+extern  void          SetDS( unsigned short );
+#pragma aux SetDS               = \
+        "mov    ds,ax"          \
+        parm                   [ax];

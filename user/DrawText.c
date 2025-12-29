@@ -53,11 +53,6 @@ To send email to the maintainer of the Willows Twin Libraries.
  ************************************************************************/
 
 
-//#include "windows.h"
-//#include "windowsx.h"
-
-//#include "Log.h"
-
 //extern LPSTR GdiDumpString(LPSTR,int);
 
 /*

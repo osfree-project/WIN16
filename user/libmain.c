@@ -8,8 +8,16 @@ int UT_GetIntFromProfile(UINT id, int defvalue)
 
 	FUNCTION_START
 
-	LoadString(USER_HeapSel, IDS_WINDOWS, section, sizeof(section));
-	LoadString(USER_HeapSel, id, key, sizeof(key));
+	if (!LoadString(USER_HeapSel, IDS_WINDOWS, section, sizeof(section)))
+	{
+		TRACE("error1");
+		for(;;);
+	}
+	if (!LoadString(USER_HeapSel, id, key, sizeof(key)))
+	{
+		TRACE("error2");
+		for(;;);
+	}
 
 	// Protect from empty value
 	if (!GetProfileString(section, key, "", value, sizeof(value)))
@@ -163,7 +171,7 @@ VOID WINAPI LW_DriversInit()
 	if (InquireKeyboard(&KbInfo)==sizeof(KBINFO))
 	{
 		TRACE("Keyboard initdone");
-		if (SetSpeed(-1)==-1) FatalExit(0x0c);
+		if (SetSpeed(-1)==-1) ;//FatalExit(0x0c);
 	} else 
 		FatalExit(0x0c);
 
@@ -231,8 +239,10 @@ VOID WINAPI LW_LoadResources()
 
 	// The next three fetched vaLues are stored in static vars
 	UT_GetIntFromProfile(IDS_DOUBLECLICKWIDTH, 4); // 0x61 = "DoubleClickWidth"
+for (;;);
 	UT_GetIntFromProfile(IDS_DOUBLECLICKHEIGHT, 4); // 0x62 = "DoubleClickHeight"
 	UT_GetIntFromProfile(IDS_MENUDROPALIGNMENT, 0); // 0x62 = "MenuDropAlignment"
+
 
 	// Get the delay times related to displaying menus.
 	// 0x5E = "MenuShowDelay", 0x5F = "MenuHideDelay". The
@@ -585,6 +595,7 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 	// Loads USER strings variables from resources
 	LW_LoadSomeStrings();
 
+
         // Get the number of entries in the system message queue and mul to 2
 	CBEntries=UT_GetIntFromProfile(IDS_TYPEAHEAD, 0x3c) << 1;
         // Get the default number of messages in a task queue
@@ -602,12 +613,14 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
         if (ClBorder > 0x32 )
             ClBorder = 0x32;
 
+
 	// Setup and initialize the Keyboard,
 	// mouse, and COMM drivers. The system
 	// message queue is created here (in
 	// DI_EventInit(), which is called from
 	// LW_DriversInit()).
 	LW_DriversInit();
+
 
 	// LW_DCInit() is where the 5 DISPLAY device contexts are
 	// created. Chapter 5 (Windows Internals) covers device contexts (DCs) in
@@ -630,6 +643,7 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 	// FindResource(), ODI_CreateBits(), and so on.
 	LW_OEMDependentInit();
 
+
 	// Sets HBmCursorBitmap and
 	// HPermanentCursor variables.
 	LW_OEMCursorInit();
@@ -643,6 +657,8 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 	//Loads lots of icons and cursors. See
 	// the pseudocode for more details.
 	LW_LoadResources();
+
+for (;;);
 
 	// Start out with no focus
 	HWndFocus = 0; 

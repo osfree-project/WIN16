@@ -3,17 +3,6 @@
 // Selector of Global Atom Table
 static WORD GlobalAtomTable_Selector;
 
-extern  void PushDS( void );
-#pragma aux PushDS = "push ds";
-
-extern  void PopDS( void );
-#pragma aux PopDS = "pop ds";
-
-/* This function sets current DS value */
-extern  void          SetDS( unsigned short );
-#pragma aux SetDS               = \
-        "mov    ds,ax"          \
-        parm                   [ax];
 
 #define  SetGlobalTableDS() if (GlobalAtomTable_Selector) SetDS(GlobalAtomTable_Selector)
 

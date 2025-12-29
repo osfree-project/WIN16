@@ -21,11 +21,6 @@
 #include <stdarg.h>
 
 #include <user.h>
-//#include "winbase.h"
-//#include "wownt32.h"
-//#include "wine/winuser16.h"
-//#include "user_private.h"
-//#include "wine/debug.h"
 
 //WINE_DEFAULT_DEBUG_CHANNEL(dialog);
 

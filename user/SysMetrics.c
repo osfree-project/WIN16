@@ -29,17 +29,9 @@ To send email to the maintainer of the Willows Twin Libraries.
    This file contains for the sysmetrics-related API functions.    
  */
 
-//#include <stdio.h>
-//#include <string.h>
 
 #include <user.h>
 
-//#include "SysMetrics.h"
-
-//#include "kerndef.h"
-//#include "Kernel.h"
-//#include "Log.h"
-//#include "WinConfig.h"
 
 /* SM_ARRANGE return codes */
 #define ARW_BOTTOMLEFT		0x0000L

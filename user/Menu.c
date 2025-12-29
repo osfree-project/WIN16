@@ -1,5 +1,8 @@
+#include <user.h>
+
 #include <ctype.h>
 #include <string.h>
+
 
 #ifndef OEMRESOURCE
 #define OEMRESOURCE	/* for OBM_CLOSE */
@@ -16,17 +19,6 @@
 #define	GetWindowSysMenu(hWnd)	((HMENU)GetWindowLong(hWnd,GWL_HSYSMENU))
 #define	SetWindowSysMenu(hWnd,hSysMenu) ((HMENU)SetWindowLong(hWnd,GWL_HSYSMENU,(LONG)hSysMenu))
 
-#define GlobalPtrHandle(lp) \
-  ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))
-
-#define     GlobalUnlockPtr(lp)      \
-                GlobalUnlock(GlobalPtrHandle(lp))
-
-#define GlobalFreePtr(lp) \
-  (GlobalUnlockPtr(lp),(BOOL)GlobalFree(GlobalPtrHandle(lp)))
-
-#define GlobalAllocPtr(flags, cb) \
-  (GlobalLock(GlobalAlloc((flags), (cb))))
 
 LONG LBoxAPI(HMENU hMenu32, UINT uiAction, LPARAM lParam);
 

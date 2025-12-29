@@ -73,18 +73,6 @@ To send email to the maintainer of the Willows Twin Libraries.
 
 #define LOSHORT(x)	(short int)LOWORD(x)
 
-#define GlobalPtrHandle(lp) \
-  ((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(lp))))
-
-#define     GlobalUnlockPtr(lp)      \
-                GlobalUnlock(GlobalPtrHandle(lp))
-
-#define GlobalFreePtr(lp) \
-  (GlobalUnlockPtr(lp),(BOOL)GlobalFree(GlobalPtrHandle(lp)))
-
-#define GlobalAllocPtr(flags, cb) \
-  (GlobalLock(GlobalAlloc((flags), (cb))))
-
 /* external functions */
 extern void GetNCRect(HWND, LPRECT);
 extern BOOL TestWF(HWND, DWORD);
