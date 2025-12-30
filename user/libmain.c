@@ -171,7 +171,7 @@ VOID WINAPI LW_DriversInit()
 	if (InquireKeyboard(&KbInfo)==sizeof(KBINFO))
 	{
 		TRACE("Keyboard initdone");
-		if (SetSpeed(-1)==-1) ;//FatalExit(0x0c);
+		if (SetSpeed(-1)==-1) FatalExit(0x0c);
 	} else 
 		FatalExit(0x0c);
 
@@ -239,7 +239,6 @@ VOID WINAPI LW_LoadResources()
 
 	// The next three fetched vaLues are stored in static vars
 	UT_GetIntFromProfile(IDS_DOUBLECLICKWIDTH, 4); // 0x61 = "DoubleClickWidth"
-for (;;);
 	UT_GetIntFromProfile(IDS_DOUBLECLICKHEIGHT, 4); // 0x62 = "DoubleClickHeight"
 	UT_GetIntFromProfile(IDS_MENUDROPALIGNMENT, 0); // 0x62 = "MenuDropAlignment"
 
@@ -289,6 +288,7 @@ for (;;);
 
 	//I Load some heaviLy used cursors
 	HCursNormal = LoadCursor(0, IDC_ARROW);
+for (;;);
 	HCursIBeam = LoadCursor(0, IDC_IBEAM);
 	HCursUpArrow= LoadCursor(0, IDC_UPARROW);
 	HIconSample = LoadIcon(0, IDI_APPLICATION);
@@ -321,7 +321,7 @@ for (;;);
 VOID WINAPI LW_OEMDependentInit()
 {
 	FUNCTION_START
-	HInstanceDisplay=GetModuleHandle("DISPLAY");
+	HInstanceDisplay=GetModuleHandle(DISPLAY);
 	FUNCTION_END
 }
 
@@ -586,7 +586,7 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 	HDC desktop;
 
 	FUNCTION_START
-	TRACE("inst=%04x", hInstance);
+	TRACE("inst=%x", hInstance);
  
         // Save the module and instance handles away in global vars
 	USER_HeapSel=hInstance;
@@ -608,7 +608,7 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 
 	// Get the default border width for a window. Default is 3.
 	ClBorder = UT_GetIntFromProfile(IDS_BORDER, 3);
-	if (ClBorder < 1) // Make sure it'~ got a reasonable
+	if (ClBorder < 1) // Make sure it's got a reasonable
             ClBorder = 1; // value.
         if (ClBorder > 0x32 )
             ClBorder = 0x32;
@@ -620,7 +620,6 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 	// DI_EventInit(), which is called from
 	// LW_DriversInit()).
 	LW_DriversInit();
-
 
 	// LW_DCInit() is where the 5 DISPLAY device contexts are
 	// created. Chapter 5 (Windows Internals) covers device contexts (DCs) in
@@ -654,8 +653,7 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 	// the size of the borders around Windows.
 	InitSizeBorderDimensions();
 
-	//Loads lots of icons and cursors. See
-	// the pseudocode for more details.
+	//Loads lots of icons and cursors.
 	LW_LoadResources();
 
 for (;;);
@@ -726,9 +724,10 @@ for (;;);
 	LocalInit(HMenuStringHeap, 0x12, 0x417);
 
 	// Load the "system" menu ("Restore", "Move", "Size", etc.)
-	HSysMenu = LoadMenu( USER_HeapSel, MK_FP(0,1));
+	HSysMenu = LoadMenu(USER_HeapSel, MK_FP(0, IDM_SYSMENU));
 
 	LW_DisplayDriverInit(); // Gets entry points in display driver
+
 	LW_LoadFonts();	// Uses AddFontResource() to load all the
 			// fonts in the "fonts" section of WIN.INI
 

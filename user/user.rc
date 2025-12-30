@@ -21,11 +21,11 @@ STRINGTABLE DISCARDABLE
 	IDS_DESKTOP,						"Desktop"
 	IDS_OK,							"Ok"
 	IDS_CANCEL,						"Cancel"
-	IDS_ABORT,						"Abort"
-	IDS_RETRY,						"Retry"
-	IDS_IGNORE,						"Ignore"
-	IDS_YES,						"Yes"
-	IDS_NO,							"No"
+	IDS_ABORT,						"&Abort"
+	IDS_RETRY,						"&Retry"
+	IDS_IGNORE,						"&Ignore"
+	IDS_YES,						"&Yes"
+	IDS_NO,							"&No"
 	IDS_AM,							"am"
 	IDS_PM,							"pm"
 	IDS_MENUSHOWDELAY,					"MenuShowDelay"
@@ -54,3 +54,19 @@ OCR_APPSTARTING CURSOR FIXED "res/idcappst.cur"
 OCR_HELP CURSOR FIXED "res/idchelp.cur"
 "DRAGCURSOR" CURSOR FIXED "res/idcdrag.cur"
 "NULLCURSOR" CURSOR FIXED "res/idcnull.cur"
+
+IDM_SYSMENU MENU
+BEGIN
+    POPUP " "
+    BEGIN
+        MENUITEM "&Restore"	SC_RESTORE
+        MENUITEM "&Move"	SC_MOVE
+        MENUITEM "&Size"	SC_SIZE
+        MENUITEM "Mi&nimize"	SC_MINIMIZE
+        MENUITEM "Ma&ximize"	SC_MAXIMIZE
+        MENUITEM SEPARATOR
+        MENUITEM "&Close\tAlt+F4"	SC_CLOSE
+        MENUITEM ""	0
+        MENUITEM "S&witch To...\tCtrl+Esc"	SC_TASKLIST
+    END
+END

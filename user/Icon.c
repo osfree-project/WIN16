@@ -5,7 +5,7 @@
 #include "list.h"
 
 VOID WINAPI FarSetOwner(HANDLE hMem, WORD wOwnerPDB);
-WORD WINAPI GetExePtr(HANDLE h);
+//WORD WINAPI GetExePtr(HANDLE h);
 
 /**********************************************************************
  * Management of the 16-bit cursors and icons

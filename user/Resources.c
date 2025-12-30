@@ -12,12 +12,13 @@ int WINAPI LoadString( HINSTANCE instance, UINT resource_id, LPSTR buffer, int b
     int ret;
 
 	FUNCTION_START
-	TRACE("inst=%04x id=%04x buff=%p len=%d", instance, resource_id, buffer, buflen);
+	TRACE("inst=%x id=%x buff=%x:%x len=%d", instance, resource_id, buffer, buflen);
 
 	hrsrc = FindResource( instance, MAKEINTRESOURCE((resource_id>>4)+1), RT_STRING );
 	if (!hrsrc) 
 	{
 		TRACE("Resource not found");
+		for (;;);
 		FUNCTION_END
 		return 0;
 	}
@@ -26,6 +27,7 @@ int WINAPI LoadString( HINSTANCE instance, UINT resource_id, LPSTR buffer, int b
 	if (!hmem) 
 	{
 		TRACE("Error loading resource");
+		for (;;);
 		FUNCTION_END
 		return 0;
 	}
@@ -48,7 +50,7 @@ int WINAPI LoadString( HINSTANCE instance, UINT resource_id, LPSTR buffer, int b
 			buffer[0] = '\0';
 			ret = 0;
 		}
-        TRACE( "%s loaded\n", buffer);
+        TRACE("%S loaded", buffer);
 	}
 	FreeResource( hmem );
 
@@ -89,6 +91,8 @@ HANDLE WINAPI LoadImage(HINSTANCE hinst, LPCSTR name, UINT type, int cx, int cy,
     HGLOBAL handle;
     HRSRC hRsrc, hGroupRsrc;
     DWORD size;
+
+	FUNCTION_START
 /*
     if (!hinst || (flags & LR_LOADFROMFILE))
     {
@@ -98,8 +102,8 @@ HANDLE WINAPI LoadImage(HINSTANCE hinst, LPCSTR name, UINT type, int cx, int cy,
             return get_icon_16( LoadImageA( 0, name, type, cx, cy, flags ));
     }
 */
+    hinst = GetExePtr(hinst);
 #if 0
-    hinst = GetExePtr( hinst );
 
     if (flags & LR_DEFAULTSIZE)
     {
@@ -197,7 +201,8 @@ HANDLE WINAPI LoadImage(HINSTANCE hinst, LPCSTR name, UINT type, int cx, int cy,
         return 0;
     }
 #endif
-  return 0;
+	FUNCTION_END
+	return 0;
 }
 
 /**********************************************************************
@@ -208,3 +213,14 @@ HBITMAP WINAPI LoadBitmap(HINSTANCE hInstance, LPCSTR name)
   return 0;//    return LoadImage( hInstance, name, IMAGE_BITMAP, 0, 0, 0 );
 }
 
+/***********************************************************************
+ *		LoadCursor (USER.173)
+ */
+HCURSOR WINAPI LoadCursor(HINSTANCE hInstance, LPCSTR name)
+{
+	HCURSOR res;
+	FUNCTION_START
+    	res=LoadImage( hInstance, name, IMAGE_CURSOR, 0, 0, LR_SHARED | LR_DEFAULTSIZE );
+	FUNCTION_END
+	return res;
+}

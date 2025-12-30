@@ -609,7 +609,7 @@ void far * _fmemcpy(void far * s1, void const far * s2, unsigned length)
 	char far * q;
 
 	FUNCTION_START
-	TRACE(s2);
+	//TRACE(s2);
 	if(length) {
 		p = s1;
 		q = (char far *)s2;

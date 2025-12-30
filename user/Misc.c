@@ -208,5 +208,16 @@ BOOL WINAPI PeekMessage( MSG *msg, HWND hwnd,
                              UINT first, UINT last, UINT flags )
 {
 	FUNCTION_START
+	FUNCTION_END
     return 0;//PeekMessage32_16( (MSG32_16 *)msg, hwnd, first, last, flags, FALSE );
+}
+
+void WINAPI
+SetDoubleClickTime(UINT uInterval)
+{
+	FUNCTION_START
+	FUNCTION_END
+//    APISTR((LF_APICALL,"SetDoubleClickTime(UINT=%x)\n",uInterval));
+//    (void)DRVCALL_EVENTS(PEH_DBLCLKTIME,1,uInterval,0);
+//    APISTR((LF_APIRET,"SetDoubleClickTime: returns void\n"));
 }

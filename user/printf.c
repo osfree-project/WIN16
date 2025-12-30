@@ -65,14 +65,12 @@ void putstrfar (const char far *str)
     putchar (*str++);
 }
 
-extern void _cdecl printf (const char *format,...);
-
-void printf (const char *format,...)
+void _cdecl printf (char far *format,...)
 {
   int *dataptr = (int *) &format;
   char c, str[16];
 
-  dataptr++;
+  dataptr+=2;
 
   while ((c = *(format++)) != 0)
     {

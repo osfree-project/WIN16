@@ -319,6 +319,7 @@ SetCaretBlinkTime(UINT	blinkrate)
 				caret.hWnd,1,caret.blinkrate,
 				(TIMERPROC)InternalCaretFunc);
 /*--- #endif ---*/
+	FUNCTION_END
 }
 
 /*****************************************************************
