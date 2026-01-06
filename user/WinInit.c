@@ -99,18 +99,6 @@ DWORD WINAPI UserSeeUserDo(WORD wReqType, WORD wParam1, WORD wParam2, WORD wPara
 }
 
 /***********************************************************************
- *           OldSetDeskPattern   (USER.279)
- */
-BOOL WINAPI OldSetDeskPattern(void)
-{
-	BOOL rc;
-	FUNCTION_START
-	rc=SystemParametersInfo( SPI_SETDESKPATTERN, -1, NULL, FALSE );
-	FUNCTION_END
-    return rc;
-}
-
-/***********************************************************************
  *		GetFreeSystemResources (USER.284)
  */
 UINT WINAPI GetFreeSystemResources( UINT resType )

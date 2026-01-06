@@ -286,19 +286,20 @@ VOID WINAPI LW_LoadResources()
 	if ( !CXYGranularity) // Make sure CXYGranularity is at
 		CXYGranularity++; // least 1.
 
-	//I Load some heaviLy used cursors
+	// Load some heavily used cursors
 	HCursNormal = LoadCursor(0, IDC_ARROW);
-for (;;);
 	HCursIBeam = LoadCursor(0, IDC_IBEAM);
 	HCursUpArrow= LoadCursor(0, IDC_UPARROW);
 	HIconSample = LoadIcon(0, IDI_APPLICATION);
 
 	// Set the "resource handler" address for cursors & icons.
+	// @todo Not clear... Befor was non-DIB cursors???
 //	SetResourceHandler(USER_HeapSel, 1, LoadDIBCursorHandler);
 //	SetResourceHandler(USER_HeapSel, 3, LoadDIBIconHandler);
 
-	HIconWindows = LoadIcon(USER_HeapSel, // The Windows Logo
-		MAKEINTRESOURCE(OCR_ICOCUR));
+	// The Windows Logo
+	HIconWindows = LoadIcon(USER_HeapSel, MAKEINTRESOURCE(OCR_ICOCUR));
+
 
 	// Load the "resizing" cursors (when cursor is over a border)
 	HCursSizeNWSE=LoadCursor(0, IDC_SIZENWSE);
@@ -418,7 +419,7 @@ BOOL WINAPI SetDeskWallPaper(LPSTR lpszBmpFileName)
  */
 BOOL WINAPI SetDeskPattern(void)
 {
-    return 1;//SystemParametersInfoA( SPI_SETDESKPATTERN, -1, NULL, FALSE );
+    return 1;//SystemParametersInfo( SPI_SETDESKPATTERN, -1, NULL, FALSE );
 }
 
 
@@ -655,6 +656,26 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 
 	//Loads lots of icons and cursors.
 	LW_LoadResources();
+
+
+{
+	TRACE("Create display context");
+	tempHDC=CreateDC(DISPLAY, NULL, NULL, NULL);
+	TRACE("Create display context done");
+	SetPixel(tempHDC, 10, 10, RGB(255, 0, 0));
+        hPenBlue=CreatePen(PS_SOLID, 5, RGB(0, 0, 255));
+        SelectObject(tempHDC, hPenBlue);
+        hBrushRed=CreateSolidBrush(RGB(255, 0, 0));
+        SelectObject(tempHDC, hBrushRed);
+        Rectangle(tempHDC, 200, 200, 400, 400);
+
+	DrawIcon(tempHDC, 210, 210, HCursNormal);
+	DrawIcon(tempHDC, 250, 210, HCursIBeam);
+	DrawIcon(tempHDC, 290, 210, HCursUpArrow);
+	DrawIcon(tempHDC, 330, 210, HIconSample);
+
+//	DeleteDC(tempHDC);
+}
 
 for (;;);
 

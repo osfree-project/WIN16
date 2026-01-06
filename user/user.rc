@@ -37,23 +37,25 @@ STRINGTABLE DISCARDABLE
 	IDS_COOLSWITCH,						"CoolSwitch"
 }
 
-OCR_ARROW CURSOR FIXED "res/idcarrow.cur"
-OCR_IBEAM CURSOR FIXED "res/idcibeam.cur"
-OCR_WAIT CURSOR FIXED "res/idcwait.cur"
-OCR_CROSS CURSOR FIXED "res/idccross.cur"
-OCR_UPARROW CURSOR FIXED "res/idcuparr.cur"
-OCR_SIZE CURSOR FIXED "res/idcsize.cur"
-OCR_ICON CURSOR FIXED "res/idcicon.cur"
-OCR_SIZENWSE CURSOR FIXED "res/idcsznw.cur"
-OCR_SIZENESW CURSOR FIXED "res/idcszne.cur"
-OCR_SIZEWE CURSOR FIXED "res/idcszwe.cur"
-OCR_SIZENS CURSOR FIXED "res/idcszns.cur"
-OCR_SIZEALL CURSOR FIXED "res/idcsize.cur"
-OCR_NO CURSOR FIXED "res/idcno.cur"
-OCR_APPSTARTING CURSOR FIXED "res/idcappst.cur"
-OCR_HELP CURSOR FIXED "res/idchelp.cur"
-"DRAGCURSOR" CURSOR FIXED "res/idcdrag.cur"
-"NULLCURSOR" CURSOR FIXED "res/idcnull.cur"
+//OCR_NORMAL CURSOR FIXED "res/idcarrow.cur"
+//OCR_IBEAM CURSOR FIXED "res/idcibeam.cur"
+//OCR_WAIT CURSOR FIXED "res/idcwait.cur"
+//OCR_CROSS CURSOR FIXED "res/idccross.cur"
+//OCR_UPARROW CURSOR FIXED "res/idcuparr.cur"
+//OCR_SIZE CURSOR FIXED "res/idcsize.cur"
+//OCR_ICON CURSOR FIXED "res/idcicon.cur"
+//OCR_SIZENWSE CURSOR FIXED "res/idcsznw.cur"
+//OCR_SIZENESW CURSOR FIXED "res/idcszne.cur"
+//OCR_SIZEWE CURSOR FIXED "res/idcszwe.cur"
+//OCR_SIZENS CURSOR FIXED "res/idcszns.cur"
+//OCR_SIZEALL CURSOR FIXED "res/idcsize.cur"
+//OCR_NO CURSOR FIXED "res/idcno.cur"
+//OCR_APPSTARTING CURSOR FIXED "res/idcappst.cur"
+//OCR_HELP CURSOR FIXED "res/idchelp.cur"
+//"DRAGCURSOR" CURSOR FIXED "res/idcdrag.cur"
+//"NULLCURSOR" CURSOR FIXED "res/idcnull.cur"
+
+//32512 ICON FIXED "res/applictn.ico" //IDI_APPLICATION 
 
 IDM_SYSMENU MENU
 BEGIN

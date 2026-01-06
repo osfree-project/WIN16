@@ -274,41 +274,6 @@ extern void _cdecl printf (char far *format,...);
 
 #define IDM_SYSMENU 0x01
 
-#if 0
-#ifdef __WATCOMC__
-#undef IDC_ARROW
-#undef IDC_IBEAM
-#undef IDC_WAIT
-#undef IDC_CROSS
-#undef IDC_UPARROW
-#undef IDC_SIZE
-#undef IDC_ICON
-#undef IDC_SIZENWSE
-#undef IDC_SIZENESW
-#undef IDC_SIZEWE
-#undef IDC_SIZENS
-#undef IDC_SIZEALL
-#undef IDC_NO
-#undef IDC_APPSTARTING
-#undef IDC_HELP
-#endif
-
-#define IDC_ARROW 32512
-#define IDC_IBEAM 32513
-#define IDC_WAIT 32514
-#define IDC_CROSS 32515
-#define IDC_UPARROW 32516
-#define IDC_SIZE 32640
-#define IDC_ICON 32641
-#define IDC_SIZENWSE 32642
-#define IDC_SIZENESW 32643
-#define IDC_SIZEWE 32644
-#define IDC_SIZENS 32645
-#define IDC_SIZEALL 32646
-#define IDC_NO 32648
-#define IDC_APPSTARTING 32650
-#define IDC_HELP 32651
-#endif
 
 /* Varoius undocumented protos */
 HANDLE WINAPI FarGetOwner( HGLOBAL handle );
@@ -503,3 +468,61 @@ extern  void          SetDS( unsigned short );
 #define LR_SHARED           0x8000
 
 HMODULE WINAPI GetExePtr(HANDLE h);
+VOID WINAPI FarSetOwner(HANDLE hMem, WORD wOwnerPDB);
+
+#pragma pack(1)
+typedef struct
+{
+    BYTE   bWidth;
+    BYTE   bHeight;
+    BYTE   bColorCount;
+    BYTE   bReserved;
+} ICONRESDIR;
+
+typedef struct
+{
+    WORD   wWidth;
+    WORD   wHeight;
+} CURSORDIR;
+
+typedef struct
+{   union
+    { ICONRESDIR icon;
+      CURSORDIR  cursor;
+    } ResInfo;
+    WORD   wPlanes;
+    WORD   wBitCount;
+    DWORD  dwBytesInRes;
+    WORD   wResId;
+} CURSORICONDIRENTRY;
+
+typedef struct
+{
+    WORD                idReserved;
+    WORD                idType;
+    WORD                idCount;
+    CURSORICONDIRENTRY  idEntries[1];
+} CURSORICONDIR;
+
+/* NtUserSetCursorIconData parameter, not compatible with Windows */
+struct cursoricon_frame
+{
+    UINT     width;    /* frame-specific width */
+    UINT     height;   /* frame-specific height */
+    HBITMAP  color;    /* color bitmap */
+    HBITMAP  alpha;    /* pre-multiplied alpha bitmap for 32-bpp icons */
+    HBITMAP  mask;     /* mask bitmap (followed by color for 1-bpp icons) */
+    POINT    hotspot;
+};
+
+struct cursoricon_desc
+{
+    UINT flags;
+    UINT num_steps;
+    UINT num_frames;
+    UINT delay;
+    struct cursoricon_frame *frames;
+    DWORD FAR *frame_seq;
+    DWORD FAR *frame_rates;
+    HRSRC rsrc;
+};

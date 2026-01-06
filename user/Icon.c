@@ -1,11 +1,6 @@
-#include <string.h>
-
 #include <user.h>
 
 #include "list.h"
-
-VOID WINAPI FarSetOwner(HANDLE hMem, WORD wOwnerPDB);
-//WORD WINAPI GetExePtr(HANDLE h);
 
 /**********************************************************************
  * Management of the 16-bit cursors and icons
@@ -37,21 +32,29 @@ static const WORD ICON_HOTSPOT = 0x4242;
 
 static struct list icon_cache = LIST_INIT( icon_cache );
 
-static HICON alloc_icon_handle( unsigned int size )
+// @todo fix. Don't know why this not work with 0 wOwnerPDB... So temporary disable this...
+VOID WINAPI FarSetOwner(HANDLE hMem, WORD wOwnerPDB)
 {
-    HGLOBAL handle = GlobalAlloc( GMEM_MOVEABLE, size + sizeof(DWORD) );
-    char far *ptr = GlobalLock( handle );
+}
+
+static HICON alloc_icon_handle( UINT size )
+{
+	HGLOBAL handle = GlobalAlloc( GMEM_MOVEABLE, size + sizeof(DWORD) );
+	char FAR *ptr = GlobalLock( handle );
 	FUNCTION_START
-    _fmemset( ptr + size, 0, sizeof(DWORD) );
-    GlobalUnlock( handle );
-    FarSetOwner( handle, 0 );
-    return handle;
+	_fmemset( ptr + size, 0, sizeof(DWORD) );
+	GlobalUnlock( handle );
+
+	FarSetOwner(handle, 0);
+
+	FUNCTION_END
+	return handle;
 }
 
 static int free_icon_handle( HICON handle )
 {
 	FUNCTION_START
-    return GlobalFree( handle );
+	return GlobalFree( handle );
 }
 
 static int get_bitmap_width_bytes( int width, int bpp )
@@ -74,7 +77,7 @@ static int get_bitmap_width_bytes( int width, int bpp )
     case 32:
         return width * 4;
     default: {}
-//        WARN("Unknown depth %d, please report.\n", bpp );
+        TRACE("Unknown depth %d, please report.\n", bpp );
     }
     return -1;
 }
@@ -89,6 +92,7 @@ static void release_icon_ptr( HICON handle, CURSORICONINFO far *ptr )
 {
 	FUNCTION_START
     GlobalUnlock( handle );
+	FUNCTION_END
 }
 
 static int release_shared_icon( HICON icon )
@@ -123,12 +127,12 @@ DWORD WINAPI IconSize(void)
  *		CreateCursorIconIndirect (USER.408)
  */
 HGLOBAL WINAPI CreateCursorIconIndirect( HINSTANCE hInstance,
-                                           CURSORICONINFO far *info,
-                                           VOID const far * lpANDbits,
-                                           VOID const far * lpXORbits )
+                                           CURSORICONINFO FAR *info,
+                                           VOID const FAR * lpANDbits,
+                                           VOID const FAR * lpXORbits )
 {
     HICON handle;
-    CURSORICONINFO far *ptr;
+    CURSORICONINFO FAR *ptr;
     int sizeAnd, sizeXor;
 
 	FUNCTION_START
@@ -157,19 +161,24 @@ HCURSOR WINAPI CreateCursor(HINSTANCE hInstance,
 				int nWidth, int nHeight,
 				VOID const far * lpANDbits, VOID const far * lpXORbits)
 {
-  CURSORICONINFO info;
+	CURSORICONINFO info;
+	HCURSOR result;
 
 	FUNCTION_START
 
-  info.ptHotSpot.x = xHotSpot;
-  info.ptHotSpot.y = yHotSpot;
-  info.nWidth = nWidth;
-  info.nHeight = nHeight;
-  info.nWidthBytes = 0;
-  info.bPlanes = 1;
-  info.bBitsPerPixel = 1;
+	info.ptHotSpot.x = xHotSpot;
+	info.ptHotSpot.y = yHotSpot;
+	info.nWidth = nWidth;
+	info.nHeight = nHeight;
+	info.nWidthBytes = 0;
+	info.bPlanes = 1;
+	info.bBitsPerPixel = 1;
 
-  return CreateCursorIconIndirect(hInstance, &info, lpANDbits, lpXORbits);
+	result = CreateCursorIconIndirect(hInstance, &info, lpANDbits, lpXORbits);
+
+	FUNCTION_END
+
+	return result;
 }
 
 

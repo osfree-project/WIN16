@@ -608,7 +608,7 @@ void far * _fmemcpy(void far * s1, void const far * s2, unsigned length)
 	char far * p;
 	char far * q;
 
-	FUNCTION_START
+//	FUNCTION_START
 	//TRACE(s2);
 	if(length) {
 		p = s1;
@@ -617,7 +617,7 @@ void far * _fmemcpy(void far * s1, void const far * s2, unsigned length)
 		while(--length);
 	}
 
-	FUNCTION_END
+//	FUNCTION_END
 	return s1;
 }
 
