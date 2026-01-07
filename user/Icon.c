@@ -369,3 +369,9 @@ HCURSOR WINAPI SetCursor(HCURSOR hCursor)
 
 	return hCursor;//@todo return previous cursor
 }
+
+VOID WINAPI SetCursorPos(int X, int Y)
+{
+	dwMouseX=X;
+	dwMouseY=Y;
+}

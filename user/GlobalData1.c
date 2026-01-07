@@ -52,6 +52,8 @@ int FFastAltTab;
 int CXYGranularity;
 int CXScreen;
 int CYScreen;
+int CXSize;
+int CYSize;
 int defaultVal;
 
 HWND HWndFocus;
@@ -68,6 +70,12 @@ HGLOBAL HMenuStringHeap;
 
 FARPROC LpSaveBitmap;
 FARPROC LpDisplayCriticalSection;
+
+HLOCAL hTaskManName;
+LPSTR PTaskManName;
+
+HMODULE HModSound;
+FARPROC lpfnSoundEnable;
 
 KBINFO KbInfo;
 CURSORINFO CursorInfo;

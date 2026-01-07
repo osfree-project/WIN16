@@ -144,7 +144,7 @@ VOID WINAPI RW_RegisteMDIClient()
 	FUNCTION_END
 }
 
-VOID WINAPI LW_RegisterWindows(HINSTANCE USER_HeapSel)
+VOID WINAPI LW_RegisterWindows()
 {
 	FUNCTION_START
 
@@ -350,29 +350,45 @@ VOID WINAPI LW_MouseInit()
 	FUNCTION_END
 }
 
+//When Windows first starts, USER calls the InquireCursor function to retrieve
+//information about the cursor. It then sets a system timer to call the
+//CheckCursor function on each timer interrupt and enables the mouse driver,
+//allowing the Windows mouse-event routine to call MoveCursor at each mouse
+//interrupt occurrence. USER and Windows applications subsequently set the
+//shape of the cursor using SetCursor.
+
+VOID WINAPI PASCAL Timer_Event(VOID){
+	 //static count = 0; 
+	 
+	 //count ++ ;
+	 //sendmessage(bScan);
+	CheckCursor();
+//	 printf("\n\rSYSTEM.drv Timer_Event()");
+} 
+
 VOID WINAPI EnableInput()
 {
-	HMODULE HModSound;
-	FARPROC lpfnSoundEnable;
-
 	FUNCTION_START
 
 	// See "Undocumented Windows"
 	EnableSystemTimers();
 
+	printf("EnableSystemTimers()");
+	if(!CreateSystemTimer(1000, (FARPROC)Timer_Event ) ){
+		printf(" CreateSystemTimer()  FAILED ! ");
+	}
+
 	//Initialize some memory starting at RGBKeyState to 0. Maybe
 	//some sort of an array. Do the same for RGBAsyncKeyState.
 
-	// KEYBOARD.2. See the
-	// DDK examples for
-	// source code for the
+	// KEYBOARD.2. See the DDK examples for source code for the
 	// Enable() routines.
-	KeyboardEnable(keybd_event, RGBKeyState);
+	KeyboardEnable((FARPROC)keybd_event, RGBKeyState);
 
 	//CopyKeyState(); // copies keyboard state tables?
 
 //	if ( some static variabLe)
-		MouseEnable(mouse_event); // MOUSE.2
+		MouseEnable((FARPROC)mouse_event); // MOUSE.2
 
 	// Look for the presence of a SOUND driver. If found, get
 	// the address of its enabLe() function, and calL it.
@@ -423,6 +439,13 @@ BOOL WINAPI SetDeskPattern(void)
 }
 
 
+void WINAPI SetMinMaxInfo(void) 
+{  
+    // Initialize default main window size (often a fraction of the screen size)
+    CXSize = CXScreen / 2;
+    CYSize = CYScreen / 2;  
+}
+
 LRESULT WINAPI SwitchWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {
 //    LOGSTR((LF_API,"DeskTopWndProc(hWnd=%.04x,wMsg=%.04x,wParam=%x,lParam=%x)\n",
@@ -430,7 +453,7 @@ LRESULT WINAPI SwitchWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 
 	FUNCTION_START
 	FUNCTION_END
-    return(1L);
+    return(1);
 }
 
 
@@ -455,7 +478,7 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 	//CXSize, CYSize, CYCaption, CXBorder, CYBorder, CYHScroLL,
 	//and CXVScroLL
 
-//	SetMinMaxInfo(); // Appears to initialize some static vars.
+	SetMinMaxInfo(); // Appears to initialize some static vars.
 			 // Uses CXScreen, CYScreen, CXBorder, etc ...
 
 	// @todo!!! Allocate 0x1A bytes.
@@ -468,7 +491,7 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 	pWndClass->hInstance = hInstance;
 	pWndClass->style = CS_DBLCLKS;
 	pWndClass->hbrBackground = 2;
-	RegisterClass( pWndClass); // Register the DeskTop cLass
+	RegisterClass(pWndClass); // Register the DeskTop cLass
 
 	// Register the "switch window" class
 	pWndClass->lpszClassName = MAKELP(0, 0x8003);
@@ -539,7 +562,7 @@ VOID WINAPI LW_DisplayDriverInit()
 	// If the display driver can save bits, get a function ptr
 	// to the routine that does it. The function has an entry
 	// ordinal of 92 (0x5C)
-	FOnBoardBitmap = GetDeviceCaps( hDC, RASTERCAPS ) & 0x0040;
+	FOnBoardBitmap = GetDeviceCaps(hDC, RASTERCAPS) & 0x0040;
 	if (FOnBoardBitmap)
 		LpSaveBitmap=GetProcAddress(HInstanceDisplay,MAKELP(0,92));
 	
@@ -569,6 +592,44 @@ VOID WINAPI LW_DrawIconInit(VOID)
 
 VOID WINAPI LW_LoadTaskmanAndScreenSaver(VOID)
 {
+	WORD IScreenSaveTimeOut;  
+	
+	// Locals:
+	char szBoot[0xA];
+	char szTaskMan[0xD];
+	char szSysIni[0x14];
+
+    FUNCTION_START 
+	// Get some strings out of the USER string tables.
+	//Ox48 -> "BOOT", Ox4F -> "TASKMAN.EXE, Ox4A -> "SYSTEM.INI"
+	LoadString( USER_HeapSel, 0x48, szBoot, 0xA );
+	LoadString( USER_HeapSel, 0x4F, szTaskMan, 0xD );
+	LoadString( USER_HeapSel, 0x4A, szSysIni, 0x14 );
+	
+	// Get Ox82 bytes for use as the string buffer in the call to
+	// GetPrivateProfileString(), below.
+	hTaskManName = UserLocalAlloc(LT_USER_STRING, 0x40, 0x82 );
+	PTaskManName = (LPSTR)LocalLock(hTaskManName);
+
+	// Get the "final" name of TASKMAN.EXE from the boot section
+	// of the SYSTEM.INI file. The default is taskman.exe=taskman.exe.
+	GetPrivateProfileString(szBoot, szTaskMan, szTaskMan, PTaskManName , 0x82, szSysIni );
+	
+	// Get rid of the excess memory that was allocated previously.
+	LocalUnlock(hTaskManName);
+	LocalReAlloc(hTaskManName, lstrlen(PTaskManName)+1, 0 );
+	
+	// The screen saver timeout value. Ox63 = "ScreenSaveTimeOut"
+	IScreenSaveTimeOut = UT_GetIntFromProfile(0x63, 0);
+	
+	// Screen saver active? Ox64 = "ScreenSaveActive"
+	if ( UT_GetIntFromProfile( 0x64, 0 ) == 0 )
+	{
+		if ( IScreenSaveTimeOut > 0 )
+				IScreenSaveTimeOut = -IScreenSaveTimeOut; //???
+	}
+	
+	FUNCTION_END
 }
 
 
@@ -669,7 +730,7 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 	// "predefined" windows, such as
 	// edit controls, etc. We'll come
 	// back to this routine later.
-//	LW_RegisterWindows(USER_HeapSel);
+	LW_RegisterWindows();
 
 	// Allocate some memory for an internal buffer.
 	// UserLocalAlloc() is a special version of LocalAlloc().
@@ -689,10 +750,7 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 	EnableInput();
 
 	// Middle of the screen
-	//SetCursorPos(100, 100);
-	// Middle of the screen
-//	SetCursorPos(100, 100);
-	MoveCursor(100,100);
+	SetCursorPos(100, 100);
 
 	// Get the hourglass cursor, show it
 	SetCursor(LoadCursor(0, IDC_WAIT));

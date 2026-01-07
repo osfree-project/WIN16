@@ -3,7 +3,7 @@
 /***********************************************************************
  *		keybd_event (USER.???)
  */
-int WINAPI keybd_event(VOID)
+VOID WINAPI keybd_event(VOID)
 {
 	FUNCTION_START
 	// send event to System Message Queue
@@ -13,7 +13,7 @@ int WINAPI keybd_event(VOID)
 /***********************************************************************
  *		mouse_event (USER.299)
  */
-int WINAPI mouse_event(VOID)
+VOID WINAPI mouse_event(VOID)
 {
 	 WORD EventCodes;   // The event codes. This is a bit-packed value that describes the various events being reported.Bit Description
 						// The mouse has moved.
@@ -42,15 +42,13 @@ int WINAPI mouse_event(VOID)
 	dwMouseX+=hMouse;
 	dwMouseY+=vMouse;
 
-//	MoveCursor(hMouse, vMouse);
 	MoveCursor(dwMouseX, dwMouseY);
-	CheckCursor();
+//	CheckCursor(); must be called by timer event
 	  
 //	 printf("\r\n %d MOUSE.drv: EventCodes[%d], hMouse[%d], vMouse[%d],  NumButts[%d] ",EventCodes,EventCodes,hMouse,vMouse,NumButts );
 
 	// send event to System Message Queue
 //	FUNCTION_END
-//	_asm {iret}
 }
 
 /***********************************************************************

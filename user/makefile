@@ -257,6 +257,8 @@ IMPORTS = GETEXEVERSION KERNEL.105, &
   LOCALHEAPSIZE KERNEL.162, &
   FARSETOWNER KERNEL.403, &
   FarGetOwner KERNEL.404, &
+  CreateSystemTimer SYSTEM.2, &
+  EnableSystemTimers SYSTEM.4, &
   GetSystemMSecCount SYSTEM.6, &
   Resurrection GDI.122, &
   InquireMouse MOUSE.1, &
@@ -268,7 +270,6 @@ IMPORTS = GETEXEVERSION KERNEL.105, &
   SetTaskQueue KERNEL.34, &
   MakeObjectPrivate GDI.463, &
   SetSpeed KEYBOARD.7, &
-  EnableSystemTimers SYSTEM.4, &
   KeyboardEnable KEYBOARD.2, &
   MouseEnable MOUSE.2
 

@@ -372,6 +372,8 @@ extern int FFastAltTab;
 extern int CXYGranularity;
 extern int CXScreen;
 extern int CYScreen;
+extern int CXSize;
+extern int CYSize;
 extern int defaultVal;
 
 extern HWND HWndFocus;
@@ -389,13 +391,16 @@ extern HGLOBAL HMenuStringHeap;
 extern FARPROC LpSaveBitmap;
 extern FARPROC LpDisplayCriticalSection;
 
+extern HLOCAL hTaskManName;
+extern LPSTR PTaskManName;
+
 WORD WINAPI InquireMouse(MOUSEINFO FAR *MouseInfo);
-int WINAPI mouse_event(VOID);
+VOID WINAPI mouse_event(VOID);
 VOID WINAPI MouseEnable(FARPROC proc);
 
 WORD WINAPI InquireDisplay(CURSORINFO FAR *CursorInfo);
 
-int WINAPI keybd_event(VOID);
+VOID WINAPI keybd_event(VOID);
 extern char RGBKeyState[0xff];
 
 VOID WINAPI KeyboardEnable(FARPROC proc, LPBYTE lpKeyState);
@@ -563,3 +568,8 @@ struct cursoricon_desc
     DWORD FAR *frame_rates;
     HRSRC rsrc;
 };
+
+WORD WINAPI CreateSystemTimer(WORD wFreq, FARPROC IpCallback);
+
+extern HMODULE HModSound;
+extern FARPROC lpfnSoundEnable;
