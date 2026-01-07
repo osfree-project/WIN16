@@ -73,6 +73,9 @@ KBINFO KbInfo;
 CURSORINFO CursorInfo;
 MOUSEINFO MouseInfo;
 
+DWORD dwMouseX=0;
+DWORD dwMouseY=0;
+
 char DISPLAY[]="DISPLAY";
 
 char RGBKeyState[0xff];

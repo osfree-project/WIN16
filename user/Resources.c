@@ -781,7 +781,7 @@ HICON WINAPI CreateIconFromResourceEx(HINSTANCE hinst, LPBYTE bits, UINT cbSize,
     BOOL needFlip = FALSE; // Флаг, указывающий нужно ли переворачивать строки
 
     FUNCTION_START
-    TRACE("%x:%x (%d bytes) , ver %x%x, %dx%d %S %S\n\r",
+    TRACE("%x:%x (%d bytes) , ver %x%x, %dx%d %S %S",
                    bits, cbSize, dwVersion, width, height,
                    bIcon ? "icon" : "cursor", (cFlag & LR_MONOCHROME) ? "mono" : "" );
 
@@ -809,7 +809,7 @@ HICON WINAPI CreateIconFromResourceEx(HINSTANCE hinst, LPBYTE bits, UINT cbSize,
         bmi = (LPBITMAPINFO)(bits + 4);
     }
 
-    TRACE("x=%d y=%d bmi=%x:%x\n\r", hotspot.x, hotspot.y, bmi);
+    TRACE("x=%d y=%d bmi=%x:%x", hotspot.x, hotspot.y, bmi);
 
     // Проверяем знак высоты в DIB заголовке
     // Если biHeight > 0, данные хранятся снизу вверх (нужно переворачивать)
@@ -817,12 +817,12 @@ HICON WINAPI CreateIconFromResourceEx(HINSTANCE hinst, LPBYTE bits, UINT cbSize,
     if (bmi->bmiHeader.biHeight > 0)
     {
         needFlip = TRUE; // Данные снизу вверх - нужно перевернуть
-        TRACE("DIB data is bottom-up, will flip\n\r");
+        TRACE("DIB data is bottom-up, will flip");
     }
     else
     {
         needFlip = FALSE; // Данные сверху вниз - не нужно переворачивать
-        TRACE("DIB data is top-down, no flip needed\n\r");
+        TRACE("DIB data is top-down, no flip needed");
         // Используем абсолютное значение высоты для расчетов
         height = -bmi->bmiHeader.biHeight;
     }
@@ -859,7 +859,7 @@ HICON WINAPI CreateIconFromResourceEx(HINSTANCE hinst, LPBYTE bits, UINT cbSize,
     // Проверяем, не выходим ли за границы данных
     if ((DWORD)(lpXOR - bits) + expectedXORSize > cbSize)
     {
-        TRACE("ERROR: XOR data exceeds buffer size!\n\r");
+        TRACE("ERROR: XOR data exceeds buffer size!");
         return 0;
     }
     
@@ -874,9 +874,9 @@ HICON WINAPI CreateIconFromResourceEx(HINSTANCE hinst, LPBYTE bits, UINT cbSize,
         lpAND = lpXOR + andOffsetFromXOR;
     }
 
-    TRACE("xorOffset=%d, xorRowSize=%d, andRowSize=%d, needFlip=%d\n\r", 
+    TRACE("xorOffset=%d, xorRowSize=%d, andRowSize=%d, needFlip=%d", 
           xorOffset, xorRowSize, andRowSize, needFlip);
-    TRACE("lpXOR=%p (offset %d from bits), lpAND=%p\n\r", lpXOR, lpXOR - bits, lpAND);
+    TRACE("lpXOR=%x:%x (offset %d from bits), lpAND=%x%x", lpXOR, lpXOR - bits, lpAND);
 
     // Выделяем память для перевернутых масок
     hMemXOR = GlobalAlloc(GMEM_MOVEABLE, expectedXORSize);

@@ -7,7 +7,7 @@
 PROJ     = user
 TRGT     = $(PROJ).exe
 DESC     = Windows USER.EXE
-srcfiles = $(p)smallcode$(e) $(p)libentry$(e) $(p)libmain$(e) $(p)GlobalData1$(e) $(p)hook$(e) $(p)dialog$(e) $(p)Time$(e) $(p)Atoms$(e) $(p)comm$(e) $(p)Caret$(e) $(p)DrawText$(e)  $(p)SysMetrics$(e) $(p)Listbox$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Resources$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)printf$(e) # $(p)Desktop$(e)  $(p)StringFunc$(e) $(p)network$(e) $(p)InitApp$(e)
+srcfiles = $(p)smallcode$(e) $(p)libentry$(e) $(p)libmain$(e) $(p)GlobalData1$(e) $(p)div$(e) $(p)hook$(e) $(p)dialog$(e) $(p)Time$(e) $(p)Atoms$(e) $(p)comm$(e) $(p)Caret$(e) $(p)DrawText$(e)  $(p)SysMetrics$(e) $(p)Listbox$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Resources$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)printf$(e) # $(p)Desktop$(e)  $(p)StringFunc$(e) $(p)network$(e) $(p)InitApp$(e)
 ADD_COPT = -zW -s -2 -DDEBUG=1 # optimize prolog, no stack checks, put constants in code segment 
 # -zc
 ADD_LINKOPT = SEGMENT CLASS DATA FIXED SHARE
@@ -262,6 +262,9 @@ IMPORTS = GETEXEVERSION KERNEL.105, &
   InquireMouse MOUSE.1, &
   InquireKeyboard KEYBOARD.1, &
   InquireDisplay DISPLAY.101, &
+  DisplaySetCursor DISPLAY.102, &
+  MoveCursor DISPLAY.103, &
+  CheckCursor DISPLAY.104, &
   SetTaskQueue KERNEL.34, &
   MakeObjectPrivate GDI.463, &
   SetSpeed KEYBOARD.7, &

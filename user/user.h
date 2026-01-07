@@ -504,6 +504,43 @@ typedef struct
     CURSORICONDIRENTRY  idEntries[1];
 } CURSORICONDIR;
 
+typedef struct tagCURSORICONINFO
+{
+    POINT   ptHotSpot;
+    WORD    nWidth;
+    WORD    nHeight;
+    WORD    nWidthBytes;
+    BYTE    bPlanes;
+    BYTE    bBitsPerPixel;
+} CURSORICONINFO;
+
+// From Norton's Writing Windows Device Drivers
+//
+VOID FAR PASCAL MoveCursor(WORD wAbsX, WORD wAbsY);
+VOID FAR PASCAL CheckCursor(VOID);
+#pragma pack(push, 1)  // Отключаем выравнивание для точного соответствия ассемблерной структуре
+
+typedef struct tagCURSORSHAPE {
+    WORD csHotX;       // Горячая точка X
+    WORD csHotY;       // Горячая точка Y
+    WORD csWidth;      // Ширина курсора в пикселях
+    WORD csHeight;     // Высота курсора в пикселях
+    WORD csWidthBytes; // Количество байт в одной строке маски
+    WORD csColor;      // Цветность (обычно 1 для монохромного)
+    // Примечание: здесь следуют данные масок
+    // Размер массива: csHeight * csWidthBytes * 2 байт
+    // Первые csHeight * csWidthBytes байт - AND маска
+    // Следующие csHeight * csWidthBytes байт - XOR маска
+    BYTE csBits[1];    // Массив переменной длины для данных масок
+} CURSORSHAPE, FAR * LPCURSORSHAPE;
+
+#pragma pack(pop)  // Восстанавливаем выравнивание
+
+VOID FAR PASCAL DisplaySetCursor(LPCURSORSHAPE lpCursorShape);
+
+extern DWORD dwMouseX;
+extern DWORD dwMouseY;
+
 /* NtUserSetCursorIconData parameter, not compatible with Windows */
 struct cursoricon_frame
 {

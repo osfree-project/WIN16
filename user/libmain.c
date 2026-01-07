@@ -690,7 +690,6 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 //	DeleteDC(tempHDC);
 }
 
-for (;;);
 
 	// Start out with no focus
 	HWndFocus = 0; 
@@ -704,7 +703,7 @@ for (;;);
 	// "predefined" windows, such as
 	// edit controls, etc. We'll come
 	// back to this routine later.
-	LW_RegisterWindows(USER_HeapSel);
+//	LW_RegisterWindows(USER_HeapSel);
 
 	// Allocate some memory for an internal buffer.
 	// UserLocalAlloc() is a special version of LocalAlloc().
@@ -724,10 +723,14 @@ for (;;);
 	EnableInput();
 
 	// Middle of the screen
-	SetCursorPos(100, 100);
+	//SetCursorPos(100, 100);
+	// Middle of the screen
+//	SetCursorPos(100, 100);
+	MoveCursor(100,100);
 
 	// Get the hourglass cursor, show it
 	SetCursor(LoadCursor(0, IDC_WAIT));
+for (;;);
 
 	// Register the Desktop and
 	// switch windows classes, and

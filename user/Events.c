@@ -15,9 +15,40 @@ int WINAPI keybd_event(VOID)
  */
 int WINAPI mouse_event(VOID)
 {
-	FUNCTION_START
+	 WORD EventCodes;   // The event codes. This is a bit-packed value that describes the various events being reported.Bit Description
+						// The mouse has moved.
+						//	1 The left button was pressed.
+						//	2 The left button was released.
+						//	3 The right button was pressed.
+						//	4 The right button was released.
+						//	5-14 Reserved
+						//	15 The position values in BX and CX are in absolute coordinates.
+	 WORD 	hMouse; 	//  Horizontal position.
+	 WORD 	vMouse;		//  Vertical position.
+	 WORD 	NumButts;	//  Number of buttons on the mouse (typically, 2).
+	 
+	 char send;
+
+//	FUNCTION_START
+
+	  _asm{
+		  mov EventCodes,	AX 
+		  mov hMouse, 		BX
+		  mov vMouse,		CX
+		  mov NumButts,		DX
+	  }
+
+//	SetDS(USER_HeapSel);
+//	dwMouseX+=hMouse;
+//	dwMouseY+=vMouse;
+
+	MoveCursor(hMouse, vMouse);
+	CheckCursor();
+	  
+//	 printf("\r\n %d MOUSE.drv: EventCodes[%d], hMouse[%d], vMouse[%d],  NumButts[%d] ",EventCodes,EventCodes,hMouse,vMouse,NumButts );
+
 	// send event to System Message Queue
-	FUNCTION_END
+//	FUNCTION_END
 }
 
 /***********************************************************************
