@@ -663,16 +663,29 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 	tempHDC=CreateDC(DISPLAY, NULL, NULL, NULL);
 	TRACE("Create display context done");
 	SetPixel(tempHDC, 10, 10, RGB(255, 0, 0));
-        hPenBlue=CreatePen(PS_SOLID, 5, RGB(0, 0, 255));
+        hPenBlue=CreatePen(PS_SOLID, 2, RGB(0, 0, 255));
         SelectObject(tempHDC, hPenBlue);
         hBrushRed=CreateSolidBrush(RGB(255, 0, 0));
         SelectObject(tempHDC, hBrushRed);
-        Rectangle(tempHDC, 200, 200, 400, 400);
+        Rectangle(tempHDC, 200, 0, 400, 200);
 
-	DrawIcon(tempHDC, 200, 210, HCursNormal);
-	DrawIcon(tempHDC, 250, 210, HCursIBeam);
-	DrawIcon(tempHDC, 290, 210, HCursUpArrow);
-	DrawIcon(tempHDC, 330, 210, HIconSample);
+	DrawIcon(tempHDC, 205, 5, HCursNormal);
+	DrawIcon(tempHDC, 250, 5, HCursIBeam);
+	DrawIcon(tempHDC, 290, 5, HCursUpArrow);
+	DrawIcon(tempHDC, 330, 5, HIconSample);
+
+	DrawIcon(tempHDC, 205, 40, HIconWindows);
+	DrawIcon(tempHDC, 250, 40, HCursSizeNWSE);
+	DrawIcon(tempHDC, 290, 40, HCursSizeNESW);
+	DrawIcon(tempHDC, 330, 40, HCursSizeNS);
+
+	DrawIcon(tempHDC, 205, 80, HCursSizeWE);
+	DrawIcon(tempHDC, 250, 80, HIconHand);
+	DrawIcon(tempHDC, 290, 80, HIconQues);
+	DrawIcon(tempHDC, 330, 80, HIconBang);
+
+	DrawIcon(tempHDC, 205, 120, HIconNote);
+	DrawIcon(tempHDC, 250, 120, HCursSizeAll);
 
 //	DeleteDC(tempHDC);
 }

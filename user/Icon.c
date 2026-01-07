@@ -59,7 +59,7 @@ static int free_icon_handle( HICON handle )
 
 static int get_bitmap_width_bytes( int width, int bpp )
 {
-	FUNCTION_START
+//	FUNCTION_START
     switch(bpp)
     {
     case 1:
@@ -84,7 +84,7 @@ static int get_bitmap_width_bytes( int width, int bpp )
 
 static CURSORICONINFO far *get_icon_ptr( HICON handle )
 {
-	FUNCTION_START
+//	FUNCTION_START
     return (CURSORICONINFO far *)GlobalLock( handle );
 }
 
@@ -278,7 +278,7 @@ DrawIcon(HDC hDC, int x, int y, HICON hIcon)
     void far *and_bits = info + 1;
     void far *xor_bits = (BYTE far *)and_bits + info->nHeight * get_bitmap_width_bytes( info->nWidth, 1 );
 
-	FUNCTION_START
+//	FUNCTION_START
 
 //    APISTR((LF_API,"DrawIcon: hDC=%x %d,%d hIcon %x\n",hDC,x,y,hIcon));
 
@@ -314,5 +314,6 @@ DrawIcon(HDC hDC, int x, int y, HICON hIcon)
     SetBkColor(hDC,bg);
     SetTextColor(hDC,fg);
 
+//	FUNCTION_END
     return bRet;
 }

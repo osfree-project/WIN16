@@ -48,7 +48,7 @@ STRINGTABLE DISCARDABLE
 //OCR_SIZENESW CURSOR FIXED "res/idcszne.cur"
 //OCR_SIZEWE CURSOR FIXED "res/idcszwe.cur"
 //OCR_SIZENS CURSOR FIXED "res/idcszns.cur"
-//OCR_SIZEALL CURSOR FIXED "res/idcsize.cur"
+OCR_SIZEALL CURSOR FIXED "res/idcsize.cur"
 //OCR_NO CURSOR FIXED "res/idcno.cur"
 //OCR_APPSTARTING CURSOR FIXED "res/idcappst.cur"
 //OCR_HELP CURSOR FIXED "res/idchelp.cur"
