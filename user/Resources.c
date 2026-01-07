@@ -723,6 +723,7 @@ static int get_bitmap_width_bytes( int width, int bpp )
     {
     case 1:
         return 2 * ((width+15) / 16);
+//	 return ((width + 31) / 32) * 4; // Выравнивание до DWORD (4 байта)
     case 4:
         return 2 * ((width+3) / 4);
     case 24:
@@ -761,11 +762,6 @@ void dumpbits(LPBYTE bits)
     TRACE("biClrImportant=%d", bmi->bmiHeader.biClrImportant);
 }
 
-/**********************************************************************
- *		CreateIconFromResourceEx (USER32.@)
- *
- * FIXME: Convert to mono when cFlag is LR_MONOCHROME.
- */
 HICON WINAPI CreateIconFromResourceEx(HINSTANCE hinst, LPBYTE bits, UINT cbSize,
                                        BOOL bIcon, DWORD dwVersion,
                                        int width, int height,
@@ -774,164 +770,17 @@ HICON WINAPI CreateIconFromResourceEx(HINSTANCE hinst, LPBYTE bits, UINT cbSize,
     POINT hotspot;
     BITMAPINFO FAR *bmi;
     HCURSOR result;
-	LPBYTE lpXOR, lpAND;
-// Yin-shaped cursor AND mask (32x32x1bpp)
- BYTE ANDmaskCursor[] =
-{
-    0xFF, 0xFC, 0x3F, 0xFF,   // ##############----##############
-    0xFF, 0xC0, 0x1F, 0xFF,   // ##########---------#############
-    0xFF, 0x00, 0x3F, 0xFF,   // ########----------##############
-    0xFE, 0x00, 0xFF, 0xFF,   // #######---------################
-    0xF8, 0x01, 0xFF, 0xFF,   // #####----------#################
-    0xF0, 0x03, 0xFF, 0xFF,   // ####----------##################
-    0xF0, 0x03, 0xFF, 0xFF,   // ####----------##################
-    0xE0, 0x07, 0xFF, 0xFF,   // ###----------###################
-    0xC0, 0x07, 0xFF, 0xFF,   // ##-----------###################
-    0xC0, 0x0F, 0xFF, 0xFF,   // ##----------####################
-    0x80, 0x0F, 0xFF, 0xFF,   // #-----------####################
-    0x80, 0x0F, 0xFF, 0xFF,   // #-----------####################
-    0x80, 0x07, 0xFF, 0xFF,   // #------------###################
-    0x00, 0x07, 0xFF, 0xFF,   // -------------###################
-    0x00, 0x03, 0xFF, 0xFF,   // --------------##################
-    0x00, 0x00, 0xFF, 0xFF,   // ----------------################
-    0x00, 0x00, 0x7F, 0xFF,   // -----------------###############
-    0x00, 0x00, 0x1F, 0xFF,   // -------------------#############
-    0x00, 0x00, 0x0F, 0xFF,   // --------------------############
-    0x80, 0x00, 0x0F, 0xFF,   // #-------------------############
-    0x80, 0x00, 0x07, 0xFF,   // #--------------------###########
-    0x80, 0x00, 0x07, 0xFF,   // #--------------------###########
-    0xC0, 0x00, 0x07, 0xFF,   // ##-------------------###########
-    0xC0, 0x00, 0x0F, 0xFF,   // ##------------------############
-    0xE0, 0x00, 0x0F, 0xFF,   // ###-----------------############
-    0xF0, 0x00, 0x1F, 0xFF,   // ####---------------#############
-    0xF0, 0x00, 0x1F, 0xFF,   // ####---------------#############
-    0xF8, 0x00, 0x3F, 0xFF,   // #####-------------##############
-    0xFE, 0x00, 0x7F, 0xFF,   // #######----------###############
-    0xFF, 0x00, 0xFF, 0xFF,   // ########--------################
-    0xFF, 0xC3, 0xFF, 0xFF,   // ##########----##################
-    0xFF, 0xFF, 0xFF, 0xFF    // ################################
-};
- 
-// Yin-shaped cursor XOR mask (32x32x1bpp)
-BYTE XORmaskCursor[] =
-{
-    0x00, 0x00, 0x00, 0x00,   // --------------------------------
-    0x00, 0x03, 0xC0, 0x00,   // --------------####--------------
-    0x00, 0x3F, 0x00, 0x00,   // ----------######----------------
-    0x00, 0xFE, 0x00, 0x00,   // --------#######-----------------
-    0x03, 0xFC, 0x00, 0x00,   // ------########------------------
-    0x07, 0xF8, 0x00, 0x00,   // -----########-------------------
-    0x07, 0xF8, 0x00, 0x00,   // -----########-------------------
-    0x0F, 0xF0, 0x00, 0x00,   // ----########--------------------
-    0x1F, 0xF0, 0x00, 0x00,   // ---#########--------------------
-    0x1F, 0xE0, 0x00, 0x00,   // ---########---------------------
-    0x3F, 0xE0, 0x00, 0x00,   // --#########---------------------
-    0x3F, 0xE0, 0x00, 0x00,   // --#########---------------------
-    0x3F, 0xF0, 0x00, 0x00,   // --##########--------------------
-    0x7F, 0xF0, 0x00, 0x00,   // -###########--------------------
-    0x7F, 0xF8, 0x00, 0x00,   // -############-------------------
-    0x7F, 0xFC, 0x00, 0x00,   // -#############------------------
-    0x7F, 0xFF, 0x00, 0x00,   // -###############----------------
-    0x7F, 0xFF, 0x80, 0x00,   // -################---------------
-    0x7F, 0xFF, 0xE0, 0x00,   // -##################-------------
-    0x3F, 0xFF, 0xE0, 0x00,   // --#################-------------
-    0x3F, 0xC7, 0xF0, 0x00,   // --########----######------------
-    0x3F, 0x83, 0xF0, 0x00,   // --#######------#####------------
-    0x1F, 0x83, 0xF0, 0x00,   // ---######------#####------------
-    0x1F, 0x83, 0xE0, 0x00,   // ---######------####-------------
-    0x0F, 0xC7, 0xE0, 0x00,   // ----######----#####-------------
-    0x07, 0xFF, 0xC0, 0x00,   // -----#############--------------
-    0x07, 0xFF, 0xC0, 0x00,   // -----#############--------------
-    0x01, 0xFF, 0x80, 0x00,   // -------##########---------------
-    0x00, 0xFF, 0x00, 0x00,   // --------########----------------
-    0x00, 0x3C, 0x00, 0x00,   // ----------####------------------
-    0x00, 0x00, 0x00, 0x00,   // --------------------------------
-    0x00, 0x00, 0x00, 0x00    // --------------------------------
-};
-BYTE ANDmaskIcon[] = {0xFF, 0xFF, 0xFF, 0xFF,   // line 1 
-                      0xFF, 0xFF, 0xC3, 0xFF,   // line 2 
-                      0xFF, 0xFF, 0x00, 0xFF,   // line 3 
-                      0xFF, 0xFE, 0x00, 0x7F,   // line 4 
- 
-                      0xFF, 0xFC, 0x00, 0x1F,   // line 5 
-                      0xFF, 0xF8, 0x00, 0x0F,   // line 6 
-                      0xFF, 0xF8, 0x00, 0x0F,   // line 7 
-                      0xFF, 0xF0, 0x00, 0x07,   // line 8 
- 
-                      0xFF, 0xF0, 0x00, 0x03,   // line 9 
-                      0xFF, 0xE0, 0x00, 0x03,   // line 10 
-                      0xFF, 0xE0, 0x00, 0x01,   // line 11 
-                      0xFF, 0xE0, 0x00, 0x01,   // line 12 
- 
-                      0xFF, 0xF0, 0x00, 0x01,   // line 13 
-                      0xFF, 0xF0, 0x00, 0x00,   // line 14 
-                      0xFF, 0xF8, 0x00, 0x00,   // line 15 
-                      0xFF, 0xFC, 0x00, 0x00,   // line 16 
- 
-                      0xFF, 0xFF, 0x00, 0x00,   // line 17 
-                      0xFF, 0xFF, 0x80, 0x00,   // line 18 
-                      0xFF, 0xFF, 0xE0, 0x00,   // line 19 
-                      0xFF, 0xFF, 0xE0, 0x01,   // line 20 
- 
-                      0xFF, 0xFF, 0xF0, 0x01,   // line 21 
-                      0xFF, 0xFF, 0xF0, 0x01,   // line 22 
-                      0xFF, 0xFF, 0xF0, 0x03,   // line 23 
-                      0xFF, 0xFF, 0xE0, 0x03,   // line 24 
- 
-                      0xFF, 0xFF, 0xE0, 0x07,   // line 25 
-                      0xFF, 0xFF, 0xC0, 0x0F,   // line 26 
-                      0xFF, 0xFF, 0xC0, 0x0F,   // line 27 
-                      0xFF, 0xFF, 0x80, 0x1F,   // line 28 
- 
-                      0xFF, 0xFF, 0x00, 0x7F,   // line 29 
-                      0xFF, 0xFC, 0x00, 0xFF,   // line 30 
-                      0xFF, 0xF8, 0x03, 0xFF,   // line 31 
-                      0xFF, 0xFC, 0x3F, 0xFF};  // line 32 
- 
-// Yang icon XOR bitmask 
- 
-BYTE lpNULL[] = {0x00, 0x00, 0x00, 0x00,   // line 1 
-                      0x00, 0x00, 0x00, 0x00,   // line 2 
-                      0x00, 0x00, 0x00, 0x00,   // line 3 
-                      0x00, 0x00, 0x00, 0x00,   // line 4 
- 
-                      0x00, 0x00, 0x00, 0x00,   // line 5 
-                      0x00, 0x00, 0x00, 0x00,   // line 6 
-                      0x00, 0x00, 0x00, 0x00,   // line 7 
-                      0x00, 0x00, 0x00, 0x00,   // line 8 
- 
-                      0x00, 0x00, 0x00, 0x00,   // line 9 
-                      0x00, 0x00, 0x00, 0x00,   // line 10 
-                      0x00, 0x00, 0x00, 0x00,   // line 11 
-                      0x00, 0x00, 0x00, 0x00,   // line 12 
- 
-                      0x00, 0x00, 0x00, 0x00,   // line 13 
-                      0x00, 0x00, 0x00, 0x00,   // line 14 
-                      0x00, 0x00, 0x00, 0x00,   // line 15 
-                      0x00, 0x00, 0x00, 0x00,   // line 16 
- 
-                      0x00, 0x00, 0x00, 0x00,   // line 17 
-                      0x00, 0x00, 0x00, 0x00,   // line 18 
-                      0x00, 0x00, 0x00, 0x00,   // line 19 
-                      0x00, 0x00, 0x00, 0x00,   // line 20 
- 
-                      0x00, 0x00, 0x00, 0x00,   // line 21 
-                      0x00, 0x00, 0x00, 0x00,   // line 22 
-                      0x00, 0x00, 0x00, 0x00,   // line 23 
-                      0x00, 0x00, 0x00, 0x00,   // line 24 
- 
-                      0x00, 0x00, 0x00, 0x00,   // line 25 
-                      0x00, 0x00, 0x00, 0x00,   // line 26 
-                      0x00, 0x00, 0x00, 0x00,   // line 27 
-                      0x00, 0x00, 0x00, 0x00,   // line 28 
- 
-                      0x00, 0x00, 0x00, 0x00,   // line 29 
-                      0x00, 0x00, 0x00, 0x00,   // line 30 
-                      0x00, 0x00, 0x00, 0x00,   // line 31 
-                      0x00, 0x00, 0x00, 0x00};  // line 32 
+    LPBYTE lpXOR, lpAND;
+    LPBYTE lpXOR_flipped, lpAND_flipped;
+    int xorRowSize, andRowSize;
+    int y, i;
+    HGLOBAL hMemXOR = 0, hMemAND = 0;
+    DWORD xorOffset, andOffset;
+    DWORD expectedXORSize;
+    DWORD andOffsetFromXOR;
+    BOOL needFlip = FALSE; // Флаг, указывающий нужно ли переворачивать строки
 
-
-	FUNCTION_START
+    FUNCTION_START
     TRACE("%x:%x (%d bytes) , ver %x%x, %dx%d %S %S\n\r",
                    bits, cbSize, dwVersion, width, height,
                    bIcon ? "icon" : "cursor", (cFlag & LR_MONOCHROME) ? "mono" : "" );
@@ -946,54 +795,163 @@ BYTE lpNULL[] = {0x00, 0x00, 0x00, 0x00,   // line 1
         return 0;
     }
 
-    /* Check if the resource is an animated icon/cursor */
-//    if (!memcmp(bits, "RIFF", 4))
-//        return CURSORICON_CreateIconFromANI( bits, cbSize, width, height,
-//                                             0 /* default depth */, bIcon, cFlag );
-
     if (bIcon)
     {
         hotspot.x = width / 2;
         hotspot.y = height / 2;
         bmi = (BITMAPINFO FAR *)bits;
     }
-    else /* get the hotspot */
+    else
     {
         short FAR *pt = (short FAR *)bits;
         hotspot.x = pt[0];
         hotspot.y = pt[1];
         bmi = (LPBITMAPINFO)(bits + 4);
-//        cbSize -= 2 * sizeof(*pt);
     }
 
     TRACE("x=%d y=%d bmi=%x:%x\n\r", hotspot.x, hotspot.y, bmi);
 
-	lpXOR=(LPBYTE)(bits+12+bmi->bmiHeader.biSize+(bmi->bmiHeader.biClrUsed*sizeof(RGBQUAD)));
-	lpAND=lpXOR+get_bitmap_width_bytes(width, bmi->bmiHeader.biBitCount /* bpp */)*(height);
-	if (bIcon)
-	{
-		result=CreateIcon(hinst,    // application instance  
-	             width,              // icon width 
-	             height,              // icon height 
-	             1,               // number of XOR planes 
-	             1,               // number of bits per pixel 
-	             lpAND/*ANDmaskIcon*/,     // AND bitmask  
-	             lpXOR/*XORmaskIcon*/);    // XOR bitmask 
-} else {
-	result=CreateCursor( hinst,     // app. instance 
-             hotspot.x,         // horizontal position of hot spot 
-             hotspot.y,         // vertical position of hot spot 
-             width,             // cursor width 
-             height,            // cursor height 
-             lpAND,//ANDmaskCursor,     // AND mask 
-             lpXOR);//XORmaskCursor );   // XOR mask 
-}
-	FUNCTION_END
-     return result;
-}
+    // Проверяем знак высоты в DIB заголовке
+    // Если biHeight > 0, данные хранятся снизу вверх (нужно переворачивать)
+    // Если biHeight < 0, данные хранятся сверху вниз (не нужно переворачивать)
+    if (bmi->bmiHeader.biHeight > 0)
+    {
+        needFlip = TRUE; // Данные снизу вверх - нужно перевернуть
+        TRACE("DIB data is bottom-up, will flip\n\r");
+    }
+    else
+    {
+        needFlip = FALSE; // Данные сверху вниз - не нужно переворачивать
+        TRACE("DIB data is top-down, no flip needed\n\r");
+        // Используем абсолютное значение высоты для расчетов
+        height = -bmi->bmiHeader.biHeight;
+    }
 
-//    return create_icon_from_bmi( bmi, cbSize, NULL, NULL, NULL, hotspot, bIcon, width, height, cFlag );
-//}
+    // Вычисляем размеры строк
+    xorRowSize = get_bitmap_width_bytes(width, bmi->bmiHeader.biBitCount);
+    andRowSize = get_bitmap_width_bytes(width, 1); // AND маска всегда 1bpp
+
+    // Вычисляем смещение до данных XOR маски
+    // Стандартное смещение: заголовок + палитра
+    xorOffset = bmi->bmiHeader.biSize;
+    
+    // Добавляем размер палитры
+    if (bmi->bmiHeader.biClrUsed > 0)
+    {
+        xorOffset += bmi->bmiHeader.biClrUsed * sizeof(RGBQUAD);
+    }
+    else if (bmi->bmiHeader.biBitCount <= 8)
+    {
+        // Если biClrUsed = 0, но битность <= 8, то используется полная палитра
+        xorOffset += (1 << bmi->bmiHeader.biBitCount) * sizeof(RGBQUAD);
+    }
+    
+    // Выравнивание до 4 байт
+    if (xorOffset % 4 != 0)
+    {
+        xorOffset += 4 - (xorOffset % 4);
+    }
+
+    // Вычисляем указатели
+    lpXOR = (LPBYTE)bmi + xorOffset;
+    expectedXORSize = xorRowSize * height;
+    
+    // Проверяем, не выходим ли за границы данных
+    if ((DWORD)(lpXOR - bits) + expectedXORSize > cbSize)
+    {
+        TRACE("ERROR: XOR data exceeds buffer size!\n\r");
+        return 0;
+    }
+    
+    // AND маска начинается сразу после XOR данных
+    lpAND = lpXOR + expectedXORSize;
+    
+    // Выравнивание для AND маски
+    andOffsetFromXOR = expectedXORSize;
+    if (andOffsetFromXOR % 4 != 0)
+    {
+        andOffsetFromXOR += 4 - (andOffsetFromXOR % 4);
+        lpAND = lpXOR + andOffsetFromXOR;
+    }
+
+    TRACE("xorOffset=%d, xorRowSize=%d, andRowSize=%d, needFlip=%d\n\r", 
+          xorOffset, xorRowSize, andRowSize, needFlip);
+    TRACE("lpXOR=%p (offset %d from bits), lpAND=%p\n\r", lpXOR, lpXOR - bits, lpAND);
+
+    // Выделяем память для перевернутых масок
+    hMemXOR = GlobalAlloc(GMEM_MOVEABLE, expectedXORSize);
+    hMemAND = GlobalAlloc(GMEM_MOVEABLE, andRowSize * height);
+    
+    if (!hMemXOR || !hMemAND)
+    {
+        if (hMemXOR) GlobalFree(hMemXOR);
+        if (hMemAND) GlobalFree(hMemAND);
+        return 0;
+    }
+    
+    lpXOR_flipped = (LPBYTE)GlobalLock(hMemXOR);
+    lpAND_flipped = (LPBYTE)GlobalLock(hMemAND);
+    
+    if (!lpXOR_flipped || !lpAND_flipped)
+    {
+        if (hMemXOR) { GlobalUnlock(hMemXOR); GlobalFree(hMemXOR); }
+        if (hMemAND) { GlobalUnlock(hMemAND); GlobalFree(hMemAND); }
+        return 0;
+    }
+    
+    // Копируем строки в зависимости от порядка данных в DIB
+    if (needFlip)
+    {
+        // Данные снизу вверх - переворачиваем строки
+        for (y = 0; y < height; y++)
+        {
+            _fmemcpy(lpXOR_flipped + (height - 1 - y) * xorRowSize,
+                     lpXOR + y * xorRowSize,
+                     xorRowSize);
+            _fmemcpy(lpAND_flipped + (height - 1 - y) * andRowSize,
+                     lpAND + y * andRowSize,
+                     andRowSize);
+        }
+    }
+    else
+    {
+        // Данные уже сверху вниз - просто копируем
+        for (y = 0; y < height; y++)
+        {
+            _fmemcpy(lpXOR_flipped + y * xorRowSize,
+                     lpXOR + y * xorRowSize,
+                     xorRowSize);
+            _fmemcpy(lpAND_flipped + y * andRowSize,
+                     lpAND + y * andRowSize,
+                     andRowSize);
+        }
+    }
+    
+    GlobalUnlock(hMemXOR);
+    GlobalUnlock(hMemAND);
+    
+    if (bIcon)
+    {
+        result = CreateIcon(hinst, width, height,
+                           bmi->bmiHeader.biPlanes,
+                           bmi->bmiHeader.biBitCount,
+                           lpAND_flipped,
+                           lpXOR_flipped);
+    }
+    else
+    {
+        result = CreateCursor(hinst, hotspot.x, hotspot.y,
+                             width, height,
+                             lpAND_flipped,
+                             lpXOR_flipped);
+    }
+    
+    GlobalFree(hMemXOR);
+    GlobalFree(hMemAND);
+    
+    FUNCTION_END
+    return result;
+}
 
 /***********************************************************************
  *		LoadImage (USER.389)

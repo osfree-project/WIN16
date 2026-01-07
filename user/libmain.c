@@ -669,7 +669,7 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
         SelectObject(tempHDC, hBrushRed);
         Rectangle(tempHDC, 200, 200, 400, 400);
 
-	DrawIcon(tempHDC, 210, 210, HCursNormal);
+	DrawIcon(tempHDC, 200, 210, HCursNormal);
 	DrawIcon(tempHDC, 250, 210, HCursIBeam);
 	DrawIcon(tempHDC, 290, 210, HCursUpArrow);
 	DrawIcon(tempHDC, 330, 210, HIconSample);
