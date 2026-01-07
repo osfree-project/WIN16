@@ -333,7 +333,7 @@ struct tagMOUSEINFO {
 
 extern WORD GlobalAtomTable_Selector; // Selector of Global Atom Table
 
-extern WORD USER_HeapSel;  /* USER heap selector */
+extern WORD __based(__segname("_TEXT")) USER_HeapSel;  /* USER heap selector */
 extern HMODULE HModuleWin;
 extern HINSTANCE HInstanceDisplay;
 

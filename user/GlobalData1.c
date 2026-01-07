@@ -2,7 +2,7 @@
 
 WORD GlobalAtomTable_Selector; // Selector of Global Atom Table
 
-WORD USER_HeapSel = 0;  /* USER heap selector (hinstance) */
+WORD __based(__segname("_TEXT")) USER_HeapSel = 0;  /* USER heap selector (hinstance) */
 HMODULE HModuleWin = 0;
 HINSTANCE HInstanceDisplay;
 

@@ -30,6 +30,7 @@ int WINAPI mouse_event(VOID)
 	 char send;
 
 //	FUNCTION_START
+	SetDS(USER_HeapSel);
 
 	  _asm{
 		  mov EventCodes,	AX 
@@ -38,17 +39,18 @@ int WINAPI mouse_event(VOID)
 		  mov NumButts,		DX
 	  }
 
-//	SetDS(USER_HeapSel);
-//	dwMouseX+=hMouse;
-//	dwMouseY+=vMouse;
+	dwMouseX+=hMouse;
+	dwMouseY+=vMouse;
 
-	MoveCursor(hMouse, vMouse);
+//	MoveCursor(hMouse, vMouse);
+	MoveCursor(dwMouseX, dwMouseY);
 	CheckCursor();
 	  
 //	 printf("\r\n %d MOUSE.drv: EventCodes[%d], hMouse[%d], vMouse[%d],  NumButts[%d] ",EventCodes,EventCodes,hMouse,vMouse,NumButts );
 
 	// send event to System Message Queue
 //	FUNCTION_END
+//	_asm {iret}
 }
 
 /***********************************************************************
