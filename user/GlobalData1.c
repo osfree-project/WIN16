@@ -1,8 +1,8 @@
 #include "user.h"
 
-WORD GlobalAtomTable_Selector; // Selector of Global Atom Table
-
+WORD __based(__segname("_TEXT")) GlobalAtomTable_Selector; // Selector of Global Atom Table
 WORD __based(__segname("_TEXT")) USER_HeapSel = 0;  /* USER heap selector (hinstance) */
+
 HMODULE HModuleWin = 0;
 HINSTANCE HInstanceDisplay;
 
@@ -88,4 +88,7 @@ char DISPLAY[]="DISPLAY";
 
 char RGBKeyState[0xff];
 HDC tempHDC;
-PDCE PDCEFirst;
+//PDCE PDCEFirst;
+
+HQUEUE HQSysQueue;	// System queue
+

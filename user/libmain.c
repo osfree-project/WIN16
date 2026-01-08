@@ -1,4 +1,6 @@
-#include "user.h"
+#include "class.h"
+//#include "user.h"
+#include "dce.h"
 
 int UT_GetIntFromProfile(UINT id, int defvalue)
 {
@@ -195,18 +197,8 @@ VOID WINAPI LW_DCInit()
 {
 	FUNCTION_START
 
-// Here we must create 5 DC and store in DCE in local user heap.. We need to implement cache DC here...
-//	PDCEFirst=LocalLock(LocalAlloc(...));
-//	TRACE("Create display context");
-//	tempHDC=CreateDC(DISPLAY, NULL, NULL, NULL);
-//	TRACE("Create display context");
-//	tempHDC=CreateDC(DISPLAY, NULL, NULL, NULL);
-//	TRACE("Create display context");
-//	tempHDC=CreateDC(DISPLAY, NULL, NULL, NULL);
-//	TRACE("Create display context");
-//	tempHDC=CreateDC(DISPLAY, NULL, NULL, NULL);
-//	TRACE("Create display context");
-//	tempHDC=CreateDC(DISPLAY, NULL, NULL, NULL);
+	// Pass to dce.c
+	DCE_Init();
 
 	FUNCTION_END
 }
@@ -481,17 +473,18 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 	SetMinMaxInfo(); // Appears to initialize some static vars.
 			 // Uses CXScreen, CYScreen, CXBorder, etc ...
 
-	// @todo!!! Allocate 0x1A bytes.
+	// Allocate 0x1A bytes.
 	hWndClass = UserLocalAlloc(LT_USER_CLASS, LMEM_ZEROINIT, sizeof(WNDCLASS));
 	pWndClass = (WNDCLASS *)LocalLock(hWndClass);
 
+	// Register the DeskTop cLass
 	pWndClass->lpszClassName = MAKELP(0, 0x8001);
 	pWndClass->hCursor = LoadCursor(0, IDC_ARROW);
 	pWndClass->lpfnWndProc = DeskTopWndProc;
 	pWndClass->hInstance = hInstance;
 	pWndClass->style = CS_DBLCLKS;
 	pWndClass->hbrBackground = 2;
-	RegisterClass(pWndClass); // Register the DeskTop cLass
+	RegisterClass(pWndClass);
 
 	// Register the "switch window" class
 	pWndClass->lpszClassName = MAKELP(0, 0x8003);
@@ -513,6 +506,7 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 
 	LocalUnlock(hWndClass);
 	LocalFree(hWndClass); // Don't need WNDCLASS anymore!
+
 
 	// Create the desktop and switch windows
 	HWndDesktop = CreateWindowEx( 0, MAKELP(0, 0x8001),
@@ -632,6 +626,40 @@ VOID WINAPI LW_LoadTaskmanAndScreenSaver(VOID)
 	FUNCTION_END
 }
 
+VOID WINAPI Disablelnput(VOID)
+{
+	FARPROC lpfnSoundDisable;
+	MSG msg;
+
+	// Broadcast message to i.nstaUable drivers.
+	// 5 = DRV-DISABLE???
+	//InternalBroadcastDriverMessage( 0, 5, 0, 0, 0, 0, 0, 6 )
+
+	// Call WNetDisable(). See the entry for FarCallNetDriver()
+	// in Undocumented Windows.
+	// if ( PNetInfo && ( *(DWORD *)(PNetInfo + 0x54) ) )
+//		(PNetlnfo + 0x54)() // Call through a function pointer
+
+	if (HModSound)
+	{
+		// Disable the SOUND driver, if present.
+		lpfnSoundDisable = GetProcAddress(HModSound, "disable");
+		if ( lpfnSoundDisable )
+			lpfnSoundDisable();
+	}
+
+	// Say goodbye to the mouse
+	//if ( some static var )
+	//DisableMouse();
+	
+	//Disable(); // Disable the keyboard driver
+
+//	DisableSystemTimers(); // See "Undocumented Windows"
+EmptyMessages:
+	// Keep reading system messages till the system message queue is empty.
+//	if ( ReadMessage(HQSysQueue, &msg, 0, 0, 0xFFfF, 1))
+	goto EmptyMessages;
+}
 
 /**********************************************************************************
  *
@@ -657,15 +685,12 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 	// Loads USER strings variables from resources
 	LW_LoadSomeStrings();
 
-
         // Get the number of entries in the system message queue and mul to 2
 	CBEntries=UT_GetIntFromProfile(IDS_TYPEAHEAD, 0x3c) << 1;
         // Get the default number of messages in a task queue
 	DefQueueSize=UT_GetIntFromProfile(IDS_DEFAULTQUEUESIZE, 8);
 
-        // Create an application message
-        // queue. This is needed to
-        // create windows.
+        // Create an application message queue. This is needed to create windows.
 	CreateQueue(DefQueueSize);
 
 	// Get the default border width for a window. Default is 3.
@@ -674,7 +699,6 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
             ClBorder = 1; // value.
         if (ClBorder > 0x32 )
             ClBorder = 0x32;
-
 
 	// Setup and initialize the Keyboard,
 	// mouse, and COMM drivers. The system
@@ -705,8 +729,7 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 	LW_OEMDependentInit();
 
 
-	// Sets HBmCursorBitmap and
-	// HPermanentCursor variables.
+	// Sets HBmCursorBitmap and HPermanentCursor variables.
 	LW_OEMCursorInit();
 
 	// Set the global variables: CLBorder, CXBorder, CXSzBorder,
@@ -726,10 +749,12 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 	// GetSystemMetrics() API
 	LW_InitSysMetrics();
 
+	// Create the global atom table.
+	GlobalInitAtom();
+
 	// Register the windows classes for
 	// "predefined" windows, such as
-	// edit controls, etc. We'll come
-	// back to this routine later.
+	// edit controls, etc. 
 	LW_RegisterWindows();
 
 	// Allocate some memory for an internal buffer.
@@ -754,7 +779,33 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 
 	// Get the hourglass cursor, show it
 	SetCursor(LoadCursor(0, IDC_WAIT));
+	// Register the Desktop and switch windows classes, and
+	// create the windows.
+	LW_InitWndMgr(hInstance);
 
+
+	// Max button size???
+	//WMaxBtnSize = MB_FindLongestString();
+	
+	// Why it was here in Pietrek book? Needed for RegisterClass. Create the global atom table.
+//	GlobalInitAtom();
+
+//	AtomCheckPointProp = GlobalAddAtom("SysCP") // Used by
+//	AtomBwlProp = GlobalAddAtom( "SysBW" ) // EnumProps()
+
+//	MsgWinHelp = RegisterWindowMessage( "WM_WINHELP");
+
+	// Allocate another local heap for menus
+	MenuBase = HMenuHeap = GlobalAlloc( GMEM_DDESHARE | GMEM_MOVEABLE | GMEM_ZEROINIT, 0x418 );
+
+	// Allocate another local heap for menu strings
+	MenuStringBase = HMenuStringHeap = GlobalAlloc( GMEM_DDESHARE | GMEM_MOVEABLE | GMEM_ZEROINIT, 0x418 );
+
+	// Initialize the menu and menu string heaps. The heaps
+	// start out small (0x417 bytes), but can grow as needed.
+
+	// list registered classes
+	CLASS_WalkClasses();
 {
 	TRACE("Create display context");
 	tempHDC=CreateDC(DISPLAY, NULL, NULL, NULL);
@@ -786,36 +837,11 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 
 //	DeleteDC(tempHDC);
 }
-
 for (;;);
-
-	// Register the Desktop and
-	// switch windows classes, and
-	// create the windows.
-	LW_InitWndMgr(hInstance);
-
-	// Max button size???
-	//WMaxBtnSize = MB_FindLongestString();
-	
-	// Create the global atom table.
-	GlobalInitAtom();
-
-//	AtomCheckPointProp = GlobalAddAtom("SysCP") // Used by
-//	AtomBwlProp = GlobalAddAtom( "SysBW" ) // EnumProps()
-
-//	MsgWinHelp = RegisterWindowMessage( "WM_WINHELP");
-
-	// Allocate another local heap for menus
-	MenuBase = HMenuHeap = GlobalAlloc( GMEM_DDESHARE | GMEM_MOVEABLE | GMEM_ZEROINIT, 0x418 );
-
-	// Allocate another local heap for menu strings
-	MenuStringBase = HMenuStringHeap = GlobalAlloc( GMEM_DDESHARE | GMEM_MOVEABLE | GMEM_ZEROINIT, 0x418 );
-
-	// Initialize the menu and menu string heaps. The heaps
-	// start out small (0x417 bytes), but can grow as needed.
 
 	LocalInit(HMenuHeap, 0x12, 0x417);
 	LocalInit(HMenuStringHeap, 0x12, 0x417);
+
 
 	// Load the "system" menu ("Restore", "Move", "Size", etc.)
 	HSysMenu = LoadMenu(USER_HeapSel, MK_FP(0, IDM_SYSMENU));

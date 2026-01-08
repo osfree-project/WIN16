@@ -3,10 +3,11 @@
 #define  SetGlobalTableDS() SetDS(GlobalAtomTable_Selector)
 
 // This is initialization of Global Atoms. This function must be called during USER.EXE initialization.
+// This is not exact implementation of origal.
 VOID WINAPI GlobalInitAtom(void)
 {
-	FUNCTION_START
 	PushDS();
+	FUNCTION_START
 	GlobalAtomTable_Selector=GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT | GMEM_DDESHARE, 0xfa);
 	if (GlobalAtomTable_Selector)
 	{
@@ -16,6 +17,7 @@ VOID WINAPI GlobalInitAtom(void)
 		InitAtomTable(0x25);
 		GlobalUnlock(GlobalAtomTable_Selector);
 	}
+	FUNCTION_END
 	PopDS();
 }
 
@@ -24,9 +26,14 @@ VOID WINAPI GlobalInitAtom(void)
  */
 ATOM WINAPI GlobalAddAtom(LPCSTR lpstr)
 {
+	ATOM res;
+	PushDS();
 	FUNCTION_START
 	SetGlobalTableDS();
-	return AddAtom(lpstr);
+	res=AddAtom(lpstr);
+	FUNCTION_END
+	PopDS();
+	return res;
 }
 
 /***********************************************************************
@@ -34,9 +41,14 @@ ATOM WINAPI GlobalAddAtom(LPCSTR lpstr)
  */
 ATOM WINAPI GlobalDeleteAtom(ATOM atom)
 {
+	ATOM res;
+	PushDS();
 	FUNCTION_START
 	SetGlobalTableDS();
-	return DeleteAtom(atom);
+	res=DeleteAtom(atom);
+	FUNCTION_END
+	PopDS();
+	return res;
 }
 
 /***********************************************************************
@@ -44,9 +56,14 @@ ATOM WINAPI GlobalDeleteAtom(ATOM atom)
  */
 ATOM WINAPI GlobalFindAtom(LPCSTR lpstr)
 {
+	ATOM res;
+	PushDS();
 	FUNCTION_START
 	SetGlobalTableDS();
-	return FindAtom(lpstr);
+	res=FindAtom(lpstr);
+	FUNCTION_END
+	PopDS();
+	return res;
 }
 
 /***********************************************************************
@@ -54,8 +71,13 @@ ATOM WINAPI GlobalFindAtom(LPCSTR lpstr)
  */
 UINT WINAPI GlobalGetAtomName(ATOM atom,LPSTR lpszbuf,int len)
 {
+	UINT res;
+	PushDS();
 	FUNCTION_START
 	SetGlobalTableDS();
-	return GetAtomName(atom, lpszbuf, len);
+	res=GetAtomName(atom, lpszbuf, len);
+	FUNCTION_END
+	PopDS();
+	return res;
 }
 

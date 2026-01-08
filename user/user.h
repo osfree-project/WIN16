@@ -52,25 +52,6 @@ typedef QUEUE FAR * LPQUEUE;
 
 HQUEUE WINAPI SetTaskQueue(HTASK, HQUEUE);
 
-// See Undocumented windows
-typedef struct tagDCE {
-	HANDLE	hdceNext;
-	HWND	hwndCurr;
-	HDC	hDC;
-	BYTE	byFlags;
-	BYTE	byInUse;
-	BYTE	byDirty;
-	BYTE	by0A;
-	WORD	xOrigin;
-	WORD	yOrigin;
-	HWND	hwndTop;
-	HRGN	hVisRgn;
-} DCE;
-
-typedef DCE	*PDCE;
-typedef DCE NEAR *NPDCE;
-typedef DCE FAR	*LPDCE;
-
 typedef struct tagWNDCLASSEX {
 	UINT	cbSize;
 	UINT	style;
@@ -331,9 +312,9 @@ struct tagMOUSEINFO {
 
 
 
-extern WORD GlobalAtomTable_Selector; // Selector of Global Atom Table
-
+extern WORD __based(__segname("_TEXT")) GlobalAtomTable_Selector; // Selector of Global Atom Table
 extern WORD __based(__segname("_TEXT")) USER_HeapSel;  /* USER heap selector */
+
 extern HMODULE HModuleWin;
 extern HINSTANCE HInstanceDisplay;
 
@@ -345,7 +326,9 @@ extern int DefQueueSize;
 
 extern char DISPLAY[];
 extern HDC tempHDC;
-extern PDCE PDCEFirst;
+
+//extern PDCE PDCEFirst;
+HDC WINAPI GetDCState(HDC);
 
 extern KBINFO KbInfo;
 extern CURSORINFO CursorInfo;
@@ -573,3 +556,4 @@ WORD WINAPI CreateSystemTimer(WORD wFreq, FARPROC IpCallback);
 
 extern HMODULE HModSound;
 extern FARPROC lpfnSoundEnable;
+extern HQUEUE HQSysQueue;

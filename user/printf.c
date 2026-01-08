@@ -69,6 +69,9 @@ void _cdecl printf (char far *format,...)
 {
   int *dataptr = (int *) &format;
   char c, str[16];
+  int near_ptr, offset, segment;
+  char far *far_ptr;
+  int len, i;
 
   dataptr+=2;
 
@@ -96,15 +99,47 @@ void _cdecl printf (char far *format,...)
             break;
 
           case 'S':
-	  {
-/* Для far-указателя нужно получить сегмент и смещение */
-              unsigned int offset = *(dataptr++);
-              unsigned int segment = *(dataptr++);
-              /* Создаем far-указатель из сегмента и смещения */
-              char far *far_ptr = (char far *)MK_FP(segment, offset);
-              putstrfar (far_ptr);           
-	      break;
-          }
+            offset = *(dataptr++);
+            segment = *(dataptr++);
+            far_ptr = (char far *)MK_FP(segment, offset);
+            putstrfar (far_ptr);           
+            break;
+
+          case 'p': /* near pointer */
+            near_ptr = *(dataptr++);
+            putstr("0x");
+            *convert_to_ascii(str, 'x', near_ptr) = 0;
+            len = 0;
+            while (str[len]) len++;
+            for (i = len; i < 4; i++) {
+                putchar('0');
+            }
+            putstr(str);
+            break;
+
+          case 'P': /* far pointer */
+            offset = *(dataptr++);
+            segment = *(dataptr++);
+            
+            putstr("0x");
+            *convert_to_ascii(str, 'x', segment) = 0;
+            len = 0;
+            while (str[len]) len++;
+            for (i = len; i < 4; i++) {
+                putchar('0');
+            }
+            putstr(str);
+            
+            putchar(':');
+            
+            *convert_to_ascii(str, 'x', offset) = 0;
+            len = 0;
+            while (str[len]) len++;
+            for (i = len; i < 4; i++) {
+                putchar('0');
+            }
+            putstr(str);
+            break;
           }
     }
 }
