@@ -796,13 +796,16 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 //	MsgWinHelp = RegisterWindowMessage( "WM_WINHELP");
 
 	// Allocate another local heap for menus
-	MenuBase = HMenuHeap = GlobalAlloc( GMEM_DDESHARE | GMEM_MOVEABLE | GMEM_ZEROINIT, 0x418 );
+	MenuBase = SELECTOROF(GlobalLock(HMenuHeap = GlobalAlloc( GMEM_DDESHARE | GMEM_MOVEABLE | GMEM_ZEROINIT, 0x418 )));
 
 	// Allocate another local heap for menu strings
-	MenuStringBase = HMenuStringHeap = GlobalAlloc( GMEM_DDESHARE | GMEM_MOVEABLE | GMEM_ZEROINIT, 0x418 );
+	MenuStringBase = SELECTOROF(GlobalLock(HMenuStringHeap = GlobalAlloc( GMEM_DDESHARE | GMEM_MOVEABLE | GMEM_ZEROINIT, 0x418 )));
 
 	// Initialize the menu and menu string heaps. The heaps
 	// start out small (0x417 bytes), but can grow as needed.
+	LocalInit(MenuBase, 0x12, 0x417);
+	LocalInit(MenuStringBase, 0x12, 0x417);
+
 
 	// list registered classes
 	CLASS_WalkClasses();
@@ -838,9 +841,6 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 //	DeleteDC(tempHDC);
 }
 for (;;);
-
-	LocalInit(HMenuHeap, 0x12, 0x417);
-	LocalInit(HMenuStringHeap, 0x12, 0x417);
 
 
 	// Load the "system" menu ("Restore", "Move", "Size", etc.)

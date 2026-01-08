@@ -3,7 +3,7 @@
 #define  SetGlobalTableDS() SetDS(GlobalAtomTable_Selector)
 
 // This is initialization of Global Atoms. This function must be called during USER.EXE initialization.
-// This is not exact implementation of origal.
+// See Windows Internals p.68
 VOID WINAPI GlobalInitAtom(void)
 {
 	PushDS();

@@ -17,7 +17,7 @@ typedef enum
 } DCE_TYPE;
 
 
-/*
+/* This is structure from old Wine. For reference only. Don't use it.
 typedef struct tagDCE
 {
     HANDLE     hNext;
