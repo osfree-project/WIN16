@@ -33,19 +33,19 @@ void QUEUE_DumpQueue( HQUEUE hQueue )
     }
 
     TRACE(
-             "next: %x  Intertask SendMessage:\n\r"
-             "hTask: %x  ----------------------\n\r"
-             "msgSize: %x  hWnd: %x\n\r"
-             "msgCount: %x  msg: %x\n\r"
-             "msgNext: %x  wParam: %x%x\n\r"
-             "msgFree: %x  lParam: %x%x\n\r"
-             "qSize: %x  lRet: %x%x\n\r"
-             "wWinVer: %x  ISMH: %4x\n\r"
-             "paints: %x  hSendTask: %4x\n\r"
-             "timers: %x  hPrevSend: %4x\n\r"
-             "wakeBits: %x\n\r"
-             "wakeMask: %x\n\r"
-             "hCurHook: %x",
+             "next: %12.4x  Intertask SendMessage:\n\r"
+             "hTask: %11.4x  ----------------------\n\r"
+             "msgSize: %9.4x  hWnd: %10.4x\n\r"
+             "msgCount: %8.4x  msg: %11.4x\n\r"
+             "msgNext: %9.4x  wParam: %8.4x\n\r"
+             "msgFree: %9.4x  lParam: %8.8x\n\r"
+             "qSize: %11.4x  lRet: %10.8x\n\r"
+             "wWinVer: %9.4x  ISMH: %10.4x\n\r"
+             "paints: %10.4x  hSendTask: %5.4x\n\r"
+             "timers: %10.4x  hPrevSend: %5.4x\n\r"
+             "wakeBits: %8.4x\n\r"
+             "wakeMask: %8.4x\n\r"
+             "hCurHook: %8.4x\n\r",
              pq->next, pq->hTask, pq->msgSize, pq->hWnd, 
              pq->msgCount, pq->msg, pq->nextMessage, pq->wParam,
              pq->nextFreeMessage, (unsigned)pq->lParam, pq->queueSize,
