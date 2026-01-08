@@ -10,7 +10,7 @@ DWORD WINAPI GetCurrentTime()
 
 DWORD WINAPI GetTickCount()
 {
-	FUNCTION_START
+//	FUNCTION_START
     return GetSystemMSecCount();
 }
 

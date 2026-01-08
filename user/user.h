@@ -557,3 +557,11 @@ WORD WINAPI CreateSystemTimer(WORD wFreq, FARPROC IpCallback);
 extern HMODULE HModSound;
 extern FARPROC lpfnSoundEnable;
 extern HQUEUE HQSysQueue;
+
+WORD WINAPI GetTaskQueue(HANDLE hTask);
+
+#define ME_MOVE 0x01
+#define ME_LDOWN 0x02
+#define ME_LUP 0x04
+#define ME_RDOWN 0x08
+#define ME_RUP 0x10

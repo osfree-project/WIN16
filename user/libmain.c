@@ -169,6 +169,8 @@ VOID WINAPI LW_DriversInit()
 {
 	FUNCTION_START
 
+	QUEUE_CreateSysMsgQueue(CBEntries);
+
 	TRACE("Keyboard init");
 	if (InquireKeyboard(&KbInfo)==sizeof(KBINFO))
 	{

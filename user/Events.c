@@ -1,4 +1,5 @@
 #include <user.h>
+#include <queue.h>
 
 /***********************************************************************
  *		keybd_event (USER.???)
@@ -15,6 +16,14 @@ VOID WINAPI keybd_event(VOID)
  */
 VOID WINAPI mouse_event(VOID)
 {
+    /* Register values:
+     * AX = mouse event
+     * BX = horizontal displacement if AX & ME_MOVE
+     * CX = vertical displacement if AX & ME_MOVE
+     * DX = button state (?)
+     * SI = mouse event flags (?)
+     */
+
 	 WORD EventCodes;   // The event codes. This is a bit-packed value that describes the various events being reported.Bit Description
 						// The mouse has moved.
 						//	1 The left button was pressed.
@@ -27,7 +36,7 @@ VOID WINAPI mouse_event(VOID)
 	 WORD 	vMouse;		//  Vertical position.
 	 WORD 	NumButts;	//  Number of buttons on the mouse (typically, 2).
 	 
-	 char send;
+	 WORD	KeyState=0;	// MK_*
 
 //	FUNCTION_START
 	SetDS(USER_HeapSel);
@@ -39,15 +48,26 @@ VOID WINAPI mouse_event(VOID)
 		  mov NumButts,		DX
 	  }
 
+
+    if (EventCodes & ME_MOVE)
+    {
 	dwMouseX+=hMouse;
 	dwMouseY+=vMouse;
-
 	MoveCursor(dwMouseX, dwMouseY);
-//	CheckCursor(); must be called by timer event
-	  
-//	 printf("\r\n %d MOUSE.drv: EventCodes[%d], hMouse[%d], vMouse[%d],  NumButts[%d] ",EventCodes,EventCodes,hMouse,vMouse,NumButts );
+	hardware_event( WM_MOUSEMOVE, KeyState, 0, dwMouseX, dwMouseY, GetTickCount(), 0 );
+    }
+    if (EventCodes & ME_LDOWN)
+        hardware_event( WM_LBUTTONDOWN, KeyState, 0, dwMouseX, dwMouseY, GetTickCount(), 0);
 
-	// send event to System Message Queue
+    if (EventCodes & ME_LUP)
+        hardware_event( WM_LBUTTONUP, KeyState, 0, dwMouseX, dwMouseY, GetTickCount(), 0);
+
+    if (EventCodes & ME_RDOWN)
+        hardware_event( WM_RBUTTONDOWN, KeyState, 0, dwMouseX, dwMouseY, GetTickCount(), 0);
+
+    if (EventCodes & ME_RUP)
+        hardware_event( WM_RBUTTONUP, KeyState, 0, dwMouseX, dwMouseY, GetTickCount(), 0);
+
 //	FUNCTION_END
 }
 
