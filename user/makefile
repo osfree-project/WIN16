@@ -271,6 +271,7 @@ IMPORTS = GETEXEVERSION KERNEL.105, &
   SetTaskQueue KERNEL.34, &
   MakeObjectPrivate GDI.463, &
   GetDCState GDI.179, &
+  SetDCState GDI.180, &
   SetSpeed KEYBOARD.7, &
   KeyboardEnable KEYBOARD.2, &
   MouseEnable MOUSE.2

@@ -3,24 +3,17 @@
  *
  * Copyright 1993 Alexandre Julliard
  *
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 */
 
 #include "dce.h"
-//#include "class.h"
-//#include "win.h"
-//#include "gdi.h"
 #include "user.h"
-//#include "sysmetrics.h"
-//#include "stddebug.h"
-/* #define DEBUG_DC */
-//#include "debug.h"
+
+// DCE lives in USER local heap. So, to access it we need to switch to USER local heap first and return DS back
+// after it. See. Undocumented Windows p. 428
 
 #define NB_DCE    5  /* Number of DCEs created at startup */
 
-static HANDLE firstDCE = 0;
 static HDC defaultDCstate = 0;
-
 
 void DumpHeader(LPGDIOBJHDR goh)
 	{
@@ -61,7 +54,7 @@ int bDebug=0;
   DC FAR * dc;
   WORD gdi = hGDI;
 	PushDS();
-	gdi &= 0xfffc;
+	gdi &= 0xfffc; // @todo Use GlobalLock instead and SELECTOROF???
 	gdi |= 1;
 	SetDS(gdi);
 	dc=MK_FP(gdi, LocalLock(hdc));
@@ -482,26 +475,56 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
     if (flags & DCX_CACHE)
     {
+	// Search free DCE in USER local heap
+	// So, switch DS to USER local heap and return back later
+	PushDS();
+	SetDS(USER_HeapSel);
 	for (hdce = firstDCE; (hdce); hdce = dce->hdceNext)
 	{
-	    if (!(dce = (DCE *) LocalLock( hdce ))) return 0;
-	    if ((dce->byFlags == DCE_CACHE_DC) && (!dce->byInUse)) break;
+		if (!(dce = (DCE *) LocalLock( hdce ))) 
+		{
+			PopDS();
+			return 0;
+		}
+		if ((dce->byFlags == DCE_CACHE_DC) && (!dce->byInUse))
+		{
+			LocalUnlock(hdce);
+			break;
+		}
+		LocalUnlock(hdce);
 	}
+	PopDS();
     }
     else hdce = wndPtr->hdce;
 
-    if (!hdce) return 0;
-    dce = (DCE *) LocalLock( hdce );
+    if (!hdce) 
+	{
+		PopDS();
+		return 0;
+	}
 
-    dce->hwndCurr = hwnd;
-    dce->byInUse       = TRUE;
-    hdc = dce->hDC;
+	// Fill DCE in USER local heap
+	// So, switch DS to USER local heap and return back later
+	PushDS();
+	SetDS(USER_HeapSel);
+	dce = (DCE *) LocalLock( hdce );
+
+	dce->hwndCurr = hwnd;
+	dce->byInUse       = TRUE;
+	hdc = dce->hDC;
+	LocalUnlock(hdce);
+	PopDS();
     
     /* Initialize DC */
 #if 0    
+	// DC lives in GDI local heap, so we need to switch DS to GDI heap,
+	// do all things and switch DS back
+	PushDS();
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
 
     DCE_SetDrawable( wndPtr, dc, flags );
+	PopDS();
+
     if (hwnd)
     {
         if (flags & DCX_PARENTCLIP)  /* Get a VisRgn for the parent */
@@ -570,29 +593,51 @@ HDC GetWindowDC( HWND hwnd )
     return GetDCEx( hwnd, 0, flags );
 }
 
+#endif
 
 /***********************************************************************
  *           ReleaseDC    (USER.68)
  */
-int ReleaseDC( HWND hwnd, HDC hdc )
+int WINAPI ReleaseDC( HWND hwnd, HDC hdc )
 {
-    HANDLE hdce;
-    DCE * dce = NULL;
+	HANDLE hdce;
+	DCE * dce = NULL;
     
-    dprintf_dc(stddeb, "ReleaseDC: %04x %04x\n", hwnd, hdc );
-        
-    for (hdce = firstDCE; (hdce); hdce = dce->hNext)
-    {
-	if (!(dce = (DCE *) USER_HEAP_LIN_ADDR( hdce ))) return 0;
-	if (dce->inUse && (dce->hdc == hdc)) break;
-    }
-    if (!hdce) return 0;
+	TRACE("ReleaseDC: %04x %04x\n", hwnd, hdc );
 
-    if (dce->type == DCE_CACHE_DC)
-    {
-	SetDCState( dce->hdc, defaultDCstate );
-	dce->inUse = FALSE;
-    }
-    return 1;
+	// Here we need to search DCE which lives in USER local heap
+	// So, switch to USER local heap, do things and switch back.
+	PushDS();
+	SetDS(USER_HeapSel);
+
+	for (hdce = firstDCE; (hdce); hdce = dce->hdceNext)
+	{
+		if (!(dce = (DCE *) LocalLock( hdce )))
+		{
+			PopDS();
+			return 0;
+		}
+
+		if (dce->byInUse && (dce->hDC == hdc))
+		{
+			break;
+		}
+		LocalUnlock(hdce);
+	}
+
+	if (!hdce) 
+	{
+		PopDS();
+		return 0;
+	}
+
+	if (dce->byFlags == DCE_CACHE_DC)
+	{
+		SetDCState(dce->hDC, defaultDCstate);
+		dce->byInUse = FALSE;
+	}
+
+	LocalUnlock(hdce);
+	PopDS();
+	return 1;
 }
-#endif

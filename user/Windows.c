@@ -308,17 +308,6 @@ void WINAPI GetClientRect( HWND hwnd, LPRECT rect )
 
 
 /**************************************************************************
- *              ReleaseDC   (USER.68)
- */
-int WINAPI ReleaseDC( HWND hwnd, HDC hdc )
-{
-	FUNCTION_START
-    //INT16 ret = (INT16)ReleaseDC( WIN_Handle32(hwnd), HDC_32(hdc) );
-    //NtUserEnableDC( HDC_32(hdc) );
-    return 0;//ret;
-}
-
-/**************************************************************************
  *              EnableScrollBar   (USER.482)
  */
 BOOL WINAPI EnableScrollBar( HWND hwnd, int nBar, UINT flags )

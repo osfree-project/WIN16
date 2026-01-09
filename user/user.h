@@ -312,8 +312,10 @@ struct tagMOUSEINFO {
 
 
 
+/* Global variables in code segment to be accessable without DS touch */
 extern WORD __based(__segname("_TEXT")) GlobalAtomTable_Selector; // Selector of Global Atom Table
-extern WORD __based(__segname("_TEXT")) USER_HeapSel;  /* USER heap selector */
+extern WORD __based(__segname("_TEXT")) USER_HeapSel;  /* USER heap selector (hinstance) */
+extern HANDLE __based(__segname("_TEXT")) firstDCE;
 
 extern HMODULE HModuleWin;
 extern HINSTANCE HInstanceDisplay;
@@ -329,6 +331,7 @@ extern HDC tempHDC;
 
 //extern PDCE PDCEFirst;
 HDC WINAPI GetDCState(HDC);
+void WINAPI SetDCState(HDC, HDC);
 
 extern KBINFO KbInfo;
 extern CURSORINFO CursorInfo;
