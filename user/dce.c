@@ -514,9 +514,9 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 	// DC lives in GDI local heap, so we need to switch DS to GDI heap,
 	// do all things and switch DS back
 	PushDS();
-    if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
+	if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
 
-    DCE_SetDrawable( wndPtr, dc, flags );
+	DCE_SetDrawable( wndPtr, dc, flags );
 	PopDS();
 #endif
     if (hwnd)
@@ -541,8 +541,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     }
     else  /* Get a VisRgn for the whole screen */
     {
-//        hrgnVisible = CreateRectRgn( 0, 0, SYSMETRICS_CXSCREEN,
-//                                     SYSMETRICS_CYSCREEN);
+        hrgnVisible = CreateRectRgn( 0, 0, CXScreen, CYScreen);
     }
 
 #if 0
