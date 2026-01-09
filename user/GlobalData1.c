@@ -4,6 +4,7 @@
 WORD __based(__segname("_TEXT")) GlobalAtomTable_Selector; // Selector of Global Atom Table
 WORD __based(__segname("_TEXT")) USER_HeapSel = 0;  /* USER heap selector (hinstance) */
 HANDLE __based(__segname("_TEXT")) firstDCE = 0;
+HANDLE __based(__segname("_TEXT")) hGDI;
 
 HMODULE HModuleWin = 0;
 HINSTANCE HInstanceDisplay;
@@ -94,4 +95,3 @@ HDC tempHDC;
 
 HQUEUE HQSysQueue;	// System queue
 
-HANDLE hGDI;

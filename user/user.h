@@ -316,6 +316,7 @@ struct tagMOUSEINFO {
 extern WORD __based(__segname("_TEXT")) GlobalAtomTable_Selector; // Selector of Global Atom Table
 extern WORD __based(__segname("_TEXT")) USER_HeapSel;  /* USER heap selector (hinstance) */
 extern HANDLE __based(__segname("_TEXT")) firstDCE;
+extern HANDLE __based(__segname("_TEXT")) hGDI;
 
 extern HMODULE HModuleWin;
 extern HINSTANCE HInstanceDisplay;
@@ -745,7 +746,6 @@ extern HCLASS CLASS_FindClassByName( LPCSTR name, HINSTANCE hinstance,
                                      CLASS **ptr );
 extern CLASS * CLASS_FindClassPtr( HCLASS hclass );
 
-extern HANDLE hGDI;
 
 /* GDI objects magic numbers */
 #define PEN_MAGIC             0x4f47
