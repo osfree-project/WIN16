@@ -22,6 +22,158 @@ static HANDLE firstDCE = 0;
 static HDC defaultDCstate = 0;
 
 
+void DumpHeader(LPGDIOBJHDR goh)
+	{
+int b31=0;
+int bDebug=0;
+	if (b31)
+		{
+		printf(
+			"GDIOBJHDR:\n\r"
+			"hNext\t\t: %04X\twMagic\t\t: %04X (\"%c%c\")\n\r"
+			"\tdwCount\t\t: %ld\n\r"
+			"\twMetaList\t: %04X\n\r",
+			goh->hNext, goh->wMagic,
+			goh->wMagic & 0xff, goh->wMagic >> 8,
+			goh->dwCount, goh->wMetaList);
+		if (bDebug)
+			printf(
+				"\twSelCount\t: %d\n\r"
+				"\thOwner\t\t: %04X\n\r",
+				((LPGDIOBJDBG) goh)->wSelCount,
+				((LPGDIOBJDBG) goh)->hOwner);
+		}
+	else
+		{
+		printf(
+			"GDIOBJHDR:\n\r"
+			"wFlags\t\t: %04X\twObjType\t: %d\tdwCount\t\t: %ld\twMetaList\t: %04X\n\r",
+			goh->hNext, goh->wMagic & 0xff,
+			goh->dwCount, goh->wMetaList);
+		}
+		
+	}
+
+VOID DumpDC(HDC hdc)
+{
+int b31=0;
+int bDebug=0;
+  DC FAR * dc;
+  WORD gdi = hGDI;
+	PushDS();
+	gdi &= 0xfffc;
+	gdi |= 1;
+	SetDS(gdi);
+	dc=MK_FP(gdi, LocalLock(hdc));
+	DumpHeader((LPGDIOBJHDR) &(dc->header));
+	if (bDebug && b31) dc = (LPDC)((LPBYTE)dc+4);
+	printf(
+		"DC:\n\r"
+		"byFlags\t\t:%02X\tbyFlags2\t:%02X\thMetaFile\t:%04X\n\r"
+		"hrgnClip\t:%04X\thPDevice\t:%04XthLPen\t\t: %04X\n\r"
+		"hLBrush\t\t:%04X\thLFont\t\t:%04X\thBitmap\t\t:%04X\n\r"
+		"dchPal\t\t:%04X\thLDevice\t:%04X\n\r\thRaoClip\t:%04X\n\r"
+		"hPDeviceBlock\t: %04X\thPPen\t\t: %04X\n\r"
+		"hPBrush\t\t: %04XthPFontTrans\t: %04X\n\r"
+		"hPFont\t\t: %04X\tlpPDevice\t: %Fp\n\r"
+		"pLDevice\t: %04X\tpRaoClip\t: %04X\n\r",
+		dc->byFlags, dc->byFlags2, dc->hMetaFile, dc->hrgnClip,
+		dc->hPDevice, dc->hLPen, dc->hLBrush, dc->hLFont,
+		dc->hBitmap, dc->dchPal, dc->hLDevice, dc->hRaoClip,
+		dc->hPDeviceBlock, dc->hPPen, dc->hPBrush, dc->hPFontTrans,
+		dc->hPFont, dc->lpPDevice, dc->pLDevice,
+		dc->pRaoClip);
+		
+	printf(
+		"pPDeviceBlock\t: %04X\tpPPen\t\t: %04X\n\r"
+		"pPBrush\t\t: %04X\tpPFontTrans\t: %04X\n\r"
+		"lpPFont\t\t: %Fp\tnPFTIndex\t: %04X\n\r"
+		"fnTransform\t: %Fp\twROP2\t\t: %04X\n\r"
+		"wBkMode\t\t: %04X\tdwBkColor\t: %08lX\n\r"
+		"dwTextColor\t: %08lX\tnTBreakExtra\t: %d\n\r"
+		"nBreakExtra\t: %d\twBreakErr\t: %04X\n\r"
+		"nBreakRem\t: %d\tnBreakCount\t: %d\n\r"
+		"nCharExtra\t: %d\tcrLbkColor\t: %08lX\n\r"
+		"crLTextColor\t: %08lX\tLCursPosX\t: %d\n\r"
+		"LCursPosY\t: %d\n\r",
+		dc->pPDeviceBlock, dc->pPPen, dc->pPBrush, dc->pPFontTrans,
+		dc->lpPFont, dc->nPFTIndex, dc->Transform, dc->wROP2,
+		dc->wBkMode, dc->dwBkColor, dc->dwTextColor, dc->nTBreakExtra,
+		dc->nBreakExtra, dc->wBreakErr, dc->nBreakRem, dc->nBreakCount,
+		dc->nCharExtra, dc->crLbkColor, dc->crLTextColor, dc->LCursPosX,
+		dc->LCursPosY);
+		
+	printf(
+		"WndOrgX\t\t: %d\tWndOrgX\t\t: %d\n\r"
+		"WndExtX\t\t: %d\tWndExtY\t\t: %d\n\r"
+		"VportOrgX\t: %d\tVportOrgY\t: %d\n\r"
+		"VportExtX\t: %d\tVportExtY\t: %d\n\r"
+		"UserVptOrgX\t: %d\tUserVptOrgY\t: %d\n\r"
+		"wMapMode\t: %04X\twXFormFlags\t: %04X\n\r"
+		"wRelAbs\t\t: %04X\twPolyFillMode\t: %04X\n\r"
+		"wStretchBltMode\t: %04X\tbyPlanes\t: %d\n\r"
+		"byBitsPix\t: %d\twPenWidth\t: %d\n\r"
+		"wPenHeight\t: %d\twTextAlign\t: %04X\n\r"
+		"dwMapperFlags\t: %08lX\n\r",
+		dc->WndOrgX, dc->WndOrgX, dc->WndExtX, dc->WndExtY,
+		dc->VportOrgX, dc->VportOrgY, dc->VportExtX, dc->VportExtY,
+		dc->UserVptOrgX, dc->UserVptOrgY, dc->wMapMode, dc->wXFormFlags,
+		dc->wRelAbs, dc->wPolyFillMode, dc->wStretchBltMode, dc->byPlanes,
+		dc->byBitsPix, dc->wPenWidth, dc->wPenHeight, dc->wTextAlign,
+		dc->dwMapperFlags);
+		
+	printf(
+		"wBrushOrgX\t:%d\twBrushOrgY\t:%d\twFontAspectX\t:%d\n\r"
+		"wFontAspectY\t:%d\thFontWeights\t:%d\twDCSaveLevel\t:%d\n\r"
+		"wcDCLocks\t: %d\thVisRgn\t\t: %04X\twDCOrgX\t\t:%d\n\r"
+		"wDCOrgY\t\t:%d\tlpfnPrint\t:%Fp\twDCLogAtom\t:%04X\n\r"
+		"wDCPhysAtom\t: %04X\twDCFileAtom\t: %04X\n\r"
+		"wPostScaleX\t: %d\twPostScaleY\t: %d\n\r",
+		dc->wBrushOrgX, dc->wBrushOrgY,
+		dc->wFontAspectX, dc->wFontAspectY,
+		dc->hFontWeights, dc->wDCSaveLevel,
+		dc->wcDCLocks, dc->hVisRgn,
+		dc->wDCOrgX, dc->wDCOrgY, dc->lpfnPrint, dc->wDCLogAtom,
+		dc->wDCPhysAtom, dc->wDCFileAtom,
+		dc->wPostScaleX, dc->wPostScaleY);
+	if (b31)
+		{
+		printf(
+			"\trectBounds\t: (%d, %d, %d, %d)\trectLVB\t\t: (%d, %d, %d, %d)\n\r"
+			"\tlpfnNotify\t: %Fp\tlpHookData\t: %Fp\n\r"
+			"\twDCGlobFlags\t: %04X\n\r",
+			dc->dc_tail.tail_3_1.rectBounds.left,
+			dc->dc_tail.tail_3_1.rectBounds.top,
+			dc->dc_tail.tail_3_1.rectBounds.right,
+			dc->dc_tail.tail_3_1.rectBounds.bottom,
+			dc->dc_tail.tail_3_1.rectLVB.left,
+			dc->dc_tail.tail_3_1.rectLVB.top,
+			dc->dc_tail.tail_3_1.rectLVB.right,
+			dc->dc_tail.tail_3_1.rectLVB.bottom,
+			dc->dc_tail.tail_3_1.lpfnNotify,
+			dc->dc_tail.tail_3_1.lpHookData,
+			dc->dc_tail.tail_3_1.wDCGlobFlags);
+		if (bDebug)
+			printf(
+				"\thDCNext\t\t: %04X\n\r",
+				dc->dc_tail.tail_3_1.hDCNext);
+		}
+	else
+		{
+		printf(
+			"wB4\t\t:%04X\trectB6\t\t:(%d, %d, %d, %d)\twDCGlobFlags\t:%04X\twC0\t\t:%04X\n\r",
+			dc->dc_tail.tail_3_0.wB4,
+			dc->dc_tail.tail_3_0.rectB6.left,
+			dc->dc_tail.tail_3_0.rectB6.top,
+			dc->dc_tail.tail_3_0.rectB6.right,
+			dc->dc_tail.tail_3_0.rectB6.bottom,
+			dc->dc_tail.tail_3_0.wDCGlobFlags,
+			dc->dc_tail.tail_3_0.wC0);
+		}
+	LocalUnlock(hdc);
+	PopDS();
+}
+
 /***********************************************************************
  *           DCE_AllocDCE
  *
@@ -38,6 +190,8 @@ HANDLE DCE_AllocDCE( DCE_TYPE type )
 	LocalFree( handle );
 	return 0;
     }
+
+//	DumpDC(dce->hDC);
     dce->hwndCurr = 0;
     dce->byFlags  = type;
     dce->byInUse = (type != DCE_CACHE_DC);
@@ -254,8 +408,8 @@ static void DCE_SetDrawable( WND *wndPtr, DC *dc, WORD flags )
     {
         dc->w.DCOrgX = 0;
         dc->w.DCOrgY = 0;
-        dc->u.x.drawable = rootWindow;
-        XSetSubwindowMode( display, dc->u.x.gc, IncludeInferiors );
+        //dc->u.x.drawable = rootWindow;
+        //XSetSubwindowMode( display, dc->u.x.gc, IncludeInferiors );
     }
     else
     {
@@ -277,17 +431,18 @@ static void DCE_SetDrawable( WND *wndPtr, DC *dc, WORD flags )
         }
         dc->w.DCOrgX -= wndPtr->rectWindow.left;
         dc->w.DCOrgY -= wndPtr->rectWindow.top;
-        dc->u.x.drawable = wndPtr->window;
+        //dc->u.x.drawable = wndPtr->window;
     }
 }
 
+#endif
 
 /***********************************************************************
  *           GetDCEx    (USER.359)
+ *
+ * Unimplemented flags: DCX_LOCKWINDOWUPDATE
  */
-/* Unimplemented flags: DCX_LOCKWINDOWUPDATE
- */
-HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
+HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 {
     HANDLE hdce;
     HRGN hrgnVisible;
@@ -298,7 +453,7 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     
     if (hwnd)
     {
-	if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
+	//!!TMP if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
     }
     else wndPtr = NULL;
 
@@ -327,22 +482,23 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
     if (flags & DCX_CACHE)
     {
-	for (hdce = firstDCE; (hdce); hdce = dce->hNext)
+	for (hdce = firstDCE; (hdce); hdce = dce->hdceNext)
 	{
-	    if (!(dce = (DCE *) USER_HEAP_LIN_ADDR( hdce ))) return 0;
-	    if ((dce->type == DCE_CACHE_DC) && (!dce->inUse)) break;
+	    if (!(dce = (DCE *) LocalLock( hdce ))) return 0;
+	    if ((dce->byFlags == DCE_CACHE_DC) && (!dce->byInUse)) break;
 	}
     }
     else hdce = wndPtr->hdce;
 
     if (!hdce) return 0;
-    dce = (DCE *) USER_HEAP_LIN_ADDR( hdce );
-    dce->hwndCurrent = hwnd;
-    dce->inUse       = TRUE;
-    hdc = dce->hdc;
+    dce = (DCE *) LocalLock( hdce );
+
+    dce->hwndCurr = hwnd;
+    dce->byInUse       = TRUE;
+    hdc = dce->hDC;
     
-      /* Initialize DC */
-    
+    /* Initialize DC */
+#if 0    
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
 
     DCE_SetDrawable( wndPtr, dc, flags );
@@ -379,8 +535,8 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     }
     SelectVisRgn( hdc, hrgnVisible );
     DeleteObject( hrgnVisible );
-
-    dprintf_dc(stddeb, "GetDCEx(%04x,%04x,0x%lx): returning %04x\n", 
+#endif
+    TRACE("GetDCEx(%04x,%04x,0x%lx): returning %04x", 
 	       hwnd, hrgnClip, flags, hdc);
     return hdc;
 }
@@ -389,11 +545,14 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 /***********************************************************************
  *           GetDC    (USER.66)
  */
-HDC GetDC( HWND hwnd )
+HDC WINAPI GetDC(HWND hwnd)
 {
-    return GetDCEx( hwnd, 0, DCX_USESTYLE );
+	HDC res;
+	res=GetDCEx(hwnd, 0, DCX_USESTYLE);
+    return res;
 }
 
+#if 0
 
 /***********************************************************************
  *           GetWindowDC    (USER.67)

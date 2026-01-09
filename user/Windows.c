@@ -294,21 +294,6 @@ LONG WINAPI GetWindowLong( HWND hwnd16, int offset )
 LONG WINAPI SetWindowLong( HWND hwnd16, int offset, LONG newval )
 {
 	FUNCTION_START
-	#if 0
-    HWND hwnd = WIN_Handle32( hwnd16 );
-    BOOL is_winproc = (offset == GWLP_WNDPROC);
-
-    if (offset == DWLP_DLGPROC)
-        is_winproc = (wow_handlers32.get_dialog_info( hwnd, FALSE ) != NULL);
-
-    if (is_winproc)
-    {
-        WNDPROC new_proc = WINPROC_AllocProc16( (WNDPROC16)newval );
-        WNDPROC old_proc = (WNDPROC)SetWindowLongPtrA( hwnd, offset, (LONG_PTR)new_proc );
-        return (LONG)WINPROC_GetProc16( old_proc, FALSE );
-    }
-    else return SetWindowLongA( hwnd, offset, newval );
-	#endif
 	return 0;
 }
 
@@ -318,25 +303,9 @@ LONG WINAPI SetWindowLong( HWND hwnd16, int offset, LONG newval )
 void WINAPI GetClientRect( HWND hwnd, LPRECT rect )
 {
 	FUNCTION_START
-	#if 0
-    RECT rect32;
-
-    GetClientRect( WIN_Handle32(hwnd), &rect32 );
-    rect->left   = rect32.left;
-    rect->top    = rect32.top;
-    rect->right  = rect32.right;
-    rect->bottom = rect32.bottom;
-	#endif
+	FUNCTION_END
 }
 
-/**************************************************************************
- *              GetDC   (USER.66)
- */
-HDC WINAPI GetDC( HWND hwnd )
-{
-	FUNCTION_START
-    return 0;//HDC_16(GetDC( WIN_Handle32(hwnd) ));
-}
 
 /**************************************************************************
  *              ReleaseDC   (USER.68)

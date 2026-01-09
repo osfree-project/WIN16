@@ -1,6 +1,7 @@
 #include "class.h"
 //#include "user.h"
 #include "dce.h"
+#include "queue.h"
 
 int UT_GetIntFromProfile(UINT id, int defvalue)
 {
@@ -554,6 +555,7 @@ VOID WINAPI LW_DisplayDriverInit()
 
 	// Need a device context below
 	hDC = GetDC(0);//GetScreenDC(); 
+for (;;);
 
 	// If the display driver can save bits, get a function ptr
 	// to the routine that does it. The function has an entry
@@ -679,6 +681,8 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 
 	FUNCTION_START
 	TRACE("inst=%x", hInstance);
+
+	hGDI = LoadLibrary( "GDI.EXE" );
  
         // Save the module and instance handles away in global vars
 	USER_HeapSel=hInstance;
@@ -783,6 +787,7 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 	SetCursor(LoadCursor(0, IDC_WAIT));
 	// Register the Desktop and switch windows classes, and
 	// create the windows.
+
 	LW_InitWndMgr(hInstance);
 
 
@@ -810,7 +815,7 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 
 
 	// list registered classes
-	CLASS_WalkClasses();
+//	CLASS_WalkClasses();
 {
 	TRACE("Create display context");
 	tempHDC=CreateDC(DISPLAY, NULL, NULL, NULL);

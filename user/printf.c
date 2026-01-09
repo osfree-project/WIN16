@@ -53,6 +53,80 @@ char * convert_to_ascii (char *buf, int c,...)
   return ptr;
 }
 
+/* Новая функция для преобразования 32-битного числа без деления */
+char * convert_to_ascii_long (char *buf, int c, unsigned long num)
+{
+  unsigned long remainder;
+  char *ptr = buf;
+  int i, j;
+  char tmp_char;
+  
+  if (c == 'x' || c == 'X')
+  {
+    /* Для шестнадцатеричного - простой сдвиг */
+    for (i = 7; i >= 0; i--)
+    {
+      int nibble = (num >> (i * 4)) & 0xF;
+      if (nibble != 0 || i == 0) /* Всегда выводим последнюю цифру */
+      {
+        if (ptr == buf && nibble == 0 && i > 0)
+          continue; /* Пропускаем ведущие нули */
+        *(ptr++) = (nibble < 10) ? ('0' + nibble) : 
+                   ((c == 'X') ? ('A' + nibble - 10) : ('a' + nibble - 10));
+      }
+    }
+    *ptr = 0;
+    return ptr;
+  }
+  else if (c == 'u' || c == 'd')
+  {
+    /* Для десятичного - используем вычитание степеней 10 */
+    const unsigned long powers10[] = {
+      1000000000UL,
+      100000000UL,
+      10000000UL,
+      1000000UL,
+      100000UL,
+      10000UL,
+      1000UL,
+      100,
+      10,
+      1
+    };
+    
+    int started = 0;
+    
+    /* Специальная обработка для знаковых отрицательных */
+    if (((long)num < 0) && c == 'd')
+    {
+      *(ptr++) = '-';
+      num = (unsigned long)(-(long)num);
+      buf++; /* Сдвигаем начало буфера, минуя минус */
+    }
+    
+    for (i = 0; i < 10; i++)
+    {
+      int digit = 0;
+      while (num >= powers10[i])
+      {
+        num -= powers10[i];
+        digit++;
+      }
+      
+      if (digit != 0 || started || i == 9) /* Последняя цифра всегда выводится */
+      {
+        *(ptr++) = '0' + digit;
+        started = 1;
+      }
+    }
+    
+    *ptr = 0;
+    return ptr;
+  }
+  
+  return buf;
+}
+
 void putstr (const char *str)
 {
   while (*str)
@@ -71,8 +145,10 @@ void _cdecl printf (char far *format,...)
   char c, str[32], tmp_str[32];
   int near_ptr, offset, segment, width, precision, zero_pad;
   char far *far_ptr;
-  int len, i, j, num, is_negative, base, idx, padding;
+  int len, i, j, is_negative, base, idx, padding, is_long;
   char tmp_char;
+  unsigned long num_long;
+  unsigned int num;
   
   dataptr+=2;
 
@@ -86,6 +162,7 @@ void _cdecl printf (char far *format,...)
           width = 0;
           precision = -1;
           zero_pad = 0;
+          is_long = 0;
           
           /* Парсинг формата */
           c = *format;
@@ -120,6 +197,14 @@ void _cdecl printf (char far *format,...)
                 }
             }
           
+          /* Модификатор 'l' для long */
+          if (c == 'l')
+            {
+              is_long = 1;
+              format++;
+              c = *format;
+            }
+          
           /* Тип спецификатора */
           c = *(format++);
           
@@ -129,76 +214,165 @@ void _cdecl printf (char far *format,...)
             case 'x':
             case 'X':
             case 'u':
-              num = *((unsigned int *) dataptr++);
-              base = (c == 'x' || c == 'X') ? 16 : 10;
-              is_negative = 0;
-              
-              if ((int)num < 0 && c == 'd')
+              if (is_long)
                 {
-                  is_negative = 1;
-                  num = -(int)num;
-                }
-              
-              /* Преобразование числа в строку */
-              idx = 0;
-              if (num == 0)
-                {
-                  if (precision != 0)
-                    tmp_str[idx++] = '0';
-                }
-              else
-                {
-                  while (num != 0)
-                    {
-                      int digit = num % base;
-                      if (digit < 10)
-                        tmp_str[idx++] = '0' + digit;
-                      else if (c == 'X')
-                        tmp_str[idx++] = 'A' + digit - 10;
-                      else
-                        tmp_str[idx++] = 'a' + digit - 10;
-                      num /= base;
-                    }
-                }
-              tmp_str[idx] = 0;
-              
-              /* Переворачиваем строку */
-              for (i = 0; i < idx / 2; i++)
-                {
-                  tmp_char = tmp_str[i];
-                  tmp_str[i] = tmp_str[idx - i - 1];
-                  tmp_str[idx - i - 1] = tmp_char;
-                }
-              
-              /* Применяем точность */
-              if (precision >= 0)
-                {
-                  /* Точность переопределяет zero_pad */
-                  zero_pad = 0;
+                  /* 32-битное число (long) */
+                  /* В 16-битной среде long передается как два слова: сначала младшее, потом старшее */
+                  unsigned long num_low = (unsigned int)(*dataptr++);
+                  unsigned long num_high = (unsigned int)(*dataptr++);
+                  num_long = (num_high << 16) | num_low;
+                  
+                  /* Используем новую функцию без деления */
+                  *convert_to_ascii_long(str, c, num_long) = 0;
                   
                   len = 0;
-                  while (tmp_str[len]) len++;
+                  while (str[len]) len++;
                   
-                  if (precision > len)
+                  /* Применяем точность (для десятичных чисел) */
+                  if (precision >= 0 && (c == 'd' || c == 'u'))
                     {
-                      /* Дополняем нулями слева */
-                      for (i = precision - 1; i >= 0; i--)
+                      /* Точность переопределяет zero_pad */
+                      zero_pad = 0;
+                      
+                      if (precision > len)
                         {
-                          if (i >= precision - len)
-                            str[i] = tmp_str[i - (precision - len)];
-                          else
+                          /* Дополняем нулями слева */
+                          padding = precision - len;
+                          for (i = len; i >= 0; i--)
+                            str[i + padding] = str[i];
+                          for (i = 0; i < padding; i++)
                             str[i] = '0';
+                          len += padding;
                         }
-                      str[precision] = 0;
+                      else if (precision == 0 && str[0] == '0')
+                        {
+                          /* Специальный случай: точность 0 для нуля */
+                          str[0] = 0;
+                          len = 0;
+                        }
                     }
-                  else if (precision == 0 && tmp_str[0] == '0')
+                  
+                  /* Применяем ширину */
+                  if (width > len)
                     {
-                      /* Специальный случай: точность 0 для нуля */
-                      str[0] = 0;
+                      padding = width - len;
+                      if (zero_pad && precision < 0)
+                        {
+                          /* Заполнение нулями */
+                          if (str[0] == '-')
+                            {
+                              /* Для отрицательных: минус, затем нули */
+                              putchar('-');
+                              for (i = 0; i < padding; i++)
+                                putchar('0');
+                              /* Пропускаем минус в строке */
+                              putstr(str + 1);
+                            }
+                          else
+                            {
+                              for (i = 0; i < padding; i++)
+                                putchar('0');
+                              putstr(str);
+                            }
+                        }
+                      else
+                        {
+                          /* Заполнение пробелами слева */
+                          for (i = 0; i < padding; i++)
+                            putchar(' ');
+                          putstr(str);
+                        }
                     }
                   else
                     {
-                      /* Копируем как есть */
+                      putstr(str);
+                    }
+                }
+              else
+                {
+                  /* 16-битное число (int) - оригинальный код */
+                  num = *((unsigned int *) dataptr++);
+                  base = (c == 'x' || c == 'X') ? 16 : 10;
+                  is_negative = 0;
+                  
+                  if ((int)num < 0 && c == 'd')
+                    {
+                      is_negative = 1;
+                      num = (unsigned int)(-(int)num);
+                    }
+                  
+                  /* Преобразование числа в строку */
+                  idx = 0;
+                  if (num == 0)
+                    {
+                      if (precision != 0)
+                        tmp_str[idx++] = '0';
+                    }
+                  else
+                    {
+                      while (num != 0)
+                        {
+                          int digit = num % base;
+                          if (digit < 10)
+                            tmp_str[idx++] = '0' + digit;
+                          else if (c == 'X')
+                            tmp_str[idx++] = 'A' + digit - 10;
+                          else
+                            tmp_str[idx++] = 'a' + digit - 10;
+                          num /= base;
+                        }
+                    }
+                  tmp_str[idx] = 0;
+                  
+                  /* Переворачиваем строку */
+                  for (i = 0; i < idx / 2; i++)
+                    {
+                      tmp_char = tmp_str[i];
+                      tmp_str[i] = tmp_str[idx - i - 1];
+                      tmp_str[idx - i - 1] = tmp_char;
+                    }
+                  
+                  /* Применяем точность */
+                  if (precision >= 0)
+                    {
+                      /* Точность переопределяет zero_pad */
+                      zero_pad = 0;
+                      
+                      len = 0;
+                      while (tmp_str[len]) len++;
+                      
+                      if (precision > len)
+                        {
+                          /* Дополняем нулями слева */
+                          for (i = precision - 1; i >= 0; i--)
+                            {
+                              if (i >= precision - len)
+                                str[i] = tmp_str[i - (precision - len)];
+                              else
+                                str[i] = '0';
+                            }
+                          str[precision] = 0;
+                        }
+                      else if (precision == 0 && tmp_str[0] == '0')
+                        {
+                          /* Специальный случай: точность 0 для нуля */
+                          str[0] = 0;
+                        }
+                      else
+                        {
+                          /* Копируем как есть */
+                          i = 0;
+                          while (tmp_str[i])
+                            {
+                              str[i] = tmp_str[i];
+                              i++;
+                            }
+                          str[i] = 0;
+                        }
+                    }
+                  else
+                    {
+                      /* Без точности - просто копируем */
                       i = 0;
                       while (tmp_str[i])
                         {
@@ -207,66 +381,55 @@ void _cdecl printf (char far *format,...)
                         }
                       str[i] = 0;
                     }
-                }
-              else
-                {
-                  /* Без точности - просто копируем */
-                  i = 0;
-                  while (tmp_str[i])
+                  
+                  /* Добавляем знак минус для отрицательных чисел */
+                  len = 0;
+                  while (str[len]) len++;
+                  
+                  if (is_negative)
                     {
-                      str[i] = tmp_str[i];
-                      i++;
+                      /* Сдвигаем строку вправо и добавляем минус */
+                      for (i = len; i >= 0; i--)
+                        str[i + 1] = str[i];
+                      str[0] = '-';
+                      len++;
                     }
-                  str[i] = 0;
-                }
-              
-              /* Добавляем знак минус для отрицательных чисел */
-              len = 0;
-              while (str[len]) len++;
-              
-              if (is_negative)
-                {
-                  /* Сдвигаем строку вправо и добавляем минус */
-                  for (i = len; i >= 0; i--)
-                    str[i + 1] = str[i];
-                  str[0] = '-';
-                  len++;
-                }
-              
-              /* Применяем ширину */
-              if (width > len)
-                {
-                  padding = width - len;
-                  if (zero_pad && precision < 0)
+                  
+                  /* Применяем ширину */
+                  if (width > len)
                     {
-                      /* Заполнение нулями */
-                      if (is_negative)
+                      padding = width - len;
+                      if (zero_pad && precision < 0)
                         {
-                          /* Для отрицательных: минус, затем нули */
-                          putchar('-');
-                          for (i = 0; i < padding; i++)
-                            putchar('0');
-                          /* Пропускаем минус в строке */
-                          putstr(str + 1);
+                          /* Заполнение нулями */
+                          if (is_negative)
+                            {
+                              /* Для отрицательных: минус, затем нули */
+                              putchar('-');
+                              for (i = 0; i < padding; i++)
+                                putchar('0');
+                              /* Пропускаем минус в строке */
+                              putstr(str + 1);
+                            }
+                          else
+                            {
+                              for (i = 0; i < padding; i++)
+                                putchar('0');
+                              putstr(str);
+                            }
                         }
                       else
                         {
+                          /* Заполнение пробелами слева */
                           for (i = 0; i < padding; i++)
-                            putchar('0');
+                            putchar(' ');
                           putstr(str);
                         }
                     }
                   else
                     {
-                      /* Заполнение пробелами слева */
-                      for (i = 0; i < padding; i++)
-                        putchar(' ');
                       putstr(str);
                     }
-                }
-              else
-                {
-                  putstr(str);
                 }
               break;
 
@@ -370,55 +533,65 @@ void _cdecl printf (char far *format,...)
               break;
 
             case 'P': /* far pointer */
-              offset = *(dataptr++);
-              segment = *(dataptr++);
-              
-              putstr("0x");
-              /* Печатаем сегмент */
-              *convert_to_ascii(str, 'x', segment) = 0;
-              len = 0;
-              while (str[len]) len++;
-              
-              if (width > 0)
+            case 'F': /* Обработка %Fp - спецификатор из двух символов */
+              {
+                char next_c = *format;
+                if (c == 'F' && next_c == 'p')
                 {
-                  for (i = len; i < width; i++)
-                    putchar('0');
+                  /* Это %Fp - пропускаем 'p' */
+                  format++;
                 }
-              else if (precision > 0)
-                {
-                  for (i = len; i < precision; i++)
-                    putchar('0');
-                }
-              else
-                {
-                  for (i = len; i < 4; i++)
-                    putchar('0');
-                }
-              putstr(str);
-              
-              putchar(':');
-              
-              /* Печатаем смещение */
-              *convert_to_ascii(str, 'x', offset) = 0;
-              len = 0;
-              while (str[len]) len++;
-              
-              if (width > 0)
-                {
-                  for (i = len; i < width; i++)
-                    putchar('0');
-                }
-              else if (precision > 0)
-                {
-                  for (i = len; i < precision; i++)
-                    putchar('0');
-                }
-              else
-                {
-                  for (i = len; i < 4; i++)
-                    putchar('0');
-                }
-              putstr(str);
+                /* Обрабатываем как far pointer */
+                offset = *(dataptr++);
+                segment = *(dataptr++);
+                
+                putstr("0x");
+                /* Печатаем сегмент */
+                *convert_to_ascii(str, 'x', segment) = 0;
+                len = 0;
+                while (str[len]) len++;
+                
+                if (width > 0)
+                  {
+                    for (i = len; i < width; i++)
+                      putchar('0');
+                  }
+                else if (precision > 0)
+                  {
+                    for (i = len; i < precision; i++)
+                      putchar('0');
+                  }
+                else
+                  {
+                    for (i = len; i < 4; i++)
+                      putchar('0');
+                  }
+                putstr(str);
+                
+                putchar(':');
+                
+                /* Печатаем смещение */
+                *convert_to_ascii(str, 'x', offset) = 0;
+                len = 0;
+                while (str[len]) len++;
+                
+                if (width > 0)
+                  {
+                    for (i = len; i < width; i++)
+                      putchar('0');
+                  }
+                else if (precision > 0)
+                  {
+                    for (i = len; i < precision; i++)
+                      putchar('0');
+                  }
+                else
+                  {
+                    for (i = len; i < 4; i++)
+                      putchar('0');
+                  }
+                putstr(str);
+              }
               break;
             }
         }

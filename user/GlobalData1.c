@@ -92,3 +92,4 @@ HDC tempHDC;
 
 HQUEUE HQSysQueue;	// System queue
 
+HANDLE hGDI;

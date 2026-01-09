@@ -36,7 +36,7 @@ void QUEUE_DumpQueue( HQUEUE hQueue )
              "next: %12.4x  Intertask SendMessage:\n\r"
              "hTask: %11.4x  ----------------------\n\r"
              "msgSize: %9.4x  hWnd: %10.4x\n\r"
-             "msgCount: %8.4x  msg: %11.4x\n\r"
+             "msgCount: %8.4d  msg: %11.4x\n\r"
              "msgNext: %9.4x  wParam: %8.4x\n\r"
              "msgFree: %9.4x  lParam: %8.8x\n\r"
              "qSize: %11.4x  lRet: %10.8x\n\r"

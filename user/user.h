@@ -514,7 +514,7 @@ typedef struct tagCURSORSHAPE {
     WORD csWidth;      // Ширина курсора в пикселях
     WORD csHeight;     // Высота курсора в пикселях
     WORD csWidthBytes; // Количество байт в одной строке маски
-    WORD csColor;      // Цветность (обычно 1 для монохромного)
+    WORD csColor;      // Цветность
     // Примечание: здесь следуют данные масок
     // Размер массива: csHeight * csWidthBytes * 2 байт
     // Первые csHeight * csWidthBytes байт - AND маска
@@ -529,28 +529,6 @@ VOID FAR PASCAL DisplaySetCursor(LPCURSORSHAPE lpCursorShape);
 extern DWORD dwMouseX;
 extern DWORD dwMouseY;
 
-/* NtUserSetCursorIconData parameter, not compatible with Windows */
-struct cursoricon_frame
-{
-    UINT     width;    /* frame-specific width */
-    UINT     height;   /* frame-specific height */
-    HBITMAP  color;    /* color bitmap */
-    HBITMAP  alpha;    /* pre-multiplied alpha bitmap for 32-bpp icons */
-    HBITMAP  mask;     /* mask bitmap (followed by color for 1-bpp icons) */
-    POINT    hotspot;
-};
-
-struct cursoricon_desc
-{
-    UINT flags;
-    UINT num_steps;
-    UINT num_frames;
-    UINT delay;
-    struct cursoricon_frame *frames;
-    DWORD FAR *frame_seq;
-    DWORD FAR *frame_rates;
-    HRSRC rsrc;
-};
 
 WORD WINAPI CreateSystemTimer(WORD wFreq, FARPROC IpCallback);
 
@@ -565,3 +543,217 @@ WORD WINAPI GetTaskQueue(HANDLE hTask);
 #define ME_LUP 0x04
 #define ME_RDOWN 0x08
 #define ME_RUP 0x10
+
+#pragma pack(1)
+
+typedef struct tagGDIOBJHDR
+{
+    HANDLE      hNext;
+    WORD        wMagic;
+    DWORD       dwCount;
+    WORD        wMetaList;
+/* additional 3.1 debug fields from here
+WORD wSelCount;
+HANDLE hOwner;
+*/
+} GDIOBJHDR, FAR * LPGDIOBJHDR;
+
+typedef struct tagGDIOBJDBG
+{
+    HANDLE      hNext;
+    WORD        wMagic;
+    DWORD       dwCount;
+    WORD        wMetaList;
+    WORD wSelCount;
+    HANDLE hOwner;
+
+} GDIOBJDBG, FAR * LPGDIOBJDBG;
+
+typedef struct tagDC {
+	GDIOBJHDR header; // 00h
+	BYTE byFlags; // OAh
+	BYTE byFlags2; // OBh
+	HANDLE hMetaFile; // OCh
+	HRGN hrgnClip; // OEh handle to (reclangular) clip region
+	HANDLE hPDevice; // 10h Phys device handle
+	HANDLE hLPen; // 12h Log. pen
+	HANDLE hLBrush; // 14h Log. brush
+	HANDLE hLFont; // 16h Log. Font
+	HANDLE hBitmap; // 18h Selected bitmap
+	HANDLE dchPal; // 1Ah Selected palette
+	HANDLE hLDevice; // 1Ch Log. device
+	HRGN hRaoClip; // 1Eh clip region
+	HANDLE hPDeviceBlock; // 20h
+	HANDLE hPPen; // 22h Phys. pen
+	HANDLE hPBrush; // 24h Phys. brush
+	HANDLE hPFontTrans; // 26h
+	HANDLE hPFont; // 28h Phys. font
+	LPVOID lpPDevice; // 2Ah
+	WORD pLDevice; // 2Eh near pointer to log. device info
+	WORD pRaoClip; // 30h near pointer to clip region
+	WORD pPDeviceBlock; // 32h near pointer to GDIINFO
+	WORD pPPen; // 34h
+	WORD pPBrush; // 36h
+	WORD pPFontTrans; // 38h near pointer to hPFontTrans
+	LPVOID lpPFont; // 3Ah Font engine entrypoint
+	int nPFTIndex; // 3Eh
+	LPVOID Transform; // 40h
+	// Begin DRAWMODE structure - see DDK doc *1
+	WORD wROP2; // 44h Raster Op drawing mode
+	WORD wBkMode; // 46h Background mode (opaque/transparent)
+	DWORD dwBkColor; // 48h Phys. Background color
+	DWORD dwTextColor; // 4Ch Phys. text color
+	int nTBreakExtra; // 50h Text padding: ExtTextOut justification
+	int nBreakExtra; // 52h pad per break = nTBreakExtra/BreakCount
+	WORD wBreakErr; // 54h SetTextJustify called with nBreakExtra=O?
+	int nBreakRem; // 56h remainder of TBreakExtra/nBreakCount
+	int nBreakCount; // 58h Count of break characters in string
+	int nCharExtra; // 5Ah Per char additional padding
+	DWORD crLbkColor; // 5Ch Logical background color
+	DWORD crLTextColor; // 60h Logical text color
+	// End DRAWMODE structure *1
+	int LCursPosX; // 64h
+	int LCursPosY; // 66h
+	int WndOrgX; // 68h
+	int WndOrgY; // 6Ah
+	int WndExtX; // 6Ch
+	int WndExtY; // 6Eh
+	int VportOrgX; // 70h
+	int VportOrgY; // 72h
+	int VportExtX; // 74h
+	int VportExtY; // 76h
+	int UserVptOrgX; // 78h
+	int UserVptOrgY; // 7Ah
+	WORD wMapMode; // 7Ch
+	WORD wXFormFlags; // 7Eh
+	WORD wRelAbs; // 80h
+	WORD wPolyFillMode; //82h
+	WORD wStretchBltMode; // 84h
+	BYTE byPlanes; // 86h
+	BYTE byBitsPix; // 87h
+	WORD wPenWidth; // 88h
+	WORD wPenHeight; // .8Ah
+	WORD wTextAlign; // 8Ch
+	DWORD dwMapperFlags; // 8Eh
+	WORD wBrushOrgX; // 92h
+	WORD wBrushOrgY; // 94h
+	WORD wFontAspectX; // 96h
+	WORD wFontAspectY; // 98h
+	HANDLE hFontWeights; // 9Ah
+	WORD wDCSaveLevel; // 9Ch
+	WORD wcDCLocks; // 9Eh
+	HRGN hVisRgn; // AOh
+	WORD wDCOrgX; // A2h
+	WORD wDCOrgY; // A4h
+	FARPROC lpfnPrint; // A6h
+	WORD wDCLogAtom; // AAh
+	WORD wDCPhysAtom; // ACh
+	WORD wDCFileAtom; // AEh
+	WORD wPostScaleX; // BOh
+	WORD wPostScaleY; // B2h
+	union {
+		struct { // 3.0
+			WORD wB4; // B4h
+			RECT rectB6; // B6h
+			WORD wDCGlobFlags; // BEh
+			WORD wC0; // COh
+		} tail_3_0; // 3.0
+		struct { // 3.1
+			RECT rectBounds; // B4h
+			RECT rectLVB; // BCh
+			FARPROC lpfnNotify; // C4h
+			LPSTR lpHookData; // C8h
+			WORD wDCGlobFlags;
+			HDC hDCNext;
+		} tail_3_1;
+	} dc_tail;
+} DC, FAR *LPDC;
+
+#define CLASS_MAGIC   0x4b4e      /* 'NK' */
+
+#pragma pack(1)
+
+#define HCLASS HANDLE
+
+/* !! Don't change this structure (see GetClassLong()) */
+typedef struct tagCLASS
+{
+    HCLASS       hNext;         /* Next class */
+    WORD         wMagic;        /* Magic number (must be CLASS_MAGIC) */
+    ATOM         atomName;      /* Name of the class */
+    HANDLE       hdce;          /* Class DCE (if CS_CLASSDC) */
+    WORD         cWindows;      /* Count of existing windows of this class */
+    WNDCLASS     wc;		/* Class information */
+    WORD         wExtra[1];     /* Class extra bytes */
+} CLASS;
+
+typedef struct tagWND
+{
+    struct tagWND *next;         /* Next sibling */
+    struct tagWND *child;        /* First child */
+    struct tagWND *parent;       /* Window parent (from CreateWindow) */
+    struct tagWND *owner;        /* Window owner */
+    DWORD        dwMagic;        /* Magic number (must be WND_MAGIC) */
+    HWND         hwndSelf;       /* Handle of this window */
+    HCLASS       hClass;         /* Window class */
+    HANDLE       hInstance;      /* Window hInstance (from CreateWindow) */
+    RECT         rectClient;     /* Client area rel. to parent client area */
+    RECT         rectWindow;     /* Whole window rel. to parent client area */
+    RECT         rectNormal;     /* Window rect. when in normal state */
+    POINT        ptIconPos;      /* Icon position */
+    POINT        ptMaxPos;       /* Maximized window position */
+    HGLOBAL      hmemTaskQ;      /* Task queue global memory handle */
+    HRGN         hrgnUpdate;     /* Update region */
+    HWND         hwndLastActive; /* Last active popup hwnd */
+    WNDPROC      lpfnWndProc;    /* Window procedure */
+    DWORD        dwStyle;        /* Window style (from CreateWindow) */
+    DWORD        dwExStyle;      /* Extended style (from CreateWindowEx) */
+    HANDLE       hdce;           /* Window DCE (if CS_OWNDC or CS_CLASSDC) */
+    HANDLE       hVScroll;       /* Vertical scroll-bar info */
+    HANDLE       hHScroll;       /* Horizontal scroll-bar info */
+    UINT         wIDmenu;        /* ID or hmenu (from CreateWindow) */
+    HANDLE       hText;          /* Handle of window text */
+    WORD         flags;          /* Misc. flags (see below) */
+//    Window       window;         /* X window (only for top-level windows) */
+    HMENU        hSysMenu;	 /* window's copy of System Menu */
+    HANDLE       hProp;          /* Handle of Properties List */
+    WORD         wExtra[1];      /* Window extra bytes */
+} WND;
+
+#pragma pack(pop)
+
+  /* WND flags values */
+#define WIN_NEEDS_BEGINPAINT   0x0001 /* WM_PAINT sent to window */
+#define WIN_NEEDS_ERASEBKGND   0x0002 /* WM_ERASEBKGND must be sent to window*/
+#define WIN_NEEDS_NCPAINT      0x0004 /* WM_NCPAINT must be sent to window */
+#define WIN_RESTORE_MAX        0x0008 /* Maximize when restoring */
+#define WIN_INTERNAL_PAINT     0x0010 /* Internal WM_PAINT message pending */
+#define WIN_NO_REDRAW          0x0020 /* WM_SETREDRAW called for this window */
+#define WIN_GOT_SIZEMSG        0x0040 /* WM_SIZE has been sent to the window */
+#define WIN_NCACTIVATED        0x0080 /* last WM_NCACTIVATE was positive */
+#define WIN_MANAGED            0x0100 /* Window managed by the X wm */
+
+#define WIN_CLASS_INFO(wndPtr)   (CLASS_FindClassPtr((wndPtr)->hClass)->wc)
+#define WIN_CLASS_STYLE(wndPtr)  (WIN_CLASS_INFO(wndPtr).style)
+
+extern void CLASS_DumpClass( HCLASS hClass );
+extern void CLASS_WalkClasses(void);
+extern HCLASS CLASS_FindClassByName( LPCSTR name, HINSTANCE hinstance,
+                                     CLASS **ptr );
+extern CLASS * CLASS_FindClassPtr( HCLASS hclass );
+
+extern HANDLE hGDI;
+
+/* GDI objects magic numbers */
+#define PEN_MAGIC             0x4f47
+#define BRUSH_MAGIC           0x4f48
+#define FONT_MAGIC            0x4f49
+#define PALETTE_MAGIC         0x4f4a
+#define BITMAP_MAGIC          0x4f4b
+#define REGION_MAGIC          0x4f4c
+#define DC_MAGIC              0x4f4d
+#define DISABLED_DC_MAGIC     0x4f4e
+#define META_DC_MAGIC         0x4f4f
+#define METAFILE_MAGIC        0x4f50
+#define METAFILE_DC_MAGIC     0x4f51
+#define MAGIC_DONTCARE	      0xffff
