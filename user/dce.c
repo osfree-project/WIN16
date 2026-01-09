@@ -388,47 +388,39 @@ HRGN DCE_GetVisRgn( HWND hwnd, WORD flags )
     return hrgn;
 }
 
+#endif
 
 /***********************************************************************
  *           DCE_SetDrawable
  *
- * Set the drawable, origin and dimensions for the DC associated to
+ * Set the origin and dimensions for the DC associated to
  * a given window.
  */
-static void DCE_SetDrawable( WND *wndPtr, DC *dc, WORD flags )
+static void DCE_SetDrawable( WND *wndPtr, DC FAR *dc, WORD flags )
 {
     if (!wndPtr)  /* Get a DC for the whole screen */
     {
-        dc->w.DCOrgX = 0;
-        dc->w.DCOrgY = 0;
-        //dc->u.x.drawable = rootWindow;
-        //XSetSubwindowMode( display, dc->u.x.gc, IncludeInferiors );
+        dc->wDCOrgX = 0;
+        dc->wDCOrgY = 0;
     }
     else
     {
         if (flags & DCX_WINDOW)
         {
-            dc->w.DCOrgX  = wndPtr->rectWindow.left;
-            dc->w.DCOrgY  = wndPtr->rectWindow.top;
+            dc->wDCOrgX  = wndPtr->rectWindow.left;
+            dc->wDCOrgY  = wndPtr->rectWindow.top;
         }
         else
         {
-            dc->w.DCOrgX  = wndPtr->rectClient.left;
-            dc->w.DCOrgY  = wndPtr->rectClient.top;
+            dc->wDCOrgX  = wndPtr->rectClient.left;
+            dc->wDCOrgY  = wndPtr->rectClient.top;
         }
-        while (!wndPtr->window)
-        {
-            wndPtr = wndPtr->parent;
-            dc->w.DCOrgX += wndPtr->rectClient.left;
-            dc->w.DCOrgY += wndPtr->rectClient.top;
-        }
-        dc->w.DCOrgX -= wndPtr->rectWindow.left;
-        dc->w.DCOrgY -= wndPtr->rectWindow.top;
-        //dc->u.x.drawable = wndPtr->window;
+
+        dc->wDCOrgX -= wndPtr->rectWindow.left;
+        dc->wDCOrgY -= wndPtr->rectWindow.top;
     }
 }
 
-#endif
 
 /***********************************************************************
  *           GetDCEx    (USER.359)
@@ -441,7 +433,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     HRGN hrgnVisible;
     HDC hdc = 0;
     DCE * dce;
-    DC * dc;
+    DC FAR * dc;
     WND * wndPtr;
     
     if (hwnd)
