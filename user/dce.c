@@ -52,10 +52,11 @@ VOID DumpDC(HDC hdc)
 int b31=0;
 int bDebug=0;
   DC FAR * dc;
-  WORD gdi = hGDI;
+  WORD gdi = 0;
 	PushDS();
-	gdi &= 0xfffc; // @todo Use GlobalLock instead and SELECTOROF???
-	gdi |= 1;
+	gdi=SELECTOROF(GlobalLock(hGDI));
+//	gdi &= 0xfffc; 
+//	gdi |= 1;
 	SetDS(gdi);
 	dc=MK_FP(gdi, LocalLock(hdc));
 	DumpHeader((LPGDIOBJHDR) &(dc->header));
@@ -164,6 +165,7 @@ int bDebug=0;
 			dc->dc_tail.tail_3_0.wC0);
 		}
 	LocalUnlock(hdc);
+	GlobalUnlock(hGDI);
 	PopDS();
 }
 
@@ -184,7 +186,7 @@ HANDLE DCE_AllocDCE( DCE_TYPE type )
 	return 0;
     }
 
-//	DumpDC(dce->hDC);
+	DumpDC(dce->hDC);
     dce->hwndCurr = 0;
     dce->byFlags  = type;
     dce->byInUse = (type != DCE_CACHE_DC);
