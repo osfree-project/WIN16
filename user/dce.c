@@ -467,6 +467,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 	else flags |= DCX_CACHE;
     }
 
+
       /* Can only use PARENTCLIP on child windows */
     if (!wndPtr || !(wndPtr->dwStyle & WS_CHILD)) flags &= ~DCX_PARENTCLIP;
 
@@ -499,7 +500,6 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
     if (!hdce) 
 	{
-		PopDS();
 		return 0;
 	}
 
@@ -524,9 +524,10 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
     DCE_SetDrawable( wndPtr, dc, flags );
 	PopDS();
-
+#endif
     if (hwnd)
     {
+#if 0
         if (flags & DCX_PARENTCLIP)  /* Get a VisRgn for the parent */
         {
             WND *parentPtr = wndPtr->parent;
@@ -542,13 +543,15 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
                                          -wndPtr->rectClient.top );
         }
         else hrgnVisible = DCE_GetVisRgn( hwnd, flags );
+#endif
     }
     else  /* Get a VisRgn for the whole screen */
     {
-        hrgnVisible = CreateRectRgn( 0, 0, SYSMETRICS_CXSCREEN,
-                                     SYSMETRICS_CYSCREEN);
+//        hrgnVisible = CreateRectRgn( 0, 0, SYSMETRICS_CXSCREEN,
+//                                     SYSMETRICS_CYSCREEN);
     }
 
+#if 0
       /* Intersect VisRgn with the given region */
 
     if ((flags & DCX_INTERSECTRGN) || (flags & DCX_EXCLUDERGN))

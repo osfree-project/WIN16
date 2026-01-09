@@ -760,3 +760,6 @@ extern HANDLE hGDI;
 #define METAFILE_MAGIC        0x4f50
 #define METAFILE_DC_MAGIC     0x4f51
 #define MAGIC_DONTCARE	      0xffff
+
+
+extern VOID LW_InitSysMetrics(VOID);

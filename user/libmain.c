@@ -316,8 +316,15 @@ VOID WINAPI LW_LoadResources()
 
 VOID WINAPI LW_OEMDependentInit()
 {
+	HDC hdc;
 	FUNCTION_START
 	HInstanceDisplay=GetModuleHandle(DISPLAY);
+
+	hdc=GetDC(0);
+	CXScreen=GetDeviceCaps(hdc, HORZRES);
+	CYScreen=GetDeviceCaps(hdc, VERTRES);
+	ReleaseDC(0, hdc);
+
 	FUNCTION_END
 }
 
@@ -328,12 +335,6 @@ VOID WINAPI LW_OEMCursorInit()
 }
 
 VOID WINAPI InitSizeBorderDimensions()
-{
-	FUNCTION_START
-	FUNCTION_END
-}
-
-VOID LW_InitSysMetrics()
 {
 	FUNCTION_START
 	FUNCTION_END
@@ -554,8 +555,7 @@ VOID WINAPI LW_DisplayDriverInit()
 	BOOL FOnBoardBitmap;
 
 	// Need a device context below
-	hDC = GetDC(0);//GetScreenDC(); 
-for (;;);
+	hDC = GetDC(0);
 
 	// If the display driver can save bits, get a function ptr
 	// to the routine that does it. The function has an entry
@@ -565,7 +565,7 @@ for (;;);
 		LpSaveBitmap=GetProcAddress(HInstanceDisplay,MAKELP(0,92));
 	
 	//Done with the device context
-	ReleaseDC(0, hDC); //ReleaseCacheDC( hDC, 0 );
+	ReleaseDC(0, hDC);
 
 	// DISPLAY.500 -> UserRepaintDisable(). This function
 	// tells the display driver when screen updates should be

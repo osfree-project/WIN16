@@ -3,11 +3,11 @@
 // Macro to switch DS to Global Atom Table selector
 #define  SetGlobalTableDS() SetDS(GlobalAtomTable_Selector)
 
+// Global Atom Table reuses standard Atom Table functions which work with local heap (uses DS).
+// We just switch DS to Global Atom Heap selector, do things and switch DS back.
+
 // This is initialization of Global Atoms. This function must be called during USER.EXE initialization.
 // See Windows Internals p.68
-//
-// Global Atom Table reuses standard Atom Table functions wich work with local heap (uses DS).
-// We just switch DS to Global Atom Heap selector, do things and switch DS back.
 //
 // Here we allocate Global Atom Table heap, switch DS to it, initialize local heap and init atom table
 // After all done - switch DS back
@@ -15,7 +15,10 @@ VOID WINAPI GlobalInitAtom(void)
 {
 	PushDS();
 	FUNCTION_START
+
+	// Allocate memory for Global Atom Table Heap
 	GlobalAtomTable_Selector=GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT | GMEM_DDESHARE, 0xfa);
+
 	if (GlobalAtomTable_Selector)
 	{
 		GlobalAtomTable_Selector=SELECTOROF(GlobalLock(GlobalAtomTable_Selector));
@@ -24,6 +27,7 @@ VOID WINAPI GlobalInitAtom(void)
 		InitAtomTable(0x25);
 		GlobalUnlock(GlobalAtomTable_Selector);
 	}
+
 	FUNCTION_END
 	PopDS();
 }

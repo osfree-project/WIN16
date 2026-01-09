@@ -112,9 +112,9 @@ HACCEL WINAPI LoadAccelerators(HINSTANCE hInstance, LPCSTR lpTableName)
 
 int get_display_bpp(void)
 {
-	HDC hdc = GetDC(0);//GetScreenDC(); 
+	HDC hdc = GetDC(0);
 	int ret = GetDeviceCaps( hdc, BITSPIXEL );
-	ReleaseDC(0, hdc); //ReleaseCacheDC( hDC, 0 );
+	ReleaseDC(0, hdc);
 	return ret;
 }
 

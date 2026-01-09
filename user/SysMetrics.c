@@ -603,3 +603,11 @@ SystemParametersInfo(UINT uAction, UINT uParam, LPVOID lpvParam,
 //    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL TRUE\n"));
     return TRUE;
 }
+
+VOID LW_InitSysMetrics()
+{
+	FUNCTION_START
+	SysMetricsDef[SM_CXSCREEN]=CXScreen;
+	SysMetricsDef[SM_CYSCREEN]=CYScreen;
+	FUNCTION_END
+}
