@@ -763,3 +763,4 @@ extern HANDLE hGDI;
 
 
 extern VOID LW_InitSysMetrics(VOID);
+int WINAPI SelectVisRgn( HDC hdc, HRGN hrgn );

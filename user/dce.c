@@ -544,7 +544,6 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
         hrgnVisible = CreateRectRgn( 0, 0, CXScreen, CYScreen);
     }
 
-#if 0
       /* Intersect VisRgn with the given region */
 
     if ((flags & DCX_INTERSECTRGN) || (flags & DCX_EXCLUDERGN))
@@ -554,7 +553,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     }
     SelectVisRgn( hdc, hrgnVisible );
     DeleteObject( hrgnVisible );
-#endif
+
     TRACE("GetDCEx(%04x,%04x,0x%lx): returning %04x", 
 	       hwnd, hrgnClip, flags, hdc);
     return hdc;

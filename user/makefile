@@ -272,6 +272,7 @@ IMPORTS = GETEXEVERSION KERNEL.105, &
   MakeObjectPrivate GDI.463, &
   GetDCState GDI.179, &
   SetDCState GDI.180, &
+  SelectVisRgn GDI.105, &
   SetSpeed KEYBOARD.7, &
   KeyboardEnable KEYBOARD.2, &
   MouseEnable MOUSE.2
