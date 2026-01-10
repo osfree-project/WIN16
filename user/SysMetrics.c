@@ -606,8 +606,8 @@ SystemParametersInfo(UINT uAction, UINT uParam, LPVOID lpvParam,
 
 VOID LW_InitSysMetrics()
 {
-	FUNCTION_START
+//	FUNCTION_START
 	SysMetricsDef[SM_CXSCREEN]=CXScreen;
 	SysMetricsDef[SM_CYSCREEN]=CYScreen;
-	FUNCTION_END
+//	FUNCTION_END
 }

@@ -14,7 +14,7 @@
 VOID WINAPI GlobalInitAtom(void)
 {
 	PushDS();
-	FUNCTION_START
+//	FUNCTION_START
 
 	// Allocate memory for Global Atom Table Heap
 	GlobalAtomTable_Selector=GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT | GMEM_DDESHARE, 0xfa);
@@ -28,7 +28,7 @@ VOID WINAPI GlobalInitAtom(void)
 		GlobalUnlock(GlobalAtomTable_Selector);
 	}
 
-	FUNCTION_END
+//	FUNCTION_END
 	PopDS();
 }
 
@@ -42,10 +42,20 @@ ATOM WINAPI GlobalAddAtom(LPCSTR lpstr)
 	ATOM res;
 
 	PushDS();
-	FUNCTION_START
+//	FUNCTION_START
+//    if (HIWORD(lpstr))
+//{
+//	TRACE("'%S' ", lpstr);
+//}
+//    else
+//{
+//	TRACE("%04x ", LOWORD(lpstr) );
+//}
+
 	SetGlobalTableDS();
 	res=AddAtom(lpstr);
-	FUNCTION_END
+//	TRACE("%04x ", res );
+//	FUNCTION_END
 	PopDS();
 	return res;
 }
@@ -60,10 +70,10 @@ ATOM WINAPI GlobalDeleteAtom(ATOM atom)
 	ATOM res;
 
 	PushDS();
-	FUNCTION_START
+//	FUNCTION_START
 	SetGlobalTableDS();
 	res=DeleteAtom(atom);
-	FUNCTION_END
+//	FUNCTION_END
 	PopDS();
 	return res;
 }
@@ -78,10 +88,19 @@ ATOM WINAPI GlobalFindAtom(LPCSTR lpstr)
 	ATOM res;
 
 	PushDS();
-	FUNCTION_START
+//	FUNCTION_START
+//    if (HIWORD(lpstr))
+//{
+//	TRACE("'%S' ", lpstr);
+//}
+//    else
+//{
+//	TRACE("%04x ", LOWORD(lpstr) );
+//}
 	SetGlobalTableDS();
 	res=FindAtom(lpstr);
-	FUNCTION_END
+//	TRACE("%04x ", res );
+//	FUNCTION_END
 	PopDS();
 	return res;
 }
@@ -96,10 +115,10 @@ UINT WINAPI GlobalGetAtomName(ATOM atom,LPSTR lpszbuf,int len)
 	UINT res;
 
 	PushDS();
-	FUNCTION_START
+//	FUNCTION_START
 	SetGlobalTableDS();
 	res=GetAtomName(atom, lpszbuf, len);
-	FUNCTION_END
+//	FUNCTION_END
 	PopDS();
 	return res;
 }

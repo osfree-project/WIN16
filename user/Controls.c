@@ -13,7 +13,7 @@ GetControlBrush(HWND hWnd, HDC hDC, WORD wType)
     HWND hWndParent;
     HBRUSH hBrush;
 
-	FUNCTION_START
+//	FUNCTION_START
 
     hWndParent = GetParent(hWnd);
     if (!hWndParent)

@@ -9,7 +9,7 @@ int UT_GetIntFromProfile(UINT id, int defvalue)
 	char key[30];
 	char value[30];
 
-	FUNCTION_START
+//	FUNCTION_START
 
 	if (!LoadString(USER_HeapSel, IDS_WINDOWS, section, sizeof(section)))
 	{
@@ -25,20 +25,22 @@ int UT_GetIntFromProfile(UINT id, int defvalue)
 	// Protect from empty value
 	if (!GetProfileString(section, key, "", value, sizeof(value)))
 	{
-		FUNCTION_END
+//		FUNCTION_END
 		return defvalue;
 	}
 
-	FUNCTION_END
+//	FUNCTION_END
 	return GetProfileInt(section, key, defvalue);
 }
+
+#if 0
 
 VOID CreateQueue(int QueueSize)
 {
 	LPQUEUE lpQueue;
 	int size;
 
-	FUNCTION_START
+//	FUNCTION_START
 
 	size=sizeof(QUEUE)+(QueueSize-1)*sizeof(INTERNALMSG);
 
@@ -54,12 +56,14 @@ VOID CreateQueue(int QueueSize)
 
 	SetTaskQueue(0, (HGLOBAL)lpQueue);
 
-	FUNCTION_END
+//	FUNCTION_END
 }
+
+#endif
 
 VOID WINAPI LW_LoadSomeStrings()
 {
-	FUNCTION_START
+//	FUNCTION_START
 	LoadString(USER_HeapSel, IDS_SYSTEMERROR, szSysError, sizeof(szSysError));
 	LoadString(USER_HeapSel, IDS_DIVIDEBYZERO, szDivZero, sizeof(szDivZero));
 	LoadString(USER_HeapSel, IDS_UNTITLED, szUntitled, sizeof(szUntitled));
@@ -74,82 +78,82 @@ VOID WINAPI LW_LoadSomeStrings()
 	// LoadString(USER_HeapSel, 0x4b, szClose, sizeof(szClose)); not found in user.exe resources
 	LoadString(USER_HeapSel, IDS_AM, szAm, sizeof(szAm));
 	LoadString(USER_HeapSel, IDS_PM, szPm, sizeof(szPm));
-	FUNCTION_END
+//	FUNCTION_END
 }
 
 VOID WINAPI RW_RegisterMenus()
 {
-	FUNCTION_START
+//	FUNCTION_START
 
-	FUNCTION_END
+//	FUNCTION_END
 }
 
 VOID WINAPI RW_RegisterButton()
 {
-	FUNCTION_START
+//	FUNCTION_START
 
-	FUNCTION_END
+//	FUNCTION_END
 }
 
 VOID WINAPI RW_RegisterStatic()
 {
-	FUNCTION_START
+//	FUNCTION_START
 
-	FUNCTION_END
+//	FUNCTION_END
 }
 
 VOID WINAPI RW_RegisterDlg()
 {
-	FUNCTION_START
+//	FUNCTION_START
 
-	FUNCTION_END
+//	FUNCTION_END
 }
 
 VOID WINAPI RW_RegisterEdit()
 {
-	FUNCTION_START
+//	FUNCTION_START
 
-	FUNCTION_END
+//	FUNCTION_END
 }
 
 VOID WINAPI RW_RegisterLBoxCtl()
 {
-	FUNCTION_START
+//	FUNCTION_START
 
-	FUNCTION_END
+//	FUNCTION_END
 }
 
 VOID WINAPI RW_RegisterSB()
 {
-	FUNCTION_START
+//	FUNCTION_START
 
-	FUNCTION_END
+//	FUNCTION_END
 }
 
 VOID WINAPI RW_RegisterComboLBoxCtl()
 {
-	FUNCTION_START
+//	FUNCTION_START
 
-	FUNCTION_END
+//	FUNCTION_END
 }
 
 VOID WINAPI RW_RegisterCBoxCtl()
 {
-	FUNCTION_START
+//	FUNCTION_START
 
-	FUNCTION_END
+//	FUNCTION_END
 }
 
 VOID WINAPI RW_RegisteMDIClient()
 {
-	FUNCTION_START
+//	FUNCTION_START
 
-	FUNCTION_END
+//	FUNCTION_END
 }
 
 VOID WINAPI LW_RegisterWindows()
 {
-	FUNCTION_START
+//	FUNCTION_START
 
 	RW_RegisterMenus();
 	RW_RegisterButton();
@@ -162,55 +166,55 @@ VOID WINAPI LW_RegisterWindows()
 	RW_RegisterCBoxCtl();
 	RW_RegisteMDIClient();
 
-	FUNCTION_END
+//	FUNCTION_END
 }
 
 // Check Windows Internals for some info
 VOID WINAPI LW_DriversInit()
 {
-	FUNCTION_START
+//	FUNCTION_START
 
 	QUEUE_CreateSysMsgQueue(CBEntries);
 
-	TRACE("Keyboard init");
+//	TRACE("Keyboard init");
 	if (InquireKeyboard(&KbInfo)==sizeof(KBINFO))
 	{
-		TRACE("Keyboard initdone");
+//		TRACE("Keyboard initdone");
 		if (SetSpeed(-1)==-1) FatalExit(0x0c);
 	} else 
 		FatalExit(0x0c);
 
-	TRACE("Mouse init");
+//	TRACE("Mouse init");
 	if (InquireMouse(&MouseInfo))
 	{
-		TRACE("Mouse initdone");
+//		TRACE("Mouse initdone");
 	} else 
 		FatalExit(0x0c);;
 
-	TRACE("Display init");
+//	TRACE("Display init");
 	if (InquireDisplay(&CursorInfo)==sizeof(CURSORINFO))
 	{
-		TRACE("Display initdone");
+//		TRACE("Display initdone");
 	};
 
-	FUNCTION_END
+//	FUNCTION_END
 }
 
 VOID WINAPI LW_DCInit()
 {
-	FUNCTION_START
+//	FUNCTION_START
 
 	// Pass to dce.c
 	DCE_Init();
 
-	FUNCTION_END
+//	FUNCTION_END
 }
 
 VOID WINAPI LW_BrushInit()
 {
-	FUNCTION_START
+//	FUNCTION_START
 
-	FUNCTION_END
+//	FUNCTION_END
 }
 
 // See Windows Internals
@@ -220,7 +224,7 @@ VOID WINAPI LW_LoadResources()
 	char szBeep[0x14];
 	char szSwapMouseButtons[0x14];
 
-	FUNCTION_START
+//	FUNCTION_START
 
 	// Get some strings out of the USER resources, for use as
 	// section and key strings in GetProfilelnt() calLs
@@ -311,13 +315,13 @@ VOID WINAPI LW_LoadResources()
 	// The "4 directions" icon
 	HCursSizeAll = LoadCursor(USER_HeapSel, MAKEINTRESOURCE(OCR_SIZEALL));
 
-	FUNCTION_END
+//	FUNCTION_END
 }
 
 VOID WINAPI LW_OEMDependentInit()
 {
 	HDC hdc;
-	FUNCTION_START
+//	FUNCTION_START
 	HInstanceDisplay=GetModuleHandle(DISPLAY);
 
 	hdc=GetDC(0);
@@ -325,25 +329,25 @@ VOID WINAPI LW_OEMDependentInit()
 	CYScreen=GetDeviceCaps(hdc, VERTRES);
 	ReleaseDC(0, hdc);
 
-	FUNCTION_END
+//	FUNCTION_END
 }
 
 VOID WINAPI LW_OEMCursorInit()
 {
-	FUNCTION_START
-	FUNCTION_END
+//	FUNCTION_START
+//	FUNCTION_END
 }
 
 VOID WINAPI InitSizeBorderDimensions()
 {
-	FUNCTION_START
-	FUNCTION_END
+//	FUNCTION_START
+//	FUNCTION_END
 }
 
 VOID WINAPI LW_MouseInit()
 {
-	FUNCTION_START
-	FUNCTION_END
+//	FUNCTION_START
+//	FUNCTION_END
 }
 
 //When Windows first starts, USER calls the InquireCursor function to retrieve
@@ -410,6 +414,7 @@ VOID WINAPI EnableInput()
 	FUNCTION_END
 }
 
+#if 0
 // @todo Move to Desktop.c
 LRESULT WINAPI DeskTopWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -417,9 +422,11 @@ LRESULT WINAPI DeskTopWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam
 //	hWnd,wMsg,wParam,lParam));
 
 	FUNCTION_START
+for(;;);
 	FUNCTION_END
     return(1L);
 }
+#endif
 
 BOOL WINAPI SetDeskWallPaper(LPSTR lpszBmpFileName)
 {
@@ -468,7 +475,7 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 	WNDCLASS * pWndClass; // For use in registering classes
 	HLOCAL hWndClass;
 
-	FUNCTION_START
+//	FUNCTION_START
 
 	//InitiaLize the following variabLes from static variabLes:
 	//CXSize, CYSize, CYCaption, CXBorder, CYBorder, CYHScroLL,
@@ -484,9 +491,9 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 	// Register the DeskTop cLass
 	pWndClass->lpszClassName = MAKELP(0, 0x8001);
 	pWndClass->hCursor = LoadCursor(0, IDC_ARROW);
-	pWndClass->lpfnWndProc = DeskTopWndProc;
+	pWndClass->lpfnWndProc = DesktopWndProc;
 	pWndClass->hInstance = hInstance;
-	pWndClass->style = CS_DBLCLKS;
+	pWndClass->style = CS_GLOBALCLASS | CS_DBLCLKS;
 	pWndClass->hbrBackground = 2;
 	RegisterClass(pWndClass);
 
@@ -495,7 +502,7 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 	pWndClass->hCursor = LoadCursor(0, IDC_ARROW);
 	pWndClass->lpfnWndProc = SwitchWndProc;
 	pWndClass->hInstance = hInstance;
-	pWndClass->style = CS_SAVEBITS | CS_VREDRAW | CS_HREDRAW;
+	pWndClass->style = CS_GLOBALCLASS | CS_SAVEBITS | CS_VREDRAW | CS_HREDRAW;
 	pWndClass->hbrBackground = 2;
 	RegisterClass( pWndClass );
 
@@ -504,7 +511,7 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 	pWndClass->hCursor = LoadCursor(0, IDC_ARROW);
 	pWndClass->lpfnWndProc = TitleWndProc;
 	pWndClass->hInstance = hInstance;
-	pWndClass->style = 0;
+	pWndClass->style = CS_GLOBALCLASS;
 	pWndClass->hbrBackground = 0;
 	RegisterClass(pWndClass);
 
@@ -513,28 +520,36 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 
 
 	// Create the desktop and switch windows
-	HWndDesktop = CreateWindowEx( 0, MAKELP(0, 0x8001),
-		0, WS_CLIPCHILDREN | WS_POPUP, 0, 0,
-		CXScreen, CYScreen, 0, 0, hInstance, 0);
+	HWndDesktop = CreateWindowEx(0, DESKTOP_CLASS_ATOM,
+		0, WS_CLIPCHILDREN | WS_VISIBLE | WS_POPUP | WS_EX_NOPARENTNOTIFY, 0, 0,
+		CXScreen, CYScreen, 0, 0, 0/*hInstance*/, 0);
+
+
+{
+	//@todo this is temporary. Must be redrawed on invalidate and update window
+//	HDC hDC = GetDC(HWndDesktop);
+//        SendMessage(HWndDesktop, WM_ERASEBKGND, (WPARAM)hDC, (LPARAM)0 );
+//        ReleaseDC(HWndDesktop, hDC);
+}
 
 	HWndSwitch = CreateWindowEx( 0, MAKELP(0, 0x8003),
-		0, WS_DISABLED | WS_POPUP, 0, 0, 0xA, 0xA,
-		0, 0, hInstance, 0 );
+		0, CS_GLOBALCLASS | WS_DISABLED | WS_POPUP, 0, 0, 0xA, 0xA,
+		0, 0, 0/*hInstance*/, 0 );
+
 
 	// Move the switch window to the center of the screen
 	SetWindowPos( HWndSwitch, 0xFFFF, 0, 0, 0, 0,
 		SWP_NOSIZE | SWP_NOMOVE | SWP_NOREDRAW | SWP_NOACTIVATE);
 
-	HWndRealPopup = CreateWindowEx( 0, MAKELP(0, 0x8000), 0,
-		WS_POPUP, 0, 0, 0x64, 0x64, 0, 0,
-		hInstance, 0 ); // Pop-up menu???
+//	HWndRealPopup = CreateWindowEx( 0, MAKELP(0, 0x8000), 0,
+//		WS_POPUP, 0, 0, 0x64, 0x64, 0, 0,
+//		hInstance, 0 ); // Pop-up menu???
 
 	SetDeskPattern();
 	SetDeskWallPaper((LPSTR)-1);
 
-	// Set the wallpaper and pattern
-	// Read names from the WIN.INI fiLe
-	// Tell the desktop that the paLette may have changed from
+	// Set the wallpaper and pattern. Read names from the WIN.INI fiLe
+	// Tell the desktop that the palette may have changed from
 	// loading the wallpaper image.
 	SendMessage(HWndDesktop, WM_SYSCOLORCHANGE, 0, 0);
 
@@ -543,10 +558,10 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 //	InvalidateDCCache( HWndDesktop, 0); What this do??
 
 	// Force the entire desktop to be refreshed
-	InvalidateRect( HWndDesktop, 0, 1);
-	UpdateWindow( HWndDesktop );
+	InvalidateRect(HWndDesktop, 0, 1);
+	UpdateWindow(HWndDesktop);
 
-	FUNCTION_END
+//	FUNCTION_END
 }
 
 VOID WINAPI LW_DisplayDriverInit()
@@ -697,7 +712,8 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 	DefQueueSize=UT_GetIntFromProfile(IDS_DEFAULTQUEUESIZE, 8);
 
         // Create an application message queue. This is needed to create windows.
-	CreateQueue(DefQueueSize);
+	SetMessageQueue(DefQueueSize);
+//	CreateQueue(DefQueueSize);
 
 	// Get the default border width for a window. Default is 3.
 	ClBorder = UT_GetIntFromProfile(IDS_BORDER, 3);
@@ -817,9 +833,9 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 	// list registered classes
 //	CLASS_WalkClasses();
 {
-	TRACE("Create display context");
+//	TRACE("Create display context");
 	tempHDC=CreateDC(DISPLAY, NULL, NULL, NULL);
-	TRACE("Create display context done");
+//	TRACE("Create display context done");
 	SetPixel(tempHDC, 10, 10, RGB(255, 0, 0));
         hPenBlue=CreatePen(PS_SOLID, 2, RGB(0, 0, 255));
         SelectObject(tempHDC, hPenBlue);
@@ -847,6 +863,17 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 
 //	DeleteDC(tempHDC);
 }
+
+// Ok. Now time to test message queue...
+{
+	MSG      msg;
+	
+//	while (GetMessage(&msg, 0, 0, 0)) 
+//	{
+//		//TranslateMessage(&msg);
+//		DispatchMessage(&msg);
+//	}
+}
 for (;;);
 
 
@@ -867,17 +894,6 @@ for (;;);
 	LW_LoadTaskmanAndScreenSaver(); // Doesn't _load_ them. Just
 					// gets configuration values
 
-	TRACE("Create display context");
-	tempHDC=CreateDC(DISPLAY, NULL, NULL, NULL);
-	TRACE("Create display context done");
-	SetPixel(tempHDC, 10, 10, RGB(255, 0, 0));
-        hPenBlue=CreatePen(PS_SOLID, 5, RGB(0, 0, 255));
-        SelectObject(tempHDC, hPenBlue);
-        hBrushRed=CreateSolidBrush(RGB(255, 0, 0));
-        SelectObject(tempHDC, hBrushRed);
-        Rectangle(tempHDC, 200, 200, 400, 400);
-
-	DeleteDC(tempHDC);
 
 	FUNCTION_END
 	return(1);

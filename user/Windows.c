@@ -1,6 +1,9 @@
 #include <user.h>
+#include <queue.h>
 
-void WINAPI PaintRect( HWND hwndParent, HWND hwnd, HDC hdc,
+VOID WIN_UpdateNCArea(WND* wnd, BOOL bUpdate);
+
+VOID WINAPI PaintRect( HWND hwndParent, HWND hwnd, HDC hdc,
                          HBRUSH hbrush, const RECT far *rect);
 
 /**************************************************************************
@@ -62,7 +65,6 @@ int WINAPI GetWindowTextLength( HWND hwnd )
  */
 void WINAPI UpdateWindow( HWND hwnd )
 {
-	FUNCTION_START
     RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN );
 }
 
@@ -72,7 +74,6 @@ void WINAPI UpdateWindow( HWND hwnd )
  */
 void WINAPI InvalidateRect( HWND hwnd, const RECT far *rect, BOOL erase )
 {
-	FUNCTION_START
     RedrawWindow( hwnd, rect, 0, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
 }
 
@@ -111,7 +112,7 @@ void WINAPI ValidateRgn( HWND hwnd, HRGN hrgn )
  */
 int WINAPI MessageBox( HWND hwnd, LPCSTR text, LPCSTR title, UINT type )
 {
-	FUNCTION_START
+//	FUNCTION_START
     return 0;
 }
 
@@ -120,7 +121,7 @@ int WINAPI MessageBox( HWND hwnd, LPCSTR text, LPCSTR title, UINT type )
  */
 int FAR PASCAL SysErrorBox(LPSTR lpszMsg,        LPSTR lpszTitle, WORD wButton1, WORD wButton2, WORD wButton3)
 {
-	FUNCTION_START
+//	FUNCTION_START
 	  return 0;
 }
 
@@ -184,6 +185,7 @@ WORD WINAPI SetWindowWord( HWND hwnd, int offset, WORD newval )
 	return 0;
 }
 
+#if 0
 /***********************************************************************
  *		CreateWindowEx (USER.452)
  */
@@ -245,6 +247,7 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className,
     return HWND_16( hwnd );
 	#endif
 }
+#endif
 
 /**********************************************************************
  *		GetWindowLong (USER.135)
@@ -297,6 +300,7 @@ LONG WINAPI SetWindowLong( HWND hwnd16, int offset, LONG newval )
 	return 0;
 }
 
+#if 0
 /**************************************************************************
  *              GetClientRect   (USER.33)
  */
@@ -306,6 +310,7 @@ void WINAPI GetClientRect( HWND hwnd, LPRECT rect )
 	FUNCTION_END
 }
 
+#endif
 
 /**************************************************************************
  *              EnableScrollBar   (USER.482)
@@ -316,23 +321,169 @@ BOOL WINAPI EnableScrollBar( HWND hwnd, int nBar, UINT flags )
     return 0;//EnableScrollBar( WIN_Handle32(hwnd), nBar, flags );
 }
 
-/**************************************************************************
- *              RedrawWindow   (USER.290)
+/***********************************************************************
+ *           RedrawWindow    (USER.290)
  */
-BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
-                              HRGN hrgnUpdate, UINT flags )
+BOOL WINAPI RedrawWindow( HWND hwnd, const RECT FAR * rectUpdate, HRGN hrgnUpdate, UINT flags )
 {
-	FUNCTION_START
+    HRGN hrgn;
+    RECT rectClient;
+    WND * wndPtr;
+
+    if (!hwnd) hwnd = GetDesktopWindow();
+    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
+    if (!IsWindowVisible(hwnd) || (wndPtr->flags & WIN_NO_REDRAW))
+        return TRUE;  /* No redraw needed */
+
     if (rectUpdate)
     {
-        RECT r;
-        r.left   = rectUpdate->left;
-        r.top    = rectUpdate->top;
-        r.right  = rectUpdate->right;
-        r.bottom = rectUpdate->bottom;
-        return 0;//RedrawWindow(WIN_Handle32(hwnd), &r, HRGN_32(hrgnUpdate), flags);
+        TRACE("RedrawWindow: %04x %d,%d-%d,%d %04x flags=%04x\n",
+                    hwnd, rectUpdate->left, rectUpdate->top,
+                    rectUpdate->right, rectUpdate->bottom, hrgnUpdate, flags );
     }
-    return 0;//RedrawWindow(WIN_Handle32(hwnd), NULL, HRGN_32(hrgnUpdate), flags);
+    else
+    {
+        TRACE("RedrawWindow: %04x NULL %04x flags=%04x\n",
+                     hwnd, hrgnUpdate, flags);
+    }
+    GetClientRect( hwnd, &rectClient );
+
+
+    if (flags & RDW_INVALIDATE)  /* Invalidate */
+    {
+        if (wndPtr->hrgnUpdate)  /* Is there already an update region? */
+        {
+            if ((hrgn = hrgnUpdate) == 0)
+                hrgn = CreateRectRgnIndirect( rectUpdate ? rectUpdate :
+                                              &rectClient );
+            CombineRgn( wndPtr->hrgnUpdate, wndPtr->hrgnUpdate, hrgn, RGN_OR );
+            if (!hrgnUpdate) DeleteObject( hrgn );
+        }
+        else  /* No update region yet */
+        {
+            if (!(wndPtr->flags & WIN_INTERNAL_PAINT))
+                QUEUE_IncPaintCount( wndPtr->hmemTaskQ );
+            if (hrgnUpdate)
+            {
+                wndPtr->hrgnUpdate = CreateRectRgn( 0, 0, 0, 0 );
+                CombineRgn( wndPtr->hrgnUpdate, hrgnUpdate, 0, RGN_COPY );
+            }
+            else wndPtr->hrgnUpdate = CreateRectRgnIndirect( rectUpdate ?
+                                                    rectUpdate : &rectClient );
+        }
+        if (flags & RDW_FRAME) wndPtr->flags |= WIN_NEEDS_NCPAINT;
+        if (flags & RDW_ERASE) wndPtr->flags |= WIN_NEEDS_ERASEBKGND;
+	flags |= RDW_FRAME;  /* Force invalidating the frame of children */
+    }
+    else if (flags & RDW_VALIDATE)  /* Validate */
+    {
+          /* We need an update region in order to validate anything */
+        if (wndPtr->hrgnUpdate)
+        {
+            if (!hrgnUpdate && !rectUpdate)
+            {
+                  /* Special case: validate everything */
+                DeleteObject( wndPtr->hrgnUpdate );
+                wndPtr->hrgnUpdate = 0;
+            }
+            else
+            {
+                if ((hrgn = hrgnUpdate) == 0)
+                    hrgn = CreateRectRgnIndirect( rectUpdate );
+                if (CombineRgn( wndPtr->hrgnUpdate, wndPtr->hrgnUpdate,
+                                hrgn, RGN_DIFF ) == NULLREGION)
+                {
+                    DeleteObject( wndPtr->hrgnUpdate );
+                    wndPtr->hrgnUpdate = 0;
+                }
+                if (!hrgnUpdate) DeleteObject( hrgn );
+            }
+            if (!wndPtr->hrgnUpdate)  /* No more update region */
+		if (!(wndPtr->flags & WIN_INTERNAL_PAINT))
+		    QUEUE_DecPaintCount( wndPtr->hmemTaskQ );
+        }
+        if (flags & RDW_NOFRAME) wndPtr->flags &= ~WIN_NEEDS_NCPAINT;
+	if (flags & RDW_NOERASE) wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
+    }
+
+      /* Set/clear internal paint flag */
+
+    if (flags & RDW_INTERNALPAINT)
+    {
+	if (!wndPtr->hrgnUpdate && !(wndPtr->flags & WIN_INTERNAL_PAINT))
+	    QUEUE_IncPaintCount( wndPtr->hmemTaskQ );
+	wndPtr->flags |= WIN_INTERNAL_PAINT;	    
+    }
+    else if (flags & RDW_NOINTERNALPAINT)
+    {
+	if (!wndPtr->hrgnUpdate && (wndPtr->flags & WIN_INTERNAL_PAINT))
+	    QUEUE_DecPaintCount( wndPtr->hmemTaskQ );
+	wndPtr->flags &= ~WIN_INTERNAL_PAINT;
+    }
+
+
+      /* Erase/update window */
+
+    if (flags & RDW_UPDATENOW) SendMessage( hwnd, WM_PAINT, 0, 0 );
+    else if (flags & RDW_ERASENOW)
+    {
+        if (wndPtr->flags & WIN_NEEDS_NCPAINT)
+	    WIN_UpdateNCArea( wndPtr, FALSE);
+
+        if (wndPtr->flags & WIN_NEEDS_ERASEBKGND)
+        {
+            HDC hdc = GetDCEx( hwnd, wndPtr->hrgnUpdate,
+                               DCX_INTERSECTRGN | DCX_USESTYLE );
+            if (hdc)
+            {
+              /* Don't send WM_ERASEBKGND to icons */
+              /* (WM_ICONERASEBKGND is sent during processing of WM_NCPAINT) */
+                if (!(wndPtr->dwStyle & WS_MINIMIZE)
+                    || !WIN_CLASS_INFO(wndPtr).hIcon)
+                {
+                    if (SendMessage( hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0 ))
+                        wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
+                }
+                ReleaseDC( hwnd, hdc );
+            }
+        }
+    }
+
+      /* Recursively process children */
+
+    if (!(flags & RDW_NOCHILDREN) &&
+	((flags & RDW_ALLCHILDREN) || !(wndPtr->dwStyle & WS_CLIPCHILDREN)))
+    {
+	if (hrgnUpdate)
+	{
+	    HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
+	    if (!hrgn) return TRUE;
+	    for (wndPtr = wndPtr->child; wndPtr; wndPtr = wndPtr->next)
+	    {
+		CombineRgn( hrgn, hrgnUpdate, 0, RGN_COPY );
+		OffsetRgn( hrgn, -wndPtr->rectClient.left,
+			         -wndPtr->rectClient.top );
+		RedrawWindow( wndPtr->hwndSelf, NULL, hrgn, flags );
+	    }
+	    DeleteObject( hrgn );
+	}
+	else
+	{
+	    RECT rect;		
+	    for (wndPtr = wndPtr->child; wndPtr; wndPtr = wndPtr->next)
+	    {
+		if (rectUpdate)
+		{
+		    rect = *rectUpdate;
+		    OffsetRect( &rect, -wndPtr->rectClient.left,
+			               -wndPtr->rectClient.top );
+		    RedrawWindow( wndPtr->hwndSelf, &rect, 0, flags );
+		}
+		else RedrawWindow( wndPtr->hwndSelf, NULL, 0, flags );
+	    }
+	}
+    }
+    return TRUE;
 }
 
 /***********************************************************************
@@ -373,6 +524,7 @@ VOID /*BOOL*/ WINAPI ReleaseCapture(void)
     //return FALSE;//ReleaseCapture();
 }
 
+#if 0
 /**************************************************************************
  *              DestroyWindow   (USER.53)
  */
@@ -381,6 +533,7 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 	FUNCTION_START
     return FALSE;//DestroyWindow( WIN_Handle32(hwnd) );
 }
+#endif
 
 /**************************************************************************
  *              GetWindowRect   (USER.32)
@@ -429,6 +582,7 @@ void WINAPI ShowScrollBar( HWND hwnd, int nBar, BOOL fShow )
     
 }
 
+#if 0
 /**************************************************************************
  *              IsWindowVisible   (USER.49)
  */
@@ -437,6 +591,7 @@ BOOL WINAPI IsWindowVisible( HWND hwnd )
 	FUNCTION_START
     return FALSE;
 }
+#endif
 
 /**************************************************************************
  *              GetScrollRange   (USER.65)
@@ -473,16 +628,6 @@ HWND WINAPI SetCapture( HWND hwnd )
 {
 	FUNCTION_START
     return 0;
-}
-
-/**************************************************************************
- *              SetWindowPos   (USER.232)
- */
-BOOL WINAPI SetWindowPos( HWND hwnd, HWND hwndInsertAfter,
-                              int x, int y, int cx, int cy, UINT flags)
-{
-	FUNCTION_START
-    return FALSE;
 }
 
 /***********************************************************************

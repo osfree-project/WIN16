@@ -7,7 +7,7 @@
  */
 int WINAPI lstrcmp( LPCSTR str1, LPCSTR str2 )
 {
-	FUNCTION_START
+//	FUNCTION_START
 
 	while (*str1 || *str2)
 		{
@@ -25,7 +25,7 @@ int WINAPI lstrcmp( LPCSTR str1, LPCSTR str2 )
 		str2 ++;
 	}
 
-	FUNCTION_END
+//	FUNCTION_END
 	return 0;
 }
 
@@ -35,7 +35,7 @@ int WINAPI lstrcmp( LPCSTR str1, LPCSTR str2 )
 
 LPSTR WINAPI AnsiUpper( LPSTR strOrChar )
 {
-	FUNCTION_START
+//	FUNCTION_START
     /* uppercase only one char if strOrChar < 0x10000 */
     if (HIWORD(strOrChar))
     {
@@ -55,7 +55,7 @@ LPSTR WINAPI AnsiUpper( LPSTR strOrChar )
  */
 LPSTR WINAPI AnsiLower( LPSTR strOrChar )
 {
-	FUNCTION_START
+//	FUNCTION_START
     /* lowercase only one char if strOrChar < 0x10000 */
     if (HIWORD(strOrChar))
     {
@@ -75,7 +75,7 @@ LPSTR WINAPI AnsiLower( LPSTR strOrChar )
  */
 LPSTR WINAPI AnsiNext(LPCSTR lpchCurrentChar)
 {
-	FUNCTION_START
+//	FUNCTION_START
     if (!lpchCurrentChar)
 	return (LPSTR)0;
 
@@ -97,7 +97,7 @@ LPSTR WINAPI AnsiPrev(LPCSTR lpchStart, LPCSTR lpchCurrentChar)
 	LPSTR lpPrev = (LPSTR)lpchStart;
 	LPSTR lpNext;
 
-	FUNCTION_START
+//	FUNCTION_START
 
     if (lpchStart == lpchCurrentChar)
 	{
@@ -111,7 +111,7 @@ LPSTR WINAPI AnsiPrev(LPCSTR lpchStart, LPCSTR lpchCurrentChar)
 //	return lpPrev;
 //    }
 
-	FUNCTION_END
+//	FUNCTION_END
 	return (LPSTR)(lpchCurrentChar-1);
 }
 
@@ -282,7 +282,7 @@ static int parse_format( LPCSTR format, WPRINTF_FORMAT *res )
 {
     LPCSTR p = format;
 
-	FUNCTION_START
+//	FUNCTION_START
 
     res->flags = 0;
     res->width = 0;
@@ -339,7 +339,7 @@ static int parse_format( LPCSTR format, WPRINTF_FORMAT *res )
         break;
     }
 	
-	FUNCTION_END
+//	FUNCTION_END
     return (p - format) + 1;
 }
 
@@ -357,7 +357,7 @@ int WINAPI wvsprintf( LPSTR buffer, LPCSTR spec, VA_LIST args )
     int int_view;
     LPCSTR seg_str;
 
-	FUNCTION_START
+//	FUNCTION_START
 
     while (*spec)
     {
@@ -461,7 +461,7 @@ int WINAPI wvsprintf( LPSTR buffer, LPCSTR spec, VA_LIST args )
     }
     *p = 0;
 
-	FUNCTION_END
+//	FUNCTION_END
     return p - buffer;
 }
 
@@ -474,13 +474,13 @@ int FAR CDECL wsprintf( LPSTR buffer, LPCSTR spec, ... )
 	int rc;
 	va_list valist;
 
-	FUNCTION_START
+//	FUNCTION_START
 
 	va_start(valist, spec);
 	rc=wvsprintf( buffer, spec, valist );
 	va_end(valist);
 
-	FUNCTION_END
+//	FUNCTION_END
 	return rc;
 }
 
@@ -491,7 +491,7 @@ int WINAPI lstrcmpi(LPCSTR lpszString1,LPCSTR lpszString2)
 {
 	int rc;
 
-	FUNCTION_START
+//	FUNCTION_START
 
 	if (!lpszString1 || !lpszString2)
 	return (lpszString2-lpszString1);
@@ -505,14 +505,14 @@ int WINAPI lstrcmpi(LPCSTR lpszString1,LPCSTR lpszString2)
 	rc=(int) _tolower((unsigned char) *lpszString1) -
 		(int) _tolower((unsigned char) *lpszString2);
 
-	FUNCTION_END
+//	FUNCTION_END
 	return rc;
 }
 
 BOOL    WINAPI 
 IsCharUpper(char ch)
 {
-	FUNCTION_START
+//	FUNCTION_START
 //	APISTR((LF_API,"IsCharUpper(char %c)\n",ch));
 	return (BOOL) _isupper((int) ch);	
 }
@@ -520,7 +520,7 @@ IsCharUpper(char ch)
 BOOL    WINAPI 
 IsCharLower(char ch)
 {
-	FUNCTION_START
+//	FUNCTION_START
 //	APISTR((LF_API,"IsCharLower(char %c)\n",ch));
 	return (BOOL) _islower((int) ch);	
 }
@@ -528,7 +528,7 @@ IsCharLower(char ch)
 BOOL    WINAPI 
 IsCharAlpha(char ch)
 {
-	FUNCTION_START
+//	FUNCTION_START
 //	APISTR((LF_API,"IsCharAlpha(char=%c)\n",ch));
 	return (BOOL) isalpha((int) ch);
 }
@@ -536,7 +536,7 @@ IsCharAlpha(char ch)
 BOOL    WINAPI 
 IsCharAlphaNumeric(char ch)
 {
-	FUNCTION_START
+//	FUNCTION_START
 //	APISTR((LF_API,"IsCharAlphaNumeric(char=%c)\n",ch));
 	return (BOOL) isalnum((int) ch);
 }
@@ -546,7 +546,7 @@ AnsiUpperBuff(LPSTR lpstr, UINT n)
 {
 	unsigned long count = n;
 
-	FUNCTION_START
+//	FUNCTION_START
 	
 	if(count == 0)
 		count = 65536;	
@@ -563,7 +563,7 @@ AnsiLowerBuff(LPSTR lpstr, UINT n)
 {
 	unsigned long count = n;
 
-	FUNCTION_START
+//	FUNCTION_START
 	
 	if(count == 0)
 		count = 65536;	
@@ -716,5 +716,5 @@ char far * itox(int i)
 
 void WINAPI StringFunc(void)
 {
-	FUNCTION_START
+//	FUNCTION_START
 }

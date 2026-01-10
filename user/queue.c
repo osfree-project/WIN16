@@ -299,8 +299,7 @@ TRACE("FULL!!");
     sysMsgQueue->nextFreeMessage = pos;
     sysMsgQueue->msgCount++;
 
-    QUEUE_DumpQueue(hmemSysMsgQueue);
-
+//    QUEUE_DumpQueue(hmemSysMsgQueue);
 }
 
 		    
@@ -411,6 +410,7 @@ BOOL WINAPI SetMessageQueue( int size )
 	return FALSE;
     }
 
+
     /* Free the old message queue */
     if ((hQueue = GetTaskQueue(0)) != 0) QUEUE_DeleteMsgQueue( hQueue );
 
@@ -420,7 +420,9 @@ BOOL WINAPI SetMessageQueue( int size )
     queuePtr->next  = hFirstQueue;
     hFirstQueue = hNewQueue;
 
-    SetTaskQueue( 0, hNewQueue );
+
+    SetTaskQueue(0, hNewQueue);
+
     return TRUE;
 }
 

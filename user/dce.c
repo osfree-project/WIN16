@@ -8,6 +8,8 @@
 #include "dce.h"
 #include "user.h"
 
+//@todo b31 and bDebug must me global. May be move hGDI to DATA segment too?
+
 // DCE lives in USER local heap. So, to access it we need to switch to USER local heap first and return DS back
 // after it. See. Undocumented Windows p. 428
 
@@ -15,6 +17,7 @@
 
 static HDC defaultDCstate = 0;
 
+#if 0
 void DumpHeader(LPGDIOBJHDR goh)
 	{
 int b31=0;
@@ -40,7 +43,8 @@ int bDebug=0;
 		{
 		printf(
 			"GDIOBJHDR:\n\r"
-			"wFlags\t\t: %04X\twObjType\t: %d\tdwCount\t\t: %ld\twMetaList\t: %04X\n\r",
+			"wFlags\t\t:%04X\twObjType\t:%04X\n\r"
+			"dwCount\t:%ld\twMetaList\t:%04X\n\r",
 			goh->hNext, goh->wMagic & 0xff,
 			goh->dwCount, goh->wMetaList);
 		}
@@ -168,6 +172,7 @@ int bDebug=0;
 	GlobalUnlock(hGDI);
 	PopDS();
 }
+#endif
 
 /***********************************************************************
  *           DCE_AllocDCE
@@ -186,7 +191,7 @@ HANDLE DCE_AllocDCE( DCE_TYPE type )
 	return 0;
     }
 
-	DumpDC(dce->hDC);
+//	DumpDC(dce->hDC);
     dce->hwndCurr = 0;
     dce->byFlags  = type;
     dce->byInUse = (type != DCE_CACHE_DC);
@@ -437,10 +442,11 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     DCE * dce;
     DC FAR * dc;
     WND * wndPtr;
-    
+
+
     if (hwnd)
     {
-	//!!TMP if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
+	if(!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
     }
     else wndPtr = NULL;
 
@@ -467,6 +473,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
       /* Whole window DC implies using cache DC and not clipping children */
     if (flags & DCX_WINDOW) flags = (flags & ~DCX_CLIPCHILDREN) | DCX_CACHE;
+
 
     if (flags & DCX_CACHE)
     {
@@ -554,8 +561,8 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     SelectVisRgn( hdc, hrgnVisible );
     DeleteObject( hrgnVisible );
 
-    TRACE("GetDCEx(%04x,%04x,0x%lx): returning %04x", 
-	       hwnd, hrgnClip, flags, hdc);
+//    TRACE("GetDCEx(%04x,%04x,0x%lx): returning %04x", 
+//	       hwnd, hrgnClip, flags, hdc);
     return hdc;
 }
 
@@ -567,7 +574,7 @@ HDC WINAPI GetDC(HWND hwnd)
 {
 	HDC res;
 	res=GetDCEx(hwnd, 0, DCX_USESTYLE);
-    return res;
+	return res;
 }
 
 #if 0
@@ -598,7 +605,7 @@ int WINAPI ReleaseDC( HWND hwnd, HDC hdc )
 	HANDLE hdce;
 	DCE * dce = NULL;
     
-	TRACE("ReleaseDC: %04x %04x\n", hwnd, hdc );
+//	TRACE("ReleaseDC: %04x %04x\n", hwnd, hdc );
 
 	// Here we need to search DCE which lives in USER local heap
 	// So, switch to USER local heap, do things and switch back.

@@ -21,7 +21,7 @@
 
 static HCLASS firstClass = 0;
 
-#ifdef DEBUG
+#if 0
 /***********************************************************************
  *           CLASS_DumpClass
  *
@@ -93,41 +93,51 @@ void CLASS_WalkClasses(void)
  * Return a handle and a pointer to the class.
  * 'ptr' can be NULL if the pointer is not needed.
  */
-HCLASS CLASS_FindClassByName( LPCSTR name, HINSTANCE hinstance, CLASS **ptr )
+HCLASS CLASS_FindClassByName(LPCSTR name, HINSTANCE hinstance, CLASS **ptr)
 {
     ATOM atom;
     HCLASS class;
     CLASS * classPtr;
 
-    if (!(atom = GlobalFindAtom( name ))) return 0;
+	atom=GlobalFindAtom(name);
+//	TRACE("%04x ", atom);
+	
+    if (!(atom)) return 0;
+//	TRACE("%04x ", atom);
 
       /* First search task-specific classes */
 
     for (class = firstClass; (class); class = classPtr->hNext)
     {
         classPtr = (CLASS *) LocalLock(class);
+//	TRACE("%04x %04x", classPtr->atomName, classPtr->wc.style & CS_GLOBALCLASS);
         if (classPtr->wc.style & CS_GLOBALCLASS) continue;
         if ((classPtr->atomName == atom) && 
             ( (hinstance==(HINSTANCE)0xffff) ||
 	      (hinstance == classPtr->wc.hInstance) ) )
         {
             if (ptr) *ptr = classPtr;
+		LocalUnlock(class);
             return class;
         }
     }
+	LocalUnlock(class);
     
       /* Then search global classes */
 
     for (class = firstClass; (class); class = classPtr->hNext)
     {
         classPtr = (CLASS *) LocalLock(class);
+//	TRACE("%04x ", classPtr->atomName);
         if (!(classPtr->wc.style & CS_GLOBALCLASS)) continue;
         if (classPtr->atomName == atom)
         {
             if (ptr) *ptr = classPtr;
+		LocalUnlock(class);
             return class;
         }
     }
+	LocalUnlock(class);
 
     return 0;
 }
@@ -158,14 +168,14 @@ ATOM WINAPI RegisterClass(const WNDCLASS FAR * class )
     HCLASS handle, prevClass;
     int classExtra;
 	HMODULE hModule;
-	FUNCTION_START
-    TRACE("RegisterClass: wndproc=%x:%x hinst=%x name='%S' background %x",
-                 class->lpfnWndProc, class->hInstance,
-                 HIWORD(class->lpszClassName) ?
-                  (class->lpszClassName) : "(int)",
-                 class->hbrBackground );
-    TRACE("               style=%x clsExtra=%d winExtra=%d",
-                  class->style, class->cbClsExtra, class->cbWndExtra );
+//	FUNCTION_START
+//    TRACE("RegisterClass: wndproc=%x:%x hinst=%x name='%S' background %x",
+//                 class->lpfnWndProc, class->hInstance,
+//                 HIWORD(class->lpszClassName) ?
+//                  (class->lpszClassName) : "(int)",
+//                 class->hbrBackground );
+//    TRACE("               style=%x clsExtra=%d winExtra=%d",
+//                  class->style, class->cbClsExtra, class->cbWndExtra );
     
       /* Window classes are owned by modules, not instances */
 //    class->hInstance = GetExePtr( class->hInstance );
@@ -219,7 +229,7 @@ ATOM WINAPI RegisterClass(const WNDCLASS FAR * class )
 
     if (classExtra) _fmemset( newClass->wExtra, 0, classExtra );
     firstClass = handle;
-	FUNCTION_END
+//	FUNCTION_END
     return newClass->atomName;
 }
 
@@ -293,6 +303,7 @@ WORD WINAPI SetClassWord( HWND hwnd, int offset, WORD newval )
     return retval;
 }
 
+#endif
 
 /***********************************************************************
  *           GetClassLong    (USER.131)
@@ -307,6 +318,7 @@ LONG WINAPI GetClassLong( HWND hwnd, int offset )
     return *(LONG *)(((char *)classPtr->wExtra) + offset);
 }
 
+#if 0
 
 /***********************************************************************
  *           SetClassLong    (USER.132)
@@ -325,24 +337,24 @@ LONG WINAPI SetClassLong( HWND hwnd, int offset, LONG newval )
     return retval;
 }
 
+#endif
 
 /***********************************************************************
  *           GetClassName      (USER.58)
  */
-int GetClassName(HWND hwnd, LPSTR lpClassName, short maxCount)
+int WINAPI GetClassName(HWND hwnd, LPSTR lpClassName, int maxCount)
 {
     WND *wndPtr;
     CLASS *classPtr;
 
     /* FIXME: We have the find the correct hInstance */
-    dprintf_class(stddeb,"GetClassName(%04x,%p,%d)\n",hwnd,lpClassName,maxCount);
+    TRACE("GetClassName(%04x,%p,%d)\n",hwnd,lpClassName,maxCount);
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
     if (!(classPtr = CLASS_FindClassPtr(wndPtr->hClass))) return 0;
     
     return GlobalGetAtomName(classPtr->atomName, lpClassName, maxCount);
 }
 
-#endif
 
 /***********************************************************************
  *           GetClassInfo      (USER.404)

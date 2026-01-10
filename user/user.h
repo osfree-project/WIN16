@@ -764,3 +764,39 @@ extern CLASS * CLASS_FindClassPtr( HCLASS hclass );
 
 extern VOID LW_InitSysMetrics(VOID);
 int WINAPI SelectVisRgn( HDC hdc, HRGN hrgn );
+
+  /* Built-in class names (see _Undocumented_Windows_ p.418) */
+#define POPUPMENU_CLASS_NAME "#32768"  /* PopupMenu */
+#define DESKTOP_CLASS_NAME   "#32769"  /* Desktop */
+#define DIALOG_CLASS_NAME    "#32770"  /* Dialog */
+#define WINSWITCH_CLASS_NAME "#32771"  /* WinSwitch */
+#define ICONTITLE_CLASS_NAME "#32772"  /* IconTitle */
+
+#define POPUPMENU_CLASS_ATOM MAKEINTATOM(32768)  /* PopupMenu */
+#define DESKTOP_CLASS_ATOM   MAKEINTATOM(32769)  /* Desktop */
+#define DIALOG_CLASS_ATOM    MAKEINTATOM(32770)  /* Dialog */
+#define WINSWITCH_CLASS_ATOM MAKEINTATOM(32771)  /* WinSwitch */
+#define ICONTITLE_CLASS_ATOM MAKEINTATOM(32772)  /* IconTitle */
+
+  /* Window functions */
+extern WND *WIN_FindWndPtr( HWND hwnd );
+extern WND *WIN_GetDesktop(void);
+extern void WIN_DumpWindow( HWND hwnd );
+extern void WIN_WalkWindows( HWND hwnd, int indent );
+extern BOOL WIN_UnlinkWindow( HWND hwnd );
+extern BOOL WIN_LinkWindow( HWND hwnd, HWND hwndInsertAfter );
+extern HWND WIN_FindWinToRepaint( HWND hwnd, HQUEUE hQueue );
+extern void WIN_SendParentNotify( HWND hwnd, WORD event,
+                                  WORD idChild, LONG lValue );
+extern BOOL WIN_CreateDesktopWindow(void);
+extern HWND WIN_GetTopParent( HWND hwnd );
+extern HINSTANCE WIN_GetWindowInstance( HWND hwnd );
+
+LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam );
+
+VOID NC_GetMinMaxInfo(HWND hwnd, POINT *maxSize, POINT *maxPos, POINT *minTrack, POINT *maxTrack);
+LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect, RECT *newWindowRect,
+			    RECT *oldWindowRect, RECT *oldClientRect,
+			    WINDOWPOS *winpos, RECT *newClientRect );
+void WINPOS_FindIconPos( HWND hwnd );
+

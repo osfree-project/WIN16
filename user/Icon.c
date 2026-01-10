@@ -31,19 +31,19 @@ static HICON alloc_icon_handle( UINT size )
 {
 	HGLOBAL handle = GlobalAlloc( GMEM_MOVEABLE, size + sizeof(DWORD) );
 	char FAR *ptr = GlobalLock( handle );
-	FUNCTION_START
+//	FUNCTION_START
 	_fmemset( ptr + size, 0, sizeof(DWORD) );
 	GlobalUnlock( handle );
 
 	FarSetOwner(handle, 0);
 
-	FUNCTION_END
+//	FUNCTION_END
 	return handle;
 }
 
 static int free_icon_handle( HICON handle )
 {
-	FUNCTION_START
+//	FUNCTION_START
 	return GlobalFree( handle );
 }
 
@@ -80,16 +80,16 @@ static CURSORICONINFO far *get_icon_ptr( HICON handle )
 
 static void release_icon_ptr( HICON handle, CURSORICONINFO far *ptr )
 {
-	FUNCTION_START
+//	FUNCTION_START
     GlobalUnlock( handle );
-	FUNCTION_END
+//	FUNCTION_END
 }
 
 static int release_shared_icon( HICON icon )
 {
     struct cache_entry *cache;
 
-	FUNCTION_START
+//	FUNCTION_START
 
     LIST_FOR_EACH_ENTRY( cache, &icon_cache, struct cache_entry, entry )
     {
@@ -107,7 +107,7 @@ static int release_shared_icon( HICON icon )
  */
 DWORD WINAPI IconSize(void)
 {
-	FUNCTION_START
+//	FUNCTION_START
   return MAKELONG(GetSystemMetrics(SM_CYICON), GetSystemMetrics(SM_CXICON));
 }
 
@@ -125,7 +125,7 @@ HGLOBAL WINAPI CreateCursorIconIndirect( HINSTANCE hInstance,
     CURSORICONINFO FAR *ptr;
     int sizeAnd, sizeXor;
 
-	FUNCTION_START
+//	FUNCTION_START
 
     hInstance = GetExePtr( hInstance );  /* Make it a module handle */
     if (!lpXORbits || !lpANDbits || info->bPlanes != 1) return 0;
@@ -154,7 +154,7 @@ HCURSOR WINAPI CreateCursor(HINSTANCE hInstance,
 	CURSORICONINFO info;
 	HCURSOR result;
 
-	FUNCTION_START
+//	FUNCTION_START
 
 	info.ptHotSpot.x = xHotSpot;
 	info.ptHotSpot.y = yHotSpot;
@@ -166,7 +166,7 @@ HCURSOR WINAPI CreateCursor(HINSTANCE hInstance,
 
 	result = CreateCursorIconIndirect(hInstance, &info, lpANDbits, lpXORbits);
 
-	FUNCTION_END
+//	FUNCTION_END
 
 	return result;
 }
@@ -181,7 +181,7 @@ HICON WINAPI CreateIcon( HINSTANCE hInstance, int nWidth,
 {
     CURSORICONINFO info;
 
-	FUNCTION_START
+//	FUNCTION_START
 
     info.ptHotSpot.x = ICON_HOTSPOT;
     info.ptHotSpot.y = ICON_HOTSPOT;
@@ -201,7 +201,7 @@ BOOL WINAPI DestroyIcon(HICON hIcon)
 {
     int count;
 
-	FUNCTION_START
+//	FUNCTION_START
 
 //    TRACE("%04x\n", hIcon );
 
@@ -217,7 +217,7 @@ BOOL WINAPI DestroyIcon(HICON hIcon)
  */
 BOOL WINAPI DestroyCursor(HCURSOR hCursor)
 {
-	FUNCTION_START
+//	FUNCTION_START
     return DestroyIcon( hCursor );
 }
 
@@ -232,7 +232,7 @@ HICON WINAPI CopyIcon( HINSTANCE hInstance, HICON hIcon )
     HGLOBAL ret = CreateCursorIconIndirect( hInstance, info, and_bits, xor_bits );
 //    HGLOBAL ret = CreateIcon(hInstance, info->nWidth, info->nHeight, info->bPlanes, info->bBitsPerPixel, and_bits, xor_bits);
 
-	FUNCTION_START
+//	FUNCTION_START
 
     release_icon_ptr( hIcon, info );
     return ret;
@@ -248,7 +248,7 @@ HCURSOR WINAPI CopyCursor( HINSTANCE hInstance, HCURSOR hCursor )
     void far *xor_bits = (BYTE far *)and_bits + info->nHeight * get_bitmap_width_bytes( info->nWidth, 1 );
     HGLOBAL ret = CreateCursorIconIndirect( hInstance, info, and_bits, xor_bits );
 
-	FUNCTION_START
+//	FUNCTION_START
 
 //    HGLOBAL ret = CreateCursor(hInstance, info->ptHotSpot.x, info->ptHotSpot.y, info->nWidth, info->nHeight, and_bits, xor_bits);
     release_icon_ptr( hCursor, info );

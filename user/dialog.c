@@ -111,7 +111,7 @@ static LPCSTR DIALOG_GetControl16( LPCSTR p, DLG_CONTROL_INFO *info )
     static char buffer[10];
     int int_id;
 
-	FUNCTION_START
+//	FUNCTION_START
 
     info->x       = GET_WORD(p);  p += sizeof(WORD);
     info->y       = GET_WORD(p);  p += sizeof(WORD);
@@ -248,7 +248,7 @@ static BOOL DIALOG_CreateControls16( HWND hwnd, LPCSTR template,
  */
 static LPCSTR DIALOG_ParseTemplate16( LPCSTR p, DLG_TEMPLATE * result )
 {
-	FUNCTION_START
+//	FUNCTION_START
 
     result->style   = GET_DWORD(p); p += sizeof(DWORD);
     result->nbItems = (unsigned char) *p++;
@@ -522,7 +522,7 @@ static HWND DIALOG_CreateIndirect16( HINSTANCE hInst, LPCVOID dlgTemplate,
 int WINAPI DialogBox( HINSTANCE hInst, LPCSTR dlgTemplate,
                           HWND owner, DLGPROC dlgProc )
 {
-	FUNCTION_START
+//	FUNCTION_START
 
     return DialogBoxParam( hInst, dlgTemplate, owner, dlgProc, 0 );
 }
@@ -533,7 +533,7 @@ int WINAPI DialogBox( HINSTANCE hInst, LPCSTR dlgTemplate,
 HWND WINAPI CreateDialog( HINSTANCE hInst, LPCSTR dlgTemplate,
                               HWND owner, DLGPROC dlgProc )
 {
-	FUNCTION_START
+//	FUNCTION_START
     return CreateDialogParam( hInst, dlgTemplate, owner, dlgProc, 0 );
 }
 
@@ -543,7 +543,7 @@ HWND WINAPI CreateDialog( HINSTANCE hInst, LPCSTR dlgTemplate,
  */
 void WINAPI SetDlgItemText( HWND hwnd, int id, LPCSTR lpString )
 {
-	FUNCTION_START
+//	FUNCTION_START
     SendDlgItemMessage( hwnd, id, WM_SETTEXT, 0, (LONG)lpString );
 }
 
@@ -552,7 +552,7 @@ void WINAPI SetDlgItemText( HWND hwnd, int id, LPCSTR lpString )
  */
 int WINAPI GetDlgItemText( HWND hwnd, int id, LPSTR str, int len )
 {
-	FUNCTION_START
+//	FUNCTION_START
     return SendDlgItemMessage( hwnd, id, WM_GETTEXT, len, (LONG)str );
 }
 
@@ -562,7 +562,7 @@ int WINAPI GetDlgItemText( HWND hwnd, int id, LPSTR str, int len )
  */
 VOID WINAPI CheckDlgButton( HWND hwnd, int id, UINT check )
 {
-	FUNCTION_START
+//	FUNCTION_START
     SendDlgItemMessage( hwnd, id, BM_SETCHECK, check, 0 );
 //    return TRUE;
 }
@@ -573,7 +573,7 @@ VOID WINAPI CheckDlgButton( HWND hwnd, int id, UINT check )
  */
 UINT WINAPI IsDlgButtonChecked( HWND hwnd, int id )
 {
-	FUNCTION_START
+//	FUNCTION_START
     return (UINT)SendDlgItemMessage( hwnd, id, BM_GETCHECK, 0, 0 );
 }
 
@@ -583,7 +583,7 @@ UINT WINAPI IsDlgButtonChecked( HWND hwnd, int id )
  */
 BOOL WINAPI DlgDirSelect( HWND hwnd, LPSTR str, int id )
 {
-	FUNCTION_START
+//	FUNCTION_START
     return DlgDirSelectEx( hwnd, str, 128, id );
 }
 
@@ -596,7 +596,7 @@ LRESULT WINAPI SendDlgItemMessage( HWND hwnd, int id, UINT msg,
                                      WPARAM wParam, LPARAM lParam )
 {
     HWND hwndCtrl = GetDlgItem( hwnd, id );
-	FUNCTION_START
+//	FUNCTION_START
     if (hwndCtrl) return SendMessage( hwndCtrl, msg, wParam, lParam );
     else return 0;
 }
@@ -607,7 +607,7 @@ LRESULT WINAPI SendDlgItemMessage( HWND hwnd, int id, UINT msg,
  */
 BOOL WINAPI DlgDirSelectComboBox( HWND hwnd, LPSTR str, int id )
 {
-	FUNCTION_START
+//	FUNCTION_START
     return DlgDirSelectComboBoxEx( hwnd, str, 128, id );
 }
 
@@ -619,7 +619,7 @@ BOOL WINAPI DlgDirSelectComboBox( HWND hwnd, LPSTR str, int id )
 int WINAPI DialogBoxIndirect( HINSTANCE hInst, HANDLE dlgTemplate,
                                   HWND owner, DLGPROC dlgProc )
 {
-	FUNCTION_START
+//	FUNCTION_START
     return DialogBoxIndirectParam( hInst, dlgTemplate, owner, dlgProc, 0 );
 }
 
@@ -630,7 +630,7 @@ int WINAPI DialogBoxIndirect( HINSTANCE hInst, HANDLE dlgTemplate,
 HWND WINAPI CreateDialogIndirect( HINSTANCE hInst, const void far * dlgTemplate,
                                       HWND owner, DLGPROC dlgProc )
 {
-	FUNCTION_START
+//	FUNCTION_START
     return CreateDialogIndirectParam( hInst, dlgTemplate, owner, dlgProc, 0);
 }
 
@@ -695,7 +695,7 @@ HWND WINAPI CreateDialogParam( HINSTANCE hInst, LPCSTR dlgTemplate,
     HGLOBAL hmem;
     const void far * data;
 
-	FUNCTION_START
+//	FUNCTION_START
 
 //    TRACE("%04x,%s,%04x,%p,%Ix\n",
 //          hInst, debugstr_a(dlgTemplate), owner, dlgProc, param );
@@ -729,7 +729,7 @@ HWND16 WINAPI CreateDialogIndirectParam16( HINSTANCE16 hInst, LPCVOID dlgTemplat
 int WINAPI DialogBoxParam( HINSTANCE hInst, LPCSTR template,
                                HWND owner16, DLGPROC dlgProc, LPARAM param )
 {
-	FUNCTION_START
+//	FUNCTION_START
 	#if 0
     HWND hwnd = 0;
     HRSRC16 hRsrc;
@@ -757,7 +757,7 @@ int WINAPI DialogBoxParam( HINSTANCE hInst, LPCSTR template,
  */
 BOOL WINAPI DlgDirSelectEx( HWND hwnd, LPSTR str, int len, int id )
 {
-	FUNCTION_START
+//	FUNCTION_START
     return FALSE;
 }
 

@@ -62,6 +62,7 @@ void WINAPI FinalUserInit( void )
     /* FIXME: Should chain to FinalGdiInit */
 }
 
+#if 0
 /***********************************************************************
  *		PostMessage  (USER.110)
  */
@@ -70,6 +71,7 @@ BOOL WINAPI PostMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 	FUNCTION_START
     return 0;
 }
+#endif
 
 /***********************************************************************
  *		SignalProc (USER.314)
@@ -89,6 +91,7 @@ void WINAPI SignalProc( HANDLE hModule, UINT code,
 #endif
 }
 
+#if 0
 /***********************************************************************
  *		SendMessage  (USER.111)
  */
@@ -123,6 +126,7 @@ LRESULT WINAPI SendMessage( HWND hwnd16, UINT msg, WPARAM wparam, LPARAM lparam 
 #endif
 	return 0;
 }
+#endif
 
 /**********************************************************************
  *		GetAsyncKeyState (USER.249)
@@ -151,6 +155,7 @@ int WINAPI GetKeyState(int vkey)
     return 0;//GetKeyState(vkey);
 }
 
+#if 0
 /***********************************************************************
  *		GetMessage  (USER.108)
  */
@@ -221,3 +226,4 @@ SetDoubleClickTime(UINT uInterval)
 //    (void)DRVCALL_EVENTS(PEH_DBLCLKTIME,1,uInterval,0);
 //    APISTR((LF_APIRET,"SetDoubleClickTime: returns void\n"));
 }
+#endif

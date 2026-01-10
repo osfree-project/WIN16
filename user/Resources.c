@@ -39,14 +39,14 @@ int WINAPI LoadString( HINSTANCE instance, UINT resource_id, LPSTR buffer, int b
     int string_num;
     int ret;
 
-	FUNCTION_START
+//	FUNCTION_START
 	TRACE("inst=%x id=%x buff=%x:%x len=%d", instance, resource_id, buffer, buflen);
 
 	hrsrc = FindResource( instance, MAKEINTRESOURCE((resource_id>>4)+1), RT_STRING );
 	if (!hrsrc) 
 	{
 		TRACE("Resource not found");
-		FUNCTION_END
+//		FUNCTION_END
 		return 0;
 	}
 
@@ -54,7 +54,7 @@ int WINAPI LoadString( HINSTANCE instance, UINT resource_id, LPSTR buffer, int b
 	if (!hmem) 
 	{
 		TRACE("Error loading resource");
-		FUNCTION_END
+//		FUNCTION_END
 		return 0;
 	}
 
@@ -80,7 +80,7 @@ int WINAPI LoadString( HINSTANCE instance, UINT resource_id, LPSTR buffer, int b
 	}
 	FreeResource( hmem );
 
-	FUNCTION_END
+//	FUNCTION_END
 	return ret;
 }
 
@@ -92,7 +92,7 @@ HACCEL WINAPI LoadAccelerators(HINSTANCE hInstance, LPCSTR lpTableName)
 	HANDLE hResInfo;
 	HACCEL rc;
 
-	FUNCTION_START
+//	FUNCTION_START
 	TRACE("LoadAccelerators(HINSTANCE=%x,LPCSTR=%x)",
 		hInstance,lpTableName);
 
@@ -136,7 +136,7 @@ int CURSORICON_FindBestCursor(LPVOID dir, DWORD size, fnGetCIEntry get_entry,
                                       int width, int height, int depth, UINT loadflags )
 {
 	int i, maxwidth, maxheight, maxbits, cx, cy, bits, bestEntry = -1;
-	FUNCTION_START
+//	FUNCTION_START
 
     if (loadflags & LR_DEFAULTSIZE)
     {
@@ -147,7 +147,7 @@ int CURSORICON_FindBestCursor(LPVOID dir, DWORD size, fnGetCIEntry get_entry,
     {
         /* use the first entry */
         if (!get_entry( dir, size, 0, &width, &height, &bits )) return -1;
-	FUNCTION_END
+//	FUNCTION_END
         return 0;
     }
 
@@ -194,7 +194,7 @@ int CURSORICON_FindBestCursor(LPVOID dir, DWORD size, fnGetCIEntry get_entry,
     }
     if (bestEntry == -1) bestEntry = 0;
 
-	FUNCTION_END
+//	FUNCTION_END
 	return bestEntry;
 }
 
@@ -204,16 +204,16 @@ static BOOL CURSORICON_GetResIconEntry( LPVOID dir, DWORD size, int n,
 	CURSORICONDIR FAR * resdir = dir;
 	ICONRESDIR FAR * icon;
 
-	FUNCTION_START
+//	FUNCTION_START
 
 	if ( resdir->idCount <= n )
 	{
-		FUNCTION_END
+//		FUNCTION_END
 	        return FALSE;
 	}
 	if ((const char FAR *)&resdir->idEntries[n + 1] - (const char FAR *)dir > size)
 	{
-		FUNCTION_END
+//		FUNCTION_END
 	        return FALSE;
 	}
     icon = &resdir->idEntries[n].ResInfo.icon;
@@ -222,13 +222,13 @@ static BOOL CURSORICON_GetResIconEntry( LPVOID dir, DWORD size, int n,
     *bits = resdir->idEntries[n].wBitCount;
     if (!*width && !*height) *width = *height = 256;
 
-	FUNCTION_END
+//	FUNCTION_END
 
     return TRUE;
 }
 
 
-int abs (int i)
+int abs(int i)
 {
   return i < 0 ? -i : i;
 }
@@ -245,7 +245,7 @@ int CURSORICON_FindBestIcon( LPVOID dir, DWORD size, fnGetCIEntry get_entry,
     UINT iTotalDiff, iXDiff=0, iYDiff=0, iColorDiff;
     UINT iTempXDiff, iTempYDiff, iTempColorDiff;
 
-	FUNCTION_START
+//	FUNCTION_START
 
     /* Find Best Fit */
     iTotalDiff = 0xFFFFFFFF;
@@ -292,7 +292,7 @@ int CURSORICON_FindBestIcon( LPVOID dir, DWORD size, fnGetCIEntry get_entry,
         }
     }
 
-	FUNCTION_END
+//	FUNCTION_END
     return bestEntry;
 }
 
@@ -315,16 +315,16 @@ BOOL CURSORICON_GetResCursorEntry( LPVOID dir, DWORD size, int n,
     CURSORICONDIR FAR *resdir = dir;
     CURSORDIR FAR *cursor;
 
-	FUNCTION_START
+//	FUNCTION_START
 
 	if ( resdir->idCount <= n )
 	{
-		FUNCTION_END
+//		FUNCTION_END
         	return FALSE;
 	}
     if ((char FAR *)&resdir->idEntries[n + 1] - (char FAR *)dir > size)
 {
-		FUNCTION_END
+//		FUNCTION_END
         return FALSE;
 }
     cursor = &resdir->idEntries[n].ResInfo.cursor;
@@ -333,7 +333,7 @@ BOOL CURSORICON_GetResCursorEntry( LPVOID dir, DWORD size, int n,
     *bits = resdir->idEntries[n].wBitCount;
     if (*height == *width * 2) *height /= 2;
 
-	FUNCTION_END
+//	FUNCTION_END
 
     return TRUE;
 }
@@ -344,12 +344,12 @@ CURSORICONDIRENTRY FAR * CURSORICON_FindBestCursorRes(CURSORICONDIR FAR *dir, DW
 {
 	int n;
 
-	FUNCTION_START
+//	FUNCTION_START
 
 	n = CURSORICON_FindBestCursor( dir, size, CURSORICON_GetResCursorEntry,
                                        width, height, depth, loadflags );
 	
-	FUNCTION_END
+//	FUNCTION_END
 	if ( n < 0 ) return NULL;
 	return &dir->idEntries[n];
 }
@@ -363,7 +363,7 @@ void dumpcursoricondir(CURSORICONDIR FAR * dir)
 //    WORD                idCount;
 //    CURSORICONDIRENTRY  idEntries[1];
 //} CURSORICONDIR;
-	TRACE("idReserver=%d idType=%d idCount=%d\n\r", dir->idReserved, dir->idType, dir->idCount);
+//	TRACE("idReserver=%d idType=%d idCount=%d\n\r", dir->idReserved, dir->idType, dir->idCount);
 }
 /**********************************************************************
  *		LookupIconIdFromDirectoryEx (USER32.@)
@@ -374,9 +374,9 @@ int WINAPI LookupIconIdFromDirectoryEx( LPBYTE xdir, BOOL bIcon,
 	CURSORICONDIR FAR * dir = (CURSORICONDIR FAR *)xdir;
 	UINT retVal = 0;
 
-	FUNCTION_START
+//	FUNCTION_START
 
-	dumpcursoricondir(dir);
+//	dumpcursoricondir(dir);
 
 	if(dir && !dir->idReserved && (dir->idType & 3))
 	{
@@ -391,8 +391,8 @@ int WINAPI LookupIconIdFromDirectoryEx( LPBYTE xdir, BOOL bIcon,
 		if (entry) retVal = entry->wResId;
 	} else TRACE("invalid resource directory\n");
 
-	TRACE("ret=%d", retVal);
-	FUNCTION_END
+//	TRACE("ret=%d", retVal);
+//	FUNCTION_END
 	return retVal;
 }
 
@@ -407,12 +407,11 @@ int WINAPI LookupIconIdFromDirectory( LPBYTE dir, BOOL bIcon )
 
 static int get_bitmap_width_bytes( int width, int bpp )
 {
-	FUNCTION_START
+//	FUNCTION_START
     switch(bpp)
     {
     case 1:
         return 2 * ((width+15) / 16);
-//	 return ((width + 31) / 32) * 4; // Выравнивание до DWORD (4 байта)
     case 4:
         return 2 * ((width+3) / 4);
     case 24:
@@ -431,25 +430,25 @@ static int get_bitmap_width_bytes( int width, int bpp )
     return -1;
 }
 
-void dumpbits(LPBYTE bits)
-{
+//void dumpbits(LPBYTE bits)
+//{
 //typedef struct tagBITMAPINFO {
 //    BITMAPINFOHEADER    bmiHeader;
 //    RGBQUAD             bmiColors[1];
 //} BITMAPINFO;
-    LPBITMAPINFO bmi=(LPBITMAPINFO)(bits);
-    TRACE("biSize=%d", bmi->bmiHeader.biSize);
-    TRACE("biWidth=%d", bmi->bmiHeader.biWidth);
-    TRACE("biHeight=%d", bmi->bmiHeader.biHeight);
-    TRACE("biPlanes=%d", bmi->bmiHeader.biPlanes);
-    TRACE("biBitCount=%d", bmi->bmiHeader.biBitCount);
-    TRACE("biCompression=%d", bmi->bmiHeader.biCompression);
-    TRACE("biSizeImage=%d", bmi->bmiHeader.biSizeImage);
-    TRACE("biXPelsPerMeter=%d", bmi->bmiHeader.biXPelsPerMeter);
-    TRACE("biXPelsPerMeter=%d", bmi->bmiHeader.biYPelsPerMeter);
-    TRACE("biClrUsed=%d", bmi->bmiHeader.biClrUsed);
-    TRACE("biClrImportant=%d", bmi->bmiHeader.biClrImportant);
-}
+//    LPBITMAPINFO bmi=(LPBITMAPINFO)(bits);
+//    TRACE("biSize=%d", bmi->bmiHeader.biSize);
+//    TRACE("biWidth=%d", bmi->bmiHeader.biWidth);
+//    TRACE("biHeight=%d", bmi->bmiHeader.biHeight);
+//    TRACE("biPlanes=%d", bmi->bmiHeader.biPlanes);
+//    TRACE("biBitCount=%d", bmi->bmiHeader.biBitCount);
+//    TRACE("biCompression=%d", bmi->bmiHeader.biCompression);
+//    TRACE("biSizeImage=%d", bmi->bmiHeader.biSizeImage);
+//    TRACE("biXPelsPerMeter=%d", bmi->bmiHeader.biXPelsPerMeter);
+//    TRACE("biXPelsPerMeter=%d", bmi->bmiHeader.biYPelsPerMeter);
+//    TRACE("biClrUsed=%d", bmi->bmiHeader.biClrUsed);
+//    TRACE("biClrImportant=%d", bmi->bmiHeader.biClrImportant);
+//}
 
 HICON WINAPI CreateIconFromResourceEx(HINSTANCE hinst, LPBYTE bits, UINT cbSize,
                                        BOOL bIcon, DWORD dwVersion,
@@ -469,14 +468,14 @@ HICON WINAPI CreateIconFromResourceEx(HINSTANCE hinst, LPBYTE bits, UINT cbSize,
     DWORD andOffsetFromXOR;
     BOOL needFlip = FALSE; // Флаг, указывающий нужно ли переворачивать строки
 
-    FUNCTION_START
-    TRACE("%x:%x (%d bytes) , ver %x%x, %dx%d %S %S",
-                   bits, cbSize, dwVersion, width, height,
-                   bIcon ? "icon" : "cursor", (cFlag & LR_MONOCHROME) ? "mono" : "" );
+//  /  FUNCTION_START
+//    TRACE("%x:%x (%d bytes) , ver %x%x, %dx%d %S %S",
+//                   bits, cbSize, dwVersion, width, height,
+//                   bIcon ? "icon" : "cursor", (cFlag & LR_MONOCHROME) ? "mono" : "" );
 
     if (!bits) return 0;
 
-    dumpbits(bIcon?bits:(bits+4));
+//    dumpbits(bIcon?bits:(bits+4));
 
     if (dwVersion == 0x00020000)
     {
@@ -498,7 +497,7 @@ HICON WINAPI CreateIconFromResourceEx(HINSTANCE hinst, LPBYTE bits, UINT cbSize,
         bmi = (LPBITMAPINFO)(bits + 4);
     }
 
-    TRACE("x=%d y=%d bmi=%x:%x", hotspot.x, hotspot.y, bmi);
+//    TRACE("x=%d y=%d bmi=%x:%x", hotspot.x, hotspot.y, bmi);
 
     // Проверяем знак высоты в DIB заголовке
     // Если biHeight > 0, данные хранятся снизу вверх (нужно переворачивать)
@@ -506,12 +505,12 @@ HICON WINAPI CreateIconFromResourceEx(HINSTANCE hinst, LPBYTE bits, UINT cbSize,
     if (bmi->bmiHeader.biHeight > 0)
     {
         needFlip = TRUE; // Данные снизу вверх - нужно перевернуть
-        TRACE("DIB data is bottom-up, will flip");
+//        TRACE("DIB data is bottom-up, will flip");
     }
     else
     {
         needFlip = FALSE; // Данные сверху вниз - не нужно переворачивать
-        TRACE("DIB data is top-down, no flip needed");
+//        TRACE("DIB data is top-down, no flip needed");
         // Используем абсолютное значение высоты для расчетов
         height = -bmi->bmiHeader.biHeight;
     }
@@ -548,7 +547,7 @@ HICON WINAPI CreateIconFromResourceEx(HINSTANCE hinst, LPBYTE bits, UINT cbSize,
     // Проверяем, не выходим ли за границы данных
     if ((DWORD)(lpXOR - bits) + expectedXORSize > cbSize)
     {
-        TRACE("ERROR: XOR data exceeds buffer size!");
+//        TRACE("ERROR: XOR data exceeds buffer size!");
         return 0;
     }
     
@@ -563,9 +562,9 @@ HICON WINAPI CreateIconFromResourceEx(HINSTANCE hinst, LPBYTE bits, UINT cbSize,
         lpAND = lpXOR + andOffsetFromXOR;
     }
 
-    TRACE("xorOffset=%d, xorRowSize=%d, andRowSize=%d, needFlip=%d", 
-          xorOffset, xorRowSize, andRowSize, needFlip);
-    TRACE("lpXOR=%x:%x (offset %d from bits), lpAND=%x%x", lpXOR, lpXOR - bits, lpAND);
+//    TRACE("xorOffset=%d, xorRowSize=%d, andRowSize=%d, needFlip=%d", 
+//          xorOffset, xorRowSize, andRowSize, needFlip);
+//    TRACE("lpXOR=%x:%x (offset %d from bits), lpAND=%x%x", lpXOR, lpXOR - bits, lpAND);
 
     // Выделяем память для перевернутых масок
     hMemXOR = GlobalAlloc(GMEM_MOVEABLE, expectedXORSize);
@@ -638,7 +637,7 @@ HICON WINAPI CreateIconFromResourceEx(HINSTANCE hinst, LPBYTE bits, UINT cbSize,
     GlobalFree(hMemXOR);
     GlobalFree(hMemAND);
     
-    FUNCTION_END
+//    FUNCTION_END
     return result;
 }
 
@@ -651,7 +650,7 @@ HANDLE WINAPI LoadImage(HINSTANCE hinst, LPCSTR name, UINT type, int cx, int cy,
 	HRSRC hRsrc, hGroupRsrc;
 	DWORD size;
 
-	FUNCTION_START
+//	FUNCTION_START
 // @TODO
 /*
     if (!hinst || (flags & LR_LOADFROMFILE))
@@ -735,7 +734,7 @@ HANDLE WINAPI LoadImage(HINSTANCE hinst, LPCSTR name, UINT type, int cx, int cy,
 	if (!hRsrc) 
 	{
 		TRACE("Resource not found");
-		FUNCTION_END
+//		FUNCTION_END
 		return 0;
 	}
 	hGroupRsrc = hRsrc;
@@ -753,7 +752,7 @@ HANDLE WINAPI LoadImage(HINSTANCE hinst, LPCSTR name, UINT type, int cx, int cy,
         if (!(handle = LoadResource(hinst, hRsrc))) return 0;
         bits = LockResource(handle );
         size = SizeofResource(hinst, hRsrc);
-	TRACE("Create icon/cursor");
+//	TRACE("Create icon/cursor");
 
         hIcon = CreateIconFromResourceEx(hinst, bits, size, type == IMAGE_ICON, 0x00030000, cx, cy, flags );
 
@@ -761,14 +760,14 @@ HANDLE WINAPI LoadImage(HINSTANCE hinst, LPCSTR name, UINT type, int cx, int cy,
 
 /* @todo port shared icons code from wine */
 //        if (hIcon && (flags & LR_SHARED)) add_shared_icon( hinst, hRsrc, hGroupRsrc, hIcon );
-	FUNCTION_END
+//	FUNCTION_END
         return hIcon;
     }
     default:
         return 0;
     }
 
-	FUNCTION_END
+//	FUNCTION_END
 	return 0;
 }
 
@@ -778,10 +777,10 @@ HANDLE WINAPI LoadImage(HINSTANCE hinst, LPCSTR name, UINT type, int cx, int cy,
 HCURSOR WINAPI LoadCursor(HINSTANCE hInstance, LPCSTR name)
 {
 	HCURSOR res;
-	FUNCTION_START
-	TRACE("name=%x:%x", name);
+//	FUNCTION_START
+//	TRACE("name=%x:%x", name);
     	res=LoadImage(hInstance, name, IMAGE_CURSOR, 0, 0, LR_SHARED | LR_DEFAULTSIZE);
-	FUNCTION_END
+//	FUNCTION_END
 	return res;
 }
 
@@ -791,9 +790,9 @@ HCURSOR WINAPI LoadCursor(HINSTANCE hInstance, LPCSTR name)
 HICON WINAPI LoadIcon(HINSTANCE hInstance, LPCSTR name)
 {
 	HICON res;
-	FUNCTION_START
+//	FUNCTION_START
 	res=LoadImage(hInstance, name, IMAGE_ICON, 0, 0, LR_SHARED | LR_DEFAULTSIZE);
-	FUNCTION_END
+//	FUNCTION_END
 	return res;
 }
 
@@ -803,8 +802,8 @@ HICON WINAPI LoadIcon(HINSTANCE hInstance, LPCSTR name)
 HBITMAP WINAPI LoadBitmap(HINSTANCE hInstance, LPCSTR name)
 {
 	HBITMAP res;
-	FUNCTION_START
+//	FUNCTION_START
 	res=LoadImage(hInstance, name, IMAGE_BITMAP, 0, 0, 0);
-	FUNCTION_END
+//	FUNCTION_END
 	return res;
 }
