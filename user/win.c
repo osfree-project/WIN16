@@ -30,7 +30,7 @@
 /* Desktop window */
 //static WND *pWndDesktop = NULL;
 
-//static HWND hwndSysModal = 0;
+static HWND hwndSysModal = 0;
 
 static WORD wDragWidth = 4;
 static WORD wDragHeight= 3;
@@ -48,7 +48,7 @@ WND * WIN_FindWndPtr( HWND hwnd )
     
     if (!hwnd) return NULL;
     ptr = (WND *) LocalLock(hwnd);
-//    if (ptr->dwMagic != WND_MAGIC) return NULL;
+    if (ptr->dwMagic != WND_MAGIC) return NULL;
     if (ptr->hwndSelf != hwnd)
     {
         TRACE("Can't happen: hwnd %04x self pointer is %04x %04x\n",
@@ -264,7 +264,7 @@ HWND WIN_FindWinToRepaint( HWND hwnd, HQUEUE hQueue )
         pWnd = pWnd->next;
     }
     if (pWnd) hwndRet = pWnd->hwndSelf;
-    TRACE("FindWinToRepaint: found %04x\n",hwndRet);
+//    TRACE("FindWinToRepaint: found %04x\n",hwndRet);
     return hwndRet;
 }
 
@@ -371,7 +371,7 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->child             = NULL;
     pWndDesktop->parent            = NULL;
     pWndDesktop->owner             = NULL;
-//    pWndDesktop->dwMagic           = WND_MAGIC;
+    pWndDesktop->dwMagic           = WND_MAGIC;
     pWndDesktop->hwndSelf          = HWndDesktop;
     pWndDesktop->hClass            = hclass;
     pWndDesktop->hInstance         = 0;
@@ -510,7 +510,7 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
     wndPtr->parent         = (style & WS_CHILD) ? WIN_FindWndPtr( parent ) : WIN_FindWndPtr(HWndDesktop);
     wndPtr->owner          = (style & WS_CHILD) ? NULL : WIN_FindWndPtr(WIN_GetTopParent(parent));
 //    wndPtr->window         = 0;
-//    wndPtr->dwMagic        = WND_MAGIC;
+    wndPtr->dwMagic        = WND_MAGIC;
     wndPtr->hwndSelf       = hwnd;
     wndPtr->hClass         = class;
     wndPtr->hInstance      = instance;
@@ -552,7 +552,7 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
 
       /* Send the WM_GETMINMAXINFO message and fix the size if needed */
 
-//@todo fix!    NC_GetMinMaxInfo( hwnd, &maxSize, &maxPos, &minTrack, &maxTrack );
+    NC_GetMinMaxInfo( hwnd, &maxSize, &maxPos, &minTrack, &maxTrack );
 
     if (maxSize.x < width) width = maxSize.x;
     if (maxSize.y < height) height = maxSize.y;
@@ -1041,10 +1041,12 @@ int GetWindowTextLength(HWND hwnd)
 }
 
 
+#endif
+
 /*******************************************************************
  *         IsWindow    (USER.47)
  */
-BOOL IsWindow( HWND hwnd )
+BOOL WINAPI IsWindow( HWND hwnd )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     return ((wndPtr != NULL) && (wndPtr->dwMagic == WND_MAGIC));
@@ -1054,15 +1056,13 @@ BOOL IsWindow( HWND hwnd )
 /*****************************************************************
  *         GetParent              (USER.46)
  */
-HWND GetParent(HWND hwnd)
+HWND WINAPI GetParent(HWND hwnd)
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     if (!wndPtr) return 0;
     wndPtr = (wndPtr->dwStyle & WS_CHILD) ? wndPtr->parent : wndPtr->owner;
     return wndPtr ? wndPtr->hwndSelf : 0;
 }
-
-#endif
 
 
 #if 0
@@ -1119,19 +1119,18 @@ BOOL WINAPI IsWindowVisible( HWND hwnd )
     return (wndPtr && (wndPtr->dwStyle & WS_VISIBLE));
 }
 
-#if 0
- 
- 
+
 /*******************************************************************
  *         GetTopWindow    (USER.229)
  */
-HWND GetTopWindow( HWND hwnd )
+HWND WINAPI GetTopWindow( HWND hwnd )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (wndPtr && wndPtr->child) return wndPtr->child->hwndSelf;
     else return 0;
 }
 
+#if 0
 
 /*******************************************************************
  *         GetWindow    (USER.262)
@@ -1403,13 +1402,6 @@ HWND SetSysModalWindow(HWND hWnd)
 }
 
 
-/*******************************************************************
- *			GetSysModalWindow		[USER.189]
- */
-HWND GetSysModalWindow(void)
-{
-    return hwndSysModal;
-}
 
 /*******************************************************************
  *			DRAG_QueryUpdate
@@ -1657,14 +1649,6 @@ HWND WINAPI GetCapture()
     return 0;//captureWnd;
 }
 
-/*******************************************************************
- *         GetActiveWindow    (USER.60)
- */
-HWND WINAPI GetActiveWindow()
-{
-    return 0;//hwndActive;
-}
-
 /**********************************************************************
  *	     CallWindowProc    (USER.122)
  */
@@ -1755,4 +1739,12 @@ void WIN_UpdateNCArea(WND* wnd, BOOL bUpdate)
     if (hClip) SendMessage( wnd->hwndSelf, WM_NCPAINT, hClip, 0L );
 
     if (hClip > 1) DeleteObject( hClip );
+}
+
+/*******************************************************************
+ *			GetSysModalWindow		[USER.189]
+ */
+HWND WINAPI GetSysModalWindow(void)
+{
+    return hwndSysModal;
 }

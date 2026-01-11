@@ -197,7 +197,7 @@ int QUEUE_FindMsg( MESSAGEQUEUE FAR * msgQueue, HWND hwnd, int first, int last )
 {
     int i, pos = msgQueue->nextMessage;
 
-    TRACE("MSG_FindMsg: hwnd=%04x\n\n", hwnd );
+//    TRACE("MSG_FindMsg: hwnd=%04x\n\n", hwnd );
 
     if (!msgQueue->msgCount) return -1;
     if (!hwnd && !first && !last) return pos;
@@ -225,6 +225,7 @@ int QUEUE_FindMsg( MESSAGEQUEUE FAR * msgQueue, HWND hwnd, int first, int last )
  */
 void QUEUE_RemoveMsg( MESSAGEQUEUE FAR * msgQueue, int pos )
 {
+//	FUNCTION_START
     if (pos >= msgQueue->nextMessage)
     {
 	for ( ; pos > msgQueue->nextMessage; pos--)
@@ -379,12 +380,11 @@ void WINAPI PostQuitMessage( int exitCode )
     queue->wExitCode = (WORD)exitCode;
 }
 
-#if 0
 
 /***********************************************************************
  *           GetWindowTask   (USER.224)
  */
-HTASK GetWindowTask( HWND hwnd )
+HTASK WINAPI GetWindowTask( HWND hwnd )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
@@ -392,7 +392,6 @@ HTASK GetWindowTask( HWND hwnd )
     return QUEUE_GetQueueTask( wndPtr->hmemTaskQ );
 }
 
-#endif
 
 /***********************************************************************
  *           SetMessageQueue   (USER.266)

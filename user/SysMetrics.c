@@ -270,6 +270,7 @@ GetSystemMetrics(int nIndex)
 
 }
 
+#if 0
 /*************************************************************************
  *		GetSysColor (USER.180)
  */
@@ -319,6 +320,7 @@ SetSysColors(int nChanges, const int far *lpSysColor,
 	SendMessage(HWND_BROADCAST,WM_SYSCOLORCHANGE,0,0);
 //	APISTR((LF_APIRET,"SetSysColors: returns void\n"));
 }
+#endif
 
 /***********************************************************************
  *		SystemParametersInfo (USER.483)

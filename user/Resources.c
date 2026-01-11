@@ -40,7 +40,7 @@ int WINAPI LoadString( HINSTANCE instance, UINT resource_id, LPSTR buffer, int b
     int ret;
 
 //	FUNCTION_START
-	TRACE("inst=%x id=%x buff=%x:%x len=%d", instance, resource_id, buffer, buflen);
+//	TRACE("inst=%x id=%x buff=%x:%x len=%d", instance, resource_id, buffer, buflen);
 
 	hrsrc = FindResource( instance, MAKEINTRESOURCE((resource_id>>4)+1), RT_STRING );
 	if (!hrsrc) 
@@ -76,7 +76,7 @@ int WINAPI LoadString( HINSTANCE instance, UINT resource_id, LPSTR buffer, int b
 			buffer[0] = '\0';
 			ret = 0;
 		}
-        TRACE("%S loaded", buffer);
+//        TRACE("%S loaded", buffer);
 	}
 	FreeResource( hmem );
 
@@ -279,7 +279,7 @@ int CURSORICON_FindBestIcon( LPVOID dir, DWORD size, fnGetCIEntry get_entry,
     /* Find Best Colors for Best Fit */
     for ( i = 0; get_entry( dir, size, i, &cx, &cy, &bits ); i++ )
     {
-        TRACE("entry %d: %d x %d, %d bpp\n", i, cx, cy, bits);
+//        TRACE("entry %d: %d x %d, %d bpp\n", i, cx, cy, bits);
 
         if(abs(width - cx) == iXDiff && abs(height - cy) == iYDiff)
         {
@@ -729,7 +729,7 @@ HANDLE WINAPI LoadImage(HINSTANCE hinst, LPCSTR name, UINT type, int cx, int cy,
         HICON hIcon = 0;
         BYTE FAR *dir, FAR *bits;
         int id = 0;
-                          TRACE("%x\n\r", name);
+                          //TRACE("%x\n\r", name);
 	hRsrc = FindResource(hinst, name, (LPCSTR)(type == IMAGE_ICON ? RT_GROUP_ICON : RT_GROUP_CURSOR));
 	if (!hRsrc) 
 	{

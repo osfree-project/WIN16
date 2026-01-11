@@ -227,3 +227,10 @@ SetDoubleClickTime(UINT uInterval)
 //    APISTR((LF_APIRET,"SetDoubleClickTime: returns void\n"));
 }
 #endif
+
+/***********************************************************************
+ *           MessageBeep    (USER.104)
+ */
+VOID WINAPI MessageBeep(UINT i)
+{
+}

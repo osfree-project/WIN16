@@ -30,6 +30,7 @@ To send email to the maintainer of the Willows Twin Libraries.
 
 #include "user.h"
 
+#if 0
 //#include "kerndef.h"
 
 // This  is undoc message, but known by many...
@@ -212,6 +213,8 @@ CaretDrv(int msg, LONG flag,DWORD lParam)
 	}	
 }
 
+#endif
+
 /************************************************************************/
 /*									*/
 /*	Caret API's							*/
@@ -227,6 +230,7 @@ CaretDrv(int msg, LONG flag,DWORD lParam)
 void WINAPI
 CreateCaret(HWND hWnd, HBITMAP hBitmap, int nWidth, int nHeight)
 {
+#if 0
 	BITMAP	bitmap ;
 	CARET	new;
 	new.hWnd 	= hWnd;
@@ -250,6 +254,7 @@ CreateCaret(HWND hWnd, HBITMAP hBitmap, int nWidth, int nHeight)
 		new.Height = GetSystemMetrics(SM_CYBORDER) ;
 	
 	CaretDrv(CARET_CREATE, 0, (DWORD) &new);
+#endif
 }
 
 
@@ -259,8 +264,8 @@ CreateCaret(HWND hWnd, HBITMAP hBitmap, int nWidth, int nHeight)
 void WINAPI
 DestroyCaret(void)
 {
-	FUNCTION_START
-	CaretDrv(CARET_DESTROY,0,0);
+//	FUNCTION_START
+//	CaretDrv(CARET_DESTROY,0,0);
 }
 
 /*****************************************************************
@@ -269,14 +274,15 @@ DestroyCaret(void)
 void WINAPI
 SetCaretPos(int X, int Y)
 {
-	POINT	caretpos;
+//	POINT	caretpos;
 
-	FUNCTION_START
+//	FUNCTION_START
 
-	caretpos.x = X;
-	caretpos.y = Y;
-	CaretDrv(CARET_POSITION,0,(DWORD) &caretpos);
+//	caretpos.x = X;
+//	caretpos.y = Y;
+//	CaretDrv(CARET_POSITION,0,(DWORD) &caretpos);
 }
+
 
 /**************************************************************************
  *              HideCaret   (USER.166)
@@ -284,9 +290,10 @@ SetCaretPos(int X, int Y)
 void WINAPI
 HideCaret(HWND hWnd)
 {
-	FUNCTION_START
-	CaretDrv(CARET_SHOWHIDE,-1,(DWORD)hWnd);
+//	FUNCTION_START
+//	CaretDrv(CARET_SHOWHIDE,-1,(DWORD)hWnd);
 }
+
 
 /**************************************************************************
  *              ShowCaret   (USER.167)
@@ -294,8 +301,8 @@ HideCaret(HWND hWnd)
 void WINAPI
 ShowCaret(HWND hWnd)
 {
-	FUNCTION_START
-	CaretDrv(CARET_SHOWHIDE, 1,(DWORD)hWnd);
+//	FUNCTION_START
+//	CaretDrv(CARET_SHOWHIDE, 1,(DWORD)hWnd);
 }
 
 /*****************************************************************
@@ -304,22 +311,22 @@ ShowCaret(HWND hWnd)
 void WINAPI
 SetCaretBlinkTime(UINT	blinkrate)
 {
-	FUNCTION_START
-	caret.blinkrate = blinkrate;
-
-	/* turn on or off timers as needed */
-	if(caret.timer == 0)
-		return;
+//	FUNCTION_START
+//	caret.blinkrate = blinkrate;
+//
+//	/* turn on or off timers as needed */
+//	if(caret.timer == 0)
+//		return;
 
 /*--- #if 0 ---*/
 // KillSystemTimer exported as BEAR182 by USER.182 !!BEWARE!! Same function name used by SYSTEM.DRV!!!
-	KillSystemTimer(caret.hWnd, caret.timer);
+//	KillSystemTimer(caret.hWnd, caret.timer);
 // SetSystemTimer exported as BEAR11 by USER.11
-	caret.timer = SetSystemTimer(
-				caret.hWnd,1,caret.blinkrate,
-				(TIMERPROC)InternalCaretFunc);
+//	caret.timer = SetSystemTimer(
+//				caret.hWnd,1,caret.blinkrate,
+//				(TIMERPROC)InternalCaretFunc);
 /*--- #endif ---*/
-	FUNCTION_END
+//	FUNCTION_END
 }
 
 /*****************************************************************
@@ -328,11 +335,11 @@ SetCaretBlinkTime(UINT	blinkrate)
 UINT WINAPI
 GetCaretBlinkTime()
 {
-	FUNCTION_START
-	if ( caret.blinkrate == 0 )
-		caret.blinkrate = 500;
-
-	return caret.blinkrate;
+//	FUNCTION_START
+//	if ( caret.blinkrate == 0 )
+//		caret.blinkrate = 500;
+//
+//	return caret.blinkrate;
 }
 
 /*****************************************************************
@@ -341,7 +348,6 @@ GetCaretBlinkTime()
 void WINAPI
 GetCaretPos(LPPOINT lpPoint)
 {
-	FUNCTION_START
-	CaretDrv(CARET_POSITION,1,(DWORD) lpPoint);
-
+//	FUNCTION_START
+//	CaretDrv(CARET_POSITION,1,(DWORD) lpPoint);
 }

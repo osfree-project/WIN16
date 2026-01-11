@@ -27,7 +27,7 @@
 //#define HWND_BROADCAST  ((HWND)0xffff)
 
 extern BYTE* 	KeyStateTable;				 /* event.c */
-//extern WPARAM	lastEventChar;				 /* event.c */
+WPARAM	lastEventChar;				 /* event.c */
 
 //extern BOOL TIMER_CheckTimer( LONG *next, MSG *msg,
 //			      HWND hwnd, BOOL remove );  /* timer.c */
@@ -71,6 +71,9 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 		       (msg->message == WM_RBUTTONDOWN) ||
 		       (msg->message == WM_MBUTTONDOWN));
 
+//FUNCTION_START
+//TRACE("msg=0x%04X", msg->message);
+
       /* Find the window */
 
     if (GetCapture())
@@ -86,7 +89,7 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 //                                msg->message, (LPARAM)MAKE_SEGPTR(&hook));
     }
    
-//@todo    hittest = WINPOS_WindowFromPoint( msg->pt, &pWnd );
+    hittest = WINPOS_WindowFromPoint( msg->pt, &pWnd );
     msg->hwnd = pWnd->hwndSelf;
     if (hittest != HTERROR)
     {
@@ -96,10 +99,12 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
                                             MAKELONG( msg->pt.x, msg->pt.y ) );
 
         /* Activate the window if needed */
-
         if (mouseClick)
         {
             HWND hwndTop = WIN_GetTopParent( msg->hwnd );
+
+		TRACE("MOUSE CLICK");
+
             if (hwndTop != GetActiveWindow())
             {
                 LONG ret = SendMessage( msg->hwnd, WM_MOUSEACTIVATE,
@@ -111,7 +116,7 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
                 {
                     SetWindowPos( hwndTop, HWND_TOP, 0, 0, 0, 0,
                                  SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
-//@todo                    WINPOS_ChangeActiveWindow( hwndTop, TRUE );
+                    WINPOS_ChangeActiveWindow( hwndTop, TRUE );
                 }
             }
         }
@@ -129,11 +134,11 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
     {
 	BOOL dbl_click = FALSE;
 
-//@todo	if ((msg->message == lastClickMsg) &&
-//@todo	    (msg->time - lastClickTime < doubleClickSpeed) &&
-//@todo	    (abs(msg->pt.x - lastClickPos.x) < SYSMETRICS_CXDOUBLECLK/2) &&
-//@todo	    (abs(msg->pt.y - lastClickPos.y) < SYSMETRICS_CYDOUBLECLK/2))
-//@todo	    dbl_click = TRUE;
+	if ((msg->message == lastClickMsg) &&
+	    (msg->time - lastClickTime < doubleClickSpeed) &&
+	    (abs(msg->pt.x - lastClickPos.x) < GetSystemMetrics(SM_CXDOUBLECLK)/2) &&
+	    (abs(msg->pt.y - lastClickPos.y) < GetSystemMetrics(SM_CYDOUBLECLK)/2))
+	    dbl_click = TRUE;
 
 	if (dbl_click && (hittest == HTCLIENT))
 	{
@@ -169,8 +174,9 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
     
 //    hook.hwnd = msg->hwnd;
 //    hook.wHitTestCode = hittest;
-TRACE("321");
-for(;;);
+//TRACE("321");
+//for(;;);
+	return TRUE; //@todo TRUE?
 //    return !HOOK_CallHooks( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
 //                            msg->message, (LPARAM)MAKE_SEGPTR(&hook));
 }
@@ -213,7 +219,7 @@ for(;;);
 static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, WORD first, WORD last,
                                  BOOL remove )
 {
-    MESSAGEQUEUE *sysMsgQueue = QUEUE_GetSysQueue();
+    MESSAGEQUEUE FAR *sysMsgQueue = QUEUE_GetSysQueue();
     int i, pos = sysMsgQueue->nextMessage;
 
     for (i = 0; i < sysMsgQueue->msgCount; i++, pos++)
@@ -222,7 +228,6 @@ static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, WORD first, WORD last,
 	*msg = sysMsgQueue->messages[pos].msg;
 
           /* Translate message */
-
         if ((msg->message >= WM_MOUSEFIRST) && (msg->message <= WM_MOUSELAST))
         {
             if (!MSG_TranslateMouseMsg( msg, remove )) continue;
@@ -252,8 +257,6 @@ for(;;);
         if (remove)
         {
             MSG tmpMsg = *msg; /* FIXME */
-	TRACE("345");
-for(;;);
 //            HOOK_CallHooks( WH_JOURNALRECORD, HC_ACTION,
 //                            0, (LPARAM)MAKE_SEGPTR(&tmpMsg) );
             QUEUE_RemoveMsg( sysMsgQueue, pos );
@@ -408,7 +411,6 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
     LONG nextExp;  /* Next timer expiration time */
 
 //	FUNCTION_START
-
 #ifdef CONFIG_IPC
     DDE_TestDDE(hwnd);	/* do we have dde handling in the window ?*/
     DDE_GetRemoteMessage();
@@ -430,8 +432,8 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
     {    
 	hQueue   = GetTaskQueue(0);
         msgQueue = (MESSAGEQUEUE FAR *)GlobalLock( hQueue );
-
         if (!msgQueue) return FALSE;
+
 
 	  /* First handle a message put by SendMessage() */
 	if (msgQueue->status & QS_SENDMESSAGE)
@@ -470,7 +472,7 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
 	  /* Now find a hardware event */
         if (MSG_PeekHardwareMsg( msg, hwnd, first, last, flags & PM_REMOVE ))
         {
-TRACE("mouse!! %d", hwnd);
+//TRACE("mouse!! %d", hwnd);
             /* Got one */
 	    msgQueue->GetMessageTimeVal      = msg->time;
 	    msgQueue->GetMessagePosVal       = *(DWORD *)&msg->pt;
@@ -521,8 +523,9 @@ TRACE("mouse!! %d", hwnd);
 	}
 	else nextExp = -1;  /* No timeout needed */
 
+
         //Yield();      //UserYield
-	DirectedYield(0);
+//	DirectedYield(0); // No multitrasking yet...
 #if 0
 	  /* Wait until something happens */
         if (peek)
@@ -599,8 +602,8 @@ BOOL WINAPI GetMessage( LPMSG msg, HWND hwnd, UINT first, UINT last )
 
     MSG_PeekMessage(lpmsg, hwnd, first, last, PM_REMOVE, FALSE);
 
-    TRACE("message %04x, hwnd %04x, filter(%04x - %04x)\n", lpmsg->message,
-		     				                 hwnd, first, last );
+//    TRACE("message %04x, hwnd %04x, filter(%04x - %04x)\n", lpmsg->message,
+//		     				                 hwnd, first, last );
 //@todo fix!!!    HOOK_CallHooks( WH_GETMESSAGE, HC_ACTION, 0, (LPARAM)msg );
     return (lpmsg->message != WM_QUIT);
 }
@@ -779,7 +782,7 @@ BOOL WINAPI TranslateMessage(const MSG FAR *msg )
 	      {
      		message += 2 - (message & 0x0001); 
 
-//@todo	        PostMessage( msg->hwnd, message, lastEventChar, msg->lParam );
+	        PostMessage( msg->hwnd, message, lastEventChar, msg->lParam );
 
 	        return TRUE;
 	      }
@@ -800,7 +803,7 @@ LONG WINAPI DispatchMessage( const MSG* msg )
 //    SPY_EnterMessage( SPY_DISPATCHMESSAGE, msg->hwnd, msg->message,
 //                      msg->wParam, msg->lParam );
 
-FUNCTION_START
+//FUNCTION_START
       /* Process timer messages */
     if ((msg->message == WM_TIMER) /*|| (msg->message == WM_SYSTIMER)*/)
     {

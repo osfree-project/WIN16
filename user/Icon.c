@@ -100,6 +100,7 @@ static int release_shared_icon( HICON icon )
     return -1;
 }
 
+#if 0
 /***********************************************************************
  *		IconSize (USER.86)
  *
@@ -111,7 +112,7 @@ DWORD WINAPI IconSize(void)
   return MAKELONG(GetSystemMetrics(SM_CYICON), GetSystemMetrics(SM_CXICON));
 }
 
-
+#endif
 
 /***********************************************************************
  *		CreateCursorIconIndirect (USER.408)

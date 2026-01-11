@@ -7,9 +7,10 @@
 PROJ     = user
 TRGT     = $(PROJ).exe
 DESC     = Windows USER.EXE
-srcfiles = $(p)smallcode$(e) $(p)libentry$(e) $(p)libmain$(e) $(p)dce$(e) $(p)desktop$(e) $(p)winpos$(e) $(p)nonclient$(e) $(p)cursor$(e) $(p)queue$(e) $(p)win$(e) $(p)message$(e) $(p)GlobalData1$(e) $(p)div$(e) $(p)hook$(e) $(p)dialog$(e) $(p)Time$(e) $(p)Atoms$(e) $(p)comm$(e) $(p)Caret$(e) $(p)DrawText$(e)  $(p)SysMetrics$(e) $(p)Listbox$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Menu$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Resources$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)printf$(e) # $(p)Desktop$(e)  $(p)StringFunc$(e) $(p)network$(e) $(p)InitApp$(e)
-ADD_COPT = -zW -s -2 -DDEBUG=1 # optimize prolog, no stack checks, put constants in code segment 
+srcfiles = $(p)smallcode$(e) $(p)libentry$(e) $(p)libmain$(e) $(p)dce$(e) $(p)desktop$(e) $(p)winpos$(e) $(p)defwnd$(e) $(p)syscolor$(e) $(p)nonclient$(e) $(p)cursor$(e) $(p)queue$(e) $(p)win$(e) $(p)message$(e) $(p)GlobalData1$(e) $(p)div$(e) $(p)hook$(e) $(p)dialog$(e) $(p)Time$(e) $(p)Atoms$(e) $(p)comm$(e) $(p)Caret$(e) $(p)DrawText$(e)  $(p)SysMetrics$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Resources$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)printf$(e) $(p)Menu$(e) $(p)focus$(e)# $(p)Desktop$(e)  $(p)StringFunc$(e) $(p)network$(e) $(p)InitApp$(e) $(p)Listbox$(e)  
+ADD_COPT = -zW -s -3 -DDEBUG=1 # optimize prolog, no stack checks, put constants in code segment 
 # -zc
+# -3 must be replaced by -0 later
 ADD_LINKOPT = SEGMENT CLASS DATA FIXED SHARE
 NOLIBS = 1 # Don't use default libentry
 NODEFAULTLIBS = 1 # Don'y use libc
@@ -92,17 +93,6 @@ EXPORTS = &
 	SetWindowWord .134, &
 	GetWindowLong .135, &
 	SetWindowLong .136, &
-	LoadMenu .150, &
-	ChangeMenu .153, &
-	CheckMenuItem .154, &
-	EnableMenuItem .155, &
-	GetSystemMenu .156, &
-	GetMenu .157, &
-	SetMenu .158, &
-	GetSubMenu .159, &
-	DrawMenuBar .160, &
-	GetMenuString .161, &
-	HiliteMenuItem .162, &
 	CreateCaret .163, &
 	DestroyCaret .164, &
 	SetCaretPos .165, &
@@ -141,7 +131,6 @@ EXPORTS = &
 	UserSeeUserDo .216, &
 	DialogBoxIndirect .218, &
 	CreateDialogIndirect .219, &
-	LoadMenuIndirect .220, &
 	GetWindowTask .224, &
 	SetWindowPos .232, &
 	DefHookProc .235, &
@@ -152,10 +141,7 @@ EXPORTS = &
 	EqualRect.244, &
 	EnableCommNotification .245, &
 	GetAsyncKeyState .249, &
-	GetMenuState .250, &
 	MapWindowPoints .258, &
-	GetMenuItemCount .263, &
-	GetMenuItemID .264, &
 	ShowScrollBar .267, &
 	GlobalAddAtom .268, &
 	GlobalDeleteAtom .269, &
@@ -187,15 +173,6 @@ EXPORTS = &
 	CreateCursor .406, &
 	CreateIcon .407, &
 	CreateCursorIconIndirect .408, &
-	InsertMenu .410, &
-	AppendMenu .411, &
-	RemoveMenu .412, &
-	DeleteMenu .413, &
-	ModifyMenu .414, &
-	CreatePopupMenu .415, &
-	TrackPopupMenu .416, &
-	GetMenuCheckMarkDimensions .417, &
-	SetMenuItemBitmaps .418, &
 	_wsprintf .420, &
 	wvsprintf .421, &
 	DlgDirSelectEx .422, &
@@ -219,6 +196,30 @@ EXPORTS = &
 	AnsiPrev .473, &
 	EnableScrollBar .482, &
 	SystemParametersInfo .483#, &
+#	LoadMenuIndirect .220, &
+#	GetMenuState .250, &
+#	GetMenuItemCount .263, &
+#	GetMenuItemID .264, &
+#	InsertMenu .410, &
+#	AppendMenu .411, &
+#	RemoveMenu .412, &
+#	DeleteMenu .413, &
+#	ModifyMenu .414, &
+#	CreatePopupMenu .415, &
+#	TrackPopupMenu .416, &
+#	GetMenuCheckMarkDimensions .417, &
+#	SetMenuItemBitmaps .418, &
+#	LoadMenu .150, &
+#	ChangeMenu .153, &
+#	CheckMenuItem .154, &
+#	EnableMenuItem .155, &
+#	GetSystemMenu .156, &
+#	GetMenu .157, &
+#	SetMenu .158, &
+#	GetSubMenu .159, &
+#	DrawMenuBar .160, &
+#	GetMenuString .161, &
+#	HiliteMenuItem .162, &
 #	RegisterClassEx .397, &
 #	GetClassInfoEx .398, &
 #	WNetErrorText .499, &
@@ -273,6 +274,8 @@ IMPORTS = GETEXEVERSION KERNEL.105, &
   GetDCState GDI.179, &
   SetDCState GDI.180, &
   SelectVisRgn GDI.105, &
+  InquireVisRgn  GDI.131, &
+  ExcludeVisRect GDI.73, &
   SetSpeed KEYBOARD.7, &
   KeyboardEnable KEYBOARD.2, &
   MouseEnable MOUSE.2

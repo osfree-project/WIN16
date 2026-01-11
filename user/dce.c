@@ -240,7 +240,6 @@ void DCE_Init()
     }
 }
 
-#if 0
 /***********************************************************************
  *           DCE_GetVisRect
  *
@@ -395,7 +394,6 @@ HRGN DCE_GetVisRgn( HWND hwnd, WORD flags )
     return hrgn;
 }
 
-#endif
 
 /***********************************************************************
  *           DCE_SetDrawable
@@ -528,7 +526,6 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 #endif
     if (hwnd)
     {
-#if 0
         if (flags & DCX_PARENTCLIP)  /* Get a VisRgn for the parent */
         {
             WND *parentPtr = wndPtr->parent;
@@ -544,7 +541,6 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
                                          -wndPtr->rectClient.top );
         }
         else hrgnVisible = DCE_GetVisRgn( hwnd, flags );
-#endif
     }
     else  /* Get a VisRgn for the whole screen */
     {
@@ -561,8 +557,8 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     SelectVisRgn( hdc, hrgnVisible );
     DeleteObject( hrgnVisible );
 
-//    TRACE("GetDCEx(%04x,%04x,0x%lx): returning %04x", 
-//	       hwnd, hrgnClip, flags, hdc);
+    TRACE("GetDCEx(%04x,%04x,0x%lx): returning %04x", 
+	       hwnd, hrgnClip, flags, hdc);
     return hdc;
 }
 

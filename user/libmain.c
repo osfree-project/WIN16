@@ -368,12 +368,12 @@ VOID WINAPI PASCAL Timer_Event(VOID){
 
 VOID WINAPI EnableInput()
 {
-	FUNCTION_START
+//	FUNCTION_START
 
 	// See "Undocumented Windows"
 	EnableSystemTimers();
 
-	printf("EnableSystemTimers()");
+//	printf("EnableSystemTimers()");
 	if(!CreateSystemTimer(1000, (FARPROC)Timer_Event ) ){
 		printf(" CreateSystemTimer()  FAILED ! ");
 	}
@@ -411,22 +411,9 @@ VOID WINAPI EnableInput()
 	// 2 = DRV_ENABLE??
 //	InternalBroadcastDriverMessage(0, 2, 0, 0, 0, 0, 0, 4);
 
-	FUNCTION_END
+//	FUNCTION_END
 }
 
-#if 0
-// @todo Move to Desktop.c
-LRESULT WINAPI DeskTopWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
-{
-//    LOGSTR((LF_API,"DeskTopWndProc(hWnd=%.04x,wMsg=%.04x,wParam=%x,lParam=%x)\n",
-//	hWnd,wMsg,wParam,lParam));
-
-	FUNCTION_START
-for(;;);
-	FUNCTION_END
-    return(1L);
-}
-#endif
 
 BOOL WINAPI SetDeskWallPaper(LPSTR lpszBmpFileName)
 {
@@ -454,8 +441,10 @@ LRESULT WINAPI SwitchWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 //    LOGSTR((LF_API,"DeskTopWndProc(hWnd=%.04x,wMsg=%.04x,wParam=%x,lParam=%x)\n",
 //	hWnd,wMsg,wParam,lParam));
 
-	FUNCTION_START
-	FUNCTION_END
+//	FUNCTION_START
+//	TRACE("switchwnd_msg=0x%04X", wMsg);
+	return DefWindowProc(hWnd, wMsg, wParam, lParam);
+//	FUNCTION_END
     return(1);
 }
 
@@ -465,8 +454,8 @@ LRESULT WINAPI TitleWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 //    LOGSTR((LF_API,"DeskTopWndProc(hWnd=%.04x,wMsg=%.04x,wParam=%x,lParam=%x)\n",
 //	hWnd,wMsg,wParam,lParam));
 
-	FUNCTION_START
-	FUNCTION_END
+//	FUNCTION_START
+//	FUNCTION_END
     return(1L);
 }
 
@@ -521,7 +510,7 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 
 	// Create the desktop and switch windows
 	HWndDesktop = CreateWindowEx(0, DESKTOP_CLASS_ATOM,
-		0, WS_CLIPCHILDREN | WS_VISIBLE | WS_POPUP | WS_EX_NOPARENTNOTIFY, 0, 0,
+		0, WS_CLIPCHILDREN |  WS_POPUP | WS_EX_NOPARENTNOTIFY, 0, 0,
 		CXScreen, CYScreen, 0, 0, 0/*hInstance*/, 0);
 
 
@@ -533,13 +522,25 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 }
 
 	HWndSwitch = CreateWindowEx( 0, MAKELP(0, 0x8003),
-		0, CS_GLOBALCLASS | WS_DISABLED | WS_POPUP, 0, 0, 0xA, 0xA,
+		0, WS_CAPTION | WS_BORDER |/*WS_DISABLED*/WS_VISIBLE | WS_POPUP, 0, 0, 150, 150,
 		0, 0, 0/*hInstance*/, 0 );
-
 
 	// Move the switch window to the center of the screen
 	SetWindowPos( HWndSwitch, 0xFFFF, 0, 0, 0, 0,
 		SWP_NOSIZE | SWP_NOMOVE | SWP_NOREDRAW | SWP_NOACTIVATE);
+
+// Ok. Now time to test message queue...
+{
+	MSG      msg;
+	
+	while (GetMessage(&msg, 0, 0, 0)) 
+	{
+		//TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+}
+
+for(;;);
 
 //	HWndRealPopup = CreateWindowEx( 0, MAKELP(0, 0x8000), 0,
 //		WS_POPUP, 0, 0, 0x64, 0x64, 0, 0,
@@ -694,8 +695,8 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 	RECT rect = {0,0,100,100};
 	HDC desktop;
 
-	FUNCTION_START
-	TRACE("inst=%x", hInstance);
+//	FUNCTION_START
+//	TRACE("inst=%x", hInstance);
 
 	hGDI = LoadLibrary( "GDI.EXE" );
  
@@ -735,6 +736,8 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 	// GetDCState(), CreateCompatibleDC(), and GetStockObject().
 	// The HFontSys and HFontSysFixed global vars are set here.
 	LW_DCInit();
+
+	SYSCOLOR_Init();
 
 	// Calls GetStockObject() to set the variables
 	// HBrWhite and HBrBlack. Calls CreateBitmap(),
@@ -864,16 +867,6 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 //	DeleteDC(tempHDC);
 }
 
-// Ok. Now time to test message queue...
-{
-	MSG      msg;
-	
-//	while (GetMessage(&msg, 0, 0, 0)) 
-//	{
-//		//TranslateMessage(&msg);
-//		DispatchMessage(&msg);
-//	}
-}
 for (;;);
 
 

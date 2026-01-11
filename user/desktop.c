@@ -155,6 +155,9 @@ TRACE("message=%04x", message);
 
     case WM_SYSCOLORCHANGE:
 	break;
+
+    case WM_SETCURSOR:
+	break;
 	
     case WM_ERASEBKGND:
 //	if (rootWindow == DefaultRootWindow(display)) return 1;

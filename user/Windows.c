@@ -9,13 +9,21 @@ VOID WINAPI PaintRect( HWND hwndParent, HWND hwnd, HDC hdc,
 /**************************************************************************
  *              FillWindow   (USER.324)
  */
-void WINAPI FillWindow( HWND hwndParent, HWND hwnd, HDC hdc, HBRUSH hbrush )
+void WINAPI FillWindow(HWND hwndParent, HWND hwnd, HDC hdc, HBRUSH hbrush)
 {
     RECT rect;
+    HBRUSH hBrushRed;
+	HPEN hPenBlue;
+
 	FUNCTION_START
-    GetClientRect( hwnd, &rect );
-    DPtoLP( hdc, (LPPOINT)&rect, 2 );
-    PaintRect( hwndParent, hwnd, hdc, hbrush, &rect );
+
+	GetClientRect( hwnd, &rect );
+TRACE("left=%d top=%d right=%d bottom=%d", rect.left, rect.top, rect.right, rect.bottom);
+
+	DPtoLP( hdc, (LPPOINT)&rect, 2 );
+TRACE("left=%d top=%d right=%d bottom=%d", rect.left, rect.top, rect.right, rect.bottom);
+	PaintRect( hwndParent, hwnd, hdc, hbrush, &rect );
+	FUNCTION_END
 }
 
 /***********************************************************************
@@ -26,7 +34,7 @@ HWND WINAPI CreateWindow( LPCSTR className, LPCSTR windowName,
                               int height, HWND parent, HMENU menu,
                               HINSTANCE instance, LPVOID data )
 {
-	FUNCTION_START
+//	FUNCTION_START
     return CreateWindowEx( 0, className, windowName, style,
                              x, y, width, height, parent, menu, instance, data );
 }
@@ -125,47 +133,6 @@ int FAR PASCAL SysErrorBox(LPSTR lpszMsg,        LPSTR lpszTitle, WORD wButton1,
 	  return 0;
 }
 
-/**************************************************************************
- *              GetFocus   (USER.23)
- */
-HWND WINAPI GetFocus(void)
-{
-	FUNCTION_START
-    return 0;
-}
-
-/**************************************************************************
- *              SetFocus   (USER.22)
- */
-HWND WINAPI SetFocus( HWND hwnd )
-{
-	FUNCTION_START
-    return 0;
-}
-
-/***********************************************************************
- *		GetWindowTask   (USER.224)
- */
-HTASK WINAPI GetWindowTask( HWND hwnd )
-{
-	FUNCTION_START
-//    DWORD tid = GetWindowThreadProcessId( HWND_32(hwnd), NULL );
-    //if (!tid) return 0;
-    //return HTASK_16(tid);
-	return 0;
-}
-
-/**************************************************************************
- *              IsWindow   (USER.47)
- */
-BOOL WINAPI IsWindow( HWND hwnd )
-{
-	FUNCTION_START
-    //CURRENT_STACK16->es = USER_HeapSel;
-    /* don't use WIN_Handle32 here, we don't care about the full handle */
-//    return IsWindow( HWND_32(hwnd) );
-  return 0;
-}
 
 /**************************************************************************
  *              GetWindowWord   (USER.133)
@@ -335,17 +302,17 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT FAR * rectUpdate, HRGN hrgnUpdat
     if (!IsWindowVisible(hwnd) || (wndPtr->flags & WIN_NO_REDRAW))
         return TRUE;  /* No redraw needed */
 
-    if (rectUpdate)
-    {
-        TRACE("RedrawWindow: %04x %d,%d-%d,%d %04x flags=%04x\n",
-                    hwnd, rectUpdate->left, rectUpdate->top,
-                    rectUpdate->right, rectUpdate->bottom, hrgnUpdate, flags );
-    }
-    else
-    {
-        TRACE("RedrawWindow: %04x NULL %04x flags=%04x\n",
-                     hwnd, hrgnUpdate, flags);
-    }
+//    if (rectUpdate)
+//    {
+//        TRACE("RedrawWindow: %04x %d,%d-%d,%d %04x flags=%04x\n",
+//                    hwnd, rectUpdate->left, rectUpdate->top,
+//                    rectUpdate->right, rectUpdate->bottom, hrgnUpdate, flags );
+//    }
+//    else
+//    {
+//        TRACE("RedrawWindow: %04x NULL %04x flags=%04x\n",
+//                     hwnd, hrgnUpdate, flags);
+//    }
     GetClientRect( hwnd, &rectClient );
 
 
@@ -486,16 +453,6 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT FAR * rectUpdate, HRGN hrgnUpdat
     return TRUE;
 }
 
-/***********************************************************************
- *		DefWindowProc (USER.107)
- */
-LRESULT WINAPI DefWindowProc( HWND hwnd16, UINT msg, WPARAM wParam, LPARAM lParam )
-{
-	FUNCTION_START
-    //LRESULT result;
-//    WINPROC_CallProc16To32A( defwnd_proc_callback, hwnd16, msg, wParam, lParam, &result, 0 );
-    return 0;//result;
-}
 
 /**************************************************************************
  *              GetDlgCtrlID   (USER.277)
@@ -506,6 +463,7 @@ int WINAPI GetDlgCtrlID( HWND hwnd )
     return 0;//GetDlgCtrlID( WIN_Handle32(hwnd) );
 }
 
+#if 0
 /*******************************************************************
  *		MapWindowPoints (USER.258)
  */
@@ -513,6 +471,7 @@ void WINAPI MapWindowPoints( HWND hwndFrom, HWND hwndTo, LPPOINT lppt, UINT coun
 {
 	FUNCTION_START
 }
+#endif
 
 /**************************************************************************
  *              ReleaseCapture   (USER.19)
@@ -612,14 +571,6 @@ void WINAPI ScrollWindow( HWND hwnd, int dx, int dy, const RECT *rect,
 	FUNCTION_START
 }
 
-/**************************************************************************
- *              GetParent   (USER.46)
- */
-HWND WINAPI GetParent( HWND hwnd )
-{
-	FUNCTION_START
-    return 0;
-}
 
 /**************************************************************************
  *              SetCapture   (USER.18)
@@ -630,25 +581,8 @@ HWND WINAPI SetCapture( HWND hwnd )
     return 0;
 }
 
-/***********************************************************************
- *		BeginPaint (USER.39)
- */
-HDC WINAPI BeginPaint( HWND hwnd, LPPAINTSTRUCT lps )
-{
-	FUNCTION_START
-    return 0;
-}
 
-/***********************************************************************
- *		EndPaint (USER.40)
- * VOID in watcom headers
- */
-VOID /*BOOL*/ WINAPI EndPaint( HWND hwnd, const PAINTSTRUCT FAR *lps )
-{
-	FUNCTION_START
-    //return FALSE;
-}
-
+#if 0
 /**************************************************************************
  *              ScreenToClient   (USER.29)
  */
@@ -657,3 +591,5 @@ void WINAPI ScreenToClient( HWND hwnd, LPPOINT lppnt )
 	FUNCTION_START
     MapWindowPoints( 0, hwnd, lppnt, 1 );
 }
+
+#endif

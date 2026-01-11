@@ -20,12 +20,10 @@
 /* #define DEBUG_WIN */
 //#include "debug.h"
 
-#if 0
 /* ----- external functions ----- */
 
 void 	FOCUS_SwitchFocus( HWND , HWND );
 
-#endif
 
 /* ----- internal variables ----- */
 
@@ -151,22 +149,21 @@ void WINAPI GetClientRect( HWND hwnd, LPRECT rect )
     }
 }
 
-#if 0
 
 /*******************************************************************
  *         ClientToScreen   (USER.28)
  */
-BOOL ClientToScreen( HWND hwnd, LPPOINT lppnt )
+VOID WINAPI ClientToScreen( HWND hwnd, LPPOINT lppnt )
 {
     MapWindowPoints( hwnd, 0, lppnt, 1 );
-    return TRUE;
+    return ;
 }
 
 
 /*******************************************************************
  *         ScreenToClient   (USER.29)
  */
-void ScreenToClient( HWND hwnd, LPPOINT lppnt )
+void WINAPI ScreenToClient( HWND hwnd, LPPOINT lppnt )
 {
     MapWindowPoints( 0, hwnd, lppnt, 1 );
 }
@@ -177,11 +174,11 @@ void ScreenToClient( HWND hwnd, LPPOINT lppnt )
  *
  * Find the window and hittest for a given point.
  */
-INT WINPOS_WindowFromPoint( POINT pt, WND **ppWnd )
+int WINPOS_WindowFromPoint( POINT pt, WND **ppWnd )
 {
     WND *wndPtr;
-    INT hittest = HTERROR;
-    INT x, y;
+    int hittest = HTERROR;
+    int x, y;
 
     *ppWnd = NULL;
     x = pt.x;
@@ -231,7 +228,7 @@ INT WINPOS_WindowFromPoint( POINT pt, WND **ppWnd )
 
         /* Send the WM_NCHITTEST message (only if to the same task) */
         if ((*ppWnd)->hmemTaskQ != GetTaskQueue(0)) return HTCLIENT;
-        hittest = (INT)SendMessage( (*ppWnd)->hwndSelf, WM_NCHITTEST, 0,
+        hittest = (int)SendMessage( (*ppWnd)->hwndSelf, WM_NCHITTEST, 0,
                                     MAKELONG( pt.x, pt.y ) );
         if (hittest != HTTRANSPARENT) return hittest;  /* Found the window */
 
@@ -248,6 +245,7 @@ INT WINPOS_WindowFromPoint( POINT pt, WND **ppWnd )
     }
 }
 
+#if 0
 
 /*******************************************************************
  *         WindowFromPoint   (USER.30)
@@ -288,10 +286,12 @@ HWND ChildWindowFromPoint( HWND hwndParent, POINT pt )
     return hwndParent;
 }
 
+#endif
+
 /*******************************************************************
  *         MapWindowPoints   (USER.258)
  */
-void MapWindowPoints( HWND hwndFrom, HWND hwndTo, LPPOINT lppt, WORD count )
+void WINAPI MapWindowPoints( HWND hwndFrom, HWND hwndTo, LPPOINT lppt, UINT count )
 {
     WND * wndPtr;
     POINT * curpt;
@@ -305,7 +305,7 @@ void MapWindowPoints( HWND hwndFrom, HWND hwndTo, LPPOINT lppt, WORD count )
     {
         if (!(wndPtr = WIN_FindWndPtr( hwndFrom )))
         {
-            fprintf(stderr,"MapWindowPoints: bad hwndFrom = %04x\n",hwndFrom);
+            TRACE("MapWindowPoints: bad hwndFrom = %04x\n",hwndFrom);
             return;
         }
         while (wndPtr->parent)
@@ -321,7 +321,7 @@ void MapWindowPoints( HWND hwndFrom, HWND hwndTo, LPPOINT lppt, WORD count )
     {
         if (!(wndPtr = WIN_FindWndPtr( hwndTo )))
         {
-            fprintf(stderr,"MapWindowPoints: bad hwndTo = %04x\n", hwndTo );
+            TRACE("MapWindowPoints: bad hwndTo = %04x\n", hwndTo );
             return;
         }
         while (wndPtr->parent)
@@ -344,18 +344,19 @@ void MapWindowPoints( HWND hwndFrom, HWND hwndTo, LPPOINT lppt, WORD count )
 /***********************************************************************
  *           IsIconic   (USER.31)
  */
-BOOL IsIconic(HWND hWnd)
+BOOL WINAPI IsIconic(HWND hWnd)
 {
     WND * wndPtr = WIN_FindWndPtr(hWnd);
     if (wndPtr == NULL) return FALSE;
     return (wndPtr->dwStyle & WS_MINIMIZE) != 0;
 }
+
  
  
 /***********************************************************************
  *           IsZoomed   (USER.272)
  */
-BOOL IsZoomed(HWND hWnd)
+BOOL WINAPI IsZoomed(HWND hWnd)
 {
     WND * wndPtr = WIN_FindWndPtr(hWnd);
     if (wndPtr == NULL) return FALSE;
@@ -363,19 +364,11 @@ BOOL IsZoomed(HWND hWnd)
 }
 
 
-/*******************************************************************
- *         GetActiveWindow    (USER.60)
- */
-HWND GetActiveWindow()
-{
-    return hwndActive;
-}
-
 
 /*******************************************************************
  *         SetActiveWindow    (USER.59)
  */
-HWND SetActiveWindow( HWND hwnd )
+HWND WINAPI SetActiveWindow( HWND hwnd )
 {
     HWND prev = hwndActive;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
@@ -391,7 +384,7 @@ HWND SetActiveWindow( HWND hwnd )
 /***********************************************************************
  *           BringWindowToTop   (USER.45)
  */
-BOOL BringWindowToTop( HWND hwnd )
+BOOL WINAPI BringWindowToTop( HWND hwnd )
 {
     return SetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE );
 }
@@ -400,16 +393,15 @@ BOOL BringWindowToTop( HWND hwnd )
 /***********************************************************************
  *           MoveWindow   (USER.56)
  */
-BOOL MoveWindow( HWND hwnd, short x, short y, short cx, short cy, BOOL repaint)
+BOOL WINAPI MoveWindow( HWND hwnd, int x, int y, int cx, int cy, BOOL repaint)
 {    
     int flags = SWP_NOZORDER | SWP_NOACTIVATE;
     if (!repaint) flags |= SWP_NOREDRAW;
-    dprintf_win(stddeb, "MoveWindow: %04x %d,%d %dx%d %d\n", 
+    TRACE("MoveWindow: %04x %d,%d %dx%d %d\n", 
 	    hwnd, x, y, cx, cy, repaint );
     return SetWindowPos( hwnd, 0, x, y, cx, cy, flags );
 }
 
-#endif
 
 /***********************************************************************
  *           ShowWindow   (USER.42)
@@ -554,7 +546,6 @@ BOOL WINAPI ShowWindow( HWND hwnd, int cmd )
 
     SendMessage( hwnd, WM_SHOWWINDOW, (cmd != SW_HIDE), 0 );
     SetWindowPos( hwnd, HWND_TOP, x, y, cx, cy, swpflags );
-for(;;);
 
       /* Send WM_SIZE and WM_MOVE messages if not already done */
     if (!(wndPtr->flags & WIN_GOT_SIZEMSG))
@@ -687,8 +678,8 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
 
     if( wndTemp )
 	wIconized = HIWORD(wndTemp->dwStyle & WS_MINIMIZE);
-    else
-	TRACE("WINPOS_ActivateWindow: no current active window.\n");
+    else ;
+	//TRACE("WINPOS_ActivateWindow: no current active window.\n");
 
     /* call CBT hook chain */
 //@todo     wRet = HOOK_CallHooks(WH_CBT, HCBT_ACTIVATE, (WPARAM)hWnd,
@@ -699,7 +690,6 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
     /* set prev active wnd to current active wnd and send notification */
     if( (hwndPrevActive = hwndActive) )
     {
-/* FIXME: need a Win32 translation for WINELIB32 */
 	if( !SendMessage(hwndPrevActive, WM_NCACTIVATE, 0, MAKELONG(hWnd,wIconized)) )
         {
 	    if (GetSysModalWindow() != hWnd) return 0;
@@ -798,13 +788,11 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
 
     if( !IsWindow(hWnd) ) return 0;
 
-#if 0
     /* change focus if possible */
     if( fChangeFocus && GetFocus() )
 	if( WIN_GetTopParent(GetFocus()) != hwndActive )
 	    FOCUS_SwitchFocus( GetFocus(),
 			       (wndPtr->dwStyle & WS_MINIMIZE)? 0: hwndActive);
-#endif
 
     /* if active wnd is minimized redraw icon title 
   if( hwndActive )
@@ -877,14 +865,13 @@ LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect, RECT *newWindowRect,
     result = SendMessage( hwnd, WM_NCCALCSIZE, calcValidRect,
                           (LPARAM)(NCCALCSIZE_PARAMS FAR *)&params );
 
-    TRACE("WINPOS_SendNCCalcSize: %d %d %d %d\n",
-		(int)params.rgrc[0].top,    (int)params.rgrc[0].left,
-		(int)params.rgrc[0].bottom, (int)params.rgrc[0].right);
+//    TRACE("WINPOS_SendNCCalcSize: %d %d %d %d",
+//		(int)params.rgrc[0].top,    (int)params.rgrc[0].left,
+//		(int)params.rgrc[0].bottom, (int)params.rgrc[0].right);
     *newClientRect = params.rgrc[0];
     return result;
 }
 
-#if 0
 
 /***********************************************************************
  *           WINPOS_HandleWindowPosChanging
@@ -906,7 +893,6 @@ LONG WINPOS_HandleWindowPosChanging( WINDOWPOS *winpos )
     return 0;
 }
 
-#endif
 
 /***********************************************************************
  *           WINPOS_MoveWindowZOrder
@@ -1054,49 +1040,6 @@ HWND WINPOS_ReorderOwnedPopups(HWND hwndInsertAfter, WND* wndPtr, WORD flags)
   return hwndInsertAfter;
 }
 
-#if 0
-
-/***********************************************************************
- *           WINPOS_SetXWindowPos
- *
- * SetWindowPos() for an X window. Used by the real SetWindowPos().
- */
-static void WINPOS_SetXWindowPos( WINDOWPOS *winpos )
-{
-    XWindowChanges winChanges;
-    int changeMask = 0;
-    WND *wndPtr = WIN_FindWndPtr( winpos->hwnd );
-
-    if (!(winpos->flags & SWP_NOSIZE))
-    {
-        winChanges.width     = winpos->cx;
-        winChanges.height    = winpos->cy;
-        changeMask |= CWWidth | CWHeight;
-    }
-    if (!(winpos->flags & SWP_NOMOVE))
-    {
-        winChanges.x = winpos->x;
-        winChanges.y = winpos->y;
-        changeMask |= CWX | CWY;
-    }
-    if (!(winpos->flags & SWP_NOZORDER))
-    {
-        if (winpos->hwndInsertAfter == HWND_TOP) winChanges.stack_mode = Above;
-        else winChanges.stack_mode = Below;
-        if ((winpos->hwndInsertAfter != HWND_TOP) &&
-            (winpos->hwndInsertAfter != HWND_BOTTOM))
-        {
-            WND * insertPtr = WIN_FindWndPtr( winpos->hwndInsertAfter );
-            winChanges.sibling = insertPtr->window;
-            changeMask |= CWSibling;
-        }
-        changeMask |= CWStackMode;
-    }
-    if (changeMask)
-        XConfigureWindow( display, wndPtr->window, changeMask, &winChanges );
-}
-
-#endif
 
 /***********************************************************************
  *           SetWindowPos   (USER.232)
@@ -1477,3 +1420,67 @@ void CascadeChildWindows( HWND parent, WORD action )
     printf("STUB CascadeChildWindows(%04x, %d)\n", parent, action);
 }
 #endif
+
+/*******************************************************************
+ *         GetActiveWindow    (USER.60)
+ */
+HWND WINAPI GetActiveWindow()
+{
+    return hwndActive;
+}
+
+
+
+/***********************************************************************
+ *           BeginPaint    (USER.39)
+ */
+HDC WINAPI BeginPaint( HWND hwnd, LPPAINTSTRUCT lps ) 
+{
+    HRGN hrgnUpdate;
+    WND * wndPtr = WIN_FindWndPtr( hwnd );
+    if (!wndPtr) return 0;
+//FUNCTION_START
+    wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
+
+    if (wndPtr->flags & WIN_NEEDS_NCPAINT) WIN_UpdateNCArea( wndPtr, TRUE );
+
+    if (((hrgnUpdate = wndPtr->hrgnUpdate) != 0) ||
+        (wndPtr->flags & WIN_INTERNAL_PAINT))
+        QUEUE_DecPaintCount( wndPtr->hmemTaskQ );
+
+    wndPtr->hrgnUpdate = 0;
+    wndPtr->flags &= ~WIN_INTERNAL_PAINT;
+
+    HideCaret( hwnd );
+
+    lps->hdc = GetDCEx( hwnd, hrgnUpdate, DCX_INTERSECTRGN | DCX_USESTYLE );
+    if(hrgnUpdate > 1) DeleteObject( hrgnUpdate );
+
+    if (!lps->hdc)
+    {
+        TRACE("GetDCEx() failed in BeginPaint(), hwnd=%04x\n", hwnd);
+        return 0;
+    }
+
+    GetRgnBox( InquireVisRgn(lps->hdc), &lps->rcPaint );
+    DPtoLP( lps->hdc, (LPPOINT)&lps->rcPaint, 2 );
+
+    if (wndPtr->flags & WIN_NEEDS_ERASEBKGND)
+    {
+        wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
+        lps->fErase = !SendMessage( hwnd, WM_ERASEBKGND, (WPARAM)lps->hdc, 0 );
+    }
+    else lps->fErase = TRUE;
+
+    return lps->hdc;
+}
+
+/***********************************************************************
+ *           EndPaint    (USER.40)
+ */
+void WINAPI EndPaint( HWND hwnd, const PAINTSTRUCT* lps )
+{
+    ReleaseDC( hwnd, lps->hdc );
+    ShowCaret( hwnd );
+    return;
+}

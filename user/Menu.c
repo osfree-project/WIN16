@@ -1,7 +1,7 @@
 #include <user.h>
 
-#include <ctype.h>
-#include <string.h>
+//#include <ctype.h>
+//#include <string.h>
 
 
 #ifndef OEMRESOURCE
@@ -10,6 +10,7 @@
 #include <windows.h>
 #undef OEMRESOURCE
 
+#if 0
 #include "menu.h"
 #include "Listbox.h"
 
@@ -48,6 +49,7 @@ static HBITMAP SystemBitmaps[8];
 #define SB_OBM_ZOOMD	7
 
 #define	OM_MASK		0x4000
+#endif
 
 int latoi(char far *h)
 {
@@ -92,7 +94,11 @@ int latoi(char far *h)
   return i;
 }
 
+#if 0
+
 HMODULE WINAPI GetExePtr( HANDLE handle );
+
+#endif
 
 /**********************************************************************
  *	    LoadMenu    (USER.150)
@@ -109,10 +115,12 @@ HMENU WINAPI LoadMenu( HINSTANCE instance, LPCSTR name )
     instance = GetExePtr( instance );
     if (!(hRsrc = FindResource( instance, name, (LPSTR)RT_MENU ))) return 0;
     if (!(handle = LoadResource( instance, hRsrc ))) return 0;
-    hMenu = LoadMenuIndirect(LockResource(handle));
+//@todo    hMenu = LoadMenuIndirect(LockResource(handle));
     FreeResource( handle );
     return hMenu;
 }
+
+#if 0
 
 /*******************************************************************
  *         ChangeMenu    (USER.153)
@@ -236,11 +244,15 @@ CreateMenu()
     return (HMENU)LBoxAPI(0,LBA_CREATE,(LPARAM)&mc);
 }
 
+#endif
+
 BOOL WINAPI		/* API */
 DestroyMenu(HMENU hMenu)
 {
-    return LBoxAPI(hMenu,LBA_DESTROY,0);
+    return 1;//LBoxAPI(hMenu,LBA_DESTROY,0);
 }
+
+#if 0
 
 void
 MenuDrawItem(HDC hDC, HMENU hMenu, HWND hWndOwner, WORD wPos, WORD wAction)
@@ -579,12 +591,15 @@ GetMenu(HWND hWnd)
     return hMenu;
 }
 
+#endif
+
 /**************************************************************************
  *              SetMenu   (USER.158)
  */
 BOOL WINAPI
 SetMenu(HWND hWnd, HMENU hMenu)
 {
+#if 0
 //    HMENU32 hMenu32;
     LPTRACKPOPUPSTRUCT lptps;
     HWND hWndMenu;
@@ -630,9 +645,12 @@ SetMenu(HWND hWnd, HMENU hMenu)
 //@todo call redraw here
 //    TWIN_RedrawWindow(hWnd,NULL,0,RDW_FRAME|RDW_INVALIDATE);
 //    RELEASELBOXINFO((LPLISTBOXINFO)hMenu32);
+#endif
 
     return TRUE;
 }
+
+#if 0
 
 /**************************************************************************
  *              GetSystemMenu   (USER.156)
@@ -1353,3 +1371,4 @@ SetMenuItemBitmaps(HMENU hMenu, UINT uiItem, UINT uiFlags,
 //    RELEASELBOXINFO((LPLISTBOXINFO)hMenu32orig);
     return TRUE;
 }
+#endif
