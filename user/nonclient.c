@@ -80,7 +80,7 @@ static void NC_AdjustRect( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
     if (style & WS_ICONIC) return;  /* Nothing to change for an icon */
 
     /* Decide if the window will be managed (see CreateWindowEx) */
-    if (!(/*@todo fix Options.managed*/1 && ((style & (WS_DLGFRAME | WS_THICKFRAME)) ||
+    if (!(/*@todo fix Options.managed*/0 && ((style & (WS_DLGFRAME | WS_THICKFRAME)) ||
           (exStyle & WS_EX_DLGMODALFRAME))))
     {
         if (HAS_DLGFRAME( style, exStyle ))
@@ -193,12 +193,12 @@ void NC_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
 
       /* Some sanity checks */
 
-    TRACE(
-		      "NC_GetMinMaxInfo: %d %d / %d %d / %d %d / %d %d\n",
-		      (int)MinMax.ptMaxSize.x,(int)MinMax.ptMaxSize.y,
-		      (int)MinMax.ptMaxPosition.x,(int)MinMax.ptMaxPosition.y,
-		      (int)MinMax.ptMaxTrackSize.x,(int)MinMax.ptMaxTrackSize.y,
-		      (int)MinMax.ptMinTrackSize.x,(int)MinMax.ptMinTrackSize.y);
+//    TRACE("NC_GetMinMaxInfo: %d %d / %d %d / %d %d / %d %d\n",
+//		      (int)MinMax.ptMaxSize.x,(int)MinMax.ptMaxSize.y,
+//		      (int)MinMax.ptMaxPosition.x,(int)MinMax.ptMaxPosition.y,
+//		      (int)MinMax.ptMaxTrackSize.x,(int)MinMax.ptMaxTrackSize.y,
+//		      (int)MinMax.ptMinTrackSize.x,(int)MinMax.ptMinTrackSize.y);
+
     MinMax.ptMaxTrackSize.x = MAX( MinMax.ptMaxTrackSize.x,
 				   MinMax.ptMinTrackSize.x );
     MinMax.ptMaxTrackSize.y = MAX( MinMax.ptMaxTrackSize.y,
@@ -270,7 +270,6 @@ void NC_GetInsideRect( HWND hwnd, RECT *rect )
     }
 }
 
-#if 0
 
 /***********************************************************************
  *           NC_HandleNCHitTest
@@ -283,8 +282,8 @@ LONG NC_HandleNCHitTest( HWND hwnd, POINT pt )
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return HTERROR;
 
-    dprintf_nonclient(stddeb, "NC_HandleNCHitTest: hwnd=%04x pt=%d,%d\n",
-		      hwnd, pt.x, pt.y );
+//    dprintf_nonclient(stddeb, "NC_HandleNCHitTest: hwnd=%04x pt=%d,%d\n",
+//		      hwnd, pt.x, pt.y );
 
     GetWindowRect( hwnd, &rect );
     if (!PtInRect( &rect, pt )) return HTNOWHERE;
@@ -296,37 +295,37 @@ LONG NC_HandleNCHitTest( HWND hwnd, POINT pt )
         /* Check borders */
         if (HAS_THICKFRAME( wndPtr->dwStyle ))
         {
-            InflateRect( &rect, -SYSMETRICS_CXFRAME, -SYSMETRICS_CYFRAME );
+            InflateRect( &rect, -GetSystemMetrics(SM_CXFRAME), -GetSystemMetrics(SM_CYFRAME));
             if (wndPtr->dwStyle & WS_BORDER)
-                InflateRect(&rect, -SYSMETRICS_CXBORDER, -SYSMETRICS_CYBORDER);
+                InflateRect(&rect, -GetSystemMetrics(SM_CXBORDER), -GetSystemMetrics(SM_CYBORDER));
             if (!PtInRect( &rect, pt ))
             {
                 /* Check top sizing border */
                 if (pt.y < rect.top)
                 {
-                    if (pt.x < rect.left+SYSMETRICS_CXSIZE) return HTTOPLEFT;
-                    if (pt.x >= rect.right-SYSMETRICS_CXSIZE) return HTTOPRIGHT;
+                    if (pt.x < rect.left+GetSystemMetrics(SM_CXSIZE)) return HTTOPLEFT;
+                    if (pt.x >= rect.right-GetSystemMetrics(SM_CXSIZE)) return HTTOPRIGHT;
                     return HTTOP;
                 }
                 /* Check bottom sizing border */
                 if (pt.y >= rect.bottom)
                 {
-                    if (pt.x < rect.left+SYSMETRICS_CXSIZE) return HTBOTTOMLEFT;
-                    if (pt.x >= rect.right-SYSMETRICS_CXSIZE) return HTBOTTOMRIGHT;
+                    if (pt.x < rect.left+GetSystemMetrics(SM_CXSIZE)) return HTBOTTOMLEFT;
+                    if (pt.x >= rect.right-GetSystemMetrics(SM_CXSIZE)) return HTBOTTOMRIGHT;
                     return HTBOTTOM;
                 }
                 /* Check left sizing border */
                 if (pt.x < rect.left)
                 {
-                    if (pt.y < rect.top+SYSMETRICS_CYSIZE) return HTTOPLEFT;
-                    if (pt.y >= rect.bottom-SYSMETRICS_CYSIZE) return HTBOTTOMLEFT;
+                    if (pt.y < rect.top+GetSystemMetrics(SM_CYSIZE)) return HTTOPLEFT;
+                    if (pt.y >= rect.bottom-GetSystemMetrics(SM_CYSIZE)) return HTBOTTOMLEFT;
                     return HTLEFT;
                 }
                 /* Check right sizing border */
                 if (pt.x >= rect.right)
                 {
-                    if (pt.y < rect.top+SYSMETRICS_CYSIZE) return HTTOPRIGHT;
-                    if (pt.y >= rect.bottom-SYSMETRICS_CYSIZE) return HTBOTTOMRIGHT;
+                    if (pt.y < rect.top+GetSystemMetrics(SM_CYSIZE)) return HTTOPRIGHT;
+                    if (pt.y >= rect.bottom-GetSystemMetrics(SM_CYSIZE)) return HTBOTTOMRIGHT;
                     return HTRIGHT;
                 }
             }
@@ -334,9 +333,9 @@ LONG NC_HandleNCHitTest( HWND hwnd, POINT pt )
         else  /* No thick frame */
         {
             if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
-                InflateRect(&rect, -SYSMETRICS_CXDLGFRAME, -SYSMETRICS_CYDLGFRAME);
+                InflateRect(&rect, -GetSystemMetrics(SM_CXDLGFRAME), -GetSystemMetrics(SM_CYDLGFRAME));
             else if (wndPtr->dwStyle & WS_BORDER)
-                InflateRect(&rect, -SYSMETRICS_CXBORDER, -SYSMETRICS_CYBORDER);
+                InflateRect(&rect, -GetSystemMetrics(SM_CXBORDER), -GetSystemMetrics(SM_CYBORDER));
             if (!PtInRect( &rect, pt )) return HTBORDER;
         }
 
@@ -344,20 +343,20 @@ LONG NC_HandleNCHitTest( HWND hwnd, POINT pt )
 
         if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
         {
-            rect.top += SYSMETRICS_CYCAPTION - 1;
+            rect.top += GetSystemMetrics(SM_CYCAPTION) - 1;
             if (!PtInRect( &rect, pt ))
             {
                 /* Check system menu */
                 if (wndPtr->dwStyle & WS_SYSMENU)
-                    rect.left += SYSMETRICS_CXSIZE;
+                    rect.left += GetSystemMetrics(SM_CXSIZE);
                 if (pt.x <= rect.left) return HTSYSMENU;
                 /* Check maximize box */
                 if (wndPtr->dwStyle & WS_MAXIMIZEBOX)
-                    rect.right -= SYSMETRICS_CXSIZE + 1;
+                    rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
                 if (pt.x >= rect.right) return HTMAXBUTTON;
                 /* Check minimize box */
                 if (wndPtr->dwStyle & WS_MINIMIZEBOX)
-                    rect.right -= SYSMETRICS_CXSIZE + 1;
+                    rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
                 if (pt.x >= rect.right) return HTMINBUTTON;
                 return HTCAPTION;
             }
@@ -374,7 +373,7 @@ LONG NC_HandleNCHitTest( HWND hwnd, POINT pt )
 
     if (wndPtr->dwStyle & WS_VSCROLL)
     {
-	rect.right += SYSMETRICS_CXVSCROLL;
+	rect.right += GetSystemMetrics(SM_CXVSCROLL);
 	if (PtInRect( &rect, pt )) return HTVSCROLL;
     }
 
@@ -382,12 +381,12 @@ LONG NC_HandleNCHitTest( HWND hwnd, POINT pt )
 
     if (wndPtr->dwStyle & WS_HSCROLL)
     {
-	rect.bottom += SYSMETRICS_CYHSCROLL;
+	rect.bottom += GetSystemMetrics(SM_CYHSCROLL);
 	if (PtInRect( &rect, pt ))
 	{
 	      /* Check size box */
 	    if ((wndPtr->dwStyle & WS_VSCROLL) &&
-		(pt.x >= rect.right - SYSMETRICS_CXVSCROLL))
+		(pt.x >= rect.right - GetSystemMetrics(SM_CXVSCROLL)))
 		return HTSIZE;
 	    return HTHSCROLL;
 	}
@@ -405,7 +404,6 @@ LONG NC_HandleNCHitTest( HWND hwnd, POINT pt )
     return HTERROR;
 }
 
-#endif
 
 /***********************************************************************
  *           NC_DrawSysButton
@@ -650,7 +648,7 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
 
     active  = wndPtr->flags & WIN_NCACTIVATED;
 
-    TRACE("NC_DoNCPaint: %04x %d %04x\n", hwnd, active, wndPtr->dwStyle);
+//    TRACE("NC_DoNCPaint: %04x %d %04x", hwnd, active, wndPtr->dwStyle);
 
     if (!(hdc = GetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW ))) return;
 
@@ -712,8 +710,6 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
         else if (wndPtr->dwStyle & WS_THICKFRAME)
             NC_DrawFrame(hdc, &rect, FALSE, active );
 
-TRACE("test frm=0x%04X", wndPtr->dwStyle );
-
         if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
         {
             RECT r = rect;
@@ -746,7 +742,7 @@ TRACE("test frm=0x%04X", wndPtr->dwStyle );
         FillRect( hdc, &r, sysColorObjects.hbrushScrollbar );
     }    
 
-    ReleaseDC( hwnd, hdc );
+    ReleaseDC(hwnd, hdc);
 }
 
 
@@ -762,7 +758,6 @@ LONG NC_HandleNCPaint( HWND hwnd , HRGN clip)
     return 0;
 }
 
-#if 0
 
 /***********************************************************************
  *           NC_HandleNCActivate
@@ -788,8 +783,9 @@ LONG NC_HandleNCActivate( HWND hwnd, WPARAM wParam )
  */
 LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
+FUNCTION_START
     if (hwnd != (HWND)wParam) return 0;  /* Don't set the cursor for child windows */
-
+TRACE("1");
     switch(LOWORD(lParam))
     {
     case HTERROR:
@@ -817,25 +813,26 @@ LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
 
     case HTLEFT:
     case HTRIGHT:
-	return (LONG)SetCursor( LoadCursor( 0, IDC_SIZEWE ) );
+	return (LONG)SetCursor(HCursSizeWE);
 
     case HTTOP:
     case HTBOTTOM:
-	return (LONG)SetCursor( LoadCursor( 0, IDC_SIZENS ) );
+	return (LONG)SetCursor(HCursSizeNS);
 
     case HTTOPLEFT:
     case HTBOTTOMRIGHT:	
-	return (LONG)SetCursor( LoadCursor( 0, IDC_SIZENWSE ) );
+	return (LONG)SetCursor(HCursSizeNWSE);
 
     case HTTOPRIGHT:
     case HTBOTTOMLEFT:
-	return (LONG)SetCursor( LoadCursor( 0, IDC_SIZENESW ) );
+	return (LONG)SetCursor(HCursSizeNESW);
     }
 
     /* Default cursor: arrow */
-    return (LONG)SetCursor( LoadCursor( 0, IDC_ARROW ) );
+    return (LONG)SetCursor(HCursNormal);
 }
 
+#if 0
 
 /***********************************************************************
  *           NC_TrackSysMenu

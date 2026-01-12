@@ -27,9 +27,6 @@
 /* #define DEBUG_MENU */
 //#include "debug.h"
 
-/* Desktop window */
-//static WND *pWndDesktop = NULL;
-
 static HWND hwndSysModal = 0;
 
 static WORD wDragWidth = 4;
@@ -71,7 +68,7 @@ HWND WIN_GetTopParent( HWND hwnd )
     return wndPtr ? wndPtr->hwndSelf : 0;
 }
 
-
+#if 0
 /***********************************************************************
  *           WIN_DumpWindow
  *
@@ -159,20 +156,6 @@ void WIN_WalkWindows( HWND hwnd, int indent )
         if (ptr->child) WIN_WalkWindows( ptr->child->hwndSelf, indent+1 );
         ptr = ptr->next;
     }
-}
-
-
-#if 0
-/***********************************************************************
- *           WIN_GetXWindow
- *
- * Return the X window associated to a window.
- */
-Window WIN_GetXWindow( HWND hwnd )
-{
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    while (wndPtr && !wndPtr->window) wndPtr = wndPtr->parent;
-    return wndPtr ? wndPtr->window : 0;
 }
 #endif
 
@@ -357,7 +340,6 @@ BOOL WIN_CreateDesktopWindow(void)
     HCLASS hclass;
     CLASS *classPtr;
     HDC hdc;
-    //HWND hwndDesktop;
 	WND * pWndDesktop;
 
     if (!(hclass = CLASS_FindClassByName(DESKTOP_CLASS_ATOM, 0, &classPtr )))
@@ -398,10 +380,8 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->wIDmenu           = 0;
     pWndDesktop->hText             = 0;
     pWndDesktop->flags             = 0;
-//    pWndDesktop->window            = rootWindow;
     pWndDesktop->hSysMenu          = 0;
     pWndDesktop->hProp	      = 0;
-//    EVENT_RegisterWindow( pWndDesktop->window, HWndDesktop );
     SendMessage( HWndDesktop, WM_NCCREATE, 0, 0 );
     if ((hdc = GetDC( HWndDesktop )) != 0)
     {
@@ -509,7 +489,6 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
     wndPtr->child          = NULL;
     wndPtr->parent         = (style & WS_CHILD) ? WIN_FindWndPtr( parent ) : WIN_FindWndPtr(HWndDesktop);
     wndPtr->owner          = (style & WS_CHILD) ? NULL : WIN_FindWndPtr(WIN_GetTopParent(parent));
-//    wndPtr->window         = 0;
     wndPtr->dwMagic        = WND_MAGIC;
     wndPtr->hwndSelf       = hwnd;
     wndPtr->hClass         = class;
@@ -566,54 +545,6 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
     wndPtr->rectClient        = wndPtr->rectWindow;
     wndPtr->rectNormal        = wndPtr->rectWindow;
 
-#if 0
-      /* Create the X window (only for top-level windows, and then only */
-      /* when there's no desktop window) */
-
-    if (!(style & WS_CHILD) /*&& (rootWindow == DefaultRootWindow(display))*/)
-    {
-	if (Options.managed && ((style & (WS_DLGFRAME | WS_THICKFRAME)) ||
-            (exStyle & WS_EX_DLGMODALFRAME)))
-        {
-	    win_attr.event_mask = ExposureMask | KeyPressMask |
-	                          KeyReleaseMask | PointerMotionMask |
-	                          ButtonPressMask | ButtonReleaseMask |
-	                          FocusChangeMask | StructureNotifyMask;
-	    win_attr.override_redirect = FALSE;
-            wndPtr->flags |= WIN_MANAGED;
-	}
-	else
-        {
-	    win_attr.event_mask = ExposureMask | KeyPressMask |
-	                          KeyReleaseMask | PointerMotionMask |
-	                          ButtonPressMask | ButtonReleaseMask |
-	                          FocusChangeMask;
-            win_attr.override_redirect = TRUE;
-	}
-        win_attr.colormap      = COLOR_WinColormap;
-        win_attr.backing_store = Options.backingstore ? WhenMapped : NotUseful;
-        win_attr.save_under    = ((classPtr->wc.style & CS_SAVEBITS) != 0);
-        win_attr.cursor        = CURSORICON_XCursor;
-        wndPtr->window = XCreateWindow( display, rootWindow, x, y,
-                                        width, height, 0, CopyFromParent,
-                                        InputOutput, CopyFromParent,
-                                        CWEventMask | CWOverrideRedirect |
-                                        CWColormap | CWCursor | CWSaveUnder |
-                                        CWBackingStore, &win_attr );
-        XStoreName( display, wndPtr->window, PTR_SEG_TO_LIN(windowName) );
-	XA_WM_DELETE_WINDOW = XInternAtom( display, "WM_DELETE_WINDOW",
-					   False );
-	XSetWMProtocols( display, wndPtr->window, &XA_WM_DELETE_WINDOW, 1 );
-	if (parent)  /* Get window owner */
-	{
-            Window win = WIN_GetXWindow( parent );
-            if (win) XSetTransientForHint( display, wndPtr->window, win );
-	}
-	    
-        EVENT_RegisterWindow( wndPtr->window, hwnd );
-    }
-
-#endif
     
     if ((style & WS_CAPTION) && !(style & WS_CHILD))
     {
@@ -1692,8 +1623,8 @@ void WIN_UpdateNCArea(WND* wnd, BOOL bUpdate)
     RECT rect = wnd->rectClient;
     HRGN hClip = 1;
 
-    TRACE("NCUpdate: hwnd %04x, hrgnUpdate %04x\n", 
-                      wnd->hwndSelf, wnd->hrgnUpdate );
+//    TRACE("NCUpdate: hwnd %04x, hrgnUpdate %04x", 
+//                      wnd->hwndSelf, wnd->hrgnUpdate );
 
     /* desktop windows doesn't have nonclient area */
     if(wnd == WIN_GetDesktop()) 

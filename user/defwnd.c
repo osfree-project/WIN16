@@ -79,15 +79,14 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 
     case WM_NCHITTEST:
         {
-//@todo            POINT pt;
-//		pt.x=LOWORD(lParam);
-//		pt.y=HIWORD(lParam);
-//            return NC_HandleNCHitTest( hwnd, pt );
-		break;
+		POINT pt;
+		pt.x=LOWORD(lParam);
+		pt.y=HIWORD(lParam);
+		return NC_HandleNCHitTest( hwnd, pt );
         }
 
     case WM_NCLBUTTONDOWN:
-//@todo	return NC_HandleNCLButtonDown( hwnd, wParam, lParam );
+//	return NC_HandleNCLButtonDown( hwnd, wParam, lParam );
 	break;
 
     case WM_LBUTTONDBLCLK:
@@ -96,8 +95,7 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 	break;
 
     case WM_NCACTIVATE:
-//@todo	return NC_HandleNCActivate( hwnd, wParam );
-	break;
+	return NC_HandleNCActivate( hwnd, wParam );
 
     case WM_NCDESTROY:
 	if (wndPtr->hText) LocalFree(wndPtr->hText);
@@ -182,7 +180,9 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
                  DeleteObject (hbrush);
             }
             else
+		{
 	         FillWindow(GetParent(hwnd), hwnd, (HDC)wParam, classPtr->wc.hbrBackground );
+		}
 	    return 1;
 	}
 
@@ -262,9 +262,7 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 	if (wndPtr->dwStyle & WS_CHILD)
 	    if (SendMessage(wndPtr->parent->hwndSelf, WM_SETCURSOR,
                             wParam, lParam))
-		return TRUE;
-//	return NC_HandleSetCursor( hwnd, wParam, lParam );
-	break;
+	return NC_HandleSetCursor( hwnd, wParam, lParam );
 
     case WM_SYSCOMMAND:
 	{

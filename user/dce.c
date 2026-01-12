@@ -181,45 +181,60 @@ int bDebug=0;
  */
 HANDLE DCE_AllocDCE( DCE_TYPE type )
 {
-    DCE * dce;
-    HANDLE handle = LocalAlloc(LMEM_FIXED, sizeof(DCE));
-    if (!handle) return 0;
-    dce = (DCE *) LocalLock( handle );
-    if (!(dce->hDC = CreateDC( "DISPLAY", NULL, NULL, NULL )))
-    {
-	LocalFree( handle );
-	return 0;
-    }
+	DCE * dce;
+	HANDLE handle;
+
+	if (type != DCE_CACHE_DC) 
+	{
+		FUNCTION_START
+		for (;;);
+	}
+
+	handle = LocalAlloc(LMEM_FIXED, sizeof(DCE));
+	if (!handle) return 0;
+
+	dce = (DCE *) LocalLock( handle );
+
+	if (!(dce->hDC = CreateDC( "DISPLAY", NULL, NULL, NULL )))
+	{
+		LocalUnlock(handle);
+		LocalFree(handle);
+		return 0;
+	}
 
 //	DumpDC(dce->hDC);
-    dce->hwndCurr = 0;
-    dce->byFlags  = type;
-    dce->byInUse = (type != DCE_CACHE_DC);
-    dce->xOrigin = 0;
-    dce->yOrigin = 0;
-    dce->hdceNext = firstDCE;
-    firstDCE = handle;
-    return handle;
+	dce->hwndCurr = 0;
+	dce->byFlags  = type;
+	dce->byInUse = (type != DCE_CACHE_DC);
+	dce->xOrigin = 0;
+	dce->yOrigin = 0;
+	dce->hdceNext = firstDCE;
+	LocalUnlock(handle);
+	firstDCE = handle;
+	return handle;
 }
 
 
 /***********************************************************************
  *           DCE_FreeDCE
  */
-void DCE_FreeDCE( HANDLE hdce )
+void DCE_FreeDCE(HANDLE hdce)
 {
-    DCE * dce;
-    HANDLE *handle = &firstDCE;
+	DCE * dce;
+	HANDLE *handle = &firstDCE;
 
-    if (!(dce = (DCE *) LocalLock( hdce ))) return;
-    while (*handle && (*handle != hdce))
-    {
-	DCE * prev = (DCE *) LocalLock( *handle );	
-	handle = &prev->hdceNext;
-    }
-    if (*handle == hdce) *handle = dce->hdceNext;
-    DeleteDC( dce->hDC );
-    LocalFree( hdce );
+	if (!(dce = (DCE *) LocalLock(hdce))) return;
+
+	while (*handle && (*handle != hdce))
+	{
+		DCE * prev = (DCE *) LocalLock( *handle );	
+		handle = &prev->hdceNext;
+	}
+	if (*handle == hdce) *handle = dce->hdceNext;
+
+	DeleteDC( dce->hDC );
+	LocalUnlock(hdce);
+	LocalFree( hdce );
 }
 
 
@@ -234,9 +249,10 @@ void DCE_Init()
         
     for (i = 0; i < NB_DCE; i++)
     {
-	if (!(handle = DCE_AllocDCE( DCE_CACHE_DC ))) return;
-	dce = (DCE *) LocalLock( handle );	
-	if (!defaultDCstate) defaultDCstate = GetDCState( dce->hDC );
+	if (!(handle = DCE_AllocDCE(DCE_CACHE_DC))) return;
+	dce = (DCE *)LocalLock(handle);
+	if (!defaultDCstate) defaultDCstate = GetDCState(dce->hDC);
+	LocalUnlock(handle);
     }
 }
 
@@ -395,6 +411,7 @@ HRGN DCE_GetVisRgn( HWND hwnd, WORD flags )
 }
 
 
+#if 0
 /***********************************************************************
  *           DCE_SetDrawable
  *
@@ -425,7 +442,7 @@ static void DCE_SetDrawable( WND *wndPtr, DC FAR *dc, WORD flags )
         dc->wDCOrgY -= wndPtr->rectWindow.top;
     }
 }
-
+#endif
 
 /***********************************************************************
  *           GetDCEx    (USER.359)
@@ -440,7 +457,8 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     DCE * dce;
     DC FAR * dc;
     WND * wndPtr;
-
+    WORD wNewOrgX, wNewOrgY;
+  WORD gdi = 0;
 
     if (hwnd)
     {
@@ -448,12 +466,14 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     }
     else wndPtr = NULL;
 
+//TRACE("wndPtr=0x%Fp", wndPtr);
+
     if (flags & DCX_USESTYLE)
     {
         /* Set the flags according to the window style. */
 	/* Not sure if this is the real meaning of the DCX_USESTYLE flag... */
 	flags &= ~(DCX_CACHE | DCX_CLIPCHILDREN |
-                   DCX_CLIPSIBLINGS | DCX_PARENTCLIP);
+                   DCX_CLIPSIBLINGS | DCX_PARENTCLIP);                           	
 	if (wndPtr)
 	{
             if (!(WIN_CLASS_STYLE(wndPtr) & (CS_OWNDC | CS_CLASSDC)))
@@ -489,6 +509,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 		if ((dce->byFlags == DCE_CACHE_DC) && (!dce->byInUse))
 		{
 			LocalUnlock(hdce);
+//			TRACE("xxxx");
 			break;
 		}
 		LocalUnlock(hdce);
@@ -497,7 +518,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     }
     else hdce = wndPtr->hdce;
 
-    if (!hdce) 
+	if (!hdce) 
 	{
 		return 0;
 	}
@@ -513,17 +534,51 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 	hdc = dce->hDC;
 	LocalUnlock(hdce);
 	PopDS();
+
     
     /* Initialize DC */
-#if 0    
+//#if 0    
 	// DC lives in GDI local heap, so we need to switch DS to GDI heap,
-	// do all things and switch DS back
-	PushDS();
-	if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
+	// do all things and switch DS back. But prepare values befor in stack.
 
-	DCE_SetDrawable( wndPtr, dc, flags );
+    if (!wndPtr)  /* Get a DC for the whole screen */
+    {
+        wNewOrgX = 0;
+        wNewOrgY = 0;
+    }
+    else
+    {
+        if (flags & DCX_WINDOW)
+        {
+            wNewOrgX  = wndPtr->rectWindow.left;
+            wNewOrgY  = wndPtr->rectWindow.top;
+        }
+        else
+        {
+            wNewOrgX  = wndPtr->rectClient.left;
+            wNewOrgY  = wndPtr->rectClient.top;
+        }
+
+        wNewOrgX -= wndPtr->rectWindow.left;
+        wNewOrgY -= wndPtr->rectWindow.top;
+    }
+
+
+	PushDS();
+//	if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
+	gdi=SELECTOROF(GlobalLock(hGDI));
+	SetDS(gdi);
+	dc=MK_FP(gdi, LocalLock(hdc));
+
+        dc->wDCOrgX = wNewOrgX;
+        dc->wDCOrgY = wNewOrgY;
+	
+	LocalUnlock(hdc);
+	GlobalUnlock(hGDI);
+//	DCE_SetDrawable( wndPtr, dc, flags );
 	PopDS();
-#endif
+
+//#endif
     if (hwnd)
     {
         if (flags & DCX_PARENTCLIP)  /* Get a VisRgn for the parent */
@@ -557,8 +612,8 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     SelectVisRgn( hdc, hrgnVisible );
     DeleteObject( hrgnVisible );
 
-    TRACE("GetDCEx(%04x,%04x,0x%lx): returning %04x", 
-	       hwnd, hrgnClip, flags, hdc);
+//    TRACE("GetDCEx(%04x,%04x,0x%lx): returning %04x", 
+//	       hwnd, hrgnClip, flags, hdc);
     return hdc;
 }
 
@@ -573,12 +628,11 @@ HDC WINAPI GetDC(HWND hwnd)
 	return res;
 }
 
-#if 0
 
 /***********************************************************************
  *           GetWindowDC    (USER.67)
  */
-HDC GetWindowDC( HWND hwnd )
+HDC WINAPI GetWindowDC( HWND hwnd )
 {
     int flags = DCX_CACHE | DCX_WINDOW;
     if (hwnd)
@@ -591,12 +645,11 @@ HDC GetWindowDC( HWND hwnd )
     return GetDCEx( hwnd, 0, flags );
 }
 
-#endif
 
 /***********************************************************************
  *           ReleaseDC    (USER.68)
  */
-int WINAPI ReleaseDC( HWND hwnd, HDC hdc )
+int WINAPI ReleaseDC(HWND hwnd, HDC hdc)
 {
 	HANDLE hdce;
 	DCE * dce = NULL;
@@ -610,7 +663,7 @@ int WINAPI ReleaseDC( HWND hwnd, HDC hdc )
 
 	for (hdce = firstDCE; (hdce); hdce = dce->hdceNext)
 	{
-		if (!(dce = (DCE *) LocalLock( hdce )))
+		if (!(dce = (DCE *) LocalLock(hdce)))
 		{
 			PopDS();
 			return 0;

@@ -118,11 +118,12 @@ UINT ArrangeIconicWindows( HWND parent )
     return yspacing;
 }
 
+#endif
 
 /***********************************************************************
  *           GetWindowRect   (USER.32)
  */
-void GetWindowRect( HWND hwnd, LPRECT rect ) 
+void WINAPI GetWindowRect( HWND hwnd, LPRECT rect ) 
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd ); 
     if (!wndPtr) return;
@@ -132,7 +133,6 @@ void GetWindowRect( HWND hwnd, LPRECT rect )
 	MapWindowPoints( wndPtr->parent->hwndSelf, 0, (POINT *)rect, 2 );
 }
 
-#endif
 
 /***********************************************************************
  *           GetClientRect   (USER.33)
@@ -245,18 +245,18 @@ int WINPOS_WindowFromPoint( POINT pt, WND **ppWnd )
     }
 }
 
-#if 0
 
 /*******************************************************************
  *         WindowFromPoint   (USER.30)
  */
-HWND WindowFromPoint( POINT pt )
+HWND WINAPI WindowFromPoint( POINT pt )
 {
     WND *pWnd;
     WINPOS_WindowFromPoint( pt, &pWnd );
     return pWnd->hwndSelf;
 }
 
+#if 0
 
 /*******************************************************************
  *         ChildWindowFromPoint   (USER.191)
@@ -416,7 +416,7 @@ BOOL WINAPI ShowWindow( HWND hwnd, int cmd )
 
     if (!wndPtr) return FALSE;
 
-    TRACE("ShowWindow: hwnd=%04x, cmd=%d\n", hwnd, cmd);
+//    TRACE("ShowWindow: hwnd=%04x, cmd=%d", hwnd, cmd);
 
     wasVisible = (wndPtr->dwStyle & WS_VISIBLE) != 0;
 
@@ -1211,32 +1211,18 @@ BOOL WINAPI SetWindowPos(HWND hwnd, HWND hwndInsertAfter, int x, int y,
     if (flags & SWP_SHOWWINDOW)
     {
 	wndPtr->dwStyle |= WS_VISIBLE;
-//        if (wndPtr->window)
-//        {
-//            XMapWindow( display, wndPtr->window );
-//        }
-//        else
-//        {
             if (!(flags & SWP_NOREDRAW))
                 RedrawWindow( winpos.hwnd, NULL, 0,
                               RDW_INVALIDATE | RDW_ALLCHILDREN |
 			      RDW_FRAME | RDW_ERASE );
-//        }
     }
     else if (flags & SWP_HIDEWINDOW)
     {
 	wndPtr->dwStyle &= ~WS_VISIBLE;
-//        if (wndPtr->window)
-//        {
-//            XUnmapWindow( display, wndPtr->window );
-//        }
-//        else
-//        {
             if (!(flags & SWP_NOREDRAW))
                 RedrawWindow( wndPtr->parent->hwndSelf, &wndPtr->rectWindow, 0,
                               RDW_INVALIDATE | RDW_FRAME |
                               RDW_ALLCHILDREN | RDW_ERASE );
-//        }
 
         if ((winpos.hwnd == GetFocus()) || IsChild(winpos.hwnd, GetFocus()))
             SetFocus( GetParent(winpos.hwnd) );  /* Revert focus to parent */

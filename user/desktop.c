@@ -73,32 +73,31 @@ static HBITMAP DESKTOP_LoadBitmap( HDC hdc, const char *filename )
 #endif
 }
 
-#if 0
 
 /***********************************************************************
  *           DESKTOP_DoEraseBkgnd
  *
  * Handle the WM_ERASEBKGND message.
  */
-static LONG DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc, DESKTOPINFO *infoPtr )
+static LONG DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc/*, DESKTOPINFO *infoPtr*/ )
 {
     RECT rect;
     GetClientRect( hwnd, &rect );    
 
     /* Paint desktop pattern (only if wall paper does not cover everything) */
 
-    if (!infoPtr->hbitmapWallPaper || 
-	(!infoPtr->fTileWallPaper && ((infoPtr->bitmapSize.cx < rect.right) ||
-	 (infoPtr->bitmapSize.cy < rect.bottom))))
+//    if (!infoPtr->hbitmapWallPaper || 
+//	(!infoPtr->fTileWallPaper && ((infoPtr->bitmapSize.cx < rect.right) ||
+//	 (infoPtr->bitmapSize.cy < rect.bottom))))
     {
 	  /* Set colors in case pattern is a monochrome bitmap */
 	SetBkColor( hdc, RGB(0,0,0) );
 	SetTextColor( hdc, GetSysColor(COLOR_BACKGROUND) );
-	FillRect( hdc, &rect, infoPtr->hbrushPattern );
+	FillRect( hdc, &rect, CreateSolidBrush( GetSysColor(COLOR_BACKGROUND) ) );
     }
 
       /* Paint wall paper */
-
+#if 0
     if (infoPtr->hbitmapWallPaper)
     {
 	int x, y;
@@ -122,10 +121,9 @@ static LONG DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc, DESKTOPINFO *infoPtr )
                               infoPtr->bitmapSize.cx, infoPtr->bitmapSize.cy );
 	}
     }
-
+#endif
     return 1;
 }
-#endif
 
 
 /***********************************************************************
@@ -140,7 +138,7 @@ LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
 
       /* Most messages are ignored (we DON'T call DefWindowProc) */
 
-TRACE("message=%04x", message);
+//TRACE("message=%04x", message);
 
     switch(message)
     {
@@ -160,21 +158,7 @@ TRACE("message=%04x", message);
 	break;
 	
     case WM_ERASEBKGND:
-//	if (rootWindow == DefaultRootWindow(display)) return 1;
-{
-	HDC hDC=(HDC)wParam;
-	HPEN hPenBlue;
-	HBRUSH hBrushRed;
-	RECT rect = {0,0,100,100};
-
-//	SetPixel(hDC, 10, 10, RGB(255, 0, 0));
-//        hPenBlue=CreatePen(PS_SOLID, 5, RGB(0, 0, 255));
-//        SelectObject(hDC, hPenBlue);
-        hBrushRed=CreateSolidBrush(RGB(255, 255, 255));
-        SelectObject(hDC, hBrushRed);
-        Rectangle(hDC, 0, 0, CXScreen, CYScreen);
-}
-	return 1;//DESKTOP_DoEraseBkgnd( hwnd, (HDC)wParam, infoPtr );
+	return DESKTOP_DoEraseBkgnd( hwnd, (HDC)wParam/*, infoPtr*/ );
 
     case WM_SYSCOMMAND:
 	if ((wParam & 0xfff0) != SC_CLOSE) return 0;

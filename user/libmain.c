@@ -483,7 +483,7 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 	pWndClass->lpfnWndProc = DesktopWndProc;
 	pWndClass->hInstance = hInstance;
 	pWndClass->style = CS_GLOBALCLASS | CS_DBLCLKS;
-	pWndClass->hbrBackground = 2;
+	pWndClass->hbrBackground = 1;
 	RegisterClass(pWndClass);
 
 	// Register the "switch window" class
@@ -491,8 +491,8 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 	pWndClass->hCursor = LoadCursor(0, IDC_ARROW);
 	pWndClass->lpfnWndProc = SwitchWndProc;
 	pWndClass->hInstance = hInstance;
-	pWndClass->style = CS_GLOBALCLASS | CS_SAVEBITS | CS_VREDRAW | CS_HREDRAW;
-	pWndClass->hbrBackground = 2;
+	pWndClass->style = CS_GLOBALCLASS /*| CS_SAVEBITS /*| CS_VREDRAW | CS_HREDRAW*/;
+	pWndClass->hbrBackground = 5;
 	RegisterClass( pWndClass );
 
 	// Register the icon title cLass
@@ -509,25 +509,22 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 
 
 	// Create the desktop and switch windows
-	HWndDesktop = CreateWindowEx(0, DESKTOP_CLASS_ATOM,
-		0, WS_CLIPCHILDREN |  WS_POPUP | WS_EX_NOPARENTNOTIFY, 0, 0,
-		CXScreen, CYScreen, 0, 0, 0/*hInstance*/, 0);
-
-
-{
-	//@todo this is temporary. Must be redrawed on invalidate and update window
-//	HDC hDC = GetDC(HWndDesktop);
-//        SendMessage(HWndDesktop, WM_ERASEBKGND, (WPARAM)hDC, (LPARAM)0 );
-//        ReleaseDC(HWndDesktop, hDC);
-}
+//	HWndDesktop = CreateWindowEx(0, DESKTOP_CLASS_ATOM,
+//		0, WS_CLIPCHILDREN |  WS_POPUP | WS_EX_NOPARENTNOTIFY, 0, 0,
+//		CXScreen, CYScreen, 0, 0, 0/*hInstance*/, 0);
+WIN_CreateDesktopWindow();
+//	ShowWindow(HWndDesktop, SW_SHOW);
 
 	HWndSwitch = CreateWindowEx( 0, MAKELP(0, 0x8003),
-		0, WS_CAPTION | WS_BORDER |/*WS_DISABLED*/WS_VISIBLE | WS_POPUP, 0, 0, 150, 150,
-		0, 0, 0/*hInstance*/, 0 );
+		"test", WS_OVERLAPPEDWINDOW /*WS_DISABLED | WS_POPUP*/, 0, 0, 150, 150,
+		HWndDesktop, 0, 0/*hInstance*/, 0 );
+
 
 	// Move the switch window to the center of the screen
-	SetWindowPos( HWndSwitch, 0xFFFF, 0, 0, 0, 0,
-		SWP_NOSIZE | SWP_NOMOVE | SWP_NOREDRAW | SWP_NOACTIVATE);
+//	SetWindowPos( HWndSwitch, 0xFFFF, 0, 0, 0, 0,
+//		SWP_NOSIZE | SWP_NOMOVE | SWP_NOREDRAW|SWP_NOACTIVATE);
+
+	ShowWindow(HWndSwitch, SW_SHOW);;
 
 // Ok. Now time to test message queue...
 {
@@ -541,6 +538,24 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 }
 
 for(;;);
+
+{
+	HPEN hPenBlue;
+	HBRUSH hBrushRed;
+	HDC xhdc=GetDC(HWndDesktop);
+
+	TRACE("xhdc=%x", xhdc);
+	SetPixel(xhdc, 10, 10, RGB(255, 0, 0));
+        hPenBlue=CreatePen(PS_SOLID, 2, RGB(0, 0, 255));
+        SelectObject(xhdc, hPenBlue);
+        hBrushRed=CreateSolidBrush(RGB(255, 0, 0));
+        SelectObject(xhdc, hBrushRed);
+        Rectangle(xhdc, 200, 0, 400, 200);
+
+	DeleteObject(hPenBlue);
+	DeleteObject(hBrushRed);
+	ReleaseDC(HWndDesktop, xhdc);
+}
 
 //	HWndRealPopup = CreateWindowEx( 0, MAKELP(0, 0x8000), 0,
 //		WS_POPUP, 0, 0, 0x64, 0x64, 0, 0,

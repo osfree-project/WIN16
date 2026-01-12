@@ -280,7 +280,7 @@ void hardware_event( WORD message, WORD wParam, LONG lParam,
     {
         /* Queue is full, beep (but not on every mouse motion...) */
 //        if (message != WM_MOUSEMOVE) MessageBeep(0);
-TRACE("FULL!!");
+//TRACE("FULL!!");
         return;
     }
 

@@ -15,15 +15,14 @@ void WINAPI FillWindow(HWND hwndParent, HWND hwnd, HDC hdc, HBRUSH hbrush)
     HBRUSH hBrushRed;
 	HPEN hPenBlue;
 
-	FUNCTION_START
+//	FUNCTION_START
 
 	GetClientRect( hwnd, &rect );
-TRACE("left=%d top=%d right=%d bottom=%d", rect.left, rect.top, rect.right, rect.bottom);
-
+//TRACE("left=%d top=%d right=%d bottom=%d", rect.left, rect.top, rect.right, rect.bottom);
 	DPtoLP( hdc, (LPPOINT)&rect, 2 );
-TRACE("left=%d top=%d right=%d bottom=%d", rect.left, rect.top, rect.right, rect.bottom);
+//TRACE("left=%d top=%d right=%d bottom=%d", rect.left, rect.top, rect.right, rect.bottom);
 	PaintRect( hwndParent, hwnd, hdc, hbrush, &rect );
-	FUNCTION_END
+//	FUNCTION_END
 }
 
 /***********************************************************************
@@ -463,16 +462,6 @@ int WINAPI GetDlgCtrlID( HWND hwnd )
     return 0;//GetDlgCtrlID( WIN_Handle32(hwnd) );
 }
 
-#if 0
-/*******************************************************************
- *		MapWindowPoints (USER.258)
- */
-void WINAPI MapWindowPoints( HWND hwndFrom, HWND hwndTo, LPPOINT lppt, UINT count )
-{
-	FUNCTION_START
-}
-#endif
-
 /**************************************************************************
  *              ReleaseCapture   (USER.19)
  * Defined as VOID in Watcom headers
@@ -494,13 +483,6 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 }
 #endif
 
-/**************************************************************************
- *              GetWindowRect   (USER.32)
- */
-void WINAPI GetWindowRect( HWND hwnd, LPRECT rect )
-{
-	FUNCTION_START
-}
 
 /**************************************************************************
  *              SetScrollRange   (USER.64)

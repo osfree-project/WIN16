@@ -103,7 +103,7 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
         {
             HWND hwndTop = WIN_GetTopParent( msg->hwnd );
 
-		TRACE("MOUSE CLICK");
+//		TRACE("MOUSE CLICK");
 
             if (hwndTop != GetActiveWindow())
             {
@@ -176,7 +176,7 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 //    hook.wHitTestCode = hittest;
 //TRACE("321");
 //for(;;);
-	return TRUE; //@todo TRUE?
+	return TRUE; 
 //    return !HOOK_CallHooks( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
 //                            msg->message, (LPARAM)MAKE_SEGPTR(&hook));
 }
@@ -493,7 +493,7 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
 	  /* Now find a WM_PAINT message */
 	if ((msgQueue->status & QS_PAINT) && (mask & QS_PAINT))
 	{
-		TRACE("paint");
+//		TRACE("paint");
 	    msg->hwnd = WIN_FindWinToRepaint( hwnd , hQueue );
 	    msg->message = WM_PAINT;
 	    msg->wParam = 0;

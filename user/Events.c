@@ -6,9 +6,9 @@
  */
 VOID WINAPI keybd_event(VOID)
 {
-	FUNCTION_START
+//	FUNCTION_START
 	// send event to System Message Queue
-	FUNCTION_END
+//	FUNCTION_END
 }
 
 /***********************************************************************

@@ -130,22 +130,6 @@ static void SYSCOLOR_SetColor( int index, COLORREF color )
 /*************************************************************************
  *             SYSCOLOR_Init
  */
-#if 0
-void SYSCOLOR_Init(void)
-{
-    int i, r, g, b;
-    char **p;
-    char buffer[100];
-
-    for (i = 0, p = DefSysColors; i < NUM_SYS_COLORS; i++, p += 2)
-    {
-	GetProfileString( "colors", p[0], p[1], buffer, 100 );
-//@todo no sscanf	if (!sscanf( buffer, " %d %d %d", &r, &g, &b )) r = g = b = 0;
-	SYSCOLOR_SetColor( i, RGB(r,g,b) );
-    }
-}
-#endif
-
 void SYSCOLOR_Init(void)
 {
     int i, r, g, b;
@@ -209,8 +193,7 @@ void SYSCOLOR_Init(void)
 
 COLORREF WINAPI GetSysColor(int nIndex)
 {
-    TRACE("System Color %d = %8lx", 
-		    nIndex, SysColors[nIndex]);
+//    TRACE("System Color %d = %8lx", nIndex, SysColors[nIndex]);
     return SysColors[nIndex];
 }
 
