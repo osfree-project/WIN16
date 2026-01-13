@@ -516,15 +516,19 @@ WIN_CreateDesktopWindow();
 //	ShowWindow(HWndDesktop, SW_SHOW);
 
 	HWndSwitch = CreateWindowEx( 0, MAKELP(0, 0x8003),
-		"test", WS_OVERLAPPEDWINDOW /*WS_DISABLED | WS_POPUP*/, 0, 0, 150, 150,
+		"test1", WS_OVERLAPPEDWINDOW /*WS_DISABLED | WS_POPUP*/, 50, 50, 150, 150,
 		HWndDesktop, 0, 0/*hInstance*/, 0 );
 
+//	HWndRealPopup = CreateWindowEx( 0, MAKELP(0, 0x8003),
+//		"test2", WS_OVERLAPPEDWINDOW /*WS_DISABLED | WS_POPUP*/, 100, 100, 200, 200,
+//		HWndDesktop, 0, 0/*hInstance*/, 0 );
 
 	// Move the switch window to the center of the screen
 //	SetWindowPos( HWndSwitch, 0xFFFF, 0, 0, 0, 0,
 //		SWP_NOSIZE | SWP_NOMOVE | SWP_NOREDRAW|SWP_NOACTIVATE);
 
 	ShowWindow(HWndSwitch, SW_SHOW);;
+//	ShowWindow(HWndRealPopup, SW_SHOW);;
 
 // Ok. Now time to test message queue...
 {
@@ -818,7 +822,8 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 	SetCursorPos(100, 100);
 
 	// Get the hourglass cursor, show it
-	SetCursor(LoadCursor(0, IDC_WAIT));
+	//SetCursor(LoadCursor(0, IDC_WAIT));
+	SetCursor(HCursNormal);
 	// Register the Desktop and switch windows classes, and
 	// create the windows.
 

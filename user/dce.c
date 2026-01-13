@@ -411,38 +411,62 @@ HRGN DCE_GetVisRgn( HWND hwnd, WORD flags )
 }
 
 
-#if 0
 /***********************************************************************
  *           DCE_SetDrawable
  *
  * Set the origin and dimensions for the DC associated to
  * a given window.
  */
-static void DCE_SetDrawable( WND *wndPtr, DC FAR *dc, WORD flags )
+static void DCE_SetDrawable( WND *wndPtr, HDC hdc, WORD flags )
 {
+    DC FAR * dc;
+    WORD wNewOrgX, wNewOrgY;
+    WORD gdi = 0;
+
     if (!wndPtr)  /* Get a DC for the whole screen */
     {
-        dc->wDCOrgX = 0;
-        dc->wDCOrgY = 0;
+        wNewOrgX = 0;
+        wNewOrgY = 0;
     }
     else
     {
         if (flags & DCX_WINDOW)
         {
-            dc->wDCOrgX  = wndPtr->rectWindow.left;
-            dc->wDCOrgY  = wndPtr->rectWindow.top;
+		wNewOrgX  = wndPtr->rectWindow.left;
+		wNewOrgY  = wndPtr->rectWindow.top;
         }
         else
         {
-            dc->wDCOrgX  = wndPtr->rectClient.left;
-            dc->wDCOrgY  = wndPtr->rectClient.top;
+            wNewOrgX  = wndPtr->rectClient.left;
+            wNewOrgY  = wndPtr->rectClient.top;
         }
 
-        dc->wDCOrgX -= wndPtr->rectWindow.left;
-        dc->wDCOrgY -= wndPtr->rectWindow.top;
+        while (wndPtr->parent)
+        {
+            wndPtr = wndPtr->parent;
+            wNewOrgX += wndPtr->rectClient.left;
+            wNewOrgY += wndPtr->rectClient.top;
+        }
+
+        wNewOrgX -= wndPtr->rectWindow.left;
+        wNewOrgY -= wndPtr->rectWindow.top;
     }
+
+	gdi=SELECTOROF(GlobalLock(hGDI));
+	PushDS();
+//	if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
+	SetDS(gdi);
+	dc=MK_FP(gdi, LocalLock(hdc));
+
+        dc->wDCOrgX = wNewOrgX;
+        dc->wDCOrgY = wNewOrgY;
+	LocalUnlock(hdc);
+	GlobalUnlock(hGDI);
+//	DCE_SetDrawable( wndPtr, dc, flags );
+	PopDS();
+//	SetWindowOrg(hdc, wNewOrgX, wNewOrgY);
 }
-#endif
+//#endif
 
 /***********************************************************************
  *           GetDCEx    (USER.359)
@@ -455,10 +479,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     HRGN hrgnVisible;
     HDC hdc = 0;
     DCE * dce;
-    DC FAR * dc;
     WND * wndPtr;
-    WORD wNewOrgX, wNewOrgY;
-  WORD gdi = 0;
 
     if (hwnd)
     {
@@ -540,43 +561,8 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 //#if 0    
 	// DC lives in GDI local heap, so we need to switch DS to GDI heap,
 	// do all things and switch DS back. But prepare values befor in stack.
+    DCE_SetDrawable( wndPtr, hdc, flags );
 
-    if (!wndPtr)  /* Get a DC for the whole screen */
-    {
-        wNewOrgX = 0;
-        wNewOrgY = 0;
-    }
-    else
-    {
-        if (flags & DCX_WINDOW)
-        {
-            wNewOrgX  = wndPtr->rectWindow.left;
-            wNewOrgY  = wndPtr->rectWindow.top;
-        }
-        else
-        {
-            wNewOrgX  = wndPtr->rectClient.left;
-            wNewOrgY  = wndPtr->rectClient.top;
-        }
-
-        wNewOrgX -= wndPtr->rectWindow.left;
-        wNewOrgY -= wndPtr->rectWindow.top;
-    }
-
-
-	PushDS();
-//	if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
-	gdi=SELECTOROF(GlobalLock(hGDI));
-	SetDS(gdi);
-	dc=MK_FP(gdi, LocalLock(hdc));
-
-        dc->wDCOrgX = wNewOrgX;
-        dc->wDCOrgY = wNewOrgY;
-	
-	LocalUnlock(hdc);
-	GlobalUnlock(hGDI);
-//	DCE_SetDrawable( wndPtr, dc, flags );
-	PopDS();
 
 //#endif
     if (hwnd)

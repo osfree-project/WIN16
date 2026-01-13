@@ -151,69 +151,6 @@ WORD WINAPI SetWindowWord( HWND hwnd, int offset, WORD newval )
 	return 0;
 }
 
-#if 0
-/***********************************************************************
- *		CreateWindowEx (USER.452)
- */
-HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className,
-                                LPCSTR windowName, DWORD style, int x,
-                                int y, int width, int height,
-                                HWND parent, HMENU menu,
-                                HINSTANCE instance, LPVOID data )
-{
-	FUNCTION_START
-	return 0;
-	#if 0
-    CREATESTRUCTA cs;
-    char buffer[256];
-    HWND hwnd;
-
-    /* Fix the coordinates */
-
-    cs.x  = (x == CW_USEDEFAULT16) ? CW_USEDEFAULT : (INT)x;
-    cs.y  = (y == CW_USEDEFAULT16) ? CW_USEDEFAULT : (INT)y;
-    cs.cx = (width == CW_USEDEFAULT16) ? CW_USEDEFAULT : (INT)width;
-    cs.cy = (height == CW_USEDEFAULT16) ? CW_USEDEFAULT : (INT)height;
-
-    /* Create the window */
-
-    cs.lpCreateParams = data;
-    cs.hInstance      = HINSTANCE_32(instance);
-    cs.hMenu          = HMENU_32(menu);
-    cs.hwndParent     = WIN_Handle32( parent );
-    cs.style          = style;
-    cs.lpszName       = windowName;
-    cs.lpszClass      = className;
-    cs.dwExStyle      = exStyle;
-
-    /* load the menu */
-    if (!menu && (style & (WS_CHILD | WS_POPUP)) != WS_CHILD)
-    {
-        WNDCLASSA class;
-        HINSTANCE16 module = GetExePtr( instance );
-
-        if (GetClassInfoA( HINSTANCE_32(module), className, &class ))
-            cs.hMenu = HMENU_32( LoadMenu16( module, class.lpszMenuName ));
-    }
-
-    if (!IS_INTRESOURCE(className))
-    {
-        WCHAR bufferW[256];
-
-        if (!MultiByteToWideChar( CP_ACP, 0, className, -1, bufferW, ARRAY_SIZE(bufferW)))
-            return 0;
-        hwnd = create_window16( (CREATESTRUCTW *)&cs, bufferW, HINSTANCE_32(instance), FALSE );
-    }
-    else
-    {
-        if (!GlobalGetAtomNameA( LOWORD(className), buffer, sizeof(buffer) )) return 0;
-        cs.lpszClass = buffer;
-        hwnd = create_window16( (CREATESTRUCTW *)&cs, (LPCWSTR)className, HINSTANCE_32(instance), FALSE );
-    }
-    return HWND_16( hwnd );
-	#endif
-}
-#endif
 
 /**********************************************************************
  *		GetWindowLong (USER.135)
