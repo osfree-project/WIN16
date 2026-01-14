@@ -641,6 +641,9 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
     HDC 	hdc;
     RECT 	rect;
     BOOL	active;
+    DC FAR * dc;
+    WORD gdi = 0;
+    WORD wDCOrgX, wDCOrgY, WndOrgX, WndOrgY, VportOrgX, VportOrgY, wMapMode, UserVptOrgX, UserVptOrgY;
 
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
@@ -652,6 +655,32 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
 
     if (!(hdc = GetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW ))) return;
 
+// ѕробуем установить преобразование вручную
+//SetViewportOrg(hdc, 0,0);//wndPtr->rectWindow.left, wndPtr->rectWindow.top);
+//SetWindowOrgEx(hdc, 0, 0, NULL);
+
+ // ќтладочный вывод: получаем текущие параметры DC
+#if 0
+    gdi = SELECTOROF(GlobalLock(hGDI));
+    PushDS();
+    SetDS(gdi);
+    dc = MK_FP(gdi, LocalLock(hdc));
+          wDCOrgX=dc->wDCOrgX;
+	wDCOrgY=dc->wDCOrgY;
+	WndOrgX=dc->WndOrgX;
+	 WndOrgY=dc->WndOrgY; 
+          VportOrgX=dc->VportOrgX;
+	 VportOrgY=dc->VportOrgY;
+	 wMapMode=dc->wMapMode;
+	UserVptOrgX=dc->UserVptOrgX;
+	UserVptOrgY=dc->UserVptOrgY;
+	PopDS();    
+    TRACE("NC_DoNCPaint: DC params - wDCOrgX=%d, wDCOrgY=%d, WndOrgX=%d, WndOrgY=%d, VportOrgX=%d, VportOrgY=%d, MapMode=%d, UserVptOrgX=%d, UserVptOrgY=%d\n\n\n\n\n",
+          wDCOrgX, wDCOrgY, WndOrgX, WndOrgY, 
+          VportOrgX, VportOrgY, wMapMode, UserVptOrgX, UserVptOrgY);
+#endif
+
+//for(;;);
     /*
      * If this is an icon, we don't want to do any more nonclient painting
      * of the window manager.
@@ -676,6 +705,7 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
         return;
     }
 
+#if 0
     if (ExcludeVisRect( hdc, wndPtr->rectClient.left-wndPtr->rectWindow.left,
 		        wndPtr->rectClient.top-wndPtr->rectWindow.top,
 		        wndPtr->rectClient.right-wndPtr->rectWindow.left,
@@ -685,10 +715,14 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
 	ReleaseDC( hwnd, hdc );
 	return;
     }
-
+#endif
     rect.top = rect.left = 0;
     rect.right  = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
     rect.bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
+
+            MoveTo( hdc, rect.left, rect.top );
+            LineTo( hdc, rect.right, rect.bottom );
+
 
     SelectObject( hdc, sysColorObjects.hpenWindowFrame );
 
@@ -754,7 +788,8 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
  */
 LONG NC_HandleNCPaint( HWND hwnd , HRGN clip)
 {
-    NC_DoNCPaint( hwnd, clip, FALSE );
+//    FUNCTION_START
+	NC_DoNCPaint( hwnd, clip, FALSE );
     return 0;
 }
 
@@ -767,7 +802,7 @@ LONG NC_HandleNCPaint( HWND hwnd , HRGN clip)
 LONG NC_HandleNCActivate( HWND hwnd, WPARAM wParam )
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
-
+    //FUNCTION_START
     if (wParam != 0) wndPtr->flags |= WIN_NCACTIVATED;
     else wndPtr->flags &= ~WIN_NCACTIVATED;
 

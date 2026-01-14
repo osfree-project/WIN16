@@ -1,6 +1,7 @@
 #define OEMRESOURCE
 #include <windows.h>
 
+#pragma pack(1)
 // Message Queue structures. See Matt Pietrek for description.
 
 typedef struct tagINTERNALMSG{
@@ -830,3 +831,5 @@ void SYSCOLOR_Init(void);
 BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus );
 
 #define WND_MAGIC     0x444e4957  /* 'WIND' */
+
+DWORD WINAPI SetDCOrg(HDC, WORD, WORD);

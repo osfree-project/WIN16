@@ -276,6 +276,7 @@ IMPORTS = GETEXEVERSION KERNEL.105, &
   SelectVisRgn GDI.105, &
   InquireVisRgn  GDI.131, &
   ExcludeVisRect GDI.73, &
+  SetDCOrg GDI.117, &
   SetSpeed KEYBOARD.7, &
   KeyboardEnable KEYBOARD.2, &
   MouseEnable MOUSE.2

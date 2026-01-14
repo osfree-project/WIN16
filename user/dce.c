@@ -410,14 +410,13 @@ HRGN DCE_GetVisRgn( HWND hwnd, WORD flags )
     return hrgn;
 }
 
-
 /***********************************************************************
  *           DCE_SetDrawable
  *
  * Set the origin and dimensions for the DC associated to
  * a given window.
  */
-static void DCE_SetDrawable( WND *wndPtr, HDC hdc, WORD flags )
+static void DCE_SetDrawable(DCE *dce, WND *wndPtr, HDC hdc, WORD flags )
 {
     DC FAR * dc;
     WORD wNewOrgX, wNewOrgY;
@@ -441,17 +440,25 @@ static void DCE_SetDrawable( WND *wndPtr, HDC hdc, WORD flags )
             wNewOrgY  = wndPtr->rectClient.top;
         }
 
-        while (wndPtr->parent)
-        {
-            wndPtr = wndPtr->parent;
-            wNewOrgX += wndPtr->rectClient.left;
-            wNewOrgY += wndPtr->rectClient.top;
-        }
-
-        wNewOrgX -= wndPtr->rectWindow.left;
-        wNewOrgY -= wndPtr->rectWindow.top;
+	if (wndPtr->parent->hwndSelf!=HWndDesktop) 
+	{
+        	while (wndPtr->parent)
+	        {
+	            wndPtr = wndPtr->parent;
+	            wNewOrgX += wndPtr->rectClient.left;
+	            wNewOrgY += wndPtr->rectClient.top;
+	        }
+	
+	        wNewOrgX -= wndPtr->rectWindow.left;
+	        wNewOrgY -= wndPtr->rectWindow.top;
+	}
     }
 
+
+	SetDCOrg(hdc, wNewOrgX, wNewOrgY);
+    dce->xOrigin = wNewOrgX;
+    dce->yOrigin = wNewOrgY;
+#if 0
 	gdi=SELECTOROF(GlobalLock(hGDI));
 	PushDS();
 //	if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
@@ -465,8 +472,93 @@ static void DCE_SetDrawable( WND *wndPtr, HDC hdc, WORD flags )
 //	DCE_SetDrawable( wndPtr, dc, flags );
 	PopDS();
 //	SetWindowOrg(hdc, wNewOrgX, wNewOrgY);
+#endif
 }
-//#endif
+
+#if 0
+static void DCE_SetDrawable( WND *wndPtr, HDC hdc, WORD flags )
+{
+    DC FAR * dc;
+    WORD wNewOrgX, wNewOrgY;
+    WORD gdi = 0;
+int f=0;
+
+    if (!wndPtr)  /* Get a DC for the whole screen */
+    {
+        wNewOrgX = 0;
+        wNewOrgY = 0;
+    }
+    else
+    {
+        if (flags & DCX_WINDOW)
+        {
+            wNewOrgX = wndPtr->rectWindow.left;
+            wNewOrgY = wndPtr->rectWindow.top;
+SetDCOrg(hdc, wNewOrgX, wNewOrgY);
+return;
+        }
+        else
+        {
+            wNewOrgX = wndPtr->rectClient.left;
+            wNewOrgY = wndPtr->rectClient.top;
+        }
+
+        /* Если окно имеет родителя (не рабочий стол), нужно перевести координаты
+           в систему координат родителя */
+        if (wndPtr->parent && wndPtr->parent->hwndSelf != HWndDesktop)
+        {
+            WND *parent = wndPtr->parent;
+            
+            /* Переводим координаты в систему родителя */
+            wNewOrgX += parent->rectClient.left;
+            wNewOrgY += parent->rectClient.top;
+            
+            /* Для всех остальных предков добавляем смещение их клиентских областей */
+            while (parent->parent && parent->parent->hwndSelf != HWndDesktop)
+            {
+                parent = parent->parent;
+                wNewOrgX += parent->rectClient.left;
+                wNewOrgY += parent->rectClient.top;
+            }
+        }
+    }
+
+	SetDCOrg(hdc, wNewOrgX, wNewOrgY);
+#if 0
+  f=wndPtr && (flags & DCX_WINDOW) && wndPtr->parent->hwndSelf == HWndDesktop;
+    gdi=SELECTOROF(GlobalLock(hGDI));
+    PushDS();
+    SetDS(gdi);
+    dc=MK_FP(gdi, LocalLock(hdc));
+
+//    dc->wDCOrgX = wNewOrgX;
+//    dc->wDCOrgY = wNewOrgY;
+    if (0&&f)
+    {
+TRACE("111111111111111111111111111111");
+        // Устанавливаем window origin в 0 (логические координаты начинаются с 0,0)
+        dc->WndOrgX = 0;
+        dc->WndOrgY = 0;
+        
+        // Устанавливаем viewport origin в экранные координаты
+        dc->VportOrgX = wNewOrgX;
+        dc->VportOrgY = wNewOrgY;
+        
+        // Устанавливаем режим MM_TEXT
+        dc->wMapMode = MM_TEXT;
+        
+        // В MM_TEXT экстенты не используются, но для порядка
+        dc->WndExtX = 1;
+        dc->WndExtY = 1;
+        dc->VportExtX = 1;
+        dc->VportExtY = 1;    
+}
+    LocalUnlock(hdc);
+    GlobalUnlock(hGDI);
+    PopDS();
+#endif
+}
+#endif
 
 /***********************************************************************
  *           GetDCEx    (USER.359)
@@ -480,6 +572,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     HDC hdc = 0;
     DCE * dce;
     WND * wndPtr;
+	int xOrigin, yOrigin;
 
     if (hwnd)
     {
@@ -553,6 +646,12 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 	dce->hwndCurr = hwnd;
 	dce->byInUse       = TRUE;
 	hdc = dce->hDC;
+
+    DCE_SetDrawable(dce, wndPtr, hdc, flags);
+	// Сохраняем xOrigin и yOrigin для последующего использования
+	xOrigin = dce->xOrigin;
+	yOrigin = dce->yOrigin;
+
 	LocalUnlock(hdce);
 	PopDS();
 
@@ -561,7 +660,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 //#if 0    
 	// DC lives in GDI local heap, so we need to switch DS to GDI heap,
 	// do all things and switch DS back. But prepare values befor in stack.
-    DCE_SetDrawable( wndPtr, hdc, flags );
+//    DCE_SetDrawable(wndPtr, hdc, flags);
 
 
 //#endif
@@ -595,8 +694,15 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
         CombineRgn( hrgnVisible, hrgnVisible, hrgnClip,
                     (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
     }
+// После получения hrgnVisible и всех операций с ним:
+if (hwnd)  // Только для окон, не для экрана
+{
+    // Смещаем регион из экранных координат в логические координаты DC
+    OffsetRgn(hrgnVisible, xOrigin, yOrigin);
+}
     SelectVisRgn( hdc, hrgnVisible );
     DeleteObject( hrgnVisible );
+
 
 //    TRACE("GetDCEx(%04x,%04x,0x%lx): returning %04x", 
 //	       hwnd, hrgnClip, flags, hdc);
