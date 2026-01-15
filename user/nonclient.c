@@ -880,9 +880,9 @@ LONG NC_HandleNCActivate( HWND hwnd, WPARAM wParam )
  */
 LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
-FUNCTION_START
+//FUNCTION_START
     if (hwnd != (HWND)wParam) return 0;  /* Don't set the cursor for child windows */
-TRACE("1");
+//TRACE("1");
     switch(LOWORD(lParam))
     {
     case HTERROR:

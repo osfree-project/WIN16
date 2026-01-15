@@ -262,6 +262,7 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 	if (wndPtr->dwStyle & WS_CHILD)
 	    if (SendMessage(wndPtr->parent->hwndSelf, WM_SETCURSOR,
                             wParam, lParam))
+		return TRUE;
 	return NC_HandleSetCursor( hwnd, wParam, lParam );
 
     case WM_SYSCOMMAND:

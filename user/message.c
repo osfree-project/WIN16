@@ -177,6 +177,7 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 //TRACE("321");
 //for(;;);
 	return TRUE; 
+
 //    return !HOOK_CallHooks( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
 //                            msg->message, (LPARAM)MAKE_SEGPTR(&hook));
 }

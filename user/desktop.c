@@ -155,8 +155,11 @@ LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
 	break;
 
     case WM_SETCURSOR:
-	break;
+	return NC_HandleSetCursor( hwnd, wParam, lParam );
 	
+//    case WM_MOUSEACTIVATE:
+//	return MA_NOACTIVATEANDEAT;
+
     case WM_ERASEBKGND:
 	return DESKTOP_DoEraseBkgnd( hwnd, (HDC)wParam/*, infoPtr*/ );
 

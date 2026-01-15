@@ -37,7 +37,7 @@ VOID WINAPI mouse_event(VOID)
 	 WORD 	NumButts;	//  Number of buttons on the mouse (typically, 2).
 	 
 	 WORD	KeyState=0;	// MK_*
-
+	PushDS();
 //	FUNCTION_START
 	SetDS(USER_HeapSel);
 
@@ -55,6 +55,8 @@ VOID WINAPI mouse_event(VOID)
 	dwMouseY+=vMouse;
 	MoveCursor(dwMouseX, dwMouseY);
 	hardware_event( WM_MOUSEMOVE, KeyState, 0, dwMouseX, dwMouseY, GetTickCount(), 0 );
+	PopDS();
+	return;
     }
     if (EventCodes & ME_LDOWN)
         hardware_event( WM_LBUTTONDOWN, KeyState, 0, dwMouseX, dwMouseY, GetTickCount(), 0);
@@ -67,7 +69,8 @@ VOID WINAPI mouse_event(VOID)
 
     if (EventCodes & ME_RUP)
         hardware_event( WM_RBUTTONUP, KeyState, 0, dwMouseX, dwMouseY, GetTickCount(), 0);
-
+  
+	PopDS();
 //	FUNCTION_END
 }
 
