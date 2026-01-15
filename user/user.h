@@ -736,7 +736,7 @@ typedef struct tagWND
 #define WIN_NO_REDRAW          0x0020 /* WM_SETREDRAW called for this window */
 #define WIN_GOT_SIZEMSG        0x0040 /* WM_SIZE has been sent to the window */
 #define WIN_NCACTIVATED        0x0080 /* last WM_NCACTIVATE was positive */
-#define WIN_MANAGED            0x0100 /* Window managed by the X wm */
+//#define WIN_MANAGED            0x0100 /* Window managed by the X wm */
 
 #define WIN_CLASS_INFO(wndPtr)   (CLASS_FindClassPtr((wndPtr)->hClass)->wc)
 #define WIN_CLASS_STYLE(wndPtr)  (WIN_CLASS_INFO(wndPtr).style)

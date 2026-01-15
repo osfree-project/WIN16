@@ -478,7 +478,7 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 	pWndClass = (WNDCLASS *)LocalLock(hWndClass);
 
 	// Register the DeskTop cLass
-	pWndClass->lpszClassName = MAKELP(0, 0x8001);
+	pWndClass->lpszClassName = DESKTOP_CLASS_ATOM;
 	pWndClass->hCursor = LoadCursor(0, IDC_ARROW);
 	pWndClass->lpfnWndProc = DesktopWndProc;
 	pWndClass->hInstance = hInstance;
@@ -487,7 +487,7 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 	RegisterClass(pWndClass);
 
 	// Register the "switch window" class
-	pWndClass->lpszClassName = MAKELP(0, 0x8003);
+	pWndClass->lpszClassName = WINSWITCH_CLASS_ATOM;
 	pWndClass->hCursor = LoadCursor(0, IDC_ARROW);
 	pWndClass->lpfnWndProc = SwitchWndProc;
 	pWndClass->hInstance = hInstance;
@@ -508,17 +508,13 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 	LocalFree(hWndClass); // Don't need WNDCLASS anymore!
 
 
-	// Create the desktop and switch windows
-//	HWndDesktop = CreateWindowEx(0, DESKTOP_CLASS_ATOM,
-//		0, WS_CLIPCHILDREN |  WS_POPUP | WS_EX_NOPARENTNOTIFY, 0, 0,
-//		CXScreen, CYScreen, 0, 0, 0/*hInstance*/, 0);
-WIN_CreateDesktopWindow();
-//	ShowWindow(HWndDesktop, SW_SHOW);
+	WIN_CreateDesktopWindow();
 
-	HWndSwitch = CreateWindowEx( 0, MAKELP(0, 0x8003),
+	HWndSwitch = CreateWindowEx( 0, WINSWITCH_CLASS_ATOM,
 		"test1", WS_OVERLAPPEDWINDOW /*WS_DISABLED | WS_POPUP*/, 50, 50, 150, 150,
 		HWndDesktop, 0, 0/*hInstance*/, 0 );
 
+//@todo hm... must not be created because no such class!!!
 	HWndRealPopup = CreateWindowEx( 0, MAKELP(0, 0x8003),
 		"test2", WS_OVERLAPPEDWINDOW /*WS_DISABLED | WS_POPUP*/, 100, 100, 200, 200,
 		HWndDesktop, 0, 0/*hInstance*/, 0 );

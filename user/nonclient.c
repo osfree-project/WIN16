@@ -80,7 +80,7 @@ static void NC_AdjustRect( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
     if (style & WS_ICONIC) return;  /* Nothing to change for an icon */
 
     /* Decide if the window will be managed (see CreateWindowEx) */
-    if (!(/*@todo fix Options.managed*/0 && ((style & (WS_DLGFRAME | WS_THICKFRAME)) ||
+    if (!(0 && ((style & (WS_DLGFRAME | WS_THICKFRAME)) ||
           (exStyle & WS_EX_DLGMODALFRAME))))
     {
         if (HAS_DLGFRAME( style, exStyle ))
@@ -155,8 +155,9 @@ void NC_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
     MinMax.ptMaxTrackSize.x = GetSystemMetrics(SM_CXSCREEN);
     MinMax.ptMaxTrackSize.y = GetSystemMetrics(SM_CYSCREEN);
 
-    if (wndPtr->flags & WIN_MANAGED) xinc = yinc = 0;
-    else if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
+//    if (wndPtr->flags & WIN_MANAGED) xinc = yinc = 0;
+//    else 
+if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
     {
         xinc = GetSystemMetrics(SM_CXDLGFRAME);
         yinc = GetSystemMetrics(SM_CYDLGFRAME);
@@ -253,7 +254,7 @@ void NC_GetInsideRect( HWND hwnd, RECT *rect )
     rect->bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
 
     if (wndPtr->dwStyle & WS_ICONIC) return;  /* No border to remove */
-    if (wndPtr->flags & WIN_MANAGED) return;
+//    if (wndPtr->flags & WIN_MANAGED) return;
 
       /* Remove frame from rectangle */
     if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
@@ -290,7 +291,7 @@ LONG NC_HandleNCHitTest( HWND hwnd, POINT pt )
 
     if (wndPtr->dwStyle & WS_MINIMIZE) return HTCAPTION;
 
-    if (!(wndPtr->flags & WIN_MANAGED))
+    if (!(0/*wndPtr->flags & WIN_MANAGED*/))
     {
         /* Check borders */
         if (HAS_THICKFRAME( wndPtr->dwStyle ))
@@ -425,21 +426,56 @@ void NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down )
     DeleteDC( hdcMem );
 }
 
-
 /***********************************************************************
  *           NC_DrawMaxButton
  */
 static void NC_DrawMaxButton( HWND hwnd, HDC hdc, BOOL down )
 {
     RECT rect;
+    HDC hdcMem;
+    HBITMAP hbitmap;
+    HBITMAP hbitmapToUse;
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    
     NC_GetInsideRect( hwnd, &rect );
-//@todo    GRAPH_DrawBitmap( hdc, (IsZoomed(hwnd) ?
-//			    (down ? hbitmapRestoreD : hbitmapRestore) :
-//			    (down ? hbitmapMaximizeD : hbitmapMaximize)),
-//		     rect.right - GetSystemMetrics(SM_CXSIZE) - 1, rect.top,
-//		     0, 0, GetSystemMetrics(SM_CXSIZE)+1, GetSystemMetrics(SM_CYSIZE) );
+    
+    /* Определяем, какая кнопка нужна: восстановить или максимизировать */
+    if (wndPtr->dwStyle & WS_MAXIMIZEBOX)
+    {
+        if (IsZoomed(hwnd))
+        {
+            /* Окно максимизировано, показываем кнопку восстановления */
+            hbitmapToUse = down ? hbitmapRestoreD : hbitmapRestore;
+        }
+        else
+        {
+            /* Окно не максимизировано, показываем кнопку максимизации */
+            hbitmapToUse = down ? hbitmapMaximizeD : hbitmapMaximize;
+        }
+    }
+    else
+    {
+        /* Кнопка максимизации не поддерживается в стиле окна */
+        return;
+    }
+    
+    /* Вычисляем позицию кнопки */
+    rect.left = rect.right - GetSystemMetrics(SM_CXSIZE) - 1;
+    rect.right = rect.left + GetSystemMetrics(SM_CXSIZE);
+    rect.bottom = rect.top + GetSystemMetrics(SM_CYSIZE);
+    
+    /* Рисуем кнопку */
+    hdcMem = CreateCompatibleDC( hdc );
+    if (hdcMem)
+    {
+        hbitmap = SelectObject( hdcMem, hbitmapToUse );
+        BitBlt( hdc, rect.left, rect.top, GetSystemMetrics(SM_CXSIZE), GetSystemMetrics(SM_CYSIZE),
+                hdcMem, 0, 0,
+                down ? NOTSRCCOPY : SRCCOPY );
+        SelectObject( hdcMem, hbitmap );
+        DeleteDC( hdcMem );
+    }
 }
-
 
 /***********************************************************************
  *           NC_DrawMinButton
@@ -447,14 +483,45 @@ static void NC_DrawMaxButton( HWND hwnd, HDC hdc, BOOL down )
 static void NC_DrawMinButton( HWND hwnd, HDC hdc, BOOL down )
 {
     RECT rect;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    NC_GetInsideRect( hwnd, &rect );
-    if (wndPtr->dwStyle & WS_MAXIMIZEBOX) rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
-//@todo    GRAPH_DrawBitmap( hdc, (down ? hbitmapMinimizeD : hbitmapMinimize),
-//		     rect.right - GetSystemMetrics(SM_CXSIZE) - 1, rect.top,
-//		     0, 0, GetSystemMetrics(SM_CXSIZE)+1, GetSystemMetrics(SM_CYSIZE));
-}
+    HDC hdcMem;
+    HBITMAP hbitmap;
+	HBITMAP hbitmapToUse;
 
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    
+    NC_GetInsideRect( hwnd, &rect );
+    
+    /* Проверяем, есть ли кнопка минимизации в стиле окна */
+    if (!(wndPtr->dwStyle & WS_MINIMIZEBOX))
+    {
+        return;
+    }
+    
+    /* Вычисляем позицию кнопки с учетом кнопки максимизации */
+    if (wndPtr->dwStyle & WS_MAXIMIZEBOX)
+    {
+        rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
+    }
+    
+    rect.left = rect.right - GetSystemMetrics(SM_CXSIZE) - 1;
+    rect.right = rect.left + GetSystemMetrics(SM_CXSIZE);
+    rect.bottom = rect.top + GetSystemMetrics(SM_CYSIZE);
+    
+    /* Выбираем правильный битмап */
+    hbitmapToUse = down ? hbitmapMinimizeD : hbitmapMinimize;
+    
+    /* Рисуем кнопку */
+    hdcMem = CreateCompatibleDC( hdc );
+    if (hdcMem)
+    {
+        hbitmap = SelectObject( hdcMem, hbitmapToUse );
+        BitBlt( hdc, rect.left, rect.top, GetSystemMetrics(SM_CXSIZE), GetSystemMetrics(SM_CYSIZE),
+                hdcMem, 0, 0,
+                down ? NOTSRCCOPY : SRCCOPY );
+        SelectObject( hdcMem, hbitmap );
+        DeleteDC( hdcMem );
+    }
+}
 
 /***********************************************************************
  *           NC_DrawFrame
@@ -576,16 +643,16 @@ static void NC_DrawCaption( HDC hdc, RECT *rect, HWND hwnd,
 
     if (!hbitmapClose)
     {
-	if (!(hbitmapClose = LoadBitmap( 0, MAKEINTRESOURCE(OBM_CLOSE) )))
+	if (!(hbitmapClose = LoadBitmap(0, MAKEINTRESOURCE(OBM_CLOSE))))
 	    return;
-	hbitmapMinimize  = LoadBitmap( 0, MAKEINTRESOURCE(OBM_REDUCE) );
-	hbitmapMinimizeD = LoadBitmap( 0, MAKEINTRESOURCE(OBM_REDUCED) );
-	hbitmapMaximize  = LoadBitmap( 0, MAKEINTRESOURCE(OBM_ZOOM) );
-	hbitmapMaximizeD = LoadBitmap( 0, MAKEINTRESOURCE(OBM_ZOOMD) );
-	hbitmapRestore   = LoadBitmap( 0, MAKEINTRESOURCE(OBM_RESTORE) );
-	hbitmapRestoreD  = LoadBitmap( 0, MAKEINTRESOURCE(OBM_RESTORED) );
+	hbitmapMinimize  = LoadBitmap(0, MAKEINTRESOURCE(OBM_REDUCE));
+	hbitmapMinimizeD = LoadBitmap(0, MAKEINTRESOURCE(OBM_REDUCED));
+	hbitmapMaximize  = LoadBitmap(0, MAKEINTRESOURCE(OBM_ZOOM));
+	hbitmapMaximizeD = LoadBitmap(0, MAKEINTRESOURCE(OBM_ZOOMD));
+	hbitmapRestore   = LoadBitmap(0, MAKEINTRESOURCE(OBM_RESTORE));
+	hbitmapRestoreD  = LoadBitmap(0, MAKEINTRESOURCE(OBM_RESTORED));
     }
-    
+
     if (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME)
     {
 	HBRUSH hbrushOld = SelectObject( hdc, sysColorObjects.hbrushWindow );
@@ -706,6 +773,7 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
     }
 
 #if 0
+//@todo
     if (ExcludeVisRect( hdc, wndPtr->rectClient.left-wndPtr->rectWindow.left,
 		        wndPtr->rectClient.top-wndPtr->rectWindow.top,
 		        wndPtr->rectClient.right-wndPtr->rectWindow.left,
@@ -720,13 +788,10 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
     rect.right  = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
     rect.bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
 
-            MoveTo( hdc, rect.left, rect.top );
-            LineTo( hdc, rect.right, rect.bottom );
-
 
     SelectObject( hdc, sysColorObjects.hpenWindowFrame );
 
-    if (!(wndPtr->flags & WIN_MANAGED))
+    if (!(0/*wndPtr->flags & WIN_MANAGED*/))
     {
         if ((wndPtr->dwStyle & WS_BORDER) || (wndPtr->dwStyle & WS_DLGFRAME) ||
             (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME))
@@ -1001,7 +1066,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
     int moved = 0;
 
     if (IsZoomed(hwnd) || !IsWindowVisible(hwnd) ||
-        (wndPtr->flags & WIN_MANAGED)) return;
+        (0/*wndPtr->flags & WIN_MANAGED*/)) return;
     hittest = wParam & 0x0f;
     thickframe = HAS_THICKFRAME( wndPtr->dwStyle );
 

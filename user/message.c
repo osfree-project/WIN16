@@ -72,7 +72,7 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 		       (msg->message == WM_MBUTTONDOWN));
 
 //FUNCTION_START
-//TRACE("msg=0x%04X", msg->message);
+//TRACE("mouseclick=%d", mouseClick);
 
       /* Find the window */
 

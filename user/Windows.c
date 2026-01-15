@@ -43,7 +43,7 @@ HWND WINAPI CreateWindow( LPCSTR className, LPCSTR windowName,
  */
 int WINAPI GetWindowText( HWND hwnd, LPSTR lpString, int nMaxCount )
 {
-	FUNCTION_START
+//	FUNCTION_START
     return SendMessage( hwnd, WM_GETTEXT, nMaxCount, (LPARAM)lpString );
 }
 
@@ -53,7 +53,7 @@ int WINAPI GetWindowText( HWND hwnd, LPSTR lpString, int nMaxCount )
  */
 VOID WINAPI SetWindowText( HWND hwnd, LPCSTR lpString )
 {
-	FUNCTION_START
+//	FUNCTION_START
     SendMessage( hwnd, WM_SETTEXT, 0, (LPARAM)lpString );
 }
 
@@ -203,17 +203,6 @@ LONG WINAPI SetWindowLong( HWND hwnd16, int offset, LONG newval )
 	return 0;
 }
 
-#if 0
-/**************************************************************************
- *              GetClientRect   (USER.33)
- */
-void WINAPI GetClientRect( HWND hwnd, LPRECT rect )
-{
-	FUNCTION_START
-	FUNCTION_END
-}
-
-#endif
 
 /**************************************************************************
  *              EnableScrollBar   (USER.482)

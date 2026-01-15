@@ -139,7 +139,7 @@ DrawText(HDC hDC, LPCSTR lpsz, int cb, LPRECT lprc, UINT uFormat)
 
 	int   	charwidth[256];
 
-	FUNCTION_START
+//	FUNCTION_START
 
 	if ( !lprc )
 		return 0;

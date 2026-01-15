@@ -28,6 +28,10 @@
 
 #include <string.h>
 
+//#ifndef BI_BITFIELDS
+//#define BI_BITFIELDS     3
+//#endif
+
 /**********************************************************************
  *     LoadString   (USER.176)
  */
@@ -649,6 +653,7 @@ HANDLE WINAPI LoadImage(HINSTANCE hinst, LPCSTR name, UINT type, int cx, int cy,
 	HGLOBAL handle;
 	HRSRC hRsrc, hGroupRsrc;
 	DWORD size;
+	LPVOID data;
 
 //	FUNCTION_START
 // @TODO
@@ -723,6 +728,309 @@ HANDLE WINAPI LoadImage(HINSTANCE hinst, LPCSTR name, UINT type, int cx, int cy,
         return ret;
     }
 #endif
+case IMAGE_BITMAP:
+{
+    HBITMAP hBitmap = 0;
+    BITMAPINFO FAR *bmi;
+    BYTE FAR *bits;
+    HDC hdc;
+    int width, height;
+    DWORD colors;
+    DWORD headerSize;
+    DWORD FAR *dwData;
+    int i;
+    WORD wSig;
+    BITMAPINFOHEADER winHeader;
+    BYTE FAR *palette;
+    BYTE FAR *pixelData;
+    HGLOBAL hTempInfo = 0;
+    BITMAPINFO FAR *tempInfo = NULL;
+    int tempInfoSize;
+    BOOL isOS2Format = FALSE;
+    BOOL isMonochrome = FALSE;
+    int rowSize;
+    int imageSize;
+    HANDLE hScaledBmp;
+    HDC hdcSrc;
+    HDC hdcDst;
+    HANDLE hOldSrc;
+    HANDLE hOldDst;
+    
+    /* Загружаем ресурс */
+    hRsrc = FindResource(hinst, name, (LPCSTR)RT_BITMAP);
+    if (!hRsrc) 
+    {
+        TRACE("Bitmap resource not found");
+        return 0;
+    }
+    
+    handle = LoadResource(hinst, hRsrc);
+    if (!handle) 
+    {
+        TRACE("Error loading bitmap resource");
+        return 0;
+    }
+    
+    data = LockResource(handle);
+    if (!data)
+    {
+        FreeResource(handle);
+        return 0;
+    }
+    
+    size = SizeofResource(hinst, hRsrc);
+    
+    /* Проверяем сигнатуру 'BM' (BITMAPFILEHEADER) */
+    wSig = *((WORD FAR *)data);
+    if (wSig == 0x4D42) /* 'BM' в little-endian */
+    {
+        data = ((BYTE FAR *)data) + 14; /* Пропускаем BITMAPFILEHEADER */
+    }
+    
+    /* Получаем размер заголовка */
+    dwData = (DWORD FAR *)data;
+    headerSize = dwData[0];
+    
+    /* Поддерживаем как 12-байтный (OS/2), так и 40-байтный (Windows) формат */
+    if (headerSize == 12) /* BITMAPCOREHEADER (OS/2) */
+    {
+        BITMAPCOREHEADER FAR *coreHeader = (BITMAPCOREHEADER FAR *)data;
+        
+        /* Конвертируем OS/2 заголовок в Windows заголовок */
+        winHeader.biSize = sizeof(BITMAPINFOHEADER);
+        winHeader.biWidth = (LONG)coreHeader->bcWidth;
+        winHeader.biHeight = (LONG)coreHeader->bcHeight;
+        winHeader.biPlanes = coreHeader->bcPlanes;
+        winHeader.biBitCount = coreHeader->bcBitCount;
+        winHeader.biCompression = 0; /* BI_RGB */
+        winHeader.biSizeImage = 0;
+        winHeader.biXPelsPerMeter = 0;
+        winHeader.biYPelsPerMeter = 0;
+        winHeader.biClrUsed = 0;
+        winHeader.biClrImportant = 0;
+        
+        width = winHeader.biWidth;
+        height = winHeader.biHeight;
+        isOS2Format = TRUE;
+        
+        /* Смещение до палитры */
+        palette = (BYTE FAR *)data + sizeof(BITMAPCOREHEADER);
+        
+        /* Рассчитываем размер палитры для OS/2 формата */
+        if (winHeader.biBitCount <= 8)
+        {
+            if (winHeader.biBitCount == 1)
+            {
+                colors = 2;
+                isMonochrome = TRUE;
+            }
+            else if (winHeader.biBitCount == 4)
+                colors = 16;
+            else /* 8 бит */
+                colors = 256;
+            
+            /* Смещение до пиксельных данных */
+            pixelData = palette + colors * 3; /* OS/2 использует RGBTRIPLE (3 байта) */
+        }
+        else
+        {
+            colors = 0;
+            pixelData = palette; /* Нет палитры */
+        }
+        
+        /* Выравнивание по DWORD */
+        if (((DWORD)pixelData - (DWORD)data) % 4 != 0)
+        {
+            pixelData += 4 - (((DWORD)pixelData - (DWORD)data) % 4);
+        }
+        
+        /* Создаем временную структуру BITMAPINFO с Windows заголовком */
+        tempInfoSize = sizeof(BITMAPINFOHEADER) + colors * sizeof(RGBQUAD);
+        hTempInfo = GlobalAlloc(GMEM_FIXED, tempInfoSize);
+        
+        if (!hTempInfo)
+        {
+            FreeResource(handle);
+            return 0;
+        }
+        
+        tempInfo = (BITMAPINFO FAR *)GlobalLock(hTempInfo);
+        
+        /* Копируем заголовок */
+        tempInfo->bmiHeader = winHeader;
+        
+        /* Конвертируем палитру из OS/2 (RGBTRIPLE) в Windows (RGBQUAD) */
+        if (colors > 0)
+        {
+            RGBTRIPLE FAR *os2pal = (RGBTRIPLE FAR *)palette;
+            for (i = 0; i < (int)colors; i++)
+            {
+                tempInfo->bmiColors[i].rgbRed = os2pal[i].rgbtRed;
+                tempInfo->bmiColors[i].rgbGreen = os2pal[i].rgbtGreen;
+                tempInfo->bmiColors[i].rgbBlue = os2pal[i].rgbtBlue;
+                tempInfo->bmiColors[i].rgbReserved = 0;
+            }
+        }
+        
+        /* Создаем DDB из DIB */
+        hdc = GetDC(0);
+        if (hdc)
+        {
+            /* Для монохромных битмапов (1 bpp) - используем CreateBitmap */
+            if (isMonochrome)
+            {
+                rowSize = ((width + 31) / 32) * 4;
+                imageSize = rowSize * height;
+                
+                hBitmap = CreateBitmap(width, height, 1, 1, NULL);
+                if (hBitmap && pixelData)
+                {
+                    SetBitmapBits(hBitmap, imageSize, pixelData);
+                }
+            }
+            else
+            {
+                /* Для цветных битмапов используем CreateDIBitmap */
+                hBitmap = CreateDIBitmap(hdc, 
+                                       &winHeader,
+                                       CBM_INIT,
+                                       pixelData,
+                                       tempInfo,
+                                       DIB_RGB_COLORS);
+            }
+            
+            ReleaseDC(0, hdc);
+        }
+        
+        if (hTempInfo)
+        {
+            GlobalUnlock(hTempInfo);
+            GlobalFree(hTempInfo);
+        }
+    }
+    else if (headerSize == 40) /* BITMAPINFOHEADER (Windows) */
+    {
+        bmi = (BITMAPINFO FAR *)data;
+        
+        /* Проверяем корректность заголовка */
+        if (bmi->bmiHeader.biSize != 40)
+        {
+            FreeResource(handle);
+            return 0;
+        }
+        
+        /* Windows 3.0 поддерживает только BI_RGB */
+        if (bmi->bmiHeader.biCompression != 0)
+        {
+            FreeResource(handle);
+            return 0;
+        }
+        
+        /* Получаем размеры */
+        width = bmi->bmiHeader.biWidth;
+        height = bmi->bmiHeader.biHeight;
+        if (height < 0) height = -height;
+        
+        /* Вычисляем смещение до пиксельных данных */
+        bits = (BYTE FAR *)data + bmi->bmiHeader.biSize;
+        
+        /* Обрабатываем палитру */
+        if (bmi->bmiHeader.biBitCount <= 8)
+        {
+            if (bmi->bmiHeader.biClrUsed > 0)
+                colors = bmi->bmiHeader.biClrUsed;
+            else
+                colors = 1 << bmi->bmiHeader.biBitCount;
+            
+            bits += colors * sizeof(RGBQUAD);
+        }
+        else
+        {
+            colors = 0;
+        }
+        
+        /* Выравнивание по DWORD */
+        if (((DWORD)bits - (DWORD)data) % 4 != 0)
+        {
+            bits += 4 - (((DWORD)bits - (DWORD)data) % 4);
+        }
+        
+        /* Создаем DDB из DIB */
+        hdc = GetDC(0);
+        if (hdc)
+        {
+            /* Для монохромных битмапов (1 bpp) - используем CreateBitmap */
+            if (bmi->bmiHeader.biBitCount == 1)
+            {
+                rowSize = ((width + 31) / 32) * 4;
+                imageSize = rowSize * height;
+                
+                hBitmap = CreateBitmap(width, height, 1, 1, NULL);
+                if (hBitmap && bits)
+                {
+                    SetBitmapBits(hBitmap, imageSize, bits);
+                }
+            }
+            else
+            {
+                /* Для цветных битмапов используем CreateDIBitmap */
+                hBitmap = CreateDIBitmap(hdc, 
+                                       (BITMAPINFOHEADER FAR *)&bmi->bmiHeader,
+                                       CBM_INIT,
+                                       bits,
+                                       bmi,
+                                       DIB_RGB_COLORS);
+            }
+            
+            ReleaseDC(0, hdc);
+        }
+    }
+    else
+    {
+        FreeResource(handle);
+        return 0;
+    }
+    
+    FreeResource(handle);
+    
+    /* Масштабирование при необходимости */
+    if (hBitmap && (cx != 0 && cy != 0) && (cx != width || cy != height))
+    {
+        hScaledBmp = 0;
+        hdcSrc = CreateCompatibleDC(0);
+        hdcDst = CreateCompatibleDC(0);
+        
+        if (hdcSrc && hdcDst)
+        {
+            hOldSrc = SelectObject(hdcSrc, hBitmap);
+            
+            hScaledBmp = CreateCompatibleBitmap(hdcSrc, cx, cy);
+            if (hScaledBmp)
+            {
+                hOldDst = SelectObject(hdcDst, hScaledBmp);
+                
+                StretchBlt(hdcDst, 0, 0, cx, cy,
+                          hdcSrc, 0, 0, width, height,
+                          SRCCOPY);
+                
+                SelectObject(hdcDst, hOldDst);
+            }
+            
+            SelectObject(hdcSrc, hOldSrc);
+        }
+        
+        if (hdcSrc) DeleteDC(hdcSrc);
+        if (hdcDst) DeleteDC(hdcDst);
+        
+        if (hScaledBmp)
+        {
+            DeleteObject(hBitmap);
+            hBitmap = hScaledBmp;
+        }
+    }
+    
+    return hBitmap;
+}
     case IMAGE_ICON:
     case IMAGE_CURSOR:
     {
