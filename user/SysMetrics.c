@@ -56,7 +56,7 @@ static int SysMetricsDef[] =
         480,            /* SM_CYSCREEN         1 */
         20,             /* SM_CXVSCROLL        2 */
         20,             /* SM_CYHSCROLL        3 */
-        25,             /* SM_CYCAPTION        4 */
+        18/*25*/,             /* SM_CYCAPTION        4 */
         1,              /* SM_CXBORDER         5 */
         1,              /* SM_CYBORDER         6 */
         1 /*4*/,        /* SM_CXDLGFRAME       7 */

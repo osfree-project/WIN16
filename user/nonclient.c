@@ -80,9 +80,6 @@ static void NC_AdjustRect( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
     if (style & WS_ICONIC) return;  /* Nothing to change for an icon */
 
     /* Decide if the window will be managed (see CreateWindowEx) */
-    if (!(0 && ((style & (WS_DLGFRAME | WS_THICKFRAME)) ||
-          (exStyle & WS_EX_DLGMODALFRAME))))
-    {
         if (HAS_DLGFRAME( style, exStyle ))
             InflateRect( rect, GetSystemMetrics(SM_CXDLGFRAME), GetSystemMetrics(SM_CYDLGFRAME) );
         else
@@ -94,9 +91,9 @@ static void NC_AdjustRect( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
         }
 
         if ((style & WS_CAPTION) == WS_CAPTION)
-            rect->top -= GetSystemMetrics(SM_CYCAPTION) - GetSystemMetrics(SM_CYBORDER);
-    }
-    if (menu) rect->top -= GetSystemMetrics(SM_CYMENU) + GetSystemMetrics(SM_CYBORDER);
+            rect->top -= GetSystemMetrics(SM_CYCAPTION) /*- GetSystemMetrics(SM_CYBORDER)*/;
+
+    if (menu) rect->top -= GetSystemMetrics(SM_CYMENU) /*+ GetSystemMetrics(SM_CYBORDER)*/;
 
     if (style & WS_VSCROLL) rect->right  += GetSystemMetrics(SM_CXVSCROLL);
     if (style & WS_HSCROLL) rect->bottom += GetSystemMetrics(SM_CYHSCROLL);
