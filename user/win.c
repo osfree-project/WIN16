@@ -1572,13 +1572,6 @@ DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE hOfStruct,
 
 #endif
 
-/**********************************************************************
- *		GetCapture 	(USER.236)
- */
-HWND WINAPI GetCapture()
-{
-    return 0;//captureWnd;
-}
 
 /**********************************************************************
  *	     CallWindowProc    (USER.122)

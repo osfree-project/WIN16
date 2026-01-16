@@ -86,7 +86,7 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
         }
 
     case WM_NCLBUTTONDOWN:
-//	return NC_HandleNCLButtonDown( hwnd, wParam, lParam );
+	return NC_HandleNCLButtonDown( hwnd, wParam, lParam );
 	break;
 
     case WM_LBUTTONDBLCLK:

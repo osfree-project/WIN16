@@ -388,26 +388,7 @@ int WINAPI GetDlgCtrlID( HWND hwnd )
     return 0;//GetDlgCtrlID( WIN_Handle32(hwnd) );
 }
 
-/**************************************************************************
- *              ReleaseCapture   (USER.19)
- * Defined as VOID in Watcom headers
- */
-VOID /*BOOL*/ WINAPI ReleaseCapture(void)
-{
-	FUNCTION_START
-    //return FALSE;//ReleaseCapture();
-}
 
-#if 0
-/**************************************************************************
- *              DestroyWindow   (USER.53)
- */
-BOOL WINAPI DestroyWindow( HWND hwnd )
-{
-	FUNCTION_START
-    return FALSE;//DestroyWindow( WIN_Handle32(hwnd) );
-}
-#endif
 
 
 /**************************************************************************
@@ -480,24 +461,3 @@ void WINAPI ScrollWindow( HWND hwnd, int dx, int dy, const RECT *rect,
 }
 
 
-/**************************************************************************
- *              SetCapture   (USER.18)
- */
-HWND WINAPI SetCapture( HWND hwnd )
-{
-	FUNCTION_START
-    return 0;
-}
-
-
-#if 0
-/**************************************************************************
- *              ScreenToClient   (USER.29)
- */
-void WINAPI ScreenToClient( HWND hwnd, LPPOINT lppnt )
-{
-	FUNCTION_START
-    MapWindowPoints( 0, hwnd, lppnt, 1 );
-}
-
-#endif

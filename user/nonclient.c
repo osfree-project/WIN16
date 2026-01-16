@@ -929,7 +929,6 @@ LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
     return (LONG)SetCursor(HCursNormal);
 }
 
-#if 0
 
 /***********************************************************************
  *           NC_TrackSysMenu
@@ -944,7 +943,7 @@ static void NC_TrackSysMenu( HWND hwnd, HDC hdc, POINT pt )
 
     if (!(wndPtr->dwStyle & WS_SYSMENU)) return;
     /* If window has a menu, track the menu bar normally if it not minimized */
-    if (HAS_MENU(wndPtr) && !iconic) MENU_TrackMouseMenuBar( hwnd, pt );
+//@todo    if (HAS_MENU(wndPtr) && !iconic) MENU_TrackMouseMenuBar( hwnd, pt );
     else
     {
 	  /* Otherwise track the system menu like a normal popup menu */
@@ -952,8 +951,8 @@ static void NC_TrackSysMenu( HWND hwnd, HDC hdc, POINT pt )
 	OffsetRect( &rect, wndPtr->rectWindow.left, wndPtr->rectWindow.top );
 	if (wndPtr->dwStyle & WS_CHILD)
 	    ClientToScreen( wndPtr->parent->hwndSelf, (POINT *)&rect );
-	rect.right = rect.left + SYSMETRICS_CXSIZE;
-	rect.bottom = rect.top + SYSMETRICS_CYSIZE;
+	rect.right = rect.left + GetSystemMetrics(SM_CXSIZE);
+	rect.bottom = rect.top + GetSystemMetrics(SM_CYSIZE);
 	if (!iconic) NC_DrawSysButton( hwnd, hdc, TRUE );
 	TrackPopupMenu( wndPtr->hSysMenu, TPM_LEFTALIGN | TPM_LEFTBUTTON,
 		        rect.left, rect.bottom, 0, hwnd, &rect );
@@ -961,6 +960,7 @@ static void NC_TrackSysMenu( HWND hwnd, HDC hdc, POINT pt )
     }
 }
 
+#if 0
 
 /***********************************************************************
  *           NC_StartSizeMove
@@ -1220,6 +1220,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
 		      SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER );
 }
 
+#endif 
 
 /***********************************************************************
  *           NC_TrackMinMaxBox
@@ -1229,8 +1230,8 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
 static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
 {
     MSG msg;
-    HDC hdc = GetWindowDC( hwnd );
     BOOL pressed = TRUE;
+    HDC hdc = GetWindowDC( hwnd );
 
     SetCapture( hwnd );
     if (wParam == HTMINBUTTON) NC_DrawMinButton( hwnd, hdc, TRUE );
@@ -1263,6 +1264,7 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
 		  IsZoomed(hwnd) ? SC_RESTORE : SC_MAXIMIZE, *(LONG*)&msg.pt );
 }
 
+#if 0
 
 /***********************************************************************
  *           NC_TrackScrollBar
@@ -1318,6 +1320,8 @@ static void NC_TrackScrollBar( HWND hwnd, WORD wParam, POINT pt )
     } while (msg.message != WM_LBUTTONUP);
 }
 
+#endif 
+
 /***********************************************************************
  *           NC_HandleNCLButtonDown
  *
@@ -1326,7 +1330,10 @@ static void NC_TrackScrollBar( HWND hwnd, WORD wParam, POINT pt )
 LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
     HDC hdc = GetWindowDC( hwnd );
-    POINT pt = { LOWORD(lParam), HIWORD(lParam) };
+    POINT pt;
+
+    pt.x = LOWORD(lParam);
+    pt.y = HIWORD(lParam);
 
     switch(wParam)  /* Hit test */
     {
@@ -1374,6 +1381,7 @@ LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
     return 0;
 }
 
+#if 0
 
 /***********************************************************************
  *           NC_HandleNCLButtonDblClk

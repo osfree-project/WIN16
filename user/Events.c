@@ -1,6 +1,8 @@
 #include <user.h>
 #include <queue.h>
 
+static HWND 	captureWnd = 0;
+
 /***********************************************************************
  *		keybd_event (USER.???)
  */
@@ -112,4 +114,50 @@ void WINAPI UserYield(void)
     MSG msg;
 	FUNCTION_START
     //PeekMessage( &msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE );
+}
+
+/**********************************************************************
+ *		SetCapture 	(USER.18)
+ */
+HWND WINAPI SetCapture( HWND hwnd )
+{
+//    Window win;
+    HWND old_capture_wnd = captureWnd;
+
+    if (!hwnd)
+    {
+        ReleaseCapture();
+        return old_capture_wnd;
+    }
+//    if (!(win = WIN_GetXWindow( hwnd ))) return 0;
+/*    if (XGrabPointer(display, win, False, 
+                     ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
+                     GrabModeAsync, GrabModeAsync,
+                     None, None, CurrentTime ) == GrabSuccess)
+    {
+	dprintf_win(stddeb, "SetCapture: %04x\n", hwnd);
+*/	captureWnd   = hwnd;
+	return old_capture_wnd;
+//    }
+//    else */return 0;
+}
+
+
+/**********************************************************************
+ *		ReleaseCapture	(USER.19)
+ */
+void WINAPI ReleaseCapture()
+{
+    if (captureWnd == 0) return;
+//    XUngrabPointer( display, CurrentTime );
+    captureWnd = 0;
+//    dprintf_win(stddeb, "ReleaseCapture\n");
+}
+
+/**********************************************************************
+ *		GetCapture 	(USER.236)
+ */
+HWND WINAPI GetCapture()
+{
+    return captureWnd;
 }
