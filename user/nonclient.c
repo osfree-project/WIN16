@@ -1417,6 +1417,7 @@ LONG NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam )
     return 0;
 }
 
+#endif
 
 /***********************************************************************
  *           NC_HandleSysCommand
@@ -1427,8 +1428,8 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
-    dprintf_nonclient(stddeb, "Handling WM_SYSCOMMAND %x %d,%d\n", 
-		      wParam, pt.x, pt.y );
+//    dprintf_nonclient(stddeb, "Handling WM_SYSCOMMAND %x %d,%d\n", 
+//		      wParam, pt.x, pt.y );
 
     if (wndPtr->dwStyle & WS_CHILD && wParam != SC_KEYMENU )
         ScreenToClient( wndPtr->parent->hwndSelf, &pt );
@@ -1437,7 +1438,7 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt )
     {
     case SC_SIZE:
     case SC_MOVE:
-	NC_DoSizeMove( hwnd, wParam, pt );
+//@todo	NC_DoSizeMove( hwnd, wParam, pt );
 	break;
 
     case SC_MINIMIZE:
@@ -1461,15 +1462,15 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt )
 
     case SC_VSCROLL:
     case SC_HSCROLL:
-	NC_TrackScrollBar( hwnd, wParam, pt );
+//@todo	NC_TrackScrollBar( hwnd, wParam, pt );
 	break;
 
     case SC_MOUSEMENU:
-	MENU_TrackMouseMenuBar( hwnd, pt );
+//@todo	MENU_TrackMouseMenuBar( hwnd, pt );
 	break;
 
     case SC_KEYMENU:
-	MENU_TrackKbdMenuBar( wndPtr , wParam , pt.x );
+//@todo	MENU_TrackKbdMenuBar( wndPtr , wParam , pt.x );
 	break;
 	
     case SC_ARRANGE:
@@ -1482,15 +1483,14 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt )
     case SC_HOTKEY:
 	break;
 
-    case SC_SCREENSAVE:
-	if (wParam == SC_ABOUTWINE)
-	{   
-	  extern const char people[];
-	  ShellAbout(hwnd,"WINE",people,0);
-        }
-	break;
+//@todo    case SC_SCREENSAVE:
+//	if (wParam == SC_ABOUTWINE)
+//	{   
+//	  extern const char people[];
+//	  ShellAbout(hwnd,"WINE",people,0);
+//        }
+//	break;
     }
     return 0;
 }
 
-#endif

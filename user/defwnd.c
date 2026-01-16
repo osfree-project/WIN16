@@ -267,10 +267,10 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 
     case WM_SYSCOMMAND:
 	{
-//@todo          POINT pt;
-//	pt.x=LOWORD(lParam);
-//	pt.y=HIWORD(lParam);
-//          return NC_HandleSysCommand( hwnd, wParam, pt );
+          POINT pt;
+	pt.x=LOWORD(lParam);
+	pt.y=HIWORD(lParam);
+          return NC_HandleSysCommand( hwnd, wParam, pt );
 	}
     case WM_KEYDOWN:
 
