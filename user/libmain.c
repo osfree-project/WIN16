@@ -818,11 +818,10 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 	SetCursorPos(100, 100);
 
 	// Get the hourglass cursor, show it
-	//SetCursor(LoadCursor(0, IDC_WAIT));
-	SetCursor(HCursNormal);
+	SetCursor(LoadCursor(0, IDC_WAIT));
+
 	// Register the Desktop and switch windows classes, and
 	// create the windows.
-
 	LW_InitWndMgr(hInstance);
 
 

@@ -22,6 +22,8 @@ VOID WINAPI mouse_event(VOID)
      * CX = vertical displacement if AX & ME_MOVE
      * DX = button state (?)
      * SI = mouse event flags (?)
+     * SI  ExtraMessageInfo for 3.1
+     * DI  ExtraMessageInfo for 3.1
      */
 
 	 WORD EventCodes;   // The event codes. This is a bit-packed value that describes the various events being reported.Bit Description
@@ -37,9 +39,6 @@ VOID WINAPI mouse_event(VOID)
 	 WORD 	NumButts;	//  Number of buttons on the mouse (typically, 2).
 	 
 	 WORD	KeyState=0;	// MK_*
-	PushDS();
-//	FUNCTION_START
-	SetDS(USER_HeapSel);
 
 	  _asm{
 		  mov EventCodes,	AX 
@@ -48,7 +47,10 @@ VOID WINAPI mouse_event(VOID)
 		  mov NumButts,		DX
 	  }
 
+	PushDS();
+	SetDS(USER_HeapSel);
 
+//printf("%04x", EventCodes);
     if (EventCodes & ME_MOVE)
     {
 	dwMouseX+=hMouse;
