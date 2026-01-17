@@ -5,30 +5,14 @@
  *                       1995,1996 Alex Korobka
  */
 
-//#include "sysmetrics.h"
-//#include "module.h"
 #include "user.h"
-//#include "win.h"
-//#include "event.h"
-//#include "hook.h"
-//#include "message.h"
 #include "queue.h"
-//#include "stackframe.h"
-//#include "winpos.h"
-//#include "nonclient.h"
-//#include "stddebug.h"
-/* #define DEBUG_WIN */
-//#include "debug.h"
 
 /* ----- external functions ----- */
 
 void 	FOCUS_SwitchFocus( HWND , HWND );
 
 
-/* ----- internal variables ----- */
-
-static HWND hwndActive      = 0;  /* Currently active window */
-static HWND hwndPrevActive  = 0;  /* Previously active window */
 
 
 /***********************************************************************

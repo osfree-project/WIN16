@@ -541,6 +541,20 @@ extern HMODULE HModSound;
 extern FARPROC lpfnSoundEnable;
 extern HQUEUE HQSysQueue;
 
+extern HWND hwndSysModal;
+extern WORD wDragWidth;
+extern WORD wDragHeight;
+extern HWND hwndActive;
+extern HWND hwndPrevActive;
+
+extern HBITMAP hbitmapClose;
+extern HBITMAP hbitmapMinimize;
+extern HBITMAP hbitmapMinimizeD;
+extern HBITMAP hbitmapMaximize;
+extern HBITMAP hbitmapMaximizeD;
+extern HBITMAP hbitmapRestore;
+extern HBITMAP hbitmapRestoreD;
+
 WORD WINAPI GetTaskQueue(HANDLE hTask);
 
 #define ME_MOVE 0x01
@@ -821,7 +835,7 @@ extern void NC_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
 extern void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint );
 extern LONG NC_HandleNCPaint( HWND hwnd , HRGN clip);
 extern LONG NC_HandleNCActivate( HWND hwnd, WPARAM wParam );
-extern LONG NC_HandleNCCalcSize( HWND hwnd, NCCALCSIZE_PARAMS *params );
+extern LONG NC_HandleNCCalcSize( HWND hwnd, NCCALCSIZE_PARAMS FAR * params );
 extern LONG NC_HandleNCHitTest( HWND hwnd, POINT pt );
 extern LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam );
 extern LONG NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam );
@@ -839,3 +853,14 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus );
 #define WND_MAGIC     0x444e4957  /* 'WIND' */
 
 DWORD WINAPI SetDCOrg(HDC, WORD, WORD);
+
+extern  unsigned short          GetDS( void );
+#pragma aux GetDS               = \
+        "mov    ax,ds"          \
+        value                   [ax];
+
+/* This function sets current DS value */
+extern  void          SetDS( unsigned short );
+#pragma aux SetDS               = \
+        "mov    ds,ax"          \
+        parm                   [ax];

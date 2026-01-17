@@ -52,16 +52,6 @@ BOOL WINAPI DllEntryPoint( DWORD reason, HINSTANCE inst, WORD ds,
 #define USUD_LOCALHEAP         0x0004
 #define USUD_FIRSTCLASS        0x0005
 
-extern  unsigned short          GetDS( void );
-#pragma aux GetDS               = \
-        "mov    ax,ds"          \
-        value                   [ax];
-
-/* This function sets current DS value */
-extern  void          SetDS( unsigned short );
-#pragma aux SetDS               = \
-        "mov    ds,ax"          \
-        parm                   [ax];
 
 /***********************************************************************
  *		UserSeeUserDo (USER.216)

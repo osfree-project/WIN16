@@ -4,23 +4,6 @@
  * Copyright 1993, 1994 Alexandre Julliard
  */
 
-//#include <stdlib.h>
-//#include <sys/time.h>
-//#include <sys/types.h>
-//#include <errno.h>
-
-//#include "message.h"
-//#include "win.h"
-//#include "gdi.h"
-//#include "sysmetrics.h"
-//#include "hook.h"
-//#include "event.h"
-//#include "spy.h"
-//#include "winpos.h"
-//#include "atom.h"
-//#include "dde.h"
-//#include "stddebug.h"
-/* #define DEBUG_MSG */
 #include "user.h"
 #include "queue.h"
 
@@ -297,7 +280,6 @@ UINT WINAPI GetDoubleClickTime()
 BOOL MSG_GetHardwareMessage( LPMSG msg )
 {
     int pos;
-//    XEvent event;
     MESSAGEQUEUE FAR *sysMsgQueue = QUEUE_GetSysQueue();
 
     while(1)
@@ -308,97 +290,10 @@ BOOL MSG_GetHardwareMessage( LPMSG msg )
 	    QUEUE_RemoveMsg( sysMsgQueue, pos );
 	    break;
 	}
-//	XNextEvent( display, &event );
-//	EVENT_ProcessEvent( &event );
     }
     return TRUE;
 }
 
-#if 0
-
-/***********************************************************************
- *           MSG_Synchronize
- *
- * Synchronize with the X server. Should not be used too often.
- */
-void MSG_Synchronize()
-{
-    XEvent event;
-
-    XSync( display, False );
-    while (XPending( display ))
-    {
-	XNextEvent( display, &event );
-	EVENT_ProcessEvent( &event );
-    }    
-}
-
-/***********************************************************************
- *           MSG_WaitXEvent
- *
- * Wait for an X event, but at most maxWait milliseconds (-1 for no timeout).
- * Return TRUE if an event is pending, FALSE on timeout or error
- * (for instance lost connection with the server).
- */
-BOOL MSG_WaitXEvent( LONG maxWait )
-{
-    fd_set read_set;
-    struct timeval timeout;
-    XEvent event;
-    int fd = ConnectionNumber(display);
-
-    if (!XPending(display) && (maxWait != -1))
-    {
-        FD_ZERO( &read_set );
-        FD_SET( fd, &read_set );
-
-	timeout.tv_usec = (maxWait % 1000) * 1000;
-	timeout.tv_sec = maxWait / 1000;
-
-#ifdef CONFIG_IPC
-	sigsetjmp(env_wait_x, 1);
-	stop_wait_op= CONT;
-	    
-	if (DDE_GetRemoteMessage()) {
-	    while(DDE_GetRemoteMessage())
-		;
-	    return TRUE;
-	}
-	stop_wait_op= STOP_WAIT_X;
-	/* The code up to the next "stop_wait_op= CONT" must be reentrant  */
-	if (select( fd+1, &read_set, NULL, NULL, &timeout ) != 1 &&
-	    !XPending(display)) {
-	    stop_wait_op= CONT;
-	    return FALSE;
-	} else {
-	    stop_wait_op= CONT;
-	}
-#else  /* CONFIG_IPC */
-	if (select( fd+1, &read_set, NULL, NULL, &timeout ) != 1)
-            return FALSE;  /* Timeout or error */
-#endif  /* CONFIG_IPC */
-
-    }
-
-    /* Process the event (and possibly others that occurred in the meantime) */
-    do
-    {
-
-#ifdef CONFIG_IPC
-	if (DDE_GetRemoteMessage())
-        {
-	    while(DDE_GetRemoteMessage()) ;
-	    return TRUE;
-	}
-#endif  /* CONFIG_IPC */
-
-        XNextEvent( display, &event );
-        EVENT_ProcessEvent( &event );
-    }
-    while (XPending( display ));
-    return TRUE;
-}
-#endif
 
 /***********************************************************************
  *           MSG_PeekMessage

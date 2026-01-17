@@ -1,5 +1,4 @@
 #include "class.h"
-//#include "user.h"
 #include "dce.h"
 #include "queue.h"
 
@@ -792,6 +791,14 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 
 	// Create the global atom table.
 	GlobalInitAtom();
+
+	hbitmapClose = LoadBitmap(0, MAKEINTRESOURCE(OBM_CLOSE));
+	hbitmapMinimize  = LoadBitmap(0, MAKEINTRESOURCE(OBM_REDUCE));
+	hbitmapMinimizeD = LoadBitmap(0, MAKEINTRESOURCE(OBM_REDUCED));
+	hbitmapMaximize  = LoadBitmap(0, MAKEINTRESOURCE(OBM_ZOOM));
+	hbitmapMaximizeD = LoadBitmap(0, MAKEINTRESOURCE(OBM_ZOOMD));
+	hbitmapRestore   = LoadBitmap(0, MAKEINTRESOURCE(OBM_RESTORE));
+	hbitmapRestoreD  = LoadBitmap(0, MAKEINTRESOURCE(OBM_RESTORED));
 
 	// Register the windows classes for
 	// "predefined" windows, such as

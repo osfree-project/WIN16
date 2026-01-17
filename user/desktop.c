@@ -4,16 +4,6 @@
  * Copyright 1994 Alexandre Julliard
  */
 
-//#include <fcntl.h>
-//#include <stdio.h>
-//#include <stdlib.h>
-//#include <string.h>
-//#include <unistd.h>
-//#include "win.h"
-//#include "desktop.h"
-//#include "directory.h"
-//#include "dos_fs.h"
-//#include "graphics.h"
 #include "user.h"
 
 

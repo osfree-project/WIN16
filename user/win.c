@@ -3,39 +3,16 @@
  *
  * Copyright 1993, 1994 Alexandre Julliard
  */
-//#include <stdlib.h>
-//#include <stdio.h>
-//#include <string.h>
 
-//#include "options.h"
-//#include "class.h"
-//#include "win.h"
 #include "user.h"
 #include "dce.h"
 #include "queue.h"
-//#include "sysmetrics.h"
-//#include "cursoricon.h"
-//#include "event.h"
-//#include "nonclient.h"
-//#include "winpos.h"
-//#include "color.h"
-//#include "shm_main_blk.h"
-//#include "dde_proc.h"
-//#include "callback.h"
-//#include "stddebug.h"
-/* #define DEBUG_WIN  */ 
-/* #define DEBUG_MENU */
-//#include "debug.h"
 
 #define CallEnumTaskWndProc( func, hwnd, lParam ) \
     (*func)( hwnd, lParam )
 #define CallEnumWindowsProc( func, hwnd, lParam ) \
     (*func)( hwnd, lParam )
 
-static HWND hwndSysModal = 0;
-
-static WORD wDragWidth = 4;
-static WORD wDragHeight= 3;
 
 extern HCURSOR CURSORICON_IconToCursor(HICON);
 
@@ -46,19 +23,21 @@ extern HCURSOR CURSORICON_IconToCursor(HICON);
  */
 WND * WIN_FindWndPtr( HWND hwnd )
 {
-    WND * ptr;
-    
-    if (!hwnd) return NULL;
-    ptr = (WND *) LocalLock(hwnd);
-    if (ptr->dwMagic != WND_MAGIC) return NULL;
-    if (ptr->hwndSelf != hwnd)
-    {
-        TRACE("Can't happen: hwnd %04x self pointer is %04x %04x\n",
-                 hwnd, ptr->hwndSelf, HWndDesktop );
-	for(;;);
-        return NULL;
-    }
-    return ptr;
+	WND * ptr=NULL;
+
+	if (hwnd)
+	{
+		ptr = (WND *) LocalLock(hwnd);
+		if (ptr)
+		{
+			if ((ptr->dwMagic != WND_MAGIC) || (ptr->hwndSelf != hwnd))
+			{
+				ptr = NULL;
+				LocalUnlock(hwnd);
+			}
+		}
+	}
+	return ptr;
 }
 
 /*****************************************************************

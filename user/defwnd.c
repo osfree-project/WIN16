@@ -5,18 +5,7 @@
  *	     1995 Alex Korobka
  */
 
-//#include <stdlib.h>
-//#include <stdio.h>
-//#include "win.h"
-//#include "class.h"
 #include "user.h"
-//#include "nonclient.h"
-//#include "winpos.h"
-//#include "syscolor.h"
-//#include "stddebug.h"
-/* #define DEBUG_MESSAGE */
-//#include "debug.h"
-//#include "spy.h"
 
   /* Last COLOR id */
 #define COLOR_MAX   COLOR_BTNHIGHLIGHT
@@ -42,8 +31,6 @@ void DEFWND_SetText( WND *wndPtr, LPSTR text )
     wndPtr->hText = LocalAlloc(LMEM_FIXED, lstrlen(text) + 1 );
     textPtr = LocalLock(wndPtr->hText);
     lstrcpy( textPtr, text );
-//    if (wndPtr->window)
-//        XStoreName( display, wndPtr->window, text );
 }
 
 

@@ -193,7 +193,10 @@ void SYSCOLOR_Init(void)
 
 COLORREF WINAPI GetSysColor(int nIndex)
 {
-//    TRACE("System Color %d = %8lx", nIndex, SysColors[nIndex]);
+    if ((nIndex < 0) || (nIndex >= sizeof(SysColors)/sizeof(SysColors[0])))
+    {
+        return RGB(0,0,0);
+    }
     return SysColors[nIndex];
 }
 
@@ -204,16 +207,15 @@ COLORREF WINAPI GetSysColor(int nIndex)
 
 void WINAPI SetSysColors(int nChanges, const int FAR * lpSysColor, const COLORREF FAR *lpColorValues)
 {
-    int i;
+	int i;
 
-    for (i = 0; i < nChanges; i++)
-    {
-	SYSCOLOR_SetColor( lpSysColor[i], lpColorValues[i] );
-    }
+	for (i = 0; i < nChanges; i++)
+	{
+		SYSCOLOR_SetColor( lpSysColor[i], lpColorValues[i] );
+	}
 
-    /* Send WM_SYSCOLORCHANGE message to all windows */
-
-    /* ................ */
+	/* Send WM_SYSCOLORCHANGE message to all windows */
+	SendMessage(HWND_BROADCAST,WM_SYSCOLORCHANGE,0,0);
 
     /* Repaint affected portions of all visible windows */
 

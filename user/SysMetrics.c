@@ -294,32 +294,6 @@ GetSysColor(int nIndex)
     return cr;
 }
 
-/*************************************************************************
- *		SetSysColors (USER.181)
- */
-void WINAPI
-SetSysColors(int nChanges, const int far *lpSysColor,
-	     const COLORREF FAR *lpColorValues)
-{
-	int index;
-
-//	APISTR((LF_APICALL,"SetSysColors(int=%d,int *%x,COLORREF *%x)\n",
-//		nChanges,lpSysColor,lpColorValues));
-
-	while(nChanges--) {
-		index = *lpSysColor++;
-		SysColors[index] = *lpColorValues++;
-//@ todo This part is present in later windows versions
-/*		if (SysColorBrushes[index] != (HBRUSH) NULL) {
-			DeleteObject(SysColorBrushes[index]);
-			SysColorBrushes[index] = 0;
-		}*/
-	}
-
-	/* then tell top level windows of change */
-	SendMessage(HWND_BROADCAST,WM_SYSCOLORCHANGE,0,0);
-//	APISTR((LF_APIRET,"SetSysColors: returns void\n"));
-}
 #endif
 
 /***********************************************************************

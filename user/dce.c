@@ -195,7 +195,7 @@ HANDLE DCE_AllocDCE( DCE_TYPE type )
 
 	dce = (DCE *) LocalLock( handle );
 
-	if (!(dce->hDC = CreateDC( "DISPLAY", NULL, NULL, NULL )))
+	if (!(dce->hDC = CreateDC( DISPLAY, NULL, NULL, NULL )))
 	{
 		LocalUnlock(handle);
 		LocalFree(handle);

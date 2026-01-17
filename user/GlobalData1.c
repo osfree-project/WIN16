@@ -9,6 +9,20 @@ HANDLE __based(__segname("_TEXT")) hGDI;
 HMODULE HModuleWin = 0;
 HINSTANCE HInstanceDisplay;
 
+HWND hwndSysModal = 0;
+WORD wDragWidth = 4;
+WORD wDragHeight= 3;
+HWND hwndActive      = 0;  /* Currently active window */
+HWND hwndPrevActive  = 0;  /* Previously active window */
+
+HBITMAP hbitmapClose = 0;
+HBITMAP hbitmapMinimize = 0;
+HBITMAP hbitmapMinimizeD = 0;
+HBITMAP hbitmapMaximize = 0;
+HBITMAP hbitmapMaximizeD = 0;
+HBITMAP hbitmapRestore = 0;
+HBITMAP hbitmapRestoreD = 0;
+
 int  ClBorder;          /* Frame border width */
 
 char DebugBuffer[100];  /* Buffer for DEBUG messages */
