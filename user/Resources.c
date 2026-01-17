@@ -464,22 +464,40 @@ HICON WINAPI CreateIconFromResourceEx(HINSTANCE hinst, LPBYTE bits, UINT cbSize,
     HCURSOR result;
     LPBYTE lpXOR, lpAND;
     LPBYTE lpXOR_flipped, lpAND_flipped;
+    LPBYTE lpXOR_scaled, lpAND_scaled;
     int xorRowSize, andRowSize;
-    int y, i;
-    HGLOBAL hMemXOR = 0, hMemAND = 0;
+    int scaledXorRowSize, scaledAndRowSize;
+    int y, x, i;
+    HGLOBAL hMemXOR, hMemAND;
+    HGLOBAL hMemXOR_scaled, hMemAND_scaled;
     DWORD xorOffset, andOffset;
-    DWORD expectedXORSize;
+    DWORD expectedXORSize, expectedANDSize;
     DWORD andOffsetFromXOR;
-    BOOL needFlip = FALSE; // Флаг, указывающий нужно ли переворачивать строки
+    BOOL needFlip;
+    BOOL needScale;
+    int dibWidth, dibHeight;
+    int srcY, srcX, srcByte, srcBit, dstByte, dstBit;
+    int srcByteIndex, srcNibble, dstByteIndex, dstNibble;
+    BYTE srcPixel, dstPixel;
+    BYTE FAR *srcXOR_line, *srcAND_line, *dstXOR_line, *dstAND_line;
+    int realHeight;
 
-//  /  FUNCTION_START
-//    TRACE("%x:%x (%d bytes) , ver %x%x, %dx%d %S %S",
-//                   bits, cbSize, dwVersion, width, height,
-//                   bIcon ? "icon" : "cursor", (cFlag & LR_MONOCHROME) ? "mono" : "" );
+    /* Инициализация */
+    lpXOR_scaled = NULL;
+    lpAND_scaled = NULL;
+    hMemXOR = 0;
+    hMemAND = 0;
+    hMemXOR_scaled = 0;
+    hMemAND_scaled = 0;
+    needFlip = FALSE;
+    needScale = FALSE;
+    lpXOR_flipped = NULL;
+    lpAND_flipped = NULL;
+    result = 0;
+    dibWidth = 0;
+    dibHeight = 0;
 
     if (!bits) return 0;
-
-//    dumpbits(bIcon?bits:(bits+4));
 
     if (dwVersion == 0x00020000)
     {
@@ -489,76 +507,98 @@ HICON WINAPI CreateIconFromResourceEx(HINSTANCE hinst, LPBYTE bits, UINT cbSize,
 
     if (bIcon)
     {
+        /* Для иконки hotspot в центре */
         hotspot.x = width / 2;
         hotspot.y = height / 2;
         bmi = (BITMAPINFO FAR *)bits;
     }
     else
     {
+        /* Для курсора первые 4 байта - hotspot */
         short FAR *pt = (short FAR *)bits;
         hotspot.x = pt[0];
         hotspot.y = pt[1];
         bmi = (LPBITMAPINFO)(bits + 4);
     }
 
-//    TRACE("x=%d y=%d bmi=%x:%x", hotspot.x, hotspot.y, bmi);
-
-    // Проверяем знак высоты в DIB заголовке
-    // Если biHeight > 0, данные хранятся снизу вверх (нужно переворачивать)
-    // Если biHeight < 0, данные хранятся сверху вниз (не нужно переворачивать)
-    if (bmi->bmiHeader.biHeight > 0)
+    /* Получаем размеры из заголовка DIB */
+    dibWidth = bmi->bmiHeader.biWidth;
+    
+    /* Высота в DIB может быть положительной (снизу вверх) или отрицательной (сверху вниз) */
+    if (bmi->bmiHeader.biHeight > 0) 
     {
-        needFlip = TRUE; // Данные снизу вверх - нужно перевернуть
-//        TRACE("DIB data is bottom-up, will flip");
+        /* Положительная высота - данные снизу вверх, нужно переворачивать */
+        dibHeight = bmi->bmiHeader.biHeight;
+        needFlip = TRUE;
+    }
+    else 
+    {
+        /* Отрицательная высота - данные сверху вниз, не нужно переворачивать */
+        dibHeight = -bmi->bmiHeader.biHeight;
+        needFlip = FALSE;
+    }
+
+    /* ВНИМАНИЕ: Для курсоров и иконок высота в DIB - это высота XOR+AND масок! */
+    /* Поэтому реальная высота изображения = dibHeight / 2 */
+    if (dibHeight % 2 != 0)
+    {
+        /* На всякий случай проверяем, что высота четная */
+        TRACE("Warning: DIB height is odd: %d\n", dibHeight);
+    }
+    
+    /* Реальная высота иконки/курсора */
+    realHeight = dibHeight / 2;
+
+    /* Определяем, нужно ли масштабирование */
+    if (width > 0 && height > 0 && (width != dibWidth || height != realHeight))
+    {
+        needScale = TRUE;
     }
     else
     {
-        needFlip = FALSE; // Данные сверху вниз - не нужно переворачивать
-//        TRACE("DIB data is top-down, no flip needed");
-        // Используем абсолютное значение высоты для расчетов
-        height = -bmi->bmiHeader.biHeight;
+        /* Используем оригинальные размеры */
+        width = dibWidth;
+        height = realHeight;
     }
 
-    // Вычисляем размеры строк
-    xorRowSize = get_bitmap_width_bytes(width, bmi->bmiHeader.biBitCount);
-    andRowSize = get_bitmap_width_bytes(width, 1); // AND маска всегда 1bpp
+    /* Вычисляем размеры строк для оригинала */
+    xorRowSize = get_bitmap_width_bytes(dibWidth, bmi->bmiHeader.biBitCount);
+    andRowSize = get_bitmap_width_bytes(dibWidth, 1);
 
-    // Вычисляем смещение до данных XOR маски
-    // Стандартное смещение: заголовок + палитра
+    /* Вычисляем смещение до данных XOR маски */
     xorOffset = bmi->bmiHeader.biSize;
     
-    // Добавляем размер палитры
     if (bmi->bmiHeader.biClrUsed > 0)
     {
         xorOffset += bmi->bmiHeader.biClrUsed * sizeof(RGBQUAD);
     }
     else if (bmi->bmiHeader.biBitCount <= 8)
     {
-        // Если biClrUsed = 0, но битность <= 8, то используется полная палитра
         xorOffset += (1 << bmi->bmiHeader.biBitCount) * sizeof(RGBQUAD);
     }
     
-    // Выравнивание до 4 байт
+    /* Выравнивание до 4 байт */
     if (xorOffset % 4 != 0)
     {
         xorOffset += 4 - (xorOffset % 4);
     }
 
-    // Вычисляем указатели
     lpXOR = (LPBYTE)bmi + xorOffset;
-    expectedXORSize = xorRowSize * height;
     
-    // Проверяем, не выходим ли за границы данных
-    if ((DWORD)(lpXOR - bits) + expectedXORSize > cbSize)
+    /* XOR маска занимает realHeight строк (половина от dibHeight) */
+    expectedXORSize = xorRowSize * realHeight;
+    
+    /* Проверяем, что данные помещаются в буфер */
+    if ((DWORD)(lpXOR - bits) + expectedXORSize + (andRowSize * realHeight) > cbSize)
     {
-//        TRACE("ERROR: XOR data exceeds buffer size!");
+        TRACE("Error: Resource data too small for icon/cursor\n");
         return 0;
     }
     
-    // AND маска начинается сразу после XOR данных
+    /* AND маска начинается сразу после XOR маски */
     lpAND = lpXOR + expectedXORSize;
     
-    // Выравнивание для AND маски
+    /* Для иконок и курсоров одинаково: выравнивание AND маски до 4 байт */
     andOffsetFromXOR = expectedXORSize;
     if (andOffsetFromXOR % 4 != 0)
     {
@@ -566,13 +606,9 @@ HICON WINAPI CreateIconFromResourceEx(HINSTANCE hinst, LPBYTE bits, UINT cbSize,
         lpAND = lpXOR + andOffsetFromXOR;
     }
 
-//    TRACE("xorOffset=%d, xorRowSize=%d, andRowSize=%d, needFlip=%d", 
-//          xorOffset, xorRowSize, andRowSize, needFlip);
-//    TRACE("lpXOR=%x:%x (offset %d from bits), lpAND=%x%x", lpXOR, lpXOR - bits, lpAND);
-
-    // Выделяем память для перевернутых масок
+    /* Выделяем память для перевернутых масок */
     hMemXOR = GlobalAlloc(GMEM_MOVEABLE, expectedXORSize);
-    hMemAND = GlobalAlloc(GMEM_MOVEABLE, andRowSize * height);
+    hMemAND = GlobalAlloc(GMEM_MOVEABLE, andRowSize * realHeight);
     
     if (!hMemXOR || !hMemAND)
     {
@@ -591,57 +627,233 @@ HICON WINAPI CreateIconFromResourceEx(HINSTANCE hinst, LPBYTE bits, UINT cbSize,
         return 0;
     }
     
-    // Копируем строки в зависимости от порядка данных в DIB
+    /* Копируем XOR маску (первые realHeight строк) */
     if (needFlip)
     {
-        // Данные снизу вверх - переворачиваем строки
-        for (y = 0; y < height; y++)
+        /* Данные снизу вверх - переворачиваем */
+        for (y = 0; y < realHeight; y++)
         {
-            _fmemcpy(lpXOR_flipped + (height - 1 - y) * xorRowSize,
+            _fmemcpy(lpXOR_flipped + (realHeight - 1 - y) * xorRowSize,
                      lpXOR + y * xorRowSize,
                      xorRowSize);
-            _fmemcpy(lpAND_flipped + (height - 1 - y) * andRowSize,
+        }
+    }
+    else
+    {
+        /* Данные сверху вниз - просто копируем */
+        for (y = 0; y < realHeight; y++)
+        {
+            _fmemcpy(lpXOR_flipped + y * xorRowSize,
+                     lpXOR + y * xorRowSize,
+                     xorRowSize);
+        }
+    }
+    
+    /* Копируем AND маску (следующие realHeight строк после XOR) */
+    if (needFlip)
+    {
+        /* Данные снизу вверх - переворачиваем */
+        for (y = 0; y < realHeight; y++)
+        {
+            _fmemcpy(lpAND_flipped + (realHeight - 1 - y) * andRowSize,
                      lpAND + y * andRowSize,
                      andRowSize);
         }
     }
     else
     {
-        // Данные уже сверху вниз - просто копируем
-        for (y = 0; y < height; y++)
+        /* Данные сверху вниз - просто копируем */
+        for (y = 0; y < realHeight; y++)
         {
-            _fmemcpy(lpXOR_flipped + y * xorRowSize,
-                     lpXOR + y * xorRowSize,
-                     xorRowSize);
             _fmemcpy(lpAND_flipped + y * andRowSize,
                      lpAND + y * andRowSize,
                      andRowSize);
         }
     }
+
+    /* Масштабирование, если нужно */
+    if (needScale && (bmi->bmiHeader.biBitCount == 1 || bmi->bmiHeader.biBitCount == 4 || bmi->bmiHeader.biBitCount == 8))
+    {
+        /* Вычисляем размеры строк для масштабированного изображения */
+        scaledXorRowSize = get_bitmap_width_bytes(width, bmi->bmiHeader.biBitCount);
+        scaledAndRowSize = get_bitmap_width_bytes(width, 1);
+
+        /* Выделяем память для масштабированных масок */
+        hMemXOR_scaled = GlobalAlloc(GMEM_MOVEABLE, scaledXorRowSize * height);
+        hMemAND_scaled = GlobalAlloc(GMEM_MOVEABLE, scaledAndRowSize * height);
+        
+        if (!hMemXOR_scaled || !hMemAND_scaled)
+        {
+            if (hMemXOR_scaled) GlobalFree(hMemXOR_scaled);
+            if (hMemAND_scaled) GlobalFree(hMemAND_scaled);
+            GlobalUnlock(hMemXOR);
+            GlobalUnlock(hMemAND);
+            GlobalFree(hMemXOR);
+            GlobalFree(hMemAND);
+            return 0;
+        }
+        
+        lpXOR_scaled = (LPBYTE)GlobalLock(hMemXOR_scaled);
+        lpAND_scaled = (LPBYTE)GlobalLock(hMemAND_scaled);
+        
+        if (!lpXOR_scaled || !lpAND_scaled)
+        {
+            if (hMemXOR_scaled) { GlobalUnlock(hMemXOR_scaled); GlobalFree(hMemXOR_scaled); }
+            if (hMemAND_scaled) { GlobalUnlock(hMemAND_scaled); GlobalFree(hMemAND_scaled); }
+            GlobalUnlock(hMemXOR);
+            GlobalUnlock(hMemAND);
+            GlobalFree(hMemXOR);
+            GlobalFree(hMemAND);
+            return 0;
+        }
+        
+        /* Обнуляем масштабированные буферы */
+        for (i = 0; i < scaledXorRowSize * height; i++) {
+            lpXOR_scaled[i] = 0;
+        }
+        for (i = 0; i < scaledAndRowSize * height; i++) {
+            lpAND_scaled[i] = 0;
+        }
+        
+        /* Простое масштабирование методом ближайшего соседа */
+        for (y = 0; y < height; y++)
+        {
+            /* Вычисляем исходную строку */
+            srcY = (y * realHeight) / height;
+            if (srcY >= realHeight) srcY = realHeight - 1;
+            
+            srcXOR_line = lpXOR_flipped + srcY * xorRowSize;
+            srcAND_line = lpAND_flipped + srcY * andRowSize;
+            dstXOR_line = lpXOR_scaled + y * scaledXorRowSize;
+            dstAND_line = lpAND_scaled + y * scaledAndRowSize;
+            
+            /* Масштабируем XOR маску */
+            if (bmi->bmiHeader.biBitCount == 1)
+            {
+                /* Монохромное изображение */
+                for (x = 0; x < width; x++)
+                {
+                    srcX = (x * dibWidth) / width;
+                    if (srcX >= dibWidth) srcX = dibWidth - 1;
+                    
+                    srcByte = srcX / 8;
+                    srcBit = 7 - (srcX % 8);
+                    dstByte = x / 8;
+                    dstBit = 7 - (x % 8);
+                    
+                    srcPixel = (srcXOR_line[srcByte] >> srcBit) & 1;
+                    
+                    if (srcPixel)
+                        dstXOR_line[dstByte] |= (1 << dstBit);
+                    else
+                        dstXOR_line[dstByte] &= ~(1 << dstBit);
+                }
+            }
+            else if (bmi->bmiHeader.biBitCount == 4)
+            {
+                /* 16-цветное изображение */
+                for (x = 0; x < width; x++)
+                {
+                    srcX = (x * dibWidth) / width;
+                    if (srcX >= dibWidth) srcX = dibWidth - 1;
+                    
+                    srcByteIndex = srcX / 2;
+                    srcNibble = (srcX % 2) ? 0 : 4;
+                    dstByteIndex = x / 2;
+                    dstNibble = (x % 2) ? 0 : 4;
+                    
+                    srcPixel = (srcXOR_line[srcByteIndex] >> srcNibble) & 0x0F;
+                    
+                    dstXOR_line[dstByteIndex] = (dstXOR_line[dstByteIndex] & (0xF0 >> dstNibble)) | 
+                                              (srcPixel << dstNibble);
+                }
+            }
+            else if (bmi->bmiHeader.biBitCount == 8)
+            {
+                /* 256-цветное изображение */
+                for (x = 0; x < width; x++)
+                {
+                    srcX = (x * dibWidth) / width;
+                    if (srcX >= dibWidth) srcX = dibWidth - 1;
+                    
+                    dstXOR_line[x] = srcXOR_line[srcX];
+                }
+            }
+            
+            /* Масштабируем AND маску */
+            for (x = 0; x < width; x++)
+            {
+                srcX = (x * dibWidth) / width;
+                if (srcX >= dibWidth) srcX = dibWidth - 1;
+                
+                srcByte = srcX / 8;
+                srcBit = 7 - (srcX % 8);
+                dstByte = x / 8;
+                dstBit = 7 - (x % 8);
+                
+                srcPixel = (srcAND_line[srcByte] >> srcBit) & 1;
+                
+                if (srcPixel)
+                    dstAND_line[dstByte] |= (1 << dstBit);
+                else
+                    dstAND_line[dstByte] &= ~(1 << dstBit);
+            }
+        }
+        
+        GlobalUnlock(hMemXOR_scaled);
+        GlobalUnlock(hMemAND_scaled);
+    }
     
     GlobalUnlock(hMemXOR);
     GlobalUnlock(hMemAND);
     
+    /* Создаем иконку/курсор */
     if (bIcon)
     {
-        result = CreateIcon(hinst, width, height,
-                           bmi->bmiHeader.biPlanes,
-                           bmi->bmiHeader.biBitCount,
-                           lpAND_flipped,
-                           lpXOR_flipped);
+        if (needScale && (bmi->bmiHeader.biBitCount == 1 || bmi->bmiHeader.biBitCount == 4 || bmi->bmiHeader.biBitCount == 8))
+        {
+            result = CreateIcon(hinst, width, height,
+                               bmi->bmiHeader.biPlanes,
+                               bmi->bmiHeader.biBitCount,
+                               lpAND_scaled,
+                               lpXOR_scaled);
+        }
+        else
+        {
+            result = CreateIcon(hinst, width, height,
+                               bmi->bmiHeader.biPlanes,
+                               bmi->bmiHeader.biBitCount,
+                               lpAND_flipped,
+                               lpXOR_flipped);
+        }
     }
     else
     {
-        result = CreateCursor(hinst, hotspot.x, hotspot.y,
-                             width, height,
-                             lpAND_flipped,
-                             lpXOR_flipped);
+        if (needScale && (bmi->bmiHeader.biBitCount == 1 || bmi->bmiHeader.biBitCount == 4 || bmi->bmiHeader.biBitCount == 8))
+        {
+            /* Масштабируем hotspot пропорционально */
+            hotspot.x = (hotspot.x * width) / dibWidth;
+            hotspot.y = (hotspot.y * height) / realHeight;
+            result = CreateCursor(hinst, hotspot.x, hotspot.y,
+                                 width, height,
+                                 lpAND_scaled,
+                                 lpXOR_scaled);
+        }
+        else
+        {
+            result = CreateCursor(hinst, hotspot.x, hotspot.y,
+                                 width, height,
+                                 lpAND_flipped,
+                                 lpXOR_flipped);
+        }
     }
     
-    GlobalFree(hMemXOR);
-    GlobalFree(hMemAND);
+    /* Очистка памяти */
+    if (hMemXOR) GlobalFree(hMemXOR);
+    if (hMemAND) GlobalFree(hMemAND);
+    if (hMemXOR_scaled) GlobalFree(hMemXOR_scaled);
+    if (hMemAND_scaled) GlobalFree(hMemAND_scaled);
     
-//    FUNCTION_END
     return result;
 }
 

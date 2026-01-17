@@ -477,7 +477,7 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 	hWndClass = UserLocalAlloc(LT_USER_CLASS, LMEM_ZEROINIT, sizeof(WNDCLASS));
 	pWndClass = (WNDCLASS *)LocalLock(hWndClass);
 
-	// Register the DeskTop cLass
+	// Register the DeskTop class
 	pWndClass->lpszClassName = DESKTOP_CLASS_ATOM;
 	pWndClass->hCursor = LoadCursor(0, IDC_ARROW);
 	pWndClass->lpfnWndProc = DesktopWndProc;
@@ -491,6 +491,7 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 	pWndClass->hCursor = LoadCursor(0, IDC_ARROW);
 	pWndClass->lpfnWndProc = SwitchWndProc;
 	pWndClass->hInstance = hInstance;
+	pWndClass->hIcon = LoadIcon(NULL, IDI_APPLICATION); 
 	pWndClass->style = CS_GLOBALCLASS /*| CS_SAVEBITS /*| CS_VREDRAW | CS_HREDRAW*/;
 	pWndClass->hbrBackground = 5;
 	RegisterClass( pWndClass );
