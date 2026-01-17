@@ -27,6 +27,11 @@
 /* #define DEBUG_MENU */
 //#include "debug.h"
 
+#define CallEnumTaskWndProc( func, hwnd, lParam ) \
+    (*func)( hwnd, lParam )
+#define CallEnumWindowsProc( func, hwnd, lParam ) \
+    (*func)( hwnd, lParam )
+
 static HWND hwndSysModal = 0;
 
 static WORD wDragWidth = 4;
@@ -675,30 +680,28 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
     return TRUE;
 }
 
-#if 0
 /***********************************************************************
  *           CloseWindow   (USER.43)
  */
-BOOL CloseWindow(HWND hWnd)
+VOID WINAPI CloseWindow(HWND hWnd)
 {
     WND * wndPtr = WIN_FindWndPtr(hWnd);
-    if (wndPtr->dwStyle & WS_CHILD) return TRUE;
+    if (wndPtr->dwStyle & WS_CHILD) return ;//TRUE;
     ShowWindow(hWnd, SW_MINIMIZE);
-    return TRUE;
+    return ;//TRUE;
 }
 
  
 /***********************************************************************
  *           OpenIcon   (USER.44)
  */
-BOOL OpenIcon(HWND hWnd)
+BOOL WINAPI OpenIcon(HWND hWnd)
 {
     if (!IsIconic(hWnd)) return FALSE;
     ShowWindow(hWnd, SW_SHOWNORMAL);
     return(TRUE);
 }
 
-#endif
  
 /***********************************************************************
  *           FindWindow   (USER.50)
@@ -753,7 +756,6 @@ HWND WINAPI GetDesktopWindow(void)
     return HWndDesktop;
 }
 
-#if 0 
 
 /**********************************************************************
  *           GetDesktopHwnd   (USER.278)
@@ -761,16 +763,16 @@ HWND WINAPI GetDesktopWindow(void)
  * Exactly the same thing as GetDesktopWindow(), but not documented.
  * Don't ask me why...
  */
-HWND GetDesktopHwnd(void)
+HWND WINAPI GetDesktopHwnd(void)
 {
-    return pWndDesktop->hwndSelf;
+    return HWndDesktop;
 }
 
 
 /*******************************************************************
  *           EnableWindow   (USER.34)
  */
-BOOL EnableWindow( HWND hwnd, BOOL enable )
+BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
 {
     WND *wndPtr;
 
@@ -800,7 +802,7 @@ BOOL EnableWindow( HWND hwnd, BOOL enable )
 /***********************************************************************
  *           IsWindowEnabled   (USER.35)
  */ 
-BOOL IsWindowEnabled(HWND hWnd)
+BOOL WINAPI IsWindowEnabled(HWND hWnd)
 {
     WND * wndPtr; 
 
@@ -808,7 +810,6 @@ BOOL IsWindowEnabled(HWND hWnd)
     return !(wndPtr->dwStyle & WS_DISABLED);
 }
 
-#endif
 
 /**********************************************************************
  *	     GetWindowWord    (USER.133)
@@ -979,11 +980,10 @@ HWND WINAPI GetParent(HWND hwnd)
 }
 
 
-#if 0
 /*****************************************************************
  *         SetParent              (USER.233)
  */
-HWND SetParent(HWND hwndChild, HWND hwndNewParent)
+HWND WINAPI SetParent(HWND hwndChild, HWND hwndNewParent)
 {
     HWND oldParent;
 
@@ -1002,7 +1002,6 @@ HWND SetParent(HWND hwndChild, HWND hwndNewParent)
     return oldParent;
 }
 
-#endif
 
 /*******************************************************************
  *         IsChild    (USER.48)
@@ -1044,12 +1043,11 @@ HWND WINAPI GetTopWindow( HWND hwnd )
     else return 0;
 }
 
-#if 0
 
 /*******************************************************************
  *         GetWindow    (USER.262)
  */
-HWND GetWindow( HWND hwnd, WORD rel )
+HWND WINAPI GetWindow( HWND hwnd, UINT rel )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
@@ -1092,7 +1090,7 @@ HWND GetWindow( HWND hwnd, WORD rel )
 /*******************************************************************
  *         GetNextWindow    (USER.230)
  */
-HWND GetNextWindow( HWND hwnd, WORD flag )
+HWND WINAPI WINAPI GetNextWindow( HWND hwnd, UINT flag )
 {
     if ((flag != GW_HWNDNEXT) && (flag != GW_HWNDPREV)) return 0;
     return GetWindow( hwnd, flag );
@@ -1101,9 +1099,11 @@ HWND GetNextWindow( HWND hwnd, WORD flag )
 /*******************************************************************
  *         ShowOwnedPopups  (USER.265)
  */
-void ShowOwnedPopups( HWND owner, BOOL fShow )
+void WINAPI ShowOwnedPopups( HWND owner, BOOL fShow )
 {
-    WND *pWnd = pWndDesktop->child;
+    WND *pWnd = (WND *)LocalLock(HWndDesktop);
+	pWnd=pWnd->child;
+	LocalUnlock(HWndDesktop);
     while (pWnd)
     {
         if (pWnd->owner && (pWnd->owner->hwndSelf == owner) &&
@@ -1117,7 +1117,7 @@ void ShowOwnedPopups( HWND owner, BOOL fShow )
 /*******************************************************************
  *         GetLastActivePopup    (USER.287)
  */
-HWND GetLastActivePopup(HWND hwnd)
+HWND WINAPI GetLastActivePopup(HWND hwnd)
 {
     WND *wndPtr;
     wndPtr = WIN_FindWndPtr(hwnd);
@@ -1129,10 +1129,12 @@ HWND GetLastActivePopup(HWND hwnd)
 /*******************************************************************
  *           EnumWindows   (USER.54)
  */
-BOOL EnumWindows( WNDENUMPROC lpEnumFunc, LPARAM lParam )
+BOOL WINAPI EnumWindows( WNDENUMPROC lpEnumFunc, LPARAM lParam )
 {
     WND *wndPtr;
+    WND *pWndDesktop;
     HWND *list, *pWnd;
+    HLOCAL hlist;
     int count;
 
     /* We have to build a list of all windows first, to avoid */
@@ -1141,13 +1143,15 @@ BOOL EnumWindows( WNDENUMPROC lpEnumFunc, LPARAM lParam )
 
       /* First count the windows */
 
+    pWndDesktop=(WND *)LocalLock(HWndDesktop);
+    
     count = 0;
     for (wndPtr = pWndDesktop->child; wndPtr; wndPtr = wndPtr->next) count++;
     if (!count) return TRUE;
 
       /* Now build the list of all windows */
-
-    if (!(pWnd = list = (HWND *)malloc( sizeof(HWND) * count ))) return FALSE;
+    hlist=LocalAlloc(LMEM_FIXED, sizeof(HWND) * count );
+    if (!(pWnd = list = (HWND *)LocalLock(hlist))) return FALSE;
     for (wndPtr = pWndDesktop->child; wndPtr; wndPtr = wndPtr->next)
         *pWnd++ = wndPtr->hwndSelf;
 
@@ -1159,7 +1163,8 @@ BOOL EnumWindows( WNDENUMPROC lpEnumFunc, LPARAM lParam )
         if (!IsWindow(*pWnd)) continue;
         if (!CallEnumWindowsProc( lpEnumFunc, *pWnd, lParam )) break;
     }
-    free( list );
+    LocalUnlock(hlist);
+    LocalFree(hlist );
     return TRUE;
 }
 
@@ -1167,10 +1172,12 @@ BOOL EnumWindows( WNDENUMPROC lpEnumFunc, LPARAM lParam )
 /**********************************************************************
  *           EnumTaskWindows   (USER.225)
  */
-BOOL EnumTaskWindows( HTASK hTask, WNDENUMPROC lpEnumFunc, LPARAM lParam )
+BOOL WINAPI EnumTaskWindows( HTASK hTask, WNDENUMPROC lpEnumFunc, LPARAM lParam )
 {
     WND *wndPtr;
+    WND *pWndDesktop=(WND *)LocalLock(HWndDesktop);
     HWND *list, *pWnd;
+    HLOCAL hlist;
     HANDLE hQueue = GetTaskQueue( hTask );
     int count;
 
@@ -1185,8 +1192,8 @@ BOOL EnumTaskWindows( HTASK hTask, WNDENUMPROC lpEnumFunc, LPARAM lParam )
     if (!count) return TRUE;
 
       /* Now build the list of all windows */
-
-    if (!(pWnd = list = (HWND *)malloc( sizeof(HWND) * count ))) return FALSE;
+    hlist=LocalAlloc(LMEM_FIXED, sizeof(HWND) * count );
+    if (!(pWnd = list = (HWND *)LocalLock(hlist))) return FALSE;
     for (wndPtr = pWndDesktop->child; wndPtr; wndPtr = wndPtr->next)
         if (wndPtr->hmemTaskQ == hQueue) *pWnd++ = wndPtr->hwndSelf;
 
@@ -1198,7 +1205,8 @@ BOOL EnumTaskWindows( HTASK hTask, WNDENUMPROC lpEnumFunc, LPARAM lParam )
         if (!IsWindow(*pWnd)) continue;
         if (!CallEnumTaskWndProc( lpEnumFunc, *pWnd, lParam )) break;
     }
-    free( list );
+    LocalUnlock(hlist);
+    LocalFree(hlist);
     return TRUE;
 }
 
@@ -1238,11 +1246,11 @@ static BOOL WIN_EnumChildWin( WND *wndPtr, FARPROC wndenumprc, LPARAM lParam )
  *
  *   o calls WIN_EnumChildWin to do a recursive decent of child windows
  */
-BOOL EnumChildWindows(HWND hwnd, WNDENUMPROC wndenumprc, LPARAM lParam)
+BOOL WINAPI EnumChildWindows(HWND hwnd, WNDENUMPROC wndenumprc, LPARAM lParam)
 {
     WND *wndPtr;
 
-    dprintf_enum(stddeb,"EnumChildWindows\n");
+//    dprintf_enum(stddeb,"EnumChildWindows\n");
 
     if (hwnd == 0) return 0;
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
@@ -1253,9 +1261,11 @@ BOOL EnumChildWindows(HWND hwnd, WNDENUMPROC wndenumprc, LPARAM lParam)
 /*******************************************************************
  *           AnyPopup   (USER.52)
  */
-BOOL AnyPopup(void)
+BOOL WINAPI AnyPopup(void)
 {
     WND *wndPtr;
+    WND *pWndDesktop=(WND *)LocalLock(HWndDesktop);
+
     for (wndPtr = pWndDesktop->child; wndPtr; wndPtr = wndPtr->next)
         if (wndPtr->owner && (wndPtr->dwStyle & WS_VISIBLE)) return TRUE;
     return FALSE;
@@ -1264,11 +1274,11 @@ BOOL AnyPopup(void)
 /*******************************************************************
  *			FlashWindow		[USER.105]
  */
-BOOL FlashWindow(HWND hWnd, BOOL bInvert)
+BOOL WINAPI FlashWindow(HWND hWnd, BOOL bInvert)
 {
     WND *wndPtr = WIN_FindWndPtr(hWnd);
 
-    dprintf_win(stddeb,"FlashWindow: %04x\n", hWnd);
+//    dprintf_win(stddeb,"FlashWindow: %04x\n", hWnd);
 
     if (!wndPtr) return FALSE;
 
@@ -1307,15 +1317,15 @@ BOOL FlashWindow(HWND hWnd, BOOL bInvert)
 /*******************************************************************
  *			SetSysModalWindow		[USER.188]
  */
-HWND SetSysModalWindow(HWND hWnd)
+HWND WINAPI SetSysModalWindow(HWND hWnd)
 {
     HWND hWndOldModal = hwndSysModal;
     hwndSysModal = hWnd;
-    dprintf_win(stdnimp,"EMPTY STUB !! SetSysModalWindow(%04x) !\n", hWnd);
+//    dprintf_win(stdnimp,"EMPTY STUB !! SetSysModalWindow(%04x) !\n", hWnd);
     return hWndOldModal;
 }
 
-
+#if 0
 
 /*******************************************************************
  *			DRAG_QueryUpdate

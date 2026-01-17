@@ -56,7 +56,6 @@ static HBITMAP hbitmapRestoreD = 0;
 
 #define HAS_MENU(w)  (!((w)->dwStyle & WS_CHILD) && ((w)->wIDmenu != 0))
 
-#if 0
 
 #define ON_LEFT_BORDER(hit) \
  (((hit) == HTLEFT) || ((hit) == HTTOPLEFT) || ((hit) == HTBOTTOMLEFT))
@@ -67,7 +66,6 @@ static HBITMAP hbitmapRestoreD = 0;
 #define ON_BOTTOM_BORDER(hit) \
  (((hit) == HTBOTTOM) || ((hit) == HTBOTTOMLEFT) || ((hit) == HTBOTTOMRIGHT))
 
-#endif
 
 /***********************************************************************
  *           NC_AdjustRect
@@ -596,7 +594,6 @@ static void NC_DrawFrame( HDC hdc, RECT *rect, BOOL dlgFrame, BOOL active )
     InflateRect( rect, -width-1, -height-1 );
 }
 
-#if 0
 
 /***********************************************************************
  *           NC_DrawMovingFrame
@@ -609,21 +606,20 @@ static void NC_DrawMovingFrame( HDC hdc, RECT *rect, BOOL thickframe )
     {
 	SelectObject( hdc, GetStockObject( GRAY_BRUSH ) );
 	PatBlt( hdc, rect->left, rect->top,
-	        rect->right - rect->left - SYSMETRICS_CXFRAME,
-	        SYSMETRICS_CYFRAME, PATINVERT );
-	PatBlt( hdc, rect->left, rect->top + SYSMETRICS_CYFRAME,
-	        SYSMETRICS_CXFRAME, 
-	        rect->bottom - rect->top - SYSMETRICS_CYFRAME, PATINVERT );
-	PatBlt( hdc, rect->left + SYSMETRICS_CXFRAME, rect->bottom,
-	        rect->right - rect->left - SYSMETRICS_CXFRAME,
-	        -SYSMETRICS_CYFRAME, PATINVERT );
-	PatBlt( hdc, rect->right, rect->top, -SYSMETRICS_CXFRAME, 
-	        rect->bottom - rect->top - SYSMETRICS_CYFRAME, PATINVERT );
+	        rect->right - rect->left - GetSystemMetrics(SM_CXFRAME),
+	        GetSystemMetrics(SM_CYFRAME), PATINVERT );
+	PatBlt( hdc, rect->left, rect->top + GetSystemMetrics(SM_CYFRAME),
+	        GetSystemMetrics(SM_CXFRAME), 
+	        rect->bottom - rect->top - GetSystemMetrics(SM_CYFRAME), PATINVERT );
+	PatBlt( hdc, rect->left + GetSystemMetrics(SM_CXFRAME), rect->bottom,
+	        rect->right - rect->left - GetSystemMetrics(SM_CXFRAME),
+	        -GetSystemMetrics(SM_CYFRAME), PATINVERT );
+	PatBlt( hdc, rect->right, rect->top, -GetSystemMetrics(SM_CXFRAME), 
+	        rect->bottom - rect->top - GetSystemMetrics(SM_CYFRAME), PATINVERT );
     }
     else DrawFocusRect( hdc, rect );
 }
 
-#endif
 
 /***********************************************************************
  *           NC_DrawCaption
@@ -960,7 +956,6 @@ static void NC_TrackSysMenu( HWND hwnd, HDC hdc, POINT pt )
     }
 }
 
-#if 0
 
 /***********************************************************************
  *           NC_StartSizeMove
@@ -981,13 +976,13 @@ static LONG NC_StartSizeMove( HWND hwnd, WPARAM wParam, POINT *capturePoint )
 	RECT rect;
 	NC_GetInsideRect( hwnd, &rect );
 	if (wndPtr->dwStyle & WS_SYSMENU)
-	    rect.left += SYSMETRICS_CXSIZE + 1;
+	    rect.left += GetSystemMetrics(SM_CXSIZE) + 1;
 	if (wndPtr->dwStyle & WS_MINIMIZEBOX)
-	    rect.right -= SYSMETRICS_CXSIZE + 1;
+	    rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
 	if (wndPtr->dwStyle & WS_MAXIMIZEBOX)
-	    rect.right -= SYSMETRICS_CXSIZE + 1;
+	    rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
 	pt.x = wndPtr->rectWindow.left + (rect.right - rect.left) / 2;
-	pt.y = wndPtr->rectWindow.top + rect.top + SYSMETRICS_CYSIZE/2;
+	pt.y = wndPtr->rectWindow.top + rect.top + GetSystemMetrics(SM_CYSIZE)/2;
 	if (wndPtr->dwStyle & WS_CHILD)
 	    ClientToScreen( wndPtr->parent->hwndSelf, &pt );
 	hittest = HTCAPTION;
@@ -1016,21 +1011,21 @@ static LONG NC_StartSizeMove( HWND hwnd, WPARAM wParam, POINT *capturePoint )
 		case VK_UP:
 		    hittest = HTTOP;
 		    pt.x =(wndPtr->rectWindow.left+wndPtr->rectWindow.right)/2;
-		    pt.y = wndPtr->rectWindow.top + SYSMETRICS_CYFRAME / 2;
+		    pt.y = wndPtr->rectWindow.top + GetSystemMetrics(SM_CYFRAME) / 2;
 		    break;
 		case VK_DOWN:
 		    hittest = HTBOTTOM;
 		    pt.x =(wndPtr->rectWindow.left+wndPtr->rectWindow.right)/2;
-		    pt.y = wndPtr->rectWindow.bottom - SYSMETRICS_CYFRAME / 2;
+		    pt.y = wndPtr->rectWindow.bottom - GetSystemMetrics(SM_CYFRAME) / 2;
 		    break;
 		case VK_LEFT:
 		    hittest = HTLEFT;
-		    pt.x = wndPtr->rectWindow.left + SYSMETRICS_CXFRAME / 2;
+		    pt.x = wndPtr->rectWindow.left + GetSystemMetrics(SM_CXFRAME) / 2;
 		    pt.y =(wndPtr->rectWindow.top+wndPtr->rectWindow.bottom)/2;
 		    break;
 		case VK_RIGHT:
 		    hittest = HTRIGHT;
-		    pt.x = wndPtr->rectWindow.right - SYSMETRICS_CXFRAME / 2;
+		    pt.x = wndPtr->rectWindow.right - GetSystemMetrics(SM_CXFRAME) / 2;
 		    pt.y =(wndPtr->rectWindow.top+wndPtr->rectWindow.bottom)/2;
 		    break;
 		case VK_RETURN:
@@ -1095,7 +1090,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
     sizingRect = wndPtr->rectWindow;
     if (wndPtr->dwStyle & WS_CHILD)
 	GetClientRect( wndPtr->parent->hwndSelf, &mouseRect );
-    else SetRect( &mouseRect, 0, 0, SYSMETRICS_CXSCREEN, SYSMETRICS_CYSCREEN );
+    else SetRect( &mouseRect, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN) );
     if (ON_LEFT_BORDER(hittest))
     {
 	mouseRect.left  = MAX( mouseRect.left, sizingRect.right-maxTrack.x );
@@ -1128,7 +1123,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
     else
     {  /* Grab the server only when moving top-level windows without desktop */
 	hdc = GetDC( 0 );
-	if (rootWindow == DefaultRootWindow(display)) XGrabServer( display );
+//	if (rootWindow == DefaultRootWindow(display)) XGrabServer( display );
     }
     NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
 
@@ -1195,7 +1190,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
     else
     {
 	ReleaseDC( 0, hdc );
-	if (rootWindow == DefaultRootWindow(display)) XUngrabServer( display );
+//	if (rootWindow == DefaultRootWindow(display)) XUngrabServer( display );
     }
     SendMessage( hwnd, WM_EXITSIZEMOVE, 0, 0 );
     SendMessage( hwnd, WM_SETVISIBLE, !IsIconic(hwnd), 0L);
@@ -1219,8 +1214,6 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
     else SetWindowPos( hwnd, 0, sizingRect.left, sizingRect.top, 0, 0,
 		      SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER );
 }
-
-#endif 
 
 /***********************************************************************
  *           NC_TrackMinMaxBox
@@ -1435,7 +1428,7 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt )
     {
     case SC_SIZE:
     case SC_MOVE:
-//@todo	NC_DoSizeMove( hwnd, wParam, pt );
+	NC_DoSizeMove( hwnd, wParam, pt );
 	break;
 
     case SC_MINIMIZE:

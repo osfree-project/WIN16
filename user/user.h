@@ -549,6 +549,12 @@ WORD WINAPI GetTaskQueue(HANDLE hTask);
 #define ME_RDOWN 0x08
 #define ME_RUP 0x10
 
+//@todo is it really existent???
+#define WM_SETVISIBLE           0x0009
+#define WM_ENTERSIZEMOVE    0x0231
+#define WM_EXITSIZEMOVE     0x0232
+#define WM_DROPFILES	    0x0233
+
 #pragma pack(1)
 
 typedef struct tagGDIOBJHDR
