@@ -91,7 +91,7 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 
     case WM_LBUTTONDBLCLK:
     case WM_NCLBUTTONDBLCLK:
-//@todo	return NC_HandleNCLButtonDblClk( hwnd, wParam, lParam );
+	return NC_HandleNCLButtonDblClk( hwnd, wParam, lParam );
 	break;
 
     case WM_NCACTIVATE:

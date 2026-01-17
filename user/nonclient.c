@@ -1381,8 +1381,6 @@ LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
     return 0;
 }
 
-#if 0
-
 /***********************************************************************
  *           NC_HandleNCLButtonDblClk
  *
@@ -1417,7 +1415,6 @@ LONG NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam )
     return 0;
 }
 
-#endif
 
 /***********************************************************************
  *           NC_HandleSysCommand
