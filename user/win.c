@@ -808,13 +808,15 @@ BOOL IsWindowEnabled(HWND hWnd)
     return !(wndPtr->dwStyle & WS_DISABLED);
 }
 
+#endif
 
 /**********************************************************************
  *	     GetWindowWord    (USER.133)
  */
-WORD GetWindowWord( HWND hwnd, short offset )
+WORD WINAPI GetWindowWord( HWND hwnd, int offset )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
+	FUNCTION_START
     if (!wndPtr) return 0;
     if (offset >= 0) return *(WORD *)(((char *)wndPtr->wExtra) + offset);
     switch(offset)
@@ -834,25 +836,26 @@ WORD GetWindowWord( HWND hwnd, short offset )
 }
 
 
-#endif
 /**********************************************************************
  *	     WIN_GetWindowInstance
  */
 HINSTANCE WIN_GetWindowInstance(HWND hwnd)
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
+	FUNCTION_START
     if (!wndPtr) return (HINSTANCE)0;
     return wndPtr->hInstance;
 }
-#if 0
+
 
 /**********************************************************************
  *	     SetWindowWord    (USER.134)
  */
-WORD SetWindowWord( HWND hwnd, short offset, WORD newval )
+WORD WINAPI SetWindowWord( HWND hwnd, int offset, WORD newval )
 {
     WORD *ptr, retval;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
+	FUNCTION_START
     if (!wndPtr) return 0;
     if (offset >= 0) ptr = (WORD *)(((char *)wndPtr->wExtra) + offset);
     else switch(offset)
@@ -877,9 +880,10 @@ WORD SetWindowWord( HWND hwnd, short offset, WORD newval )
 /**********************************************************************
  *	     GetWindowLong    (USER.135)
  */
-LONG GetWindowLong( HWND hwnd, short offset )
+LONG WINAPI GetWindowLong( HWND hwnd, int offset )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
+	FUNCTION_START
     if (!wndPtr) return 0;
     if (offset >= 0) return *(LONG *)(((char *)wndPtr->wExtra) + offset);
     switch(offset)
@@ -899,10 +903,11 @@ LONG GetWindowLong( HWND hwnd, short offset )
 /**********************************************************************
  *	     SetWindowLong    (USER.136)
  */
-LONG SetWindowLong( HWND hwnd, short offset, LONG newval )
+LONG WINAPI SetWindowLong( HWND hwnd, int offset, LONG newval )
 {
     LONG *ptr, retval;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
+	FUNCTION_START
     if (!wndPtr) return 0;
     if (offset >= 0) ptr = (LONG *)(((char *)wndPtr->wExtra) + offset);
     else switch(offset)
@@ -921,23 +926,13 @@ LONG SetWindowLong( HWND hwnd, short offset, LONG newval )
 /*******************************************************************
  *         GetWindowText          (USER.36)
  */
-int WIN16_GetWindowText( HWND hwnd, SEGPTR lpString, INT nMaxCount )
-{
-    return (int)SendMessage(hwnd, WM_GETTEXT, nMaxCount, (LPARAM)lpString);
-}
 
-int GetWindowText( HWND hwnd, LPSTR lpString, int nMaxCount )
+int WINAPI GetWindowText( HWND hwnd, LPSTR lpString, int nMaxCount )
 {
     int len;
-    HANDLE handle;
 
-      /* We have to allocate a buffer on the USER heap */
-      /* to be able to pass its address to 16-bit code */
-    if (!(handle = USER_HEAP_ALLOC( nMaxCount ))) return 0;
     len = (int)SendMessage( hwnd, WM_GETTEXT, (WPARAM)nMaxCount, 
-                            (LPARAM)USER_HEAP_SEG_ADDR(handle) );
-    strncpy( lpString, USER_HEAP_LIN_ADDR(handle), nMaxCount );
-    USER_HEAP_FREE( handle );
+                            (LPARAM)lpString);
     return len;
 }
 
@@ -945,34 +940,22 @@ int GetWindowText( HWND hwnd, LPSTR lpString, int nMaxCount )
 /*******************************************************************
  *         SetWindowText          (USER.37)
  */
-void WIN16_SetWindowText( HWND hwnd, SEGPTR lpString )
+void WINAPI SetWindowText( HWND hwnd, LPCSTR lpString )
 {
-    SendMessage( hwnd, WM_SETTEXT, 0, (LPARAM)lpString );
-}
-
-void SetWindowText( HWND hwnd, LPCSTR lpString )
-{
-    HANDLE handle;
-
       /* We have to allocate a buffer on the USER heap */
       /* to be able to pass its address to 16-bit code */
-    if (!(handle = USER_HEAP_ALLOC( strlen(lpString)+1 ))) return;
-    strcpy( USER_HEAP_LIN_ADDR(handle), lpString );
-    SendMessage( hwnd, WM_SETTEXT, 0, (LPARAM)USER_HEAP_SEG_ADDR(handle) );
-    USER_HEAP_FREE( handle );
+    SendMessage( hwnd, WM_SETTEXT, 0, (LPARAM)lpString);
 }
 
 
 /*******************************************************************
  *         GetWindowTextLength    (USER.38)
  */
-int GetWindowTextLength(HWND hwnd)
+int WINAPI GetWindowTextLength(HWND hwnd)
 {
     return (int)SendMessage(hwnd, WM_GETTEXTLENGTH, 0, 0 );
 }
 
-
-#endif
 
 /*******************************************************************
  *         IsWindow    (USER.47)

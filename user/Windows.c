@@ -38,34 +38,6 @@ HWND WINAPI CreateWindow( LPCSTR className, LPCSTR windowName,
                              x, y, width, height, parent, menu, instance, data );
 }
 
-/**************************************************************************
- *              GetWindowText   (USER.36)
- */
-int WINAPI GetWindowText( HWND hwnd, LPSTR lpString, int nMaxCount )
-{
-//	FUNCTION_START
-    return SendMessage( hwnd, WM_GETTEXT, nMaxCount, (LPARAM)lpString );
-}
-
-
-/**************************************************************************
- *              SetWindowText   (USER.37)
- */
-VOID WINAPI SetWindowText( HWND hwnd, LPCSTR lpString )
-{
-//	FUNCTION_START
-    SendMessage( hwnd, WM_SETTEXT, 0, (LPARAM)lpString );
-}
-
-
-/**************************************************************************
- *              GetWindowTextLength   (USER.38)
- */
-int WINAPI GetWindowTextLength( HWND hwnd )
-{
-	FUNCTION_START
-    return SendMessage( hwnd, WM_GETTEXTLENGTH, 0, 0 );
-}
 
 /**************************************************************************
  *              UpdateWindow   (USER.124)
@@ -132,76 +104,6 @@ int FAR PASCAL SysErrorBox(LPSTR lpszMsg,        LPSTR lpszTitle, WORD wButton1,
 	  return 0;
 }
 
-
-/**************************************************************************
- *              GetWindowWord   (USER.133)
- */
-WORD WINAPI GetWindowWord( HWND hwnd, int offset )
-{
-	FUNCTION_START
-	return 0;
-}
-
-/**************************************************************************
- *              SetWindowWord   (USER.134)
- */
-WORD WINAPI SetWindowWord( HWND hwnd, int offset, WORD newval )
-{
-	FUNCTION_START
-	return 0;
-}
-
-
-/**********************************************************************
- *		GetWindowLong (USER.135)
- */
-LONG WINAPI GetWindowLong( HWND hwnd16, int offset )
-{
-	FUNCTION_START
-#if 0
-    HWND hwnd = WIN_Handle32( hwnd16 );
-    LONG_PTR retvalue;
-    BOOL is_winproc = (offset == GWLP_WNDPROC);
-
-    if (offset >= 0)
-    {
-        int cbWndExtra = GetClassLongA( hwnd, GCL_CBWNDEXTRA );
-
-        if (offset > (int)(cbWndExtra - sizeof(LONG)))
-        {
-            /*
-             * Some programs try to access last element from 16 bit
-             * code using illegal offset value. Hopefully this is
-             * what those programs really expect.
-             */
-            if (cbWndExtra >= 4 && offset == cbWndExtra - sizeof(WORD))
-            {
-                offset = cbWndExtra - sizeof(LONG);
-            }
-            else
-            {
-                SetLastError( ERROR_INVALID_INDEX );
-                return 0;
-            }
-        }
-        else if (offset == DWLP_DLGPROC)
-            is_winproc = (wow_handlers32.get_dialog_info( hwnd, FALSE ) != NULL);
-    }
-    retvalue = GetWindowLongA( hwnd, offset );
-    if (is_winproc) retvalue = (LONG_PTR)WINPROC_GetProc16( (WNDPROC)retvalue, FALSE );
-    return retvalue;
-#endif
-	return 0;
-}
-
-/**********************************************************************
- *		SetWindowLong (USER.136)
- */
-LONG WINAPI SetWindowLong( HWND hwnd16, int offset, LONG newval )
-{
-	FUNCTION_START
-	return 0;
-}
 
 
 /**************************************************************************
