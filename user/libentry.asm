@@ -1,16 +1,13 @@
 
-DGROUP group _NULL,_DATA,CONST,DATA,_BSS
+DGROUP group _NULL,_DATA,CONST,_BSS
 
         .dosseg
-
-FAR_DATA segment byte public 'FAR_DATA'
-FAR_DATA ends
 
 _BSS    segment word public 'BSS'
 _BSS    ends
 
-DATA    segment word public 'DATA'
-DATA    ends
+;DATA    segment word public 'DATA'
+;DATA    ends
 
 CONST   segment word public 'DATA'
 CONST   ends
@@ -50,6 +47,9 @@ __no87     dw 0                 ; always try to use the 8087
 
 _DATA ends
 
+FIXED_TEXT segment word public 'CODE'
+FIXED_TEXT ends
+
 ;*
 ;*** the windows extender code lies here
 ;*
@@ -57,12 +57,7 @@ _TEXT segment word public 'CODE'
 
         extrn   LIBMAIN     : near       ; startup code
         extrn   LOCALINIT   : far       ; Windows heap init routine
-        extrn   GLOBALFIX   : far       ; Fix segment
-        extrn   GLOBALWIRE  : far       ; Move segment segment
-        extrn   GLOBALPAGELOCK  : far       ; Move segment segment
 
-public          _large_code_
-_large_code_    equ 0
 
 ;****************************************************************************
 ;***                                                                      ***
@@ -82,25 +77,14 @@ __DLLstart_:
         xor     ax,ax
         jcxz    exit		; If no heap then error exit (USER.EXE needs heap)
 
-        push    ds		; DS (can be 0 also which is same as DS)
+        push    ax		; DS (can be 0 also which is same as DS)
         push    ax		; 0
         push    cx		; Heap size
         call    LOCALINIT	; Initialize LocalHeap
         jcxz    exit		; CX=AX for LocalInit. Quit if it failed
 
-	mov	ax, DGROUP:FAR_DATA
-	push	ax
-	push	ax
-	call	GlobalWire
-	call	GlobalFix
-
-	; @todo: only for enhanced mode
-.386
-	push	DGROUP:FAR_DATA
-	call	GlobalPageLock
-.8086
-
 	push	di
+	push	ds
         call	LIBMAIN         ; invoke the 'C' routine (result in AX)
 
 exit:

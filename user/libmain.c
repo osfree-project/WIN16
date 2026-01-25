@@ -1,158 +1,152 @@
 #include "class.h"
 #include "dce.h"
 #include "queue.h"
+#include "menu.h"
+#include "display.h"
+
+
+
 
 int UT_GetIntFromProfile(UINT id, int defvalue)
 {
 	char section[30];
 	char key[30];
 	char value[30];
+	int retVal;
 
-//	FUNCTION_START
+	FUNCTION_START
+	TRACE("id=%d, defvalue=%d", id, defvalue);
 
-	if (!LoadString(USER_HeapSel, IDS_WINDOWS, section, sizeof(section)))
+	retVal=defvalue;
+
+	// Load name of section
+	if (LoadString(USER_HeapSel, IDS_WINDOWS, section, sizeof(section)))
 	{
-		TRACE("error1");
-		for(;;);
-	}
-	if (!LoadString(USER_HeapSel, id, key, sizeof(key)))
-	{
-		TRACE("error2");
-		for(;;);
-	}
-
-	// Protect from empty value
-	if (!GetProfileString(section, key, "", value, sizeof(value)))
-	{
-//		FUNCTION_END
-		return defvalue;
+		TRACE("section=%S", section);
+		// Load name of key
+		if (LoadString(USER_HeapSel, id, key, sizeof(key)))
+		{
+			TRACE("key=%S", key);
+			// Check is non-empty value
+			if (GetProfileString(section, key, "", value, sizeof(value)))
+			{
+				// Load value
+				retVal=GetProfileInt(section, key, defvalue);
+			}
+		}
 	}
 
-//	FUNCTION_END
-	return GetProfileInt(section, key, defvalue);
+	TRACE("retVal=%d", retVal);
+	FUNCTION_END
+	return retVal;
 }
-
-#if 0
-
-VOID CreateQueue(int QueueSize)
-{
-	LPQUEUE lpQueue;
-	int size;
-
-//	FUNCTION_START
-
-	size=sizeof(QUEUE)+(QueueSize-1)*sizeof(INTERNALMSG);
-
-	lpQueue=(LPQUEUE)GlobalAlloc(GPTR+GMEM_SHARE, size);
-	lpQueue->OwningTask=GetCurrentTask();
-	lpQueue->MessageSize=sizeof(INTERNALMSG);
-	lpQueue->Size=QueueSize;
-	//lpQueue->ReadPtr=???;
-	//lpQueue->WritePtr=???;
-	lpQueue->ExpWinVersion=GetExeVersion();
-	lpQueue->WakeBits=QS_SMPARAMSFREE;
-//	lpQueue->flags=QF_INIT;
-
-	SetTaskQueue(0, (HGLOBAL)lpQueue);
-
-//	FUNCTION_END
-}
-
-#endif
 
 VOID WINAPI LW_LoadSomeStrings()
 {
-//	FUNCTION_START
+	FUNCTION_START
 	LoadString(USER_HeapSel, IDS_SYSTEMERROR, szSysError, sizeof(szSysError));
+	TRACE("szSysError=%s", szSysError);
 	LoadString(USER_HeapSel, IDS_DIVIDEBYZERO, szDivZero, sizeof(szDivZero));
+	TRACE("szDivZero=%s", szDivZero);
 	LoadString(USER_HeapSel, IDS_UNTITLED, szUntitled, sizeof(szUntitled));
+	TRACE("szUntitled=%s", szUntitled);
 	LoadString(USER_HeapSel, IDS_ERROR, szError, sizeof(szError));
+	TRACE("szError=%s", szError);
 	LoadString(USER_HeapSel, IDS_OK, szOk, sizeof(szOk));
+	TRACE("szOk=%s", szOk);
 	LoadString(USER_HeapSel, IDS_CANCEL, szCancel, sizeof(szCancel));
+	TRACE("szCancel=%s", szCancel);
 	LoadString(USER_HeapSel, IDS_ABORT, szAbort, sizeof(szAbort));
+	TRACE("szAbort=%s", szAbort);
 	LoadString(USER_HeapSel, IDS_RETRY, szRetry, sizeof(szRetry));
+	TRACE("szRetry=%s", szRetry);
 	LoadString(USER_HeapSel, IDS_IGNORE, szIgnore, sizeof(szIgnore));
+	TRACE("szIgnore=%s", szIgnore);
 	LoadString(USER_HeapSel, IDS_YES, szYes, sizeof(szYes));
+	TRACE("szYes=%s", szYes);
 	LoadString(USER_HeapSel, IDS_NO, szNo, sizeof(szNo));
+	TRACE("szNo=%s", szNo);
 	// LoadString(USER_HeapSel, 0x4b, szClose, sizeof(szClose)); not found in user.exe resources
 	LoadString(USER_HeapSel, IDS_AM, szAm, sizeof(szAm));
+	TRACE("szAm=%s", szAm);
 	LoadString(USER_HeapSel, IDS_PM, szPm, sizeof(szPm));
-//	FUNCTION_END
+	TRACE("szPm=%s", szPm);
+	FUNCTION_END
 }
 
 VOID WINAPI RW_RegisterMenus()
 {
-//	FUNCTION_START
+	FUNCTION_START
 
-//	FUNCTION_END
+	FUNCTION_END
 }
 
 VOID WINAPI RW_RegisterButton()
 {
-//	FUNCTION_START
+	FUNCTION_START
 
-//	FUNCTION_END
+	FUNCTION_END
 }
 
 VOID WINAPI RW_RegisterStatic()
 {
-//	FUNCTION_START
+	FUNCTION_START
 
-//	FUNCTION_END
+	FUNCTION_END
 }
 
 VOID WINAPI RW_RegisterDlg()
 {
-//	FUNCTION_START
+	FUNCTION_START
 
-//	FUNCTION_END
+	FUNCTION_END
 }
 
 VOID WINAPI RW_RegisterEdit()
 {
-//	FUNCTION_START
+	FUNCTION_START
 
-//	FUNCTION_END
+	FUNCTION_END
 }
 
 VOID WINAPI RW_RegisterLBoxCtl()
 {
-//	FUNCTION_START
+	FUNCTION_START
 
-//	FUNCTION_END
+	FUNCTION_END
 }
 
 VOID WINAPI RW_RegisterSB()
 {
-//	FUNCTION_START
+	FUNCTION_START
 
-//	FUNCTION_END
+	FUNCTION_END
 }
 
 VOID WINAPI RW_RegisterComboLBoxCtl()
 {
-//	FUNCTION_START
+	FUNCTION_START
 
-//	FUNCTION_END
+	FUNCTION_END
 }
 
 VOID WINAPI RW_RegisterCBoxCtl()
 {
-//	FUNCTION_START
+	FUNCTION_START
 
-//	FUNCTION_END
+	FUNCTION_END
 }
 
 VOID WINAPI RW_RegisteMDIClient()
 {
-//	FUNCTION_START
+	FUNCTION_START
 
-//	FUNCTION_END
+	FUNCTION_END
 }
 
 VOID WINAPI LW_RegisterWindows()
 {
-//	FUNCTION_START
+	FUNCTION_START
 
 	RW_RegisterMenus();
 	RW_RegisterButton();
@@ -165,55 +159,45 @@ VOID WINAPI LW_RegisterWindows()
 	RW_RegisterCBoxCtl();
 	RW_RegisteMDIClient();
 
-//	FUNCTION_END
+	FUNCTION_END
 }
 
 // Check Windows Internals for some info
 VOID WINAPI LW_DriversInit()
 {
-//	FUNCTION_START
+	FUNCTION_START
 
 	QUEUE_CreateSysMsgQueue(CBEntries);
 
-//	TRACE("Keyboard init");
+	TRACE("Keyboard init");
 	if (InquireKeyboard(&KbInfo)==sizeof(KBINFO))
 	{
-//		TRACE("Keyboard initdone");
+		TRACE("Keyboard initdone");
 		if (SetSpeed(-1)==-1) FatalExit(0x0c);
 	} else 
 		FatalExit(0x0c);
 
-//	TRACE("Mouse init");
+	TRACE("Mouse init");
 	if (InquireMouse(&MouseInfo))
 	{
-//		TRACE("Mouse initdone");
+		TRACE("Mouse initdone");
 	} else 
 		FatalExit(0x0c);;
 
-//	TRACE("Display init");
+	TRACE("Display init");
 	if (InquireDisplay(&CursorInfo)==sizeof(CURSORINFO))
 	{
-//		TRACE("Display initdone");
+		TRACE("Display initdone");
 	};
 
-//	FUNCTION_END
-}
-
-VOID WINAPI LW_DCInit()
-{
-//	FUNCTION_START
-
-	// Pass to dce.c
-	DCE_Init();
-
-//	FUNCTION_END
+	FUNCTION_END
 }
 
 VOID WINAPI LW_BrushInit()
 {
-//	FUNCTION_START
+	FUNCTION_START
 
-//	FUNCTION_END
+	FUNCTION_END
 }
 
 // See Windows Internals
@@ -223,7 +207,7 @@ VOID WINAPI LW_LoadResources()
 	char szBeep[0x14];
 	char szSwapMouseButtons[0x14];
 
-//	FUNCTION_START
+	FUNCTION_START
 
 	// Get some strings out of the USER resources, for use as
 	// section and key strings in GetProfilelnt() calLs
@@ -286,6 +270,7 @@ VOID WINAPI LW_LoadResources()
 
 	// Load some heavily used cursors
 	HCursNormal = LoadCursor(0, IDC_ARROW);
+	TRACE("TEST");
 	HCursIBeam = LoadCursor(0, IDC_IBEAM);
 	HCursUpArrow= LoadCursor(0, IDC_UPARROW);
 	HIconSample = LoadIcon(0, IDI_APPLICATION);
@@ -314,39 +299,132 @@ VOID WINAPI LW_LoadResources()
 	// The "4 directions" icon
 	HCursSizeAll = LoadCursor(USER_HeapSel, MAKEINTRESOURCE(OCR_SIZEALL));
 
-//	FUNCTION_END
+	FUNCTION_END
 }
 
+#if 0
 VOID WINAPI LW_OEMDependentInit()
 {
 	HDC hdc;
-//	FUNCTION_START
+	HRSRC hRes;
+	HGLOBAL hData;
+	DISPLAY_CONFIG FAR* lpConfig; 
+	FUNCTION_START
+
 	HInstanceDisplay=GetModuleHandle(DISPLAY);
+
+	/* Ищем ресурс config.bin (ID 1) @todo some drivers has ID=2001 */
+	hRes = FindResource(HInstanceDisplay, MAKEINTRESOURCE(1), "oembin");
+	if (!hRes) {
+		FreeLibrary(HInstanceDisplay);
+		return;
+	}
+    
+	hData = LoadResource(HInstanceDisplay, hRes);
+	if (!hData) {
+		FreeLibrary(HInstanceDisplay);
+		return;
+	}
+    
+	lpConfig = (DISPLAY_CONFIG FAR *)LockResource(hData);
+	if (!lpConfig) {
+		FreeLibrary(HInstanceDisplay);
+		return;
+	}
+
+	DumpDisplayConfig(lpConfig);
+#endif
+#if 0    
+	/* Обновляем системные метрики */
+	SysMetricsDef[SM_CYVTHUMB] = pConfig->cyVThumb;         /* Индекс 9 */
+	SysMetricsDef[SM_CXHTHUMB] = pConfig->cxHThumb;         /* Индекс 10 */
+	SysMetricsDef[SM_CYKANJIWINDOW] = pConfig->cyKanjiWindow; /* Индекс 18 */
+	SysMetricsDef[SM_CXBORDER] = pConfig->cxBorder;         /* Индекс 5 */
+	SysMetricsDef[SM_CYBORDER] = pConfig->cyBorder;         /* Индекс 6 */
+    
+	/* Применяем коэффициенты сжатия к размерам иконок и курсоров */
+	if (pConfig->cxIconCompression > 0) {
+		SysMetricsDef[SM_CXICON] = 32 / pConfig->cxIconCompression; /* Индекс 11 */
+		SysMetricsDef[SM_CYICON] = 32 / pConfig->cyIconCompression; /* Индекс 12 */
+	}
+    
+	if (pConfig->cxCursorCompression > 0) {
+		SysMetricsDef[SM_CXCURSOR] = 32 / pConfig->cxCursorCompression; /* Индекс 13 */
+		SysMetricsDef[SM_CYCURSOR] = 32 / pConfig->cyCursorCompression; /* Индекс 14 */
+	}
+    
+	/* Обновляем системные цвета */
+	SysColors[COLOR_SCROLLBAR] = RGB(pConfig->scrollbarR, pConfig->scrollbarG, pConfig->scrollbarB);
+	SysColors[COLOR_BACKGROUND] = RGB(pConfig->desktopR, pConfig->desktopG, pConfig->desktopB);
+	SysColors[COLOR_ACTIVECAPTION] = RGB(pConfig->activeCaptionR, pConfig->activeCaptionG, pConfig->activeCaptionB);
+	SysColors[COLOR_INACTIVECAPTION] = RGB(pConfig->inactiveCaptionR, pConfig->inactiveCaptionG, pConfig->inactiveCaptionB);
+	SysColors[COLOR_MENU] = RGB(pConfig->menuR, pConfig->menuG, pConfig->menuB);
+	SysColors[COLOR_WINDOW] = RGB(pConfig->windowR, pConfig->windowG, pConfig->windowB);
+	SysColors[COLOR_WINDOWFRAME] = RGB(pConfig->windowFrameR, pConfig->windowFrameG, pConfig->windowFrameB);
+	SysColors[COLOR_MENUTEXT] = RGB(pConfig->menuTextR, pConfig->menuTextG, pConfig->menuTextB);
+	SysColors[COLOR_WINDOWTEXT] = RGB(pConfig->windowTextR, pConfig->windowTextG, pConfig->windowTextB);
+	SysColors[COLOR_CAPTIONTEXT] = RGB(pConfig->captionTextR, pConfig->captionTextG, pConfig->captionTextB);
+	SysColors[COLOR_ACTIVEBORDER] = RGB(pConfig->activeBorderR, pConfig->activeBorderG, pConfig->activeBorderB);
+	SysColors[COLOR_INACTIVEBORDER] = RGB(pConfig->inactiveBorderR, pConfig->inactiveBorderG, pConfig->inactiveBorderB);
+	SysColors[COLOR_APPWORKSPACE] = RGB(pConfig->appWorkspaceR, pConfig->appWorkspaceG, pConfig->appWorkspaceB);
+	SysColors[COLOR_HIGHLIGHT] = RGB(pConfig->hiliteBkR, pConfig->hiliteBkG, pConfig->hiliteBkB);
+	SysColors[COLOR_HIGHLIGHTTEXT] = RGB(pConfig->hiliteTextR, pConfig->hiliteTextG, pConfig->hiliteTextB);
+	SysColors[COLOR_BTNFACE] = RGB(pConfig->btnFaceR, pConfig->btnFaceG, pConfig->btnFaceB);
+	SysColors[COLOR_BTNSHADOW] = RGB(pConfig->btnShadowR, pConfig->btnShadowG, pConfig->btnShadowB);
+	SysColors[COLOR_GRAYTEXT] = RGB(pConfig->grayTextR, pConfig->grayTextG, pConfig->grayTextB);
+	SysColors[COLOR_BTNTEXT] = RGB(pConfig->btnTextR, pConfig->btnTextG, pConfig->btnTextB);
+    
+	/* Также обновляем соответствующие объекты GDI (кисти, перья) */
+	SYSCOLOR_SetColor(COLOR_SCROLLBAR, SysColors[COLOR_SCROLLBAR]);
+	SYSCOLOR_SetColor(COLOR_BACKGROUND, SysColors[COLOR_BACKGROUND]);
+	SYSCOLOR_SetColor(COLOR_ACTIVECAPTION, SysColors[COLOR_ACTIVECAPTION]);
+	SYSCOLOR_SetColor(COLOR_INACTIVECAPTION, SysColors[COLOR_INACTIVECAPTION]);
+	SYSCOLOR_SetColor(COLOR_MENU, SysColors[COLOR_MENU]);
+	SYSCOLOR_SetColor(COLOR_WINDOW, SysColors[COLOR_WINDOW]);
+	SYSCOLOR_SetColor(COLOR_WINDOWFRAME, SysColors[COLOR_WINDOWFRAME]);
+	SYSCOLOR_SetColor(COLOR_MENUTEXT, SysColors[COLOR_MENUTEXT]);
+	SYSCOLOR_SetColor(COLOR_WINDOWTEXT, SysColors[COLOR_WINDOWTEXT]);
+	SYSCOLOR_SetColor(COLOR_CAPTIONTEXT, SysColors[COLOR_CAPTIONTEXT]);
+	SYSCOLOR_SetColor(COLOR_ACTIVEBORDER, SysColors[COLOR_ACTIVEBORDER]);
+	SYSCOLOR_SetColor(COLOR_INACTIVEBORDER, SysColors[COLOR_INACTIVECAPTION]);
+	SYSCOLOR_SetColor(COLOR_APPWORKSPACE, SysColors[COLOR_APPWORKSPACE]);
+	SYSCOLOR_SetColor(COLOR_HIGHLIGHT, SysColors[COLOR_HIGHLIGHT]);
+	SYSCOLOR_SetColor(COLOR_HIGHLIGHTTEXT, SysColors[COLOR_HIGHLIGHTTEXT]);
+	SYSCOLOR_SetColor(COLOR_BTNFACE, SysColors[COLOR_BTNFACE]);
+	SYSCOLOR_SetColor(COLOR_BTNSHADOW, SysColors[COLOR_BTNSHADOW]);
+	SYSCOLOR_SetColor(COLOR_GRAYTEXT, SysColors[COLOR_GRAYTEXT]);
+	SYSCOLOR_SetColor(COLOR_BTNTEXT, SysColors[COLOR_BTNTEXT]);
+#endif    
+#if 0
+	FreeLibrary(HInstanceDisplay);
+
+//	SYSCOLOR_Init();
 
 	hdc=GetDC(0);
 	CXScreen=GetDeviceCaps(hdc, HORZRES);
 	CYScreen=GetDeviceCaps(hdc, VERTRES);
 	ReleaseDC(0, hdc);
 
-//	FUNCTION_END
+	FUNCTION_END
 }
+#endif 
 
 VOID WINAPI LW_OEMCursorInit()
 {
-//	FUNCTION_START
-//	FUNCTION_END
+	FUNCTION_START
+	FUNCTION_END
 }
 
 VOID WINAPI InitSizeBorderDimensions()
 {
-//	FUNCTION_START
-//	FUNCTION_END
+	FUNCTION_START
+	FUNCTION_END
 }
 
 VOID WINAPI LW_MouseInit()
 {
-//	FUNCTION_START
-//	FUNCTION_END
+	FUNCTION_START
+	FUNCTION_END
 }
 
 //When Windows first starts, USER calls the InquireCursor function to retrieve
@@ -367,7 +445,7 @@ VOID WINAPI PASCAL Timer_Event(VOID){
 
 VOID WINAPI EnableInput()
 {
-//	FUNCTION_START
+	FUNCTION_START
 
 	// See "Undocumented Windows"
 	EnableSystemTimers();
@@ -410,7 +488,7 @@ VOID WINAPI EnableInput()
 	// 2 = DRV_ENABLE??
 //	InternalBroadcastDriverMessage(0, 2, 0, 0, 0, 0, 0, 4);
 
-//	FUNCTION_END
+	FUNCTION_END
 }
 
 
@@ -430,9 +508,13 @@ BOOL WINAPI SetDeskPattern(void)
 
 void WINAPI SetMinMaxInfo(void) 
 {  
-    // Initialize default main window size (often a fraction of the screen size)
-    CXSize = CXScreen / 2;
-    CYSize = CYScreen / 2;  
+	FUNCTION_START
+
+	// Initialize default main window size (often a fraction of the screen size)
+	CXSize = CXScreen / 2;
+	CYSize = CYScreen / 2;  
+
+	FUNCTION_END
 }
 
 LRESULT WINAPI SwitchWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
@@ -440,10 +522,10 @@ LRESULT WINAPI SwitchWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 //    LOGSTR((LF_API,"DeskTopWndProc(hWnd=%.04x,wMsg=%.04x,wParam=%x,lParam=%x)\n",
 //	hWnd,wMsg,wParam,lParam));
 
-//	FUNCTION_START
+	FUNCTION_START
 //	TRACE("switchwnd_msg=0x%04X", wMsg);
 	return DefWindowProc(hWnd, wMsg, wParam, lParam);
-//	FUNCTION_END
+	FUNCTION_END
     return(1);
 }
 
@@ -453,8 +535,8 @@ LRESULT WINAPI TitleWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 //    LOGSTR((LF_API,"DeskTopWndProc(hWnd=%.04x,wMsg=%.04x,wParam=%x,lParam=%x)\n",
 //	hWnd,wMsg,wParam,lParam));
 
-//	FUNCTION_START
-//	FUNCTION_END
+	FUNCTION_START
+	FUNCTION_END
     return(1L);
 }
 
@@ -463,7 +545,7 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 	WNDCLASS * pWndClass; // For use in registering classes
 	HLOCAL hWndClass;
 
-//	FUNCTION_START
+	FUNCTION_START
 
 	//InitiaLize the following variabLes from static variabLes:
 	//CXSize, CYSize, CYCaption, CXBorder, CYBorder, CYHScroLL,
@@ -509,6 +591,45 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 
 
 	WIN_CreateDesktopWindow();
+
+#if 0
+{
+	HDC tempHDC;
+	HPEN hPenBlue;
+	HBRUSH hBrushRed;
+
+//	TRACE("Create display context");
+	tempHDC=GetDC(0);
+//	TRACE("Create display context done");
+	SetPixel(tempHDC, 10, 10, RGB(255, 0, 0));
+        hPenBlue=CreatePen(PS_SOLID, 2, RGB(0, 0, 255));
+        SelectObject(tempHDC, hPenBlue);
+        hBrushRed=CreateSolidBrush(RGB(255, 0, 0));
+        SelectObject(tempHDC, hBrushRed);
+        Rectangle(tempHDC, 200, 0, 400, 200);
+
+	DrawIcon(tempHDC, 205, 5, HCursNormal);
+	DrawIcon(tempHDC, 250, 5, HCursIBeam);
+	DrawIcon(tempHDC, 290, 5, HCursUpArrow);
+	DrawIcon(tempHDC, 330, 5, HIconSample);
+
+	DrawIcon(tempHDC, 205, 40, HIconWindows);
+	DrawIcon(tempHDC, 250, 40, HCursSizeNWSE);
+	DrawIcon(tempHDC, 290, 40, HCursSizeNESW);
+	DrawIcon(tempHDC, 330, 40, HCursSizeNS);
+
+	DrawIcon(tempHDC, 205, 80, HCursSizeWE);
+	DrawIcon(tempHDC, 250, 80, HIconHand);
+	DrawIcon(tempHDC, 290, 80, HIconQues);
+	DrawIcon(tempHDC, 330, 80, HIconBang);
+
+	DrawIcon(tempHDC, 205, 120, HIconNote);
+	DrawIcon(tempHDC, 250, 120, HCursSizeAll);
+
+//	DeleteDC(tempHDC);
+}
+for (;;);
+#endif
 
 	HWndSwitch = CreateWindowEx( 0, WINSWITCH_CLASS_ATOM,
 		"test1", WS_OVERLAPPEDWINDOW /*WS_DISABLED | WS_POPUP*/, 50, 50, 150, 150,
@@ -577,13 +698,15 @@ for(;;);
 	InvalidateRect(HWndDesktop, 0, 1);
 	UpdateWindow(HWndDesktop);
 
-//	FUNCTION_END
+	FUNCTION_END
 }
 
 VOID WINAPI LW_DisplayDriverInit()
 {
 	HDC hDC;
 	BOOL FOnBoardBitmap;
+
+	FUNCTION_START
 
 	// Need a device context below
 	hDC = GetDC(0);
@@ -603,19 +726,26 @@ VOID WINAPI LW_DisplayDriverInit()
 	// enabled or disabled.
 	LpDisplayCriticalSection =
 		GetProcAddress( HInstanceDisplay, MAKELP(0, 500) );
+	FUNCTION_END
 }
 
 VOID WINAPI LW_LoadFonts(VOID)
 {
+	FUNCTION_START
+	FUNCTION_END
 }
 
 VOID WINAPI LW_DesktopIconInit(VOID)
 {
+	FUNCTION_START
+	FUNCTION_END
 }
 
 
 VOID WINAPI LW_DrawIconInit(VOID)
 {
+	FUNCTION_START
+	FUNCTION_END
 }
 
 
@@ -628,14 +758,14 @@ VOID WINAPI LW_LoadTaskmanAndScreenSaver(VOID)
 	char szTaskMan[0xD];
 	char szSysIni[0x14];
 
-    FUNCTION_START 
+	FUNCTION_START
 	// Get some strings out of the USER string tables.
-	//Ox48 -> "BOOT", Ox4F -> "TASKMAN.EXE, Ox4A -> "SYSTEM.INI"
+	// 0x48 -> "BOOT", 0x4F -> "TASKMAN.EXE, 0x4A -> "SYSTEM.INI"
 	LoadString( USER_HeapSel, 0x48, szBoot, 0xA );
 	LoadString( USER_HeapSel, 0x4F, szTaskMan, 0xD );
 	LoadString( USER_HeapSel, 0x4A, szSysIni, 0x14 );
 	
-	// Get Ox82 bytes for use as the string buffer in the call to
+	// Get 0x82 bytes for use as the string buffer in the call to
 	// GetPrivateProfileString(), below.
 	hTaskManName = UserLocalAlloc(LT_USER_STRING, 0x40, 0x82 );
 	PTaskManName = (LPSTR)LocalLock(hTaskManName);
@@ -651,7 +781,7 @@ VOID WINAPI LW_LoadTaskmanAndScreenSaver(VOID)
 	// The screen saver timeout value. Ox63 = "ScreenSaveTimeOut"
 	IScreenSaveTimeOut = UT_GetIntFromProfile(0x63, 0);
 	
-	// Screen saver active? Ox64 = "ScreenSaveActive"
+	// Screen saver active? 0x64 = "ScreenSaveActive"
 	if ( UT_GetIntFromProfile( 0x64, 0 ) == 0 )
 	{
 		if ( IScreenSaveTimeOut > 0 )
@@ -692,7 +822,7 @@ VOID WINAPI Disablelnput(VOID)
 //	DisableSystemTimers(); // See "Undocumented Windows"
 EmptyMessages:
 	// Keep reading system messages till the system message queue is empty.
-//	if ( ReadMessage(HQSysQueue, &msg, 0, 0, 0xFFfF, 1))
+//	if ( ReadMessage(hmemSysMsgQueue, &msg, 0, 0, 0xFFfF, 1))
 	goto EmptyMessages;
 }
 
@@ -703,21 +833,19 @@ EmptyMessages:
  *
  */
 
-BOOL PASCAL LibMain( HINSTANCE hInstance )
+BOOL PASCAL LibMain(HINSTANCE hInstance)
 {
-        HPEN hPenBlue;
-        HBRUSH hBrushRed;
-	RECT rect = {0,0,100,100};
-	HDC desktop;
+	TRACE("Windows user interface implementation.\r\n"
+		"osFree Janus project (c) 2026 osFree\r\n"
+		"GNU LGPL v2.1 or later");
 
-//	FUNCTION_START
-//	TRACE("inst=%x", hInstance);
+	FUNCTION_START
+	TRACE("hInstance=%x", hInstance);
 
-	hGDI = LoadLibrary( "GDI.EXE" );
- 
         // Save the module and instance handles away in global vars
 	USER_HeapSel=hInstance;
-	HModuleWin = GetModuleHandle(MK_FP(0, hInstance));
+	// Don't use MK_FP here. For 0:xxxx far pointer 0 will be replaced by DS segment. Use MAKELP which preveny it.
+	HModuleWin = GetModuleHandle(MAKELP(0, hInstance));
 
 	// Loads USER strings variables from resources
 	LW_LoadSomeStrings();
@@ -729,7 +857,9 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 
         // Create an application message queue. This is needed to create windows.
 	SetMessageQueue(DefQueueSize);
-//	CreateQueue(DefQueueSize);
+
+	// GDI module handle
+	hGDI = LoadLibrary( "GDI.EXE" );
 
 	// Get the default border width for a window. Default is 3.
 	ClBorder = UT_GetIntFromProfile(IDS_BORDER, 3);
@@ -750,9 +880,7 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 	// detail. LW_DCInit() also calls @InitCreateRgn(),
 	// GetDCState(), CreateCompatibleDC(), and GetStockObject().
 	// The HFontSys and HFontSysFixed global vars are set here.
-	LW_DCInit();
-
-	SYSCOLOR_Init();
+	DCE_Init();
 
 	// Calls GetStockObject() to set the variables
 	// HBrWhite and HBrBlack. Calls CreateBitmap(),
@@ -760,14 +888,16 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 	// and MakeObjectPrivate()
 	LW_BrushInit();
 
+
 	// Perform various initialization required by the DISPLAY
 	// driver. Sets HInstanceDisplay variable by calling
 	// GetModuleHandle("DISPLAY"). LW_OemDependentInit() is a very
 	// large function, with numerous calls to routines such as
 	// GetDeviceCaps(), GetStockObject(), SetResourceHandler(),
 	// FindResource(), ODI_CreateBits(), and so on.
-	LW_OEMDependentInit();
-
+//	LW_OEMDependentInit();
+	DISPLAY_Init();
+	SYSCOLOR_Init();
 
 	// Sets HBmCursorBitmap and HPermanentCursor variables.
 	LW_OEMCursorInit();
@@ -782,7 +912,7 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 	LW_LoadResources();
 
 	// Start out with no focus
-	HWndFocus = 0; 
+	hwndFocus = 0; 
 
 	// Loads values into the RGWSYSMet array.
 	// These values can be retrieved via the
@@ -793,12 +923,15 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 	GlobalInitAtom();
 
 	hbitmapClose = LoadBitmap(0, MAKEINTRESOURCE(OBM_CLOSE));
-	hbitmapMinimize  = LoadBitmap(0, MAKEINTRESOURCE(OBM_REDUCE));
+	hbitmapMinimize = LoadBitmap(0, MAKEINTRESOURCE(OBM_REDUCE));
 	hbitmapMinimizeD = LoadBitmap(0, MAKEINTRESOURCE(OBM_REDUCED));
-	hbitmapMaximize  = LoadBitmap(0, MAKEINTRESOURCE(OBM_ZOOM));
+	hbitmapMaximize = LoadBitmap(0, MAKEINTRESOURCE(OBM_ZOOM));
 	hbitmapMaximizeD = LoadBitmap(0, MAKEINTRESOURCE(OBM_ZOOMD));
-	hbitmapRestore   = LoadBitmap(0, MAKEINTRESOURCE(OBM_RESTORE));
+	hbitmapRestore = LoadBitmap(0, MAKEINTRESOURCE(OBM_RESTORE));
 	hbitmapRestoreD  = LoadBitmap(0, MAKEINTRESOURCE(OBM_RESTORED));
+
+
+//	MENU_Init();
 
 	// Register the windows classes for
 	// "predefined" windows, such as
@@ -823,7 +956,7 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 	EnableInput();
 
 	// Middle of the screen
-	SetCursorPos(100, 100);
+	SetCursorPos(CXScreen / 2, CYScreen / 2);
 
 	// Get the hourglass cursor, show it
 	SetCursor(LoadCursor(0, IDC_WAIT));
@@ -831,6 +964,7 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 	// Register the Desktop and switch windows classes, and
 	// create the windows.
 	LW_InitWndMgr(hInstance);
+
 
 
 	// Max button size???
@@ -858,43 +992,10 @@ BOOL PASCAL LibMain( HINSTANCE hInstance )
 
 	// list registered classes
 //	CLASS_WalkClasses();
-{
-//	TRACE("Create display context");
-	tempHDC=CreateDC(DISPLAY, NULL, NULL, NULL);
-//	TRACE("Create display context done");
-	SetPixel(tempHDC, 10, 10, RGB(255, 0, 0));
-        hPenBlue=CreatePen(PS_SOLID, 2, RGB(0, 0, 255));
-        SelectObject(tempHDC, hPenBlue);
-        hBrushRed=CreateSolidBrush(RGB(255, 0, 0));
-        SelectObject(tempHDC, hBrushRed);
-        Rectangle(tempHDC, 200, 0, 400, 200);
-
-	DrawIcon(tempHDC, 205, 5, HCursNormal);
-	DrawIcon(tempHDC, 250, 5, HCursIBeam);
-	DrawIcon(tempHDC, 290, 5, HCursUpArrow);
-	DrawIcon(tempHDC, 330, 5, HIconSample);
-
-	DrawIcon(tempHDC, 205, 40, HIconWindows);
-	DrawIcon(tempHDC, 250, 40, HCursSizeNWSE);
-	DrawIcon(tempHDC, 290, 40, HCursSizeNESW);
-	DrawIcon(tempHDC, 330, 40, HCursSizeNS);
-
-	DrawIcon(tempHDC, 205, 80, HCursSizeWE);
-	DrawIcon(tempHDC, 250, 80, HIconHand);
-	DrawIcon(tempHDC, 290, 80, HIconQues);
-	DrawIcon(tempHDC, 330, 80, HIconBang);
-
-	DrawIcon(tempHDC, 205, 120, HIconNote);
-	DrawIcon(tempHDC, 250, 120, HCursSizeAll);
-
-//	DeleteDC(tempHDC);
-}
-
-for (;;);
 
 
 	// Load the "system" menu ("Restore", "Move", "Size", etc.)
-	HSysMenu = LoadMenu(USER_HeapSel, MK_FP(0, IDM_SYSMENU));
+	HSysMenu = LoadMenu(USER_HeapSel, MAKEINTRESOURCE(IDM_SYSMENU));
 
 	LW_DisplayDriverInit(); // Gets entry points in display driver
 

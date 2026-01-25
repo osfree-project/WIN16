@@ -14,9 +14,7 @@
 
 #define MAX_QUEUE_SIZE   120  /* Max. size of a message queue */
 
-static HQUEUE hFirstQueue = 0;
-static HQUEUE hmemSysMsgQueue = 0;
-static MESSAGEQUEUE FAR *sysMsgQueue = NULL;
+static MESSAGEQUEUE FAR *sysMsgQueue;
 
 /***********************************************************************
  *	     QUEUE_DumpQueue
@@ -31,6 +29,8 @@ void QUEUE_DumpQueue( HQUEUE hQueue )
         TRACE("%04x is not a queue handle", hQueue );
         return;
     }
+
+	TRACE("msgFree: %9.4x",1234);
 
     TRACE(
              "next: %12.4x  Intertask SendMessage:\n\r"
@@ -160,7 +160,7 @@ MESSAGEQUEUE FAR *QUEUE_GetSysQueue(void)
  *
  * Add a message to the queue. Return FALSE if queue is full.
  */
-BOOL QUEUE_AddMsg( HQUEUE hQueue, MSG * msg, DWORD extraInfo )
+BOOL QUEUE_AddMsg( HQUEUE hQueue, MSG FAR * msg, DWORD extraInfo )
 {
     int pos;
     MESSAGEQUEUE FAR *msgQueue;
@@ -252,11 +252,13 @@ void QUEUE_RemoveMsg( MESSAGEQUEUE FAR * msgQueue, int pos )
  *
  * Add an event to the system message queue.
  */
-void hardware_event( WORD message, WORD wParam, LONG lParam,
+void FAR hardware_event( WORD message, WORD wParam, LONG lParam,
 		     int xPos, int yPos, DWORD time, DWORD extraInfo )
 {
     MSG *msg;
     int pos;
+
+	TRACE("msg=%04x", message);
   
     if (!sysMsgQueue) return;
     pos = sysMsgQueue->nextFreeMessage;

@@ -1,5 +1,5 @@
   
-    Copyright 2023,2025 osFree
+    Copyright 2023,2025,2026 osFree
     Copyright 1997 Willows Software, Inc. 
     Copyright (c) 1993-2022 the Wine project authors
 

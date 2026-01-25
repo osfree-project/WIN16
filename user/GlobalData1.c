@@ -14,6 +14,7 @@ WORD wDragWidth = 4;
 WORD wDragHeight= 3;
 HWND hwndActive      = 0;  /* Currently active window */
 HWND hwndPrevActive  = 0;  /* Previously active window */
+HWND captureWnd = 0;
 
 HBITMAP hbitmapClose = 0;
 HBITMAP hbitmapMinimize = 0;
@@ -22,6 +23,8 @@ HBITMAP hbitmapMaximize = 0;
 HBITMAP hbitmapMaximizeD = 0;
 HBITMAP hbitmapRestore = 0;
 HBITMAP hbitmapRestoreD = 0;
+HBITMAP hbitmapStdCheck = 0;
+HBITMAP hbitmapStdMnArrow = 0;
 
 int  ClBorder;          /* Frame border width */
 
@@ -73,7 +76,7 @@ int CXSize;
 int CYSize;
 int defaultVal;
 
-HWND HWndFocus;
+HWND hwndFocus;
 HWND HWndDesktop;
 HWND HWndSwitch;
 HWND HWndRealPopup;
@@ -84,6 +87,7 @@ HGLOBAL MenuBase;
 HGLOBAL HMenuHeap;
 HGLOBAL MenuStringBase;
 HGLOBAL HMenuStringHeap;
+
 
 FARPROC LpSaveBitmap;
 FARPROC LpDisplayCriticalSection;
@@ -98,14 +102,15 @@ KBINFO KbInfo;
 CURSORINFO CursorInfo;
 MOUSEINFO MouseInfo;
 
-DWORD dwMouseX=0;
-DWORD dwMouseY=0;
+LONG iMouseX=0;
+LONG iMouseY=0;
+
+HQUEUE hFirstQueue = 0;
+HQUEUE hmemSysMsgQueue = 0;
 
 char DISPLAY[]="DISPLAY";
 
 char RGBKeyState[0xff];
-HDC tempHDC;
 //PDCE PDCEFirst;
 
-HQUEUE HQSysQueue;	// System queue
 

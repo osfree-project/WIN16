@@ -93,7 +93,7 @@ void CLASS_WalkClasses(void)
  * Return a handle and a pointer to the class.
  * 'ptr' can be NULL if the pointer is not needed.
  */
-HCLASS CLASS_FindClassByName(LPCSTR name, HINSTANCE hinstance, CLASS **ptr)
+HCLASS CLASS_FindClassByName(LPCSTR name, HINSTANCE hinstance, CLASS *FAR *ptr)
 {
     ATOM atom;
     HCLASS class;
@@ -218,12 +218,11 @@ ATOM WINAPI RegisterClass(const WNDCLASS FAR * class )
 
     if (HIWORD(class->lpszMenuName))
     {
-//        char *menuname = PTR_SEG_TO_LIN( class->lpszMenuName );
 	HANDLE hname = LocalAlloc(LMEM_FIXED, lstrlen(class->lpszMenuName)+1 );
 	if (hname)
 	{
-	    newClass->wc.lpszMenuName = LocalLock(hname);//(SEGPTR)USER_HEAP_SEG_ADDR( hname );
-	    lstrcpy( newClass->wc.lpszMenuName/*LocalLock( hname )*/, class->lpszMenuName/*menuname*/ );
+	    newClass->wc.lpszMenuName = LocalLock(hname);
+	    lstrcpy( newClass->wc.lpszMenuName, class->lpszMenuName );
 	}
     }
 

@@ -55,7 +55,7 @@ LRESULT WINAPI DefHookProc( int code, WPARAM wparam, LPARAM lparam, HOOKPROC far
 /***********************************************************************
  *		CallMsgFilter (USER.123)
  */
-BOOL WINAPI CallMsgFilter( MSG *msg, int code )
+BOOL WINAPI CallMsgFilter( MSG FAR *msg, int code )
 {
 	FUNCTION_START
     return 0;//CallMsgFilter32_16( (MSG32_16 *)msg, code, FALSE );

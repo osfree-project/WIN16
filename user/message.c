@@ -39,7 +39,7 @@ int abs(int i)
  *   the coordinates to client coordinates.
  * - Send the WM_SETCURSOR message.
  */
-static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
+static BOOL MSG_TranslateMouseMsg( MSG FAR *msg, BOOL remove )
 {
     WND *pWnd;
     BOOL eatMsg = FALSE;
@@ -173,7 +173,7 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
  * Return value indicates whether the translated message must be passed
  * to the user.
  */
-static BOOL MSG_TranslateKeyboardMsg( MSG *msg, BOOL remove )
+static BOOL MSG_TranslateKeyboardMsg( MSG FAR *msg, BOOL remove )
 {
       /* Should check Ctrl-Esc and PrintScreen here */
 
@@ -200,7 +200,7 @@ for(;;);
  *
  * Peek for a hardware message matching the hwnd and message filters.
  */
-static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, WORD first, WORD last,
+static BOOL MSG_PeekHardwareMsg( MSG FAR *msg, HWND hwnd, WORD first, WORD last,
                                  BOOL remove )
 {
     MESSAGEQUEUE FAR *sysMsgQueue = QUEUE_GetSysQueue();
@@ -224,10 +224,12 @@ static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, WORD first, WORD last,
         {
 //            HARDWAREHOOKSTRUCT hook = { msg->hwnd, msg->message,
 //                                        msg->wParam, msg->lParam };
-TRACE("432");
-for(;;);
+TRACE("432 msg=%x", msg->message);
+//QUEUE_DumpQueue(hmemSysMsgQueue);
+//for(;;);
 //            if (HOOK_CallHooks( WH_HARDWARE, remove ? HC_ACTION : HC_NOREMOVE,
 //                                0, (LPARAM)MAKE_SEGPTR(&hook) )) continue;
+		return FALSE;
         }
 
           /* Check message against filters */
@@ -419,20 +421,11 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
 	}
 	else nextExp = -1;  /* No timeout needed */
 
-
+	GlobalUnlock(hQueue);
         //Yield();      //UserYield
 //	DirectedYield(0); // No multitrasking yet...
-#if 0
-	  /* Wait until something happens */
-        if (peek)
-        {
-            if (!MSG_WaitXEvent( 0 )) return FALSE;  /* No pending event */
-        }
-        else  /* Wait for an event, then restart the loop */
-            MSG_WaitXEvent( nextExp );
-#endif
     }
-
+	
       /* We got a message */
     return (msg->message != WM_QUIT);
 }
@@ -483,7 +476,12 @@ BOOL MSG_InternalGetMessage( LPMSG msg, HWND hwnd, HWND hwndOwner, short code,
  */
 BOOL WINAPI PeekMessage( LPMSG msg, HWND hwnd, UINT first, UINT last, UINT flags )
 {
-    return MSG_PeekMessage( msg, hwnd, first, last, flags, TRUE );
+	BOOL retVal;
+	PushDS();
+	SetDS(USER_HeapSel);
+	retVal=MSG_PeekMessage( msg, hwnd, first, last, flags, TRUE );
+	PopDS();
+	return retVal;
 }
 
 
@@ -494,12 +492,11 @@ BOOL WINAPI GetMessage( LPMSG msg, HWND hwnd, UINT first, UINT last )
 {
     MSG FAR * lpmsg = msg;
 
-//	FUNCTION_START
+	PushDS();
+	SetDS(USER_HeapSel);
+	MSG_PeekMessage(lpmsg, hwnd, first, last, PM_REMOVE, FALSE);
+	PopDS();
 
-    MSG_PeekMessage(lpmsg, hwnd, first, last, PM_REMOVE, FALSE);
-
-//    TRACE("message %04x, hwnd %04x, filter(%04x - %04x)\n", lpmsg->message,
-//		     				                 hwnd, first, last );
 //@todo fix!!!    HOOK_CallHooks( WH_GETMESSAGE, HC_ACTION, 0, (LPARAM)msg );
     return (lpmsg->message != WM_QUIT);
 }
@@ -631,7 +628,7 @@ LRESULT WINAPI SendMessage( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 void WINAPI WaitMessage( void )
 {
     MSG msg;
-    MESSAGEQUEUE *queue;
+    MESSAGEQUEUE FAR *queue;
     LONG nextExp = -1;  /* Next timer expiration time */
 
 #ifdef CONFIG_IPC
@@ -690,7 +687,7 @@ BOOL WINAPI TranslateMessage(const MSG FAR *msg )
 /***********************************************************************
  *           DispatchMessage   (USER.114)
  */
-LONG WINAPI DispatchMessage( const MSG* msg )
+LONG WINAPI DispatchMessage( const MSG FAR * msg )
 {
     WND * wndPtr;
     LONG retval;
@@ -769,9 +766,9 @@ DWORD GetCurrentTime(void)
 #endif
 
 /***********************************************************************
- *			InSendMessage	(USER.192
+ *			InSendMessage	(USER.192)
  *
- * According to the book, this should return true iff the current message
+ * According to the book, this should return true if the current message
  * was send from another application. In that case, the application should
  * invoke ReplyMessage before calling message relevant API.
  * Currently, Wine will always return FALSE, as there is no other app.

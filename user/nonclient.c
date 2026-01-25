@@ -98,8 +98,8 @@ VOID WINAPI AdjustWindowRectEx( LPRECT rect, DWORD style, BOOL menu, DWORD exSty
  *
  * Get the minimized and maximized information for a window.
  */
-void NC_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
-                       POINT *minTrack, POINT *maxTrack )
+void NC_GetMinMaxInfo( HWND hwnd, POINT FAR *maxSize, POINT FAR *maxPos,
+                       POINT FAR *minTrack, POINT FAR *maxTrack )
 {
 	MINMAXINFO MinMax;
 	short xinc, yinc;
@@ -218,7 +218,7 @@ LONG NC_HandleNCCalcSize(HWND hwnd, NCCALCSIZE_PARAMS FAR * params)
  * but without the borders (if any).
  * The rectangle is in window coordinates (for drawing with GetWindowDC()).
  */
-void NC_GetInsideRect( HWND hwnd, RECT *rect )
+void NC_GetInsideRect( HWND hwnd, RECT FAR *rect )
 {
 	WND * wndPtr;
 
@@ -517,7 +517,7 @@ static void NC_DrawMinButton( HWND hwnd, HDC hdc, BOOL down )
  * Draw a window frame inside the given rectangle, and update the rectangle.
  * The correct pen for the frame must be selected in the DC.
  */
-static void NC_DrawFrame( HDC hdc, RECT *rect, BOOL dlgFrame, BOOL active )
+static void NC_DrawFrame( HDC hdc, RECT FAR *rect, BOOL dlgFrame, BOOL active )
 {
     short width, height, tmp;
 
@@ -598,7 +598,7 @@ static void NC_DrawFrame( HDC hdc, RECT *rect, BOOL dlgFrame, BOOL active )
  *
  * Draw the frame used when moving or resizing window.
  */
-static void NC_DrawMovingFrame( HDC hdc, RECT *rect, BOOL thickframe )
+static void NC_DrawMovingFrame( HDC hdc, RECT FAR *rect, BOOL thickframe )
 {
     if (thickframe)
     {
@@ -625,7 +625,7 @@ static void NC_DrawMovingFrame( HDC hdc, RECT *rect, BOOL thickframe )
  * Draw the window caption.
  * The correct pen for the window frame must be selected in the DC.
  */
-static void NC_DrawCaption( HDC hdc, RECT *rect, HWND hwnd,
+static void NC_DrawCaption( HDC hdc, RECT FAR *rect, HWND hwnd,
 			    DWORD style, BOOL active )
 {
 	RECT r = *rect;
@@ -944,7 +944,7 @@ static void NC_TrackSysMenu( HWND hwnd, HDC hdc, POINT pt )
  * Initialisation of a move or resize, when initiatied from a menu choice.
  * Return hit test code for caption or sizing border.
  */
-static LONG NC_StartSizeMove( HWND hwnd, WPARAM wParam, POINT *capturePoint )
+static LONG NC_StartSizeMove( HWND hwnd, WPARAM wParam, POINT FAR *capturePoint )
 {
     LONG hittest = 0;
     POINT pt;

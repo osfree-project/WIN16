@@ -135,14 +135,16 @@ void SYSCOLOR_Init(void)
     int i, r, g, b;
     char **p;
     char buffer[100];
-    char *ptr;
+    char far *ptr;
     int color_index;
     int value;
 
     for (i = 0, p = DefSysColors; i < NUM_SYS_COLORS; i++, p += 2)
     {
         GetProfileString("colors", p[0], p[1], buffer, 100);
-        
+
+	TRACE("buffer=%S", buffer);        
+
         // Парсинг строки вручную вместо sscanf
         r = g = b = 0;
         color_index = 0;
@@ -183,7 +185,7 @@ void SYSCOLOR_Init(void)
         {
             r = g = b = 0;
         }
-        
+	TRACE("r=%d g=%d b=%d", r, g, b);        
         SYSCOLOR_SetColor(i, RGB(r, g, b));
     }
 }
@@ -193,11 +195,20 @@ void SYSCOLOR_Init(void)
 
 COLORREF WINAPI GetSysColor(int nIndex)
 {
-    if ((nIndex < 0) || (nIndex >= sizeof(SysColors)/sizeof(SysColors[0])))
-    {
-        return RGB(0,0,0);
-    }
-    return SysColors[nIndex];
+	COLORREF retVal;
+
+	PushDS();
+	SetDS(USER_HeapSel);
+
+	if ((nIndex < 0) || (nIndex >= sizeof(SysColors)/sizeof(SysColors[0])))
+	{
+		retVal=RGB(0,0,0);
+	} else {
+		retVal=SysColors[nIndex];
+	}
+
+	PopDS();
+	return retVal;
 }
 
 
@@ -209,10 +220,15 @@ void WINAPI SetSysColors(int nChanges, const int FAR * lpSysColor, const COLORRE
 {
 	int i;
 
+	PushDS();
+	SetDS(USER_HeapSel);
+
 	for (i = 0; i < nChanges; i++)
 	{
 		SYSCOLOR_SetColor( lpSysColor[i], lpColorValues[i] );
 	}
+
+	PopDS();
 
 	/* Send WM_SYSCOLORCHANGE message to all windows */
 	SendMessage(HWND_BROADCAST,WM_SYSCOLORCHANGE,0,0);

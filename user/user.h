@@ -180,15 +180,18 @@ extern char szAm[0x14];
 extern char szPm[0x14];
 
 #ifdef DEBUG
-extern void _cdecl printf (char far *format,...);
+extern void _cdecl far printf (char far *format,...);
 #define OutputDebugString printf
 #define FUNCTION_START \
 {\
-	OutputDebugString(__FUNCTION__ " start\r\n");\
+	static const char __based(__segname("FIXED_TEXT")) msg[] = __FUNCTION__ " start\r\n"; \
+	OutputDebugString(msg);\
 }
+
 #define FUNCTION_END \
 {\
-	OutputDebugString(__FUNCTION__ " end\r\n");\
+	static const char __based(__segname("FIXED_TEXT")) msg[] = __FUNCTION__ " end\r\n"; \
+	OutputDebugString(msg);\
 }
 
 
@@ -329,7 +332,7 @@ extern int IDelayMenuHide;
 extern int DefQueueSize;
 
 extern char DISPLAY[];
-extern HDC tempHDC;
+//extern HDC tempHDC;
 
 //extern PDCE PDCEFirst;
 HDC WINAPI GetDCState(HDC);
@@ -364,10 +367,11 @@ extern int CXSize;
 extern int CYSize;
 extern int defaultVal;
 
-extern HWND HWndFocus;
+extern HWND hwndFocus;
 extern HWND HWndDesktop;
 extern HWND HWndSwitch;
 extern HWND HWndRealPopup;
+extern HWND captureWnd;
 
 extern HMENU HSysMenu;
 
@@ -531,15 +535,17 @@ typedef struct tagCURSORSHAPE {
 
 VOID FAR PASCAL DisplaySetCursor(LPCURSORSHAPE lpCursorShape);
 
-extern DWORD dwMouseX;
-extern DWORD dwMouseY;
+extern LONG iMouseX;
+extern LONG iMouseY;
 
 
 WORD WINAPI CreateSystemTimer(WORD wFreq, FARPROC IpCallback);
 
 extern HMODULE HModSound;
 extern FARPROC lpfnSoundEnable;
-extern HQUEUE HQSysQueue;
+
+extern HQUEUE hFirstQueue;
+extern HQUEUE hmemSysMsgQueue;
 
 extern HWND hwndSysModal;
 extern WORD wDragWidth;
@@ -554,6 +560,8 @@ extern HBITMAP hbitmapMaximize;
 extern HBITMAP hbitmapMaximizeD;
 extern HBITMAP hbitmapRestore;
 extern HBITMAP hbitmapRestoreD;
+extern HBITMAP hbitmapStdCheck;
+extern HBITMAP hbitmapStdMnArrow;
 
 WORD WINAPI GetTaskQueue(HANDLE hTask);
 
@@ -562,12 +570,16 @@ WORD WINAPI GetTaskQueue(HANDLE hTask);
 #define ME_LUP 0x04
 #define ME_RDOWN 0x08
 #define ME_RUP 0x10
+#define ME_ABSOLUTE 0x8000
 
 //@todo is it really existent???
 #define WM_SETVISIBLE           0x0009
 #define WM_ENTERSIZEMOVE    0x0231
 #define WM_EXITSIZEMOVE     0x0232
 #define WM_DROPFILES	    0x0233
+
+#define WM_ENTERMENULOOP    0x0211
+#define WM_EXITMENULOOP     0x0212
 
 #pragma pack(1)
 
@@ -764,7 +776,7 @@ typedef struct tagWND
 extern void CLASS_DumpClass( HCLASS hClass );
 extern void CLASS_WalkClasses(void);
 extern HCLASS CLASS_FindClassByName( LPCSTR name, HINSTANCE hinstance,
-                                     CLASS **ptr );
+                                     CLASS *FAR*ptr );
 extern CLASS * CLASS_FindClassPtr( HCLASS hclass );
 
 
@@ -815,12 +827,12 @@ extern HINSTANCE WIN_GetWindowInstance( HWND hwnd );
 
 LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam );
 
-LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect, RECT *newWindowRect,
+LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect, RECT FAR *newWindowRect,
 			    RECT *oldWindowRect, RECT *oldClientRect,
-			    WINDOWPOS *winpos, RECT *newClientRect );
+			    WINDOWPOS FAR *winpos, RECT FAR *newClientRect );
 void WINPOS_FindIconPos( HWND hwnd );
 
-int WINPOS_WindowFromPoint( POINT pt, WND **ppWnd );
+int WINPOS_WindowFromPoint( POINT pt, WND *FAR*ppWnd );
 
 void WINAPI FillWindow( HWND hwndParent, HWND hwnd, HDC hdc, HBRUSH hbrush );
 
@@ -829,9 +841,9 @@ int WINAPI ExcludeVisRect(HDC,short,short,short,short);
 
 void WIN_UpdateNCArea(WND* wnd, BOOL bUpdate);
 
-extern void NC_GetInsideRect( HWND hwnd, RECT *rect );
-extern void NC_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
-                              POINT *minTrack, POINT *maxTrack );
+extern void NC_GetInsideRect( HWND hwnd, RECT FAR *rect );
+extern void NC_GetMinMaxInfo( HWND hwnd, POINT FAR *maxSize, POINT FAR *maxPos,
+                              POINT FAR *minTrack, POINT FAR *maxTrack );
 extern void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint );
 extern LONG NC_HandleNCPaint( HWND hwnd , HRGN clip);
 extern LONG NC_HandleNCActivate( HWND hwnd, WPARAM wParam );
@@ -849,6 +861,7 @@ extern LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam );
 void SYSCOLOR_Init(void);
 
 BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus );
+BOOL WINPOS_ChangeActiveWindow( HWND hWnd, BOOL mouseMsg );
 
 #define WND_MAGIC     0x444e4957  /* 'WIND' */
 
@@ -864,3 +877,7 @@ extern  void          SetDS( unsigned short );
 #pragma aux SetDS               = \
         "mov    ds,ax"          \
         parm                   [ax];
+
+char far * lstrchr (const char far *s, int c);
+int latoi(const char far *h);
+

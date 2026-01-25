@@ -356,8 +356,8 @@ VOID /*BOOL*/ WINAPI GetScrollRange( HWND hwnd, int nBar, LPINT lpMin, LPINT lpM
 /**************************************************************************
  *              ScrollWindow   (USER.61)
  */
-void WINAPI ScrollWindow( HWND hwnd, int dx, int dy, const RECT *rect,
-                            const RECT *clipRect )
+void WINAPI ScrollWindow( HWND hwnd, int dx, int dy, const RECT FAR *rect,
+                            const RECT FAR *clipRect )
 {
 	FUNCTION_START
 }

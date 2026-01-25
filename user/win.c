@@ -13,7 +13,6 @@
 #define CallEnumWindowsProc( func, hwnd, lParam ) \
     (*func)( hwnd, lParam )
 
-
 extern HCURSOR CURSORICON_IconToCursor(HICON);
 
 /***********************************************************************
@@ -390,28 +389,8 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
     CREATESTRUCT createStruct;
     int wmcreate;
 
-//    TRACE("CreateWindowEx: " );
-//    if (HIWORD(windowName))
-//{
-//	TRACE("'%S' ", windowName);
-//}
-//    else
-//{
-//	TRACE("%04x ", LOWORD(windowName) );
-//}
-
-//    if (HIWORD(className))
-//{
-//        TRACE("'%S' ", className);
-//}
-//    else
-//{
-//        TRACE("%04x ", LOWORD(className) );
-//}
-
-//    TRACE("%08lx %08lx %d,%d %dx%d %04x %04x %04x %08lx\n",
-//		exStyle, style, x, y, width, height,
-//		parent, menu, instance, (DWORD)data);
+    PushDS();
+    SetDS(USER_HeapSel);
 
     if (x == CW_USEDEFAULT) x = y = 0;
     if (width == CW_USEDEFAULT)
@@ -427,6 +406,7 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
 	/* Make sure parent is valid */
         if (!IsWindow( parent )) {
 	    TRACE("CreateWindowEx: Parent %04x is not a window\n", parent);
+		PopDS();
 	    return 0;
 	}
     }
@@ -434,6 +414,7 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
     {
 	if (style & WS_CHILD) {
 	    TRACE("CreateWindowEx: no parent\n");
+		PopDS();
 	    return 0;  /* WS_CHILD needs a parent */
 	}
     }
@@ -450,6 +431,7 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
 	{
 		TRACE("%04x\n", LOWORD(className) );
 	}
+	PopDS();
         return 0;
     }
       /* Correct the window style */
@@ -463,6 +445,7 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
     hwnd = LocalAlloc(LMEM_FIXED, sizeof(WND)+classPtr->wc.cbWndExtra );
     if (!hwnd) {
 	TRACE("CreateWindowEx: Out of memory\n");
+	PopDS();
 	return 0;
     }
 
@@ -577,7 +560,9 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
     {
 	  /* Abort window creation */
 	TRACE("CreateWindowEx: wmcreate==-1, aborting\n");
+	LocalUnlock(hwnd);
         WIN_DestroyWindow( hwnd );
+	PopDS();
 	return 0;
     }
 
@@ -603,6 +588,8 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
     else if (style & WS_VISIBLE) ShowWindow( hwnd, SW_SHOW );
 
 //    TRACE("CreateWindowEx: return %04x\n", hwnd);
+	LocalUnlock(hwnd);
+	PopDS();
     return hwnd;
 }
 
@@ -723,7 +710,14 @@ HWND WINAPI FindWindow( LPCSTR ClassMatch, LPCSTR TitleMatch )
  */
 WND *WIN_GetDesktop(void)
 {
-    return (WND *)LocalLock(HWndDesktop);
+	WND * retVal;
+
+	PushDS();
+	SetDS(USER_HeapSel);
+	retVal=(WND *)LocalLock(HWndDesktop);
+	PopDS();
+
+	return retVal;
 }
 
 
@@ -732,10 +726,17 @@ WND *WIN_GetDesktop(void)
  */
 HWND WINAPI GetDesktopWindow(void)
 {
-    return HWndDesktop;
+	HWND retVal;
+
+	PushDS();
+	SetDS(USER_HeapSel);
+	retVal=HWndDesktop;
+	PopDS();
+
+	return retVal;
 }
 
-
+//@ todo just export twice. No code dup
 /**********************************************************************
  *           GetDesktopHwnd   (USER.278)
  *
@@ -744,7 +745,14 @@ HWND WINAPI GetDesktopWindow(void)
  */
 HWND WINAPI GetDesktopHwnd(void)
 {
-    return HWndDesktop;
+	HWND retVal;
+
+	PushDS();
+	SetDS(USER_HeapSel);
+	retVal=HWndDesktop;
+	PopDS();
+
+	return retVal;
 }
 
 
@@ -833,22 +841,15 @@ HINSTANCE WIN_GetWindowInstance(HWND hwnd)
  */
 WORD WINAPI SetWindowWord( HWND hwnd, int offset, WORD newval )
 {
-    WORD *ptr, retval;
+    UINT *ptr, retval;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
 	FUNCTION_START
     if (!wndPtr) return 0;
-    if (offset >= 0) ptr = (WORD *)(((char *)wndPtr->wExtra) + offset);
+    if (offset >= 0) ptr = (UINT *)(((char *)wndPtr->wExtra) + offset);
     else switch(offset)
     {
-#ifdef WINELIB32
-	case GWW_ID:
-	case GWW_HINSTANCE:
-            fprintf(stderr,"SetWindowWord called with offset %d.\n",offset);
-            return 0;
-#else
 	case GWW_ID:        ptr = &wndPtr->wIDmenu;   break;
-	case GWW_HINSTANCE: ptr = (WORD*)&wndPtr->hInstance; break;
-#endif
+	case GWW_HINSTANCE: ptr = (UINT *)&wndPtr->hInstance; break;
 	default: return 0;
     }
     retval = *ptr;
@@ -871,10 +872,6 @@ LONG WINAPI GetWindowLong( HWND hwnd, int offset )
 	case GWL_STYLE:   return wndPtr->dwStyle;
         case GWL_EXSTYLE: return wndPtr->dwExStyle;
 	case GWL_WNDPROC: return (LONG)wndPtr->lpfnWndProc;
-#ifdef WINELIB32
-	case GWW_HWNDPARENT: return wndPtr->parent ? wndPtr->parent->hwndSelf : 0;
-	case GWW_HINSTANCE:  return wndPtr->hInstance;
-#endif
     }
     return 0;
 }
@@ -885,16 +882,16 @@ LONG WINAPI GetWindowLong( HWND hwnd, int offset )
  */
 LONG WINAPI SetWindowLong( HWND hwnd, int offset, LONG newval )
 {
-    LONG *ptr, retval;
+    UINT *ptr, retval;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
-	FUNCTION_START
+//	FUNCTION_START
     if (!wndPtr) return 0;
-    if (offset >= 0) ptr = (LONG *)(((char *)wndPtr->wExtra) + offset);
+    if (offset >= 0) ptr = (UINT *)(((char *)wndPtr->wExtra) + offset);
     else switch(offset)
     {
-	case GWL_STYLE:   ptr = &wndPtr->dwStyle; break;
-        case GWL_EXSTYLE: ptr = &wndPtr->dwExStyle; break;
-	case GWL_WNDPROC: ptr = (LONG *)&wndPtr->lpfnWndProc; break;
+	case GWL_STYLE:   ptr = (UINT *)&wndPtr->dwStyle; break;
+        case GWL_EXSTYLE: ptr = (UINT *)&wndPtr->dwExStyle; break;
+	case GWL_WNDPROC: ptr = (UINT *)&wndPtr->lpfnWndProc; break;
 	default: return 0;
     }
     retval = *ptr;
@@ -909,11 +906,7 @@ LONG WINAPI SetWindowLong( HWND hwnd, int offset, LONG newval )
 
 int WINAPI GetWindowText( HWND hwnd, LPSTR lpString, int nMaxCount )
 {
-    int len;
-
-    len = (int)SendMessage( hwnd, WM_GETTEXT, (WPARAM)nMaxCount, 
-                            (LPARAM)lpString);
-    return len;
+    return (int)SendMessage( hwnd, WM_GETTEXT, (WPARAM)nMaxCount, (LPARAM)lpString);
 }
 
 
@@ -937,16 +930,6 @@ int WINAPI GetWindowTextLength(HWND hwnd)
 }
 
 
-/*******************************************************************
- *         IsWindow    (USER.47)
- */
-BOOL WINAPI IsWindow( HWND hwnd )
-{
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
-    return ((wndPtr != NULL) && (wndPtr->dwMagic == WND_MAGIC));
-}
-
-
 /*****************************************************************
  *         GetParent              (USER.46)
  */
@@ -956,6 +939,16 @@ HWND WINAPI GetParent(HWND hwnd)
     if (!wndPtr) return 0;
     wndPtr = (wndPtr->dwStyle & WS_CHILD) ? wndPtr->parent : wndPtr->owner;
     return wndPtr ? wndPtr->hwndSelf : 0;
+}
+
+
+/*******************************************************************
+ *         IsWindow    (USER.47)
+ */
+BOOL WINAPI IsWindow( HWND hwnd )
+{
+    WND * wndPtr = WIN_FindWndPtr( hwnd );
+    return ((wndPtr != NULL) && (wndPtr->dwMagic == WND_MAGIC));
 }
 
 
@@ -1298,10 +1291,30 @@ BOOL WINAPI FlashWindow(HWND hWnd, BOOL bInvert)
  */
 HWND WINAPI SetSysModalWindow(HWND hWnd)
 {
-    HWND hWndOldModal = hwndSysModal;
-    hwndSysModal = hWnd;
-//    dprintf_win(stdnimp,"EMPTY STUB !! SetSysModalWindow(%04x) !\n", hWnd);
-    return hWndOldModal;
+	HWND hWndOldModal;
+
+	PushDS();
+	SetDS(USER_HeapSel);
+	hWndOldModal=hwndSysModal;
+	hwndSysModal=hWnd;
+	PopDS();
+
+	return hWndOldModal;
+}
+
+/*******************************************************************
+ *			GetSysModalWindow		[USER.189]
+ */
+HWND WINAPI GetSysModalWindow(void)
+{
+	HWND retVal;
+
+	PushDS();
+	SetDS(USER_HeapSel);
+	retVal=hwndSysModal;
+	PopDS();
+
+	return retVal;
 }
 
 #if 0
@@ -1635,12 +1648,4 @@ void WIN_UpdateNCArea(WND* wnd, BOOL bUpdate)
     if (hClip) SendMessage( wnd->hwndSelf, WM_NCPAINT, hClip, 0L );
 
     if (hClip > 1) DeleteObject( hClip );
-}
-
-/*******************************************************************
- *			GetSysModalWindow		[USER.189]
- */
-HWND WINAPI GetSysModalWindow(void)
-{
-    return hwndSysModal;
 }

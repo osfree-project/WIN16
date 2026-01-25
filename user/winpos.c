@@ -123,14 +123,26 @@ void WINAPI GetWindowRect( HWND hwnd, LPRECT rect )
  */
 void WINAPI GetClientRect( HWND hwnd, LPRECT rect ) 
 {
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
+	WND * wndPtr;
 
-    rect->left = rect->top = rect->right = rect->bottom = 0;
-    if (wndPtr) 
-    {
-	rect->right  = wndPtr->rectClient.right - wndPtr->rectClient.left;
-	rect->bottom = wndPtr->rectClient.bottom - wndPtr->rectClient.top;
-    }
+	// Switch to USER data segment
+	PushDS();
+	SetDS(USER_HeapSel);	
+
+	// Get WND structure
+	wndPtr = WIN_FindWndPtr( hwnd );
+
+	rect->left = rect->top = rect->right = rect->bottom = 0;
+	if (wndPtr) 
+	{
+		rect->right  = wndPtr->rectClient.right - wndPtr->rectClient.left;
+		rect->bottom = wndPtr->rectClient.bottom - wndPtr->rectClient.top;
+	}
+
+	// Free WND stucture
+	LocalUnlock(hwnd);
+	// Restore data segment
+	PopDS();
 }
 
 
@@ -158,7 +170,7 @@ void WINAPI ScreenToClient( HWND hwnd, LPPOINT lppnt )
  *
  * Find the window and hittest for a given point.
  */
-int WINPOS_WindowFromPoint( POINT pt, WND **ppWnd )
+int WINPOS_WindowFromPoint( POINT pt, WND * FAR *ppWnd )
 {
     WND *wndPtr;
     int hittest = HTERROR;
@@ -278,7 +290,7 @@ HWND ChildWindowFromPoint( HWND hwndParent, POINT pt )
 void WINAPI MapWindowPoints( HWND hwndFrom, HWND hwndTo, LPPOINT lppt, UINT count )
 {
     WND * wndPtr;
-    POINT * curpt;
+    POINT FAR * curpt;
     POINT origin = { 0, 0 };
     WORD i;
 
@@ -832,9 +844,9 @@ BOOL WINPOS_ChangeActiveWindow( HWND hWnd, BOOL mouseMsg )
  * oldWindowRect, oldClientRect and winpos must be non-NULL only
  * when calcValidRect is TRUE.
  */
-LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect, RECT *newWindowRect,
+LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect, RECT FAR *newWindowRect,
 			    RECT *oldWindowRect, RECT *oldClientRect,
-			    WINDOWPOS *winpos, RECT *newClientRect )
+			    WINDOWPOS FAR *winpos, RECT FAR *newClientRect )
 {
     NCCALCSIZE_PARAMS params;
     LONG result;
@@ -1119,14 +1131,6 @@ BOOL WINAPI SetWindowPos(HWND hwnd, HWND hwndInsertAfter, int x, int y,
 	if( wndPtr->parent == WIN_GetDesktop() )
 	    hwndInsertAfter = WINPOS_ReorderOwnedPopups( hwndInsertAfter,
 							 wndPtr, flags );
-#if 0
-        if (wndPtr->window)
-        {
-            WIN_UnlinkWindow( winpos.hwnd );
-            WIN_LinkWindow( winpos.hwnd, hwndInsertAfter );
-        }
-        else
-#endif
 	WINPOS_MoveWindowZOrder(winpos.hwnd, hwndInsertAfter);
     }
 
@@ -1139,20 +1143,6 @@ BOOL WINAPI SetWindowPos(HWND hwnd, HWND hwndInsertAfter, int x, int y,
 
     /* Perform the moving and resizing */
 
-#if 0
-    if (wndPtr->window)
-    {
-        HWND bogusInsertAfter = winpos.hwndInsertAfter;
-
-        winpos.hwndInsertAfter = hwndInsertAfter;
-        WINPOS_SetXWindowPos( &winpos );
-
-        wndPtr->rectWindow = newWindowRect;
-        wndPtr->rectClient = newClientRect;
-        winpos.hwndInsertAfter = bogusInsertAfter;
-    }
-    else
-#endif
     {
         RECT oldWindowRect = wndPtr->rectWindow;
 
@@ -1448,7 +1438,7 @@ HDC WINAPI BeginPaint( HWND hwnd, LPPAINTSTRUCT lps )
 /***********************************************************************
  *           EndPaint    (USER.40)
  */
-void WINAPI EndPaint( HWND hwnd, const PAINTSTRUCT* lps )
+void WINAPI EndPaint( HWND hwnd, const PAINTSTRUCT FAR * lps )
 {
     ReleaseDC( hwnd, lps->hdc );
     ShowCaret( hwnd );

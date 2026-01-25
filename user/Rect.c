@@ -268,9 +268,9 @@ int WINAPI FillRect( HDC hdc, const RECT far *rect, HBRUSH hbrush )
      */
 
     if (!(prevBrush = SelectObject( hdc, hbrush ))) return 0;
-    PatBlt( hdc, rect->left, rect->top,
-              rect->right - rect->left, rect->bottom - rect->top, PATCOPY );
+    PatBlt(hdc, rect->left, rect->top, rect->right - rect->left, rect->bottom - rect->top, PATCOPY);
     SelectObject( hdc, prevBrush );
+
     return 1;
 }
 

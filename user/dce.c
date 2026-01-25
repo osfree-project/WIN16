@@ -184,12 +184,6 @@ HANDLE DCE_AllocDCE( DCE_TYPE type )
 	DCE * dce;
 	HANDLE handle;
 
-	if (type != DCE_CACHE_DC) 
-	{
-		FUNCTION_START
-		for (;;);
-	}
-
 	handle = LocalAlloc(LMEM_FIXED, sizeof(DCE));
 	if (!handle) return 0;
 
@@ -263,7 +257,7 @@ void DCE_Init()
  * window area clipped by the client area of all ancestors.
  * Return FALSE if the visible region is empty.
  */
-static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT *lprect )
+static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT FAR *lprect )
 {
     int xoffset, yoffset;
 
@@ -456,109 +450,10 @@ static void DCE_SetDrawable(DCE *dce, WND *wndPtr, HDC hdc, WORD flags )
 
 
 	SetDCOrg(hdc, wNewOrgX, wNewOrgY);
-    dce->xOrigin = wNewOrgX;
-    dce->yOrigin = wNewOrgY;
-#if 0
-	gdi=SELECTOROF(GlobalLock(hGDI));
-	PushDS();
-//	if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
-	SetDS(gdi);
-	dc=MK_FP(gdi, LocalLock(hdc));
-
-        dc->wDCOrgX = wNewOrgX;
-        dc->wDCOrgY = wNewOrgY;
-	LocalUnlock(hdc);
-	GlobalUnlock(hGDI);
-//	DCE_SetDrawable( wndPtr, dc, flags );
-	PopDS();
-//	SetWindowOrg(hdc, wNewOrgX, wNewOrgY);
-#endif
+	dce->xOrigin = wNewOrgX;
+	dce->yOrigin = wNewOrgY;
 }
 
-#if 0
-static void DCE_SetDrawable( WND *wndPtr, HDC hdc, WORD flags )
-{
-    DC FAR * dc;
-    WORD wNewOrgX, wNewOrgY;
-    WORD gdi = 0;
-int f=0;
-
-    if (!wndPtr)  /* Get a DC for the whole screen */
-    {
-        wNewOrgX = 0;
-        wNewOrgY = 0;
-    }
-    else
-    {
-        if (flags & DCX_WINDOW)
-        {
-            wNewOrgX = wndPtr->rectWindow.left;
-            wNewOrgY = wndPtr->rectWindow.top;
-SetDCOrg(hdc, wNewOrgX, wNewOrgY);
-return;
-        }
-        else
-        {
-            wNewOrgX = wndPtr->rectClient.left;
-            wNewOrgY = wndPtr->rectClient.top;
-        }
-
-        /* Если окно имеет родителя (не рабочий стол), нужно перевести координаты
-           в систему координат родителя */
-        if (wndPtr->parent && wndPtr->parent->hwndSelf != HWndDesktop)
-        {
-            WND *parent = wndPtr->parent;
-            
-            /* Переводим координаты в систему родителя */
-            wNewOrgX += parent->rectClient.left;
-            wNewOrgY += parent->rectClient.top;
-            
-            /* Для всех остальных предков добавляем смещение их клиентских областей */
-            while (parent->parent && parent->parent->hwndSelf != HWndDesktop)
-            {
-                parent = parent->parent;
-                wNewOrgX += parent->rectClient.left;
-                wNewOrgY += parent->rectClient.top;
-            }
-        }
-    }
-
-	SetDCOrg(hdc, wNewOrgX, wNewOrgY);
-#if 0
-  f=wndPtr && (flags & DCX_WINDOW) && wndPtr->parent->hwndSelf == HWndDesktop;
-    gdi=SELECTOROF(GlobalLock(hGDI));
-    PushDS();
-    SetDS(gdi);
-    dc=MK_FP(gdi, LocalLock(hdc));
-
-//    dc->wDCOrgX = wNewOrgX;
-//    dc->wDCOrgY = wNewOrgY;
-    if (0&&f)
-    {
-TRACE("111111111111111111111111111111");
-        // Устанавливаем window origin в 0 (логические координаты начинаются с 0,0)
-        dc->WndOrgX = 0;
-        dc->WndOrgY = 0;
-        
-        // Устанавливаем viewport origin в экранные координаты
-        dc->VportOrgX = wNewOrgX;
-        dc->VportOrgY = wNewOrgY;
-        
-        // Устанавливаем режим MM_TEXT
-        dc->wMapMode = MM_TEXT;
-        
-        // В MM_TEXT экстенты не используются, но для порядка
-        dc->WndExtX = 1;
-        dc->WndExtY = 1;
-        dc->VportExtX = 1;
-        dc->VportExtY = 1;    
-}
-    LocalUnlock(hdc);
-    GlobalUnlock(hGDI);
-    PopDS();
-#endif
-}
-#endif
 
 /***********************************************************************
  *           GetDCEx    (USER.359)
@@ -567,20 +462,21 @@ TRACE("111111111111111111111111111111");
  */
 HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 {
-    HANDLE hdce;
-    HRGN hrgnVisible;
-    HDC hdc = 0;
-    DCE * dce;
-    WND * wndPtr;
+	HANDLE hdce;
+	HRGN hrgnVisible;
+	HDC hdc = 0;
+	DCE * dce;
+	WND * wndPtr;
 	int xOrigin, yOrigin;
 
-    if (hwnd)
-    {
-	if(!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-    }
-    else wndPtr = NULL;
+	PushDS();
+	SetDS(USER_HeapSel);
 
-//TRACE("wndPtr=0x%Fp", wndPtr);
+	if (hwnd)
+	{
+		if(!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
+	}
+	else wndPtr = NULL;
 
     if (flags & DCX_USESTYLE)
     {
@@ -611,36 +507,42 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     {
 	// Search free DCE in USER local heap
 	// So, switch DS to USER local heap and return back later
-	PushDS();
-	SetDS(USER_HeapSel);
-	for (hdce = firstDCE; (hdce); hdce = dce->hdceNext)
-	{
-		if (!(dce = (DCE *) LocalLock( hdce ))) 
-		{
-			PopDS();
-			return 0;
-		}
-		if ((dce->byFlags == DCE_CACHE_DC) && (!dce->byInUse))
-		{
-			LocalUnlock(hdce);
-//			TRACE("xxxx");
-			break;
-		}
-		LocalUnlock(hdce);
-	}
-	PopDS();
+    for (hdce = firstDCE; hdce; )
+    {
+	HANDLE next;
+//	TRACE("%d", firstDCE);
+        dce = (DCE *)LocalLock(hdce);  // LocalLock возвращает указатель
+        if (!dce) 
+        {
+            PopDS();
+            return 0;
+        }
+        
+        // Сохраняем следующий элемент ПЕРЕД разблокировкой
+        next = dce->hdceNext;
+        
+        if ((dce->byFlags == DCE_CACHE_DC) && (!dce->byInUse))
+        {
+            LocalUnlock(hdce);
+            break;
+        }
+        
+        LocalUnlock(hdce);
+        hdce = next;  // Используем сохраненный handle
+    }
+
     }
     else hdce = wndPtr->hdce;
 
 	if (!hdce) 
 	{
+		PopDS();
 		return 0;
 	}
 
+
 	// Fill DCE in USER local heap
 	// So, switch DS to USER local heap and return back later
-	PushDS();
-	SetDS(USER_HeapSel);
 	dce = (DCE *) LocalLock( hdce );
 
 	dce->hwndCurr = hwnd;
@@ -653,15 +555,6 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 	yOrigin = dce->yOrigin;
 
 	LocalUnlock(hdce);
-	PopDS();
-
-    
-    /* Initialize DC */
-//#if 0    
-	// DC lives in GDI local heap, so we need to switch DS to GDI heap,
-	// do all things and switch DS back. But prepare values befor in stack.
-//    DCE_SetDrawable(wndPtr, hdc, flags);
-
 
 //#endif
     if (hwnd)
@@ -706,7 +599,8 @@ if (hwnd)  // Только для окон, не для экрана
 
 //    TRACE("GetDCEx(%04x,%04x,0x%lx): returning %04x", 
 //	       hwnd, hrgnClip, flags, hdc);
-    return hdc;
+	PopDS();
+	return hdc;
 }
 
 
@@ -726,15 +620,19 @@ HDC WINAPI GetDC(HWND hwnd)
  */
 HDC WINAPI GetWindowDC( HWND hwnd )
 {
-    int flags = DCX_CACHE | DCX_WINDOW;
-    if (hwnd)
-    {
-	WND * wndPtr;
-	if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
+	int flags = DCX_CACHE | DCX_WINDOW;
+
+	PushDS();
+	SetDS(USER_HeapSel);
+	if (hwnd)
+	{
+		WND * wndPtr;
+		if (!(wndPtr = WIN_FindWndPtr( hwnd ))) {PopDS(); return 0;}
 /*	if (wndPtr->dwStyle & WS_CLIPCHILDREN) flags |= DCX_CLIPCHILDREN; */
-	if (wndPtr->dwStyle & WS_CLIPSIBLINGS) flags |= DCX_CLIPSIBLINGS;
-    }
-    return GetDCEx( hwnd, 0, flags );
+		if (wndPtr->dwStyle & WS_CLIPSIBLINGS) flags |= DCX_CLIPSIBLINGS;
+	}
+	PopDS();
+	return GetDCEx( hwnd, 0, flags );
 }
 
 
@@ -744,7 +642,7 @@ HDC WINAPI GetWindowDC( HWND hwnd )
 int WINAPI ReleaseDC(HWND hwnd, HDC hdc)
 {
 	HANDLE hdce;
-	DCE * dce = NULL;
+	DCE * dce;
     
 //	TRACE("ReleaseDC: %04x %04x\n", hwnd, hdc );
 

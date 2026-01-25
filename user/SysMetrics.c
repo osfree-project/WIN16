@@ -270,32 +270,6 @@ GetSystemMetrics(int nIndex)
 
 }
 
-#if 0
-/*************************************************************************
- *		GetSysColor (USER.180)
- */
-COLORREF WINAPI
-GetSysColor(int nIndex)
-{
-    COLORREF cr;
-
-//    APISTR((LF_APICALL,"GetSysColor(int=%d)\n", nIndex));
-
-    if ((nIndex < 0) || (nIndex >= sizeof(SysColors)/sizeof(SysColors[0])))
-    {
-	cr = RGB(0,0,0);
-//        APISTR((LF_APIFAIL,"GetSysColor: returns COLORREF %x\n", cr));
-        return cr;
-    }
-
-    cr = SysColors[nIndex];
-
-//    APISTR((LF_APIRET,"GetSysColor: returns COLORREF %x\n", cr));
-    return cr;
-}
-
-#endif
-
 /***********************************************************************
  *		SystemParametersInfo (USER.483)
  */
@@ -582,8 +556,8 @@ SystemParametersInfo(UINT uAction, UINT uParam, LPVOID lpvParam,
 
 VOID LW_InitSysMetrics()
 {
-//	FUNCTION_START
+	FUNCTION_START
 	SysMetricsDef[SM_CXSCREEN]=CXScreen;
 	SysMetricsDef[SM_CYSCREEN]=CYScreen;
-//	FUNCTION_END
+	FUNCTION_END
 }

@@ -14,7 +14,6 @@
 //#include "options.h"
 #include "user.h"
 
-static HWND hwndFocus = 0;
 
 #if 0
 /*****************************************************************

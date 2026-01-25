@@ -7,11 +7,12 @@
 PROJ     = user
 TRGT     = $(PROJ).exe
 DESC     = Windows USER.EXE
-srcfiles = $(p)smallcode$(e) $(p)libentry$(e) $(p)libmain$(e) $(p)dce$(e) $(p)desktop$(e) $(p)winpos$(e) $(p)defwnd$(e) $(p)syscolor$(e) $(p)nonclient$(e) $(p)cursor$(e) $(p)queue$(e) $(p)win$(e) $(p)message$(e) $(p)GlobalData1$(e) $(p)div$(e) $(p)hook$(e) $(p)dialog$(e) $(p)Time$(e) $(p)Atoms$(e) $(p)comm$(e) $(p)Caret$(e) $(p)DrawText$(e)  $(p)SysMetrics$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Resources$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)printf$(e) $(p)Menu$(e) $(p)focus$(e)# $(p)Desktop$(e)  $(p)StringFunc$(e) $(p)network$(e) $(p)InitApp$(e) $(p)Listbox$(e)  
-ADD_COPT = -zW -s -3 -DDEBUG=1 # optimize prolog, no stack checks, put constants in code segment 
+srcfiles = $(p)display$(e) $(p)libentry$(e) $(p)libmain$(e) $(p)dce$(e) $(p)desktop$(e) $(p)winpos$(e) $(p)defwnd$(e) $(p)syscolor$(e) $(p)nonclient$(e) $(p)cursor$(e) $(p)queue$(e) $(p)win$(e) $(p)message$(e) $(p)GlobalData1$(e) $(p)div$(e) $(p)hook$(e) $(p)dialog$(e) $(p)Time$(e) $(p)Atoms$(e) $(p)comm$(e) $(p)Caret$(e) $(p)DrawText$(e)  $(p)SysMetrics$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Resources$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)printf$(e) $(p)Menu$(e) $(p)focus$(e) $(p)network$(e) # $(p)Listbox$(e) $(p)StringFunc$(e) $(p)InitApp$(e) 
+ADD_COPT = -zls -ms -zW -s -3 -DDEBUG=1 # optimize prolog, no stack checks, put constants in code segment 
+ADD_ASMOPT = -ms
 # -zc
 # -3 must be replaced by -0 later
-ADD_LINKOPT = SEGMENT CLASS DATA FIXED SHARE
+ADD_LINKOPT = SEGMENT FIXED_TEXT preload fixed
 NOLIBS = 1 # Don't use default libentry
 NODEFAULTLIBS = 1 # Don'y use libc
 
@@ -195,16 +196,44 @@ EXPORTS = &
 	AnsiNext .472, &
 	AnsiPrev .473, &
 	EnableScrollBar .482, &
+	InsertMenu .410, &
+	AppendMenu .411, &
+	RemoveMenu .412, &
+	DeleteMenu .413, &
+	ModifyMenu .414, &
+	WNetErrorText .499, &
+	WNetOpenJob .501, &
+	WNetCloseJob .502, &
+	WNetAbortJob .503, &
+	WNetHoldJob .504, &
+	WNetReleaseJob .505, &
+	WNetCancelJob .506, &
+	WNetSetJobCopies .507, &
+	WNetWatchQueue .508, &
+	WNetUnwatchQueue .509, &
+	WNetLockQueueData .510, &
+	WNetUnlockQueueData .511, &
+	WNetGetCaps .513, &
+	WNetDeviceMode .514, &
+	WNetBrowseDialog .515, &
+	WNetAddConnection .517, &
+	WNetCancelConnection .518, &
+	WNetGetError .519, &
+	WNetGetErrorText .520, &
+	WNetRestoreConnection .523, &
+	WNetWriteJob .524, &
+	WNetConnectDialog .525, &
+	WNetDisconnectDialog .526, &
+	WNetConnectionDialog .527, &
+	WNetViewQueueDialog .528, &
+	WNetPropertyDialog .529, &
+	WNetDirectoryNotify .531, &
+	WNetGetPropertyText .532, &
 	SystemParametersInfo .483#, &
 #	LoadMenuIndirect .220, &
 #	GetMenuState .250, &
 #	GetMenuItemCount .263, &
 #	GetMenuItemID .264, &
-#	InsertMenu .410, &
-#	AppendMenu .411, &
-#	RemoveMenu .412, &
-#	DeleteMenu .413, &
-#	ModifyMenu .414, &
 #	CreatePopupMenu .415, &
 #	TrackPopupMenu .416, &
 #	GetMenuCheckMarkDimensions .417, &
@@ -222,34 +251,6 @@ EXPORTS = &
 #	HiliteMenuItem .162, &
 #	RegisterClassEx .397, &
 #	GetClassInfoEx .398, &
-#	WNetErrorText .499, &
-#	WNetOpenJob .501, &
-#	WNetCloseJob .502, &
-#	WNetAbortJob .503, &
-#	WNetHoldJob .504, &
-#	WNetReleaseJob .505, &
-#	WNetCancelJob .506, &
-#	WNetSetJobCopies .507, &
-#	WNetWatchQueue .508, &
-#	WNetUnwatchQueue .509, &
-#	WNetLockQueueData .510, &
-#	WNetUnlockQueueData .511, &
-#	WNetGetCaps .513, &
-#	WNetDeviceMode .514, &
-#	WNetBrowseDialog .515, &
-#	WNetAddConnection .517, &
-#	WNetCancelConnection .518, &
-#	WNetGetError .519, &
-#	WNetGetErrorText .520, &
-#	WNetRestoreConnection .523, &
-#	WNetWriteJob .524, &
-#	WNetConnectDialog .525, &
-#	WNetDisconnectDialog .526, &
-#	WNetConnectionDialog .527, &
-#	WNetViewQueueDialog .528, &
-#	WNetPropertyDialog .529, &
-#	WNetDirectoryNotify .531, &
-#	WNetGetPropertyText .532
 
 
 IMPORTS = GETEXEVERSION KERNEL.105, &
@@ -269,6 +270,7 @@ IMPORTS = GETEXEVERSION KERNEL.105, &
   DisplaySetCursor DISPLAY.102, &
   MoveCursor DISPLAY.103, &
   CheckCursor DISPLAY.104, &
+  GetDriverResourceID DISPLAY.450, &
   SetTaskQueue KERNEL.34, &
   MakeObjectPrivate GDI.463, &
   GetDCState GDI.179, &

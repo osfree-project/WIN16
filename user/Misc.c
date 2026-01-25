@@ -91,14 +91,6 @@ int WINAPI GetAsyncKeyState( int key )
     return 0;
 }
 
-/**********************************************************************
- *		IsMenu    (USER.358)
- */
-BOOL WINAPI IsMenu( HMENU hmenu )
-{
-	FUNCTION_START
-    return 0;
-}
 
 /**********************************************************************
  *		GetKeyState (USER.106)

@@ -61,7 +61,7 @@ typedef struct tagMESSAGEQUEUE
 
 extern void QUEUE_DumpQueue( HQUEUE hQueue );
 extern void QUEUE_WalkQueues(void);
-extern MESSAGEQUEUE *QUEUE_GetSysQueue(void);
+extern MESSAGEQUEUE FAR *QUEUE_GetSysQueue(void);
 extern void QUEUE_IncPaintCount( HQUEUE hQueue );
 extern void QUEUE_DecPaintCount( HQUEUE hQueue );
 extern void QUEUE_IncTimerCount( HQUEUE hQueue );
@@ -69,11 +69,11 @@ extern void QUEUE_DecTimerCount( HQUEUE hQueue );
 extern BOOL QUEUE_CreateSysMsgQueue( int size );
 extern BOOL QUEUE_DeleteMsgQueue( HQUEUE hQueue );
 extern HTASK QUEUE_GetQueueTask( HQUEUE hQueue );
-extern BOOL QUEUE_AddMsg( HQUEUE hQueue, MSG * msg, DWORD extraInfo );
-extern int QUEUE_FindMsg( MESSAGEQUEUE * msgQueue, HWND hwnd,
+extern BOOL QUEUE_AddMsg( HQUEUE hQueue, MSG FAR * msg, DWORD extraInfo );
+extern int QUEUE_FindMsg( MESSAGEQUEUE FAR * msgQueue, HWND hwnd,
                           int first, int last );
-extern void QUEUE_RemoveMsg( MESSAGEQUEUE * msgQueue, int pos );
-extern void hardware_event( WORD message, WORD wParam, LONG lParam,
+extern void QUEUE_RemoveMsg( MESSAGEQUEUE FAR * msgQueue, int pos );
+extern void FAR hardware_event( WORD message, WORD wParam, LONG lParam,
 			    int xPos, int yPos, DWORD time, DWORD extraInfo );
 
 #endif  /* __WINE_QUEUE_H */

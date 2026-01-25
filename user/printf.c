@@ -3,22 +3,149 @@
  *
  */
 
+#pragma code_seg( "FIXED_TEXT" );
+
 #ifndef MK_FP
 #define MK_FP(seg,off) ((void far *)(((unsigned long)(seg) << 16) | (unsigned)(off)))
 #endif
 
 /* This function prints one char */
+//extern  void putchar(char);
+//#pragma aux putchar               = 
+//        "mov ah, 2"          
+//        "int 21h"          
+//        parm                   [dl];
+
+/* Глобальная переменная для выбора порта вывода */
+int comport = 1; /* 0 = консоль, 1 = COM1, 2 = COM2 */
+
+/* This function prints one char */
 extern  void putchar(char);
 #pragma aux putchar               = \
-        "mov ah, 2"          \
-        "int 21h"          \
+        "cmp word ptr [comport], 0" \
+        "je  putchar_console"     \
+        "cmp word ptr [comport], 1" \
+        "je  putchar_com1"        \
+        "cmp word ptr [comport], 2" \
+        "je  putchar_com2"        \
+        "putchar_console:"        \
+        "mov ah, 2"               \
+        "int 21h"                 \
+        "jmp putchar_end"         \
+        "putchar_com1:"           \
+        "push ax"                 \
+        "push dx"                 \
+        "push bx"                 \
+        "mov bl, dl"              \
+        "com1_wait:"              \
+        "mov dx, 0x3FD"           \
+        "in  al, dx"              \
+        "test al, 0x20"           \
+        "jz com1_wait"            \
+        "mov dx, 0x3F8"           \
+        "mov al, bl"              \
+        "out dx, al"              \
+        "pop bx"                  \
+        "pop dx"                  \
+        "pop ax"                  \
+        "jmp putchar_end"         \
+        "putchar_com2:"           \
+        "push ax"                 \
+        "push dx"                 \
+        "push bx"                 \
+        "mov bl, dl"              \
+        "com2_wait:"              \
+        "mov dx, 0x2FD"           \
+        "in  al, dx"              \
+        "test al, 0x20"           \
+        "jz com2_wait"            \
+        "mov dx, 0x2F8"           \
+        "mov al, bl"              \
+        "out dx, al"              \
+        "pop bx"                  \
+        "pop dx"                  \
+        "pop ax"                  \
+        "putchar_end:"            \
         parm                   [dl];
 
-char * convert_to_ascii (char *buf, int c,...)
+/* Инициализация COM-порта через ассемблерную вставку */
+void init_com(int port, int baud_rate)
 {
-  unsigned int num = *((&c) + 1), mult = 10;
-  char *ptr = buf;
+    unsigned short divisor = 12; //115200 / baud_rate;
+    
+    if (port == 1) {
+        /* Инициализация COM1 (0x3F8) */
+        _asm {
+            mov dx, 0x3F8
+            add dx, 3
+            mov al, 0x80
+            out dx, al
+            
+            mov dx, 0x3F8
+            mov al, byte ptr divisor
+            out dx, al
+            
+            mov dx, 0x3F8
+            inc dx
+            mov al, byte ptr divisor+1
+            out dx, al
+            
+            mov dx, 0x3F8
+            add dx, 3
+            mov al, 0x03
+            out dx, al
+            
+            mov dx, 0x3F8
+            add dx, 2
+            mov al, 0xC7
+            out dx, al
+            
+            mov dx, 0x3F8
+            add dx, 4
+            mov al, 0x03
+            out dx, al
+        }
+    } else {
+        /* Инициализация COM2 (0x2F8) */
+        _asm {
+            mov dx, 0x2F8
+            add dx, 3
+            mov al, 0x80
+            out dx, al
+            
+            mov dx, 0x2F8
+            mov al, byte ptr divisor
+            out dx, al
+            
+            mov dx, 0x2F8
+            inc dx
+            mov al, byte ptr divisor+1
+            out dx, al
+            
+            mov dx, 0x2F8
+            add dx, 3
+            mov al, 0x03
+            out dx, al
+            
+            mov dx, 0x2F8
+            add dx, 2
+            mov al, 0xC7
+            out dx, al
+            
+            mov dx, 0x2F8
+            add dx, 4
+            mov al, 0x03
+            out dx, al
+        }
+    }
+}
 
+/* Изменяем convert_to_ascii - теперь она принимает num явно */
+char * convert_to_ascii (char *buf, int c, unsigned int num)
+{
+  unsigned int mult = 10;
+  char *ptr = buf;
+  
   if (c == 'x' || c == 'X')
     mult = 16;
 
@@ -28,6 +155,12 @@ char * convert_to_ascii (char *buf, int c,...)
       *(ptr++) = '-';
       buf++;
     }
+
+  if (num == 0) {
+    *(ptr++) = '0';
+    *ptr = 0;
+    return ptr;
+  }
 
   do
     {
@@ -50,10 +183,11 @@ char * convert_to_ascii (char *buf, int c,...)
       }
   }
 
+  *ptr = 0;
   return ptr;
 }
 
-/* Новая функция для преобразования 32-битного числа без деления */
+/* Функция для преобразования 32-битного числа без деления */
 char * convert_to_ascii_long (char *buf, int c, unsigned long num)
 {
   unsigned long remainder;
@@ -139,9 +273,10 @@ void putstrfar (const char far *str)
     putchar (*str++);
 }
 
-void _cdecl printf (char far *format,...)
+void _cdecl far printf (char far *format,...)
 {
-  int *dataptr = (int *) &format;
+  /* Используем прямой доступ к аргументам через указатель на char */
+  char far *arg_ptr = (char far *)&format;
   char c, str[32], tmp_str[32];
   int near_ptr, offset, segment, width, precision, zero_pad;
   char far *far_ptr;
@@ -150,7 +285,8 @@ void _cdecl printf (char far *format,...)
   unsigned long num_long;
   unsigned int num;
   
-  dataptr+=2;
+  /* Пропускаем far pointer format (4 байта) */
+  arg_ptr += 4;
 
   while ((c = *(format++)) != 0)
     {
@@ -216,13 +352,11 @@ void _cdecl printf (char far *format,...)
             case 'u':
               if (is_long)
                 {
-                  /* 32-битное число (long) */
-                  /* В 16-битной среде long передается как два слова: сначала младшее, потом старшее */
-                  unsigned long num_low = (unsigned int)(*dataptr++);
-                  unsigned long num_high = (unsigned int)(*dataptr++);
-                  num_long = (num_high << 16) | num_low;
+                  /* 32-битное число (long) - 4 байта */
+                  /* В 16-битной среде передается как два слова */
+                  num_long = *(unsigned long far *)arg_ptr;
+                  arg_ptr += 4;
                   
-                  /* Используем новую функцию без деления */
                   *convert_to_ascii_long(str, c, num_long) = 0;
                   
                   len = 0;
@@ -231,12 +365,10 @@ void _cdecl printf (char far *format,...)
                   /* Применяем точность (для десятичных чисел) */
                   if (precision >= 0 && (c == 'd' || c == 'u'))
                     {
-                      /* Точность переопределяет zero_pad */
                       zero_pad = 0;
                       
                       if (precision > len)
                         {
-                          /* Дополняем нулями слева */
                           padding = precision - len;
                           for (i = len; i >= 0; i--)
                             str[i + padding] = str[i];
@@ -246,7 +378,6 @@ void _cdecl printf (char far *format,...)
                         }
                       else if (precision == 0 && str[0] == '0')
                         {
-                          /* Специальный случай: точность 0 для нуля */
                           str[0] = 0;
                           len = 0;
                         }
@@ -258,14 +389,11 @@ void _cdecl printf (char far *format,...)
                       padding = width - len;
                       if (zero_pad && precision < 0)
                         {
-                          /* Заполнение нулями */
                           if (str[0] == '-')
                             {
-                              /* Для отрицательных: минус, затем нули */
                               putchar('-');
                               for (i = 0; i < padding; i++)
                                 putchar('0');
-                              /* Пропускаем минус в строке */
                               putstr(str + 1);
                             }
                           else
@@ -277,7 +405,6 @@ void _cdecl printf (char far *format,...)
                         }
                       else
                         {
-                          /* Заполнение пробелами слева */
                           for (i = 0; i < padding; i++)
                             putchar(' ');
                           putstr(str);
@@ -290,109 +417,34 @@ void _cdecl printf (char far *format,...)
                 }
               else
                 {
-                  /* 16-битное число (int) - оригинальный код */
-                  num = *((unsigned int *) dataptr++);
-                  base = (c == 'x' || c == 'X') ? 16 : 10;
-                  is_negative = 0;
+                  /* 16-битное число (int) - 2 байта */
+                  num = *(unsigned int far *)arg_ptr;
+                  arg_ptr += 2;
                   
-                  if ((int)num < 0 && c == 'd')
-                    {
-                      is_negative = 1;
-                      num = (unsigned int)(-(int)num);
-                    }
+                  *convert_to_ascii(str, c, num) = 0;
                   
-                  /* Преобразование числа в строку */
-                  idx = 0;
-                  if (num == 0)
-                    {
-                      if (precision != 0)
-                        tmp_str[idx++] = '0';
-                    }
-                  else
-                    {
-                      while (num != 0)
-                        {
-                          int digit = num % base;
-                          if (digit < 10)
-                            tmp_str[idx++] = '0' + digit;
-                          else if (c == 'X')
-                            tmp_str[idx++] = 'A' + digit - 10;
-                          else
-                            tmp_str[idx++] = 'a' + digit - 10;
-                          num /= base;
-                        }
-                    }
-                  tmp_str[idx] = 0;
-                  
-                  /* Переворачиваем строку */
-                  for (i = 0; i < idx / 2; i++)
-                    {
-                      tmp_char = tmp_str[i];
-                      tmp_str[i] = tmp_str[idx - i - 1];
-                      tmp_str[idx - i - 1] = tmp_char;
-                    }
-                  
-                  /* Применяем точность */
-                  if (precision >= 0)
-                    {
-                      /* Точность переопределяет zero_pad */
-                      zero_pad = 0;
-                      
-                      len = 0;
-                      while (tmp_str[len]) len++;
-                      
-                      if (precision > len)
-                        {
-                          /* Дополняем нулями слева */
-                          for (i = precision - 1; i >= 0; i--)
-                            {
-                              if (i >= precision - len)
-                                str[i] = tmp_str[i - (precision - len)];
-                              else
-                                str[i] = '0';
-                            }
-                          str[precision] = 0;
-                        }
-                      else if (precision == 0 && tmp_str[0] == '0')
-                        {
-                          /* Специальный случай: точность 0 для нуля */
-                          str[0] = 0;
-                        }
-                      else
-                        {
-                          /* Копируем как есть */
-                          i = 0;
-                          while (tmp_str[i])
-                            {
-                              str[i] = tmp_str[i];
-                              i++;
-                            }
-                          str[i] = 0;
-                        }
-                    }
-                  else
-                    {
-                      /* Без точности - просто копируем */
-                      i = 0;
-                      while (tmp_str[i])
-                        {
-                          str[i] = tmp_str[i];
-                          i++;
-                        }
-                      str[i] = 0;
-                    }
-                  
-                  /* Добавляем знак минус для отрицательных чисел */
                   len = 0;
                   while (str[len]) len++;
                   
-                  if (is_negative)
+                  /* Применяем точность (для десятичных чисел) */
+                  if (precision >= 0 && (c == 'd' || c == 'u'))
                     {
-                      /* Сдвигаем строку вправо и добавляем минус */
-                      for (i = len; i >= 0; i--)
-                        str[i + 1] = str[i];
-                      str[0] = '-';
-                      len++;
+                      zero_pad = 0;
+                      
+                      if (precision > len)
+                        {
+                          padding = precision - len;
+                          for (i = len; i >= 0; i--)
+                            str[i + padding] = str[i];
+                          for (i = 0; i < padding; i++)
+                            str[i] = '0';
+                          len += padding;
+                        }
+                      else if (precision == 0 && str[0] == '0')
+                        {
+                          str[0] = 0;
+                          len = 0;
+                        }
                     }
                   
                   /* Применяем ширину */
@@ -401,14 +453,11 @@ void _cdecl printf (char far *format,...)
                       padding = width - len;
                       if (zero_pad && precision < 0)
                         {
-                          /* Заполнение нулями */
-                          if (is_negative)
+                          if (str[0] == '-')
                             {
-                              /* Для отрицательных: минус, затем нули */
                               putchar('-');
                               for (i = 0; i < padding; i++)
                                 putchar('0');
-                              /* Пропускаем минус в строке */
                               putstr(str + 1);
                             }
                           else
@@ -420,7 +469,6 @@ void _cdecl printf (char far *format,...)
                         }
                       else
                         {
-                          /* Заполнение пробелами слева */
                           for (i = 0; i < padding; i++)
                             putchar(' ');
                           putstr(str);
@@ -434,9 +482,9 @@ void _cdecl printf (char far *format,...)
               break;
 
             case 'c':
-              tmp_char = (*(dataptr++)) & 0xff;
+              tmp_char = *(char far *)arg_ptr;
+              arg_ptr += 2; /* char расширяется до int в вызовах cdecl */
               
-              /* Ширина для символа */
               if (width > 1)
                 {
                   for (i = 1; i < width; i++)
@@ -447,9 +495,10 @@ void _cdecl printf (char far *format,...)
 
             case 's':
               {
-                char *str_ptr = (char *) *(dataptr++);
+                /* near указатель - 2 байта */
+                char *str_ptr = *(char * far *)arg_ptr;
+                arg_ptr += 2;
                 
-                /* Определяем длину строки с учетом точности */
                 len = 0;
                 if (precision >= 0)
                   {
@@ -462,25 +511,25 @@ void _cdecl printf (char far *format,...)
                       len++;
                   }
                 
-                /* Применяем ширину */
                 if (width > len)
                   {
                     for (i = len; i < width; i++)
                       putchar(' ');
                   }
                 
-                /* Выводим строку */
                 for (i = 0; i < len; i++)
                   putchar(str_ptr[i]);
               }
               break;
 
             case 'S':
-              offset = *(dataptr++);
-              segment = *(dataptr++);
-              far_ptr = (char far *)MK_FP(segment, offset);
+              /* far указатель - 4 байта (сегмент:смещение) */
+              offset = *(unsigned int far *)arg_ptr;
+              arg_ptr += 2;
+              segment = *(unsigned int far *)arg_ptr;
+              arg_ptr += 2;
+              far_ptr = MK_FP(segment, offset);
               
-              /* Определяем длину far-строки с учетом точности */
               len = 0;
               if (precision >= 0)
                 {
@@ -493,26 +542,24 @@ void _cdecl printf (char far *format,...)
                     len++;
                 }
               
-              /* Применяем ширину */
               if (width > len)
                 {
                   for (i = len; i < width; i++)
                     putchar(' ');
                 }
               
-              /* Выводим строку */
               for (i = 0; i < len; i++)
                 putchar(far_ptr[i]);
               break;
 
             case 'p': /* near pointer */
-              near_ptr = *(dataptr++);
+              near_ptr = *(unsigned int far *)arg_ptr;
+              arg_ptr += 2;
               putstr("0x");
               *convert_to_ascii(str, 'x', near_ptr) = 0;
               len = 0;
               while (str[len]) len++;
               
-              /* Применяем ширину с заполнением нулями */
               if (width > 0)
                 {
                   for (i = len; i < width; i++)
@@ -525,7 +572,6 @@ void _cdecl printf (char far *format,...)
                 }
               else
                 {
-                  /* По умолчанию 4 цифры для указателей */
                   for (i = len; i < 4; i++)
                     putchar('0');
                 }
@@ -533,20 +579,19 @@ void _cdecl printf (char far *format,...)
               break;
 
             case 'P': /* far pointer */
-            case 'F': /* Обработка %Fp - спецификатор из двух символов */
+            case 'F': /* Обработка %Fp */
               {
                 char next_c = *format;
                 if (c == 'F' && next_c == 'p')
                 {
-                  /* Это %Fp - пропускаем 'p' */
                   format++;
                 }
-                /* Обрабатываем как far pointer */
-                offset = *(dataptr++);
-                segment = *(dataptr++);
+                offset = *(unsigned int far *)arg_ptr;
+                arg_ptr += 2;
+                segment = *(unsigned int far *)arg_ptr;
+                arg_ptr += 2;
                 
                 putstr("0x");
-                /* Печатаем сегмент */
                 *convert_to_ascii(str, 'x', segment) = 0;
                 len = 0;
                 while (str[len]) len++;
@@ -570,7 +615,6 @@ void _cdecl printf (char far *format,...)
                 
                 putchar(':');
                 
-                /* Печатаем смещение */
                 *convert_to_ascii(str, 'x', offset) = 0;
                 len = 0;
                 while (str[len]) len++;
@@ -593,7 +637,18 @@ void _cdecl printf (char far *format,...)
                 putstr(str);
               }
               break;
+              
+            case '%':
+              putchar('%');
+              break;
+              
+            default:
+              putchar('%');
+              putchar(c);
+              break;
             }
         }
     }
 }
+
+#pragma code_seg();

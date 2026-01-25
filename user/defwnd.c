@@ -22,7 +22,7 @@ static short iMenuSysKey = 0;
  *
  * Set the window text.
  */
-void DEFWND_SetText( WND *wndPtr, LPSTR text )
+void DEFWND_SetText( WND *wndPtr, LPCSTR text )
 {
     LPSTR textPtr;
 
@@ -157,6 +157,7 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
     case WM_ERASEBKGND:
     case WM_ICONERASEBKGND:
 	{
+		TRACE("ERASE");
 	    if (!(classPtr = CLASS_FindClassPtr( wndPtr->hClass ))) return 0;
 	    if (!classPtr->wc.hbrBackground) return 0;
             if (classPtr->wc.hbrBackground <= (HBRUSH)(COLOR_MAX+1))

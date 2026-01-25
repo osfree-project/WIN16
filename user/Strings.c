@@ -278,7 +278,7 @@ typedef struct
     WPRINTF_TYPE type;
 } WPRINTF_FORMAT;
 
-static int parse_format( LPCSTR format, WPRINTF_FORMAT *res )
+static int parse_format( LPCSTR format, WPRINTF_FORMAT FAR *res )
 {
     LPCSTR p = format;
 
@@ -717,4 +717,58 @@ char far * itox(int i)
 void WINAPI StringFunc(void)
 {
 //	FUNCTION_START
+}
+
+char far * lstrchr (const char far *s, int c)
+{
+  do {
+    if (*s == c)
+      {
+	return (char far *)s;
+      }
+  } while (*s++);
+  return (0);
+}
+
+int latoi(const char far *h)
+{
+  char far *s = (char far *)h;
+  int  i = 0;
+  int  j, k, l;
+  char c;
+  int  base;
+
+  if (s[0] == '0' && s[1] == 'x') {
+    base = 16;
+    s += 2; // Delete "0x"
+  } else {
+    base = 10;
+  }
+
+  l = lstrlen(s) - 1;
+
+  while (*s) {
+    c = _tolower(*s);
+
+    if ('a' <= c && c <= 'f') {
+      if (base == 16) {
+        c = c - 'a' + 10;
+      } else {
+        return 0;
+      }
+    } else if ('0' <= c && c <= '9') {
+      c -= '0';
+    } else {
+      return 0;
+    }
+
+    for (j = 0, k = c; j < l; j++)
+      k *= base;
+
+    i += k;
+    s++;
+    l--;
+  }
+
+  return i;
 }

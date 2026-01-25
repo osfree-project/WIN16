@@ -71,22 +71,31 @@ static HBITMAP DESKTOP_LoadBitmap( HDC hdc, const char *filename )
  */
 static LONG DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc/*, DESKTOPINFO *infoPtr*/ )
 {
-    RECT rect;
-    GetClientRect( hwnd, &rect );    
+	RECT rect;
 
-    /* Paint desktop pattern (only if wall paper does not cover everything) */
+	PushDS();
+	SetDS(USER_HeapSel);
+
+	FUNCTION_START
+
+	GetClientRect(hwnd, &rect);
+
+	TRACE("hdc=%x", hdc);
+
+	/* Paint desktop pattern (only if wall paper does not cover everything) */
 
 //    if (!infoPtr->hbitmapWallPaper || 
 //	(!infoPtr->fTileWallPaper && ((infoPtr->bitmapSize.cx < rect.right) ||
 //	 (infoPtr->bitmapSize.cy < rect.bottom))))
-    {
-	  /* Set colors in case pattern is a monochrome bitmap */
-	SetBkColor( hdc, RGB(0,0,0) );
-	SetTextColor( hdc, GetSysColor(COLOR_BACKGROUND) );
-	FillRect( hdc, &rect, CreateSolidBrush( GetSysColor(COLOR_BACKGROUND) ) );
-    }
+	{
+		/* Set colors in case pattern is a monochrome bitmap */
+		SetBkColor(hdc, RGB(0,0,0));
+		SetTextColor(hdc, GetSysColor(COLOR_BACKGROUND));
+		FillRect(hdc, &rect, CreateSolidBrush(GetSysColor(COLOR_BACKGROUND)));
+	}
 
-      /* Paint wall paper */
+
+	/* Paint wall paper */
 #if 0
     if (infoPtr->hbitmapWallPaper)
     {
@@ -112,7 +121,12 @@ static LONG DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc/*, DESKTOPINFO *infoPtr*/ )
 	}
     }
 #endif
-    return 1;
+
+	FUNCTION_END
+
+	PopDS();
+
+	return 1;
 }
 
 
@@ -123,7 +137,10 @@ static LONG DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc/*, DESKTOPINFO *infoPtr*/ )
  */
 LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
+	WND *wndPtr = WIN_FindWndPtr( hwnd );
+
+	FUNCTION_START
+
 //    DESKTOPINFO *infoPtr = (DESKTOPINFO *)wndPtr->wExtra;
 
       /* Most messages are ignored (we DON'T call DefWindowProc) */
