@@ -41,7 +41,7 @@ int WINAPI LoadString( HINSTANCE instance, UINT resource_id, LPSTR buffer, int b
     int ret;
 
 	FUNCTION_START
-	TRACE("inst=%x id=%x buff=%x:%x len=%d", instance, resource_id, buffer, buflen);
+	TRACE("inst=%x id=%x buff=%Fp len=%d", instance, resource_id, buffer, buflen);
 
 	hrsrc = FindResource( instance, MAKEINTRESOURCE((resource_id>>4)+1), RT_STRING );
 	if (!hrsrc) 

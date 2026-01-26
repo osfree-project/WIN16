@@ -72,3 +72,13 @@ BEGIN
         MENUITEM "S&witch To...\tCtrl+Esc"	SC_TASKLIST
     END
 END
+
+555 MENU
+{
+ POPUP "&Settings" {
+  MENUITEM "&Analog", 555
+  MENUITEM "&Digital", 556
+  MENUITEM SEPARATOR
+  MENUITEM "A&bout Clock", 557
+ }
+}

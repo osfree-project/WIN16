@@ -522,7 +522,7 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
     else wndPtr->wIDmenu = (UINT)menu;
 
 
-//@todo    GetSystemMenu( hwnd, TRUE );  /* Create a copy of the system menu */
+    GetSystemMenu( hwnd, TRUE );  /* Create a copy of the system menu */
 
 
       /* Send the WM_CREATE message */

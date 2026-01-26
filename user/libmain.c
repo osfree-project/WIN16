@@ -302,38 +302,6 @@ VOID WINAPI LW_LoadResources()
 	FUNCTION_END
 }
 
-#if 0
-VOID WINAPI LW_OEMDependentInit()
-{
-	HDC hdc;
-	HRSRC hRes;
-	HGLOBAL hData;
-	DISPLAY_CONFIG FAR* lpConfig; 
-	FUNCTION_START
-
-	HInstanceDisplay=GetModuleHandle(DISPLAY);
-
-	/* Ищем ресурс config.bin (ID 1) @todo some drivers has ID=2001 */
-	hRes = FindResource(HInstanceDisplay, MAKEINTRESOURCE(1), "oembin");
-	if (!hRes) {
-		FreeLibrary(HInstanceDisplay);
-		return;
-	}
-    
-	hData = LoadResource(HInstanceDisplay, hRes);
-	if (!hData) {
-		FreeLibrary(HInstanceDisplay);
-		return;
-	}
-    
-	lpConfig = (DISPLAY_CONFIG FAR *)LockResource(hData);
-	if (!lpConfig) {
-		FreeLibrary(HInstanceDisplay);
-		return;
-	}
-
-	DumpDisplayConfig(lpConfig);
-#endif
 #if 0    
 	/* Обновляем системные метрики */
 	SysMetricsDef[SM_CYVTHUMB] = pConfig->cyVThumb;         /* Индекс 9 */
@@ -633,7 +601,7 @@ for (;;);
 
 	HWndSwitch = CreateWindowEx( 0, WINSWITCH_CLASS_ATOM,
 		"test1", WS_OVERLAPPEDWINDOW /*WS_DISABLED | WS_POPUP*/, 50, 50, 150, 150,
-		HWndDesktop, 0, 0/*hInstance*/, 0 );
+		HWndDesktop, LoadMenu(hInstance, MAKEINTRESOURCE(555)), 0/*hInstance*/, 0 );
 
 //@todo hm... must not be created because no such class!!!
 	HWndRealPopup = CreateWindowEx( 0, MAKELP(0, 0x8003),
@@ -931,7 +899,7 @@ BOOL PASCAL LibMain(HINSTANCE hInstance)
 	hbitmapRestoreD  = LoadBitmap(0, MAKEINTRESOURCE(OBM_RESTORED));
 
 
-//	MENU_Init();
+	MENU_Init();
 
 	// Register the windows classes for
 	// "predefined" windows, such as

@@ -8,6 +8,7 @@
 #include "user.h"
 #include "queue.h"
 #include "syscolor.h"
+#include "menu.h"
 
 #ifndef MAX
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
@@ -198,9 +199,9 @@ LONG NC_HandleNCCalcSize(HWND hwnd, NCCALCSIZE_PARAMS FAR * params)
 
 		if (HAS_MENU(wndPtr))
 		{
-//@todo fix	params->rgrc[0].top += MENU_GetMenuBarHeight( hwnd,
-//				  params->rgrc[0].right - params->rgrc[0].left,
-//				  -tmpRect.left, -tmpRect.top ) + 1;
+	params->rgrc[0].top += MENU_GetMenuBarHeight( hwnd,
+				  params->rgrc[0].right - params->rgrc[0].left,
+				  -tmpRect.left, -tmpRect.top ) + 1;
 		}
 
 		LocalUnlock(hwnd);
@@ -782,7 +783,7 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
 				{
 					RECT r = rect;
 					r.bottom = rect.top + GetSystemMetrics(SM_CYMENU);  /* default height */
-					//@todo	rect.top += MENU_DrawMenuBar( hdc, &r, hwnd, suppress_menupaint );
+					rect.top += MENU_DrawMenuBar( hdc, &r, hwnd, suppress_menupaint );
 				}
 
       /* Draw the scroll-bars */
@@ -920,7 +921,7 @@ static void NC_TrackSysMenu( HWND hwnd, HDC hdc, POINT pt )
 
     if (!(wndPtr->dwStyle & WS_SYSMENU)) return;
     /* If window has a menu, track the menu bar normally if it not minimized */
-//@todo    if (HAS_MENU(wndPtr) && !iconic) MENU_TrackMouseMenuBar( hwnd, pt );
+    if (HAS_MENU(wndPtr) && !iconic) MENU_TrackMouseMenuBar( hwnd, pt );
     else
     {
 	  /* Otherwise track the system menu like a normal popup menu */
@@ -1437,11 +1438,11 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt )
 	break;
 
     case SC_MOUSEMENU:
-//@todo	MENU_TrackMouseMenuBar( hwnd, pt );
+	MENU_TrackMouseMenuBar( hwnd, pt );
 	break;
 
     case SC_KEYMENU:
-//@todo	MENU_TrackKbdMenuBar( wndPtr , wParam , pt.x );
+	MENU_TrackKbdMenuBar( wndPtr , wParam , pt.x );
 	break;
 	
     case SC_ARRANGE:
