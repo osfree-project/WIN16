@@ -7,20 +7,21 @@
 /**************************************************************************
  *              GetControlBrush   (USER.326)
  */
-HBRUSH WINAPI
-GetControlBrush(HWND hWnd, HDC hDC, WORD wType)
+HBRUSH WINAPI GetControlBrush(HWND hWnd, HDC hDC, WORD wType)
 {
-    HWND hWndParent;
-    HBRUSH hBrush;
+	HWND hWndParent;
+	HBRUSH hBrush;
 
 	FUNCTION_START
 
-    hWndParent = GetParent(hWnd);
-    if (!hWndParent)
-	hWndParent = hWnd;
-    hBrush =  (HBRUSH)SendMessage(hWndParent,GET_WM_CTLCOLOR_MSG(wType),
+	hWndParent = GetParent(hWnd);
+    	if (!hWndParent)
+		hWndParent = hWnd;
+	hBrush =  (HBRUSH)SendMessage(hWndParent,GET_WM_CTLCOLOR_MSG(wType),
 		GET_WM_CTLCOLOR_MPS(hDC,hWnd,wType));
-    if (hBrush == 0)
-	hBrush = GetStockObject(LTGRAY_BRUSH);
-    return hBrush;
+	if (hBrush == 0)
+		hBrush = GetStockObject(LTGRAY_BRUSH);
+
+	FUNCTION_END
+	return hBrush;
 }

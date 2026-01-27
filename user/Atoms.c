@@ -1,6 +1,5 @@
 #include <user.h>
 
-
 // Global Atom Table reuses standard Atom Table functions which work with local heap (uses DS).
 // We just switch DS to Global Atom Heap selector, do things and switch DS back.
 

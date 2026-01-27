@@ -9,37 +9,38 @@
 #include "user.h"
 #include "display.h"
 
-/* An undocumented function called by USER to check if display driver
+/* An undocumented function called by USER to check is display driver
  * contains a more suitable version of a resource.
  * Exported as ordinal 450.
  */
 DWORD WINAPI GetDriverResourceID( WORD wResID, LPSTR lpResType );
 
-/* Версии конфигурации DISPLAY.DRV. Пока это предположение, требующее проверки. Точно для 2.0 и 3.0. Остальное не проверял. 
-   Судя по всему, в версиях 3.1 и выше схема уже другая и такие бинарные ресурсы использованы только для совместимости. */
-#define OEM_CONFIG_OLD    13  /* Windows 2.x и ранее - 13 цветов */
-#define OEM_CONFIG_WIN30  19  /* Windows 3.0 - 19 цветов (до COLOR_BTNTEXT) */
-#define OEM_CONFIG_WIN31  21  /* Windows 3.1 - 21 цветов (до COLOR_BTNHIGHLIGHT) */
-#define OEM_CONFIG_WIN95  25  /* Windows 95 - 25 цветов (до COLOR_INFOBK) */
-#define OEM_CONFIG_WIN98  25  /* Windows 98 - 29 цветов (до COLOR_GRADIENTINACTIVECAPTION) */
+/* DISPLAY.DRV configuration versions. This is currently an assumption that requires verification. Definitely for 2.0 and 3.0. The rest haven't been checked.
+   Apparently, in versions 3.1 and later, a different scheme is used and such binary resources are only used for compatibility. */
+#define OEM_CONFIG_OLD    13  /* Windows 2.x and earlier - 13 colors */
+#define OEM_CONFIG_WIN30  19  /* Windows 3.0 - 19 colors (up to COLOR_BTNTEXT) */
+// Starting from here something another are used
+#define OEM_CONFIG_WIN31  21  /* Windows 3.1 - 21 colors (up to COLOR_BTNHIGHLIGHT) */
+#define OEM_CONFIG_WIN95  25  /* Windows 95 - 25 colors (up to COLOR_INFOBK) */
+#define OEM_CONFIG_WIN98  25  /* Windows 98 - 29 colors (up to COLOR_GRADIENTINACTIVECAPTION) */
 
-/* Базовая структура конфигурации - заголовок с метриками */
+/* Basic configuration structure - header with metrics */
 #pragma pack(push, 1)
 typedef struct {
-    WORD cyVThumb;          /* Высота вертикального скроллбара */
-    WORD cxHThumb;          /* Ширина горизонтального скроллбара */
-    WORD cxIconCompression; /* Коэффициент сжатия иконок по горизонтали */
-    WORD cyIconCompression; /* Коэффициент сжатия иконок по вертикали */
-    WORD cxCursorCompression; /* Коэффициент сжатия курсоров по горизонтали */
-    WORD cyCursorCompression; /* Коэффициент сжатия курсоров по вертикали */
-    WORD cyKanjiWindow;     /* Высота окна кандзи */
-    WORD cxBorder;          /* Толщина вертикальных линий */
-    WORD cyBorder;          /* Толщина горизонтальных линий */
-    /* Далее идет массив цветов переменной длины */
+    WORD cyVThumb;          /* Vertical scrollbar height */
+    WORD cxHThumb;          /* Horizontal scrollbar width */
+    WORD cxIconCompression; /* Icon compression coefficient horizontally */
+    WORD cyIconCompression; /* Icon compression coefficient vertically */
+    WORD cxCursorCompression; /* Cursor compression coefficient horizontally */
+    WORD cyCursorCompression; /* Cursor compression coefficient vertically */
+    WORD cyKanjiWindow;     /* Kanji window height */
+    WORD cxBorder;          /* Vertical line thickness */
+    WORD cyBorder;          /* Horizontal line thickness */
+    /* After this comes a variable-length color array */
 } DISPLAY_CONFIG_HEADER;
 #pragma pack(pop)
 
-/* Имена системных цветов для всех версий */
+/* System color names for all versions */
 static const char* SysColorNames[] = {
     "Scrollbar",        /* COLOR_SCROLLBAR = 0 */
     "Background",       /* COLOR_BACKGROUND = 1 */
@@ -78,7 +79,7 @@ static const char* SysColorNames[] = {
 #endif
 };
 
-/* Функция для вывода дампа конфигурации */
+/* Function to dump configuration */
 static void DISPLAY_DumpDisplayConfig(BYTE FAR* pData)
 {
     DISPLAY_CONFIG_HEADER FAR* pHeader;
@@ -99,7 +100,7 @@ static void DISPLAY_DumpDisplayConfig(BYTE FAR* pData)
     TRACE("  cxBorder:          %u", pHeader->cxBorder);
     TRACE("  cyBorder:          %u", pHeader->cyBorder);
 
-        pColors = (BYTE FAR*)(pHeader + 1); /* Цвета начинаются после заголовка */
+        pColors = (BYTE FAR*)(pHeader + 1); /* Colors start after the header */
         
         TRACE("\nColors (RGB):");
         for (i = 0; i < (sizeof(SysColorNames)/sizeof(SysColorNames[0])); i++) 
@@ -117,55 +118,55 @@ static void DISPLAY_DumpDisplayConfig(BYTE FAR* pData)
 }
 
 #if 0
-/* Функция обновления системных метрик из конфига */
+/* Function to update system metrics from config */
 static void UpdateSysMetricsFromConfig(DISPLAY_CONFIG_HEADER FAR* pHeader)
 {
-    /* Обновляем системные метрики */
-    SysMetricsDef[SM_CYVTHUMB] = pHeader->cyVThumb;         /* Индекс 9 */
-    SysMetricsDef[SM_CXHTHUMB] = pHeader->cxHThumb;         /* Индекс 10 */
-    SysMetricsDef[SM_CYKANJIWINDOW] = pHeader->cyKanjiWindow; /* Индекс 18 */
-    SysMetricsDef[SM_CXBORDER] = pHeader->cxBorder;         /* Индекс 5 */
-    SysMetricsDef[SM_CYBORDER] = pHeader->cyBorder;         /* Индекс 6 */
+    /* Update system metrics */
+    SysMetricsDef[SM_CYVTHUMB] = pHeader->cyVThumb;         /* Index 9 */
+    SysMetricsDef[SM_CXHTHUMB] = pHeader->cxHThumb;         /* Index 10 */
+    SysMetricsDef[SM_CYKANJIWINDOW] = pHeader->cyKanjiWindow; /* Index 18 */
+    SysMetricsDef[SM_CXBORDER] = pHeader->cxBorder;         /* Index 5 */
+    SysMetricsDef[SM_CYBORDER] = pHeader->cyBorder;         /* Index 6 */
     
-    /* Применяем коэффициенты сжатия к размерам иконок и курсоров */
+    /* Apply compression coefficients to icon and cursor sizes */
     if (pHeader->cxIconCompression > 0) {
-        SysMetricsDef[SM_CXICON] = 32 / pHeader->cxIconCompression; /* Индекс 11 */
-        SysMetricsDef[SM_CYICON] = 32 / pHeader->cyIconCompression; /* Индекс 12 */
-        TRACE("UpdateSysMetricsFromConfig: иконки сжаты %dx%d -> %dx%d", 
+        SysMetricsDef[SM_CXICON] = 32 / pHeader->cxIconCompression; /* Index 11 */
+        SysMetricsDef[SM_CYICON] = 32 / pHeader->cyIconCompression; /* Index 12 */
+        TRACE("UpdateSysMetricsFromConfig: icons compressed %dx%d -> %dx%d", 
               32, 32, 
               SysMetricsDef[SM_CXICON], SysMetricsDef[SM_CYICON]);
     }
     
     if (pHeader->cxCursorCompression > 0) {
-        SysMetricsDef[SM_CXCURSOR] = 32 / pHeader->cxCursorCompression; /* Индекс 13 */
-        SysMetricsDef[SM_CYCURSOR] = 32 / pHeader->cyCursorCompression; /* Индекс 14 */
-        TRACE("UpdateSysMetricsFromConfig: курсоры сжаты %dx%d -> %dx%d", 
+        SysMetricsDef[SM_CXCURSOR] = 32 / pHeader->cxCursorCompression; /* Index 13 */
+        SysMetricsDef[SM_CYCURSOR] = 32 / pHeader->cyCursorCompression; /* Index 14 */
+        TRACE("UpdateSysMetricsFromConfig: cursors compressed %dx%d -> %dx%d", 
               32, 32, 
               SysMetricsDef[SM_CXCURSOR], SysMetricsDef[SM_CYCURSOR]);
     }
 }
 
-/* Функция обновления системных цветов из конфига */
+/* Function to update system colors from config */
 static void UpdateSysColorsFromConfig(BYTE FAR* pColors, int colorCount)
 {
     int i;
     
-    TRACE("UpdateSysColorsFromConfig: обновление %d цветов из конфига", colorCount);
-    TRACE("Текущая версия Windows: %d.%d", HIBYTE(wWinVer), LOBYTE(wWinVer));
+    TRACE("UpdateSysColorsFromConfig: updating %d colors from config", colorCount);
+    TRACE("Current Windows version: %d.%d", HIBYTE(wWinVer), LOBYTE(wWinVer));
     
-    /* Обновляем системные цвета циклом */
+    /* Update system colors in a loop */
     for (i = 0; i < min(colorCount, NUM_SYS_COLORS); i++) {
-        /* Проверяем, поддерживается ли этот цвет в текущей версии Windows */
+        /* Check if this color is supported in the current Windows version */
         BOOL bSupported = TRUE;
         
         if (i >= COLOR_INACTIVECAPTIONTEXT && wWinVer < WINVER_30A) {
             bSupported = FALSE;
-            TRACE("  [%2d] %-20s ПРОПУЩЕН (не поддерживается в Win%d.%d)", 
+            TRACE("  [%2d] %-20s SKIPPED (not supported in Win%d.%d)", 
                   i, SysColorNames[i], HIBYTE(wWinVer), LOBYTE(wWinVer));
             continue;
         } else if (i >= COLOR_3DDKSHADOW && wWinVer < WINVER_400) {
             bSupported = FALSE;
-            TRACE("  [%2d] %-20s ПРОПУЩЕН (не поддерживается в Win%d.%d)", 
+            TRACE("  [%2d] %-20s SKIPPED (not supported in Win%d.%d)", 
                   i, SysColorNames[i], HIBYTE(wWinVer), LOBYTE(wWinVer));
             continue;
         }
@@ -184,13 +185,13 @@ static void UpdateSysColorsFromConfig(BYTE FAR* pColors, int colorCount)
         }
     }
     
-    /* Если в конфиге меньше цветов, чем поддерживается в системе, устанавливаем значения по умолчанию */
+    /* If the config has fewer colors than supported by the system, set default values */
     if (colorCount < NUM_SYS_COLORS) {
-        TRACE("UpdateSysColorsFromConfig: установка значений по умолчанию для неподдерживаемых цветов");
+        TRACE("UpdateSysColorsFromConfig: setting default values for unsupported colors");
         
-        /* Для Windows 3.0: если конфиг старый (13 цветов), заполняем недостающие */
+        /* For Windows 3.0: if the config is old (13 colors), fill in the missing ones */
         if (wWinVer >= WINVER_300 && colorCount == OEM_CONFIG_OLD) {
-            /* Windows 3.0 с конфигом от Windows 2.x */
+            /* Windows 3.0 with config from Windows 2.x */
             for (i = colorCount; i < min(NUM_SYS_COLORS, 20); i++) {
                 switch (i) {
                     case COLOR_HIGHLIGHT:          /* 13 */
@@ -221,7 +222,7 @@ static void UpdateSysColorsFromConfig(BYTE FAR* pColors, int colorCount)
                 }
                 
                 if (i < NUM_SYS_COLORS) {
-                    TRACE("  [%2d] %-20s = установлен по умолчанию (RGB(%d,%d,%d))", 
+                    TRACE("  [%2d] %-20s = set to default (RGB(%d,%d,%d))", 
                           i, 
                           i < (int)(sizeof(SysColorNames)/sizeof(SysColorNames[0])) ? SysColorNames[i] : "Unknown",
                           GetRValue(SysColors[i]),
@@ -231,9 +232,9 @@ static void UpdateSysColorsFromConfig(BYTE FAR* pColors, int colorCount)
             }
         }
         
-        /* Для Windows 3.1 с конфигом от Windows 3.0 (19 цветов) */
+        /* For Windows 3.1 with config from Windows 3.0 (19 colors) */
         if (wWinVer >= WINVER_30A && colorCount == OEM_CONFIG_WIN30) {
-            /* Добавляем цвета 19-20 */
+            /* Add colors 19-20 */
             if (NUM_SYS_COLORS > COLOR_INACTIVECAPTIONTEXT) {
                 SysColors[COLOR_INACTIVECAPTIONTEXT] = RGB(0, 0, 0);
                 TRACE("  [19] InactiveCaptionText = RGB(0, 0, 0) [default for Win3.1]");
@@ -244,9 +245,9 @@ static void UpdateSysColorsFromConfig(BYTE FAR* pColors, int colorCount)
             }
         }
         
-        /* Для Windows 95+ с конфигом от Windows 3.1 (21 цветов) */
+        /* For Windows 95+ with config from Windows 3.1 (21 colors) */
         if (wWinVer >= WINVER_400 && colorCount == OEM_CONFIG_WIN31) {
-            /* Добавляем цвета 21-24 */
+            /* Add colors 21-24 */
             if (NUM_SYS_COLORS > COLOR_3DDKSHADOW) {
                 SysColors[COLOR_3DDKSHADOW] = RGB(0, 0, 0);
                 TRACE("  [21] 3DDkShadow = RGB(0, 0, 0) [default for Win95+]");
@@ -267,16 +268,16 @@ static void UpdateSysColorsFromConfig(BYTE FAR* pColors, int colorCount)
     }
 }
 
-/* Функция обновления объектов GDI из обновленных цветов */
+/* Function to update GDI objects from updated colors */
 static void UpdateSysColorObjectsFromColors(void)
 {
     int i;
     
-    TRACE("UpdateSysColorObjectsFromColors: обновление объектов GDI");
+    TRACE("UpdateSysColorObjectsFromColors: updating GDI objects");
     
-    /* Обновляем кисти и перья для всех цветов, которые имеют объекты */
+    /* Update brushes and pens for all colors that have objects */
     for (i = 0; i < NUM_SYS_COLORS; i++) {
-        /* Пропускаем цвета, которые не поддерживаются в текущей версии */
+        /* Skip colors not supported in the current version */
         if (i >= COLOR_INACTIVECAPTIONTEXT && wWinVer < WINVER_30A) {
             continue;
         }
@@ -303,7 +304,7 @@ VOID DISPLAY_Init()
 
 	FUNCTION_START
     
-	/* Пытаемся получить handle уже загруженного драйвера дисплея */
+	/* Try to get handle to already loaded display driver */
 	HInstanceDisplay = GetModuleHandle(DISPLAY);
 	if (HInstanceDisplay)
 	{
@@ -332,43 +333,43 @@ VOID DISPLAY_Init()
 
 #if 0    
     if (colorCount > 0) {
-        /* Обновляем системные метрики */
-        TRACE("LW_OEMDependentInit: Обновление системных метрик из конфига");
+        /* Update system metrics */
+        TRACE("LW_OEMDependentInit: Updating system metrics from config");
         UpdateSysMetricsFromConfig(pHeader);
         
-        /* Обновляем системные цвета */
-        TRACE("LW_OEMDependentInit: Обновление системных цветов из конфига");
+        /* Update system colors */
+        TRACE("LW_OEMDependentInit: Updating system colors from config");
         UpdateSysColorsFromConfig(pColors, colorCount);
         
-        /* Обновляем объекты GDI */
-        TRACE("LW_OEMDependentInit: Обновление объектов GDI");
+        /* Update GDI objects */
+        TRACE("LW_OEMDependentInit: Updating GDI objects");
         UpdateSysColorObjectsFromColors();
         
         bConfigLoaded = TRUE;
     } else {
-        TRACE("LW_OEMDependentInit: Неизвестный формат конфига");
+        TRACE("LW_OEMDependentInit: Unknown config format");
     }
 #endif
     
-    /* Освобождаем ресурсы */
+    /* Free resources */
     UnlockResource(hData);
     FreeResource(hData);
     
    
-    /* Получаем разрешение экрана */
+    /* Get screen resolution */
     hdc = GetDC(0);
     if (hdc) {
         CXScreen = GetDeviceCaps(hdc, HORZRES);
         CYScreen = GetDeviceCaps(hdc, VERTRES);
         ReleaseDC(0, hdc);
-        TRACE("LW_OEMDependentInit: Разрешение экрана: %dx%d", CXScreen, CYScreen);
+        TRACE("LW_OEMDependentInit: Screen resolution: %dx%d", CXScreen, CYScreen);
     } else {
         CXScreen = 640;
         CYScreen = 480;
-        TRACE("LW_OEMDependentInit: Не удалось получить разрешение, используем %dx%d", CXScreen, CYScreen);
+        TRACE("LW_OEMDependentInit: Failed to get resolution, using %dx%d", CXScreen, CYScreen);
     }
     
-    /* Обновляем другие системные метрики на основе разрешения экрана */
+    /* Update other system metrics based on screen resolution */
     LW_InitSysMetrics();
     
     FUNCTION_END

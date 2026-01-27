@@ -1,15 +1,24 @@
-Minimal API according Pietrek book to load user.exe:
-1
-320
-7
-4
-332
-400
-110
-314
-333
-284
-470
-23
-224
-47
+USER.EXE internals
+
+USER.EXE consist of 3 code segments (2 for code and one only for debug version) and set of heaps.
+
+Heaps are:
+
+1. Main user heap, selected by SetUserHeapDS()
+2. Global Atom table head, selected by SetGlobalTableDS()
+
+Other heaps not implemented yet, but in plans to implement.
+
+So, you must be carefull and set corresponding heap and restore application heap on exit.
+
+PushDS - saves current data segment (heap)
+PopDS - restores current data segment (heap)
+
+Set*DS - sets corresponding heap for access
+
+Also need to be sure all locked structures unlocked after use
+
+Metrics:
+
+For now exists some global variables and system metrics. For optimal memory usage and performance better to implement 
+direct access to metrics array. For now variables accessed via standard GetSystemMetrics.
