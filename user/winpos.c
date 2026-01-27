@@ -692,14 +692,8 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
 	    /* disregard refusal if hWnd is sysmodal */
         }
 
-#ifdef WINELIB32
-	SendMessage( hwndActive, WM_ACTIVATE,
-		     MAKEWPARAM( WA_INACTIVE, wIconized ),
-		     (LPARAM)hWnd );
-#else
 	SendMessage(hwndPrevActive, WM_ACTIVATE, WA_INACTIVE, 
 		    MAKELONG(hWnd,wIconized));
-#endif
 
 	/* check if something happened during message processing */
 	if( hwndPrevActive != hwndActive ) return 0;
@@ -773,14 +767,8 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
 /* FIXME: Needs a Win32 translation for WINELIB32 */
     SendMessage( hWnd, WM_NCACTIVATE, 1,
 		 MAKELONG(hwndPrevActive,wIconized));
-#ifdef WINELIB32
-    SendMessage( hWnd, WM_ACTIVATE,
-		 MAKEWPARAM( (fMouse)?WA_CLICKACTIVE:WA_ACTIVE, wIconized),
-		 (LPARAM)hwndPrevActive );
-#else
     SendMessage( hWnd, WM_ACTIVATE, (fMouse)? WA_CLICKACTIVE : WA_ACTIVE,
 		 MAKELONG(hwndPrevActive,wIconized));
-#endif
 
     if( !IsWindow(hWnd) ) return 0;
 
@@ -1386,53 +1374,76 @@ void CascadeChildWindows( HWND parent, WORD action )
  */
 HWND WINAPI GetActiveWindow()
 {
-    return hwndActive;
-}
+	HWND retVal;
 
+	PushDS();
+	SetDS(USER_HeapSel);
+	FUNCTION_START
+
+    	retVal=hwndActive;
+
+	FUNCTION_END
+	PopDS();
+
+	return retVal;
+}
 
 
 /***********************************************************************
  *           BeginPaint    (USER.39)
  */
-HDC WINAPI BeginPaint( HWND hwnd, LPPAINTSTRUCT lps ) 
+HDC WINAPI BeginPaint( HWND hWnd, LPPAINTSTRUCT lps ) 
 {
-    HRGN hrgnUpdate;
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr) return 0;
-//FUNCTION_START
-    wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
+	HRGN hrgnUpdate;
+	WND * wndPtr;
+	HDC retVal;
 
-    if (wndPtr->flags & WIN_NEEDS_NCPAINT) WIN_UpdateNCArea( wndPtr, TRUE );
+	PushDS();
+	SetDS(USER_HeapSel);
+	FUNCTION_START
 
-    if (((hrgnUpdate = wndPtr->hrgnUpdate) != 0) ||
-        (wndPtr->flags & WIN_INTERNAL_PAINT))
-        QUEUE_DecPaintCount( wndPtr->hmemTaskQ );
+	retVal=0;
+	wndPtr = WIN_FindWndPtr(hWnd);
+	if (wndPtr)
+	{
+		wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
 
-    wndPtr->hrgnUpdate = 0;
-    wndPtr->flags &= ~WIN_INTERNAL_PAINT;
+		if (wndPtr->flags & WIN_NEEDS_NCPAINT) WIN_UpdateNCArea( wndPtr, TRUE );
 
-    HideCaret( hwnd );
+		if (((hrgnUpdate = wndPtr->hrgnUpdate) != 0) ||
+			(wndPtr->flags & WIN_INTERNAL_PAINT))
+			QUEUE_DecPaintCount( wndPtr->hmemTaskQ );
 
-    lps->hdc = GetDCEx( hwnd, hrgnUpdate, DCX_INTERSECTRGN | DCX_USESTYLE );
-    if(hrgnUpdate > 1) DeleteObject( hrgnUpdate );
+		wndPtr->hrgnUpdate = 0;
+		wndPtr->flags &= ~WIN_INTERNAL_PAINT;
 
-    if (!lps->hdc)
-    {
-        TRACE("GetDCEx() failed in BeginPaint(), hwnd=%04x\n", hwnd);
-        return 0;
-    }
+		HideCaret( hWnd );
 
-    GetRgnBox( InquireVisRgn(lps->hdc), &lps->rcPaint );
-    DPtoLP( lps->hdc, (LPPOINT)&lps->rcPaint, 2 );
+		lps->hdc = GetDCEx( hWnd, hrgnUpdate, DCX_INTERSECTRGN | DCX_USESTYLE );
+		if(hrgnUpdate > 1) DeleteObject( hrgnUpdate );
 
-    if (wndPtr->flags & WIN_NEEDS_ERASEBKGND)
-    {
-        wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
-        lps->fErase = !SendMessage( hwnd, WM_ERASEBKGND, (WPARAM)lps->hdc, 0 );
-    }
-    else lps->fErase = TRUE;
+		if (lps->hdc)
+		{
+			GetRgnBox( InquireVisRgn(lps->hdc), &lps->rcPaint );
+			DPtoLP( lps->hdc, (LPPOINT)&lps->rcPaint, 2 );
 
-    return lps->hdc;
+			if (wndPtr->flags & WIN_NEEDS_ERASEBKGND)
+			{
+				wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
+				lps->fErase = !SendMessage( hWnd, WM_ERASEBKGND, (WPARAM)lps->hdc, 0 );
+			}
+			else lps->fErase = TRUE;
+
+			retVal=lps->hdc;
+		}
+	}
+
+	LocalUnlock(hWnd);
+
+	FUNCTION_END
+	PopDS();
+
+	return retVal;
 }
 
 /***********************************************************************
@@ -1440,7 +1451,10 @@ HDC WINAPI BeginPaint( HWND hwnd, LPPAINTSTRUCT lps )
  */
 void WINAPI EndPaint( HWND hwnd, const PAINTSTRUCT FAR * lps )
 {
-    ReleaseDC( hwnd, lps->hdc );
-    ShowCaret( hwnd );
-    return;
+	FUNCTION_START
+
+	ReleaseDC(hwnd, lps->hdc);
+	ShowCaret(hwnd);
+
+	FUNCTION_END
 }

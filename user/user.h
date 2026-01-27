@@ -165,7 +165,7 @@ typedef CLASSINFO FAR	*LPCLASSINFO;
 extern char szNullString[1];
 extern char DebugBuffer[100];
 extern char szSysError[0x14];
-extern char szDivZero[0x14];
+extern char szDivZero[0x28];
 extern char szUntitled[0x14];
 extern char szError[0x14];
 extern char szOk[0x14];
@@ -331,6 +331,10 @@ extern int IDelayMenuShow;
 extern int IDelayMenuHide;
 extern int DefQueueSize;
 
+#define HCLASS HANDLE
+
+extern HCLASS firstClass;
+
 extern char DISPLAY[];
 //extern HDC tempHDC;
 
@@ -444,6 +448,11 @@ extern  void          SetDS( unsigned short );
 #pragma aux SetDS               = \
         "mov    ds,ax"          \
         parm                   [ax];
+
+// Macro to switch DS to Global Atom Table selector
+#define  SetGlobalTableDS() SetDS(GlobalAtomTable_Selector)
+// Macro to switch DS to Global Atom Table selector
+#define  SetUserHeapDS() SetDS(USER_HeapSel)
 
 
 #define IMAGE_BITMAP   0
@@ -710,7 +719,6 @@ typedef struct tagDC {
 
 #pragma pack(1)
 
-#define HCLASS HANDLE
 
 /* !! Don't change this structure (see GetClassLong()) */
 typedef struct tagCLASS

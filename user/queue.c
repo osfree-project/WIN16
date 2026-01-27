@@ -4,13 +4,8 @@
  * Copyright 1993, 1994 Alexandre Julliard
  */
 
-//#include <stdlib.h>
-//#include "module.h"
 #include "user.h"
 #include "queue.h"
-//#include "win.h"
-//#include "stddebug.h"
-//#include "debug.h"
 
 #define MAX_QUEUE_SIZE   120  /* Max. size of a message queue */
 
@@ -97,7 +92,7 @@ static HQUEUE QUEUE_CreateMsgQueue( int size )
     msgQueue->msgSize = sizeof(QMSG);
     msgQueue->queueSize = size;
     msgQueue->wWinVersion = 0;  /* FIXME? */
-    GlobalUnlock( hQueue );
+//    GlobalUnlock( hQueue );
     return hQueue;
 }
 

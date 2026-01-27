@@ -16,7 +16,7 @@ OldExitWindows(void)
 /**********************************************************************
  *		DllEntryPoint (USER.374)
  * 
- * We calling this from LibEntry function
+ * We calling this from LibEntry function @todo not sure yet is is correct declaration...
  */
 BOOL WINAPI DllEntryPoint( DWORD reason, HINSTANCE inst, WORD ds,
                            WORD heap, DWORD reserved1, WORD reserved2 )
@@ -38,7 +38,6 @@ BOOL WINAPI DllEntryPoint( DWORD reason, HINSTANCE inst, WORD ds,
 
 
     USER_HeapSel = ds;
-//    register_wow_handlers();
     gdi_inst = LoadLibrary( "gdi.exe" );
 
 	FUNCTION_END

@@ -32,7 +32,7 @@ char DebugBuffer[100];  /* Buffer for DEBUG messages */
 
 char szNullString[1]="";
 char szSysError[0x14];
-char szDivZero[0x14];
+char szDivZero[0x28];
 char szUntitled[0x14];
 char szError[0x14];
 char szOk[0x14];
@@ -107,6 +107,7 @@ LONG iMouseY=0;
 
 HQUEUE hFirstQueue = 0;
 HQUEUE hmemSysMsgQueue = 0;
+HCLASS firstClass = 0;
 
 char DISPLAY[]="DISPLAY";
 

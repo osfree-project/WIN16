@@ -470,7 +470,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 	int xOrigin, yOrigin;
 
 	PushDS();
-	SetDS(USER_HeapSel);
+	SetUserHeapDS();
 
 	if (hwnd)
 	{
@@ -618,21 +618,31 @@ HDC WINAPI GetDC(HWND hwnd)
 /***********************************************************************
  *           GetWindowDC    (USER.67)
  */
-HDC WINAPI GetWindowDC( HWND hwnd )
+HDC WINAPI GetWindowDC(/* in */ HWND hWnd)
 {
 	int flags = DCX_CACHE | DCX_WINDOW;
+	HDC retVal=0;
+	WND * wndPtr;
 
 	PushDS();
-	SetDS(USER_HeapSel);
-	if (hwnd)
+	SetUserHeapDS();
+	FUNCTION_START
+
+	if (hWnd)
 	{
-		WND * wndPtr;
-		if (!(wndPtr = WIN_FindWndPtr( hwnd ))) {PopDS(); return 0;}
-/*	if (wndPtr->dwStyle & WS_CLIPCHILDREN) flags |= DCX_CLIPCHILDREN; */
-		if (wndPtr->dwStyle & WS_CLIPSIBLINGS) flags |= DCX_CLIPSIBLINGS;
+		if ((wndPtr = WIN_FindWndPtr( hWnd )))
+		{
+			/* if (wndPtr->dwStyle & WS_CLIPCHILDREN) flags |= DCX_CLIPCHILDREN; */
+			if (wndPtr->dwStyle & WS_CLIPSIBLINGS) flags |= DCX_CLIPSIBLINGS;
+			LocalUnlock(hWnd);
+		}
 	}
+
+	retVal=GetDCEx(hWnd, 0, flags);
+
 	PopDS();
-	return GetDCEx( hwnd, 0, flags );
+	FUNCTION_END
+	return retVal;
 }
 
 
@@ -649,7 +659,7 @@ int WINAPI ReleaseDC(HWND hwnd, HDC hdc)
 	// Here we need to search DCE which lives in USER local heap
 	// So, switch to USER local heap, do things and switch back.
 	PushDS();
-	SetDS(USER_HeapSel);
+	SetUserHeapDS();
 
 	for (hdce = firstDCE; (hdce); hdce = dce->hdceNext)
 	{
@@ -661,6 +671,7 @@ int WINAPI ReleaseDC(HWND hwnd, HDC hdc)
 
 		if (dce->byInUse && (dce->hDC == hdc))
 		{
+			LocalUnlock(hdce);
 			break;
 		}
 		LocalUnlock(hdce);

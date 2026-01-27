@@ -4,22 +4,8 @@
  * Copyright 1993 Alexandre Julliard
  */
 
-//#include <stdlib.h>
-//#include <stdio.h>
-//#include <string.h>
 #include "class.h"
-//#include "user.h"
-//#include "win.h"
 #include "dce.h"
-//#include "atom.h"
-//#include "ldt.h"
-//#include "toolhelp.h"
-//#include "stddebug.h"
-/* #define DEBUG_CLASS */
-//#include "debug.h"
-
-
-static HCLASS firstClass = 0;
 
 #if 0
 /***********************************************************************
@@ -95,14 +81,14 @@ void CLASS_WalkClasses(void)
  */
 HCLASS CLASS_FindClassByName(LPCSTR name, HINSTANCE hinstance, CLASS *FAR *ptr)
 {
-    ATOM atom;
-    HCLASS class;
-    CLASS * classPtr;
+	ATOM atom;
+	HCLASS class;
+	CLASS * classPtr;
 
 	atom=GlobalFindAtom(name);
 //	TRACE("%04x ", atom);
 	
-    if (!(atom)) return 0;
+	if (!(atom)) return 0;
 //	TRACE("%04x ", atom);
 
       /* First search task-specific classes */
@@ -164,11 +150,15 @@ CLASS * CLASS_FindClassPtr( HCLASS hclass )
  */
 ATOM WINAPI RegisterClass(const WNDCLASS FAR * class )
 {
-    CLASS * newClass, * prevClassPtr;
-    HCLASS handle, prevClass;
-    int classExtra;
+	CLASS * newClass, * prevClassPtr;
+	HCLASS handle, prevClass;
+	int classExtra;
 	HMODULE hModule;
-//	FUNCTION_START
+
+	PushDS();
+	SetUserHeapDS();
+	FUNCTION_START
+
 //    TRACE("RegisterClass: wndproc=%x:%x hinst=%x name='%S' background %x",
 //                 class->lpfnWndProc, class->hInstance,
 //                 HIWORD(class->lpszClassName) ?
@@ -178,7 +168,6 @@ ATOM WINAPI RegisterClass(const WNDCLASS FAR * class )
 //                  class->style, class->cbClsExtra, class->cbWndExtra );
     
       /* Window classes are owned by modules, not instances */
-//    class->hInstance = GetExePtr( class->hInstance );
 	hModule = GetExePtr( class->hInstance );
     
 
@@ -190,15 +179,27 @@ ATOM WINAPI RegisterClass(const WNDCLASS FAR * class )
 	  /* Class can be created only if it is local and */
 	  /* if the class with the same name is global.   */
 
-	if (class->style & CS_GLOBALCLASS) return 0;
-	if (!(prevClassPtr->wc.style & CS_GLOBALCLASS)) return 0;
+	if (class->style & CS_GLOBALCLASS) 
+	{
+		PopDS();
+		return 0;
+	}
+	if (!(prevClassPtr->wc.style & CS_GLOBALCLASS)) 
+	{
+		PopDS();
+		return 0;
+	}
     }
 
       /* Create class */
 
     classExtra = (class->cbClsExtra < 0) ? 0 : class->cbClsExtra;
     handle = LocalAlloc (LMEM_FIXED, sizeof(CLASS) + classExtra );
-    if (!handle) return 0;
+    if (!handle) 
+	{
+		PopDS();
+		return 0;
+	}
     newClass = (CLASS *) LocalLock( handle );
     newClass->hNext         = firstClass;
     newClass->wMagic        = CLASS_MAGIC;
@@ -228,7 +229,10 @@ ATOM WINAPI RegisterClass(const WNDCLASS FAR * class )
 
     if (classExtra) _fmemset( newClass->wExtra, 0, classExtra );
     firstClass = handle;
-//	FUNCTION_END
+
+	FUNCTION_END
+	PopDS();
+
     return newClass->atomName;
 }
 
@@ -240,13 +244,24 @@ BOOL WINAPI UnregisterClass( LPCSTR className, HINSTANCE hinstance )
 {
     HANDLE class, prevClass;
     CLASS * classPtr, * prevClassPtr;
+
+	PushDS();
+	SetUserHeapDS();
+	FUNCTION_START
     
     hinstance = GetExePtr( hinstance );
       /* Check if we can remove this class */
     class = CLASS_FindClassByName( className, hinstance, &classPtr );
-    if (!class) return FALSE;
+    if (!class) 
+	{
+		PopDS();
+		return FALSE;
+	}
     if ((classPtr->wc.hInstance != hinstance) || (classPtr->cWindows > 0))
-	return FALSE;
+	{
+		PopDS();
+		return FALSE;
+	}
     
       /* Remove the class from the linked list */
     if (firstClass == class) firstClass = classPtr->hNext;
@@ -260,6 +275,7 @@ BOOL WINAPI UnregisterClass( LPCSTR className, HINSTANCE hinstance )
 	if (!prevClass)
 	{
 	    TRACE("ERROR: Class list corrupted\n" );
+		PopDS();
 	    return FALSE;
 	}
 	prevClassPtr->hNext = classPtr->hNext;
@@ -272,12 +288,15 @@ BOOL WINAPI UnregisterClass( LPCSTR className, HINSTANCE hinstance )
     if (HIWORD(classPtr->wc.lpszMenuName))
 	LocalFree( (HANDLE)classPtr->wc.lpszMenuName );
     LocalFree( class );
+	FUNCTION_END
+	PopDS();
     return TRUE;
 }
 
 
 /***********************************************************************
  *           GetClassWord    (USER.129)
+ * @todo Export GetClassWord as alias of GetClassWord?
  */
 WORD WINAPI GetClassWord( HWND hwnd, int offset )
 {
@@ -307,14 +326,30 @@ WORD WINAPI SetClassWord( HWND hwnd, int offset, WORD newval )
 /***********************************************************************
  *           GetClassLong    (USER.131)
  */
-LONG WINAPI GetClassLong( HWND hwnd, int offset )
+LONG WINAPI GetClassLong( HWND hWnd, int offset )
 {
-    CLASS * classPtr;
-    WND * wndPtr;
+	CLASS * classPtr;
+	WND * wndPtr;
+	LONG retVal;
+
+	PushDS();
+	SetUserHeapDS();
+	FUNCTION_START
     
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-    if (!(classPtr = CLASS_FindClassPtr( wndPtr->hClass ))) return 0;
-    return *(LONG *)(((char *)classPtr->wExtra) + offset);
+	retVal=0;
+
+	if (wndPtr = WIN_FindWndPtr( hWnd ))
+	{
+		if (classPtr = CLASS_FindClassPtr( wndPtr->hClass ))
+		{
+			retVal=*(LONG *)(((char *)classPtr->wExtra) + offset);
+		}
+		LocalUnlock(hWnd);
+	}
+
+	FUNCTION_END
+	PopDS();
+	return retVal;
 }
 
 #if 0
@@ -343,15 +378,30 @@ LONG WINAPI SetClassLong( HWND hwnd, int offset, LONG newval )
  */
 int WINAPI GetClassName(HWND hwnd, LPSTR lpClassName, int maxCount)
 {
-    WND *wndPtr;
-    CLASS *classPtr;
+	WND *wndPtr;
+	CLASS *classPtr;
+	int retVal;
 
-    /* FIXME: We have the find the correct hInstance */
-    TRACE("GetClassName(%04x,%p,%d)\n",hwnd,lpClassName,maxCount);
-    if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
-    if (!(classPtr = CLASS_FindClassPtr(wndPtr->hClass))) return 0;
+	PushDS();
+	SetUserHeapDS();
+	FUNCTION_START
+
+	/* FIXME: We have the find the correct hInstance */
+	TRACE("GetClassName(%04x,%p,%d)\n",hwnd,lpClassName,maxCount);
+
+	if ((wndPtr = WIN_FindWndPtr(hwnd))) 
+	{
+		if ((classPtr = CLASS_FindClassPtr(wndPtr->hClass))) 
+		{
+			retVal=GlobalGetAtomName(classPtr->atomName, lpClassName, maxCount);
+		}
     
-    return GlobalGetAtomName(classPtr->atomName, lpClassName, maxCount);
+		LocalUnlock(hwnd);
+	}
+
+	FUNCTION_END
+	PopDS();
+	return retVal;
 }
 
 
@@ -360,18 +410,26 @@ int WINAPI GetClassName(HWND hwnd, LPSTR lpClassName, int maxCount)
  */
 BOOL WINAPI GetClassInfo( HANDLE hInstance, LPCSTR name, LPWNDCLASS lpWndClass )
 {
-    CLASS *classPtr;
+	CLASS *classPtr;
 
-    TRACE("GetClassInfo: hInstance=%x className=%S",
+	PushDS();
+	SetUserHeapDS();
+	FUNCTION_START
+
+	TRACE("GetClassInfo: hInstance=%x className=%S",
 		   hInstance,
                    HIWORD(name) ? name : "(int)" );
 
-    hInstance = GetExePtr( hInstance );
+	hInstance = GetExePtr( hInstance );
     
-    if (!(CLASS_FindClassByName( name, hInstance, &classPtr))) return FALSE;
-    if (hInstance && (hInstance != classPtr->wc.hInstance)) return FALSE;
+	if (!(CLASS_FindClassByName( name, hInstance, &classPtr))) return FALSE;
+	if (hInstance && (hInstance != classPtr->wc.hInstance)) return FALSE;
 
-    _fmemcpy(lpWndClass, &(classPtr->wc), sizeof(WNDCLASS));
-    return TRUE;
+	_fmemcpy(lpWndClass, &(classPtr->wc), sizeof(WNDCLASS));
+
+	FUNCTION_END
+	PopDS();
+
+	return TRUE;
 }
 

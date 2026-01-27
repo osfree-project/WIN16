@@ -35,15 +35,15 @@ assume cs:_TEXT
 
 ;        extrn   __AHSHIFT                   : word
 
-        public  "C",_curbrk
-        public  "C",_cbyte
-        public  __no87
+;        public  "C",_curbrk
+;        public  "C",_cbyte
+;        public  __no87
 
-__aaltstkovr dw -1              ; alternate stack overflow routine address
-_curbrk    dw 0                 ; top of usable memory
-_cbyte     dw 0                 ; used by getch, getche
-__no87     dw 0                 ; always try to use the 8087
-           db 0                 ; slack byte
+;__aaltstkovr dw -1              ; alternate stack overflow routine address
+;_curbrk    dw 0                 ; top of usable memory
+;_cbyte     dw 0                 ; used by getch, getche
+;__no87     dw 0                 ; always try to use the 8087
+;           db 0                 ; slack byte
 
 _DATA ends
 
@@ -74,6 +74,7 @@ __DLLstart_:
 ;       cx               ; heap size
 ;       es               ; command line segment
 ;       si               ; command line offset
+
         xor     ax,ax
         jcxz    exit		; If no heap then error exit (USER.EXE needs heap)
 

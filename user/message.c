@@ -308,7 +308,7 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
     HQUEUE	  hQueue;
     LONG nextExp;  /* Next timer expiration time */
 
-//	FUNCTION_START
+	FUNCTION_START
 #ifdef CONFIG_IPC
     DDE_TestDDE(hwnd);	/* do we have dde handling in the window ?*/
     DDE_GetRemoteMessage();
@@ -490,15 +490,17 @@ BOOL WINAPI PeekMessage( LPMSG msg, HWND hwnd, UINT first, UINT last, UINT flags
  */
 BOOL WINAPI GetMessage( LPMSG msg, HWND hwnd, UINT first, UINT last ) 
 {
-    MSG FAR * lpmsg = msg;
+	MSG FAR * lpmsg = msg;
 
 	PushDS();
 	SetDS(USER_HeapSel);
+
 	MSG_PeekMessage(lpmsg, hwnd, first, last, PM_REMOVE, FALSE);
+
 	PopDS();
 
 //@todo fix!!!    HOOK_CallHooks( WH_GETMESSAGE, HC_ACTION, 0, (LPARAM)msg );
-    return (lpmsg->message != WM_QUIT);
+	return (lpmsg->message != WM_QUIT);
 }
 
 
@@ -693,8 +695,6 @@ LONG WINAPI DispatchMessage( const MSG FAR * msg )
     LONG retval;
     int painting;
     
-//    SPY_EnterMessage( SPY_DISPATCHMESSAGE, msg->hwnd, msg->message,
-//                      msg->wParam, msg->lParam );
 
 //FUNCTION_START
       /* Process timer messages */
@@ -702,10 +702,8 @@ LONG WINAPI DispatchMessage( const MSG FAR * msg )
     {
 	if (msg->lParam)
         {
-#ifndef WINELIB
             HINSTANCE ds = msg->hwnd ? WIN_GetWindowInstance( msg->hwnd )
                                      : (HINSTANCE)GetDS()/*CURRENT_DS*/;
-#endif
 /*            HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, 0, FIXME ); */
 	    return CallWindowProc( (FARPROC)msg->lParam, /*ds,*/ msg->hwnd,
                                 msg->message, msg->wParam, GetTickCount() );

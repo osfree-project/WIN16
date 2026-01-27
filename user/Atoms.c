@@ -1,7 +1,5 @@
 #include <user.h>
 
-// Macro to switch DS to Global Atom Table selector
-#define  SetGlobalTableDS() SetDS(GlobalAtomTable_Selector)
 
 // Global Atom Table reuses standard Atom Table functions which work with local heap (uses DS).
 // We just switch DS to Global Atom Heap selector, do things and switch DS back.
@@ -14,7 +12,7 @@
 VOID WINAPI GlobalInitAtom(void)
 {
 	PushDS();
-//	FUNCTION_START
+	FUNCTION_START
 
 	// Allocate memory for Global Atom Table Heap
 	GlobalAtomTable_Selector=GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT | GMEM_DDESHARE, 0xfa);
@@ -28,7 +26,7 @@ VOID WINAPI GlobalInitAtom(void)
 		GlobalUnlock(GlobalAtomTable_Selector);
 	}
 
-//	FUNCTION_END
+	FUNCTION_END
 	PopDS();
 }
 
@@ -42,7 +40,7 @@ ATOM WINAPI GlobalAddAtom(LPCSTR lpstr)
 	ATOM res;
 
 	PushDS();
-//	FUNCTION_START
+	FUNCTION_START
 //    if (HIWORD(lpstr))
 //{
 //	TRACE("'%S' ", lpstr);
@@ -55,7 +53,7 @@ ATOM WINAPI GlobalAddAtom(LPCSTR lpstr)
 	SetGlobalTableDS();
 	res=AddAtom(lpstr);
 //	TRACE("%04x ", res );
-//	FUNCTION_END
+	FUNCTION_END
 	PopDS();
 	return res;
 }
@@ -70,10 +68,10 @@ ATOM WINAPI GlobalDeleteAtom(ATOM atom)
 	ATOM res;
 
 	PushDS();
-//	FUNCTION_START
+	FUNCTION_START
 	SetGlobalTableDS();
 	res=DeleteAtom(atom);
-//	FUNCTION_END
+	FUNCTION_END
 	PopDS();
 	return res;
 }
@@ -88,7 +86,7 @@ ATOM WINAPI GlobalFindAtom(LPCSTR lpstr)
 	ATOM res;
 
 	PushDS();
-//	FUNCTION_START
+	FUNCTION_START
 //    if (HIWORD(lpstr))
 //{
 //	TRACE("'%S' ", lpstr);
@@ -100,7 +98,7 @@ ATOM WINAPI GlobalFindAtom(LPCSTR lpstr)
 	SetGlobalTableDS();
 	res=FindAtom(lpstr);
 //	TRACE("%04x ", res );
-//	FUNCTION_END
+	FUNCTION_END
 	PopDS();
 	return res;
 }
@@ -115,10 +113,10 @@ UINT WINAPI GlobalGetAtomName(ATOM atom,LPSTR lpszbuf,int len)
 	UINT res;
 
 	PushDS();
-//	FUNCTION_START
+	FUNCTION_START
 	SetGlobalTableDS();
 	res=GetAtomName(atom, lpszbuf, len);
-//	FUNCTION_END
+	FUNCTION_END
 	PopDS();
 	return res;
 }

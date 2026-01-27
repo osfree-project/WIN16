@@ -2270,21 +2270,25 @@ BOOL WINAPI DestroyMenu(HMENU hMenu)
 HMENU WINAPI GetSystemMenu(HWND hWnd, BOOL bRevert)
 {
 	WND *wndPtr;
+	HMENU retVal;
 
 	PushDS();
 	SetDS(USER_HeapSel);
 
 	FUNCTION_START
 
+	retVal=0;
 	wndPtr = WIN_FindWndPtr( hWnd );
     	if (!wndPtr) 
 	{
+		LocalUnlock(hWnd);
 		PopDS();
 		return 0;
 	}
 
     	if (!bRevert) 
 	{
+		LocalUnlock(hWnd);
 		PopDS();
 		return wndPtr->hSysMenu;
 	}
@@ -2292,11 +2296,13 @@ HMENU WINAPI GetSystemMenu(HWND hWnd, BOOL bRevert)
 	if (wndPtr->hSysMenu) DestroyMenu(wndPtr->hSysMenu);
 	wndPtr->hSysMenu = MENU_CopySysMenu();
 
-	FUNCTION_END
+	retVal=wndPtr->hSysMenu;
+	LocalUnlock(hWnd);
 
+	FUNCTION_END
 	PopDS();
 
-	return wndPtr->hSysMenu;
+	return retVal;
 }
 
 
@@ -2319,9 +2325,28 @@ BOOL WINAPI SetSystemMenu( HWND hwnd, HMENU hMenu )
  */
 HMENU WINAPI GetMenu(HWND hWnd) 
 { 
-	WND * wndPtr = WIN_FindWndPtr(hWnd);
-	if (wndPtr == NULL) return 0;
-	return (HMENU)wndPtr->wIDmenu;
+	WND * wndPtr;
+	HMENU retVal;
+
+	PushDS();
+	SetDS(USER_HeapSel);
+
+	FUNCTION_START
+	
+	retVal=0;
+	wndPtr = WIN_FindWndPtr(hWnd);
+	if (wndPtr)
+	{
+		retVal=(HMENU)wndPtr->wIDmenu;
+	}
+
+	LocalUnlock(hWnd);
+
+	FUNCTION_END
+
+	PopDS();
+
+	return retVal;
 }
 
 
