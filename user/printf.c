@@ -3,6 +3,12 @@
  *
  */
 
+
+/*
+ *   mini-libc functions
+ *
+ */
+
 #pragma code_seg( "FIXED_TEXT" );
 
 #ifndef MK_FP
@@ -16,6 +22,66 @@
 //        "int 21h"          
 //        parm                   [dl];
 
+/* Глобальная переменная для выбора порта вывода */
+int comport = 1; /* 0 = консоль, 1 = COM1, 2 = COM2 */
+
+/* This function prints one char */
+extern  void putchar(char);
+#pragma aux putchar               = \
+        "push ds"                 \
+        "mov  ax, seg comport"    \
+        "mov  ds, ax"             \
+        "cmp  word ptr [comport], 0" \
+        "je   putchar_console"     \
+        "cmp  word ptr [comport], 1" \
+        "je   putchar_com1"        \
+        "cmp  word ptr [comport], 2" \
+        "je   putchar_com2"        \
+        "putchar_console:"        \
+        "pop  ds"                 \
+        "mov  ah, 2"               \
+        "int  21h"                 \
+        "jmp  putchar_end"         \
+        "putchar_com1:"           \
+        "pop  ds"                 \
+        "push ax"                 \
+        "push dx"                 \
+        "push bx"                 \
+        "mov  bl, dl"              \
+        "com1_wait:"              \
+        "mov  dx, 0x3FD"           \
+        "in   al, dx"              \
+        "test al, 0x20"           \
+        "jz   com1_wait"            \
+        "mov  dx, 0x3F8"           \
+        "mov  al, bl"              \
+        "out  dx, al"              \
+        "pop  bx"                  \
+        "pop  dx"                  \
+        "pop  ax"                  \
+        "jmp  putchar_end"         \
+        "putchar_com2:"           \
+        "pop  ds"                 \
+        "push ax"                 \
+        "push dx"                 \
+        "push bx"                 \
+        "mov  bl, dl"              \
+        "com2_wait:"              \
+        "mov  dx, 0x2FD"           \
+        "in   al, dx"              \
+        "test al, 0x20"           \
+        "jz   com2_wait"            \
+        "mov  dx, 0x2F8"           \
+        "mov  al, bl"              \
+        "out  dx, al"              \
+        "pop  bx"                  \
+        "pop  dx"                  \
+        "pop  ax"                  \
+        "putchar_end:"            \
+        parm                   [dl] \
+        modify                [ax bx dx];
+
+#if 0
 /* Глобальная переменная для выбора порта вывода */
 int comport = 1; /* 0 = консоль, 1 = COM1, 2 = COM2 */
 
@@ -67,6 +133,8 @@ extern  void putchar(char);
         "pop ax"                  \
         "putchar_end:"            \
         parm                   [dl];
+
+#endif
 
 /* Инициализация COM-порта через ассемблерную вставку */
 void init_com(int port, int baud_rate)

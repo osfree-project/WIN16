@@ -6,13 +6,8 @@
  *
  */
 
-//#include <stdio.h>
-//#include <stdlib.h>
 #include "user.h"
 #include "syscolor.h"
-//#include "stddebug.h"
-/* #define DEBUG_SYSCOLOR */
-//#include "debug.h"
 
 struct SysColorObjects sysColorObjects = { 0, };
 
@@ -46,8 +41,7 @@ static char * DefSysColors[] =
 static COLORREF SysColors[NUM_SYS_COLORS];
 
 //#define MAKE_SOLID(color) (PALETTEINDEX(GetNearestPaletteIndex(STOCK_DEFAULT_PALETTE,(color))))
-
-#define MAKE_SOLID(color) 0
+#define MAKE_SOLID(color) (PALETTEINDEX(GetNearestPaletteIndex(GetStockObject(DEFAULT_PALETTE), (color))))
 
 /*************************************************************************
  *             SYSCOLOR_SetColor

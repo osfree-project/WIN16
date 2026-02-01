@@ -39,19 +39,20 @@ ATOM WINAPI GlobalAddAtom(LPCSTR lpstr)
 	ATOM res;
 
 	PushDS();
-	FUNCTION_START
-//    if (HIWORD(lpstr))
-//{
-//	TRACE("'%S' ", lpstr);
-//}
-//    else
-//{
-//	TRACE("%04x ", LOWORD(lpstr) );
-//}
-
 	SetGlobalTableDS();
+	FUNCTION_START
+
+	if (HIWORD(lpstr))
+	{
+		TRACE("'%S' ", lpstr);
+	}
+	else
+	{
+		TRACE("%04x ", LOWORD(lpstr) );
+	}
+
 	res=AddAtom(lpstr);
-//	TRACE("%04x ", res );
+
 	FUNCTION_END
 	PopDS();
 	return res;
@@ -67,9 +68,11 @@ ATOM WINAPI GlobalDeleteAtom(ATOM atom)
 	ATOM res;
 
 	PushDS();
-	FUNCTION_START
 	SetGlobalTableDS();
+	FUNCTION_START
+
 	res=DeleteAtom(atom);
+
 	FUNCTION_END
 	PopDS();
 	return res;
@@ -85,18 +88,20 @@ ATOM WINAPI GlobalFindAtom(LPCSTR lpstr)
 	ATOM res;
 
 	PushDS();
-	FUNCTION_START
-//    if (HIWORD(lpstr))
-//{
-//	TRACE("'%S' ", lpstr);
-//}
-//    else
-//{
-//	TRACE("%04x ", LOWORD(lpstr) );
-//}
 	SetGlobalTableDS();
+	FUNCTION_START
+
+	if (HIWORD(lpstr))
+	{
+		TRACE("'%S' ", lpstr);
+	}
+	else
+	{
+		TRACE("%04x ", LOWORD(lpstr) );
+	}
+
 	res=FindAtom(lpstr);
-//	TRACE("%04x ", res );
+
 	FUNCTION_END
 	PopDS();
 	return res;
@@ -112,9 +117,11 @@ UINT WINAPI GlobalGetAtomName(ATOM atom,LPSTR lpszbuf,int len)
 	UINT res;
 
 	PushDS();
-	FUNCTION_START
 	SetGlobalTableDS();
+	FUNCTION_START
+
 	res=GetAtomName(atom, lpszbuf, len);
+
 	FUNCTION_END
 	PopDS();
 	return res;

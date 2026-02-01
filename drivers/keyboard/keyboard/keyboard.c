@@ -184,7 +184,7 @@ void far * mymemset (void far *start, int c, int len)
 /***********************************************************************
  *		Enable (KEYBOARD.2)
  */
-VOID WINAPI Enable( FARPROC proc, LPBYTE lpKeyState )
+VOID WINAPI Enable(FARPROC proc, LPBYTE lpKeyState)
 {
     DefKeybEventProc = proc;
     pKeyStateTable = lpKeyState;

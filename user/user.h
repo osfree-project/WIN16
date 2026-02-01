@@ -7,7 +7,10 @@
 typedef struct tagINTERNALMSG{
 	DWORD ExtraInfo;
 	MSG msg;
-} INTERNALMSG, * PINTERNALMSG, FAR * LPINTERNALMSG;
+} INTERNALMSG;
+typedef INTERNALMSG * PINTERNALMSG;
+typedef INTERNALMSG NEAR * NPINTERNALMSG;
+typedef INTERNALMSG FAR * LPINTERNALMSG;
 
 typedef struct tagQUEUE{
 	WORD NextQueue;
@@ -67,10 +70,9 @@ typedef struct tagWNDCLASSEX {
 	LPCSTR	lpszClassName;
 	HICON	hIconSm;
 } WNDCLASSEX;
-
-typedef WNDCLASSEX	*PWNDCLASSEX;
-typedef WNDCLASSEX NEAR	*NPWNDCLASSEX;
-typedef WNDCLASSEX FAR	*LPWNDCLASSEX;
+typedef WNDCLASSEX * PWNDCLASSEX;
+typedef WNDCLASSEX NEAR * NPWNDCLASSEX;
+typedef WNDCLASSEX FAR * LPWNDCLASSEX;
 
 typedef struct tagINTWNDCLASS {
                 HANDLE hcNext;
@@ -129,8 +131,8 @@ typedef WNDCLASS FAR    *LPWNDCLASS;
 
 
 typedef	struct	tagCLASSINFO {
-    struct tagCLASSINFO	far * lpClassNext;	/* ptr to next class */
-    struct tagCLASSINFO	far * lpClassPrev;	/* ptr to prev class */
+    struct tagCLASSINFO	FAR * lpClassNext;	/* ptr to next class */
+    struct tagCLASSINFO	FAR * lpClassPrev;	/* ptr to prev class */
     WORD wSign;	/* 'NK' */
     ATOM	atmClassName;		/* class name atom */
     HDC		hDC;			/* class DC handle */
@@ -336,11 +338,9 @@ extern int DefQueueSize;
 extern HCLASS firstClass;
 
 extern char DISPLAY[];
-//extern HDC tempHDC;
 
-//extern PDCE PDCEFirst;
 HDC WINAPI GetDCState(HDC);
-void WINAPI SetDCState(HDC, HDC);
+VOID WINAPI SetDCState(HDC, HDC);
 
 extern KBINFO KbInfo;
 extern CURSORINFO CursorInfo;
@@ -789,6 +789,7 @@ extern CLASS * CLASS_FindClassPtr( HCLASS hclass );
 
 
 /* GDI objects magic numbers */
+// @todo Windows 3.0 has another numbers
 #define PEN_MAGIC             0x4f47
 #define BRUSH_MAGIC           0x4f48
 #define FONT_MAGIC            0x4f49

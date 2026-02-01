@@ -281,13 +281,8 @@ static UINT MENU_FindItemByKey( HWND hwndOwner, HMENU hmenu, UINT key )
 	    if (p && (p[1] != '&') && (toupper(p[1]) == key)) return i;
 	}
     }
-#ifdef WINELIB32
-    menuchar = SendMessage( hwndOwner, WM_MENUCHAR, 
-			    MAKEWPARAM(key,menu->wFlags), hmenu );
-#else
     menuchar = SendMessage( hwndOwner, WM_MENUCHAR, key,
 			    MAKELONG( menu->wFlags, hmenu ) );
-#endif
     if (HIWORD(menuchar) == 2) return LOWORD(menuchar);
     if (HIWORD(menuchar) == 1) return -2;
     return -1;
@@ -738,38 +733,43 @@ static void MENU_DrawPopupMenu( HWND hwnd, HDC hdc, HMENU hmenu )
  */
 UINT MENU_DrawMenuBar(HDC hDC, LPRECT lprect, HWND hwnd, BOOL suppress_draw)
 {
-    POPUPMENU * lppop;
-    MENUITEM * lpitem;
-    int i;
-    WND *wndPtr;
+	POPUPMENU * lppop;
+	MENUITEM * lpitem;
+	int i;
+	WND *wndPtr;
 
+	PushDS();
+	SetDS(USER_HeapSel);
 	FUNCTION_START    
 
-    TRACE("MENU_DrawMenuBar(%04x, %p, %p)", hDC, lprect, lppop);
+	TRACE("MENU_DrawMenuBar(%04x, %p, %p)", hDC, lprect, lppop);
 
-    wndPtr = WIN_FindWndPtr( hwnd );
+	wndPtr = WIN_FindWndPtr( hwnd );
 
-    lppop = (POPUPMENU *) LocalLock((HMENU)wndPtr->wIDmenu );
-    if (lppop == NULL || lprect == NULL) return GetSystemMetrics(SM_CYMENU);
-    if (lppop->Height == 0) MENU_MenuBarCalcSize(hDC, lprect, lppop, hwnd);
-    lprect->bottom = lprect->top + lppop->Height;
-    if (suppress_draw) return lppop->Height;
+	lppop = (POPUPMENU *) LocalLock((HMENU)wndPtr->wIDmenu );
+	if (lppop == NULL || lprect == NULL) return GetSystemMetrics(SM_CYMENU);
+	if (lppop->Height == 0) MENU_MenuBarCalcSize(hDC, lprect, lppop, hwnd);
+	lprect->bottom = lprect->top + lppop->Height;
+	if (suppress_draw) return lppop->Height;
 
 	TRACE("Fill start");    
-    FillRect(hDC, lprect, sysColorObjects.hbrushMenu );
-    SelectObject( hDC, sysColorObjects.hpenWindowFrame );
-    MoveTo( hDC, lprect->left, lprect->bottom );
-    LineTo( hDC, lprect->right, lprect->bottom );
+	FillRect(hDC, lprect, sysColorObjects.hbrushMenu );
+	SelectObject( hDC, sysColorObjects.hpenWindowFrame );
+	MoveTo( hDC, lprect->left, lprect->bottom );
+	LineTo( hDC, lprect->right, lprect->bottom );
 	TRACE("Fill end");    
 
-    if (lppop->nItems == 0) return GetSystemMetrics(SM_CYMENU);
-    lpitem = (MENUITEM *) LocalLock(lppop->hItems );
-    for (i = 0; i < lppop->nItems; i++, lpitem++)
-    {
-	MENU_DrawMenuItem( hwnd, hDC, lpitem, lppop->Height, TRUE );
-    }
+	if (lppop->nItems == 0) return GetSystemMetrics(SM_CYMENU);
+	lpitem = (MENUITEM *) LocalLock(lppop->hItems );
+	for (i = 0; i < lppop->nItems; i++, lpitem++)
+	{
+		MENU_DrawMenuItem( hwnd, hDC, lpitem, lppop->Height, TRUE );
+	}
+
 	FUNCTION_END
-    return lppop->Height;
+	PopDS();
+
+	return lppop->Height;
 } 
 
 
