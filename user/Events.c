@@ -135,11 +135,11 @@ VOID WINAPI mouse_event(VOID)
      */
 
     WORD EventCodes;
-    int  hMouse;
-    int  vMouse;
+    WORD hMouse;
+    WORD vMouse;
     WORD NumButts;
     WORD KeyState = 0;
-    static int callCount = 0;
+//    static int callCount = 0;
     
     // Получаем значения из регистров
     _asm{
@@ -203,73 +203,54 @@ VOID WINAPI mouse_event(VOID)
 
     if (EventCodes & ME_MOVE)
     {
-        int maxX, maxY;
-        
         // Отладка перемещения
 //        TRACE("Processing ME_MOVE:");
 //        TRACE("  hMouse delta: %d", hMouse);
 //        TRACE("  vMouse delta: %d", vMouse);
-        
-        // Обновляем позицию
-        iMouseX += hMouse;
-        iMouseY += vMouse;
-        
-//        TRACE("  New position (before bounds check): X=%d, Y=%d", iMouseX, iMouseY);
 
-        // Проверить границы
-        maxX = CXScreen/*GetSystemMetrics(SM_CXSCREEN)*/ - 1;
-        maxY = CYScreen/*GetSystemMetrics(SM_CYSCREEN)*/ - 1;
+        if (((long)wMouseX + (int)hMouse)< 0) {
+		wMouseX = 0;
+        } else {
+		wMouseX += (int)hMouse;
+	}
+
+
+        if (((long)wMouseY+(int)vMouse) < 0) {
+		wMouseY = 0;
+        } else {
+		wMouseY += (int)vMouse;
+	}
         
-//        TRACE("  Screen bounds: X:0-%d, Y:0-%d", maxX, maxY);
-    
-        if (iMouseX < 0) {
-//            TRACE("  X < 0, clamping to 0");
-            iMouseX = 0;
+        if (wMouseX > (CXScreen/*GetSystemMetrics(SM_CXSCREEN)*/ - 1)) {
+            wMouseX = (CXScreen/*GetSystemMetrics(SM_CXSCREEN)*/ - 1);
         }
-        if (iMouseX > maxX) {
-//            TRACE("  X > maxX, clamping to %d", maxX);
-            iMouseX = maxX;
-        }
-        if (iMouseY < 0) {
-//            TRACE("  Y < 0, clamping to 0");
-            iMouseY = 0;
-        }
-        if (iMouseY > maxY) {
-//            TRACE("  Y > maxY, clamping to %d", maxY);
-            iMouseY = maxY;
+        if (wMouseY > (CYScreen/*GetSystemMetrics(SM_CYSCREEN)*/ - 1)) {
+            wMouseY = (CYScreen/*GetSystemMetrics(SM_CYSCREEN)*/ - 1);
         }
         
-//        TRACE("  Final position: X=%d, Y=%d", iMouseX, iMouseY);
-        
-        // Отладка MoveCursor
-//        TRACE("  Calling MoveCursor(%d, %d)", iMouseX, iMouseY);
-        MoveCursor(iMouseX, iMouseY);
-        
-        // Отладка hardware_event
-//        TRACE("  Calling hardware_event: WM_MOUSEMOVE, KeyState=0x%04X, pos=(%d,%d)", 
-//              KeyState, iMouseX, iMouseY);
-        hardware_event(WM_MOUSEMOVE, KeyState, 0, iMouseX, iMouseY, GetTickCount(), 0);
+        hardware_event(WM_MOUSEMOVE, KeyState, 0, wMouseX, wMouseY, GetTickCount(), 0);
+        MoveCursor(wMouseX, wMouseY);
     }
     
     // Обработка нажатий/отпусканий кнопок
     if (EventCodes & ME_LDOWN) {
 //        TRACE("Processing ME_LDOWN, calling hardware_event: WM_LBUTTONDOWN");
-        hardware_event(WM_LBUTTONDOWN, KeyState, 0, iMouseX, iMouseY, GetTickCount(), 0);
+        hardware_event(WM_LBUTTONDOWN, KeyState, 0, wMouseX, wMouseY, GetTickCount(), 0);
     }
     
     if (EventCodes & ME_LUP) {
 //        TRACE("Processing ME_LUP, calling hardware_event: WM_LBUTTONUP");
-        hardware_event(WM_LBUTTONUP, KeyState, 0, iMouseX, iMouseY, GetTickCount(), 0);
+        hardware_event(WM_LBUTTONUP, KeyState, 0, wMouseX, wMouseY, GetTickCount(), 0);
     }
     
     if (EventCodes & ME_RDOWN) {
 //        TRACE("Processing ME_RDOWN, calling hardware_event: WM_RBUTTONDOWN");
-        hardware_event(WM_RBUTTONDOWN, KeyState, 0, iMouseX, iMouseY, GetTickCount(), 0);
+        hardware_event(WM_RBUTTONDOWN, KeyState, 0, wMouseX, wMouseY, GetTickCount(), 0);
     }
     
     if (EventCodes & ME_RUP) {
 //        TRACE("Processing ME_RUP, calling hardware_event: WM_RBUTTONUP");
-        hardware_event(WM_RBUTTONUP, KeyState, 0, iMouseX, iMouseY, GetTickCount(), 0);
+        hardware_event(WM_RBUTTONUP, KeyState, 0, wMouseX, wMouseY, GetTickCount(), 0);
     }
     
 //    TRACE("========== End of mouse_event #%d ==========\n", callCount);

@@ -86,7 +86,7 @@ static BOOL MSG_TranslateMouseMsg( MSG FAR *msg, BOOL remove )
         {
             HWND hwndTop = WIN_GetTopParent( msg->hwnd );
 
-//		TRACE("MOUSE CLICK");
+		TRACE("MOUSE CLICK");
 
             if (hwndTop != GetActiveWindow())
             {
@@ -357,7 +357,7 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
 
 	if (pos != -1)
 	{
-	    QMSG *qmsg = &msgQueue->messages[pos];
+	    QMSG FAR *qmsg = &msgQueue->messages[pos];
 	    *msg = qmsg->msg;
 	    msgQueue->GetMessageTimeVal      = msg->time;
 	    msgQueue->GetMessagePosVal       = *(DWORD *)&msg->pt;

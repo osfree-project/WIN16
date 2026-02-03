@@ -532,7 +532,7 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 	pWndClass->lpfnWndProc = DesktopWndProc;
 	pWndClass->hInstance = hInstance;
 	pWndClass->style = CS_GLOBALCLASS | CS_DBLCLKS;
-	pWndClass->hbrBackground = 1;
+	pWndClass->hbrBackground = COLOR_BACKGROUND;
 	RegisterClass(pWndClass);
 
 	// Register the "switch window" class
@@ -542,7 +542,7 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 	pWndClass->hInstance = hInstance;
 	pWndClass->hIcon = LoadIcon(NULL, IDI_APPLICATION); 
 	pWndClass->style = CS_GLOBALCLASS /*| CS_SAVEBITS /*| CS_VREDRAW | CS_HREDRAW*/;
-	pWndClass->hbrBackground = 5;
+	pWndClass->hbrBackground = COLOR_WINDOW;
 	RegisterClass( pWndClass );
 
 	// Register the icon title cLass

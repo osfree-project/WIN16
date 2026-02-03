@@ -102,8 +102,8 @@ KBINFO KbInfo;
 CURSORINFO CursorInfo;
 MOUSEINFO MouseInfo;
 
-LONG iMouseX=0;
-LONG iMouseY=0;
+WORD wMouseX=0;
+WORD wMouseY=0;
 
 HQUEUE hFirstQueue = 0;
 HQUEUE hmemSysMsgQueue = 0;

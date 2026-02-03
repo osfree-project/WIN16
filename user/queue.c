@@ -81,19 +81,20 @@ void QUEUE_WalkQueues(void)
  */
 static HQUEUE QUEUE_CreateMsgQueue( int size )
 {
-    HQUEUE hQueue;
-    MESSAGEQUEUE FAR * msgQueue;
-    int queueSize;
+	MESSAGEQUEUE FAR * msgQueue;
+	int queueSize;
+	HQUEUE hQueue=0;
 
-    queueSize = sizeof(MESSAGEQUEUE) + size * sizeof(QMSG);
-    if (!(hQueue = GlobalAlloc( GMEM_FIXED | GMEM_ZEROINIT, queueSize )))
-        return 0;
-    msgQueue = (MESSAGEQUEUE FAR *) GlobalLock( hQueue );
-    msgQueue->msgSize = sizeof(QMSG);
-    msgQueue->queueSize = size;
-    msgQueue->wWinVersion = 0;  /* FIXME? */
-//    GlobalUnlock( hQueue );
-    return hQueue;
+	queueSize = sizeof(MESSAGEQUEUE) + size * sizeof(QMSG);
+	if ((hQueue = GlobalAlloc( GMEM_FIXED | GMEM_ZEROINIT, queueSize )))
+	{
+		msgQueue = (MESSAGEQUEUE FAR *) GlobalLock( hQueue );
+		msgQueue->msgSize = sizeof(QMSG);
+		msgQueue->queueSize = size;
+		msgQueue->wWinVersion = 0;  /* FIXME? */
+		GlobalUnlock( hQueue );
+	}
+	return hQueue;
 }
 
 
@@ -248,56 +249,56 @@ void QUEUE_RemoveMsg( MESSAGEQUEUE FAR * msgQueue, int pos )
  * Add an event to the system message queue.
  */
 void FAR hardware_event( WORD message, WORD wParam, LONG lParam,
-		     int xPos, int yPos, DWORD time, DWORD extraInfo )
+		     WORD xPos, WORD yPos, DWORD time, DWORD extraInfo )
 {
-    MSG *msg;
-    int pos;
+	MSG FAR *msg;
+	int pos;
 
 	TRACE("msg=%04x", message);
   
-    if (!sysMsgQueue) return;
-    pos = sysMsgQueue->nextFreeMessage;
+	if (!sysMsgQueue) return;
+	pos = sysMsgQueue->nextFreeMessage;
 
-      /* Merge with previous event if possible */
+	/* Merge with previous event if possible */
 
-    if ((message == WM_MOUSEMOVE) && sysMsgQueue->msgCount)
-    {
-        if (pos > 0) pos--;
-        else pos = sysMsgQueue->queueSize - 1;
-	msg = &sysMsgQueue->messages[pos].msg;
-	if ((msg->message == message) && (msg->wParam == wParam))
-            sysMsgQueue->msgCount--;  /* Merge events */
-        else
-            pos = sysMsgQueue->nextFreeMessage;  /* Don't merge */
-    }
+	if ((message == WM_MOUSEMOVE) && sysMsgQueue->msgCount)
+	{
+		if (pos > 0) pos--;
+		else pos = sysMsgQueue->queueSize - 1;
+		msg = &sysMsgQueue->messages[pos].msg;
+		if ((msg->message == message) && (msg->wParam == wParam))
+		sysMsgQueue->msgCount--;  /* Merge events */
+	else
+		pos = sysMsgQueue->nextFreeMessage;  /* Don't merge */
+	}
 
       /* Check if queue is full */
 
-    if ((pos == sysMsgQueue->nextMessage) && sysMsgQueue->msgCount)
-    {
+	if ((pos == sysMsgQueue->nextMessage) && sysMsgQueue->msgCount)
+	{
         /* Queue is full, beep (but not on every mouse motion...) */
 //        if (message != WM_MOUSEMOVE) MessageBeep(0);
 //TRACE("FULL!!");
-        return;
-    }
+		return;
+	}
 
       /* Store message */
 
-    msg = &sysMsgQueue->messages[pos].msg;
-    msg->hwnd    = 0;
-    msg->message = message;
-    msg->wParam  = wParam;
-    msg->lParam  = lParam;
-    msg->time    = time;
-    msg->pt.x    = xPos & 0xffff;
-    msg->pt.y    = yPos & 0xffff;
-    sysMsgQueue->messages[pos].extraInfo = extraInfo;
-    if (pos < sysMsgQueue->queueSize - 1) pos++;
-    else pos = 0;
-    sysMsgQueue->nextFreeMessage = pos;
-    sysMsgQueue->msgCount++;
+	msg = &sysMsgQueue->messages[pos].msg;
+	msg->hwnd    = 0;
+	msg->message = message;
+	msg->wParam  = wParam;
+	msg->lParam  = lParam;
+	msg->time    = time;
+	msg->pt.x    = xPos & 0xffff;
+	msg->pt.y    = yPos & 0xffff;
+	sysMsgQueue->messages[pos].extraInfo = extraInfo;
+	if (pos < sysMsgQueue->queueSize - 1) pos++;
+	else pos = 0;
+	sysMsgQueue->nextFreeMessage = pos;
+	sysMsgQueue->msgCount++;
 
-//    QUEUE_DumpQueue(hmemSysMsgQueue);
+//	QUEUE_DumpQueue(hmemSysMsgQueue);
 }
 
 		    
@@ -357,11 +358,14 @@ void QUEUE_IncTimerCount( HQUEUE hQueue )
  */
 void QUEUE_DecTimerCount( HQUEUE hQueue )
 {
-    MESSAGEQUEUE FAR *queue;
+	MESSAGEQUEUE FAR *queue;
 
-    if (!(queue = (MESSAGEQUEUE FAR *)GlobalLock( hQueue ))) return;
-    queue->wTimerCount--;
-    if (!queue->wTimerCount) queue->status &= ~QS_TIMER;
+	if ((queue = (MESSAGEQUEUE FAR *)GlobalLock( hQueue )))
+	{
+		queue->wTimerCount--;
+		if (!queue->wTimerCount) queue->status &= ~QS_TIMER;
+		GlobalUnlock( hQueue );
+	}
 }
 
 

@@ -4,6 +4,20 @@
  * Copyright 2026 Yuri Prokushev
  *
  * This is interface to DISPLAY.DRV. For now it is support only Windows 3.0 things.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 #include "user.h"
@@ -22,7 +36,7 @@ DWORD WINAPI GetDriverResourceID( WORD wResID, LPSTR lpResType );
 // Starting from here something another are used
 #define OEM_CONFIG_WIN31  21  /* Windows 3.1 - 21 colors (up to COLOR_BTNHIGHLIGHT) */
 #define OEM_CONFIG_WIN95  25  /* Windows 95 - 25 colors (up to COLOR_INFOBK) */
-#define OEM_CONFIG_WIN98  25  /* Windows 98 - 29 colors (up to COLOR_GRADIENTINACTIVECAPTION) */
+#define OEM_CONFIG_WIN98  29  /* Windows 98 - 29 colors (up to COLOR_GRADIENTINACTIVECAPTION) */
 
 /* Basic configuration structure - header with metrics */
 #pragma pack(push, 1)
@@ -78,6 +92,41 @@ static const char* SysColorNames[] = {
     "GradientInactiveCaption"       /* COLOR_GRADIENTINACTIVECAPTION = 28 (WINVER >= 0x0410) */
 #endif
 };
+
+/* Бинарные значения по умолчанию (VGA.DRV) в формате COLORREF */
+static COLORREF g_SysColorDefaultsBinary[] = {
+    RGB(0, 0, 0),  /* Scrollbar */
+    RGB(0, 0, 0),  /* Background */
+    RGB(0, 0, 0),     /* ActiveTitle */
+    RGB(0, 0, 0),  /* InactiveTitle */
+    RGB(0, 0, 0),  /* Menu */
+    RGB(0, 0, 0),  /* Window */
+    RGB(0, 0, 0),        /* WindowFrame */
+    RGB(0, 0, 0),        /* MenuText */
+    RGB(0, 0, 0),        /* WindowText */
+    RGB(0, 0, 0),  /* TitleText */
+    RGB(0, 0, 0),  /* ActiveBorder */
+    RGB(0, 0, 0),  /* InactiveBorder */
+    RGB(0, 0, 0),  /* AppWorkspace */
+    RGB(0, 0, 0),        /* Hilight */
+    RGB(0, 0, 0),  /* HilightText */
+    RGB(0, 0, 0),  /* ButtonFace */
+    RGB(0, 0, 0),  /* ButtonShadow */
+    RGB(0, 0, 0),  /* GrayText */
+    RGB(0, 0, 0),        /* ButtonText */
+    RGB(0, 0, 0),        /* InactiveTitleText */
+    RGB(0, 0, 0)         /* ButtonHilight */
+};
+
+const COLORREF* DISPLAY_GetSysColorDefaultsBinary(void)
+{
+    return g_SysColorDefaultsBinary;
+}
+
+int DISPLAY_GetSysColorCount(void)
+{
+    return sizeof(g_SysColorDefaultsBinary) / sizeof(COLORREF);
+}
 
 /* Function to dump configuration */
 static void DISPLAY_DumpDisplayConfig(BYTE FAR* pData)
@@ -311,10 +360,10 @@ VOID DISPLAY_Init()
 		/* Search config.bin (ID 1) */
 		lpfnGetDriverResourceID = GetProcAddress(HInstanceDisplay, "GetDriverResourceID");
 		if (lpfnGetDriverResourceID)
-			hRes = FindResource(HInstanceDisplay, (LPSTR)GetDriverResourceID(1, "oembin")/*MAKEINTRESOURCE(1)*/, "oembin");
+			hRes = FindResource(HInstanceDisplay, (LPSTR)GetDriverResourceID(1, "oembin"), "oembin");
 		else
 			hRes = FindResource(HInstanceDisplay, MAKEINTRESOURCE(1), "oembin");
-		if (hRes) 
+		if (hRes)
 		{
 			hData = LoadResource(HInstanceDisplay, hRes);
 			if (hData)
@@ -322,9 +371,20 @@ VOID DISPLAY_Init()
 				lpData = (BYTE FAR*)LockResource(hData);
 				if (lpData) 
 				{
+					int i;
+
 					pHeader = (DISPLAY_CONFIG_HEADER FAR*)lpData;
 					pColors = lpData + sizeof(DISPLAY_CONFIG_HEADER);
-    
+
+        /* Прямое обновление бинарных данных из драйвера */
+        for (i = 0; i < OEM_CONFIG_WIN30 && i < DISPLAY_GetSysColorCount(); i++) 
+        {
+            BYTE r = pColors[i * 4 + 0];
+            BYTE g = pColors[i * 4 + 1];
+            BYTE b = pColors[i * 4 + 2];
+            g_SysColorDefaultsBinary[i] = RGB(r, g, b);
+        }
+
 					DISPLAY_DumpDisplayConfig(lpData);
 				}
 			}

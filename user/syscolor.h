@@ -7,7 +7,8 @@
 #ifndef SYSCOLOR_H
 #define SYSCOLOR_H
 
-#include "windows.h"
+#include <windows.h>
+#include "display.h"
 
 struct SysColorObjects
 {

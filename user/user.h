@@ -544,8 +544,8 @@ typedef struct tagCURSORSHAPE {
 
 VOID FAR PASCAL DisplaySetCursor(LPCURSORSHAPE lpCursorShape);
 
-extern LONG iMouseX;
-extern LONG iMouseY;
+extern WORD wMouseX;
+extern WORD wMouseY;
 
 
 WORD WINAPI CreateSystemTimer(WORD wFreq, FARPROC IpCallback);

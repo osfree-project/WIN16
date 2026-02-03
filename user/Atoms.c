@@ -11,6 +11,7 @@
 VOID WINAPI GlobalInitAtom(void)
 {
 	PushDS();
+	SetUserHeapDS();
 	FUNCTION_START
 
 	// Allocate memory for Global Atom Table Heap
@@ -22,9 +23,10 @@ VOID WINAPI GlobalInitAtom(void)
 		SetGlobalTableDS();
 		LocalInit(0, 0, 0xea);
 		InitAtomTable(0x25);
-		GlobalUnlock(GlobalAtomTable_Selector);
+		//GlobalUnlock(GlobalAtomTable_Selector);
 	}
 
+	SetUserHeapDS();
 	FUNCTION_END
 	PopDS();
 }

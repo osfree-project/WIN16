@@ -312,6 +312,6 @@ DrawIcon(HDC hDC, int x, int y, HICON hIcon)
 
 VOID WINAPI SetCursorPos(int X, int Y)
 {
-	iMouseX=X;
-	iMouseY=Y;
+	wMouseX=X;
+	wMouseY=Y;
 }
