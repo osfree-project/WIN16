@@ -11,7 +11,6 @@
 VOID WINAPI GlobalInitAtom(void)
 {
 	PushDS();
-	SetUserHeapDS();
 	FUNCTION_START
 
 	// Allocate memory for Global Atom Table Heap
@@ -26,7 +25,6 @@ VOID WINAPI GlobalInitAtom(void)
 		//GlobalUnlock(GlobalAtomTable_Selector);
 	}
 
-	SetUserHeapDS();
 	FUNCTION_END
 	PopDS();
 }
@@ -91,7 +89,6 @@ ATOM WINAPI GlobalFindAtom(LPCSTR lpstr)
 	ATOM res;
 
 	PushDS();
-	SetGlobalTableDS();
 	FUNCTION_START
 
 	if (HIWORD(lpstr))
@@ -102,6 +99,8 @@ ATOM WINAPI GlobalFindAtom(LPCSTR lpstr)
 	{
 		TRACE("%04x ", LOWORD(lpstr) );
 	}
+
+	SetGlobalTableDS();
 
 	res=FindAtom(lpstr);
 
