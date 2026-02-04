@@ -90,7 +90,7 @@ static HQUEUE QUEUE_CreateMsgQueue( int size )
 	HQUEUE hQueue=0;
 
 	queueSize = sizeof(MESSAGEQUEUE) + size * sizeof(QMSG);
-	if ((hQueue = GlobalAlloc( GMEM_FIXED | GMEM_ZEROINIT, queueSize )))
+	if ((hQueue = GlobalAlloc( GHND /* GMEM_FIXED | GMEM_ZEROINIT */, queueSize )))
 	{
 		msgQueue = (MESSAGEQUEUE FAR *) GlobalLock( hQueue );
 		msgQueue->msgSize = sizeof(QMSG);

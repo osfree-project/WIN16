@@ -7,7 +7,7 @@
 PROJ     = user
 TRGT     = $(PROJ).exe
 DESC     = Windows USER.EXE
-srcfiles = $(p)display$(e) $(p)libentry$(e) $(p)libmain$(e) $(p)dce$(e) $(p)desktop$(e) $(p)winpos$(e) $(p)defwnd$(e) $(p)syscolor$(e) $(p)nonclient$(e) $(p)cursor$(e) $(p)queue$(e) $(p)win$(e) $(p)message$(e) $(p)GlobalData1$(e) $(p)div$(e) $(p)hook$(e) $(p)dialog$(e) $(p)Time$(e) $(p)Atoms$(e) $(p)comm$(e) $(p)Caret$(e) $(p)DrawText$(e)  $(p)SysMetrics$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Resources$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)printf$(e) $(p)Menu$(e) $(p)focus$(e) $(p)network$(e) # $(p)Listbox$(e) $(p)StringFunc$(e) $(p)InitApp$(e) 
+srcfiles = $(p)display$(e) $(p)capture$(e) $(p)libentry$(e) $(p)libmain$(e) $(p)dce$(e) $(p)desktop$(e) $(p)winpos$(e) $(p)defwnd$(e) $(p)syscolor$(e) $(p)nonclient$(e) $(p)cursor$(e) $(p)queue$(e) $(p)win$(e) $(p)message$(e) $(p)GlobalData1$(e) $(p)div$(e) $(p)hook$(e) $(p)dialog$(e) $(p)Time$(e) $(p)Atoms$(e) $(p)comm$(e) $(p)Caret$(e) $(p)DrawText$(e)  $(p)SysMetrics$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Resources$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)printf$(e) $(p)Menu$(e) $(p)focus$(e) $(p)network$(e) # $(p)Listbox$(e) $(p)StringFunc$(e) $(p)InitApp$(e) 
 ADD_COPT = -zls -ms -zW -s -3 -DDEBUG=1 # optimize prolog, no stack checks, put constants in code segment 
 ADD_ASMOPT = -ms
 # -zc

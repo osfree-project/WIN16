@@ -4,8 +4,12 @@ USER.EXE consist of 3 code segments (2 for code and one only for debug version) 
 
 Heaps are:
 
-1. Main user heap, selected by SetUserHeapDS()
-2. Global Atom table heap, selected by SetGlobalTableDS()
+1. Main user heap, selected by SetUserHeapDS(). Comes from DLL.
+2. Global Atom table heap, selected by SetGlobalTableDS(). Allocated from global heap.
+
+Menus lives in main user heap.
+Windows lives in main user heap.
+MessageQueues lives in global heap.
 
 Other heaps not implemented yet, but in plans to implement.
 
@@ -15,6 +19,11 @@ PushDS - saves current data segment (heap)
 PopDS - restores current data segment (heap)
 
 Set*DS - sets corresponding heap for access
+
+@todo Create macros like SelectUserHeap(or variables heap?), SelectMenusHeap, SelectWindowsHeap
+and so on? SelectApplicationHeap too (restore DS from stack)?
+Also set of macros like UserAlloc (user heap), WindowsAlloc, MenusAlloc, etc?
+Such approach will allow to easely move to another heap.
 
 Also need to be sure all locked structures unlocked after use
 

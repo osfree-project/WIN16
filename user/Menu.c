@@ -263,7 +263,7 @@ static MENUITEM *MENU_FindItemByCoords( POPUPMENU *menu, int x, int y, UINT FAR 
 static UINT MENU_FindItemByKey( HWND hwndOwner, HMENU hmenu, UINT key )
 {
     POPUPMENU *menu;
-    LPMENUITEM lpitem;
+    MENUITEM *item;
     int i;
     LONG menuchar;
 
@@ -271,13 +271,13 @@ static UINT MENU_FindItemByKey( HWND hwndOwner, HMENU hmenu, UINT key )
     if (!hmenu) return -1;
 
     menu = (POPUPMENU *) LocalLock( hmenu );
-    lpitem = (MENUITEM *) LocalLock( menu->hItems );
+    item = (MENUITEM *) LocalLock( menu->hItems );
     key = toupper(key);
-    for (i = 0; i < menu->nItems; i++, lpitem++)
+    for (i = 0; i < menu->nItems; i++, item++)
     {
-	if (IS_STRING_ITEM(lpitem->item_flags))
+	if (IS_STRING_ITEM(item->item_flags))
 	{
-	    char FAR *p = lstrchr(LocalLock(lpitem->hText), '&');
+	    char FAR *p = lstrchr(LocalLock(item->hText), '&');
 	    if (p && (p[1] != '&') && (toupper(p[1]) == key)) return i;
 	}
     }
@@ -2150,14 +2150,18 @@ BOOL WINAPI ModifyMenu( HMENU hMenu, UINT pos, UINT flags, UINT id, LPCSTR data 
  */
 HMENU WINAPI CreatePopupMenu()
 {
-    HMENU hmenu;
-    POPUPMENU *menu;
+	HMENU hmenu;
+	POPUPMENU *menu;
+
 	FUNCTION_START
-    if (!(hmenu = CreateMenu())) return 0;
-    menu = (POPUPMENU *) LocalLock( hmenu );
-    menu->wFlags |= MF_POPUP;
+
+	if (!(hmenu = CreateMenu())) return 0;
+	menu = (POPUPMENU *) LocalLock( hmenu );
+	menu->wFlags |= MF_POPUP;
+	LocalUnlock(hmenu);
+
 	FUNCTION_END
-    return hmenu;
+	return hmenu;
 }
 
 

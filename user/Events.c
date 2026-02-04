@@ -42,7 +42,7 @@ VOID WINAPI mouse_event(VOID)
     }
 
     PushDS();
-    SetDS(USER_HeapSel);
+    SetUserHeapDS();
     
     
     // Определяем состояние клавиш-модификаторов
@@ -54,24 +54,8 @@ VOID WINAPI mouse_event(VOID)
 //        KeyState |= MK_CONTROL;
 //        TRACE("CONTROL key is pressed");
 //    }
-    
-//    // Состояние кнопок мыши из NumButts
-//    if (NumButts & 0x01) {
-//        KeyState |= MK_LBUTTON;
-//        TRACE("LEFT mouse button is pressed");
-//    }
-//    if (NumButts & 0x02) {
-//        KeyState |= MK_RBUTTON;
-//        TRACE("RIGHT mouse button is pressed");
-//    }
-//    if (NumButts & 0x04) {
-//        KeyState |= MK_MBUTTON;
-//        TRACE("MIDDLE mouse button is pressed");
-//    }
-    
-//    TRACE("Final KeyState = 0x%04X", KeyState);
 
-    if (EventCodes & ME_MOVE)
+    if (EventCodes & MOUSEEVENTF_MOVE)
     {
 	// @todo Handle absolute position
 
@@ -99,19 +83,19 @@ VOID WINAPI mouse_event(VOID)
         MoveCursor(wMouseX, wMouseY);
     }
     
-    if (EventCodes & ME_LDOWN) {
+    if (EventCodes & MOUSEEVENTF_LEFTDOWN) {
         hardware_event(WM_LBUTTONDOWN, KeyState, 0, wMouseX, wMouseY, GetTickCount(), 0);
     }
     
-    if (EventCodes & ME_LUP) {
+    if (EventCodes & MOUSEEVENTF_LEFTUP) {
         hardware_event(WM_LBUTTONUP, KeyState, 0, wMouseX, wMouseY, GetTickCount(), 0);
     }
     
-    if (EventCodes & ME_RDOWN) {
+    if (EventCodes & MOUSEEVENTF_RIGHTDOWN) {
         hardware_event(WM_RBUTTONDOWN, KeyState, 0, wMouseX, wMouseY, GetTickCount(), 0);
     }
     
-    if (EventCodes & ME_RUP) {
+    if (EventCodes & MOUSEEVENTF_RIGHTUP) {
         hardware_event(WM_RBUTTONUP, KeyState, 0, wMouseX, wMouseY, GetTickCount(), 0);
     }
     
@@ -126,7 +110,6 @@ VOID WINAPI mouse_event(VOID)
 FARPROC WINAPI GetMouseEventProc(void)
 {
 	HMODULE hmodule;
-	FUNCTION_START
 
 	hmodule = GetModuleHandle("USER");
 	return GetProcAddress(hmodule, "mouse_event");
@@ -156,39 +139,5 @@ void WINAPI UserYield(void)
     MSG msg;
 	FUNCTION_START
     //PeekMessage( &msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE );
-}
-
-/**********************************************************************
- *		SetCapture 	(USER.18)
- */
-HWND WINAPI SetCapture( HWND hwnd )
-{
-    HWND old_capture_wnd = captureWnd;
-
-    if (!hwnd)
-    {
-        ReleaseCapture();
-        return old_capture_wnd;
-    }
-	captureWnd   = hwnd;
-	return old_capture_wnd;
-}
-
-
-/**********************************************************************
- *		ReleaseCapture	(USER.19)
- */
-void WINAPI ReleaseCapture()
-{
-    if (captureWnd == 0) return;
-    captureWnd = 0;
-}
-
-/**********************************************************************
- *		GetCapture 	(USER.236)
- */
-HWND WINAPI GetCapture()
-{
-    return captureWnd;
 }
 

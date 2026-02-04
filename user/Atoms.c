@@ -41,7 +41,6 @@ ATOM WINAPI GlobalAddAtom(LPCSTR lpstr)
 	ATOM res;
 
 	PushDS();
-	SetGlobalTableDS();
 	FUNCTION_START
 
 	if (HIWORD(lpstr))
@@ -52,6 +51,8 @@ ATOM WINAPI GlobalAddAtom(LPCSTR lpstr)
 	{
 		TRACE("%04x ", LOWORD(lpstr) );
 	}
+
+	SetGlobalTableDS();
 
 	res=AddAtom(lpstr);
 
