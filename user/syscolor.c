@@ -25,42 +25,10 @@
 
 struct SysColorObjects sysColorObjects = { 0, };
 
-/* 
- * Default system colors for Windows 3.0 with VGA.DRV driver.
- * These are AUTHENTIC values extracted from the original VGA driver.
- * Note: Windows 3.1 used different values (e.g., blue highlight).
- */
-static char * DefSysColors[] =
-{
-    /* WIN.INI key         Default VGA.DRV value  : Windows CONSTANT        */
-    "Scrollbar",        "224 224 224",      /* COLOR_SCROLLBAR           */
-    "Background",       "192 192 192",      /* COLOR_BACKGROUND          */
-    "ActiveTitle",      "0 64 128",         /* COLOR_ACTIVECAPTION       */
-    "InactiveTitle",    "255 255 255",      /* COLOR_INACTIVECAPTION     */
-    "Menu",             "255 255 255",      /* COLOR_MENU                */
-    "Window",           "255 255 255",      /* COLOR_WINDOW              */
-    "WindowFrame",      "0 0 0",            /* COLOR_WINDOWFRAME         */
-    "MenuText",         "0 0 0",            /* COLOR_MENUTEXT            */
-    "WindowText",       "0 0 0",            /* COLOR_WINDOWTEXT          */
-    "TitleText",        "255 255 255",      /* COLOR_CAPTIONTEXT         */
-    "ActiveBorder",     "128 128 128",      /* COLOR_ACTIVEBORDER        */
-    "InactiveBorder",   "255 255 255",      /* COLOR_INACTIVEBORDER      */
-    "AppWorkspace",     "255 255 232",      /* COLOR_APPWORKSPACE        */
-    "Hilight",          "0 0 0",            /* COLOR_HIGHLIGHT           */
-    "HilightText",      "255 255 255",      /* COLOR_HIGHLIGHTTEXT       */
-    "ButtonFace",       "192 192 192",      /* COLOR_BTNFACE             */
-    "ButtonShadow",     "128 128 128",      /* COLOR_BTNSHADOW           */
-    "GrayText",         "192 192 192",      /* COLOR_GRAYTEXT            */
-    "ButtonText",       "0 0 0",            /* COLOR_BTNTEXT             */
-    "InactiveTitleText","0 0 0",            /* COLOR_INACTIVECAPTIONTEXT */
-    "ButtonHilight",    "255 255 255"       /* COLOR_BTNHIGHLIGHT        */
-};
-
 #define NUM_SYS_COLORS     (COLOR_BTNHIGHLIGHT+1)
 
 static COLORREF SysColors[NUM_SYS_COLORS];
 
-//#define MAKE_SOLID(color) (PALETTEINDEX(GetNearestPaletteIndex(STOCK_DEFAULT_PALETTE,(color))))
 #define MAKE_SOLID(color) (PALETTEINDEX(GetNearestPaletteIndex(GetStockObject(DEFAULT_PALETTE), (color))))
 
 /*************************************************************************
@@ -230,27 +198,6 @@ static void SYSCOLOR_SetColor( int index, COLORREF color )
     }
 }
 
-#if 0
-/*************************************************************************
- *             SYSCOLOR_Init
- */
-void SYSCOLOR_Init(void)
-{
-    int i;
-    char **p;
-    char buffer[100];
-
-	FUNCTION_START
-
-    for (i = 0, p = DefSysColors; i < NUM_SYS_COLORS; i++, p += 2)
-    {
-        GetProfileString("colors", p[0], p[1], buffer, 100);
-        TRACE("Color %S: %S", p[0], buffer);        
-        SYSCOLOR_SetColor(i, ParseColorString(buffer));
-    }
-	FUNCTION_END
-}
-#endif
 void SYSCOLOR_Init(void)
 {
     int i;

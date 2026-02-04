@@ -5,7 +5,7 @@ USER.EXE consist of 3 code segments (2 for code and one only for debug version) 
 Heaps are:
 
 1. Main user heap, selected by SetUserHeapDS()
-2. Global Atom table head, selected by SetGlobalTableDS()
+2. Global Atom table heap, selected by SetGlobalTableDS()
 
 Other heaps not implemented yet, but in plans to implement.
 

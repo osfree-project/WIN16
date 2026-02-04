@@ -574,12 +574,7 @@ extern HBITMAP hbitmapStdMnArrow;
 
 WORD WINAPI GetTaskQueue(HANDLE hTask);
 
-#define ME_MOVE 0x01
-#define ME_LDOWN 0x02
-#define ME_LUP 0x04
-#define ME_RDOWN 0x08
-#define ME_RUP 0x10
-#define ME_ABSOLUTE 0x8000
+#include "events.h"
 
 //@todo is it really existent???
 #define WM_SETVISIBLE           0x0009

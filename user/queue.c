@@ -11,6 +11,10 @@
 
 static MESSAGEQUEUE FAR *sysMsgQueue;
 
+//////////////////////////////////////////////////////////////////////////
+// Private block
+//////////////////////////////////////////////////////////////////////////
+
 /***********************************************************************
  *	     QUEUE_DumpQueue
  */
@@ -307,60 +311,76 @@ void FAR hardware_event( WORD message, WORD wParam, LONG lParam,
  */
 HTASK QUEUE_GetQueueTask( HQUEUE hQueue )
 {
-    MESSAGEQUEUE FAR *queue = (MESSAGEQUEUE FAR *)GlobalLock( hQueue );
-    return (queue) ? queue->hTask : 0 ;
+	HTASK retVal=0;
+	MESSAGEQUEUE FAR *queue = (MESSAGEQUEUE FAR *)GlobalLock( hQueue );
+
+	if (queue)
+	{
+		retVal=queue->hTask;
+		GlobalUnlock(hQueue);
+	}
+	return retVal;
 }
 
 
 /***********************************************************************
  *           QUEUE_IncPaintCount
  */
-void QUEUE_IncPaintCount( HQUEUE hQueue )
+VOID QUEUE_IncPaintCount( HQUEUE hQueue )
 {
-    MESSAGEQUEUE FAR *queue;
+	MESSAGEQUEUE FAR *queue;
 
-    if (!(queue = (MESSAGEQUEUE FAR *)GlobalLock( hQueue ))) return;
-    queue->wPaintCount++;
-    queue->status |= QS_PAINT;
-    queue->tempStatus |= QS_PAINT;    
+	if (queue = (MESSAGEQUEUE FAR *)GlobalLock( hQueue ))
+	{
+		queue->wPaintCount++;
+		queue->status |= QS_PAINT;
+		queue->tempStatus |= QS_PAINT;    
+		GlobalUnlock(hQueue);
+	}
 }
 
 
 /***********************************************************************
  *           QUEUE_DecPaintCount
  */
-void QUEUE_DecPaintCount( HQUEUE hQueue )
+VOID QUEUE_DecPaintCount( HQUEUE hQueue )
 {
-    MESSAGEQUEUE FAR *queue;
+	MESSAGEQUEUE FAR *queue;
 
-    if (!(queue = (MESSAGEQUEUE FAR *)GlobalLock( hQueue ))) return;
-    queue->wPaintCount--;
-    if (!queue->wPaintCount) queue->status &= ~QS_PAINT;
+	if (queue = (MESSAGEQUEUE FAR *)GlobalLock( hQueue ))
+	{
+		queue->wPaintCount--;
+		if (!queue->wPaintCount) queue->status &= ~QS_PAINT;
+		GlobalUnlock(hQueue);
+	}
 }
 
 
 /***********************************************************************
  *           QUEUE_IncTimerCount
  */
-void QUEUE_IncTimerCount( HQUEUE hQueue )
+VOID QUEUE_IncTimerCount( HQUEUE hQueue )
 {
-    MESSAGEQUEUE FAR *queue;
+	MESSAGEQUEUE FAR *queue;
 
-    if (!(queue = (MESSAGEQUEUE FAR *)GlobalLock( hQueue ))) return;
-    queue->wTimerCount++;
-    queue->status |= QS_TIMER;
-    queue->tempStatus |= QS_TIMER;
+	if (queue = (MESSAGEQUEUE FAR *)GlobalLock( hQueue ))
+	{
+		queue->wTimerCount++;
+		queue->status |= QS_TIMER;
+		queue->tempStatus |= QS_TIMER;
+		GlobalUnlock( hQueue );
+	}
 }
 
 
 /***********************************************************************
  *           QUEUE_DecTimerCount
  */
-void QUEUE_DecTimerCount( HQUEUE hQueue )
+VOID QUEUE_DecTimerCount( HQUEUE hQueue )
 {
 	MESSAGEQUEUE FAR *queue;
 
-	if ((queue = (MESSAGEQUEUE FAR *)GlobalLock( hQueue )))
+	if (queue = (MESSAGEQUEUE FAR *)GlobalLock( hQueue ))
 	{
 		queue->wTimerCount--;
 		if (!queue->wTimerCount) queue->status &= ~QS_TIMER;
@@ -369,28 +389,50 @@ void QUEUE_DecTimerCount( HQUEUE hQueue )
 }
 
 
+//////////////////////////////////////////////////////////////////////////
+// Public block
+//////////////////////////////////////////////////////////////////////////
+
 /***********************************************************************
  *           PostQuitMessage   (USER.6)
  */
-void WINAPI PostQuitMessage( int exitCode )
+VOID WINAPI PostQuitMessage( int exitCode )
 {
-    MESSAGEQUEUE FAR *queue;
+	MESSAGEQUEUE FAR *queue;
+	HQUEUE hqTask;
 
-    if (!(queue = (MESSAGEQUEUE FAR *)GlobalLock( GetTaskQueue(0) ))) return;
-    queue->wPostQMsg = TRUE;
-    queue->wExitCode = (WORD)exitCode;
+	hqTask=GetTaskQueue(0);
+
+	if (queue = (MESSAGEQUEUE FAR *)GlobalLock(hqTask))
+	{
+		queue->wPostQMsg = TRUE;
+		queue->wExitCode = (WORD)exitCode;
+		GlobalUnlock(hqTask);
+	}
 }
 
 
 /***********************************************************************
  *           GetWindowTask   (USER.224)
  */
-HTASK WINAPI GetWindowTask( HWND hwnd )
+HTASK WINAPI GetWindowTask(HWND hWnd)
 {
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
+	WND *wndPtr;
+	HTASK retVal;
 
-    if (!wndPtr) return 0;
-    return QUEUE_GetQueueTask( wndPtr->hmemTaskQ );
+	PushDS();
+	SetUserHeapDS();
+
+	wndPtr = WIN_FindWndPtr( hWnd );
+
+	if (wndPtr)
+	{
+		retVal=QUEUE_GetQueueTask( wndPtr->hmemTaskQ );
+		LocalUnlock(hWnd);
+	}
+
+	PopDS();
+	return retVal;
 }
 
 
@@ -399,31 +441,31 @@ HTASK WINAPI GetWindowTask( HWND hwnd )
  */
 BOOL WINAPI SetMessageQueue( int size )
 {
-    HQUEUE hQueue, hNewQueue;
-    MESSAGEQUEUE FAR *queuePtr;
+	HQUEUE hQueue, hNewQueue;
+	MESSAGEQUEUE FAR *queuePtr;
 
-    if ((size > MAX_QUEUE_SIZE) || (size <= 0)) return TRUE;
+	if ((size > MAX_QUEUE_SIZE) || (size <= 0)) return TRUE;
 
-    if( !(hNewQueue = QUEUE_CreateMsgQueue( size ))) 
-    {
-	TRACE("SetMessageQueue: failed!\n");
-	return FALSE;
-    }
-
-
-    /* Free the old message queue */
-    if ((hQueue = GetTaskQueue(0)) != 0) QUEUE_DeleteMsgQueue( hQueue );
-
-    /* Link new queue into list */
-    queuePtr = (MESSAGEQUEUE FAR *)GlobalLock( hNewQueue );
-    queuePtr->hTask = GetCurrentTask();
-    queuePtr->next  = hFirstQueue;
-    hFirstQueue = hNewQueue;
+	if( !(hNewQueue = QUEUE_CreateMsgQueue( size ))) 
+	{
+		TRACE("SetMessageQueue: failed!\n");
+		return FALSE;
+	}
 
 
-    SetTaskQueue(0, hNewQueue);
+	/* Free the old message queue */
+	if ((hQueue = GetTaskQueue(0)) != 0) QUEUE_DeleteMsgQueue( hQueue );
 
-    return TRUE;
+	/* Link new queue into list */
+	queuePtr = (MESSAGEQUEUE FAR *)GlobalLock( hNewQueue );
+	queuePtr->hTask = GetCurrentTask();
+	queuePtr->next  = hFirstQueue;
+	GlobalUnlock(hNewQueue);
+	hFirstQueue = hNewQueue;
+
+	SetTaskQueue(0, hNewQueue);
+
+	return TRUE;
 }
 
 
@@ -432,13 +474,21 @@ BOOL WINAPI SetMessageQueue( int size )
  */
 DWORD WINAPI GetQueueStatus( UINT flags )
 {
-    MESSAGEQUEUE FAR *queue;
-    DWORD ret;
+	MESSAGEQUEUE FAR *queue;
+	DWORD ret;
+	HQUEUE hqTask;
+	DWORD retVal=0;
 
-    if (!(queue = (MESSAGEQUEUE FAR *)GlobalLock( GetTaskQueue(0) ))) return 0;
-    ret = MAKELONG( queue->tempStatus, queue->status );
-    queue->tempStatus = 0;
-    return ret & MAKELONG( flags, flags );
+	hqTask=GetTaskQueue(0);
+
+	if (queue = (MESSAGEQUEUE FAR *)GlobalLock(hqTask))
+	{
+		ret = MAKELONG( queue->tempStatus, queue->status );
+		queue->tempStatus = 0;
+		retVal=ret & MAKELONG( flags, flags );
+		GlobalUnlock(hqTask);
+	}
+	return retVal;
 }
 
 
@@ -447,44 +497,76 @@ DWORD WINAPI GetQueueStatus( UINT flags )
  */
 BOOL WINAPI GetInputState()
 {
-    MESSAGEQUEUE FAR *queue;
+	MESSAGEQUEUE FAR *queue;
+	HQUEUE hqTask;
+	BOOL retVal=FALSE;
 
-    if (!(queue = (MESSAGEQUEUE FAR *)GlobalLock( GetTaskQueue(0) ))) return FALSE;
-    return queue->status & (QS_KEY | QS_MOUSEBUTTON);
+	hqTask=GetTaskQueue(0);
+
+	if (queue = (MESSAGEQUEUE FAR *)GlobalLock(hqTask))
+	{
+		retVal=queue->status & (QS_KEY | QS_MOUSEBUTTON);
+		GlobalUnlock(hqTask);
+	}
+	return retVal;
 }
 
 
 /***********************************************************************
  *           GetMessagePos   (USER.119)
  */
-DWORD WINAPI GetMessagePos(void)
+DWORD WINAPI GetMessagePos(VOID)
 {
-    MESSAGEQUEUE FAR *queue;
+	MESSAGEQUEUE FAR *queue;
+	HQUEUE hqTask;
+	DWORD retVal=0;
 
-    if (!(queue = (MESSAGEQUEUE FAR *)GlobalLock( GetTaskQueue(0) ))) return 0;
-    return queue->GetMessagePosVal;
+	hqTask=GetTaskQueue(0);
+
+	if (queue = (MESSAGEQUEUE FAR *)GlobalLock(hqTask))
+	{
+		retVal=queue->GetMessagePosVal;
+		GlobalUnlock(hqTask);
+	}
+	return retVal;
 }
 
 
 /***********************************************************************
  *           GetMessageTime   (USER.120)
  */
-LONG WINAPI GetMessageTime(void)
+LONG WINAPI GetMessageTime(VOID)
 {
-    MESSAGEQUEUE FAR *queue;
+	MESSAGEQUEUE FAR *queue;
+	HQUEUE hqTask;
+	LONG retVal=0;
 
-    if (!(queue = (MESSAGEQUEUE FAR *)GlobalLock( GetTaskQueue(0) ))) return 0;
-    return queue->GetMessageTimeVal;
+	hqTask=GetTaskQueue(0);
+
+    	if (queue = (MESSAGEQUEUE FAR *)GlobalLock(hqTask))
+	{
+		retVal=queue->GetMessageTimeVal;
+		GlobalUnlock(hqTask);
+	};
+	return retVal;
 }
 
 
 /***********************************************************************
  *           GetMessageExtraInfo   (USER.288)
  */
-LONG WINAPI GetMessageExtraInfo(void)
+LONG WINAPI GetMessageExtraInfo(VOID)
 {
-    MESSAGEQUEUE FAR *queue;
+	MESSAGEQUEUE FAR *queue;
+	HQUEUE hqTask;
+	LONG retVal=0;
 
-    if (!(queue = (MESSAGEQUEUE FAR *)GlobalLock( GetTaskQueue(0) ))) return 0;
-    return queue->GetMessageExtraInfoVal;
+	hqTask=GetTaskQueue(0);
+
+	if (queue = (MESSAGEQUEUE FAR *)GlobalLock(hqTask))
+	{
+		retVal=queue->GetMessageExtraInfoVal;
+		GlobalUnlock(hqTask);
+	}
+	return retVal;
 }

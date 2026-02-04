@@ -66,8 +66,9 @@ static BOOL MSG_TranslateMouseMsg( MSG FAR *msg, BOOL remove )
 	msg->lParam = MAKELONG( pt.x, pt.y );
         /* No need to further process the message */
         //hook.hwnd = msg->hwnd;
-	TRACE("123");
-	for(;;);
+//	TRACE("123");
+//	for(;;);
+	return TRUE;
 //        return !HOOK_CallHooks( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
 //                                msg->message, (LPARAM)MAKE_SEGPTR(&hook));
     }

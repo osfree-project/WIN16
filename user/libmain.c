@@ -76,7 +76,26 @@ VOID WINAPI LW_LoadSomeStrings()
 
 VOID WINAPI RW_RegisterMenus()
 {
+	WNDCLASS * pWndClass; // For use in registering classes
+	HLOCAL hWndClass;
+
 	FUNCTION_START
+
+	// Allocate 0x1A bytes.
+	hWndClass = UserLocalAlloc(LT_USER_CLASS, LMEM_ZEROINIT, sizeof(WNDCLASS));
+	pWndClass = (WNDCLASS *)LocalLock(hWndClass);
+
+	// Register the PopupMenu class
+	pWndClass->lpszClassName = POPUPMENU_CLASS_ATOM;
+	pWndClass->hCursor = LoadCursor(0, IDC_ARROW);
+	pWndClass->lpfnWndProc = PopupMenuWndProc;
+//	pWndClass->hInstance = hInstance;
+	pWndClass->style = CS_GLOBALCLASS | CS_SAVEBITS;
+	pWndClass->hbrBackground = COLOR_BACKGROUND;
+	RegisterClass(pWndClass);
+
+	LocalUnlock(hWndClass);
+	LocalFree(hWndClass); // Don't need WNDCLASS anymore!
 
 	FUNCTION_END
 }

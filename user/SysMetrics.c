@@ -56,7 +56,7 @@ static int SysMetricsDef[] =
         480,            /* SM_CYSCREEN         1 */
         20,             /* SM_CXVSCROLL        2 */
         20,             /* SM_CYHSCROLL        3 */
-        18/*25*/,             /* SM_CYCAPTION        4 */
+        18/*25*/,	/* SM_CYCAPTION        4 */
         1,              /* SM_CXBORDER         5 */
         1,              /* SM_CYBORDER         6 */
         1 /*4*/,        /* SM_CXDLGFRAME       7 */
@@ -138,35 +138,6 @@ static int SysMetricsDef[] =
 	75,		/* SM_CMETRICS		75 */
   };
 
-static COLORREF SysColors[] =
-  {
-	RGB(192,192,192),	/* COLOR_SCROLLBAR */
-	RGB(255,255,255),	/* COLOR_BACKGROUND */
-	RGB(0,0,192),		/* COLOR_ACTIVECAPTION */
-	RGB(255,255,255),	/* COLOR_INACTIVECAPTION */
-	RGB(255,255,255),	/* COLOR_MENU */
-	RGB(255,255,255),	/* COLOR_WINDOW */
-	RGB(0,0,0),		/* COLOR_WINDOWFRAME */
-	RGB(0,0,0),		/* COLOR_MENUTEXT */
-	RGB(0,0,0),		/* COLOR_WINDOWTEXT */
-	RGB(255,255,255),	/* COLOR_CAPTIONTEXT */
-	RGB(192,192,192),	/* COLOR_ACTIVEBORDER */
-	RGB(192,192,192),	/* COLOR_INACTIVEBORDER */
-	RGB(192,192,192),	/* COLOR_APPWORKSPACE */
-	RGB(255,0,0),		/* COLOR_HIGHLIGHT */
-	RGB(255,255,255),	/* COLOR_HIGHLIGHTTEXT */
-	RGB(192,192,192),	/* COLOR_BTNFACE */
-	RGB(128,128,128),	/* COLOR_BTNSHADOW */
-	RGB(128,128,128),	/* COLOR_GRAYTEXT */
-	RGB(0,0,0),		/* COLOR_BTNTEXT */
-	RGB(0,0,0),		/* COLOR_INACTIVECAPTIONTEXT */
-	RGB(255,255,255),	/* COLOR_BTNHIGHLIGHT */
-	/* WIN32 */
-	RGB(0,0,0),		/* (21) COLOR_3DDKSHADOW */
-	RGB(192,192,192),	/* (22) COLOR_3DLIGHT */
-	RGB(0,0,0),		/* (23) COLOR_INFOTEXT */
-	RGB(255,255,0),		/* (24) COLOR_INFOBK */
-  };
 
 static BOOL bWarningBeep = FALSE;
 static BOOL bFastTaskSwitch = FALSE;
