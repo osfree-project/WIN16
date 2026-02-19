@@ -1,6 +1,17 @@
 #define OEMRESOURCE
-#include <windows.h>
 
+#include <windows.h>
+#include <syscolor.h>
+
+// OpenWatcom has incorrect SM_CMETRICS constant for Windows 3.0
+#if (WINVER < 0x030a)
+#ifdef SM_CMETRICS
+#undef SM_CMETRICS
+#define SM_CMETRICS 36
+#endif
+#endif
+
+//@todo recheck message queue internal structure
 #pragma pack(1)
 // Message Queue structures. See Matt Pietrek for description.
 
@@ -53,6 +64,8 @@ typedef QUEUE NEAR * NPQUEUE;
 typedef QUEUE FAR * LPQUEUE;
 
 #define HQUEUE HGLOBAL
+
+#include <queue.h>
 
 HQUEUE WINAPI SetTaskQueue(HTASK, HQUEUE);
 
@@ -186,13 +199,13 @@ extern void _cdecl far printf (char far *format,...);
 #define OutputDebugString printf
 #define FUNCTION_START \
 {\
-	static const char __based(__segname("FIXED_TEXT")) msg[] = __FUNCTION__ " start\r\n"; \
+	static const char __based(__segname("DEBUG_TEXT")) msg[] = __FUNCTION__ " start\r\n"; \
 	OutputDebugString(msg);\
 }
 
 #define FUNCTION_END \
 {\
-	static const char __based(__segname("FIXED_TEXT")) msg[] = __FUNCTION__ " end\r\n"; \
+	static const char __based(__segname("DEBUG_TEXT")) msg[] = __FUNCTION__ " end\r\n"; \
 	OutputDebugString(msg);\
 }
 
@@ -218,9 +231,9 @@ extern void _cdecl far printf (char far *format,...);
 #else
 #define FUNCTION_START
 #define FUNCTION_END
-#define TRACE
-#define WARN
-#define FIXME
+#define TRACE(...) {};
+#define WARN(...) {};
+#define FIXME(...) {};
 #endif
 
 /* Resources */
@@ -228,15 +241,38 @@ extern void _cdecl far printf (char far *format,...);
 #define IDS_WINDOWS 0x00					// Windows
 #define IDS_COLORS 0x01						// Colors
 #define IDS_PATTERN 0x2						// Patterm
-#define IDS_FONTS 0x3						// Fonts
-#define IDS_CURSORBLINKRATE 0x4					// CursorBlinkRate
-#define IDS_SWAPMOUSEBUTTONS 0x5				// SwapMouseButtons
-#define IDS_DOUBLECLICKSPEED 0x6				// DoubleClickSpeed
+#define IDS_FONTS 0x03						// Fonts
+#define IDS_CURSORBLINKRATE 0x04				// CursorBlinkRate
+#define IDS_SWAPMOUSEBUTTONS 0x05				// SwapMouseButtons
+#define IDS_DOUBLECLICKSPEED 0x06				// DoubleClickSpeed
 #define IDS_TYPEAHEAD 0x07					// TypeAhead
 #define IDS_GRIDGRANULARITY 0x08				// GridGranularity
 #define IDS_BEEP 0x09						// Beep
 #define IDS_BORDER 0x0e                                         // Border
 #define IDS_DEFAULTQUEUESIZE 0x0f				// DefaultQueueSize
+#define IDS_SCROLLBAR 0x20					// Scrollbar
+#define IDS_BACKGROUND 0x21					// Background
+#define IDS_ACTIVETITLE 0x22					// ActiveTitle
+#define IDS_INACTIVETITLE 0x23					// InactiveTitle
+#define IDS_MENU 0x24						// Menu
+#define IDS_WINDOW 0x25						// Window
+#define IDS_WINDOWFRAME 0x26					// WindowFrame
+#define IDS_MENUTEXT 0x27					// MenuText
+#define IDS_WINDOWTEXT 0x28					// WindowText
+#define IDS_TITLETEXT 0x29					// TitleText
+#define IDS_ACTIVEBORDER 0x2a					// ActiveBorder
+#define IDS_INACTIVEBORDER 0x2b					// InactiveBorder
+#define IDS_APPWORKSPACE 0x2c					// AppWorkspace
+#define IDS_HILIGHT 0x2d					// Hilight
+#define IDS_HILIGHTTEXT 0x2e					// HilightText
+#define IDS_BUTTONFACE 0x2f					// ButtonFace
+#define IDS_BUTTONSHADOW 0x30					// ButtonShadow
+#define IDS_GRAYTEXT 0x31					// GrayText
+#define IDS_BUTTONTEXT 0x32					// ButtonText
+#if WINVER >= 0x030a
+#define IDS_INACTIVETITLETEXT 0x33				// InactiveTitleText
+#define IDS_BUTTONHILIGHT 0x34					// ButtonHilight
+#endif
 #define IDS_SYSTEMERROR 0x4b					// System Error
 #define IDS_DIVIDEBYZERO 0x4c					// Divide By Zero or Overflow Error
 #define IDS_UNTITLED 0x4d					// Untitiled
@@ -260,7 +296,7 @@ extern void _cdecl far printf (char far *format,...);
 #define IDS_COOLSWITCH 0x6f					// CoolSwitch
 
 #define IDM_SYSMENU 0x01
-
+#define IDM_SYSMENUMDI 0x02
 
 /* Varoius undocumented protos */
 HANDLE WINAPI FarGetOwner( HGLOBAL handle );
@@ -320,12 +356,12 @@ struct tagMOUSEINFO {
 
 /* Global variables in code segment to be accessable without DS touch */
 extern WORD __based(__segname("_TEXT")) GlobalAtomTable_Selector; // Selector of Global Atom Table
-extern WORD __based(__segname("_TEXT")) USER_HeapSel;  /* USER heap selector (hinstance) */
+extern WORD __based(__segname("_TEXT")) USER_HeapSel;  /* USER heap selector  */
 extern HANDLE __based(__segname("_TEXT")) firstDCE;
 extern HANDLE __based(__segname("_TEXT")) hGDI;
 
-extern HMODULE HModuleWin;
-extern HINSTANCE HInstanceDisplay;
+extern HMODULE hModuleWin;
+extern HINSTANCE hInstanceDisplay;
 
 extern int ClBorder;
 extern int CBEntries;
@@ -338,6 +374,7 @@ extern int DefQueueSize;
 extern HCLASS firstClass;
 
 extern char DISPLAY[];
+extern char SOUND[];
 
 HDC WINAPI GetDCState(HDC);
 VOID WINAPI SetDCState(HDC, HDC);
@@ -362,11 +399,11 @@ extern HCURSOR HCursSizeNESW;
 extern HCURSOR HCursSizeNS;
 extern HCURSOR HCursSizeWE;
 
+extern int SysMetricsDef[];
+
 extern int FDragFullWindows;
 extern int FFastAltTab;
 extern int CXYGranularity;
-extern int CXScreen;
-extern int CYScreen;
 extern int CXSize;
 extern int CYSize;
 extern int defaultVal;
@@ -555,6 +592,7 @@ extern FARPROC lpfnSoundEnable;
 
 extern HQUEUE hFirstQueue;
 extern HQUEUE hmemSysMsgQueue;
+extern MESSAGEQUEUE FAR *sysMsgQueue;
 
 extern HWND hwndSysModal;
 extern WORD wDragWidth;
@@ -799,7 +837,6 @@ extern CLASS * CLASS_FindClassPtr( HCLASS hclass );
 #define MAGIC_DONTCARE	      0xffff
 
 
-extern VOID LW_InitSysMetrics(VOID);
 int WINAPI SelectVisRgn( HDC hdc, HRGN hrgn );
 
   /* Built-in class names (see _Undocumented_Windows_ p.418) */
@@ -830,6 +867,8 @@ extern HWND WIN_GetTopParent( HWND hwnd );
 extern HINSTANCE WIN_GetWindowInstance( HWND hwnd );
 
 LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam );
+
+
 
 LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect, RECT FAR *newWindowRect,
 			    RECT *oldWindowRect, RECT *oldClientRect,

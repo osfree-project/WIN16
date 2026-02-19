@@ -157,18 +157,22 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
     case WM_ERASEBKGND:
     case WM_ICONERASEBKGND:
 	{
-		TRACE("ERASE");
 	    if (!(classPtr = CLASS_FindClassPtr( wndPtr->hClass ))) return 0;
 	    if (!classPtr->wc.hbrBackground) return 0;
+		TRACE("ERASE hbr=%d", classPtr->wc.hbrBackground);
             if (classPtr->wc.hbrBackground <= (HBRUSH)(COLOR_MAX+1))
             {
                  HBRUSH hbrush;
+		TRACE("ERASE1");
                  hbrush = CreateSolidBrush(GetSysColor(((DWORD)classPtr->wc.hbrBackground)-1));
+		TRACE("ERASE1 hbr=%d", hbrush);
                  FillWindow( GetParent(hwnd), hwnd, (HDC)wParam, hbrush);
+//		FillRect((HDC)wParam, &wndPtr->rectClient, hbrush);
                  DeleteObject (hbrush);
             }
             else
 		{
+		TRACE("ERASE2");
 	         FillWindow(GetParent(hwnd), hwnd, (HDC)wParam, classPtr->wc.hbrBackground );
 		}
 	    return 1;
@@ -197,7 +201,6 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 
     case WM_CTLCOLOR:
 	{
-#if 0
 	    if (HIWORD(lParam) == CTLCOLOR_SCROLLBAR)
 	    {
 		SetBkColor( (HDC)wParam, RGB(255, 255, 255) );
@@ -211,7 +214,6 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 		SetTextColor( (HDC)wParam, GetSysColor(COLOR_WINDOWTEXT) );
 		return (LONG)sysColorObjects.hbrushWindow;
 	    }
-#endif
 	}
 	
     case WM_GETTEXT:
@@ -255,10 +257,10 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 
     case WM_SYSCOMMAND:
 	{
-          POINT pt;
-	pt.x=LOWORD(lParam);
-	pt.y=HIWORD(lParam);
-          return NC_HandleSysCommand( hwnd, wParam, pt );
+		POINT pt;
+		pt.x=LOWORD(lParam);
+		pt.y=HIWORD(lParam);
+		return NC_HandleSysCommand( hwnd, wParam, pt );
 	}
     case WM_KEYDOWN:
 

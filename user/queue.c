@@ -9,7 +9,6 @@
 
 #define MAX_QUEUE_SIZE   120  /* Max. size of a message queue */
 
-static MESSAGEQUEUE FAR *sysMsgQueue;
 
 //////////////////////////////////////////////////////////////////////////
 // Private block
@@ -70,9 +69,7 @@ void QUEUE_WalkQueues(void)
             TRACE("*** Bad queue handle %04x\n", hQueue );
             return;
         }
-        TRACE("%04x %5d %4d %04x %S\n",
-                 hQueue, queue->msgSize, queue->msgCount, queue->hTask,
-                 ""/*MODULE_GetModuleName( GetExePtr(queue->hTask) )*/ );
+        TRACE("%04x %5d %4d %04x %S\n", hQueue, queue->msgSize, queue->msgCount, queue->hTask, ""/*MODULE_GetModuleName( GetExePtr(queue->hTask) )*/ );
         hQueue = queue->next;
     }
 }
@@ -244,65 +241,6 @@ void QUEUE_RemoveMsg( MESSAGEQUEUE FAR * msgQueue, int pos )
     msgQueue->msgCount--;
     if (!msgQueue->msgCount) msgQueue->status &= ~QS_POSTMESSAGE;
     msgQueue->tempStatus = 0;
-}
-
-
-/***********************************************************************
- *           hardware_event
- *
- * Add an event to the system message queue.
- */
-void FAR hardware_event( WORD message, WORD wParam, LONG lParam,
-		     WORD xPos, WORD yPos, DWORD time, DWORD extraInfo )
-{
-	MSG FAR *msg;
-	int pos;
-
-	TRACE("msg=%04x", message);
-  
-	if (!sysMsgQueue) return;
-	pos = sysMsgQueue->nextFreeMessage;
-
-	/* Merge with previous event if possible */
-
-	if ((message == WM_MOUSEMOVE) && sysMsgQueue->msgCount)
-	{
-		if (pos > 0) pos--;
-		else pos = sysMsgQueue->queueSize - 1;
-		msg = &sysMsgQueue->messages[pos].msg;
-		if ((msg->message == message) && (msg->wParam == wParam))
-		sysMsgQueue->msgCount--;  /* Merge events */
-	else
-		pos = sysMsgQueue->nextFreeMessage;  /* Don't merge */
-	}
-
-      /* Check if queue is full */
-
-	if ((pos == sysMsgQueue->nextMessage) && sysMsgQueue->msgCount)
-	{
-        /* Queue is full, beep (but not on every mouse motion...) */
-//        if (message != WM_MOUSEMOVE) MessageBeep(0);
-//TRACE("FULL!!");
-		return;
-	}
-
-      /* Store message */
-
-	msg = &sysMsgQueue->messages[pos].msg;
-	msg->hwnd    = 0;
-	msg->message = message;
-	msg->wParam  = wParam;
-	msg->lParam  = lParam;
-	msg->time    = time;
-	msg->pt.x    = xPos & 0xffff;
-	msg->pt.y    = yPos & 0xffff;
-	sysMsgQueue->messages[pos].extraInfo = extraInfo;
-	if (pos < sysMsgQueue->queueSize - 1) pos++;
-	else pos = 0;
-	sysMsgQueue->nextFreeMessage = pos;
-	sysMsgQueue->msgCount++;
-
-//	QUEUE_DumpQueue(hmemSysMsgQueue);
 }
 
 		    

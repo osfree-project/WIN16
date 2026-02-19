@@ -11,18 +11,15 @@ VOID WINAPI PaintRect( HWND hwndParent, HWND hwnd, HDC hdc,
  */
 void WINAPI FillWindow(HWND hwndParent, HWND hwnd, HDC hdc, HBRUSH hbrush)
 {
-    RECT rect;
-    HBRUSH hBrushRed;
-	HPEN hPenBlue;
+	RECT rect;
 
-//	FUNCTION_START
-
+	FUNCTION_START
 	GetClientRect( hwnd, &rect );
 //TRACE("left=%d top=%d right=%d bottom=%d", rect.left, rect.top, rect.right, rect.bottom);
 	DPtoLP( hdc, (LPPOINT)&rect, 2 );
-//TRACE("left=%d top=%d right=%d bottom=%d", rect.left, rect.top, rect.right, rect.bottom);
-	PaintRect( hwndParent, hwnd, hdc, hbrush, &rect );
-//	FUNCTION_END
+TRACE("hdc=%d, hbr=%d left=%d top=%d right=%d bottom=%d", hdc, hbrush, rect.left, rect.top, rect.right, rect.bottom);
+	PaintRect(hwndParent, hwnd, hdc, hbrush, &rect );
+	FUNCTION_END
 }
 
 /***********************************************************************
@@ -44,7 +41,9 @@ HWND WINAPI CreateWindow( LPCSTR className, LPCSTR windowName,
  */
 void WINAPI UpdateWindow( HWND hwnd )
 {
-    RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN );
+	FUNCTION_START
+	RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN );
+	FUNCTION_END
 }
 
 
@@ -53,7 +52,9 @@ void WINAPI UpdateWindow( HWND hwnd )
  */
 void WINAPI InvalidateRect( HWND hwnd, const RECT far *rect, BOOL erase )
 {
-    RedrawWindow( hwnd, rect, 0, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
+	FUNCTION_START
+	RedrawWindow( hwnd, rect, 0, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
+	FUNCTION_END
 }
 
 
@@ -63,7 +64,8 @@ void WINAPI InvalidateRect( HWND hwnd, const RECT far *rect, BOOL erase )
 void WINAPI InvalidateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
 {
 	FUNCTION_START
-    RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
+	RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
+	FUNCTION_END
 }
 
 
@@ -73,7 +75,8 @@ void WINAPI InvalidateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
 void WINAPI ValidateRect( HWND hwnd, const RECT far *rect )
 {
 	FUNCTION_START
-    RedrawWindow( hwnd, rect, 0, RDW_VALIDATE | RDW_NOCHILDREN );
+	RedrawWindow( hwnd, rect, 0, RDW_VALIDATE | RDW_NOCHILDREN );
+	FUNCTION_END
 }
 
 
@@ -83,7 +86,8 @@ void WINAPI ValidateRect( HWND hwnd, const RECT far *rect )
 void WINAPI ValidateRgn( HWND hwnd, HRGN hrgn )
 {
 	FUNCTION_START
-    RedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE | RDW_NOCHILDREN );
+	RedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE | RDW_NOCHILDREN );
+	FUNCTION_END
 }
 
 /**************************************************************************
@@ -331,17 +335,6 @@ void WINAPI ShowScrollBar( HWND hwnd, int nBar, BOOL fShow )
 	FUNCTION_START
     
 }
-
-#if 0
-/**************************************************************************
- *              IsWindowVisible   (USER.49)
- */
-BOOL WINAPI IsWindowVisible( HWND hwnd )
-{
-	FUNCTION_START
-    return FALSE;
-}
-#endif
 
 /**************************************************************************
  *              GetScrollRange   (USER.65)

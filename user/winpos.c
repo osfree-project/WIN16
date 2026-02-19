@@ -127,7 +127,7 @@ void WINAPI GetClientRect( HWND hwnd, LPRECT rect )
 
 	// Switch to USER data segment
 	PushDS();
-	SetDS(USER_HeapSel);	
+	SetUserHeapDS();
 
 	// Get WND structure
 	wndPtr = WIN_FindWndPtr( hwnd );
@@ -764,7 +764,6 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
     wndTemp->hwndLastActive = hWnd;
 
     wIconized = HIWORD(wndTemp->dwStyle & WS_MINIMIZE);
-/* FIXME: Needs a Win32 translation for WINELIB32 */
     SendMessage( hWnd, WM_NCACTIVATE, 1,
 		 MAKELONG(hwndPrevActive,wIconized));
     SendMessage( hWnd, WM_ACTIVATE, (fMouse)? WA_CLICKACTIVE : WA_ACTIVE,
@@ -1159,6 +1158,13 @@ BOOL WINAPI SetWindowPos(HWND hwnd, HWND hwndInsertAfter, int x, int y,
                               RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE );
             }
  	    else
+            if ((oldWindowRect.right < wndPtr->rectWindow.right) ||
+                (oldWindowRect.bottom < wndPtr->rectWindow.bottom))
+            {
+                RedrawWindow( winpos.hwnd, NULL, 0, RDW_INVALIDATE |
+                              RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE );
+            }
+ 	    else
 		if( CombineRgn( hrgn3, hrgn2, hrgn1, RGN_DIFF) != NULLREGION )
 		    RedrawWindow( winpos.hwnd, NULL, hrgn3, RDW_INVALIDATE |
 				  RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE );
@@ -1377,7 +1383,7 @@ HWND WINAPI GetActiveWindow()
 	HWND retVal;
 
 	PushDS();
-	SetDS(USER_HeapSel);
+	SetUserHeapDS();
 	FUNCTION_START
 
     	retVal=hwndActive;
@@ -1399,7 +1405,7 @@ HDC WINAPI BeginPaint( HWND hWnd, LPPAINTSTRUCT lps )
 	HDC retVal;
 
 	PushDS();
-	SetDS(USER_HeapSel);
+	SetUserHeapDS();
 	FUNCTION_START
 
 	retVal=0;
@@ -1449,12 +1455,12 @@ HDC WINAPI BeginPaint( HWND hWnd, LPPAINTSTRUCT lps )
 /***********************************************************************
  *           EndPaint    (USER.40)
  */
-void WINAPI EndPaint( HWND hwnd, const PAINTSTRUCT FAR * lps )
+VOID WINAPI EndPaint( HWND hWnd, const PAINTSTRUCT FAR * lps )
 {
 	FUNCTION_START
 
-	ReleaseDC(hwnd, lps->hdc);
-	ShowCaret(hwnd);
+	ReleaseDC(hWnd, lps->hdc);
+	ShowCaret(hWnd);
 
 	FUNCTION_END
 }

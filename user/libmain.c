@@ -382,19 +382,6 @@ VOID WINAPI LW_LoadResources()
 	SYSCOLOR_SetColor(COLOR_GRAYTEXT, SysColors[COLOR_GRAYTEXT]);
 	SYSCOLOR_SetColor(COLOR_BTNTEXT, SysColors[COLOR_BTNTEXT]);
 #endif    
-#if 0
-	FreeLibrary(HInstanceDisplay);
-
-//	SYSCOLOR_Init();
-
-	hdc=GetDC(0);
-	CXScreen=GetDeviceCaps(hdc, HORZRES);
-	CYScreen=GetDeviceCaps(hdc, VERTRES);
-	ReleaseDC(0, hdc);
-
-	FUNCTION_END
-}
-#endif 
 
 VOID WINAPI LW_OEMCursorInit()
 {
@@ -421,13 +408,9 @@ VOID WINAPI LW_MouseInit()
 //interrupt occurrence. USER and Windows applications subsequently set the
 //shape of the cursor using SetCursor.
 
-VOID WINAPI PASCAL Timer_Event(VOID){
-	 //static count = 0; 
-	 
-	 //count ++ ;
-	 //sendmessage(bScan);
+VOID WINAPI Timer_Event(VOID)
+{
 	CheckCursor();
-//	 printf("\n\rSYSTEM.drv Timer_Event()");
 } 
 
 VOID WINAPI EnableInput()
@@ -437,7 +420,6 @@ VOID WINAPI EnableInput()
 	// See "Undocumented Windows"
 	EnableSystemTimers();
 
-//	printf("EnableSystemTimers()");
 	if(!CreateSystemTimer(100, (FARPROC)Timer_Event ) ){
 		printf(" CreateSystemTimer()  FAILED ! ");
 	}
@@ -456,7 +438,7 @@ VOID WINAPI EnableInput()
 
 	// Look for the presence of a SOUND driver. If found, get
 	// the address of its enabLe() function, and calL it.
-	HModSound = GetModuleHandle("SOUND");
+	HModSound = GetModuleHandle(SOUND);
 	if ( HModSound )
 		lpfnSoundEnable = GetProcAddress(HModSound, "enable");
 
@@ -498,8 +480,8 @@ void WINAPI SetMinMaxInfo(void)
 	FUNCTION_START
 
 	// Initialize default main window size (often a fraction of the screen size)
-	CXSize = CXScreen / 2;
-	CYSize = CYScreen / 2;  
+	CXSize = SysMetricsDef[SM_CXSCREEN] / 2;
+	CYSize = SysMetricsDef[SM_CYSCREEN] / 2;  
 
 	FUNCTION_END
 }
@@ -539,7 +521,7 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 	//and CXVScroLL
 
 	SetMinMaxInfo(); // Appears to initialize some static vars.
-			 // Uses CXScreen, CYScreen, CXBorder, etc ...
+			 // Uses SysMetricsDef[SM_CXSCREEN], SysMetricsDef[SM_CYSCREEN], CXBorder, etc ...
 
 	// Allocate 0x1A bytes.
 	hWndClass = UserLocalAlloc(LT_USER_CLASS, LMEM_ZEROINIT, sizeof(WNDCLASS));
@@ -560,7 +542,7 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 	pWndClass->lpfnWndProc = SwitchWndProc;
 	pWndClass->hInstance = hInstance;
 	pWndClass->hIcon = LoadIcon(NULL, IDI_APPLICATION); 
-	pWndClass->style = CS_GLOBALCLASS /*| CS_SAVEBITS /*| CS_VREDRAW | CS_HREDRAW*/;
+	pWndClass->style = CS_GLOBALCLASS /*| CS_VREDRAW | CS_HREDRAW /*| CS_SAVEBITS */;
 	pWndClass->hbrBackground = COLOR_WINDOW;
 	RegisterClass( pWndClass );
 
@@ -703,7 +685,7 @@ VOID WINAPI LW_DisplayDriverInit()
 	// ordinal of 92 (0x5C)
 	FOnBoardBitmap = GetDeviceCaps(hDC, RASTERCAPS) & 0x0040;
 	if (FOnBoardBitmap)
-		LpSaveBitmap=GetProcAddress(HInstanceDisplay,MAKELP(0,92));
+		LpSaveBitmap=GetProcAddress(hInstanceDisplay,MAKELP(0,92));
 	
 	//Done with the device context
 	ReleaseDC(0, hDC);
@@ -712,7 +694,7 @@ VOID WINAPI LW_DisplayDriverInit()
 	// tells the display driver when screen updates should be
 	// enabled or disabled.
 	LpDisplayCriticalSection =
-		GetProcAddress( HInstanceDisplay, MAKELP(0, 500) );
+		GetProcAddress( hInstanceDisplay, MAKELP(0, 500) );
 	FUNCTION_END
 }
 
@@ -816,190 +798,190 @@ EmptyMessages:
 /**********************************************************************************
  *
  * This is main initialization code of USER.EXE, same as LoadWindows functions in
- * original Windows
+ * original Windows (see Windows Internals).
  *
  */
 
-BOOL PASCAL LibMain(HINSTANCE hInstance)
+BOOL PASCAL LibMain(WORD wHeapSeg, HINSTANCE hInstance , WORD wHeapSize)
 {
 	TRACE("Windows user interface implementation.\r\n"
 		"osFree Janus project (c) 2026 osFree\r\n"
 		"GNU LGPL v2.1 or later");
 
 	FUNCTION_START
-	TRACE("hInstance=%x", hInstance);
+	TRACE("wHeapSeg=0x%04x hInstance=0x%04x wHeapSize=0x%04x", wHeapSeg, hInstance, wHeapSize);
 
-        // Save the module and instance handles away in global vars
-	USER_HeapSel=hInstance;
-	// Don't use MK_FP here. For 0:xxxx far pointer 0 will be replaced by DS segment. Use MAKELP which preveny it.
-	HModuleWin = GetModuleHandle(MAKELP(0, hInstance));
+	if (wHeapSize)
+	{
+		// Initialize local heap
+		LocalInit(wHeapSeg, 0, wHeapSize);
 
-	// Loads USER strings variables from resources
-	LW_LoadSomeStrings();
+		// Save the module and instance handles away in global vars
+		USER_HeapSel=wHeapSeg;
 
-        // Get the number of entries in the system message queue and mul to 2
-	CBEntries=UT_GetIntFromProfile(IDS_TYPEAHEAD, 0x3c) << 1;
-        // Get the default number of messages in a task queue
-	DefQueueSize=UT_GetIntFromProfile(IDS_DEFAULTQUEUESIZE, 8);
+		// Don't use MK_FP here. For 0:xxxx far pointer 0 will be replaced by DS segment. Use MAKELP which prevent it.
+		hModuleWin = GetModuleHandle(MAKELP(0, hInstance));
+		TRACE("hModule=0x%04x", hModuleWin);
 
-        // Create an application message queue. This is needed to create windows.
-	SetMessageQueue(DefQueueSize);
+		// Loads USER strings variables from resources
+		LW_LoadSomeStrings();
 
-	// GDI module handle
-	hGDI = LoadLibrary( "GDI.EXE" );
+		// Get the number of entries in the system message queue and mul to 2
+		CBEntries=UT_GetIntFromProfile(IDS_TYPEAHEAD, 0x3c) << 1;
+		// Get the default number of messages in a task queue
+		DefQueueSize=UT_GetIntFromProfile(IDS_DEFAULTQUEUESIZE, 8);
 
-	// Get the default border width for a window. Default is 3.
-	ClBorder = UT_GetIntFromProfile(IDS_BORDER, 3);
-	if (ClBorder < 1) // Make sure it's got a reasonable
-            ClBorder = 1; // value.
-        if (ClBorder > 0x32 )
-            ClBorder = 0x32;
+		// Create an application message queue. This is needed to create windows.
+		SetMessageQueue(DefQueueSize);
 
-	// Setup and initialize the Keyboard,
-	// mouse, and COMM drivers. The system
-	// message queue is created here (in
-	// DI_EventInit(), which is called from
-	// LW_DriversInit()).
-	LW_DriversInit();
+		// GDI module handle
+		hGDI = LoadLibrary( "GDI.EXE" );
 
-	// LW_DCInit() is where the 5 DISPLAY device contexts are
-	// created. Chapter 5 (Windows Internals) covers device contexts (DCs) in
-	// detail. LW_DCInit() also calls @InitCreateRgn(),
-	// GetDCState(), CreateCompatibleDC(), and GetStockObject().
-	// The HFontSys and HFontSysFixed global vars are set here.
-	DCE_Init();
+		// Get the default border width for a window. Default is 3.
+		ClBorder = UT_GetIntFromProfile(IDS_BORDER, 3);
+		if (ClBorder < 1) // Make sure it's got a reasonable
+			ClBorder = 1; // value.
+		if (ClBorder > 0x32 )
+			ClBorder = 0x32;
 
-	// Calls GetStockObject() to set the variables
-	// HBrWhite and HBrBlack. Calls CreateBitmap(),
-	// CreatePatternBrush(), DeleteObject(),
-	// and MakeObjectPrivate()
-	LW_BrushInit();
+		// Setup and initialize the Keyboard,
+		// mouse, and COMM drivers. The system
+		// message queue is created here (in
+		// DI_EventInit(), which is called from
+		// LW_DriversInit()).
+		LW_DriversInit();
 
+		// LW_DCInit() is where the 5 DISPLAY device contexts are
+		// created. Chapter 5 (Windows Internals) covers device contexts (DCs) in
+		// detail. LW_DCInit() also calls @InitCreateRgn(),
+		// GetDCState(), CreateCompatibleDC(), and GetStockObject().
+		// The HFontSys and HFontSysFixed global vars are set here.
+		DCE_Init();
 
-	// Perform various initialization required by the DISPLAY
-	// driver. Sets HInstanceDisplay variable by calling
-	// GetModuleHandle("DISPLAY"). LW_OemDependentInit() is a very
-	// large function, with numerous calls to routines such as
-	// GetDeviceCaps(), GetStockObject(), SetResourceHandler(),
-	// FindResource(), ODI_CreateBits(), and so on.
-//	LW_OEMDependentInit();
-	DISPLAY_Init();
-	SYSCOLOR_Init();
+		// Calls GetStockObject() to set the variables
+		// HBrWhite and HBrBlack. Calls CreateBitmap(),
+		// CreatePatternBrush(), DeleteObject(),
+		// and MakeObjectPrivate()
+		LW_BrushInit();
 
-	// Sets HBmCursorBitmap and HPermanentCursor variables.
-	LW_OEMCursorInit();
+		// Perform various initialization required by the DISPLAY
+		// driver. Sets hInstanceDisplay variable by calling
+		// GetModuleHandle("DISPLAY"). LW_OemDependentInit() is a very
+		// large function, with numerous calls to routines such as
+		// GetDeviceCaps(), GetStockObject(), SetResourceHandler(),
+		// FindResource(), ODI_CreateBits(), and so on.
+		// Loads values into the SysMetricsDef array.
+		// These values can be retrieved via the
+		// GetSystemMetrics() API
+		DISPLAY_Init();
+		SYSCOLOR_Init();
 
-	// Set the global variables: CLBorder, CXBorder, CXSzBorder,
-	// CXSzBorderPlus1, CYBorder, CYSzBorder, CYSzBorderPlus1,
-	// CXCwMargin, and CYCwMargin. Presumably these deal with
-	// the size of the borders around Windows.
-	InitSizeBorderDimensions();
+		// Sets HBmCursorBitmap and HPermanentCursor variables.
+		LW_OEMCursorInit();
 
-	//Loads lots of icons and cursors.
-	LW_LoadResources();
+		// Set the global variables: CLBorder, CXBorder, CXSzBorder,
+		// CXSzBorderPlus1, CYBorder, CYSzBorder, CYSzBorderPlus1,
+		// CXCwMargin, and CYCwMargin. Presumably these deal with
+		// the size of the borders around Windows.
+		InitSizeBorderDimensions();
 
-	// Start out with no focus
-	hwndFocus = 0; 
+		//Loads lots of icons and cursors.
+		LW_LoadResources();
 
-	// Loads values into the RGWSYSMet array.
-	// These values can be retrieved via the
-	// GetSystemMetrics() API
-	LW_InitSysMetrics();
+		// Start out with no focus
+		hwndFocus = 0; 
 
-	// Create the global atom table.
-	GlobalInitAtom();
+		// Create the global atom table.
+		GlobalInitAtom();
 
-	hbitmapClose = LoadBitmap(0, MAKEINTRESOURCE(OBM_CLOSE));
-	hbitmapMinimize = LoadBitmap(0, MAKEINTRESOURCE(OBM_REDUCE));
-	hbitmapMinimizeD = LoadBitmap(0, MAKEINTRESOURCE(OBM_REDUCED));
-	hbitmapMaximize = LoadBitmap(0, MAKEINTRESOURCE(OBM_ZOOM));
-	hbitmapMaximizeD = LoadBitmap(0, MAKEINTRESOURCE(OBM_ZOOMD));
-	hbitmapRestore = LoadBitmap(0, MAKEINTRESOURCE(OBM_RESTORE));
-	hbitmapRestoreD  = LoadBitmap(0, MAKEINTRESOURCE(OBM_RESTORED));
-
-
-	MENU_Init();
-
-	// Register the windows classes for
-	// "predefined" windows, such as
-	// edit controls, etc. 
-	LW_RegisterWindows();
-
-	// Allocate some memory for an internal buffer.
-	// UserLocalAlloc() is a special version of LocalAlloc().
-	// The first parameter "marks" each item in the USER local
-	// heap with a value that indicates what it is. This
-	// "tagging" of blocks only occurs in the debug version of
-	// USER. See the TOOLHELP LocalEntry documentation for
-	// a list of the various "tag" values.
-	//PState = UserLocalAlloc(LT_USER_STRING, 0x40, some_static_var + 0x10 )
-
-	// Sets X_Mickey_Rate, Y_Mickey_Rate, and
-	// calls ClipCursor( 0 )
-	LW_MouseInit();
-
-	// Call the "enable" routine for various
-	// input/output devices.
-	EnableInput();
-
-	// Middle of the screen
-	SetCursorPos(CXScreen / 2, CYScreen / 2);
-
-	// Get the hourglass cursor, show it
-	SetCursor(LoadCursor(0, IDC_WAIT));
-
-	// Register the Desktop and switch windows classes, and
-	// create the windows.
-	LW_InitWndMgr(hInstance);
+		hbitmapClose = LoadBitmap(0, MAKEINTRESOURCE(OBM_CLOSE));
+		hbitmapMinimize = LoadBitmap(0, MAKEINTRESOURCE(OBM_REDUCE));
+		hbitmapMinimizeD = LoadBitmap(0, MAKEINTRESOURCE(OBM_REDUCED));
+		hbitmapMaximize = LoadBitmap(0, MAKEINTRESOURCE(OBM_ZOOM));
+		hbitmapMaximizeD = LoadBitmap(0, MAKEINTRESOURCE(OBM_ZOOMD));
+		hbitmapRestore = LoadBitmap(0, MAKEINTRESOURCE(OBM_RESTORE));
+		hbitmapRestoreD  = LoadBitmap(0, MAKEINTRESOURCE(OBM_RESTORED));
 
 
+		MENU_Init();
 
-	// Max button size???
-	//WMaxBtnSize = MB_FindLongestString();
+		// Register the windows classes for
+		// "predefined" windows, such as
+		// edit controls, etc. 
+		LW_RegisterWindows();
+
+		// Allocate some memory for an internal buffer.
+		// UserLocalAlloc() is a special version of LocalAlloc().
+		// The first parameter "marks" each item in the USER local
+		// heap with a value that indicates what it is. This
+		// "tagging" of blocks only occurs in the debug version of
+		// USER. See the TOOLHELP LocalEntry documentation for
+		// a list of the various "tag" values.
+		//PState = UserLocalAlloc(LT_USER_STRING, 0x40, some_static_var + 0x10 )
+
+		// Sets X_Mickey_Rate, Y_Mickey_Rate, and
+		// calls ClipCursor( 0 )
+		LW_MouseInit();
+
+		// Call the "enable" routine for various
+		// input/output devices.
+		EnableInput();
+
+		// Middle of the screen
+		SetCursorPos(SysMetricsDef[SM_CXSCREEN] / 2, SysMetricsDef[SM_CYSCREEN] / 2);
+
+		// Get the hourglass cursor, show it
+		SetCursor(LoadCursor(0, IDC_WAIT));
+
+		// Register the Desktop and switch windows classes, and
+		// create the windows.
+		LW_InitWndMgr(hInstance); 
+
+		// Max button size???
+		//WMaxBtnSize = MB_FindLongestString();
 	
-	// Why it was here in Pietrek book? Needed for RegisterClass. Create the global atom table.
-//	GlobalInitAtom();
+		// Why it was here in Pietrek book? Needed for RegisterClass. Create the global atom table.
+		//GlobalInitAtom();
 
-//	AtomCheckPointProp = GlobalAddAtom("SysCP") // Used by
-//	AtomBwlProp = GlobalAddAtom( "SysBW" ) // EnumProps()
+		//	AtomCheckPointProp = GlobalAddAtom("SysCP") // Used by
+		//	AtomBwlProp = GlobalAddAtom( "SysBW" ) // EnumProps()
 
-//	MsgWinHelp = RegisterWindowMessage( "WM_WINHELP");
+		//	MsgWinHelp = RegisterWindowMessage( "WM_WINHELP");
 
-	// Allocate another local heap for menus
-	MenuBase = SELECTOROF(GlobalLock(HMenuHeap = GlobalAlloc( GMEM_DDESHARE | GMEM_MOVEABLE | GMEM_ZEROINIT, 0x418 )));
+		// Allocate another local heap for menus
+		//	MenuBase = SELECTOROF(GlobalLock(HMenuHeap = GlobalAlloc( GMEM_DDESHARE | GMEM_MOVEABLE | GMEM_ZEROINIT, 0x418 )));
 
-	// Allocate another local heap for menu strings
-	MenuStringBase = SELECTOROF(GlobalLock(HMenuStringHeap = GlobalAlloc( GMEM_DDESHARE | GMEM_MOVEABLE | GMEM_ZEROINIT, 0x418 )));
+		// Allocate another local heap for menu strings
+		//	MenuStringBase = SELECTOROF(GlobalLock(HMenuStringHeap = GlobalAlloc( GMEM_DDESHARE | GMEM_MOVEABLE | GMEM_ZEROINIT, 0x418 )));
 
-	// Initialize the menu and menu string heaps. The heaps
-	// start out small (0x417 bytes), but can grow as needed.
-	LocalInit(MenuBase, 0x12, 0x417);
-	LocalInit(MenuStringBase, 0x12, 0x417);
-
-
-	// list registered classes
-//	CLASS_WalkClasses();
+		// Initialize the menu and menu string heaps. The heaps
+		// start out small (0x417 bytes), but can grow as needed.
+	//	LocalInit(MenuBase, 0x12, 0x417);
+	//	LocalInit(MenuStringBase, 0x12, 0x417);
 
 
-	// Load the "system" menu ("Restore", "Move", "Size", etc.)
-	HSysMenu = LoadMenu(USER_HeapSel, MAKEINTRESOURCE(IDM_SYSMENU));
+		// list registered classes
+	//	CLASS_WalkClasses();
 
-	LW_DisplayDriverInit(); // Gets entry points in display driver
 
-	LW_LoadFonts();	// Uses AddFontResource() to load all the
+		// Load the "system" menu ("Restore", "Move", "Size", etc.)
+	//	HSysMenu = LoadMenu(USER_HeapSel, MAKEINTRESOURCE(IDM_SYSMENU));
+
+		LW_DisplayDriverInit(); // Gets entry points in display driver
+
+		LW_LoadFonts();	// Uses AddFontResource() to load all the
 			// fonts in the "fonts" section of WIN.INI
 
-	LW_DesktopIconInit(); // Initialize things related to
+		LW_DesktopIconInit(); // Initialize things related to
 				// desktop icons/fonts
 
-	LW_DrawIconInit(); // Initializes HBmDrawIconMono and
+		LW_DrawIconInit(); // Initializes HBmDrawIconMono and
 				// HMbDrawIconColor
 
-	LW_LoadTaskmanAndScreenSaver(); // Doesn't _load_ them. Just
+		LW_LoadTaskmanAndScreenSaver(); // Doesn't _load_ them. Just
 					// gets configuration values
 
-
+	}
 	FUNCTION_END
-	return(1);
+	return TRUE;
 }
-

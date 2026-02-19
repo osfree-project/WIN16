@@ -14,6 +14,29 @@ STRINGTABLE DISCARDABLE
 	IDS_BEEP,						"Beep"
         IDS_BORDER,                                             "BorderWidth"
 	IDS_DEFAULTQUEUESIZE,					"DefaultQueueSize"
+	IDS_SCROLLBAR,						"ScrollBar"
+	IDS_BACKGROUND,						"Background"
+	IDS_ACTIVETITLE,					"ActiveTitle"
+	IDS_INACTIVETITLE,					"InactiveTitle"
+	IDS_MENU,						"Menu"
+	IDS_WINDOW,						"Window"
+	IDS_WINDOWFRAME,					"WindowFrame"
+	IDS_MENUTEXT,						"MenuText"
+	IDS_WINDOWTEXT,						"WindowText"
+	IDS_TITLETEXT,						"TitleText"
+	IDS_ACTIVEBORDER,					"ActiveBorder"
+	IDS_INACTIVEBORDER,					"InactiveBorder"
+	IDS_APPWORKSPACE,					"AppWorkspace"
+	IDS_HILIGHT,						"Hilight"
+	IDS_HILIGHTTEXT,					"HilightText"
+	IDS_BUTTONFACE,						"ButtonFace"
+	IDS_BUTTONSHADOW,					"ButtonShadow"
+	IDS_GRAYTEXT,						"GrayText"
+	IDS_BUTTONTEXT,						"ButtonText"
+#if WINVER >= 0x030a
+	IDS_INACTIVETITLETEXT,					"InactiveTitleText"
+	IDS_BUTTONHILIGHT,					"ButtonHilight"
+#endif
 	IDS_SYSTEMERROR,					"System Error"
 	IDS_DIVIDEBYZERO,					"Divide By Zero or Overflow Error"
 	IDS_UNTITLED,						"Untitled"
@@ -37,30 +60,15 @@ STRINGTABLE DISCARDABLE
 	IDS_COOLSWITCH,						"CoolSwitch"
 }
 
-//OCR_NORMAL CURSOR FIXED "res/idcarrow.cur"
-//OCR_IBEAM CURSOR FIXED "res/idcibeam.cur"
-//OCR_WAIT CURSOR FIXED "res/idcwait.cur"
-//OCR_CROSS CURSOR FIXED "res/idccross.cur"
-//OCR_UPARROW CURSOR FIXED "res/idcuparr.cur"
-//OCR_SIZE CURSOR FIXED "res/idcsize.cur"
-//OCR_ICON CURSOR FIXED "res/idcicon.cur"
-//OCR_SIZENWSE CURSOR FIXED "res/idcsznw.cur"
-//OCR_SIZENESW CURSOR FIXED "res/idcszne.cur"
-//OCR_SIZEWE CURSOR FIXED "res/idcszwe.cur"
-//OCR_SIZENS CURSOR FIXED "res/idcszns.cur"
+// Constant not found for this. And where it used?
+100 CURSOR FIXED "res/idcno.cur"
 OCR_SIZEALL CURSOR FIXED "res/idcsize.cur"
-//OCR_NO CURSOR FIXED "res/idcno.cur"
-//OCR_APPSTARTING CURSOR FIXED "res/idcappst.cur"
-//OCR_HELP CURSOR FIXED "res/idchelp.cur"
-//"DRAGCURSOR" CURSOR FIXED "res/idcdrag.cur"
-//"NULLCURSOR" CURSOR FIXED "res/idcnull.cur"
-
-//32512 ICON FIXED "res/applictn.ico" //IDI_APPLICATION 
+// here must be also OCR_ICOCUR, but where it used?
 
 IDM_SYSMENU MENU
-BEGIN
+{
     POPUP " "
-    BEGIN
+    {
         MENUITEM "&Restore"	SC_RESTORE
         MENUITEM "&Move"	SC_MOVE
         MENUITEM "&Size"	SC_SIZE
@@ -70,9 +78,27 @@ BEGIN
         MENUITEM "&Close\tAlt+F4"	SC_CLOSE
         MENUITEM ""	0
         MENUITEM "S&witch To...\tCtrl+Esc"	SC_TASKLIST
-    END
-END
+    }
+}
 
+IDM_SYSMENUMDI MENU
+{
+    POPUP "-"
+    {
+        MENUITEM "&Restore"	SC_RESTORE
+        MENUITEM "&Move"	SC_MOVE
+        MENUITEM "&Size"	SC_SIZE
+        MENUITEM "Mi&nimize"	SC_MINIMIZE
+        MENUITEM "Ma&ximize"	SC_MAXIMIZE
+        MENUITEM SEPARATOR
+        MENUITEM "&Close\tCtrl+F4"	SC_CLOSE
+        MENUITEM ""	0
+        MENUITEM "Nex&t\tCtrl+F6"	SC_NEXTWINDOW
+    }
+}
+
+
+// This is temporary for debuging...
 555 MENU
 {
  POPUP "&Settings" {

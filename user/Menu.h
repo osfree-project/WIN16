@@ -26,7 +26,7 @@ typedef struct tagMENUITEM
     HBITMAP	hCheckBit;     /* Bitmap for checked item */
     HBITMAP	hUnCheckBit;   /* Bitmap for unchecked item */
     HANDLE      hText;	       /* Handle to item string or bitmap */
-} MENUITEM, FAR*LPMENUITEM;
+} MENUITEM, FAR * LPMENUITEM, NEAR * NPMENUITEM, * PMENUITEM;
 
 
 typedef struct tagPOPUPMENU

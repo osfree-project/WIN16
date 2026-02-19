@@ -51,9 +51,7 @@ To send email to the maintainer of the Willows Twin Libraries.
 
 #include <string.h>
 
-#include <windows.h>
-//#include "windowsx.h"
-//#include "Log.h"
+#include "user.h"
 
 /***********************************************************************
  *		EqualRect (USER.244)
@@ -122,10 +120,12 @@ PtInRect(const RECT far *lpr,POINT pt)
 /***********************************************************************
  *		IntersectRect (USER.79)
  */
-BOOL WINAPI
-IntersectRect(LPRECT lpDestRect, const RECT far *lpSrc1Rect,
-	      const RECT far *lpSrc2Rect)
+//BOOL WINAPI
+//IntersectRect(LPRECT lpDestRect, const RECT far *lpSrc1Rect,
+//	      const RECT far *lpSrc2Rect)
+BOOL WINAPI IntersectRect( LPRECT dest, const RECT FAR *src1, const RECT FAR * src2 )
 {
+/*
     lpDestRect->left = max(lpSrc1Rect->left, lpSrc2Rect->left);
     lpDestRect->top = max(lpSrc1Rect->top, lpSrc2Rect->top);
     lpDestRect->right = min(lpSrc1Rect->right, lpSrc2Rect->right);
@@ -138,6 +138,20 @@ IntersectRect(LPRECT lpDestRect, const RECT far *lpSrc1Rect,
     }
     else
 	return TRUE;
+*/
+    if (IsRectEmpty(src1) || IsRectEmpty(src2) ||
+	(src1->left >= src2->right) || (src2->left >= src1->right) ||
+	(src1->top >= src2->bottom) || (src2->top >= src1->bottom))
+    {
+	SetRectEmpty( dest );
+	return FALSE;
+    }
+    dest->left   = max( src1->left, src2->left );
+    dest->right  = min( src1->right, src2->right );
+    dest->top    = max( src1->top, src2->top );
+    dest->bottom = min( src1->bottom, src2->bottom );
+    return TRUE;
+
 }
  
 /***********************************************************************
@@ -198,8 +212,9 @@ BOOL WINAPI
 IsRectEmpty(const RECT far *lprcRect)
 {
     if (!lprcRect) return(TRUE);
-    return ((lprcRect->right <= lprcRect->left) ||
-        (lprcRect->bottom <= lprcRect->top));
+    return ((lprcRect->left == lprcRect->right) || (lprcRect->top == lprcRect->bottom));
+//    return ((lprcRect->right <= lprcRect->left) ||
+//        (lprcRect->bottom <= lprcRect->top));
 }
  
 /***********************************************************************
@@ -261,17 +276,21 @@ UnionRect(LPRECT lpDestRect, const RECT far *lpSrc1Rect,
  */
 int WINAPI FillRect( HDC hdc, const RECT far *rect, HBRUSH hbrush )
 {
-    HBRUSH prevBrush;
+	HBRUSH prevBrush;
 
-    /* coordinates are logical so we cannot fast-check 'rect',
-     * it will be done later in the PatBlt().
-     */
+	FUNCTION_START
 
-    if (!(prevBrush = SelectObject( hdc, hbrush ))) return 0;
-    PatBlt(hdc, rect->left, rect->top, rect->right - rect->left, rect->bottom - rect->top, PATCOPY);
-    SelectObject( hdc, prevBrush );
+	/* coordinates are logical so we cannot fast-check 'rect',
+	* it will be done later in the PatBlt().
+	*/
 
-    return 1;
+	if (!(prevBrush = SelectObject( hdc, hbrush ))) return 0;
+	TRACE("hdc=%d, hbrush=%d left=%d top=%d right=%d bottom=%d", hdc, hbrush, rect->left, rect->top, rect->right, rect->bottom);
+	PatBlt(hdc, rect->left, rect->top, rect->right - rect->left, rect->bottom - rect->top, PATCOPY);
+	SelectObject( hdc, prevBrush );
+	FUNCTION_END
+
+	return 1;
 }
 
 /***********************************************************************
@@ -378,15 +397,22 @@ DrawFocusRect(HDC hDC, const RECT far *lprc)
 void WINAPI PaintRect( HWND hwndParent, HWND hwnd, HDC hdc,
                          HBRUSH hbrush, const RECT far *rect)
 {
+	FUNCTION_START
+	TRACE("hbrush=%d", hbrush);
     if (hbrush <= CTLCOLOR_STATIC)
     {
+	TRACE("111");
         if (!hwndParent) return;
+	TRACE("222");
 	hbrush = (HBRUSH)SendMessage( hwndParent, WM_CTLCOLOR,
 				      hdc, MAKELONG( hwnd, hbrush ) );
-//        hbrush = SendMessage( hwndParent, WM_CTLCOLORMSGBOX + hbrush, hdc, hwnd );
-//        if (!hbrush) hbrush = DefWindowProc( hwndParent, WM_CTLCOLORMSGBOX + hbrush,
-//                                              hdc, (LPARAM)hwnd );
+	TRACE("333");
     }
-    if (hbrush) FillRect( hdc, rect, hbrush );
+    if (hbrush)
+	{
+		TRACE("hdc=%d, hbr=%d left=%d top=%d right=%d bottom=%d", hdc, hbrush, rect->left, rect->top, rect->right, rect->bottom);
+		 FillRect( hdc, rect, hbrush );
+	}
+	FUNCTION_END
 }
 

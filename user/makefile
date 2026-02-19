@@ -14,7 +14,7 @@ ADD_ASMOPT = -ms
 # -3 must be replaced by -0 later
 ADD_LINKOPT = SEGMENT FIXED_TEXT preload fixed
 NOLIBS = 1 # Don't use default libentry
-NODEFAULTLIBS = 1 # Don'y use libc
+NODEFAULTLIBS = 1 # Don't use libc
 
 STACKSIZE = 10k
 HEAPSIZE = 20k

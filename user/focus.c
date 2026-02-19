@@ -7,47 +7,7 @@
  *
  */
 
-//#include "win.h"
-//#include "winpos.h"
-//#include "hook.h"
-//#include "color.h"
-//#include "options.h"
 #include "user.h"
-
-
-#if 0
-/*****************************************************************
- *               FOCUS_SetXFocus
- *
- * Set the X focus.
- */
-static void FOCUS_SetXFocus( HWND hwnd )
-{
-    XWindowAttributes win_attr;
-    Window win;
-
-    /* Only mess with the X focus if there's */
-    /* no desktop window and no window manager. */
-    if ((rootWindow != DefaultRootWindow(display)) || Options.managed) return;
-
-    if (!hwnd)	/* If setting the focus to 0, uninstall the colormap */
-    {
-	if (COLOR_WinColormap != DefaultColormapOfScreen(screen))
-	    XUninstallColormap( display, COLOR_WinColormap );
-	return;
-    }
-
-      /* Set X focus and install colormap */
-
-    if (!(win = WIN_GetXWindow( hwnd ))) return;
-    if (!XGetWindowAttributes( display, win, &win_attr ) ||
-        (win_attr.map_state != IsViewable))
-        return;  /* If window is not viewable, don't change anything */
-    XSetInputFocus( display, win, RevertToParent, CurrentTime );
-    if (COLOR_WinColormap != DefaultColormapOfScreen(screen))
-	XInstallColormap( display, COLOR_WinColormap );
-}
-#endif
 
 /*****************************************************************
  *	         FOCUS_SwitchFocus 

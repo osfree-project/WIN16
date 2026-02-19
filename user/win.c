@@ -306,7 +306,6 @@ static void WIN_DestroyWindow( HWND hwnd )
         if (wndPtr->wIDmenu) DestroyMenu( (HMENU)wndPtr->wIDmenu );
     }
     if (wndPtr->hSysMenu) DestroyMenu( wndPtr->hSysMenu );
-//    if (wndPtr->window) XDestroyWindow( display, wndPtr->window );
     if (classPtr->wc.style & CS_OWNDC) DCE_FreeDCE( wndPtr->hdce );
     classPtr->cWindows--;
     LocalFree( hwnd );
@@ -729,7 +728,7 @@ HWND WINAPI GetDesktopWindow(void)
 	HWND retVal;
 
 	PushDS();
-	SetDS(USER_HeapSel);
+	SetUserHeapDS();
 	retVal=HWndDesktop;
 	PopDS();
 
@@ -748,7 +747,7 @@ HWND WINAPI GetDesktopHwnd(void)
 	HWND retVal;
 
 	PushDS();
-	SetDS(USER_HeapSel);
+	SetUserHeapDS();
 	retVal=HWndDesktop;
 	PopDS();
 
@@ -791,11 +790,32 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
  */ 
 BOOL WINAPI IsWindowEnabled(HWND hWnd)
 {
-    WND * wndPtr; 
+	WND * wndPtr; 
+	BOOL retVal;
 
-    if (!(wndPtr = WIN_FindWndPtr(hWnd))) return FALSE;
-    return !(wndPtr->dwStyle & WS_DISABLED);
+	PushDS();
+	SetUserHeapDS();
+	FUNCTION_START
+
+	retVal=FALSE;
+
+	if ((wndPtr = WIN_FindWndPtr(hWnd)))
+	{
+		retVal=!(wndPtr->dwStyle & WS_DISABLED);
+		LocalUnlock(hWnd);
+	}
+
+	FUNCTION_END
+	PopDS();
+	return retVal;
 }
+
+//    #define GWL_WNDPROC     (-4)
+//    #define GWW_HINSTANCE   (-6)
+//    #define GWW_HWNDPARENT  (-8)
+//    #define GWW_ID          (-12)
+//    #define GWL_STYLE       (-16)
+//    #define GWL_EXSTYLE     (-20)
 
 
 /**********************************************************************
@@ -810,15 +830,8 @@ WORD WINAPI GetWindowWord( HWND hwnd, int offset )
     switch(offset)
     {
 	case GWW_ID:         return wndPtr->wIDmenu;
-#ifdef WINELIB32
-        case GWW_HWNDPARENT:
-        case GWW_HINSTANCE: 
-            fprintf(stderr,"GetWindowWord called with offset %d.\n",offset);
-            return 0;
-#else
 	case GWW_HWNDPARENT: return wndPtr->parent ? wndPtr->parent->hwndSelf : 0;
 	case GWW_HINSTANCE:  return (WORD)wndPtr->hInstance;
-#endif
     }
     return 0;
 }
@@ -861,19 +874,43 @@ WORD WINAPI SetWindowWord( HWND hwnd, int offset, WORD newval )
 /**********************************************************************
  *	     GetWindowLong    (USER.135)
  */
-LONG WINAPI GetWindowLong( HWND hwnd, int offset )
+LONG WINAPI GetWindowLong( HWND hWnd, int offset )
 {
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
+	WND * wndPtr;
+	LONG retVal;
+
+	PushDS();
+	SetUserHeapDS();
 	FUNCTION_START
-    if (!wndPtr) return 0;
-    if (offset >= 0) return *(LONG *)(((char *)wndPtr->wExtra) + offset);
-    switch(offset)
-    {
-	case GWL_STYLE:   return wndPtr->dwStyle;
-        case GWL_EXSTYLE: return wndPtr->dwExStyle;
-	case GWL_WNDPROC: return (LONG)wndPtr->lpfnWndProc;
-    }
-    return 0;
+
+	retVal=0;
+	wndPtr = WIN_FindWndPtr( hWnd );
+    	if (wndPtr)
+	{
+		if (offset >= 0)
+		{
+			retVal=*(LONG *)(((char *)wndPtr->wExtra) + offset);
+		} else {
+			switch(offset)
+			{
+				case GWL_STYLE:
+					retVal=wndPtr->dwStyle;
+					break;
+				case GWL_EXSTYLE:
+					retVal=wndPtr->dwExStyle;
+					break;
+				case GWL_WNDPROC:
+					retVal=(LONG)wndPtr->lpfnWndProc;
+					break;
+			}
+		}
+		LocalUnlock(hWnd);
+	}
+
+	FUNCTION_END
+	PopDS();
+
+	return retVal;
 }
 
 
@@ -915,8 +952,6 @@ int WINAPI GetWindowText( HWND hwnd, LPSTR lpString, int nMaxCount )
  */
 void WINAPI SetWindowText( HWND hwnd, LPCSTR lpString )
 {
-      /* We have to allocate a buffer on the USER heap */
-      /* to be able to pass its address to 16-bit code */
     SendMessage( hwnd, WM_SETTEXT, 0, (LPARAM)lpString);
 }
 

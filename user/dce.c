@@ -8,7 +8,7 @@
 #include "dce.h"
 #include "user.h"
 
-//@todo b31 and bDebug must me global. May be move hGDI to DATA segment too?
+//@todo b31 and bDebug must be global. May be move hGDI to DATA segment too?
 
 // DCE lives in USER local heap. So, to access it we need to switch to USER local heap first and return DS back
 // after it. See. Undocumented Windows p. 428
@@ -184,7 +184,7 @@ HANDLE DCE_AllocDCE( DCE_TYPE type )
 	DCE * dce;
 	HANDLE handle;
 
-	handle = LocalAlloc(LMEM_FIXED, sizeof(DCE));
+	handle = LocalAlloc(LHND, sizeof(DCE));
 	if (!handle) return 0;
 
 	dce = (DCE *) LocalLock( handle );
@@ -250,6 +250,52 @@ void DCE_Init()
     }
 }
 
+#if 0
+static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT FAR *lprect )
+{
+    int xoffset, yoffset;
+	int addX, addY;
+    WND *childPtr = NULL;  // дл€ хранени€ предыдущего окна
+
+    *lprect = clientArea ? wndPtr->rectClient : wndPtr->rectWindow;
+    xoffset = lprect->left;
+    yoffset = lprect->top;
+
+    if (!(wndPtr->dwStyle & WS_VISIBLE) || (wndPtr->flags & WIN_NO_REDRAW))
+    {
+        SetRectEmpty( lprect );
+        return FALSE;
+    }
+
+    while (wndPtr->parent)
+    {
+        childPtr = wndPtr;               // запоминаем текущее окно (дочернее дл€ следующего родител€)
+        wndPtr = wndPtr->parent;         // переходим к родителю
+
+        if (!(wndPtr->dwStyle & WS_VISIBLE) ||
+            (wndPtr->flags & WIN_NO_REDRAW) ||
+            (wndPtr->dwStyle & WS_ICONIC))
+        {
+            SetRectEmpty( lprect );
+            return FALSE;
+        }
+
+        // ѕравильное смещение: положение дочернего окна + смещение клиентской области родител€
+        addX = childPtr->rectWindow.left + wndPtr->rectClient.left;
+        addY = childPtr->rectWindow.top  + wndPtr->rectClient.top;
+
+        xoffset += addX;
+        yoffset += addY;
+        OffsetRect( lprect, addX, addY );
+
+        if (!IntersectRect( lprect, lprect, &wndPtr->rectClient ))
+            return FALSE;
+    }
+
+    OffsetRect( lprect, -xoffset, -yoffset );
+    return TRUE;
+}
+#endif 
 /***********************************************************************
  *           DCE_GetVisRect
  *
@@ -294,7 +340,6 @@ static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT FAR *lprect )
     OffsetRect( lprect, -xoffset, -yoffset );
     return TRUE;
 }
-
 
 /***********************************************************************
  *           DCE_ClipWindows
@@ -510,7 +555,6 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     for (hdce = firstDCE; hdce; )
     {
 	HANDLE next;
-//	TRACE("%d", firstDCE);
         dce = (DCE *)LocalLock(hdce);  // LocalLock возвращает указатель
         if (!dce) 
         {
@@ -549,7 +593,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 	dce->byInUse       = TRUE;
 	hdc = dce->hDC;
 
-    DCE_SetDrawable(dce, wndPtr, hdc, flags);
+	DCE_SetDrawable(dce, wndPtr, hdc, flags);
 	// —охран€ем xOrigin и yOrigin дл€ последующего использовани€
 	xOrigin = dce->xOrigin;
 	yOrigin = dce->yOrigin;
@@ -577,7 +621,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     }
     else  /* Get a VisRgn for the whole screen */
     {
-        hrgnVisible = CreateRectRgn( 0, 0, CXScreen, CYScreen);
+        hrgnVisible = CreateRectRgn( 0, 0, SysMetricsDef[SM_CXSCREEN], SysMetricsDef[SM_CYSCREEN]);
     }
 
       /* Intersect VisRgn with the given region */
@@ -587,12 +631,14 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
         CombineRgn( hrgnVisible, hrgnVisible, hrgnClip,
                     (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
     }
-// ѕосле получени€ hrgnVisible и всех операций с ним:
-if (hwnd)  // “олько дл€ окон, не дл€ экрана
-{
-    // —мещаем регион из экранных координат в логические координаты DC
-    OffsetRgn(hrgnVisible, xOrigin, yOrigin);
-}
+
+    // ѕосле получени€ hrgnVisible и всех операций с ним:
+    if (hwnd)  // “олько дл€ окон, не дл€ экрана
+    {
+      // —мещаем регион из экранных координат в логические координаты DC
+      OffsetRgn(hrgnVisible, xOrigin, yOrigin);
+    }
+
     SelectVisRgn( hdc, hrgnVisible );
     DeleteObject( hrgnVisible );
 

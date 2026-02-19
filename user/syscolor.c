@@ -20,12 +20,18 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+
 #include "user.h"
 #include "syscolor.h"
 
-struct SysColorObjects sysColorObjects = { 0, };
 
+#if (WINVER >= 0x0300) && (WINVER < 0x030a)
+#define NUM_SYS_COLORS     (COLOR_BTNTEXT+1)
+#endif
+
+#if WINVER >= 0x030a
 #define NUM_SYS_COLORS     (COLOR_BTNHIGHLIGHT+1)
+#endif
 
 static COLORREF SysColors[NUM_SYS_COLORS];
 
@@ -189,12 +195,16 @@ static void SYSCOLOR_SetColor( int index, COLORREF color )
 	break;
     case COLOR_GRAYTEXT:
     case COLOR_BTNTEXT:
+#if WINVER >= 0x030a
     case COLOR_INACTIVECAPTIONTEXT:
+#endif
 	break;
+#if WINVER >= 0x030a
     case COLOR_BTNHIGHLIGHT:
 	DeleteObject( sysColorObjects.hbrushBtnHighlight );
 	sysColorObjects.hbrushBtnHighlight = CreateSolidBrush( color );
 	break;
+#endif
     }
 }
 
@@ -203,29 +213,49 @@ void SYSCOLOR_Init(void)
     int i;
     char buffer[100];
     int len;
+    char szColors[0x14];
+    char szColor[0x14];
     
     /* Имена цветов для WIN.INI (нужны только для GetProfileString) */
-    static const char far *SysColorNames[] = {
-        "Scrollbar", "Background", "ActiveTitle", "InactiveTitle",
-        "Menu", "Window", "WindowFrame", "MenuText", "WindowText",
-        "TitleText", "ActiveBorder", "InactiveBorder", "AppWorkspace",
-        "Hilight", "HilightText", "ButtonFace", "ButtonShadow",
-        "GrayText", "ButtonText", "InactiveTitleText", "ButtonHilight"
+    static const WORD SysColorIds[] = {
+	IDS_SCROLLBAR,
+	IDS_BACKGROUND,
+	IDS_ACTIVETITLE,
+	IDS_INACTIVETITLE,
+	IDS_MENU,
+	IDS_WINDOW,
+	IDS_WINDOWFRAME,
+	IDS_MENUTEXT,
+	IDS_WINDOWTEXT,
+	IDS_TITLETEXT,
+	IDS_ACTIVEBORDER,
+	IDS_INACTIVEBORDER,
+	IDS_APPWORKSPACE,
+	IDS_HILIGHT,
+	IDS_HILIGHTTEXT,
+	IDS_BUTTONFACE,
+	IDS_BUTTONSHADOW,
+	IDS_GRAYTEXT,
+	IDS_BUTTONTEXT,
+#if WINVER >= 0x030a
+        IDS_INACTIVETITLETEXT,
+	IDS_BUTTONHILIGHT
+#endif
     };
     
     /* Получаем бинарные значения по умолчанию из драйвера */
     const COLORREF* defaultColors = DISPLAY_GetSysColorDefaultsBinary();
     int colorCount = min(DISPLAY_GetSysColorCount(), NUM_SYS_COLORS);
 
+	LoadString(USER_HeapSel, IDS_COLORS, szColors, sizeof(szColors));
     for (i = 0; i < colorCount; i++)
     {
         COLORREF finalColor;
         
-        /* 1. Получаем строку из WIN.INI */
-        len = GetProfileString("colors", (LPSTR)SysColorNames[i], 
-                              "", buffer, 100);
+	LoadString(USER_HeapSel, SysColorIds[i], szColor, sizeof(szColor));
+
+        len = GetProfileString(szColors, (LPSTR)szColor, "", buffer, 100);
         
-        /* 2. Если в INI есть значение - парсим его (поддержка всех форматов) */
         if (len > 0)
         {
             buffer[len] = '\0'; /* Гарантируем завершение строки */
@@ -234,12 +264,10 @@ void SYSCOLOR_Init(void)
         }
         else
         {
-            /* 3. Используем бинарное значение по умолчанию из драйвера */
             finalColor = defaultColors[i];
-            TRACE("Color %s: using driver default", SysColorNames[i]);
+            TRACE("Color %S: using driver default", szColor);
         }
         
-        /* 4. Устанавливаем цвет */
         SYSCOLOR_SetColor(i, finalColor);
     }
 }

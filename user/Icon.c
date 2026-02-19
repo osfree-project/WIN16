@@ -215,6 +215,7 @@ BOOL WINAPI DestroyIcon(HICON hIcon)
 
 /***********************************************************************
  *		DestroyCursor (USER.458)
+ * @todo Just export as alias?
  */
 BOOL WINAPI DestroyCursor(HCURSOR hCursor)
 {
@@ -312,6 +313,11 @@ DrawIcon(HDC hDC, int x, int y, HICON hIcon)
 
 VOID WINAPI SetCursorPos(int X, int Y)
 {
+	PushDS();
+	SetUserHeapDS();
+
 	wMouseX=X;
 	wMouseY=Y;
+
+	PopDS();
 }

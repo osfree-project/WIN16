@@ -1400,8 +1400,7 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
-//    dprintf_nonclient(stddeb, "Handling WM_SYSCOMMAND %x %d,%d\n", 
-//		      wParam, pt.x, pt.y );
+	TRACE("Handling WM_SYSCOMMAND %x %d,%d", wParam, pt.x, pt.y );
 
     if (wndPtr->dwStyle & WS_CHILD && wParam != SC_KEYMENU )
         ScreenToClient( wndPtr->parent->hwndSelf, &pt );

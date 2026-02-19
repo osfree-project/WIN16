@@ -73,7 +73,5 @@ extern BOOL QUEUE_AddMsg( HQUEUE hQueue, MSG FAR * msg, DWORD extraInfo );
 extern int QUEUE_FindMsg( MESSAGEQUEUE FAR * msgQueue, HWND hwnd,
                           int first, int last );
 extern void QUEUE_RemoveMsg( MESSAGEQUEUE FAR * msgQueue, int pos );
-extern void FAR hardware_event( WORD message, WORD wParam, LONG lParam,
-			    WORD xPos, WORD yPos, DWORD time, DWORD extraInfo );
 
 #endif  /* __WINE_QUEUE_H */

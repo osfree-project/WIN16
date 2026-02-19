@@ -1174,8 +1174,8 @@ HANDLE WINAPI LoadImage(HINSTANCE hinst, LPCSTR name, UINT type, int cx, int cy,
 	SetDS(USER_HeapSel);	
 	if (!hinst) 
 	{
-		hinst = HInstanceDisplay;  /* Load OEM cursor/icon */
-		TRACE("Using HInstanceDisplay: %08X", hinst);
+		hinst = hInstanceDisplay;  /* Load OEM cursor/icon */
+		TRACE("Using hInstanceDisplay: %08X", hinst);
 	}
 
 	hinst = GetExePtr(hinst);

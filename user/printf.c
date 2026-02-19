@@ -9,7 +9,7 @@
  *
  */
 
-#pragma code_seg( "FIXED_TEXT" );
+#pragma code_seg( "DEBUG_TEXT" );
 
 #ifndef MK_FP
 #define MK_FP(seg,off) ((void far *)(((unsigned long)(seg) << 16) | (unsigned)(off)))
