@@ -1,6 +1,22 @@
-/* $Id$
+/* 
  *
  * Menu definitions
+
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see
+<https://www.gnu.org/licenses/>.
+
  */
 
 #ifndef MENU_H
@@ -8,7 +24,7 @@
 
 #define MENU_MAGIC   0x554d  /* 'MU' */
 
-extern BOOL MENU_Init(void);
+extern BOOL FAR MENU_Init(VOID);
 extern UINT MENU_GetMenuBarHeight( HWND hwnd, UINT menubarWidth,
 				   int orgX, int orgY );         /* menu.c */
 extern void MENU_TrackMouseMenuBar( HWND hwnd, POINT pt );       /* menu.c */

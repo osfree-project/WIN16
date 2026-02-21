@@ -2,6 +2,20 @@
  * System color objects
  *
  * Copyright  Alexandre Julliard, 1994
+ *
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see
+<https://www.gnu.org/licenses/>.
  */
 
 #ifndef SYSCOLOR_H
@@ -9,6 +23,14 @@
 
 #include <windows.h>
 #include "display.h"
+
+#if (WINVER >= 0x0300) && (WINVER < 0x030a)
+#define NUM_SYS_COLORS     (COLOR_BTNTEXT+1)
+#endif
+
+#if WINVER >= 0x030a
+#define NUM_SYS_COLORS     (COLOR_BTNHIGHLIGHT+1)
+#endif
 
 struct SysColorObjects
 {
@@ -35,7 +57,7 @@ struct SysColorObjects
     HBRUSH hbrushBtnHighlight;     /* COLOR_BTNHIGHLIGHT        */
 };
 
-extern void SYSCOLOR_Init(void);
+extern VOID FAR SYSCOLOR_Init(VOID);
 extern struct SysColorObjects sysColorObjects;
 
 #endif  /* SYSCOLOR_H */

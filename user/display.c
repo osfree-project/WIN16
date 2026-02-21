@@ -5,19 +5,20 @@
  *
  * This is interface to DISPLAY.DRV. For now it is support only Windows 3.0 things.
  *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see
+<https://www.gnu.org/licenses/>.
+
  */
 
 #include "user.h"
@@ -175,7 +176,7 @@ static void DISPLAY_DumpDisplayConfig(BYTE FAR* pData)
 
 #endif
 
-VOID DISPLAY_Init()
+VOID FAR DISPLAY_Init()
 {
 	HDC hdc;
 	HRSRC hRes;
@@ -247,14 +248,14 @@ VOID DISPLAY_Init()
 	if (hdc) 
 	{
 		// SysMetricsDef[SM_CXMAXTRACK] = SysMetricsDef[SM_CXMAXIMIZED] = // This is for Win95
-		SysMetricsDef[SM_CXFULLSCREEN] = SysMetricsDef[SM_CXSCREEN] = GetDeviceCaps(hdc, HORZRES);
+		SysMetricsDef[SM_CXFULLSCREEN] = GETSYSTEMMETRICS(SM_CXSCREEN) = GetDeviceCaps(hdc, HORZRES);
 
 		// SysMetricsDef[SM_CYMAXTRACK] = SysMetricsDef[SM_CYMAXIMIZED] = // This is for Win95
 		SysMetricsDef[SM_CYSCREEN] = GetDeviceCaps(hdc, VERTRES);
-		SysMetricsDef[SM_CYFULLSCREEN] = SysMetricsDef[SM_CYSCREEN] - SysMetricsDef[SM_CYCAPTION];
+		SysMetricsDef[SM_CYFULLSCREEN] = GETSYSTEMMETRICS(SM_CYSCREEN) - GETSYSTEMMETRICS(SM_CYCAPTION);
 
 		ReleaseDC(0, hdc);
-		TRACE("Screen resolution: %dx%d", SysMetricsDef[SM_CXSCREEN], SysMetricsDef[SM_CYSCREEN]);
+		TRACE("Screen resolution: %dx%d", GETSYSTEMMETRICS(SM_CXSCREEN), GETSYSTEMMETRICS(SM_CYSCREEN));
 	}
     
 	FUNCTION_END

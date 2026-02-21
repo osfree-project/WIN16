@@ -3,6 +3,21 @@
  *
  * Copyright 1993 Alexandre Julliard
  *	     1995 Alex Korobka
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see
+<https://www.gnu.org/licenses/>.
+
  */
 
 #include "user.h"
@@ -164,7 +179,7 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
             {
                  HBRUSH hbrush;
 		TRACE("ERASE1");
-                 hbrush = CreateSolidBrush(GetSysColor(((DWORD)classPtr->wc.hbrBackground)-1));
+                 hbrush = CreateSolidBrush(GETSYSCOLOR(((DWORD)classPtr->wc.hbrBackground)-1));
 		TRACE("ERASE1 hbr=%d", hbrush);
                  FillWindow( GetParent(hwnd), hwnd, (HDC)wParam, hbrush);
 //		FillRect((HDC)wParam, &wndPtr->rectClient, hbrush);
@@ -188,15 +203,15 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
     case WM_CTLCOLORBTN:
     case WM_CTLCOLORDLG:
     case WM_CTLCOLORSTATIC:
-        SetBkColor( (HDC)wParam, GetSysColor(COLOR_WINDOW) );
-        SetTextColor( (HDC)wParam, GetSysColor(COLOR_WINDOWTEXT) );
-        return (LONG)sysColorObjects.hbrushWindow;
+        SetBkColor( (HDC)wParam, GETSYSCOLOR(COLOR_WINDOW) );
+        SetTextColor( (HDC)wParam, GETSYSCOLOR(COLOR_WINDOWTEXT) );
+        return (LONG)GETSYSCOLORBRUSH(hbrushWindow);
 
     case WM_CTLCOLORSCROLLBAR:
         SetBkColor( (HDC)wParam, RGB(255, 255, 255) );
         SetTextColor( (HDC)wParam, RGB(0, 0, 0) );
-        UnrealizeObject( sysColorObjects.hbrushScrollbar );
-        return (LONG)sysColorObjects.hbrushScrollbar;
+        UnrealizeObject( GETSYSCOLORBRUSH(hbrushScrollbar));
+        return (LONG)GETSYSCOLORBRUSH(hbrushScrollbar);
 #endif
 
     case WM_CTLCOLOR:
@@ -205,14 +220,14 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 	    {
 		SetBkColor( (HDC)wParam, RGB(255, 255, 255) );
 		SetTextColor( (HDC)wParam, RGB(0, 0, 0) );
-		UnrealizeObject( sysColorObjects.hbrushScrollbar );
-		return (LONG)sysColorObjects.hbrushScrollbar;
+		UnrealizeObject(GETSYSCOLORBRUSH(hbrushScrollbar));
+		return (LONG)GETSYSCOLORBRUSH(hbrushScrollbar);
 	    }
 	    else
 	    {
-		SetBkColor( (HDC)wParam, GetSysColor(COLOR_WINDOW) );
-		SetTextColor( (HDC)wParam, GetSysColor(COLOR_WINDOWTEXT) );
-		return (LONG)sysColorObjects.hbrushWindow;
+		SetBkColor( (HDC)wParam, GETSYSCOLOR(COLOR_WINDOW) );
+		SetTextColor( (HDC)wParam, GETSYSCOLOR(COLOR_WINDOWTEXT) );
+		return (LONG)GETSYSCOLORBRUSH(hbrushWindow);
 	    }
 	}
 	

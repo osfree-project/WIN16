@@ -3,6 +3,19 @@
  *
  * Copyright 1993 Alexandre Julliard
  *
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see
+<https://www.gnu.org/licenses/>.
 */
 
 #include "dce.h"
@@ -235,7 +248,7 @@ void DCE_FreeDCE(HANDLE hdce)
 /***********************************************************************
  *           DCE_Init
  */
-void DCE_Init()
+VOID FAR DCE_Init()
 {
     int i;
     HANDLE handle;
@@ -621,7 +634,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     }
     else  /* Get a VisRgn for the whole screen */
     {
-        hrgnVisible = CreateRectRgn( 0, 0, SysMetricsDef[SM_CXSCREEN], SysMetricsDef[SM_CYSCREEN]);
+        hrgnVisible = CreateRectRgn( 0, 0, GETSYSTEMMETRICS(SM_CXSCREEN), GETSYSTEMMETRICS(SM_CYSCREEN));
     }
 
       /* Intersect VisRgn with the given region */

@@ -3,30 +3,19 @@
     	Copyright 1997 Willows Software, Inc. 
 
 This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Library General Public License as
-published by the Free Software Foundation; either version 2 of the
-License, or (at your option) any later version.
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
 
 This library is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Library General Public License for more details.
+Lesser General Public License for more details.
 
-You should have received a copy of the GNU Library General Public
-License along with this library; see the file COPYING.LIB.  If
-not, write to the Free Software Foundation, Inc., 675 Mass Ave,
-Cambridge, MA 02139, USA.
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see
+<https://www.gnu.org/licenses/>.
 
-
-For more information about the Willows Twin Libraries.
-
-	http://www.willows.com	
-
-To send email to the maintainer of the Willows Twin Libraries.
-
-	mailto:twin@willows.com 
-
-   This file contains for the sysmetrics-related API functions.    
  */
 
 
@@ -112,7 +101,7 @@ int WINAPI GetSystemMetrics(int nIndex)
 
 	retVal=0;
 	/* get system metrics value */
-	if ((nIndex >= 0) && (nIndex < SM_CMETRICS ))
+	if ((nIndex >= 0) && (nIndex < SM_CMETRICS))
 	{
 		retVal = SysMetricsDef[nIndex];
 	}
@@ -262,7 +251,7 @@ BOOL WINAPI SystemParametersInfo(UINT uAction, UINT uParam, LPVOID lpvParam,
 	    break;
 
 	case SPI_GETMENUDROPALIGNMENT:
-	    *((LPINT)lpvParam) = SysMetricsDef[SM_MENUDROPALIGNMENT];
+	    *((LPINT)lpvParam) = GETSYSTEMMETRICS(SM_MENUDROPALIGNMENT);
 //    	    APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL TRUE\n"));
 	    return TRUE;
 
@@ -310,14 +299,14 @@ BOOL WINAPI SystemParametersInfo(UINT uAction, UINT uParam, LPVOID lpvParam,
 
 	case SPI_ICONHORIZONTALSPACING:
 	    if (lpvParam) {
-		*((LPINT)lpvParam) = SysMetricsDef[SM_CXICONSPACING];
+		*((LPINT)lpvParam) = GETSYSTEMMETRICS(SM_CXICONSPACING);
 //    	    	APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL TRUE\n"));
 		return TRUE;
 	    }
 	    SysMetricsDef[SM_CXICONSPACING] = (int)uParam;
 	    if (fuWinIni & SPIF_UPDATEINIFILE) {
 		lstrcpy(lpszSection,"desktop");
-		lstrcpy(szBuffer, itoa(SysMetricsDef[SM_CXICONSPACING]));//sprintf(szBuffer,"%d",SysMetricsDef[SM_CXICONSPACING]);
+		lstrcpy(szBuffer, itoa(GETSYSTEMMETRICS(SM_CXICONSPACING)));//sprintf(szBuffer,"%d",SysMetricsDef[SM_CXICONSPACING]);
 		WriteProfileString(lpszSection,"IconSpacing",szBuffer);
 		if (fuWinIni & SPIF_SENDWININICHANGE)
 		    bSendWinIniChange = TRUE;
@@ -326,7 +315,7 @@ BOOL WINAPI SystemParametersInfo(UINT uAction, UINT uParam, LPVOID lpvParam,
 
 	case SPI_ICONVERTICALSPACING:
 	    if (lpvParam) {
-		*((LPINT)lpvParam) = SysMetricsDef[SM_CYICONSPACING];
+		*((LPINT)lpvParam) = GETSYSTEMMETRICS(SM_CYICONSPACING);
 //    	    	APISTR((LF_APIRET,"SystemParametersInfo: returns BOOL TRUE\n"));
 		return TRUE;
 	    }
@@ -334,7 +323,7 @@ BOOL WINAPI SystemParametersInfo(UINT uAction, UINT uParam, LPVOID lpvParam,
 	    SysMetricsDef[SM_CYICONSPACING] = (int)uParam;
 	    if (fuWinIni & SPIF_UPDATEINIFILE) {
 		lstrcpy(lpszSection,"windows");
-		lstrcpy(szBuffer, itoa(SysMetricsDef[SM_CYICONSPACING]));//sprintf(szBuffer,"%d",SysMetricsDef[SM_CYICONSPACING]);
+		lstrcpy(szBuffer, itoa(GETSYSTEMMETRICS(SM_CYICONSPACING)));//sprintf(szBuffer,"%d",SysMetricsDef[SM_CYICONSPACING]);
 		WriteProfileString(lpszSection,"IconSpacing",szBuffer);
 		if (fuWinIni & SPIF_SENDWININICHANGE)
 		    bSendWinIniChange = TRUE;
@@ -385,8 +374,8 @@ BOOL WINAPI SystemParametersInfo(UINT uAction, UINT uParam, LPVOID lpvParam,
 		return FALSE;
 	    lpRect->left = 0;
 	    lpRect->top = 0;
-	    lpRect->right = GetSystemMetrics(SM_CXSCREEN);
-	    lpRect->bottom = GetSystemMetrics(SM_CYSCREEN);
+	    lpRect->right = GETSYSTEMMETRICS(SM_CXSCREEN);
+	    lpRect->bottom = GETSYSTEMMETRICS(SM_CYSCREEN);
 	    break;
 
 	case SPI_SETWORKAREA:

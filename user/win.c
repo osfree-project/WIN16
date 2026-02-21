@@ -2,6 +2,21 @@
  * Window related functions
  *
  * Copyright 1993, 1994 Alexandre Julliard
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see
+<https://www.gnu.org/licenses/>.
+
  */
 
 #include "user.h"
@@ -317,7 +332,7 @@ static void WIN_DestroyWindow( HWND hwnd )
  *
  * Create the desktop window.
  */
-BOOL WIN_CreateDesktopWindow(void)
+BOOL FAR WIN_CreateDesktopWindow(void)
 {
     HCLASS hclass;
     CLASS *classPtr;
@@ -341,8 +356,8 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->hInstance         = 0;
     pWndDesktop->rectWindow.left   = 0;
     pWndDesktop->rectWindow.top    = 0;
-    pWndDesktop->rectWindow.right  = GetSystemMetrics(SM_CXSCREEN);
-    pWndDesktop->rectWindow.bottom = GetSystemMetrics(SM_CYSCREEN);
+    pWndDesktop->rectWindow.right  = GETSYSTEMMETRICS(SM_CXSCREEN);
+    pWndDesktop->rectWindow.bottom = GETSYSTEMMETRICS(SM_CYSCREEN);
     pWndDesktop->rectClient        = pWndDesktop->rectWindow;
     pWndDesktop->rectNormal        = pWndDesktop->rectWindow;
     pWndDesktop->ptIconPos.x       = -1;
@@ -574,7 +589,7 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
         wndPtr->dwStyle &= ~WS_MAXIMIZE;
         WINPOS_FindIconPos( hwnd );
         SetWindowPos( hwnd, 0, wndPtr->ptIconPos.x, wndPtr->ptIconPos.y,
-                      GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON),
+                      GETSYSTEMMETRICS(SM_CXICON), GETSYSTEMMETRICS(SM_CYICON),
                       SWP_FRAMECHANGED |
                       (style & WS_VISIBLE) ? SWP_SHOWWINDOW : 0 );
     }

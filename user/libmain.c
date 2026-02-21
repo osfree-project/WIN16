@@ -1,3 +1,21 @@
+/*
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see
+<https://www.gnu.org/licenses/>.
+
+*/
+
 #include "class.h"
 #include "dce.h"
 #include "queue.h"
@@ -5,7 +23,7 @@
 #include "display.h"
 
 
-
+#pragma code_seg( "INIT_TEXT" );
 
 int UT_GetIntFromProfile(UINT id, int defvalue)
 {
@@ -475,16 +493,6 @@ BOOL WINAPI SetDeskPattern(void)
 }
 
 
-void WINAPI SetMinMaxInfo(void) 
-{  
-	FUNCTION_START
-
-	// Initialize default main window size (often a fraction of the screen size)
-	CXSize = SysMetricsDef[SM_CXSCREEN] / 2;
-	CYSize = SysMetricsDef[SM_CYSCREEN] / 2;  
-
-	FUNCTION_END
-}
 
 LRESULT WINAPI SwitchWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -515,13 +523,6 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 	HLOCAL hWndClass;
 
 	FUNCTION_START
-
-	//InitiaLize the following variabLes from static variabLes:
-	//CXSize, CYSize, CYCaption, CXBorder, CYBorder, CYHScroLL,
-	//and CXVScroLL
-
-	SetMinMaxInfo(); // Appears to initialize some static vars.
-			 // Uses SysMetricsDef[SM_CXSCREEN], SysMetricsDef[SM_CYSCREEN], CXBorder, etc ...
 
 	// Allocate 0x1A bytes.
 	hWndClass = UserLocalAlloc(LT_USER_CLASS, LMEM_ZEROINIT, sizeof(WNDCLASS));
@@ -928,7 +929,7 @@ BOOL PASCAL LibMain(WORD wHeapSeg, HINSTANCE hInstance , WORD wHeapSize)
 		EnableInput();
 
 		// Middle of the screen
-		SetCursorPos(SysMetricsDef[SM_CXSCREEN] / 2, SysMetricsDef[SM_CYSCREEN] / 2);
+		SetCursorPos(GETSYSTEMMETRICS(SM_CXSCREEN) / 2, GETSYSTEMMETRICS(SM_CYSCREEN) / 2);
 
 		// Get the hourglass cursor, show it
 		SetCursor(LoadCursor(0, IDC_WAIT));
@@ -985,3 +986,5 @@ BOOL PASCAL LibMain(WORD wHeapSeg, HINSTANCE hInstance , WORD wHeapSize)
 	FUNCTION_END
 	return TRUE;
 }
+
+#pragma code_seg();

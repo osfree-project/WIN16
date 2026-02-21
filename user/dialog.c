@@ -3,19 +3,20 @@
  *
  * Copyright 1993, 1994, 1996, 2003 Alexandre Julliard
  *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see
+<https://www.gnu.org/licenses/>.
+
  */
 
 #include <stdarg.h>
@@ -432,9 +433,9 @@ static HWND DIALOG_CreateIndirect16( HINSTANCE hInst, LPCVOID dlgTemplate,
                 monitor = MonitorFromRect( &rect, MONITOR_DEFAULTTOPRIMARY );
                 GetMonitorInfoW( monitor, &mon_info );
             }
-            if ((dX = pos.x + size.cx + GetSystemMetrics(SM_CXDLGFRAME) - mon_info.rcWork.right) > 0)
+            if ((dX = pos.x + size.cx + GETSYSTEMMETRICS(SM_CXDLGFRAME) - mon_info.rcWork.right) > 0)
                 pos.x -= dX;
-            if ((dY = pos.y + size.cy + GetSystemMetrics(SM_CYDLGFRAME) - mon_info.rcWork.bottom) > 0)
+            if ((dY = pos.y + size.cy + GETSYSTEMMETRICS(SM_CYDLGFRAME) - mon_info.rcWork.bottom) > 0)
                 pos.y -= dY;
             if( pos.x < mon_info.rcWork.left ) pos.x = mon_info.rcWork.left;
             if( pos.y < mon_info.rcWork.top ) pos.y = mon_info.rcWork.top;

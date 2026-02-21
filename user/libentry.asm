@@ -41,7 +41,7 @@ INIT_TEXT ends
 ;*
 ;*** the windows extender code lies here
 ;*
-_TEXT segment word public 'CODE'
+INIT_TEXT segment word public 'CODE'
 
         extrn   LIBMAIN     : near       ; startup code
 
@@ -70,5 +70,5 @@ __DLLstart_:
         ret
 LibEntry    endp
 
-_TEXT   ends
+INIT_TEXT   ends
         end     LibEntry

@@ -3,17 +3,25 @@
  *
  * Copyright 1994 Alexandre Julliard
  *
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see
+<https://www.gnu.org/licenses/>.
  */
 
 #include "user.h"
 #include "queue.h"
 #include "syscolor.h"
 #include "menu.h"
-
-#ifndef MAX
-#define MAX(a,b) (((a) > (b)) ? (a) : (b))
-#endif
-
 
   /* Some useful macros */
 #define HAS_DLGFRAME(style,exStyle) \
@@ -50,22 +58,22 @@ static void NC_AdjustRect( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
 
     /* Decide if the window will be managed (see CreateWindowEx) */
         if (HAS_DLGFRAME( style, exStyle ))
-            InflateRect( rect, GetSystemMetrics(SM_CXDLGFRAME), GetSystemMetrics(SM_CYDLGFRAME) );
+            InflateRect( rect, GETSYSTEMMETRICS(SM_CXDLGFRAME), GETSYSTEMMETRICS(SM_CYDLGFRAME) );
         else
         {
             if (HAS_THICKFRAME(style))
-                InflateRect( rect, GetSystemMetrics(SM_CXFRAME), GetSystemMetrics(SM_CYFRAME));
+                InflateRect( rect, GETSYSTEMMETRICS(SM_CXFRAME), GETSYSTEMMETRICS(SM_CYFRAME));
             if (style & WS_BORDER)
-                InflateRect( rect, GetSystemMetrics(SM_CXBORDER), GetSystemMetrics(SM_CYBORDER));
+                InflateRect( rect, GETSYSTEMMETRICS(SM_CXBORDER), GETSYSTEMMETRICS(SM_CYBORDER));
         }
 
         if ((style & WS_CAPTION) == WS_CAPTION)
-            rect->top -= GetSystemMetrics(SM_CYCAPTION) /*- GetSystemMetrics(SM_CYBORDER)*/;
+            rect->top -= GETSYSTEMMETRICS(SM_CYCAPTION) /*- GETSYSTEMMETRICS(SM_CYBORDER)*/;
 
-    if (menu) rect->top -= GetSystemMetrics(SM_CYMENU) /*+ GetSystemMetrics(SM_CYBORDER)*/;
+    if (menu) rect->top -= GETSYSTEMMETRICS(SM_CYMENU) /*+ GETSYSTEMMETRICS(SM_CYBORDER)*/;
 
-    if (style & WS_VSCROLL) rect->right  += GetSystemMetrics(SM_CXVSCROLL);
-    if (style & WS_HSCROLL) rect->bottom += GetSystemMetrics(SM_CYHSCROLL);
+    if (style & WS_VSCROLL) rect->right  += GETSYSTEMMETRICS(SM_CXVSCROLL);
+    if (style & WS_HSCROLL) rect->bottom += GETSYSTEMMETRICS(SM_CYHSCROLL);
 }
 
 
@@ -113,31 +121,31 @@ void NC_GetMinMaxInfo( HWND hwnd, POINT FAR *maxSize, POINT FAR *maxPos,
 	if (wndPtr)
 	{
 		/* Compute default values */
-		MinMax.ptMaxSize.x = GetSystemMetrics(SM_CXSCREEN);
-		MinMax.ptMaxSize.y = GetSystemMetrics(SM_CYSCREEN);
-		MinMax.ptMinTrackSize.x = GetSystemMetrics(SM_CXMINTRACK);
-		MinMax.ptMinTrackSize.y = GetSystemMetrics(SM_CYMINTRACK);
-		MinMax.ptMaxTrackSize.x = GetSystemMetrics(SM_CXSCREEN);
-		MinMax.ptMaxTrackSize.y = GetSystemMetrics(SM_CYSCREEN);
+		MinMax.ptMaxSize.x = GETSYSTEMMETRICS(SM_CXSCREEN);
+		MinMax.ptMaxSize.y = GETSYSTEMMETRICS(SM_CYSCREEN);
+		MinMax.ptMinTrackSize.x = GETSYSTEMMETRICS(SM_CXMINTRACK);
+		MinMax.ptMinTrackSize.y = GETSYSTEMMETRICS(SM_CYMINTRACK);
+		MinMax.ptMaxTrackSize.x = GETSYSTEMMETRICS(SM_CXSCREEN);
+		MinMax.ptMaxTrackSize.y = GETSYSTEMMETRICS(SM_CYSCREEN);
 
 		if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
 		{
-			xinc = GetSystemMetrics(SM_CXDLGFRAME);
-			yinc = GetSystemMetrics(SM_CYDLGFRAME);
+			xinc = GETSYSTEMMETRICS(SM_CXDLGFRAME);
+			yinc = GETSYSTEMMETRICS(SM_CYDLGFRAME);
 		}
 		else
 		{
 			xinc = yinc = 0;
 			if (HAS_THICKFRAME(wndPtr->dwStyle))
 			{
-				xinc += GetSystemMetrics(SM_CXFRAME);
-				yinc += GetSystemMetrics(SM_CYFRAME);
+				xinc += GETSYSTEMMETRICS(SM_CXFRAME);
+				yinc += GETSYSTEMMETRICS(SM_CYFRAME);
 			}
 
 			if (wndPtr->dwStyle & WS_BORDER)
 			{
-				xinc += GetSystemMetrics(SM_CXBORDER);
-				yinc += GetSystemMetrics(SM_CYBORDER);
+				xinc += GETSYSTEMMETRICS(SM_CXBORDER);
+				yinc += GETSYSTEMMETRICS(SM_CYBORDER);
 			}
 		}
 
@@ -159,9 +167,9 @@ void NC_GetMinMaxInfo( HWND hwnd, POINT FAR *maxSize, POINT FAR *maxPos,
 
 		/* Some sanity checks */
 
-		MinMax.ptMaxTrackSize.x = MAX( MinMax.ptMaxTrackSize.x,
+		MinMax.ptMaxTrackSize.x = max( MinMax.ptMaxTrackSize.x,
 						MinMax.ptMinTrackSize.x );
-		MinMax.ptMaxTrackSize.y = MAX( MinMax.ptMaxTrackSize.y,
+		MinMax.ptMaxTrackSize.y = max( MinMax.ptMaxTrackSize.y,
 						MinMax.ptMinTrackSize.y );
     
 		if (maxSize) *maxSize = MinMax.ptMaxSize;
@@ -238,15 +246,15 @@ void NC_GetInsideRect( HWND hwnd, RECT FAR *rect )
 			/* Remove frame from rectangle */
 			if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
 			{
-				InflateRect( rect, -GetSystemMetrics(SM_CXDLGFRAME), -GetSystemMetrics(SM_CYDLGFRAME));
+				InflateRect( rect, -GETSYSTEMMETRICS(SM_CXDLGFRAME), -GETSYSTEMMETRICS(SM_CYDLGFRAME));
 				if (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME) InflateRect( rect, -1, 0);
 			}
 			else
 			{
 				if (HAS_THICKFRAME( wndPtr->dwStyle ))
-					InflateRect( rect, -GetSystemMetrics(SM_CXFRAME), -GetSystemMetrics(SM_CYFRAME));
+					InflateRect( rect, -GETSYSTEMMETRICS(SM_CXFRAME), -GETSYSTEMMETRICS(SM_CYFRAME));
 				if (wndPtr->dwStyle & WS_BORDER)
-					InflateRect( rect, -GetSystemMetrics(SM_CXBORDER), -GetSystemMetrics(SM_CYBORDER));
+					InflateRect( rect, -GETSYSTEMMETRICS(SM_CXBORDER), -GETSYSTEMMETRICS(SM_CYBORDER));
 			}
 		}
 		LocalUnlock(hwnd);
@@ -275,37 +283,37 @@ LONG NC_HandleNCHitTest( HWND hwnd, POINT pt )
         /* Check borders */
         if (HAS_THICKFRAME( wndPtr->dwStyle ))
         {
-            InflateRect( &rect, -GetSystemMetrics(SM_CXFRAME), -GetSystemMetrics(SM_CYFRAME));
+            InflateRect( &rect, -GETSYSTEMMETRICS(SM_CXFRAME), -GETSYSTEMMETRICS(SM_CYFRAME));
             if (wndPtr->dwStyle & WS_BORDER)
-                InflateRect(&rect, -GetSystemMetrics(SM_CXBORDER), -GetSystemMetrics(SM_CYBORDER));
+                InflateRect(&rect, -GETSYSTEMMETRICS(SM_CXBORDER), -GETSYSTEMMETRICS(SM_CYBORDER));
             if (!PtInRect( &rect, pt ))
             {
                 /* Check top sizing border */
                 if (pt.y < rect.top)
                 {
-                    if (pt.x < rect.left+GetSystemMetrics(SM_CXSIZE)) return HTTOPLEFT;
-                    if (pt.x >= rect.right-GetSystemMetrics(SM_CXSIZE)) return HTTOPRIGHT;
+                    if (pt.x < rect.left+GETSYSTEMMETRICS(SM_CXSIZE)) return HTTOPLEFT;
+                    if (pt.x >= rect.right-GETSYSTEMMETRICS(SM_CXSIZE)) return HTTOPRIGHT;
                     return HTTOP;
                 }
                 /* Check bottom sizing border */
                 if (pt.y >= rect.bottom)
                 {
-                    if (pt.x < rect.left+GetSystemMetrics(SM_CXSIZE)) return HTBOTTOMLEFT;
-                    if (pt.x >= rect.right-GetSystemMetrics(SM_CXSIZE)) return HTBOTTOMRIGHT;
+                    if (pt.x < rect.left+GETSYSTEMMETRICS(SM_CXSIZE)) return HTBOTTOMLEFT;
+                    if (pt.x >= rect.right-GETSYSTEMMETRICS(SM_CXSIZE)) return HTBOTTOMRIGHT;
                     return HTBOTTOM;
                 }
                 /* Check left sizing border */
                 if (pt.x < rect.left)
                 {
-                    if (pt.y < rect.top+GetSystemMetrics(SM_CYSIZE)) return HTTOPLEFT;
-                    if (pt.y >= rect.bottom-GetSystemMetrics(SM_CYSIZE)) return HTBOTTOMLEFT;
+                    if (pt.y < rect.top+GETSYSTEMMETRICS(SM_CYSIZE)) return HTTOPLEFT;
+                    if (pt.y >= rect.bottom-GETSYSTEMMETRICS(SM_CYSIZE)) return HTBOTTOMLEFT;
                     return HTLEFT;
                 }
                 /* Check right sizing border */
                 if (pt.x >= rect.right)
                 {
-                    if (pt.y < rect.top+GetSystemMetrics(SM_CYSIZE)) return HTTOPRIGHT;
-                    if (pt.y >= rect.bottom-GetSystemMetrics(SM_CYSIZE)) return HTBOTTOMRIGHT;
+                    if (pt.y < rect.top+GETSYSTEMMETRICS(SM_CYSIZE)) return HTTOPRIGHT;
+                    if (pt.y >= rect.bottom-GETSYSTEMMETRICS(SM_CYSIZE)) return HTBOTTOMRIGHT;
                     return HTRIGHT;
                 }
             }
@@ -313,9 +321,9 @@ LONG NC_HandleNCHitTest( HWND hwnd, POINT pt )
         else  /* No thick frame */
         {
             if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
-                InflateRect(&rect, -GetSystemMetrics(SM_CXDLGFRAME), -GetSystemMetrics(SM_CYDLGFRAME));
+                InflateRect(&rect, -GETSYSTEMMETRICS(SM_CXDLGFRAME), -GETSYSTEMMETRICS(SM_CYDLGFRAME));
             else if (wndPtr->dwStyle & WS_BORDER)
-                InflateRect(&rect, -GetSystemMetrics(SM_CXBORDER), -GetSystemMetrics(SM_CYBORDER));
+                InflateRect(&rect, -GETSYSTEMMETRICS(SM_CXBORDER), -GETSYSTEMMETRICS(SM_CYBORDER));
             if (!PtInRect( &rect, pt )) return HTBORDER;
         }
 
@@ -323,20 +331,20 @@ LONG NC_HandleNCHitTest( HWND hwnd, POINT pt )
 
         if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
         {
-            rect.top += GetSystemMetrics(SM_CYCAPTION) - 1;
+            rect.top += GETSYSTEMMETRICS(SM_CYCAPTION) - 1;
             if (!PtInRect( &rect, pt ))
             {
                 /* Check system menu */
                 if (wndPtr->dwStyle & WS_SYSMENU)
-                    rect.left += GetSystemMetrics(SM_CXSIZE);
+                    rect.left += GETSYSTEMMETRICS(SM_CXSIZE);
                 if (pt.x <= rect.left) return HTSYSMENU;
                 /* Check maximize box */
                 if (wndPtr->dwStyle & WS_MAXIMIZEBOX)
-                    rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
+                    rect.right -= GETSYSTEMMETRICS(SM_CXSIZE) + 1;
                 if (pt.x >= rect.right) return HTMAXBUTTON;
                 /* Check minimize box */
                 if (wndPtr->dwStyle & WS_MINIMIZEBOX)
-                    rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
+                    rect.right -= GETSYSTEMMETRICS(SM_CXSIZE) + 1;
                 if (pt.x >= rect.right) return HTMINBUTTON;
                 return HTCAPTION;
             }
@@ -352,7 +360,7 @@ LONG NC_HandleNCHitTest( HWND hwnd, POINT pt )
 
     if (wndPtr->dwStyle & WS_VSCROLL)
     {
-	rect.right += GetSystemMetrics(SM_CXVSCROLL);
+	rect.right += GETSYSTEMMETRICS(SM_CXVSCROLL);
 	if (PtInRect( &rect, pt )) return HTVSCROLL;
     }
 
@@ -360,12 +368,12 @@ LONG NC_HandleNCHitTest( HWND hwnd, POINT pt )
 
     if (wndPtr->dwStyle & WS_HSCROLL)
     {
-	rect.bottom += GetSystemMetrics(SM_CYHSCROLL);
+	rect.bottom += GETSYSTEMMETRICS(SM_CYHSCROLL);
 	if (PtInRect( &rect, pt ))
 	{
 	      /* Check size box */
 	    if ((wndPtr->dwStyle & WS_VSCROLL) &&
-		(pt.x >= rect.right - GetSystemMetrics(SM_CXVSCROLL)))
+		(pt.x >= rect.right - GETSYSTEMMETRICS(SM_CXVSCROLL)))
 		return HTSIZE;
 	    return HTHSCROLL;
 	}
@@ -405,8 +413,8 @@ void NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down )
 		if (hdcMem)
 		{
 			hbitmap = SelectObject( hdcMem, hbitmapClose );
-			BitBlt( hdc, rect.left, rect.top, GetSystemMetrics(SM_CXSIZE), GetSystemMetrics(SM_CYSIZE),
-				hdcMem, (wndPtr->dwStyle & WS_CHILD) ? GetSystemMetrics(SM_CXSIZE) : 0, 0,
+			BitBlt( hdc, rect.left, rect.top, GETSYSTEMMETRICS(SM_CXSIZE), GETSYSTEMMETRICS(SM_CYSIZE),
+				hdcMem, (wndPtr->dwStyle & WS_CHILD) ? GETSYSTEMMETRICS(SM_CXSIZE) : 0, 0,
 				down ? NOTSRCCOPY : SRCCOPY );
 			SelectObject( hdcMem, hbitmap );
 			DeleteDC( hdcMem );
@@ -439,16 +447,16 @@ static void NC_DrawMaxButton( HWND hwnd, HDC hdc, BOOL down )
 			NC_GetInsideRect( hwnd, &rect );
 
 			/* Вычисляем позицию кнопки */
-			rect.left = rect.right - GetSystemMetrics(SM_CXSIZE) - 1;
-			rect.right = rect.left + GetSystemMetrics(SM_CXSIZE);
-			rect.bottom = rect.top + GetSystemMetrics(SM_CYSIZE);
+			rect.left = rect.right - GETSYSTEMMETRICS(SM_CXSIZE) - 1;
+			rect.right = rect.left + GETSYSTEMMETRICS(SM_CXSIZE);
+			rect.bottom = rect.top + GETSYSTEMMETRICS(SM_CYSIZE);
     
 			/* Рисуем кнопку */
 			hdcMem = CreateCompatibleDC( hdc );
 			if (hdcMem)
 			{
 				hbitmap = SelectObject( hdcMem, IsZoomed(hwnd) ? (down ? hbitmapRestoreD : hbitmapRestore) : (down ? hbitmapMaximizeD : hbitmapMaximize) );
-				BitBlt( hdc, rect.left, rect.top, GetSystemMetrics(SM_CXSIZE), GetSystemMetrics(SM_CYSIZE),
+				BitBlt( hdc, rect.left, rect.top, GETSYSTEMMETRICS(SM_CXSIZE), GETSYSTEMMETRICS(SM_CYSIZE),
 					hdcMem, 0, 0,
 					down ? NOTSRCCOPY : SRCCOPY );
 				SelectObject( hdcMem, hbitmap );
@@ -486,19 +494,19 @@ static void NC_DrawMinButton( HWND hwnd, HDC hdc, BOOL down )
 			/* Вычисляем позицию кнопки с учетом кнопки максимизации */
 			if (wndPtr->dwStyle & WS_MAXIMIZEBOX)
 			{
-				rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
+				rect.right -= GETSYSTEMMETRICS(SM_CXSIZE) + 1;
 			}
     
-			rect.left = rect.right - GetSystemMetrics(SM_CXSIZE) - 1;
-			rect.right = rect.left + GetSystemMetrics(SM_CXSIZE);
-			rect.bottom = rect.top + GetSystemMetrics(SM_CYSIZE);
+			rect.left = rect.right - GETSYSTEMMETRICS(SM_CXSIZE) - 1;
+			rect.right = rect.left + GETSYSTEMMETRICS(SM_CXSIZE);
+			rect.bottom = rect.top + GETSYSTEMMETRICS(SM_CYSIZE);
     
 			/* Рисуем кнопку */
 			hdcMem = CreateCompatibleDC( hdc );
 			if (hdcMem)
 			{
 				hbitmap = SelectObject( hdcMem, down ? hbitmapMinimizeD : hbitmapMinimize );
-				BitBlt( hdc, rect.left, rect.top, GetSystemMetrics(SM_CXSIZE), GetSystemMetrics(SM_CYSIZE),
+				BitBlt( hdc, rect.left, rect.top, GETSYSTEMMETRICS(SM_CXSIZE), GETSYSTEMMETRICS(SM_CYSIZE),
 					hdcMem, 0, 0,
 					down ? NOTSRCCOPY : SRCCOPY );
 				SelectObject( hdcMem, hbitmap );
@@ -527,17 +535,17 @@ static void NC_DrawFrame( HDC hdc, RECT FAR *rect, BOOL dlgFrame, BOOL active )
 
     if (dlgFrame)
     {
-	width = GetSystemMetrics(SM_CXDLGFRAME) - 1;
-	height = GetSystemMetrics(SM_CYDLGFRAME) - 1;
-        SelectObject( hdc, active ? sysColorObjects.hbrushActiveCaption :
-                                    sysColorObjects.hbrushInactiveCaption );
+	width = GETSYSTEMMETRICS(SM_CXDLGFRAME) - 1;
+	height = GETSYSTEMMETRICS(SM_CYDLGFRAME) - 1;
+        SelectObject( hdc, active ? GETSYSCOLORBRUSH(hbrushActiveCaption) :
+                                    GETSYSCOLORBRUSH(hbrushInactiveCaption));
     }
     else
     {
-	width = GetSystemMetrics(SM_CXFRAME) - 1;
-	height = GetSystemMetrics(SM_CYFRAME) - 1;
-        SelectObject( hdc, active ? sysColorObjects.hbrushActiveBorder :
-                                    sysColorObjects.hbrushInactiveBorder );
+	width = GETSYSTEMMETRICS(SM_CXFRAME) - 1;
+	height = GETSYSTEMMETRICS(SM_CYFRAME) - 1;
+        SelectObject( hdc, active ? GETSYSCOLORBRUSH(hbrushActiveBorder):
+                                    GETSYSCOLORBRUSH(hbrushInactiveBorder));
     }
 
       /* Draw frame */
@@ -565,25 +573,25 @@ static void NC_DrawFrame( HDC hdc, RECT FAR *rect, BOOL dlgFrame, BOOL active )
     LineTo( hdc, rect->left+width, rect->top+height );
 
       /* Draw the decorations */
-    tmp = rect->top + GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CYSIZE);
+    tmp = rect->top + GETSYSTEMMETRICS(SM_CYFRAME) + GETSYSTEMMETRICS(SM_CYSIZE);
     MoveTo( hdc, rect->left, tmp);
     LineTo( hdc, rect->left+width, tmp );
     MoveTo( hdc, rect->right-width-1, tmp );
     LineTo( hdc, rect->right-1, tmp );
 
-    tmp = rect->bottom - 1 - GetSystemMetrics(SM_CYFRAME) - GetSystemMetrics(SM_CYSIZE);
+    tmp = rect->bottom - 1 - GETSYSTEMMETRICS(SM_CYFRAME) - GETSYSTEMMETRICS(SM_CYSIZE);
     MoveTo( hdc, rect->left, tmp );
     LineTo( hdc, rect->left+width, tmp );
     MoveTo( hdc, rect->right-width-1, tmp );
     LineTo( hdc, rect->right-1, tmp );
 
-    tmp = rect->left + GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXSIZE);
+    tmp = rect->left + GETSYSTEMMETRICS(SM_CXFRAME) + GETSYSTEMMETRICS(SM_CXSIZE);
     MoveTo( hdc, tmp, rect->top );
     LineTo( hdc, tmp, rect->top+height );
     MoveTo( hdc, tmp, rect->bottom-height-1 );
     LineTo( hdc, tmp, rect->bottom-1 );
 
-    tmp = rect->right - 1 - GetSystemMetrics(SM_CXFRAME) - GetSystemMetrics(SM_CYSIZE);
+    tmp = rect->right - 1 - GETSYSTEMMETRICS(SM_CXFRAME) - GETSYSTEMMETRICS(SM_CYSIZE);
     MoveTo( hdc, tmp, rect->top );
     LineTo( hdc, tmp, rect->top+height );
     MoveTo( hdc, tmp, rect->bottom-height-1 );
@@ -605,16 +613,16 @@ static void NC_DrawMovingFrame( HDC hdc, RECT FAR *rect, BOOL thickframe )
     {
 	SelectObject( hdc, GetStockObject( GRAY_BRUSH ) );
 	PatBlt( hdc, rect->left, rect->top,
-	        rect->right - rect->left - GetSystemMetrics(SM_CXFRAME),
-	        GetSystemMetrics(SM_CYFRAME), PATINVERT );
-	PatBlt( hdc, rect->left, rect->top + GetSystemMetrics(SM_CYFRAME),
-	        GetSystemMetrics(SM_CXFRAME), 
-	        rect->bottom - rect->top - GetSystemMetrics(SM_CYFRAME), PATINVERT );
-	PatBlt( hdc, rect->left + GetSystemMetrics(SM_CXFRAME), rect->bottom,
-	        rect->right - rect->left - GetSystemMetrics(SM_CXFRAME),
-	        -GetSystemMetrics(SM_CYFRAME), PATINVERT );
-	PatBlt( hdc, rect->right, rect->top, -GetSystemMetrics(SM_CXFRAME), 
-	        rect->bottom - rect->top - GetSystemMetrics(SM_CYFRAME), PATINVERT );
+	        rect->right - rect->left - GETSYSTEMMETRICS(SM_CXFRAME),
+	        GETSYSTEMMETRICS(SM_CYFRAME), PATINVERT );
+	PatBlt( hdc, rect->left, rect->top + GETSYSTEMMETRICS(SM_CYFRAME),
+	        GETSYSTEMMETRICS(SM_CXFRAME), 
+	        rect->bottom - rect->top - GETSYSTEMMETRICS(SM_CYFRAME), PATINVERT );
+	PatBlt( hdc, rect->left + GETSYSTEMMETRICS(SM_CXFRAME), rect->bottom,
+	        rect->right - rect->left - GETSYSTEMMETRICS(SM_CXFRAME),
+	        -GETSYSTEMMETRICS(SM_CYFRAME), PATINVERT );
+	PatBlt( hdc, rect->right, rect->top, -GETSYSTEMMETRICS(SM_CXFRAME), 
+	        rect->bottom - rect->top - GETSYSTEMMETRICS(SM_CYFRAME), PATINVERT );
     }
     else DrawFocusRect( hdc, rect );
 }
@@ -641,7 +649,7 @@ static void NC_DrawCaption( HDC hdc, RECT FAR *rect, HWND hwnd,
 	{
 		if (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME)
 		{
-			HBRUSH hbrushOld = SelectObject( hdc, sysColorObjects.hbrushWindow );
+			HBRUSH hbrushOld = SelectObject( hdc, GETSYSCOLORBRUSH(hbrushWindow));
 			PatBlt( hdc, r.left, r.top, 1, r.bottom-r.top+1,PATCOPY );
 			PatBlt( hdc, r.right-1, r.top, 1, r.bottom-r.top+1, PATCOPY );
 			PatBlt( hdc, r.left, r.top-1, r.right-r.left, 1, PATCOPY );
@@ -656,7 +664,7 @@ static void NC_DrawCaption( HDC hdc, RECT FAR *rect, HWND hwnd,
 		if (style & WS_SYSMENU)
 		{
 			NC_DrawSysButton( hwnd, hdc, FALSE );
-			r.left += GetSystemMetrics(SM_CXSIZE) + 1;
+			r.left += GETSYSTEMMETRICS(SM_CXSIZE) + 1;
 			MoveTo( hdc, r.left - 1, r.top );
 			LineTo( hdc, r.left - 1, r.bottom );
 		}
@@ -664,21 +672,21 @@ static void NC_DrawCaption( HDC hdc, RECT FAR *rect, HWND hwnd,
 		if (style & WS_MAXIMIZEBOX)
 		{
 			NC_DrawMaxButton( hwnd, hdc, FALSE );
-			r.right -= GetSystemMetrics(SM_CXSIZE) + 1;
+			r.right -= GETSYSTEMMETRICS(SM_CXSIZE) + 1;
 		}
 
 		if (style & WS_MINIMIZEBOX)
 		{
 			NC_DrawMinButton( hwnd, hdc, FALSE );
-			r.right -= GetSystemMetrics(SM_CXSIZE) + 1;
+			r.right -= GETSYSTEMMETRICS(SM_CXSIZE) + 1;
 		}
 
-		FillRect( hdc, &r, active ? sysColorObjects.hbrushActiveCaption : sysColorObjects.hbrushInactiveCaption );
+		FillRect( hdc, &r, active ? GETSYSCOLORBRUSH(hbrushActiveCaption) : GETSYSCOLORBRUSH(hbrushInactiveCaption));
 
 		if (GetWindowText( hwnd, buffer, 256 ))
     		{
-			if (active) SetTextColor( hdc, GetSysColor( COLOR_CAPTIONTEXT ) );
-			else SetTextColor( hdc, GetSysColor( COLOR_INACTIVECAPTIONTEXT ) );
+			if (active) SetTextColor( hdc, GETSYSCOLOR( COLOR_CAPTIONTEXT ) );
+			else SetTextColor( hdc, GETSYSCOLOR( COLOR_INACTIVECAPTIONTEXT ) );
 			SetBkMode( hdc, TRANSPARENT );
 			DrawText( hdc, buffer, -1, &r, DT_SINGLELINE | DT_CENTER | DT_VCENTER);
 		}
@@ -753,7 +761,7 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
 				rect.right  = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
 				rect.bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
 
-				SelectObject( hdc, sysColorObjects.hpenWindowFrame );
+				SelectObject( hdc, GETSYSCOLORBRUSH(hpenWindowFrame));
 
 				if ((wndPtr->dwStyle & WS_BORDER) || (wndPtr->dwStyle & WS_DLGFRAME) || (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME))
 				{
@@ -773,8 +781,8 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
 				if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
 				{
 					RECT r = rect;
-					r.bottom = rect.top + GetSystemMetrics(SM_CYSIZE);
-					rect.top += GetSystemMetrics(SM_CYSIZE) + GetSystemMetrics(SM_CYBORDER);
+					r.bottom = rect.top + GETSYSTEMMETRICS(SM_CYSIZE);
+					rect.top += GETSYSTEMMETRICS(SM_CYSIZE) + GETSYSTEMMETRICS(SM_CYBORDER);
 					NC_DrawCaption( hdc, &r, hwnd, wndPtr->dwStyle, active );
 				}
 
@@ -782,7 +790,7 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
 				if (HAS_MENU(wndPtr))
 				{
 					RECT r = rect;
-					r.bottom = rect.top + GetSystemMetrics(SM_CYMENU);  /* default height */
+					r.bottom = rect.top + GETSYSTEMMETRICS(SM_CYMENU);  /* default height */
 					rect.top += MENU_DrawMenuBar( hdc, &r, hwnd, suppress_menupaint );
 				}
 
@@ -795,9 +803,9 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
 				if ((wndPtr->dwStyle & WS_VSCROLL) && (wndPtr->dwStyle & WS_HSCROLL))
 				{
 				        RECT r = rect;
-				        r.left = r.right - GetSystemMetrics(SM_CXVSCROLL) + 1;
-				        r.top  = r.bottom - GetSystemMetrics(SM_CYHSCROLL) + 1;
-				        FillRect( hdc, &r, sysColorObjects.hbrushScrollbar );
+				        r.left = r.right - GETSYSTEMMETRICS(SM_CXVSCROLL) + 1;
+				        r.top  = r.bottom - GETSYSTEMMETRICS(SM_CYHSCROLL) + 1;
+				        FillRect( hdc, &r, GETSYSCOLORBRUSH(hbrushScrollbar));
 				}
 
 			}
@@ -929,8 +937,8 @@ static void NC_TrackSysMenu( HWND hwnd, HDC hdc, POINT pt )
 	OffsetRect( &rect, wndPtr->rectWindow.left, wndPtr->rectWindow.top );
 	if (wndPtr->dwStyle & WS_CHILD)
 	    ClientToScreen( wndPtr->parent->hwndSelf, (POINT *)&rect );
-	rect.right = rect.left + GetSystemMetrics(SM_CXSIZE);
-	rect.bottom = rect.top + GetSystemMetrics(SM_CYSIZE);
+	rect.right = rect.left + GETSYSTEMMETRICS(SM_CXSIZE);
+	rect.bottom = rect.top + GETSYSTEMMETRICS(SM_CYSIZE);
 	if (!iconic) NC_DrawSysButton( hwnd, hdc, TRUE );
 	TrackPopupMenu( wndPtr->hSysMenu, TPM_LEFTALIGN | TPM_LEFTBUTTON,
 		        rect.left, rect.bottom, 0, hwnd, &rect );
@@ -958,13 +966,13 @@ static LONG NC_StartSizeMove( HWND hwnd, WPARAM wParam, POINT FAR *capturePoint 
 	RECT rect;
 	NC_GetInsideRect( hwnd, &rect );
 	if (wndPtr->dwStyle & WS_SYSMENU)
-	    rect.left += GetSystemMetrics(SM_CXSIZE) + 1;
+	    rect.left += GETSYSTEMMETRICS(SM_CXSIZE) + 1;
 	if (wndPtr->dwStyle & WS_MINIMIZEBOX)
-	    rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
+	    rect.right -= GETSYSTEMMETRICS(SM_CXSIZE) + 1;
 	if (wndPtr->dwStyle & WS_MAXIMIZEBOX)
-	    rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
+	    rect.right -= GETSYSTEMMETRICS(SM_CXSIZE) + 1;
 	pt.x = wndPtr->rectWindow.left + (rect.right - rect.left) / 2;
-	pt.y = wndPtr->rectWindow.top + rect.top + GetSystemMetrics(SM_CYSIZE)/2;
+	pt.y = wndPtr->rectWindow.top + rect.top + GETSYSTEMMETRICS(SM_CYSIZE)/2;
 	if (wndPtr->dwStyle & WS_CHILD)
 	    ClientToScreen( wndPtr->parent->hwndSelf, &pt );
 	hittest = HTCAPTION;
@@ -993,21 +1001,21 @@ static LONG NC_StartSizeMove( HWND hwnd, WPARAM wParam, POINT FAR *capturePoint 
 		case VK_UP:
 		    hittest = HTTOP;
 		    pt.x =(wndPtr->rectWindow.left+wndPtr->rectWindow.right)/2;
-		    pt.y = wndPtr->rectWindow.top + GetSystemMetrics(SM_CYFRAME) / 2;
+		    pt.y = wndPtr->rectWindow.top + GETSYSTEMMETRICS(SM_CYFRAME) / 2;
 		    break;
 		case VK_DOWN:
 		    hittest = HTBOTTOM;
 		    pt.x =(wndPtr->rectWindow.left+wndPtr->rectWindow.right)/2;
-		    pt.y = wndPtr->rectWindow.bottom - GetSystemMetrics(SM_CYFRAME) / 2;
+		    pt.y = wndPtr->rectWindow.bottom - GETSYSTEMMETRICS(SM_CYFRAME) / 2;
 		    break;
 		case VK_LEFT:
 		    hittest = HTLEFT;
-		    pt.x = wndPtr->rectWindow.left + GetSystemMetrics(SM_CXFRAME) / 2;
+		    pt.x = wndPtr->rectWindow.left + GETSYSTEMMETRICS(SM_CXFRAME) / 2;
 		    pt.y =(wndPtr->rectWindow.top+wndPtr->rectWindow.bottom)/2;
 		    break;
 		case VK_RIGHT:
 		    hittest = HTRIGHT;
-		    pt.x = wndPtr->rectWindow.right - GetSystemMetrics(SM_CXFRAME) / 2;
+		    pt.x = wndPtr->rectWindow.right - GETSYSTEMMETRICS(SM_CXFRAME) / 2;
 		    pt.y =(wndPtr->rectWindow.top+wndPtr->rectWindow.bottom)/2;
 		    break;
 		case VK_RETURN:
@@ -1072,26 +1080,26 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
     sizingRect = wndPtr->rectWindow;
     if (wndPtr->dwStyle & WS_CHILD)
 	GetClientRect( wndPtr->parent->hwndSelf, &mouseRect );
-    else SetRect( &mouseRect, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN) );
+    else SetRect( &mouseRect, 0, 0, GETSYSTEMMETRICS(SM_CXSCREEN), GETSYSTEMMETRICS(SM_CYSCREEN) );
     if (ON_LEFT_BORDER(hittest))
     {
-	mouseRect.left  = MAX( mouseRect.left, sizingRect.right-maxTrack.x );
-	mouseRect.right = MIN( mouseRect.right, sizingRect.right-minTrack.x );
+	mouseRect.left  = max( mouseRect.left, sizingRect.right-maxTrack.x );
+	mouseRect.right = min( mouseRect.right, sizingRect.right-minTrack.x );
     }
     else if (ON_RIGHT_BORDER(hittest))
     {
-	mouseRect.left  = MAX( mouseRect.left, sizingRect.left+minTrack.x );
-	mouseRect.right = MIN( mouseRect.right, sizingRect.left+maxTrack.x );
+	mouseRect.left  = max( mouseRect.left, sizingRect.left+minTrack.x );
+	mouseRect.right = min( mouseRect.right, sizingRect.left+maxTrack.x );
     }
     if (ON_TOP_BORDER(hittest))
     {
-	mouseRect.top    = MAX( mouseRect.top, sizingRect.bottom-maxTrack.y );
-	mouseRect.bottom = MIN( mouseRect.bottom,sizingRect.bottom-minTrack.y);
+	mouseRect.top    = max( mouseRect.top, sizingRect.bottom-maxTrack.y );
+	mouseRect.bottom = min( mouseRect.bottom,sizingRect.bottom-minTrack.y);
     }
     else if (ON_BOTTOM_BORDER(hittest))
     {
-	mouseRect.top    = MAX( mouseRect.top, sizingRect.top+minTrack.y );
-	mouseRect.bottom = MIN( mouseRect.bottom, sizingRect.top+maxTrack.y );
+	mouseRect.top    = max( mouseRect.top, sizingRect.top+minTrack.y );
+	mouseRect.bottom = min( mouseRect.bottom, sizingRect.top+maxTrack.y );
     }
     SendMessage( hwnd, WM_ENTERSIZEMOVE, 0, 0 );
 
@@ -1136,10 +1144,10 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
 	    case VK_RIGHT: pt.x += 8; break;		
 	}
 
-	pt.x = MAX( pt.x, mouseRect.left );
-	pt.x = MIN( pt.x, mouseRect.right );
-	pt.y = MAX( pt.y, mouseRect.top );
-	pt.y = MIN( pt.y, mouseRect.bottom );
+	pt.x = max( pt.x, mouseRect.left );
+	pt.x = min( pt.x, mouseRect.right );
+	pt.y = max( pt.y, mouseRect.top );
+	pt.y = min( pt.y, mouseRect.bottom );
 
 	dx = pt.x - capturePoint.x;
 	dy = pt.y - capturePoint.y;

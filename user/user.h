@@ -1,7 +1,25 @@
+/*
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see
+<https://www.gnu.org/licenses/>.
+
+*/
+
 #define OEMRESOURCE
 
 #include <windows.h>
-#include <syscolor.h>
+#include "syscolor.h"
 
 // OpenWatcom has incorrect SM_CMETRICS constant for Windows 3.0
 #if (WINVER < 0x030a)
@@ -359,7 +377,6 @@ extern WORD __based(__segname("_TEXT")) GlobalAtomTable_Selector; // Selector of
 extern WORD __based(__segname("_TEXT")) USER_HeapSel;  /* USER heap selector  */
 extern HANDLE __based(__segname("_TEXT")) firstDCE;
 extern HANDLE __based(__segname("_TEXT")) hGDI;
-
 extern HMODULE hModuleWin;
 extern HINSTANCE hInstanceDisplay;
 
@@ -416,7 +433,6 @@ extern HWND captureWnd;
 
 extern HMENU HSysMenu;
 
-extern HGLOBAL MenuBase;
 extern HGLOBAL HMenuHeap;
 extern HGLOBAL MenuStringBase;
 extern HGLOBAL HMenuStringHeap;
@@ -458,7 +474,6 @@ int _fstrnicmp(char const far *s1, const char far *s2, unsigned int n);
 char far *itoa(int i);
 char far *uitoa(unsigned int i);
 char far *itox(int m);
-
 
 #define  UserLocalAlloc(tag, flags, size)   LocalAlloc(flags, size)
 
@@ -561,7 +576,8 @@ typedef struct tagCURSORICONINFO
 //
 VOID FAR PASCAL MoveCursor(WORD wAbsX, WORD wAbsY);
 VOID FAR PASCAL CheckCursor(VOID);
-#pragma pack(push, 1)  // Отключаем выравнивание для точного соответствия ассемблерной структуре
+
+#pragma pack(push, 1)
 
 typedef struct tagCURSORSHAPE {
     WORD csHotX;       // Горячая точка X
@@ -577,7 +593,7 @@ typedef struct tagCURSORSHAPE {
     BYTE csBits[1];    // Массив переменной длины для данных масок
 } CURSORSHAPE, FAR * LPCURSORSHAPE;
 
-#pragma pack(pop)  // Восстанавливаем выравнивание
+#pragma pack(pop)
 
 VOID FAR PASCAL DisplaySetCursor(LPCURSORSHAPE lpCursorShape);
 
@@ -837,7 +853,7 @@ extern CLASS * CLASS_FindClassPtr( HCLASS hclass );
 #define MAGIC_DONTCARE	      0xffff
 
 
-int WINAPI SelectVisRgn( HDC hdc, HRGN hrgn );
+int WINAPI SelectVisRgn(HDC hdc, HRGN hrgn);
 
   /* Built-in class names (see _Undocumented_Windows_ p.418) */
 #define POPUPMENU_CLASS_NAME "#32768"  /* PopupMenu */
@@ -862,7 +878,7 @@ extern BOOL WIN_LinkWindow( HWND hwnd, HWND hwndInsertAfter );
 extern HWND WIN_FindWinToRepaint( HWND hwnd, HQUEUE hQueue );
 extern void WIN_SendParentNotify( HWND hwnd, WORD event,
                                   WORD idChild, LONG lValue );
-extern BOOL WIN_CreateDesktopWindow(void);
+extern BOOL FAR WIN_CreateDesktopWindow(void);
 extern HWND WIN_GetTopParent( HWND hwnd );
 extern HINSTANCE WIN_GetWindowInstance( HWND hwnd );
 
@@ -897,12 +913,6 @@ extern LONG NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam );
 extern LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt );
 extern LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam );
 
-#ifndef MIN
-#define MIN(a,b) (((a) < (b)) ? (a) : (b))
-#endif
-
-void SYSCOLOR_Init(void);
-
 BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus );
 BOOL WINPOS_ChangeActiveWindow( HWND hWnd, BOOL mouseMsg );
 
@@ -924,3 +934,13 @@ extern  void          SetDS( unsigned short );
 char far * lstrchr (const char far *s, int c);
 int latoi(const char far *h);
 
+
+BOOL MSG_InternalGetMessage( LPMSG msg, HWND hwnd, HWND hwndOwner, short code,
+			     WORD flags, BOOL sendIdle );
+
+
+extern COLORREF SysColors[];
+
+#define GETSYSTEMMETRICS(x) SysMetricsDef[x]
+#define GETSYSCOLORBRUSH(x) sysColorObjects.x
+#define GETSYSCOLOR(x) SysColors[x]

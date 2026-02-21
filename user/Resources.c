@@ -9,19 +9,19 @@
  * Copyright 2009 Vincent Povirk for CodeWeavers
  * Copyright 2016 Dmitry Timoshkov
  *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see
+<https://www.gnu.org/licenses/>.
  */
 
 #include <user.h>
@@ -148,8 +148,8 @@ int CURSORICON_FindBestCursor(LPVOID dir, DWORD size, fnGetCIEntry get_entry,
 
     if (loadflags & LR_DEFAULTSIZE)
     {
-        if (!width) width = GetSystemMetrics( SM_CXCURSOR );
-        if (!height) height = GetSystemMetrics( SM_CYCURSOR );
+        if (!width) width = GETSYSTEMMETRICS( SM_CXCURSOR );
+        if (!height) height = GETSYSTEMMETRICS( SM_CYCURSOR );
         TRACE("LR_DEFAULTSIZE set: width=%d, height=%d", width, height);
     }
     else if (!width && !height)
@@ -329,8 +329,8 @@ int CURSORICON_FindBestIcon( LPVOID dir, DWORD size, fnGetCIEntry get_entry,
 
     if (loadflags & LR_DEFAULTSIZE)
     {
-        if (!width) width = GetSystemMetrics( SM_CXICON );
-        if (!height) height = GetSystemMetrics( SM_CYICON );
+        if (!width) width = GETSYSTEMMETRICS( SM_CXICON );
+        if (!height) height = GETSYSTEMMETRICS( SM_CYICON );
         TRACE("LR_DEFAULTSIZE set: width=%d, height=%d", width, height);
     }
     else if (!width && !height)
@@ -1185,16 +1185,16 @@ HANDLE WINAPI LoadImage(HINSTANCE hinst, LPCSTR name, UINT type, int cx, int cy,
     {
         if (type == IMAGE_ICON)
         {
-            int sysCx = GetSystemMetrics(SM_CXICON);
-            int sysCy = GetSystemMetrics(SM_CYICON);
+            int sysCx = GETSYSTEMMETRICS(SM_CXICON);
+            int sysCy = GETSYSTEMMETRICS(SM_CYICON);
             if (!cx) cx = sysCx;
             if (!cy) cy = sysCy;
             TRACE("LR_DEFAULTSIZE for ICON: using %dx%d (system: %dx%d)", cx, cy, sysCx, sysCy);
         }
         else if (type == IMAGE_CURSOR)
         {
-            int sysCx = GetSystemMetrics(SM_CXCURSOR);
-            int sysCy = GetSystemMetrics(SM_CYCURSOR);
+            int sysCx = GETSYSTEMMETRICS(SM_CXCURSOR);
+            int sysCy = GETSYSTEMMETRICS(SM_CYCURSOR);
             if (!cx) cx = sysCx;
             if (!cy) cy = sysCy;
             TRACE("LR_DEFAULTSIZE for CURSOR: using %dx%d (system: %dx%d)", cx, cy, sysCx, sysCy);

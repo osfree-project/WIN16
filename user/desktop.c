@@ -2,6 +2,21 @@
  * Desktop window class.
  *
  * Copyright 1994 Alexandre Julliard
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see
+<https://www.gnu.org/licenses/>.
+
  */
 
 #include "user.h"
@@ -90,8 +105,8 @@ static LONG DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc/*, DESKTOPINFO *infoPtr*/ )
 	{
 		/* Set colors in case pattern is a monochrome bitmap */
 		SetBkColor(hdc, RGB(0,0,0));
-		SetTextColor(hdc, GetSysColor(COLOR_BACKGROUND));
-		FillRect(hdc, &rect, CreateSolidBrush(GetSysColor(COLOR_BACKGROUND)));
+		SetTextColor(hdc, GETSYSCOLOR(COLOR_BACKGROUND));
+		FillRect(hdc, &rect, CreateSolidBrush(GETSYSCOLOR(COLOR_BACKGROUND)));
 	}
 
 
@@ -250,7 +265,7 @@ BOOL DESKTOP_SetPattern(char *pattern )
 	infoPtr->hbrushPattern = CreatePatternBrush( hbitmap );
 	DeleteObject( hbitmap );
     }
-    else infoPtr->hbrushPattern = CreateSolidBrush( GetSysColor(COLOR_BACKGROUND) );
+    else infoPtr->hbrushPattern = CreateSolidBrush(GETSYSCOLOR(COLOR_BACKGROUND) );
     return TRUE;
 }
 

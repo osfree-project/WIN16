@@ -2,6 +2,21 @@
  * Message queues definitions
  *
  * Copyright 1993 Alexandre Julliard
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see
+<https://www.gnu.org/licenses/>.
+
  */
 
 #ifndef __WINE_QUEUE_H
@@ -66,7 +81,7 @@ extern void QUEUE_IncPaintCount( HQUEUE hQueue );
 extern void QUEUE_DecPaintCount( HQUEUE hQueue );
 extern void QUEUE_IncTimerCount( HQUEUE hQueue );
 extern void QUEUE_DecTimerCount( HQUEUE hQueue );
-extern BOOL QUEUE_CreateSysMsgQueue( int size );
+extern BOOL FAR QUEUE_CreateSysMsgQueue( int size );
 extern BOOL QUEUE_DeleteMsgQueue( HQUEUE hQueue );
 extern HTASK QUEUE_GetQueueTask( HQUEUE hQueue );
 extern BOOL QUEUE_AddMsg( HQUEUE hQueue, MSG FAR * msg, DWORD extraInfo );

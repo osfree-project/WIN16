@@ -50,7 +50,7 @@ typedef DCE	*PDCE;
 typedef DCE NEAR *NPDCE;
 typedef DCE FAR	*LPDCE;
 
-extern void DCE_Init(void);
+extern VOID FAR DCE_Init(VOID);
 extern HANDLE DCE_AllocDCE( DCE_TYPE type );
 extern void DCE_FreeDCE( HANDLE hdce );
 

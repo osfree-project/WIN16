@@ -5,35 +5,24 @@
  * Copyright  Alexandre Julliard, 1994
  * Copyright  Yuri Prokushev, 2026
  *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see
+<https://www.gnu.org/licenses/>.
  */
 
 
 #include "user.h"
 #include "syscolor.h"
-
-
-#if (WINVER >= 0x0300) && (WINVER < 0x030a)
-#define NUM_SYS_COLORS     (COLOR_BTNTEXT+1)
-#endif
-
-#if WINVER >= 0x030a
-#define NUM_SYS_COLORS     (COLOR_BTNHIGHLIGHT+1)
-#endif
-
-static COLORREF SysColors[NUM_SYS_COLORS];
 
 #define MAKE_SOLID(color) (PALETTEINDEX(GetNearestPaletteIndex(GetStockObject(DEFAULT_PALETTE), (color))))
 
@@ -208,7 +197,7 @@ static void SYSCOLOR_SetColor( int index, COLORREF color )
     }
 }
 
-void SYSCOLOR_Init(void)
+VOID FAR SYSCOLOR_Init(VOID)
 {
     int i;
     char buffer[100];
@@ -284,7 +273,7 @@ COLORREF WINAPI GetSysColor(int nIndex)
 	SetDS(USER_HeapSel);
 	FUNCTION_START
 
-	if ((nIndex < 0) || (nIndex >= sizeof(SysColors)/sizeof(SysColors[0])))
+	if ((nIndex < 0) || (nIndex >= NUM_SYS_COLORS/*sizeof(SysColors)/sizeof(SysColors[0])*/))
 	{
 		retVal=RGB(0,0,0);
 	} else {

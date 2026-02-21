@@ -3,6 +3,22 @@
  *
  * Copyright 1993, 1994, 1995 Alexandre Julliard
  *                       1995,1996 Alex Korobka
+
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see
+<https://www.gnu.org/licenses/>.
+
  */
 
 #include "user.h"
@@ -30,9 +46,9 @@ void WINPOS_FindIconPos( HWND hwnd )
     if (!wndPtr || !wndPtr->parent) return;
     GetClientRect( wndPtr->parent->hwndSelf, &rectParent );
     if ((wndPtr->ptIconPos.x >= rectParent.left) &&
-        (wndPtr->ptIconPos.x + GetSystemMetrics(SM_CXICON) < rectParent.right) &&
+        (wndPtr->ptIconPos.x + GETSYSTEMMETRICS(SM_CXICON) < rectParent.right) &&
         (wndPtr->ptIconPos.y >= rectParent.top) &&
-        (wndPtr->ptIconPos.y + GetSystemMetrics(SM_CYICON) < rectParent.bottom))
+        (wndPtr->ptIconPos.y + GETSYSTEMMETRICS(SM_CYICON) < rectParent.bottom))
         return;  /* The icon already has a suitable position */
 
     xspacing = yspacing = 70;  /* FIXME: This should come from WIN.INI */
@@ -58,8 +74,8 @@ void WINPOS_FindIconPos( HWND hwnd )
             if (!childPtr)
             {
                   /* No window was found, so it's OK for us */
-                wndPtr->ptIconPos.x = x + (xspacing - GetSystemMetrics(SM_CXICON)) / 2;
-                wndPtr->ptIconPos.y = y - (yspacing + GetSystemMetrics(SM_CYICON)) / 2;
+                wndPtr->ptIconPos.x = x + (xspacing - GETSYSTEMMETRICS(SM_CXICON)) / 2;
+                wndPtr->ptIconPos.y = y - (yspacing + GETSYSTEMMETRICS(SM_CYICON)) / 2;
                 return;
             }
         }
@@ -447,8 +463,8 @@ BOOL WINAPI ShowWindow( HWND hwnd, int cmd )
                 WINPOS_FindIconPos( hwnd );
                 x  = wndPtr->ptIconPos.x;
                 y  = wndPtr->ptIconPos.y;
-                cx = GetSystemMetrics(SM_CXICON);
-                cy = GetSystemMetrics(SM_CYICON);
+                cx = GETSYSTEMMETRICS(SM_CXICON);
+                cy = GETSYSTEMMETRICS(SM_CYICON);
             }
             else swpflags |= SWP_NOSIZE | SWP_NOMOVE;
 	    break;
@@ -870,8 +886,8 @@ LONG WINPOS_HandleWindowPosChanging( WINDOWPOS *winpos )
 	((wndPtr->dwStyle & (WS_POPUP | WS_CHILD)) == 0))
     {
 	NC_GetMinMaxInfo( winpos->hwnd, &maxSize, NULL, NULL, NULL );
-	winpos->cx = MIN( winpos->cx, maxSize.x );
-	winpos->cy = MIN( winpos->cy, maxSize.y );
+	winpos->cx = min( winpos->cx, maxSize.x );
+	winpos->cy = min( winpos->cy, maxSize.y );
     }
     return 0;
 }

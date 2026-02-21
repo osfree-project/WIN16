@@ -1,3 +1,21 @@
+/*
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see
+<https://www.gnu.org/licenses/>.
+
+*/
+
 #include <user.h>
 
 // All this function in fixed code segment, not moveable and discardable
@@ -130,12 +148,12 @@ VOID WINAPI mouse_event(VOID)
 			wMouseY += (int)vMouse;
 		}
         
-		if (wMouseX > (SysMetricsDef[SM_CXSCREEN] - 1)) {
-	            wMouseX = (SysMetricsDef[SM_CXSCREEN] - 1);
+		if (wMouseX > (GETSYSTEMMETRICS(SM_CXSCREEN) - 1)) {
+	            wMouseX = (GETSYSTEMMETRICS(SM_CXSCREEN) - 1);
 		}
 
-		if (wMouseY > (SysMetricsDef[SM_CYSCREEN] - 1)) {
-			wMouseY = (SysMetricsDef[SM_CYSCREEN] - 1);
+		if (wMouseY > (GETSYSTEMMETRICS(SM_CYSCREEN) - 1)) {
+			wMouseY = (GETSYSTEMMETRICS(SM_CYSCREEN) - 1);
 		}
 		MoveCursor(wMouseX, wMouseY);
 		hardware_event(WM_MOUSEMOVE, KeyState, 0, wMouseX, wMouseY, GetTickCount(), 0);
@@ -168,10 +186,19 @@ VOID WINAPI mouse_event(VOID)
  */
 FARPROC WINAPI GetMouseEventProc(void)
 {
-	HMODULE hModule;
+//	HMODULE hModule;
+	FARPROC retVal;
 
-	hModule = GetModuleHandle("USER");
-	return GetProcAddress(hModule, "mouse_event");
+//	hModule = GetModuleHandle("USER");
+	PushDS();
+	SetUserHeapDS();
+	FUNCTION_START
+
+	retVal=GetProcAddress(hModuleWin /*hModule*/, "mouse_event");
+
+	FUNCTION_END
+	PopDS();
+	return retVal;
 }
 
 /***********************************************************************

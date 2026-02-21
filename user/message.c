@@ -2,6 +2,21 @@
  * Message queues related functions
  *
  * Copyright 1993, 1994 Alexandre Julliard
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see
+<https://www.gnu.org/licenses/>.
+
  */
 
 #include "user.h"
@@ -120,8 +135,8 @@ static BOOL MSG_TranslateMouseMsg( MSG FAR *msg, BOOL remove )
 
 	if ((msg->message == lastClickMsg) &&
 	    (msg->time - lastClickTime < doubleClickSpeed) &&
-	    (abs(msg->pt.x - lastClickPos.x) < GetSystemMetrics(SM_CXDOUBLECLK)/2) &&
-	    (abs(msg->pt.y - lastClickPos.y) < GetSystemMetrics(SM_CYDOUBLECLK)/2))
+	    (abs(msg->pt.x - lastClickPos.x) < GETSYSTEMMETRICS(SM_CXDOUBLECLK)/2) &&
+	    (abs(msg->pt.y - lastClickPos.y) < GETSYSTEMMETRICS(SM_CYDOUBLECLK)/2))
 	    dbl_click = TRUE;
 
 	if (dbl_click && (hittest == HTCLIENT))
@@ -327,7 +342,7 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
     }
     else mask = QS_MOUSE | QS_KEY | QS_POSTMESSAGE | QS_TIMER | QS_PAINT;
 
-    while(1/*1*/)
+    while(1)
     {    
 	hQueue   = GetTaskQueue(0);
         msgQueue = (MESSAGEQUEUE FAR *)GlobalLock( hQueue );
@@ -371,7 +386,6 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
 	  /* Now find a hardware event */
         if (MSG_PeekHardwareMsg( msg, hwnd, first, last, flags & PM_REMOVE ))
         {
-//TRACE("mouse!! %d", hwnd);
             /* Got one */
 	    msgQueue->GetMessageTimeVal      = msg->time;
 	    msgQueue->GetMessagePosVal       = *(DWORD *)&msg->pt;
@@ -428,6 +442,7 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
     }
 	
       /* We got a message */
+	FUNCTION_END
     return (msg->message != WM_QUIT);
 }
 
@@ -440,6 +455,7 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
  * 'hwnd' must be the handle of the dialog or menu window.
  * 'code' is the message filter value (MSGF_??? codes).
  */
+#if 0
 BOOL MSG_InternalGetMessage( LPMSG msg, HWND hwnd, HWND hwndOwner, short code,
 			     WORD flags, BOOL sendIdle ) 
 {
@@ -451,7 +467,8 @@ BOOL MSG_InternalGetMessage( LPMSG msg, HWND hwnd, HWND hwndOwner, short code,
                                   0, 0, 0, flags, TRUE ))
 	    {
 		  /* No message present -> send ENTERIDLE and wait */
-		SendMessage( hwndOwner, WM_ENTERIDLE, code, (LPARAM)hwnd );
+		//@todo need WM_ENTERIDLE????
+		//SendMessage( hwndOwner, WM_ENTERIDLE, code, (LPARAM)hwnd );
 		MSG_PeekMessage( msg,
                                  0, 0, 0, flags, FALSE );
 	    }
@@ -470,7 +487,60 @@ BOOL MSG_InternalGetMessage( LPMSG msg, HWND hwnd, HWND hwndOwner, short code,
                              0, 0, 0, PM_REMOVE, TRUE );
     }
 }
+#endif
+BOOL MSG_InternalGetMessage( LPMSG msg, HWND hwnd, HWND hwndOwner, short code,
+                             WORD flags, BOOL sendIdle ) 
+{
+	FUNCTION_START
+    for (;;)
+    {
+        if (sendIdle)
+        {
+            // Пытаемся получить сообщение без блокировки (peek = TRUE)
+            if (!MSG_PeekMessage( msg, 0, 0, 0, flags, TRUE ))
+            {
+                // Сообщений нет: отправляем WM_ENTERIDLE и ждём
+//@todo
+//                SendMessage( hwndOwner, WM_ENTERIDLE, code, (LPARAM)hwnd );
 
+                // Активно ждём появления сообщения
+                while (!MSG_PeekMessage( msg, 0, 0, 0, flags, TRUE ))
+                {
+                    // Можно добавить микрозадержку, если нужно снизить нагрузку
+                    // Например, пустой цикл или DirectedYield (если доступен)
+                }
+            }
+        }
+        else
+        {
+            // Всегда ждём сообщение (активное ожидание)
+            while (!MSG_PeekMessage( msg, 0, 0, 0, flags, TRUE ))
+            {
+                // Аналогично
+            }
+        }
+
+TRACE("msg=%04x", msg->message);
+
+        // Проверяем, не отфильтровано ли сообщение
+        if (!CallMsgFilter( msg, code ))
+        {
+            // Не отфильтровано – возвращаем управление
+		FUNCTION_END
+TRACE("msg=%04x", msg->message);
+            return (msg->message != WM_QUIT);
+        }
+
+        // Сообщение отфильтровано – удаляем его из очереди,
+        // если оно ещё не удалено (т.е. flags не содержат PM_REMOVE)
+        if (!(flags & PM_REMOVE))
+        {
+            MSG dummy;
+            MSG_PeekMessage( &dummy, 0, 0, 0, PM_REMOVE, TRUE );
+        }
+        // Продолжаем цикл
+    }
+}
 
 /***********************************************************************
  *           PeekMessage   (USER.109)
