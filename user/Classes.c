@@ -238,7 +238,7 @@ ATOM WINAPI RegisterClass(const WNDCLASS FAR * class )
 	if (hName)
 	{
 	    newClass->wc.lpszMenuName = LocalLock(hName);
-	    lstrcpy( newClass->wc.lpszMenuName, class->lpszMenuName );
+	    lstrcpy( (LPSTR)newClass->wc.lpszMenuName, class->lpszMenuName );
             LocalUnlock(hName);
 	}
     }

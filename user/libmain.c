@@ -21,6 +21,7 @@ License along with this library; if not, see
 #include "queue.h"
 #include "menu.h"
 #include "display.h"
+#include "dialog.h"
 
 
 #pragma code_seg( "INIT_TEXT" );
@@ -940,6 +941,7 @@ BOOL PASCAL LibMain(WORD wHeapSeg, HINSTANCE hInstance , WORD wHeapSize)
 		// create the windows.
 		LW_InitWndMgr(hInstance); 
 
+		DIALOG_Init();
 		// Max button size???
 		//WMaxBtnSize = MB_FindLongestString();
 	
@@ -966,9 +968,6 @@ BOOL PASCAL LibMain(WORD wHeapSeg, HINSTANCE hInstance , WORD wHeapSize)
 		// list registered classes
 	//	CLASS_WalkClasses();
 
-
-		// Load the "system" menu ("Restore", "Move", "Size", etc.)
-	//	HSysMenu = LoadMenu(USER_HeapSel, MAKEINTRESOURCE(IDM_SYSMENU));
 
 		LW_DisplayDriverInit(); // Gets entry points in display driver
 

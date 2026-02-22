@@ -188,8 +188,6 @@ HWND HWndDesktop;
 HWND HWndSwitch;
 HWND HWndRealPopup;
 
-HMENU HSysMenu;
-
 HGLOBAL MenuBase;
 HGLOBAL HMenuHeap;
 HGLOBAL MenuStringBase;

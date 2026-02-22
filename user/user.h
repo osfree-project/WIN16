@@ -432,8 +432,6 @@ extern HWND HWndSwitch;
 extern HWND HWndRealPopup;
 extern HWND captureWnd;
 
-extern HMENU HSysMenu;
-
 extern HGLOBAL HMenuHeap;
 extern HGLOBAL MenuStringBase;
 extern HGLOBAL HMenuStringHeap;

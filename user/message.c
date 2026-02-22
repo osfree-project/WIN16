@@ -101,7 +101,7 @@ static BOOL MSG_TranslateMouseMsg( MSG FAR *msg, BOOL remove )
         {
             HWND hwndTop = WIN_GetTopParent( msg->hwnd );
 
-		TRACE("MOUSE CLICK");
+//		TRACE("MOUSE CLICK");
 
             if (hwndTop != GetActiveWindow())
             {
@@ -519,14 +519,14 @@ BOOL MSG_InternalGetMessage( LPMSG msg, HWND hwnd, HWND hwndOwner, short code,
             }
         }
 
-TRACE("msg=%04x", msg->message);
+//TRACE("msg=%04x", msg->message);
 
         // Проверяем, не отфильтровано ли сообщение
         if (!CallMsgFilter( msg, code ))
         {
             // Не отфильтровано – возвращаем управление
 		FUNCTION_END
-TRACE("msg=%04x", msg->message);
+//TRACE("msg=%04x", msg->message);
             return (msg->message != WM_QUIT);
         }
 
