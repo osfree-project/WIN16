@@ -2433,22 +2433,34 @@ VOID WINAPI DrawMenuBar(HWND hWnd)
 {
 	WND *wndPtr;
 	LPPOPUPMENU lppop;
-
+	
+	PushDS();
+	SetUserHeapDS();
 	FUNCTION_START
+
 //	dprintf_menu(stddeb,"DrawMenuBar (%04x)\n", hWnd);
 	wndPtr = WIN_FindWndPtr(hWnd);
 	if (wndPtr && (wndPtr->dwStyle & WS_CHILD) == 0 && 
 		wndPtr->wIDmenu != 0) {
 //		dprintf_menu(stddeb,"DrawMenuBar wIDmenu=%04X \n", 
 //			     wndPtr->wIDmenu);
-		lppop = (POPUPMENU *) LocalLock((HMENU)wndPtr->wIDmenu);
-		if (lppop == NULL) return;
+		lppop = (LPPOPUPMENU) LocalLock((HMENU)wndPtr->wIDmenu);
+		if (lppop == NULL)
+		{
+			FUNCTION_END
+			PopDS();
+			return;
+		}
 
 		lppop->Height = 0; /* Make sure we call MENU_MenuBarCalcSize */
-		SetWindowPos( hWnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
-			    SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
+		LocalUnlock((HMENU)wndPtr->wIDmenu);
+		LocalUnlock(hWnd);
+		SetWindowPos(hWnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
+			    SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED);
 	    }
+
 	FUNCTION_END
+	PopDS();
 }
 
 
@@ -2488,11 +2500,11 @@ HMENU WINAPI LoadMenu(HINSTANCE instance, LPCSTR name)
 		if (HIWORD(name))
 		{
 			const char FAR *str = name;
-			TRACE("LoadMenu(%04x,'%s')\n", instance, str );
+			TRACE("LoadMenu(%04x,'%s')", instance, str );
 			if (str[0] == '#') name = (LPSTR)latoi( str + 1 );
 		}
 		else
-			TRACE("LoadMenu(%04x,%04x)\n",instance,LOWORD(name));
+			TRACE("LoadMenu(%04x,%04x)", instance,LOWORD(name));
     
 		instance = GetExePtr( instance );
 
@@ -2529,11 +2541,10 @@ HMENU WINAPI LoadMenuIndirect( const VOID FAR * template )
 	if (hMenu)
 	{
 		template = (LPBYTE)template+sizeof(MENU_HEADER);
-		if (!MENU_ParseResource(template, hMenu ))
+		if (!MENU_ParseResource(template, hMenu))
 		{
-			DestroyMenu( hMenu );
-			FUNCTION_END
-			return (HMENU)0;
+			DestroyMenu(hMenu);
+			hMenu=0;
 		}
 	}
 

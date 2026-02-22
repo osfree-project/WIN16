@@ -3,21 +3,21 @@
  *
  * Copyright 1993 Alexandre Julliard
  *	     1995 Alex Korobka
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, see
-<https://www.gnu.org/licenses/>.
-
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
+ *
  */
 
 #include "user.h"
@@ -182,7 +182,6 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
                  hbrush = CreateSolidBrush(GETSYSCOLOR(((DWORD)classPtr->wc.hbrBackground)-1));
 		TRACE("ERASE1 hbr=%d", hbrush);
                  FillWindow( GetParent(hwnd), hwnd, (HDC)wParam, hbrush);
-//		FillRect((HDC)wParam, &wndPtr->rectClient, hbrush);
                  DeleteObject (hbrush);
             }
             else

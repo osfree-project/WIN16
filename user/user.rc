@@ -67,8 +67,6 @@ OCR_SIZEALL CURSOR FIXED "res/idcsize.cur"
 
 IDM_SYSMENU MENU
 {
-    POPUP " "
-    {
         MENUITEM "&Restore"	SC_RESTORE
         MENUITEM "&Move"	SC_MOVE
         MENUITEM "&Size"	SC_SIZE
@@ -78,7 +76,6 @@ IDM_SYSMENU MENU
         MENUITEM "&Close\tAlt+F4"	SC_CLOSE
         MENUITEM ""	0
         MENUITEM "S&witch To...\tCtrl+Esc"	SC_TASKLIST
-    }
 }
 
 IDM_SYSMENUMDI MENU

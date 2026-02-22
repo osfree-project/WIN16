@@ -213,12 +213,11 @@ FARPROC WINAPI GetMouseEventProc(void)
 //	HMODULE hModule;
 	FARPROC retVal;
 
-//	hModule = GetModuleHandle("USER");
 	PushDS();
 	SetUserHeapDS();
 	FUNCTION_START
 
-	retVal=GetProcAddress(hModuleWin /*hModule*/, "mouse_event");
+	retVal=GetProcAddress(hModuleWin, "mouse_event");
 
 	FUNCTION_END
 	PopDS();
