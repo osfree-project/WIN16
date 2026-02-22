@@ -27,7 +27,3 @@ Such approach will allow to easely move to another heap.
 
 Also need to be sure all locked structures unlocked after use
 
-Metrics:
-
-For now exists some global variables and system metrics. For optimal memory usage and performance better to implement 
-direct access to metrics array. For now variables accessed via standard GetSystemMetrics.

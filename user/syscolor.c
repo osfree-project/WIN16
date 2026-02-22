@@ -5,26 +5,39 @@
  * Copyright  Alexandre Julliard, 1994
  * Copyright  Yuri Prokushev, 2026
  *
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, see
-<https://www.gnu.org/licenses/>.
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
-
 
 #include "user.h"
 #include "syscolor.h"
 
 #define MAKE_SOLID(color) (PALETTEINDEX(GetNearestPaletteIndex(GetStockObject(DEFAULT_PALETTE), (color))))
+
+#include <windows.h>
+
+/* Вспомогательная функция: преобразует шестнадцатеричный символ в число (0-15) или возвращает -1 */
+static int hex_char_to_int(char c)
+{
+    if (c >= '0' && c <= '9')
+        return c - '0';
+    if (c >= 'A' && c <= 'F')
+        return c - 'A' + 10;
+    if (c >= 'a' && c <= 'f')
+        return c - 'a' + 10;
+    return -1;
+}
 
 /*************************************************************************
  *             ParseColorString
@@ -32,87 +45,124 @@ License along with this library; if not, see
  * Parse color string in any supported WIN.INI format:
  * 1. Decimal RGB: "red green blue"           (0-255 each)
  * 2. Hexadecimal full: "#RRGGBB"             (0-ffffff)
- * 3. Hexadecimal triplet: "#R #G #B"         (0-ff each, osFree Janus)
- * 4. Single number: "gray"                   (0-255, gray scale)
+ * 3. Hexadecimal triplet: "#R #G #B"         (0-ff each)
  */
 static COLORREF ParseColorString(const char far *str)
 {
     int r = 0, g = 0, b = 0;
     const char far *p = str;
-    int num_count = 0;       /* Для подсчёта чисел в строке */
-    const char far *temp;        /* Для проверки формата */
-    int i;                   /* Для циклов */
-    int component;           /* Для разбора чисел */
-    
-    if (!str || !*str) 
+    int i;
+
+    if (!str || !*str)
         return RGB(0, 0, 0);
-    
-    /* Skip leading spaces */
+
+    /* Пропускаем ведущие пробелы */
     while (*p == ' ') p++;
-    
-    /* Count numbers in the string */
-    temp = p;
-    while (*temp) {
-        /* Skip to next number */
-        while (*temp == ' ') temp++;
-        
-        if (*temp >= '0' && *temp <= '9') {
-            num_count++;
-            while (*temp >= '0' && *temp <= '9') temp++;
-        } else {
-            break;
+
+    /* Проверяем, не начинается ли строка с '#' – значит шестнадцатеричный формат */
+    if (*p == '#')
+    {
+        const char far *start = p;   /* Запоминаем начало для повторной попытки */
+
+        /* ---- Попытка разобрать полный формат "#RRGGBB" (ровно 6 цифр) ---- */
+        int digits[6];
+        int count = 0;
+
+        p++;  /* пропускаем первый '#' */
+        while (count < 6 && *p) {
+            int val = hex_char_to_int(*p);
+            if (val == -1) break;
+            digits[count++] = val;
+            p++;
         }
+
+        /* Если прочитали 6 цифр и следующий символ не является шестнадцатеричной цифрой и не '#' */
+        if (count == 6 && hex_char_to_int(*p) == -1 && *p != '#') {
+            r = (digits[0] << 4) | digits[1];
+            g = (digits[2] << 4) | digits[3];
+            b = (digits[4] << 4) | digits[5];
+            return RGB(r, g, b);
+        }
+
+        /* ---- Если не подошло, пробуем разобрать как триплет "#R #G #B" ---- */
+        p = start;  /* возвращаемся к началу строки */
+
+        for (i = 0; i < 3; i++) {
+            int comp = 0;
+            int digit_count = 0;
+            int val;
+
+            /* Пропускаем пробелы перед '#' */
+            while (*p == ' ') p++;
+
+            /* Должен быть '#' */
+            if (*p != '#')
+                return RGB(0, 0, 0);
+            p++;  /* пропускаем '#' */
+
+            /* Читаем первую цифру */
+            val = hex_char_to_int(*p);
+            if (val == -1)   /* после '#' нет ни одной цифры */
+                return RGB(0, 0, 0);
+            comp = val;
+            digit_count = 1;
+            p++;
+
+            /* Пробуем прочитать вторую цифру */
+            val = hex_char_to_int(*p);
+            if (val != -1) {
+                comp = (comp << 4) | val;
+                digit_count = 2;
+                p++;
+            } else {
+                /* Если была только одна цифра, дублируем её (например, #F -> 0xFF) */
+                comp = (comp << 4) | comp;
+            }
+
+            /* Убеждаемся, что после компоненты нет лишней hex-цифры */
+            if (hex_char_to_int(*p) != -1)
+                return RGB(0, 0, 0);
+
+            /* Сохраняем компоненту */
+            if (i == 0) r = comp;
+            else if (i == 1) g = comp;
+            else b = comp;
+
+            /* Пропускаем пробелы перед следующей компонентой */
+            while (*p == ' ') p++;
+        }
+
+        /* Успешно разобрали три компоненты */
+        return RGB(r, g, b);
     }
-    
-    /* If only one number, treat it as grayscale: R=G=B */
-    if (num_count == 1) {
-        component = 0;
+
+    /* ---- Десятичный формат RGB: "red green blue" ---- */
+    for (i = 0; i < 3; i++) {
+        int component = 0;
+
+        /* Пропускаем пробелы */
+        while (*p == ' ') p++;
+
+        /* Если строка закончилась до того, как прочитали три числа, возвращаем чёрный */
+        if (!(*p >= '0' && *p <= '9')) {
+            return RGB(0, 0, 0);
+        }
+
         while (*p >= '0' && *p <= '9') {
             component = component * 10 + (*p - '0');
             p++;
         }
-        if (component < 0) component = 0; 
-        else if (component > 255) component = 255;
-        return RGB(component, component, component);
-    }
-    
-    /* Otherwise parse three numbers or hex formats */
-    
-    /* Check for hexadecimal format */
-    if (*p == '#')
-    {
-        /* Hexadecimal format - пропускаем для простоты, 
-           можно добавить обработку позже */
-        /* For now, return black */
-        return RGB(0, 0, 0);
-    }
-    
-    /* Decimal RGB format: "red green blue" */
-    for (i = 0; i < 3; i++)
-    {
-        /* Skip spaces */
-        while (*p == ' ') p++;
-        
-        component = 0;
-        while (*p >= '0' && *p <= '9')
-        {
-            component = component * 10 + (*p - '0');
-            p++;
-        }
-        
+
         if (i == 0) r = component;
         else if (i == 1) g = component;
         else b = component;
-        
-        /* Skip spaces before next number */
-        while (*p == ' ') p++;
     }
-    
-    /* Clamp values to 0-255 range */
+
+    /* Ограничиваем значения диапазоном 0-255 */
     if (r < 0) r = 0; else if (r > 255) r = 255;
     if (g < 0) g = 0; else if (g > 255) g = 255;
     if (b < 0) b = 0; else if (b > 255) b = 255;
-    
+
     return RGB(r, g, b);
 }
 
