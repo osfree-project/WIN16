@@ -379,6 +379,7 @@ extern HANDLE __based(__segname("_TEXT")) firstDCE;
 extern HANDLE __based(__segname("_TEXT")) hGDI;
 extern HMODULE hModuleWin;
 extern HINSTANCE hInstanceDisplay;
+extern HMODULE hmodSound;
 
 extern int ClBorder;
 extern int CBEntries;
@@ -603,7 +604,6 @@ extern WORD wMouseY;
 
 WORD WINAPI CreateSystemTimer(WORD wFreq, FARPROC IpCallback);
 
-extern HMODULE HModSound;
 extern FARPROC lpfnSoundEnable;
 
 extern HQUEUE hFirstQueue;
@@ -944,3 +944,8 @@ extern COLORREF SysColors[];
 #define GETSYSTEMMETRICS(x) SysMetricsDef[x]
 #define GETSYSCOLORBRUSH(x) sysColorObjects.x
 #define GETSYSCOLOR(x) SysColors[x]
+
+extern BOOL MouseButtonsStates[3];
+extern BOOL AsyncMouseButtonsStates[3];
+extern BYTE KeyStateTable[256];
+extern BYTE AsyncKeyStateTable[256];

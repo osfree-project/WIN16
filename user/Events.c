@@ -121,6 +121,30 @@ VOID WINAPI mouse_event(VOID)
 	SetUserHeapDS();
     
 	KeyState=0;
+	if (EventCodes & MOUSEEVENTF_LEFTDOWN)
+	{
+		KeyState |= MK_LBUTTON;
+		MouseButtonsStates[0] = TRUE;
+		AsyncMouseButtonsStates[0] = TRUE;
+	}
+	if (EventCodes & MOUSEEVENTF_LEFTUP)
+	{
+		KeyState &= ~MK_LBUTTON;
+		MouseButtonsStates[0] = FALSE;
+		AsyncMouseButtonsStates[0] = FALSE;
+	}
+	if (EventCodes & MOUSEEVENTF_RIGHTDOWN)
+	{
+		KeyState |= MK_RBUTTON;
+		MouseButtonsStates[2] = TRUE;
+		AsyncMouseButtonsStates[2] = TRUE;
+	}
+	if (EventCodes & MOUSEEVENTF_RIGHTUP)
+	{
+		KeyState &= ~MK_RBUTTON;
+		MouseButtonsStates[2] = FALSE;
+		AsyncMouseButtonsStates[2] = FALSE;
+	}
     
     // Определяем состояние клавиш-модификаторов
 //    if (GetAsyncKeyState(VK_SHIFT) & 0x8000) {

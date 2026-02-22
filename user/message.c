@@ -24,7 +24,6 @@ License along with this library; if not, see
 
 //#define HWND_BROADCAST  ((HWND)0xffff)
 
-extern BYTE* 	KeyStateTable;				 /* event.c */
 WPARAM	lastEventChar;				 /* event.c */
 
 //extern BOOL TIMER_CheckTimer( LONG *next, MSG *msg,

@@ -99,27 +99,6 @@ void WINAPI SignalProc( HANDLE hModule, UINT code,
 #endif
 }
 
-
-/**********************************************************************
- *		GetAsyncKeyState (USER.249)
- */
-int WINAPI GetAsyncKeyState( int key )
-{
-	FUNCTION_START
-    return 0;
-}
-
-
-/**********************************************************************
- *		GetKeyState (USER.106)
- */
-int WINAPI GetKeyState(int vkey)
-{
-	FUNCTION_START
-    return 0;//GetKeyState(vkey);
-}
-
-
 /***********************************************************************
  *           MessageBeep    (USER.104)
  */

@@ -26,6 +26,8 @@ License along with this library; if not, see
  * This is probably not the meaning this style has in MS-Windows.
  */
 
+// @todo create 2 local heaps for menu and strings as in original USER. See Pietrek book.
+
 #include "user.h"
 #include "menu.h"
 #include "syscolor.h"

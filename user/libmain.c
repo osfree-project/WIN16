@@ -456,12 +456,14 @@ VOID WINAPI EnableInput()
 
 	// Look for the presence of a SOUND driver. If found, get
 	// the address of its enabLe() function, and calL it.
-	HModSound = GetModuleHandle(SOUND);
-	if ( HModSound )
-		lpfnSoundEnable = GetProcAddress(HModSound, "enable");
+	hmodSound = GetModuleHandle(SOUND);
+	if (hmodSound)
+	{
+		lpfnSoundEnable = GetProcAddress(hmodSound, "enable");
+		if (lpfnSoundEnable)
+			lpfnSoundEnable();
+	}
 
-	if ( lpfnSoundEnable )
-		lpfnSoundEnable();
 
 	// Call WNetEnable() to initialize the network module,
 	// if a network is present. See FarCallNetDriver() entry
@@ -775,10 +777,10 @@ VOID WINAPI Disablelnput(VOID)
 	// if ( PNetInfo && ( *(DWORD *)(PNetInfo + 0x54) ) )
 //		(PNetlnfo + 0x54)() // Call through a function pointer
 
-	if (HModSound)
+	if (hmodSound)
 	{
 		// Disable the SOUND driver, if present.
-		lpfnSoundDisable = GetProcAddress(HModSound, "disable");
+		lpfnSoundDisable = GetProcAddress(hmodSound, "disable");
 		if ( lpfnSoundDisable )
 			lpfnSoundDisable();
 	}

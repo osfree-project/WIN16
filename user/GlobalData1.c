@@ -23,10 +23,10 @@ License along with this library; if not, see
 WORD __based(__segname("_TEXT")) GlobalAtomTable_Selector; // Selector of Global Atom Table
 WORD __based(__segname("_TEXT")) USER_HeapSel = 0;  /* USER heap selector (hinstance) */
 HANDLE __based(__segname("_TEXT")) firstDCE = 0;
-HANDLE __based(__segname("_TEXT")) hGDI;
-
-HMODULE hModuleWin = 0;
-HINSTANCE hInstanceDisplay;
+HANDLE __based(__segname("_TEXT")) hGDI = 0; /* Handle of GDI module */
+HMODULE hModuleWin = 0; /* Handle of USER module */
+HINSTANCE hInstanceDisplay = 0; /* hInstance of DISPLAY module */
+HMODULE hmodSound = 0; 
 
 HWND hwndSysModal = 0;
 WORD wDragWidth = 4;
@@ -202,7 +202,6 @@ FARPROC LpDisplayCriticalSection;
 HLOCAL hTaskManName;
 LPSTR PTaskManName;
 
-HMODULE HModSound;
 FARPROC lpfnSoundEnable;
 
 KBINFO KbInfo;
@@ -222,9 +221,13 @@ char DISPLAY[]="DISPLAY";
 char SOUND[]="SOUND";
 
 char RGBKeyState[0xff];
-//PDCE PDCEFirst;
 
 struct SysColorObjects sysColorObjects = { 0, };
 
 COLORREF SysColors[NUM_SYS_COLORS];
 
+/* State variables */
+BOOL MouseButtonsStates[3] = { FALSE, FALSE, FALSE };
+BOOL AsyncMouseButtonsStates[3] = { FALSE, FALSE, FALSE };
+BYTE KeyStateTable[256];
+BYTE AsyncKeyStateTable[256];
