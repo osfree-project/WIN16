@@ -8,7 +8,7 @@ PROJ     = user
 TRGT     = $(PROJ).exe
 DESC     = Windows USER.EXE
 srcfiles = $(p)keyboard$(e) $(p)display$(e) $(p)capture$(e) $(p)libentry$(e) $(p)libmain$(e) $(p)dce$(e) $(p)desktop$(e) $(p)winpos$(e) $(p)defwnd$(e) $(p)syscolor$(e) $(p)nonclient$(e) $(p)cursor$(e) $(p)queue$(e) $(p)win$(e) $(p)message$(e) $(p)GlobalData1$(e) $(p)div$(e) $(p)hook$(e) $(p)dialog$(e) $(p)Time$(e) $(p)Atoms$(e) $(p)comm$(e) $(p)Caret$(e) $(p)DrawText$(e)  $(p)SysMetrics$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Resources$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)printf$(e) $(p)Menu$(e) $(p)focus$(e) $(p)network$(e) # $(p)Listbox$(e) $(p)StringFunc$(e) $(p)InitApp$(e) 
-ADD_COPT = -zls -ms -zW -s -3 -DDEBUG=1 # optimize prolog, no stack checks, put constants in code segment 
+ADD_COPT = -zls -ms -zW -s -3 -DDEBUG=1 # optimize prolog, no stack checks
 ADD_ASMOPT = -ms
 # -zc
 # -3 must be replaced by -0 later
@@ -72,9 +72,8 @@ EXPORTS = &
 	GetDlgItem .91, &
 	SetDlgItemText .92, &
 	GetDlgItemText .93, &
-	CheckDlgButton .97, &
+	CheckDlgButton .97=CheckDlgButtonReal, &
 	IsDlgButtonChecked  .98, &
-	DlgDirSelect .99, &
 	SendDlgItemMessage .101, &
 	GetKeyState .106, &
 	DefWindowProc .107, &
@@ -110,7 +109,6 @@ EXPORTS = &
 	BEAR182 .182, &
 	GetCaretPos .183, &
 	GrayString .185, &
-	DlgDirSelectComboBox .194, &
 	TabbedTextOut .196, &
 	GetTabbedTextExtent .197, &
 	OpenComm .200, &
@@ -176,8 +174,6 @@ EXPORTS = &
 	CreateCursorIconIndirect .408, &
 	_wsprintf .420, &
 	wvsprintf .421, &
-	DlgDirSelectEx .422, &
-	DlgDirSelectComboBoxEx .423, &
 	lstrcmp .430, &
 	AnsiUpper .431, &
 	AnsiLower .432, &
@@ -230,6 +226,10 @@ EXPORTS = &
 	WNetDirectoryNotify .531, &
 	WNetGetPropertyText .532, &
 	SystemParametersInfo .483#, &
+#	DlgDirSelect .99, &
+#	DlgDirSelectComboBox .194, &
+#	DlgDirSelectEx .422, &
+#	DlgDirSelectComboBoxEx .423, &
 #	LoadMenuIndirect .220, &
 #	GetMenuState .250, &
 #	GetMenuItemCount .263, &

@@ -75,34 +75,34 @@ BOOL WINAPI DllEntryPoint( DWORD reason, HINSTANCE inst, WORD ds,
  */
 DWORD WINAPI UserSeeUserDo(WORD wReqType, WORD wParam1, WORD wParam2, WORD wParam3)
 {
-    WORD oldDS = GetDS();
-    DWORD ret = (DWORD)-1;
+	DWORD ret = (DWORD)-1;
 
+	PushDS();
+	SetUserHeapDS();
 	FUNCTION_START
 
-    SetDS(USER_HeapSel);
-    switch (wReqType)
-    {
-    case USUD_LOCALALLOC:
-        ret = LocalAlloc(wParam1, wParam3);
-        break;
-    case USUD_LOCALFREE:
-        ret = LocalFree(wParam1);
-        break;
-    case USUD_LOCALCOMPACT:
-        ret = LocalCompact(wParam3);
-        break;
-    case USUD_LOCALHEAP:
-        ret = USER_HeapSel;
-        break;
-    case USUD_FIRSTCLASS:
-        FIXME("return a pointer to the first window class.\n");
-        break;
-    default:
+	switch (wReqType)
+	{
+	case USUD_LOCALALLOC:
+		ret = LocalAlloc(wParam1, wParam3);
+		break;
+	case USUD_LOCALFREE:
+        	ret = LocalFree(wParam1);
+	        break;
+	case USUD_LOCALCOMPACT:
+        	ret = LocalCompact(wParam3);
+        	break;
+    	case USUD_LOCALHEAP:
+        	ret = USER_HeapSel;
+        	break;
+    	case USUD_FIRSTCLASS:
+		FIXME("return a pointer to the first window class.\n");
+        	break;
+	    default:
 		WARN("wReqType %04x (unknown)\n", wReqType);
-    }
-    SetDS(oldDS);
-    return ret;
+	}
+	PopDS();
+	return ret;
 }
 
 /***********************************************************************

@@ -303,17 +303,6 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT FAR * rectUpdate, HRGN hrgnUpdat
 }
 
 
-/**************************************************************************
- *              GetDlgCtrlID   (USER.277)
- */
-int WINAPI GetDlgCtrlID( HWND hwnd )
-{
-	FUNCTION_START
-    return 0;//GetDlgCtrlID( WIN_Handle32(hwnd) );
-}
-
-
-
 
 /**************************************************************************
  *              SetScrollRange   (USER.64)
