@@ -1,20 +1,20 @@
 /*
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, see
-<https://www.gnu.org/licenses/>.
-
-*/
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
+ *
+ */
 
 #define OEMRESOURCE
 
@@ -830,9 +830,9 @@ typedef struct tagWND
 
 extern void CLASS_DumpClass( HCLASS hClass );
 extern void CLASS_WalkClasses(void);
-extern HCLASS CLASS_FindClassByName( LPCSTR name, HINSTANCE hinstance,
+extern HCLASS FAR CLASS_FindClassByName( LPCSTR name, HINSTANCE hinstance,
                                      CLASS *FAR*ptr );
-extern CLASS * CLASS_FindClassPtr( HCLASS hclass );
+extern CLASS * FAR CLASS_FindClassPtr( HCLASS hclass );
 
 
 /* GDI objects magic numbers */
@@ -867,8 +867,8 @@ int WINAPI SelectVisRgn(HDC hdc, HRGN hrgn);
 #define ICONTITLE_CLASS_ATOM MAKEINTATOM(32772)  /* IconTitle */
 
   /* Window functions */
-extern WND *WIN_FindWndPtr( HWND hwnd );
-extern WND *WIN_GetDesktop(void);
+extern WND * FAR WIN_FindWndPtr( HWND hwnd );
+extern WND * WIN_GetDesktop(void);
 extern void WIN_DumpWindow( HWND hwnd );
 extern void WIN_WalkWindows( HWND hwnd, int indent );
 extern BOOL WIN_UnlinkWindow( HWND hwnd );
@@ -877,7 +877,7 @@ extern HWND WIN_FindWinToRepaint( HWND hwnd, HQUEUE hQueue );
 extern void WIN_SendParentNotify( HWND hwnd, WORD event,
                                   WORD idChild, LONG lValue );
 extern BOOL FAR WIN_CreateDesktopWindow(void);
-extern HWND WIN_GetTopParent( HWND hwnd );
+extern HWND FAR WIN_GetTopParent( HWND hwnd );
 extern HINSTANCE WIN_GetWindowInstance( HWND hwnd );
 
 LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam );
@@ -902,17 +902,18 @@ extern void NC_GetInsideRect( HWND hwnd, RECT FAR *rect );
 extern void NC_GetMinMaxInfo( HWND hwnd, POINT FAR *maxSize, POINT FAR *maxPos,
                               POINT FAR *minTrack, POINT FAR *maxTrack );
 extern void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint );
-extern LONG NC_HandleNCPaint( HWND hwnd , HRGN clip);
-extern LONG NC_HandleNCActivate( HWND hwnd, WPARAM wParam );
-extern LONG NC_HandleNCCalcSize( HWND hwnd, NCCALCSIZE_PARAMS FAR * params );
-extern LONG NC_HandleNCHitTest( HWND hwnd, POINT pt );
-extern LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam );
-extern LONG NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam );
-extern LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt );
-extern LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam );
+extern LONG FAR NC_HandleNCPaint( HWND hwnd , HRGN clip);
+extern LONG FAR NC_HandleNCActivate( HWND hwnd, WPARAM wParam );
+extern LONG FAR NC_HandleNCCalcSize( HWND hwnd, NCCALCSIZE_PARAMS FAR * params );
+extern LONG FAR NC_HandleNCHitTest( HWND hwnd, POINT pt );
+extern LONG FAR NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam );
+extern LONG FAR NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam );
+extern LONG FAR NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt );
+extern LONG FAR NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam );
 
 BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus );
 BOOL WINPOS_ChangeActiveWindow( HWND hWnd, BOOL mouseMsg );
+LONG FAR WINPOS_HandleWindowPosChanging( WINDOWPOS FAR *winpos );
 
 #define WND_MAGIC     0x444e4957  /* 'WIND' */
 
@@ -947,3 +948,5 @@ extern BOOL MouseButtonsStates[3];
 extern BOOL AsyncMouseButtonsStates[3];
 extern BYTE KeyStateTable[256];
 extern BYTE AsyncKeyStateTable[256];
+
+LPSTR WINAPI lstrcat( LPSTR dst, LPCSTR t );

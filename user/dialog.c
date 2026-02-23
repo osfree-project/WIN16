@@ -37,7 +37,8 @@ BOOL DIALOG_Init()
 {
     TEXTMETRIC tm;
     HDC hdc;
-    
+
+	FUNCTION_START    
       /* Calculate the dialog base units */
 
     if (!(hdc = GetDC( 0 ))) return FALSE;
@@ -51,18 +52,18 @@ BOOL DIALOG_Init()
     if (tm.tmPitchAndFamily & TMPF_FIXED_PITCH) xBaseUnit = xBaseUnit * 5 / 4;
 
     TRACE("DIALOG_Init: base units = %d,%d", xBaseUnit, yBaseUnit );
+
     return TRUE;
 }
 
 #pragma code_seg();
-
 
 /***********************************************************************
  *           DIALOG_GetFirstTabItem
  *
  * Return the first item of the dialog that has the WS_TABSTOP style.
  */
-HWND DIALOG_GetFirstTabItem( HWND hwndDlg )
+HWND FAR DIALOG_GetFirstTabItem( HWND hwndDlg )
 {
     WND *pWnd = WIN_FindWndPtr( hwndDlg );
     for (pWnd = pWnd->child; pWnd; pWnd = pWnd->next)
@@ -70,6 +71,7 @@ HWND DIALOG_GetFirstTabItem( HWND hwndDlg )
     return 0;
 }
 
+#if 0
 
 /***********************************************************************
  *           DIALOG_GetControl
@@ -82,8 +84,9 @@ static LPCSTR DIALOG_GetControl( LPCSTR ptr, LPCSTR FAR *class, LPCSTR FAR *text
     unsigned char *base = (unsigned char *)ptr;
     LPBYTE p = base;
 
-    p += 14;  /* size of control header */
+	FUNCTION_START
 
+    p += 14;  /* size of control header */
     if (*p & 0x80)
     {
         *class = MAKEINTRESOURCE( *p );
@@ -106,9 +109,69 @@ static LPCSTR DIALOG_GetControl( LPCSTR ptr, LPCSTR FAR *class, LPCSTR FAR *text
 	*text = ptr + (WORD)(p - base);
 	p += lstrlen(p) + 2;
     }
+	FUNCTION_END
     return ptr + (WORD)(p - base);
 }
 
+#endif
+
+/***********************************************************************
+ *           DIALOG_GetControl
+ *
+ * Return the class and text of the control pointed to by ptr,
+ * and return a pointer to the next control.
+ */
+static LPCSTR DIALOG_GetControl( LPCSTR ptr, LPCSTR FAR *class, LPCSTR FAR *text )
+{
+    unsigned char far *base = (unsigned char far *)ptr;
+    unsigned char far *p = base;
+    WORD len;
+
+    FUNCTION_START
+
+    TRACE("--- DIALOG_GetControl: element at %Fp ---", ptr);
+
+    p += 14;
+
+    TRACE("After header, offset=%u, byte=0x%02X", (WORD)(p-base), *p);
+
+    /* --- Чтение класса --- */
+    if (*p & 0x80)   /* предопределённый класс */
+    {
+        *class = MAKEINTRESOURCE( *p );
+        TRACE("  Predefined class: id=%u\n", *p);
+        p++;
+    }
+    else
+    {
+        *class = ptr + (WORD)(p - base);
+        TRACE("  Class string at offset %u: \"%S\"", (WORD)(p-base), (LPCSTR)p);
+        p += lstrlen((LPCSTR)p) + 1;
+    }
+
+    /* --- Чтение текста --- */
+    TRACE("Text offset=%u, first byte=0x%02X", (WORD)(p-base), *p);
+
+    if (*p == 0xff)   /* идентификатор иконки */
+    {
+        *text = MAKEINTRESOURCE( p[1] + 256 * p[2] );
+        TRACE("  Icon ID: %u", p[1] + 256 * p[2]);
+        p += 4;   /* 0xff + 2 байта id */
+    }
+    else
+    {
+        *text = ptr + (WORD)(p - base);
+        len = lstrlen((LPCSTR)p);
+        TRACE("  Text string at offset %u: \"%S\" (len=%u)", (WORD)(p-base), (LPCSTR)p, len);
+        p += len + 2;
+    }
+
+    TRACE("  class -> %p, text -> %p", *class, *text);
+    TRACE("--- Next element offset: %u ---", (WORD)(p - base));
+
+    FUNCTION_END
+    return ptr + (WORD)(p - base);
+}
 
 /***********************************************************************
  *           DIALOG_ParseTemplate
@@ -118,10 +181,12 @@ static LPCSTR DIALOG_GetControl( LPCSTR ptr, LPCSTR FAR *class, LPCSTR FAR *text
  */
 static LPCSTR DIALOG_ParseTemplate( LPCSTR template, DLGTEMPLATE FAR * result )
 {
-    unsigned char *base = (unsigned char *)(template);
-    unsigned char * p = base;
+    unsigned char far *base = (unsigned char far *)(template);
+    unsigned char far * p = base;
+
+	FUNCTION_START
  
-    result->header = *(DLGTEMPLATEHEADER *)p;
+    result->header = *(DLGTEMPLATEHEADER far *)p;
     p += 13;
 
     /* Get the menu name */
@@ -157,7 +222,7 @@ static LPCSTR DIALOG_ParseTemplate( LPCSTR template, DLGTEMPLATE FAR * result )
 
     if (result->header.style & DS_SETFONT)
     {
-	result->pointSize = *(WORD *)p;
+	result->pointSize = *(WORD FAR *)p;
         p += sizeof(WORD);
 	result->faceName = template + (WORD)(p - base);
         p += lstrlen(p) + 1;
@@ -166,6 +231,72 @@ static LPCSTR DIALOG_ParseTemplate( LPCSTR template, DLGTEMPLATE FAR * result )
     return template + (WORD)(p - base);
 }
 
+#if 0
+static LPCSTR DIALOG_ParseTemplate( LPCSTR template, DLGTEMPLATE FAR * result )
+{
+    unsigned char far *base = (unsigned char far *)(template);
+    unsigned char far * p = base;
+
+    FUNCTION_START
+
+    result->header = *(DLGTEMPLATEHEADER far *)p;
+    p += 13;
+
+    /* --- Меню --- */
+    if (*p == 0xff)
+    {
+        result->menuName = MAKEINTRESOURCE( p[1] + 256 * p[2] );
+        p += 3;
+    }
+    else if (*p)
+    {
+        result->menuName = template + (WORD)(p - base);
+        p += lstrlen((LPCSTR)p) + 1;
+        if ( ((WORD)(p - base)) & 1 )
+            p++;
+    }
+    else
+    {
+        result->menuName = 0;
+        p++;
+    }
+
+    /* --- Класс --- */
+    if (*p)
+    {
+        result->className = template + (WORD)(p - base);
+        p += lstrlen((LPCSTR)p) + 1;
+        if ( ((WORD)(p - base)) & 1 )
+            p++;
+    }
+    else
+    {
+        result->className = DIALOG_CLASS_ATOM;
+        p++;
+    }
+
+    /* --- Заголовок --- */
+    result->caption = template + (WORD)(p - base);
+    p += lstrlen((LPCSTR)p) + 1;
+    if ( ((WORD)(p - base)) & 1 )
+        p++;
+
+    /* --- Шрифт (если есть) --- */
+    if (result->header.style & DS_SETFONT)
+    {
+
+        result->pointSize = *(WORD FAR *)p;
+        p += sizeof(WORD);
+
+        result->faceName = template + (WORD)(p - base);
+        p += lstrlen((LPCSTR)p) + 1;
+
+    }
+
+    return template + (WORD)(p - base);
+}
+
+#endif
 
 /***********************************************************************
  *           DIALOG_DisplayTemplate
@@ -175,13 +306,13 @@ static void DIALOG_DisplayTemplate( DLGTEMPLATE FAR * result )
     TRACE("DIALOG %d, %d, %d, %d", result->header.x, result->header.y,
 	    result->header.cx, result->header.cy );
     TRACE(" STYLE %08lx", result->header.style );
-    TRACE(" CAPTION '%s'", (result->caption) );
+    TRACE(" CAPTION '%S'", (result->caption) );
 
     if (HIWORD(result->className))
     {
         TRACE("CLASS '%S'", result->className);
     } else
-        TRACE("CLASS #%d", LOWORD(result->className) );
+        TRACE("CLASS #%04x", LOWORD(result->className) );
 
     if (HIWORD(result->menuName))
     {
@@ -210,20 +341,30 @@ HWND WINAPI CreateDialog( HINSTANCE hInst, LPCSTR dlgTemplate,
 HWND WINAPI CreateDialogParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 		        HWND owner, DLGPROC dlgProc, LPARAM param )
 {
-    HWND hwnd = 0;
-    HRSRC hRsrc;
-    HGLOBAL hmem;
-    LPBYTE data;
+	HWND hwnd;
+	HRSRC hRsrc;
+	HGLOBAL hmem;
+	LPBYTE data;
 
-    TRACE("CreateDialogParam: %04x,%08lx,%04x,%08lx,%ld\n",
+	TRACE("CreateDialogParam: %04x,%08lx,%04x,%08lx,%ld\n",
                    hInst, (DWORD)dlgTemplate, owner, (DWORD)dlgProc, param );
-     
-    if (!(hRsrc = FindResource( hInst, dlgTemplate, RT_DIALOG ))) return 0;
-    if (!(hmem = LoadResource( hInst, hRsrc ))) return 0;
-    if (!(data = LockResource( hmem ))) hwnd = 0;
-    else hwnd = CreateDialogIndirectParam(hInst, data, owner, dlgProc, param);
-    FreeResource( hmem );
-    return hwnd;
+
+	hwnd=0;
+
+	if ((hRsrc = FindResource( hInst, dlgTemplate, RT_DIALOG )))
+	{
+    		if ((hmem = LoadResource( hInst, hRsrc )))
+		{
+			if ((data = LockResource( hmem )))
+			{
+				hwnd = CreateDialogIndirectParam(hInst, data, owner, dlgProc, param);
+				UnlockResource( hmem );
+			}
+			FreeResource( hmem );
+		}
+	}
+	FUNCTION_END
+	return hwnd;
 }
 
 
@@ -251,11 +392,12 @@ HWND WINAPI CreateDialogIndirectParam( HINSTANCE hInst, const void FAR * dlgTemp
     int i;
     DLGTEMPLATE template;
     LPCSTR headerPtr;
-    DIALOGINFO * dlgInfo;
+    DIALOGINFO FAR * dlgInfo;
     DWORD exStyle = 0;
     WORD xUnit = xBaseUnit;
     WORD yUnit = yBaseUnit;
 
+	FUNCTION_START
       /* Parse dialog template */
 
     if (!dlgTemplate) return 0;
@@ -349,18 +491,18 @@ HWND WINAPI CreateDialogIndirectParam( HINSTANCE hInst, const void FAR * dlgTemp
 
     TRACE(" BEGIN\n" );
 
-    dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
+    dlgInfo = (DIALOGINFO FAR *)wndPtr->wExtra;
     dlgInfo->msgResult = 0;  /* This is used to store the default button id */
     dlgInfo->hDialogHeap = 0;
 
     for (i = 0; i < template.header.nbItems; i++)
     {
-	DLGCONTROLHEADER *header;
+	DLGCONTROLHEADER FAR *header;
 	LPCSTR className, winName;
         HWND hwndDefButton = 0;
         char buffer[10];
 
-        header = (DLGCONTROLHEADER *)headerPtr;
+        header = (DLGCONTROLHEADER FAR *)headerPtr;
 	headerPtr = DIALOG_GetControl( headerPtr, &className, &winName );
 
         if (!HIWORD(className))
@@ -380,9 +522,10 @@ HWND WINAPI CreateDialogIndirectParam( HINSTANCE hInst, const void FAR * dlgTemp
 
         if (HIWORD(className))
 	{
-            TRACE("   %S ", className);
+            TRACE("   '%S' ", className);
 	}
         else TRACE("   %04x ", LOWORD(className) );
+
 	if (HIWORD(winName))
 	{
             TRACE("'%S'", winName);
@@ -404,6 +547,7 @@ HWND WINAPI CreateDialogIndirectParam( HINSTANCE hInst, const void FAR * dlgTemp
 		    TRACE("CreateDialogIndirectParam: Insufficient memory to create heap for edit control");
 		    continue;
 		}
+		// @todo rework to moveable?
 		LocalInit(dlgInfo->hDialogHeap, 0, 0xffff);
 	    }
 	    hwndCtrl = CreateWindowEx(WS_EX_NOPARENTNOTIFY, className, winName,
@@ -521,13 +665,18 @@ int WINAPI DialogBox( HINSTANCE hInst, LPCSTR dlgTemplate, HWND owner, DLGPROC d
 int WINAPI DialogBoxParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 		    HWND owner, DLGPROC dlgProc, LPARAM param )
 {
-    HWND hwnd;
-    
-    TRACE("DialogBoxParam: %04x,%08lx,%04x,%08lx,%ld\n",
-                   hInst, (DWORD)dlgTemplate, owner, (DWORD)dlgProc, param );
-    hwnd = CreateDialogParam( hInst, dlgTemplate, owner, dlgProc, param );
-    if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
-    return -1;
+	HWND hWnd;
+	int retVal=-1;
+
+	FUNCTION_START    
+	TRACE("DialogBoxParam: %04x,%08lx,%04x,%08lx,%ld", hInst, (DWORD)dlgTemplate, owner, (DWORD)dlgProc, param );
+
+	hWnd = CreateDialogParam( hInst, dlgTemplate, owner, dlgProc, param );
+	if (hWnd) retVal=DIALOG_DoDialogBox(hWnd, owner);
+
+	FUNCTION_END
+
+	return retVal;
 }
 
 

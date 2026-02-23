@@ -877,7 +877,7 @@ LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect, RECT FAR *newWindowRe
  *
  * Default handling for a WM_WINDOWPOSCHANGING. Called from DefWindowProc().
  */
-LONG WINPOS_HandleWindowPosChanging( WINDOWPOS *winpos )
+LONG FAR WINPOS_HandleWindowPosChanging( WINDOWPOS FAR *winpos )
 {
     POINT maxSize;
     WND *wndPtr = WIN_FindWndPtr( winpos->hwnd );

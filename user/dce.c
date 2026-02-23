@@ -192,7 +192,7 @@ int bDebug=0;
  *
  * Allocate a new DCE.
  */
-HANDLE DCE_AllocDCE( DCE_TYPE type )
+HANDLE FAR DCE_AllocDCE( DCE_TYPE type )
 {
 	DCE * dce;
 	HANDLE handle;
@@ -245,6 +245,8 @@ void DCE_FreeDCE(HANDLE hdce)
 }
 
 
+#pragma code_seg( "INIT_TEXT" );
+
 /***********************************************************************
  *           DCE_Init
  */
@@ -262,6 +264,8 @@ VOID FAR DCE_Init()
 	LocalUnlock(handle);
     }
 }
+
+#pragma code_seg();
 
 #if 0
 static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT FAR *lprect )

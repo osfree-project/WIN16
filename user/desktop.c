@@ -78,6 +78,7 @@ static HBITMAP DESKTOP_LoadBitmap( HDC hdc, const char *filename )
 #endif
 }
 
+#pragma code_seg( "FIXED_TEXT" );
 
 /***********************************************************************
  *           DESKTOP_DoEraseBkgnd
@@ -144,7 +145,6 @@ static LONG DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc/*, DESKTOPINFO *infoPtr*/ )
 	return 1;
 }
 
-
 /***********************************************************************
  *           DesktopWndProc
  *
@@ -193,6 +193,7 @@ LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
     return 0;
 }
 
+#pragma code_seg();
 
 #if 0
 /***********************************************************************

@@ -67,6 +67,8 @@ static BOOL fEndMenuCalled = FALSE;
 extern void NC_DrawSysButton(HWND hwnd, HDC hdc, BOOL down);  /* nonclient.c */
 
 
+#pragma code_seg( "INIT_TEXT" );
+
 /***********************************************************************
  *           MENU_Init
  *
@@ -94,6 +96,7 @@ BOOL FAR MENU_Init()
 	return TRUE;
 }
 
+#pragma code_seg();
 
 /***********************************************************************
  *           MENU_HasSysMenu

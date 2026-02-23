@@ -3,19 +3,19 @@
  *
  * Copyright 1994 Alexandre Julliard
  *
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, see
-<https://www.gnu.org/licenses/>.
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
  */
 
 #include "user.h"
@@ -188,7 +188,7 @@ void NC_GetMinMaxInfo( HWND hwnd, POINT FAR *maxSize, POINT FAR *maxPos,
  *
  * Handle a WM_NCCALCSIZE message. Called from DefWindowProc().
  */
-LONG NC_HandleNCCalcSize(HWND hwnd, NCCALCSIZE_PARAMS FAR * params)
+LONG FAR NC_HandleNCCalcSize(HWND hwnd, NCCALCSIZE_PARAMS FAR * params)
 {
 	RECT tmpRect = { 0, 0, 0, 0 };
 	WND *wndPtr;
@@ -268,7 +268,7 @@ void NC_GetInsideRect( HWND hwnd, RECT FAR *rect )
  *
  * Handle a WM_NCHITTEST message. Called from DefWindowProc().
  */
-LONG NC_HandleNCHitTest( HWND hwnd, POINT pt )
+LONG FAR NC_HandleNCHitTest( HWND hwnd, POINT pt )
 {
     RECT rect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
@@ -823,7 +823,7 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
  *
  * Handle a WM_NCPAINT message. Called from DefWindowProc().
  */
-LONG NC_HandleNCPaint( HWND hwnd , HRGN clip)
+LONG FAR NC_HandleNCPaint( HWND hwnd , HRGN clip)
 {
 //    FUNCTION_START
 	NC_DoNCPaint( hwnd, clip, FALSE );
@@ -836,7 +836,7 @@ LONG NC_HandleNCPaint( HWND hwnd , HRGN clip)
  *
  * Handle a WM_NCACTIVATE message. Called from DefWindowProc().
  */
-LONG NC_HandleNCActivate( HWND hwnd, WPARAM wParam )
+LONG FAR NC_HandleNCActivate( HWND hwnd, WPARAM wParam )
 {
 	WND *wndPtr;
 
@@ -865,7 +865,7 @@ LONG NC_HandleNCActivate( HWND hwnd, WPARAM wParam )
  *
  * Handle a WM_SETCURSOR message. Called from DefWindowProc().
  */
-LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
+LONG FAR NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
     if (hwnd != (HWND)wParam) return 0;  /* Don't set the cursor for child windows */
 
@@ -1310,7 +1310,7 @@ static void NC_TrackScrollBar( HWND hwnd, WORD wParam, POINT pt )
  *
  * Handle a WM_NCLBUTTONDOWN message. Called from DefWindowProc().
  */
-LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
+LONG FAR NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
     HDC hdc = GetWindowDC( hwnd );
     POINT pt;
@@ -1369,7 +1369,7 @@ LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
  *
  * Handle a WM_NCLBUTTONDBLCLK message. Called from DefWindowProc().
  */
-LONG NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam )
+LONG FAR NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
     /*
      * if this is an icon, send a restore since we are handling
@@ -1404,7 +1404,7 @@ LONG NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam )
  *
  * Handle a WM_SYSCOMMAND message. Called from DefWindowProc().
  */
-LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt )
+LONG FAR NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 

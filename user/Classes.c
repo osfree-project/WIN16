@@ -94,7 +94,7 @@ void CLASS_WalkClasses(void)
  * Return a handle and a pointer to the class.
  * 'ptr' can be NULL if the pointer is not needed.
  */
-HCLASS CLASS_FindClassByName(LPCSTR name, HINSTANCE hinstance, CLASS *FAR *ptr)
+HCLASS FAR CLASS_FindClassByName(LPCSTR name, HINSTANCE hinstance, CLASS *FAR *ptr)
 {
 	ATOM atom;
 	HCLASS class;
@@ -149,7 +149,7 @@ HCLASS CLASS_FindClassByName(LPCSTR name, HINSTANCE hinstance, CLASS *FAR *ptr)
  *
  * Return a pointer to the CLASS structure corresponding to a HCLASS.
  */
-CLASS * CLASS_FindClassPtr( HCLASS hclass )
+CLASS * FAR CLASS_FindClassPtr( HCLASS hclass )
 {
     CLASS * ptr;
     

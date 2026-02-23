@@ -789,3 +789,14 @@ int latoi(const char far *h)
 
   return i;
 }
+
+LPSTR WINAPI lstrcat( LPSTR dst, LPCSTR t )
+{
+    LPSTR s;
+    s = dst;
+    while( *s != '\0' )
+        ++s;
+    while( *s++ = *t++ )
+        ;
+    return( dst );
+}

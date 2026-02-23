@@ -548,9 +548,14 @@ BOOL WINAPI PeekMessage( LPMSG msg, HWND hwnd, UINT first, UINT last, UINT flags
 {
 	BOOL retVal;
 	PushDS();
-	SetDS(USER_HeapSel);
+	SetUserHeapDS();
+	FUNCTION_START
+
 	retVal=MSG_PeekMessage( msg, hwnd, first, last, flags, TRUE );
+
+	FUNCTION_END
 	PopDS();
+
 	return retVal;
 }
 

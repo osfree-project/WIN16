@@ -10,7 +10,7 @@
 #include "windows.h"
 
 extern BOOL DIALOG_Init(void);
-extern HWND DIALOG_GetFirstTabItem( HWND hwndDlg );
+extern HWND FAR DIALOG_GetFirstTabItem( HWND hwndDlg );
 
 #pragma pack(1)
 

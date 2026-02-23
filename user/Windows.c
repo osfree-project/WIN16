@@ -108,14 +108,6 @@ void WINAPI ValidateRgn( HWND hwnd, HRGN hrgn )
 	FUNCTION_END
 }
 
-/**************************************************************************
- *              MessageBox   (USER.1)
- */
-int WINAPI MessageBox( HWND hwnd, LPCSTR text, LPCSTR title, UINT type )
-{
-//	FUNCTION_START
-    return 0;
-}
 
 /**************************************************************************
  *              SysErrorBox   (USER.320)

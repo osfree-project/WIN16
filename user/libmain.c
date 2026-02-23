@@ -22,6 +22,8 @@ License along with this library; if not, see
 #include "menu.h"
 #include "display.h"
 #include "dialog.h"
+#include "button.h"
+#include "static.h"
 
 
 #pragma code_seg( "INIT_TEXT" );
@@ -121,21 +123,81 @@ VOID WINAPI RW_RegisterMenus()
 
 VOID WINAPI RW_RegisterButton()
 {
+	WNDCLASS * pWndClass; // For use in registering classes
+	HLOCAL hWndClass;
+
 	FUNCTION_START
+
+	// Allocate 0x1A bytes.
+	hWndClass = UserLocalAlloc(LT_USER_CLASS, LMEM_ZEROINIT, sizeof(WNDCLASS));
+	pWndClass = (WNDCLASS *)LocalLock(hWndClass);
+
+	// Register the Dialog class
+	pWndClass->lpszClassName = "BUTTON";
+	pWndClass->hCursor = LoadCursor(0, IDC_ARROW);
+	pWndClass->lpfnWndProc = ButtonWndProc;
+	pWndClass->cbWndExtra = sizeof(BUTTONINFO);
+//	pWndClass->hInstance = hInstance;
+	pWndClass->style = CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC;
+	pWndClass->hbrBackground = COLOR_WINDOW;
+	RegisterClass(pWndClass);
+
+	LocalUnlock(hWndClass);
+	LocalFree(hWndClass); // Don't need WNDCLASS anymore!
 
 	FUNCTION_END
 }
 
 VOID WINAPI RW_RegisterStatic()
 {
+	WNDCLASS * pWndClass; // For use in registering classes
+	HLOCAL hWndClass;
+
 	FUNCTION_START
+
+	// Allocate 0x1A bytes.
+	hWndClass = UserLocalAlloc(LT_USER_CLASS, LMEM_ZEROINIT, sizeof(WNDCLASS));
+	pWndClass = (WNDCLASS *)LocalLock(hWndClass);
+
+	// Register the Dialog class
+	pWndClass->lpszClassName = "STATIC";
+	pWndClass->hCursor = LoadCursor(0, IDC_ARROW);
+	pWndClass->lpfnWndProc = StaticWndProc;
+	pWndClass->cbWndExtra = sizeof(STATICINFO);
+//	pWndClass->hInstance = hInstance;
+	pWndClass->style = CS_GLOBALCLASS | CS_PARENTDC;
+	pWndClass->hbrBackground = COLOR_WINDOW;
+	RegisterClass(pWndClass);
+
+	LocalUnlock(hWndClass);
+	LocalFree(hWndClass); // Don't need WNDCLASS anymore!
 
 	FUNCTION_END
 }
 
 VOID WINAPI RW_RegisterDlg()
 {
+	WNDCLASS * pWndClass; // For use in registering classes
+	HLOCAL hWndClass;
+
 	FUNCTION_START
+
+	// Allocate 0x1A bytes.
+	hWndClass = UserLocalAlloc(LT_USER_CLASS, LMEM_ZEROINIT, sizeof(WNDCLASS));
+	pWndClass = (WNDCLASS *)LocalLock(hWndClass);
+
+	// Register the Dialog class
+	pWndClass->lpszClassName = DIALOG_CLASS_ATOM;
+	pWndClass->hCursor = LoadCursor(0, IDC_ARROW);
+	pWndClass->lpfnWndProc = DefDlgProc;
+	pWndClass->cbWndExtra = DLGWINDOWEXTRA;
+//	pWndClass->hInstance = hInstance;
+	pWndClass->style = CS_GLOBALCLASS | CS_DBLCLKS;
+	pWndClass->hbrBackground = COLOR_WINDOW;
+	RegisterClass(pWndClass);
+
+	LocalUnlock(hWndClass);
+	LocalFree(hWndClass); // Don't need WNDCLASS anymore!
 
 	FUNCTION_END
 }
@@ -540,6 +602,7 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 	pWndClass->hbrBackground = COLOR_BACKGROUND;
 	RegisterClass(pWndClass);
 
+
 	// Register the "switch window" class
 	pWndClass->lpszClassName = WINSWITCH_CLASS_ATOM;
 	pWndClass->hCursor = LoadCursor(0, IDC_ARROW);
@@ -619,6 +682,15 @@ for (;;);
 
 	ShowWindow(HWndSwitch, SW_SHOW);;
 	ShowWindow(HWndRealPopup, SW_SHOW);;
+
+{
+ int msgboxID = MessageBox(
+        NULL,
+        (LPCSTR)"Resource not available\nDo you want to try again?",
+        (LPCSTR)"Account Details",
+        MB_ICONEXCLAMATION | MB_ABORTRETRYIGNORE | MB_DEFBUTTON2
+    );
+}
 
 // Ok. Now time to test message queue...
 {
@@ -939,9 +1011,9 @@ BOOL PASCAL LibMain(WORD wHeapSeg, HINSTANCE hInstance , WORD wHeapSize)
 
 		// Register the Desktop and switch windows classes, and
 		// create the windows.
+		DIALOG_Init();
 		LW_InitWndMgr(hInstance); 
 
-		DIALOG_Init();
 		// Max button size???
 		//WMaxBtnSize = MB_FindLongestString();
 	

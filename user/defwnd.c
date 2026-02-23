@@ -32,6 +32,8 @@
 static short iF10Key = 0;
 static short iMenuSysKey = 0;
 
+#pragma code_seg( "FIXED_TEXT" );
+
 /***********************************************************************
  *           DEFWND_SetText
  *
@@ -47,7 +49,6 @@ void DEFWND_SetText( WND *wndPtr, LPCSTR text )
     textPtr = LocalLock(wndPtr->hText);
     lstrcpy( textPtr, text );
 }
-
 
 /***********************************************************************
  *           DefWindowProc   (USER.107)
@@ -398,4 +399,5 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
     return 0;
 }
 
+#pragma code_seg();
 

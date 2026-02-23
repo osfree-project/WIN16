@@ -29,9 +29,9 @@ License along with this library; if not, see
 VOID FAR DISPLAY_Init();
 
 /* Получить бинарные данные цветов по умолчанию из драйвера */
-const COLORREF* DISPLAY_GetSysColorDefaultsBinary(void);
+const COLORREF* FAR DISPLAY_GetSysColorDefaultsBinary(void);
 
 /* Получить количество цветов */
-int DISPLAY_GetSysColorCount(void);
+int FAR DISPLAY_GetSysColorCount(void);
 
 #endif

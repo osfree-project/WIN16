@@ -35,7 +35,7 @@ extern HCURSOR CURSORICON_IconToCursor(HICON);
  *
  * Return a pointer to the WND structure corresponding to a HWND.
  */
-WND * WIN_FindWndPtr( HWND hwnd )
+WND * FAR WIN_FindWndPtr( HWND hwnd )
 {
 	WND * ptr=NULL;
 
@@ -59,7 +59,7 @@ WND * WIN_FindWndPtr( HWND hwnd )
  *
  * Get the top-level parent for a child window.
  */
-HWND WIN_GetTopParent( HWND hwnd )
+HWND FAR WIN_GetTopParent( HWND hwnd )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     while (wndPtr && (wndPtr->dwStyle & WS_CHILD)) wndPtr = wndPtr->parent;
@@ -327,6 +327,8 @@ static void WIN_DestroyWindow( HWND hwnd )
 }
 
 
+#pragma code_seg( "INIT_TEXT" );
+
 /***********************************************************************
  *           WIN_CreateDesktopWindow
  *
@@ -388,6 +390,7 @@ BOOL FAR WIN_CreateDesktopWindow(void)
     return TRUE;
 }
 
+#pragma code_seg();
 
 /***********************************************************************
  *           CreateWindowEx   (USER.452)
@@ -404,7 +407,8 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
     int wmcreate;
 
     PushDS();
-    SetDS(USER_HeapSel);
+    SetUserHeapDS();
+	FUNCTION_START
 
     if (x == CW_USEDEFAULT) x = y = 0;
     if (width == CW_USEDEFAULT)
@@ -436,10 +440,10 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
     if (!(class = CLASS_FindClassByName( className, GetExePtr(instance),
                                          &classPtr )))
     {
-        TRACE("CreateWindow BAD CLASSNAME " );
+        TRACE("CreateWindowEx BAD CLASSNAME " );
         if (HIWORD(className))
 	{
-	  TRACE("'%S'\n", className);
+		TRACE("'%S'\n", className);
 	}
         else 
 	{
@@ -601,8 +605,8 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
     }
     else if (style & WS_VISIBLE) ShowWindow( hwnd, SW_SHOW );
 
-//    TRACE("CreateWindowEx: return %04x\n", hwnd);
 	LocalUnlock(hwnd);
+    TRACE("CreateWindowEx: return %04x\n", hwnd);
 	PopDS();
     return hwnd;
 }
@@ -1620,26 +1624,10 @@ LRESULT WINAPI CallWindowProc( FARPROC func, HWND hwnd, UINT message,
 
     if (!wndPtr) return 0;
 
-#if 0
-
-    /* check if we have something better than 16 bit relays */
-    if(!ALIAS_UseAliases || !(a=ALIAS_LookupAlias((DWORD)func)) ||
-        (!a->wine && !a->win32))
-        return CallWndProc( (FARPROC)func, wndPtr->hInstance, 
-                        hwnd, message, wParam, lParam );
-    if(a->wine)
-#endif
         res=((WNDPROC)func)(hwnd,message,wParam,lParam);
 //TRACE("%Fp", func);
 //for(;;);
 	return res;
-#if 0
-    if(!a->win32)
-        fprintf(stderr,"Where is the Win32 callback?\n");
-//    if (UsesLParamPtr(message))
-//	return RELAY32_CallWindowProcConvStruct(a->win32,hwnd,message,wParam,lParam);
-//    return CallWndProc32( (FARPROC)a->win32, hwnd, message, wParam, lParam );
-#endif
 }
 
 /***********************************************************************

@@ -127,15 +127,17 @@ static COLORREF g_SysColorDefaultsBinary[] = {
 #endif
 };
 
-const COLORREF* DISPLAY_GetSysColorDefaultsBinary(void)
+const COLORREF* FAR DISPLAY_GetSysColorDefaultsBinary(void)
 {
     return g_SysColorDefaultsBinary;
 }
 
-int DISPLAY_GetSysColorCount(void)
+int FAR DISPLAY_GetSysColorCount(void)
 {
     return sizeof(g_SysColorDefaultsBinary) / sizeof(COLORREF);
 }
+
+#pragma code_seg( "INIT_TEXT" );
 
 #if DEBUG
 /* Function to dump configuration */
@@ -262,3 +264,5 @@ VOID FAR DISPLAY_Init()
     
 	FUNCTION_END
 }
+
+#pragma code_seg();
