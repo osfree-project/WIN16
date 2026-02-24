@@ -39,6 +39,7 @@ static pfPaint staticPaintFunc[LAST_STATIC_TYPE+1] =
     STATIC_PaintTextfn       /* SS_LEFTNOWORDWRAP */
 };
 
+#pragma code_seg( "FIXED_TEXT" );
 
 /***********************************************************************
  *           STATIC_SetIcon
@@ -192,6 +193,8 @@ static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc )
     LONG style = wndPtr->dwStyle;
     STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
 
+	FUNCTION_START
+
     GetClientRect( wndPtr->hwndSelf, &rc);
     text = LocalLock( wndPtr->hText );
 
@@ -225,16 +228,13 @@ static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc )
 	wFormat |= DT_NOPREFIX;
 
     if (infoPtr->hFont) SelectObject( hdc, infoPtr->hFont );
-#ifdef WINELIB32
-    hBrush = SendMessage( GetParent(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
-                          hdc, wndPtr->hwndSelf );
-#else
     hBrush = SendMessage( GetParent(wndPtr->hwndSelf), WM_CTLCOLOR, (WORD)hdc,
                           MAKELONG(wndPtr->hwndSelf, CTLCOLOR_STATIC));
-#endif
     if (!hBrush) hBrush = GetStockObject(WHITE_BRUSH);
     FillRect(hdc, &rc, hBrush);
     if (text) DrawText( hdc, text, -1, &rc, wFormat );
+
+	FUNCTION_END
 }
 
 static void STATIC_PaintRectfn( WND *wndPtr, HDC hdc )
@@ -284,13 +284,10 @@ static void STATIC_PaintIconfn( WND *wndPtr, HDC hdc )
     STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
 
     GetClientRect( wndPtr->hwndSelf, &rc);
-#ifdef WINELIB32
-    hbrush = SendMessage( GetParent(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
-                          hdc, wndPtr->hwndSelf );
-#else
     hbrush = SendMessage( GetParent(wndPtr->hwndSelf), WM_CTLCOLOR, hdc,
                           MAKELONG(wndPtr->hwndSelf, CTLCOLOR_STATIC));
-#endif
     FillRect( hdc, &rc, hbrush );
     if (infoPtr->hIcon) DrawIcon( hdc, rc.left, rc.top, infoPtr->hIcon );
 }
+
+#pragma code_seg(  );

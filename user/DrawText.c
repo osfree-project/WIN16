@@ -100,6 +100,8 @@ DrawTextOut(HDC hDC,int x,int y,char far *lpstr,int len,UINT uFormat)
 			LineTo(hDC,x1+dx,y+dy);
 		}
 	}
+
+	FUNCTION_END
 }
 
 
@@ -129,7 +131,7 @@ DrawText(HDC hDC, LPCSTR lpsz, int cb, LPRECT lprc, UINT uFormat)
 
 	int   	charwidth[256];
 
-//	FUNCTION_START
+	FUNCTION_START
 
 	if ( !lprc )
 		return 0;
@@ -355,6 +357,7 @@ DrawText(HDC hDC, LPCSTR lpsz, int cb, LPRECT lprc, UINT uFormat)
 	    DeleteObject(hPen);
 	}
 
+	FUNCTION_END
 	return baseline - lprc->top;	
 }
 

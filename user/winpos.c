@@ -1050,32 +1050,41 @@ BOOL WINAPI SetWindowPos(HWND hwnd, HWND hwndInsertAfter, int x, int y,
     WND *wndPtr;
     RECT newWindowRect, newClientRect;
     int result;
+	BOOL retVal;
 
+	PushDS();
+	SetUserHeapDS();
+	FUNCTION_START
+
+	retVal=FALSE;
       /* Check window handle */
 
-    if (hwnd == GetDesktopWindow()) return FALSE;
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
+	if (hwnd != GetDesktopWindow())
+	{
 
-    /* Check for windows that may not be resized 
-       FIXME: this should be done only for Windows 3.0 programs */
-    if (flags ==(SWP_SHOWWINDOW) || flags ==(SWP_HIDEWINDOW ) )
-       flags |= SWP_NOSIZE | SWP_NOMOVE;
+		TRACE("SetWindowPos 1");
+		if ((wndPtr = WIN_FindWndPtr( hwnd )))
+		{
 
-      /* Check dimensions */
+			TRACE("SetWindowPos 2");
+		    	/* Check for windows that may not be resized 
+			FIXME: this should be done only for Windows 3.0 programs */
+			if (flags ==(SWP_SHOWWINDOW) || flags ==(SWP_HIDEWINDOW )) flags |= SWP_NOSIZE | SWP_NOMOVE;
 
-    if (cx <= 0) cx = 1;
-    if (cy <= 0) cy = 1;
+			/* Check dimensions */
+			if (cx <= 0) cx = 1;
+			if (cy <= 0) cy = 1;
 
-      /* Check flags */
+			/* Check flags */
 
-    if (hwnd == hwndActive) flags |= SWP_NOACTIVATE;   /* Already active */
-    if ((wndPtr->rectWindow.right - wndPtr->rectWindow.left == cx) &&
-        (wndPtr->rectWindow.bottom - wndPtr->rectWindow.top == cy))
-        flags |= SWP_NOSIZE;    /* Already the right size */
-    if ((wndPtr->rectWindow.left == x) && (wndPtr->rectWindow.top == y))
-        flags |= SWP_NOMOVE;    /* Already the right position */
+			if (hwnd == hwndActive) flags |= SWP_NOACTIVATE;   /* Already active */
+			if ((wndPtr->rectWindow.right - wndPtr->rectWindow.left == cx) &&
+				(wndPtr->rectWindow.bottom - wndPtr->rectWindow.top == cy))
+					flags |= SWP_NOSIZE;    /* Already the right size */
+			if ((wndPtr->rectWindow.left == x) && (wndPtr->rectWindow.top == y))
+					flags |= SWP_NOMOVE;    /* Already the right position */
 
-      /* Check hwndInsertAfter */
+			/* Check hwndInsertAfter */
 
     if (!(flags & (SWP_NOZORDER | SWP_NOACTIVATE)))
     {
@@ -1089,9 +1098,16 @@ BOOL WINAPI SetWindowPos(HWND hwnd, HWND hwndInsertAfter, int x, int y,
     if ((hwndInsertAfter == HWND_TOPMOST) ||
         (hwndInsertAfter == HWND_NOTOPMOST)) hwndInsertAfter = HWND_TOP;
       /* hwndInsertAfter must be a sibling of the window */
+
     if ((hwndInsertAfter != HWND_TOP) && (hwndInsertAfter != HWND_BOTTOM) &&
 	(wndPtr->parent != WIN_FindWndPtr(hwndInsertAfter)->parent))
-        return FALSE;
+	{
+		FUNCTION_END
+		PopDS();
+	        return FALSE;
+	}
+
+		TRACE("SetWindowPos 3");
 
       /* Fill the WINDOWPOS structure */
 
@@ -1106,6 +1122,8 @@ BOOL WINAPI SetWindowPos(HWND hwnd, HWND hwndInsertAfter, int x, int y,
       /* Send WM_WINDOWPOSCHANGING message */
     if (!(flags & SWP_NOSENDCHANGING))
 	SendMessage( hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)(WINDOWPOS FAR *)&winpos);
+
+		TRACE("SetWindowPos 4");
 
       /* Calculate new position and size */
 
@@ -1144,6 +1162,7 @@ BOOL WINAPI SetWindowPos(HWND hwnd, HWND hwndInsertAfter, int x, int y,
 				    &winpos, &newClientRect );
     /* FIXME: Should handle result here */
 
+		TRACE("SetWindowPos 5");
     /* Perform the moving and resizing */
 
     {
@@ -1191,6 +1210,7 @@ BOOL WINAPI SetWindowPos(HWND hwnd, HWND hwndInsertAfter, int x, int y,
         }
     }
 
+		TRACE("SetWindowPos 6");
 
     if (flags & SWP_SHOWWINDOW)
     {
@@ -1211,6 +1231,8 @@ BOOL WINAPI SetWindowPos(HWND hwnd, HWND hwndInsertAfter, int x, int y,
         if ((winpos.hwnd == GetFocus()) || IsChild(winpos.hwnd, GetFocus()))
             SetFocus( GetParent(winpos.hwnd) );  /* Revert focus to parent */
 
+		TRACE("SetWindowPos 7");
+
 	if (winpos.hwnd == hwndActive)
 	{
 	      /* Activate previously active window if possible */
@@ -1225,6 +1247,7 @@ BOOL WINAPI SetWindowPos(HWND hwnd, HWND hwndInsertAfter, int x, int y,
 	}
     }
 
+		TRACE("SetWindowPos 8");
       /* Activate the window */
 
     if (!(flags & SWP_NOACTIVATE))
@@ -1244,6 +1267,8 @@ BOOL WINAPI SetWindowPos(HWND hwnd, HWND hwndInsertAfter, int x, int y,
         RedrawWindow( wndPtr->parent->hwndSelf, NULL, 0,
                       RDW_ALLCHILDREN | RDW_ERASENOW );
 
+		TRACE("SetWindowPos 9");
+
       /* And last, send the WM_WINDOWPOSCHANGED message */
 
     winpos.flags |= SWP_NOMOVE; /* prevent looping.. window is already moved ??? (FIXME)*/
@@ -1252,7 +1277,15 @@ BOOL WINAPI SetWindowPos(HWND hwnd, HWND hwndInsertAfter, int x, int y,
         SendMessage( winpos.hwnd, WM_WINDOWPOSCHANGED,
                      0, (LPARAM)(WINDOWPOS FAR *)(&winpos) );
 
-    return TRUE;
+			LocalUnlock(hwnd);
+		}
+		retVal=TRUE;
+	}
+
+	FUNCTION_END
+	PopDS();
+
+	return retVal;
 }
 
 #if 0

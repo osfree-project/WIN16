@@ -120,6 +120,8 @@ int WINAPI MessageBox(HWND hWnd, LPCSTR text, LPCSTR caption, UINT flag)
 	return rc;
 }
 
+#pragma code_seg( "FIXED_TEXT" );
+
 /*
  * LATER
  *	the constant strings should be a the resource file...
@@ -174,7 +176,7 @@ static BOOL WINAPI MessageBoxHandler(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 			default:
 				resid = (LPSTR)0;
 		}
-		TRACE("1");
+		TRACE("MessageBoxHandler 1");
 		if(resid) {
 			hIcon = LoadIcon(0,resid);
 	    		SendDlgItemMessage(hDlg,105,STM_SETICON,(WPARAM)hIcon,0L);
@@ -183,6 +185,7 @@ static BOOL WINAPI MessageBoxHandler(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 				ShowWindow(hWnd,SW_HIDE);
 		}
 		
+		TRACE("MessageBoxHandler 2");
 		/* set default button to 1 */
 		control = IDOK;
 		nItems  = 1;
@@ -220,14 +223,17 @@ static BOOL WINAPI MessageBoxHandler(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 				ctlid[1] = IDCANCEL;
 				break;
 			case MB_ABORTRETRYIGNORE:
+				TRACE("MessageBoxHandler 2.1");
 				SetDlgItemText(hDlg,101,"&ABORT");
 				SetDlgItemText(hDlg,102,"&RETRY");
 				SetDlgItemText(hDlg,103,"&IGNORE");
 
+				TRACE("MessageBoxHandler 2.2");
 				hWnd = GetDlgItem(hDlg,101);
 				ShowWindow(hWnd,SW_SHOW);
 				SetWindowID(hWnd,IDABORT);
 
+				TRACE("MessageBoxHandler 2.3");
 				hWnd = GetDlgItem(hDlg,102);
 				ShowWindow(hWnd,SW_SHOW);
 				SetWindowID(hWnd,IDRETRY);
@@ -305,6 +311,8 @@ static BOOL WINAPI MessageBoxHandler(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 				break;
 		}
 
+		TRACE("MessageBoxHandler 3");
+
 		/* default id */
 		mbd->lParam = control;
 
@@ -321,7 +329,7 @@ static BOOL WINAPI MessageBoxHandler(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 		/*						*/
 		/************************************************/
 		hDC = GetDC(0);
-		len = GetTextExtent(hDC,mbd->text,lstrlen(mbd->text));	
+		len = GetTextExtent(hDC,mbd->text,lstrlen(mbd->text));
 		width = LOWORD(len);
 		height = HIWORD(len);
 
@@ -353,6 +361,7 @@ static BOOL WINAPI MessageBoxHandler(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 		/* this is the actual position */
 		rect.top = 32;
 
+		TRACE("MessageBoxHandler 4");
 		/* where should the text go... */
 		/* should we move it to make room for icon? */
 		if(mbd->flag & MB_ICONMASK) {
@@ -378,6 +387,8 @@ static BOOL WINAPI MessageBoxHandler(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 
 		ReleaseDC(0,hDC);
 
+		TRACE("MessageBoxHandler 6");
+
 		/************************************************/
 		/*						*/
 		/*  calculate the size of the message box, given*/
@@ -402,6 +413,7 @@ static BOOL WINAPI MessageBoxHandler(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 		hWnd = GetDlgItem(hDlg,control);
 		GetClientRect(hWnd,&crect);
 
+
 		/* the actual bottom is bottom of text and button... */
 		/* calculate using rect.top position and rect.bottom */
 		/* as distance */
@@ -415,12 +427,15 @@ static BOOL WINAPI MessageBoxHandler(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 		width = rcClient.right + nNCWidth;
 		height = rcClient.bottom + nNCHeight;
 
+		TRACE("MessageBoxHandler 7");
 		SetWindowPos(hDlg,0,
-			(GetSystemMetrics(SM_CXSCREEN) - width) /2,
-			(GetSystemMetrics(SM_CYSCREEN) - height) /3,
+			(GETSYSTEMMETRICS(SM_CXSCREEN) - width) /2,
+			(GETSYSTEMMETRICS(SM_CYSCREEN) - height) /3,
 			width,height,
 			SWP_NOZORDER|SWP_NOACTIVATE);
-			
+		TRACE("MessageBoxHandler 7...");
+
+		
 		/* now place the buttons correctly */
 		GetClientRect(hDlg,&crect);
 
@@ -453,6 +468,8 @@ static BOOL WINAPI MessageBoxHandler(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 			SetFocus((HWND)wParam);
 			hWnd = (HWND)wParam;
 		}
+
+		TRACE("MessageBoxHandler 8");
 		
 #ifdef CURSORWARPING
 		/* this will warp the cursor to the default button */
@@ -464,6 +481,7 @@ static BOOL WINAPI MessageBoxHandler(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 		height += 20;
 		SetCursorPos(width,height);
 #endif
+		FUNCTION_END
 		return FALSE;
 
 	case WM_PAINT:
@@ -495,3 +513,4 @@ static BOOL WINAPI MessageBoxHandler(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 	return FALSE;
 }
 
+#pragma code_seg();

@@ -834,12 +834,25 @@ int WINAPI GetDlgCtrlID( HWND hwnd )
  */
 HWND WINAPI GetDlgItem( HWND hwndDlg, int id )
 {
-    WND *pWnd;
+	WND *pWnd;
+	HWND retVal;
 
-    if (!(pWnd = WIN_FindWndPtr( hwndDlg ))) return 0;
-    for (pWnd = pWnd->child; pWnd; pWnd = pWnd->next)
-        if (pWnd->wIDmenu == id) return pWnd->hwndSelf;
-    return 0;
+	PushDS();
+	SetUserHeapDS();
+
+	FUNCTION_START
+
+	if (pWnd = WIN_FindWndPtr( hwndDlg ))
+	{
+		for (pWnd = pWnd->child; pWnd; pWnd = pWnd->next)
+			if (pWnd->wIDmenu == id) retVal=pWnd->hwndSelf;
+		LocalUnlock(hwndDlg);
+	}
+
+	FUNCTION_END;
+	PopDS();
+
+	return retVal;
 }
 
 
@@ -848,9 +861,18 @@ HWND WINAPI GetDlgItem( HWND hwndDlg, int id )
  */
 LRESULT WINAPI SendDlgItemMessage(HWND hwnd, int id, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    HWND hwndCtrl = GetDlgItem( hwnd, id );
-    if (hwndCtrl) return SendMessage( hwndCtrl, msg, wParam, lParam );
-    else return 0;
+	HWND hwndCtrl;
+	LRESULT retVal;
+
+	FUNCTION_START
+
+	retVal=0;
+	hwndCtrl = GetDlgItem( hwnd, id );
+	if (hwndCtrl) retVal=SendMessage( hwndCtrl, msg, wParam, lParam );
+
+	FUNCTION_END
+
+	return retVal;
 }
 
 
@@ -859,7 +881,9 @@ LRESULT WINAPI SendDlgItemMessage(HWND hwnd, int id, UINT msg, WPARAM wParam, LP
  */
 VOID WINAPI SetDlgItemText( HWND hwnd, int id, LPCSTR lpString )
 {
-    SendDlgItemMessage( hwnd, id, WM_SETTEXT, 0, (DWORD)lpString );
+	FUNCTION_START
+    	SendDlgItemMessage( hwnd, id, WM_SETTEXT, 0, (DWORD)lpString );
+	FUNCTION_END
 }
 
 

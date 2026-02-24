@@ -84,7 +84,7 @@ static HWND DEFDLG_FindDefButton( HWND hwndDlg )
  *
  * Set the new default button to be hwndNew.
  */
-static BOOL DEFDLG_SetDefButton( HWND hwndDlg, DIALOGINFO *dlgInfo,
+static BOOL DEFDLG_SetDefButton( HWND hwndDlg, DIALOGINFO FAR *dlgInfo,
                                  HWND hwndNew )
 {
     if (hwndNew &&
@@ -122,13 +122,14 @@ LRESULT WINAPI DefDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     dlgInfo->msgResult = 0;
     if (dlgInfo->dlgProc)
     {
-	TRACE("1 %Fp=", dlgInfo->dlgProc);
+	TRACE("DefDlgProc 1 dlgProc=%Fp", dlgInfo->dlgProc);
 	  /* Call dialog procedure */
 	result = (BOOL)CallWindowProc( (FARPROC)dlgInfo->dlgProc, hwnd, 
 				       msg, wParam, lParam );
-	TRACE("2");
+	TRACE("DefDlgProc 2");
 	  /* Check if window destroyed by dialog procedure */
 	wndPtr = WIN_FindWndPtr( hwnd );
+	TRACE("DefDlgProc 3");
 	if (!wndPtr) return result;
     }
     
