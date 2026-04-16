@@ -307,7 +307,7 @@ VOID FAR SYSCOLOR_Init(VOID)
         else
         {
             finalColor = defaultColors[i];
-            TRACE("Color %S: using driver default", szColor);
+            //TRACE("Color %S: using driver default", szColor);
         }
         
         SYSCOLOR_SetColor(i, finalColor);

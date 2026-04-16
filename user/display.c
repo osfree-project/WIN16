@@ -147,35 +147,35 @@ static void DISPLAY_DumpDisplayConfig(BYTE FAR* pData)
 	BYTE FAR* pColors;
 	int i, colorCount;
     
-	pHeader = (DISPLAY_CONFIG_HEADER FAR*)pData;
+//	pHeader = (DISPLAY_CONFIG_HEADER FAR*)pData;
     
-	TRACE("=== DISPLAY.DRV Configuration Dump ===");
-	TRACE("\nMetrics:");
-	TRACE("  cyVThumb:          %u", pHeader->cyVThumb);
-	TRACE("  cxHThumb:          %u", pHeader->cxHThumb);
-	TRACE("  cxIconCompression: %u", pHeader->cxIconCompression);
-	TRACE("  cyIconCompression: %u", pHeader->cyIconCompression);
-	TRACE("  cxCursorCompression: %u", pHeader->cxCursorCompression);
-	TRACE("  cyCursorCompression: %u", pHeader->cyCursorCompression);
-	TRACE("  cyKanjiWindow:     %u", pHeader->cyKanjiWindow);
-	TRACE("  cxBorder:          %u", pHeader->cxBorder);
-	TRACE("  cyBorder:          %u", pHeader->cyBorder);
+	//TRACE("=== DISPLAY.DRV Configuration Dump ===");
+	//TRACE("\nMetrics:");
+	//TRACE("  cyVThumb:          %u", pHeader->cyVThumb);
+	//TRACE("  cxHThumb:          %u", pHeader->cxHThumb);
+	//TRACE("  cxIconCompression: %u", pHeader->cxIconCompression);
+	//TRACE("  cyIconCompression: %u", pHeader->cyIconCompression);
+	//TRACE("  cxCursorCompression: %u", pHeader->cxCursorCompression);
+	//TRACE("  cyCursorCompression: %u", pHeader->cyCursorCompression);
+	//TRACE("  cyKanjiWindow:     %u", pHeader->cyKanjiWindow);
+	//TRACE("  cxBorder:          %u", pHeader->cxBorder);
+	//TRACE("  cyBorder:          %u", pHeader->cyBorder);
 
         pColors = (BYTE FAR*)(pHeader + 1); /* Colors start after the header */
         
-        TRACE("\nColors (RGB):");
-        for (i = 0; i < (sizeof(SysColorNames)/sizeof(SysColorNames[0])); i++) 
-	{
-            
-                TRACE("  [%2d] %20s %3d,%3d,%3d", 
-                      i,
-                      SysColorNames[i],
-                      pColors[i * 4 + 0],  /* R */
-                      pColors[i * 4 + 1],  /* G */
-                      pColors[i * 4 + 2]); /* B */
-        }
+//        TRACE("\nColors (RGB):");
+//        for (i = 0; i < (sizeof(SysColorNames)/sizeof(SysColorNames[0])); i++) 
+//	{
+//            
+//                TRACE("  [%2d] %20s %3d,%3d,%3d", 
+//                      i,
+//                      SysColorNames[i],
+//                      pColors[i * 4 + 0],  /* R */
+//                      pColors[i * 4 + 1],  /* G */
+//                      pColors[i * 4 + 2]); /* B */
+//        }
         
-    TRACE("=====================================");
+//    TRACE("=====================================");
 }
 
 #endif
@@ -259,7 +259,7 @@ VOID FAR DISPLAY_Init()
 		SysMetricsDef[SM_CYFULLSCREEN] = GETSYSTEMMETRICS(SM_CYSCREEN) - GETSYSTEMMETRICS(SM_CYCAPTION);
 
 		ReleaseDC(0, hdc);
-		TRACE("Screen resolution: %dx%d", GETSYSTEMMETRICS(SM_CXSCREEN), GETSYSTEMMETRICS(SM_CYSCREEN));
+//		TRACE("Screen resolution: %dx%d", GETSYSTEMMETRICS(SM_CXSCREEN), GETSYSTEMMETRICS(SM_CYSCREEN));
 	}
     
 	FUNCTION_END

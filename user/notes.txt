@@ -27,3 +27,7 @@ Such approach will allow to easely move to another heap.
 
 Also need to be sure all locked structures unlocked after use
 
+Source code structure
+
+*.h - public headers
+*.ih - implementation private headers

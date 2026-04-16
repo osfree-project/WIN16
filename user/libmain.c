@@ -1,20 +1,20 @@
 /*
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, see
-<https://www.gnu.org/licenses/>.
-
-*/
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
+ *
+ */
 
 #include "class.h"
 #include "dce.h"
@@ -36,18 +36,18 @@ int UT_GetIntFromProfile(UINT id, int defvalue)
 	int retVal;
 
 	FUNCTION_START
-	TRACE("id=%d, defvalue=%d", id, defvalue);
+//	TRACE("id=%d, defvalue=%d", id, defvalue);
 
 	retVal=defvalue;
 
 	// Load name of section
 	if (LoadString(USER_HeapSel, IDS_WINDOWS, section, sizeof(section)))
 	{
-		TRACE("section=%S", section);
+//		TRACE("section=%S", section);
 		// Load name of key
 		if (LoadString(USER_HeapSel, id, key, sizeof(key)))
 		{
-			TRACE("key=%S", key);
+//			TRACE("key=%S", key);
 			// Check is non-empty value
 			if (GetProfileString(section, key, "", value, sizeof(value)))
 			{
@@ -57,7 +57,7 @@ int UT_GetIntFromProfile(UINT id, int defvalue)
 		}
 	}
 
-	TRACE("retVal=%d", retVal);
+//	TRACE("retVal=%d", retVal);
 	FUNCTION_END
 	return retVal;
 }
@@ -66,32 +66,32 @@ VOID WINAPI LW_LoadSomeStrings()
 {
 	FUNCTION_START
 	LoadString(USER_HeapSel, IDS_SYSTEMERROR, szSysError, sizeof(szSysError));
-	TRACE("szSysError=%s", szSysError);
+//	TRACE("szSysError=%s", szSysError);
 	LoadString(USER_HeapSel, IDS_DIVIDEBYZERO, szDivZero, sizeof(szDivZero));
-	TRACE("szDivZero=%s", szDivZero);
+//	TRACE("szDivZero=%s", szDivZero);
 	LoadString(USER_HeapSel, IDS_UNTITLED, szUntitled, sizeof(szUntitled));
-	TRACE("szUntitled=%s", szUntitled);
+//	TRACE("szUntitled=%s", szUntitled);
 	LoadString(USER_HeapSel, IDS_ERROR, szError, sizeof(szError));
-	TRACE("szError=%s", szError);
+//	TRACE("szError=%s", szError);
 	LoadString(USER_HeapSel, IDS_OK, szOk, sizeof(szOk));
-	TRACE("szOk=%s", szOk);
+//	TRACE("szOk=%s", szOk);
 	LoadString(USER_HeapSel, IDS_CANCEL, szCancel, sizeof(szCancel));
-	TRACE("szCancel=%s", szCancel);
+//	TRACE("szCancel=%s", szCancel);
 	LoadString(USER_HeapSel, IDS_ABORT, szAbort, sizeof(szAbort));
-	TRACE("szAbort=%s", szAbort);
+//	TRACE("szAbort=%s", szAbort);
 	LoadString(USER_HeapSel, IDS_RETRY, szRetry, sizeof(szRetry));
-	TRACE("szRetry=%s", szRetry);
+//	TRACE("szRetry=%s", szRetry);
 	LoadString(USER_HeapSel, IDS_IGNORE, szIgnore, sizeof(szIgnore));
-	TRACE("szIgnore=%s", szIgnore);
+//	TRACE("szIgnore=%s", szIgnore);
 	LoadString(USER_HeapSel, IDS_YES, szYes, sizeof(szYes));
-	TRACE("szYes=%s", szYes);
+//	TRACE("szYes=%s", szYes);
 	LoadString(USER_HeapSel, IDS_NO, szNo, sizeof(szNo));
-	TRACE("szNo=%s", szNo);
+//	TRACE("szNo=%s", szNo);
 	// LoadString(USER_HeapSel, 0x4b, szClose, sizeof(szClose)); not found in user.exe resources
 	LoadString(USER_HeapSel, IDS_AM, szAm, sizeof(szAm));
-	TRACE("szAm=%s", szAm);
+//	TRACE("szAm=%s", szAm);
 	LoadString(USER_HeapSel, IDS_PM, szPm, sizeof(szPm));
-	TRACE("szPm=%s", szPm);
+//	TRACE("szPm=%s", szPm);
 	FUNCTION_END
 }
 
@@ -502,7 +502,7 @@ VOID WINAPI EnableInput()
 	EnableSystemTimers();
 
 	if(!CreateSystemTimer(100, (FARPROC)Timer_Event ) ){
-		printf(" CreateSystemTimer()  FAILED ! ");
+		TRACE(" CreateSystemTimer()  FAILED ! ");
 	}
 
 	//Initialize some memory starting at RGBKeyState to 0. Maybe
@@ -667,43 +667,44 @@ VOID WINAPI LW_InitWndMgr(HINSTANCE hInstance)
 for (;;);
 #endif
 
-	HWndSwitch = CreateWindowEx( 0, WINSWITCH_CLASS_ATOM,
-		"test1", WS_OVERLAPPEDWINDOW /*WS_DISABLED | WS_POPUP*/, 50, 50, 150, 150,
-		HWndDesktop, LoadMenu(hInstance, MAKEINTRESOURCE(555)), 0/*hInstance*/, 0 );
+//	HWndSwitch = CreateWindowEx( 0, WINSWITCH_CLASS_ATOM,
+//		"test1", WS_OVERLAPPEDWINDOW /*WS_DISABLED | WS_POPUP*/, 50, 50, 150, 150,
+//		HWndDesktop, 0/*LoadMenu(hInstance, MAKEINTRESOURCE(555))*/, 0/*hInstance*/, 0 );
 
 //@todo hm... must not be created because no such class!!!
-	HWndRealPopup = CreateWindowEx( 0, MAKELP(0, 0x8003),
-		"test2", WS_OVERLAPPEDWINDOW /*WS_DISABLED | WS_POPUP*/, 100, 100, 200, 200,
-		HWndDesktop, 0, 0/*hInstance*/, 0 );
+//	HWndRealPopup = CreateWindowEx( 0, MAKELP(0, 0x8003),
+//		"test2", WS_OVERLAPPEDWINDOW /*WS_DISABLED | WS_POPUP*/, 100, 100, 200, 200,
+//		HWndDesktop, 0, 0/*hInstance*/, 0 );
 
 	// Move the switch window to the center of the screen
 //	SetWindowPos( HWndSwitch, 0xFFFF, 0, 0, 0, 0,
 //		SWP_NOSIZE | SWP_NOMOVE | SWP_NOREDRAW|SWP_NOACTIVATE);
 
-	ShowWindow(HWndSwitch, SW_SHOW);;
-	ShowWindow(HWndRealPopup, SW_SHOW);;
+//	ShowWindow(HWndSwitch, SW_SHOW);;
+//	ShowWindow(HWndRealPopup, SW_SHOW);;
 
-{
- int msgboxID = MessageBox(
-        NULL,
-        (LPCSTR)"Resource not available\nDo you want to try again?",
-        (LPCSTR)"Account Details",
-        MB_ICONEXCLAMATION | MB_ABORTRETRYIGNORE | MB_DEFBUTTON2
-    );
-}
+//if (1)
+// {
+// int msgboxID = MessageBox(
+//        HWndDesktop,
+//        (LPCSTR)"Resource not available\nDo you want to try again?",
+//        (LPCSTR)"Account Details",
+//        MB_ICONEXCLAMATION | MB_ABORTRETRYIGNORE | MB_DEFBUTTON2
+//    );
+//}
 
 // Ok. Now time to test message queue...
-{
-	MSG      msg;
-	
-	while (GetMessage(&msg, 0, 0, 0)) 
-	{
-		//TranslateMessage(&msg);
-		DispatchMessage(&msg);
-	}
-}
+//{
+//	MSG      msg;
+//	
+//	while (GetMessage(&msg, 0, 0, 0)) 
+//	{
+//		//TranslateMessage(&msg);
+//		DispatchMessage(&msg);
+//	}
+//}
 
-for(;;);
+//for(;;);
 
 {
 	HPEN hPenBlue;
@@ -971,13 +972,19 @@ BOOL PASCAL LibMain(WORD wHeapSeg, HINSTANCE hInstance , WORD wHeapSize)
 		GlobalInitAtom();
 
 		hbitmapClose = LoadBitmap(0, MAKEINTRESOURCE(OBM_CLOSE));
+		if (!hbitmapClose) TRACE("Failed to load OBM_CLOSE");
 		hbitmapMinimize = LoadBitmap(0, MAKEINTRESOURCE(OBM_REDUCE));
+		if (!hbitmapMinimize) TRACE("Failed to load OBM_REDUCE");
 		hbitmapMinimizeD = LoadBitmap(0, MAKEINTRESOURCE(OBM_REDUCED));
+		if (!hbitmapMinimizeD) TRACE("Failed to load OBM_REDUCED");
 		hbitmapMaximize = LoadBitmap(0, MAKEINTRESOURCE(OBM_ZOOM));
+		if (!hbitmapMaximize) TRACE("Failed to load OBM_ZOOM");
 		hbitmapMaximizeD = LoadBitmap(0, MAKEINTRESOURCE(OBM_ZOOMD));
+		if (!hbitmapMaximizeD) TRACE("Failed to load OBM_ZOOMD");
 		hbitmapRestore = LoadBitmap(0, MAKEINTRESOURCE(OBM_RESTORE));
+		if (!hbitmapRestore) TRACE("Failed to load OBM_RESTORE");
 		hbitmapRestoreD  = LoadBitmap(0, MAKEINTRESOURCE(OBM_RESTORED));
-
+		if (!hbitmapRestoreD) TRACE("Failed to load OBM_RESTORED");
 
 		MENU_Init();
 

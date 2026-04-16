@@ -78,6 +78,7 @@ void WINAPI FinalUserInit( void )
 {
 	FUNCTION_START
     /* FIXME: Should chain to FinalGdiInit */
+	FUNCTION_END
 }
 
 

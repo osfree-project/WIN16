@@ -71,6 +71,7 @@ void WINAPI UpdateWindow( HWND hwnd )
 void WINAPI InvalidateRect( HWND hwnd, const RECT far *rect, BOOL erase )
 {
 	FUNCTION_START
+	    TRACE("InvalidateRect: hwnd=%04x, rect=%p, erase=%d", hwnd, rect, erase);
 	RedrawWindow( hwnd, rect, 0, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
 	FUNCTION_END
 }
@@ -93,6 +94,7 @@ void WINAPI InvalidateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
 void WINAPI ValidateRect( HWND hwnd, const RECT far *rect )
 {
 	FUNCTION_START
+    TRACE("ValidateRect: hwnd=%04x, rect=%p", hwnd, rect);
 	RedrawWindow( hwnd, rect, 0, RDW_VALIDATE | RDW_NOCHILDREN );
 	FUNCTION_END
 }
@@ -137,12 +139,40 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT FAR * rectUpdate, HRGN hrgnUpdat
     HRGN hrgn;
     RECT rectClient;
     WND * wndPtr;
+    char flagbuf[256] = "";
 
+	PushDS();
+	SetUserHeapDS();
+    if (flags & RDW_INVALIDATE) lstrcat(flagbuf, "INVALIDATE ");
+    if (flags & RDW_ERASE) lstrcat(flagbuf, "ERASE ");
+    if (flags & RDW_FRAME) lstrcat(flagbuf, "FRAME ");
+    if (flags & RDW_INTERNALPAINT) lstrcat(flagbuf, "INTERNALPAINT ");
+    if (flags & RDW_UPDATENOW) lstrcat(flagbuf, "UPDATENOW ");
+    if (flags & RDW_ERASENOW) lstrcat(flagbuf, "ERASENOW ");
+    if (flags & RDW_ALLCHILDREN) lstrcat(flagbuf, "ALLCHILDREN ");
+    if (flags & RDW_NOCHILDREN) lstrcat(flagbuf, "NOCHILDREN ");
+    if (flags & RDW_VALIDATE) lstrcat(flagbuf, "VALIDATE ");
+    if (flags & RDW_NOFRAME) lstrcat(flagbuf, "NOFRAME ");
+    if (flags & RDW_NOINTERNALPAINT) lstrcat(flagbuf, "NOINTERNALPAINT ");
+    TRACE("RedrawWindow: hwnd=%04x, rectUpdate=%Fp, hrgnUpdate=%04x, flags=%04x (%Fs)",
+          hwnd, rectUpdate, hrgnUpdate, flags, flagbuf);
+
+	TRACE(__FUNCTION__ "-3");
     if (!hwnd) hwnd = GetDesktopWindow();
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
+	TRACE(__FUNCTION__ "-2");
+    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) 
+	{
+		PopDS();
+		return FALSE;
+	}
+	TRACE(__FUNCTION__ "-1");
     if (!IsWindowVisible(hwnd) || (wndPtr->flags & WIN_NO_REDRAW))
-        return TRUE;  /* No redraw needed */
+	{
+		PopDS();
+	        return TRUE;  /* No redraw needed */
+	}
 
+	TRACE(__FUNCTION__ "0");
 //    if (rectUpdate)
 //    {
 //        TRACE("RedrawWindow: %04x %d,%d-%d,%d %04x flags=%04x\n",
@@ -156,6 +186,8 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT FAR * rectUpdate, HRGN hrgnUpdat
 //    }
     GetClientRect( hwnd, &rectClient );
 
+
+	TRACE(__FUNCTION__ "1");
 
     if (flags & RDW_INVALIDATE)  /* Invalidate */
     {
@@ -214,6 +246,7 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT FAR * rectUpdate, HRGN hrgnUpdat
 	if (flags & RDW_NOERASE) wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
     }
 
+	TRACE(__FUNCTION__ "2");
       /* Set/clear internal paint flag */
 
     if (flags & RDW_INTERNALPAINT)
@@ -229,6 +262,7 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT FAR * rectUpdate, HRGN hrgnUpdat
 	wndPtr->flags &= ~WIN_INTERNAL_PAINT;
     }
 
+	TRACE(__FUNCTION__ "3");
 
       /* Erase/update window */
 
@@ -257,6 +291,7 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT FAR * rectUpdate, HRGN hrgnUpdat
         }
     }
 
+	TRACE(__FUNCTION__ "4");
       /* Recursively process children */
 
     if (!(flags & RDW_NOCHILDREN) &&
@@ -291,6 +326,8 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT FAR * rectUpdate, HRGN hrgnUpdat
 	    }
 	}
     }
+	FUNCTION_END
+	PopDS();
     return TRUE;
 }
 

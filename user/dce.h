@@ -17,41 +17,8 @@ typedef enum
     DCE_WINDOW_DC   /* This is a window DC (style CS_OWNDC) */
 } DCE_TYPE;
 
-
-/* This is structure from old Wine. For reference only. Don't use it.
-typedef struct tagDCE
-{
-    HANDLE     hNext;
-    HWND       hwndCurrent;
-    HDC        hdc;
-    DCE_TYPE   type;
-    BOOL       inUse;
-    WORD       xOrigin;
-    WORD       yOrigin;
-} DCE;
-*/
-
-// See Undocumented windows
-typedef struct tagDCE {
-	HANDLE	hdceNext;
-	HWND	hwndCurr;
-	HDC	hDC;
-	BYTE	byFlags;
-	BYTE	byInUse;
-	BYTE	byDirty;
-	BYTE	by0A;
-	WORD	xOrigin;
-	WORD	yOrigin;
-	HWND	hwndTop;
-	HRGN	hVisRgn;
-} DCE;
-
-typedef DCE	*PDCE;
-typedef DCE NEAR *NPDCE;
-typedef DCE FAR	*LPDCE;
-
 extern VOID FAR DCE_Init(VOID);
 extern HANDLE FAR DCE_AllocDCE( DCE_TYPE type );
-extern void DCE_FreeDCE( HANDLE hdce );
+extern VOID FAR DCE_FreeDCE( HANDLE hdce );
 
 #endif  /* DCE_H */

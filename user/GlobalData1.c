@@ -95,8 +95,8 @@ int SysMetricsDef[] =
         18/*25*/,	/* SM_CYCAPTION        4 */
         1,              /* SM_CXBORDER         5 */
         1,              /* SM_CYBORDER         6 */
-        1 /*4*/,        /* SM_CXDLGFRAME       7 */
-        1 /*4*/,        /* SM_CYDLGFRAME       8 */
+        4,              /* SM_CXDLGFRAME       7 */
+        4,              /* SM_CYDLGFRAME       8 */
         20,             /* SM_CYVTHUMB         9 */
         20,             /* SM_CXHTHUMB         10 */
         32,             /* SM_CXICON           11 */
@@ -229,3 +229,6 @@ BOOL MouseButtonsStates[3] = { FALSE, FALSE, FALSE };
 BOOL AsyncMouseButtonsStates[3] = { FALSE, FALSE, FALSE };
 BYTE KeyStateTable[256];
 BYTE AsyncKeyStateTable[256];
+
+/* dce.ih */
+HDC defaultDCstate = 0;

@@ -1,24 +1,23 @@
 /*    
-	DrawText.c	2.17
-    	Copyright 1997 Willows Software, Inc. 
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, see
-<https://www.gnu.org/licenses/>.
-
+ * osFree Janus
+ *	DrawText.c	2.17
+ *    	Copyright 1997 Willows Software, Inc. 
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
+ *
  */
-
-//#include <string.h>
 
 #include <user.h>
 
@@ -51,13 +50,16 @@ License along with this library; if not, see
  *	output the text with textout, and underline 
  *	any ampersands...
  */
-static void
-DrawTextOut(HDC hDC,int x,int y,char far *lpstr,int len,UINT uFormat)
+static VOID DrawTextOut(HDC hDC,int x,int y,char far *lpstr,int len,UINT uFormat)
 {
 	int i,j,k,dx,dy,x1;
-	long extent;
+	DWORD extent;
 
 	FUNCTION_START
+
+	if (!lpstr || len <= 0) return;
+
+	TRACE("DrawTextOut: hDC=%04x, x=%d, y=%d, str='%Fs',len=%d", hDC, x, y, lpstr, len);
 
 	for(i=0, j=0, k=0, x1=0; i<len; i++) {
 		if(lpstr[i] == '&') {
@@ -96,6 +98,8 @@ DrawTextOut(HDC hDC,int x,int y,char far *lpstr,int len,UINT uFormat)
 			dx = LOWORD(extent); 
 			dy = HIWORD(extent);	
 			dy -= dy/18 + 1; /* we use the same formula for underline in DrvText */
+			TRACE("DrawTextOut: drawing underline at (%d,%d) width %d, y+dy=%d",
+		          x1, y, dx, y+dy);
 			MoveTo(hDC,x1,y+dy);
 			LineTo(hDC,x1+dx,y+dy);
 		}
@@ -105,8 +109,7 @@ DrawTextOut(HDC hDC,int x,int y,char far *lpstr,int len,UINT uFormat)
 }
 
 
-int   WINAPI
-DrawText(HDC hDC, LPCSTR lpsz, int cb, LPRECT lprc, UINT uFormat)
+int WINAPI DrawText(HDC hDC, LPCSTR lpsz, int cb, LPRECT lprc, UINT uFormat)
 {
 	TEXTMETRIC TextMetrics;
 	DWORD 	extent;
@@ -134,13 +137,17 @@ DrawText(HDC hDC, LPCSTR lpsz, int cb, LPRECT lprc, UINT uFormat)
 	FUNCTION_START
 
 	if ( !lprc )
+	{
 		return 0;
+	}
 
-//	LOGSTR((LF_API,
-//	    "DrawText: (hdc:%x str:[%s],len:%d rect:%d,%d:%d,%d flags=%x)\n",
-//		hDC,GdiDumpString((LPSTR)lpsz,cb),cb,
-//		lprc->left,lprc->top,lprc->right,lprc->bottom,
-//		uFormat));
+	if ( !lpsz )
+	{
+		return 0;
+	}
+
+	TRACE("DrawText: hDC=%04x, lpsz=(%Fp)'%Fs', cb=%d, rect=(%d,%d,%d,%d), flags=%04x",
+          hDC, lpsz, lpsz, cb, lprc->left, lprc->top, lprc->right, lprc->bottom, uFormat);
 
 	/****************************************/
 	/* initialize the text engine 		*/
@@ -157,12 +164,15 @@ DrawText(HDC hDC, LPCSTR lpsz, int cb, LPRECT lprc, UINT uFormat)
 
 	/* number of characters to output */
 	if(cb == -1)
+	{
 		cb = lstrlen(lpstr);
+	}
 
 	/* get character width array */
-	GetCharWidth(hDC, 0,255, charwidth);
+//	GetCharWidth(hDC, 0,255, charwidth);
 
-	GetTextMetrics(hDC,(LPTEXTMETRIC) &TextMetrics);
+//	GetTextMetrics(hDC,(LPTEXTMETRIC) &TextMetrics);
+
 	LineHeight = TextMetrics.tmHeight;
 
 	/* additional line spacing */
@@ -193,6 +203,7 @@ DrawText(HDC hDC, LPCSTR lpsz, int cb, LPRECT lprc, UINT uFormat)
 	/* loop over all lines 			*/
 	/****************************************/
 	while(cb) {
+		TRACE("DrawText: starting line loop, cb=%d", cb);
 
 		/****************************************/
 		/* get a line, w/ tabs and prefix 	*/
@@ -287,10 +298,18 @@ DrawText(HDC hDC, LPCSTR lpsz, int cb, LPRECT lprc, UINT uFormat)
 		if(uFormat & DT_VCENTER) {
 			extent = GetTextExtent(hDC, lpstr, cnt);
 			dy = HIWORD(extent);
+			TRACE("DrawText: DT_VCENTER: baseline=%d, lprc->bottom=%d, dy=%d",
+			          baseline, lprc->bottom, dy);
 		    	y = (int)(baseline + lprc->bottom - dy)/2;
+			    TRACE("DrawText: computed y=%d", y);
 		} else if(uFormat & DT_BOTTOM)
+		{
 		    	y = lprc->bottom - dy;
-		else    y = baseline;
+		    TRACE("DrawText: DT_BOTTOM: y=%d", y);
+		} else {
+		    y = baseline;
+		    TRACE("DrawText: DT_TOP: y=%d", y);
+		}
 
 		/****************************************/
 		/* do we actually draw 			*/
@@ -346,6 +365,7 @@ DrawText(HDC hDC, LPCSTR lpsz, int cb, LPRECT lprc, UINT uFormat)
 		}
 
 	}
+
 
 	if ((uFormat & DT_CALCRECT) &&
 	    !(uFormat & DT_SINGLELINE) &&

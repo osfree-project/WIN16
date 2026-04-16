@@ -63,15 +63,9 @@ static pfPaint btnPaintFunc[MAX_BTN_TYPE] =
          (btnPaintFunc[style])(wndPtr,hdc,action); \
          ReleaseDC( (wndPtr)->hwndSelf, hdc ); }
 
-#ifdef WINELIB32
-#define BUTTON_SEND_CTLCOLOR(wndPtr,hdc) \
-    SendMessage( GetParent((wndPtr)->hwndSelf), WM_CTLCOLORBTN, \
-                 (hdc), (wndPtr)->hwndSelf )
-#else
 #define BUTTON_SEND_CTLCOLOR(wndPtr,hdc) \
     SendMessage( GetParent((wndPtr)->hwndSelf), WM_CTLCOLOR, (hdc), \
                  MAKELPARAM((wndPtr)->hwndSelf, CTLCOLOR_BTN) )
-#endif
 
 static HBITMAP hbitmapCheckBoxes = 0;
 static WORD checkBoxWidth = 0, checkBoxHeight = 0;

@@ -22,7 +22,7 @@
 
 #include "user.h"
 
-  /* Last COLOR id */
+  /* Last COLOR id @todo !!! double definition see display */
 #define COLOR_MAX   COLOR_BTNHIGHLIGHT
 
   /* bits in the dwKeyData */
@@ -62,8 +62,13 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 
 //    SPY_EnterMessage( SPY_DEFWNDPROC, hwnd, msg, wParam, lParam );
 
+ /* Трассировка всех сообщений для отладки */
+    TRACE("DefWindowProc: hwnd=%04x msg=%04x wParam=%04x lParam=%08lx",
+          hwnd, msg, wParam, lParam);
+
     switch(msg)
     {
+
     case WM_NCCREATE:
 	{
 	    CREATESTRUCT FAR *createStruct = (CREATESTRUCT FAR *)lParam;
@@ -78,6 +83,7 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 
 //    case WM_PAINTICON: ???
     case WM_NCPAINT:
+	TRACE("DefWindowProc: WM_NCPAINT hwnd=%04x, wParam=%04x\n", hwnd, wParam);
 	return NC_HandleNCPaint( hwnd, (HRGN)wParam );
 
     case WM_NCHITTEST:
@@ -98,6 +104,7 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 	break;
 
     case WM_NCACTIVATE:
+	TRACE("DefWindowProc: WM_NCACTIVATE for hwnd=%04x, wParam=%04x", hwnd, wParam);
 	return NC_HandleNCActivate( hwnd, wParam );
 
     case WM_NCDESTROY:
@@ -138,6 +145,8 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 	return MA_ACTIVATE;
 
     case WM_ACTIVATE:
+	TRACE("DefWindowProc: WM_ACTIVATE for hwnd=%04x, wParam=%04x, lParam=%08lx",
+          hwnd, wParam, lParam);
 	if (LOWORD(wParam)!=WA_INACTIVE) SetFocus( hwnd );
 	break;
 
@@ -173,6 +182,7 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
     case WM_ERASEBKGND:
     case WM_ICONERASEBKGND:
 	{
+		TRACE("DefWindowProc: WM_ERASEBKGND for hwnd=%04x", hwnd);
 	    if (!(classPtr = CLASS_FindClassPtr( wndPtr->hClass ))) return 0;
 	    if (!classPtr->wc.hbrBackground) return 0;
 		TRACE("ERASE hbr=%d", classPtr->wc.hbrBackground);
@@ -358,7 +368,7 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 	ShowWindow(hwnd,(wParam)? SW_SHOWNOACTIVATE: SW_HIDE);
 	break; 
 
-    case WM_CANCELMODE:
+    case  WM_CANCELMODE:
 
 	/* EndMenu() should be called if in menu state but currently it's
 	   impossible to detect - menu code should be updated*/

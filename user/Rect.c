@@ -256,8 +256,13 @@ int WINAPI FillRect( HDC hdc, const RECT far *rect, HBRUSH hbrush )
 	* it will be done later in the PatBlt().
 	*/
 
-	if (!(prevBrush = SelectObject( hdc, hbrush ))) return 0;
-	TRACE("hdc=%d, hbrush=%d left=%d top=%d right=%d bottom=%d", hdc, hbrush, rect->left, rect->top, rect->right, rect->bottom);
+	if (!(prevBrush = SelectObject( hdc, hbrush )))
+	{
+		FUNCTION_END
+		return 0;
+	}
+
+	TRACE("hdc=%04x, hbrush=%04x left=%d top=%d right=%d bottom=%d", hdc, hbrush, rect->left, rect->top, rect->right, rect->bottom);
 	PatBlt(hdc, rect->left, rect->top, rect->right - rect->left, rect->bottom - rect->top, PATCOPY);
 	SelectObject( hdc, prevBrush );
 	FUNCTION_END

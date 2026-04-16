@@ -226,6 +226,43 @@ FARPROC WINAPI GetMouseEventProc(void)
 
 /***********************************************************************
  *		IsUserIdle (USER.333)
+ * p. 467 Undocumented Windows:
+ * BOOL FAR PASCAL IsUserldle(void);
+ * USER.59 !!! BUG IN BOOK!!!
+ * This function, which indicates the level of end-user keyboard and mouse activity, is
+ * called (via a function pointer returned from GetProcAddress) from the KERNEL
+ * scheduler. It allows Windows to perform housekeeping while the user is not typing or
+ * using the mouse. The KERNEL scheduler uses the return value from IsUserIdle() to
+ * determine whether to set the Win_Idle_Mouse_Busy_Bit when calling the Wm_Ker-
+ * nel_Idle (INT 2Fh AX=1689h) function (see INT2FAPI.INC in the DDK).
+ * IsUserIdle() can be called asynchronously, for example, from within a Create-
+ * SystemTimer callback function (see chapter 9).
+ * In 3.1, this function is responsible for triggering screen-saver applications. When
+ * no activity is detected (IsUserldle() returns TRUE), and the duration since the time of
+ * last activity exceeds that specified in the ScreenSaveTimeOut= entry in WIN.INI, a
+ * WM_SYSCOMMAND with wParam=SC_SCREENSAVE is sent to the screen-saver
+ * application window. If, on the other hand, activity is detected, the time of last activity
+ * is reset to the current time. (For more on screen savers, see chapter 14 of the 3.1 SDK
+ * Overviews manual.)
+ * Return: FALSE if input is pending; TRUE if no input
+ * Support: 3.0, 3.1
+ * p.425 Windows Internals:
+ * Besides being called by Reschedul() to determine if anything is happening in the messaging
+ * system, IsUserIdleO is also called by the internal IdleTime() function. IdleTimer() calls
+ * IsUserIdle to give it a chance to activate the sere ens aver (added in Windows 3.1). During its
+ * first invocation, InitAppO calls SetSystemTimerO, telling it to call IdleTimerO every 10 sec-
+ * onds. The implication is that the minimum screensaver delay is 10 seconds.
+ * Of some note are the tests in Is U serIdleO that determine whether to activate the
+ * screensaver. In order to start the screensaver, the following conditions must be met:
+ * - Enough time has elapsed.
+ * - There's an active window. See Chapter 5 for details on what this entails.
+ * - The active window cannot be a DOS application running in a window if running in
+ * Enhanced mode.
+ * If all these tests are passed, IsUserIdleO posts a WM_SYSCOMMAND message with an
+ * SC_SCREENSAVE wParam. Assuming the active window doesn't handle the message,
+ * DefWindowProcO gets it and calls the internal SysCommandO function to load the
+ * screensaver module specified in the SYSTEM.INI file.
+ * 
  */
 BOOL WINAPI IsUserIdle(void)
 {
@@ -236,7 +273,44 @@ BOOL WINAPI IsUserIdle(void)
 		return FALSE;
 	if ( GetAsyncKeyState( VK_MBUTTON ) & 0x8000 )
 		return FALSE;
-	/* Should check for screen saver activation here ... */
+	/* Should check for screen saver activation here for win 3.1+ */
+
+	#if 0
+
+	// Here's where we find out if we need to post the
+	// SC_SCREENSAVE message. We won't bother to do this if
+	// there's a system modaL window up, or if the screen save
+	// time intervaL is set to 0_
+	if ( (HWndSysModal==0) && (IScreenSaveTimeout > 0)
+		&& (TimeLastInputMessage != 0) )
+	{
+		// TimeLastInputMessage is a USER gLobal variabLe, which
+		// remembers the time (in miLLiseconds) when the Last
+		// input message (mouse or keyboard) was received.
+		timeDiff = GetCurrentTime() - TimeLastInputMessage;
+		// Has enough time eLapsed? Get out now if not.
+		if ( (IScreenSaveTimeout * 1000) >= timeDiff )
+			goto IsUserIdLe_done;
+		if ( HWndActive == 0 )
+			goto IsUserIdLe_done;
+		// If no active window, don't
+		// bother posting the message
+		// If running in Standard mode, we'LL aLways post
+		// the SC_SCREENSAVE message if we get this far.
+		if ( (WinFLags & WF_ENHANCED) = 0)
+			goto IsUserIdle_PostMessage;
+		// Running in Enhanced mode. See if the active
+		// window is for a DOS appLication in a window. Don't
+		// post the SC_SCREENSAVE message if so.
+		if ( IsWinOLdApTask(GetWindowTask(HWndActive)))
+			goto IsUserIdLe_done;
+IsUserIdLe_PostMessage:
+		PostMessage( HWndActive, WM_SYSCOMMAND, // Post the
+			SC_SCREENSAVE, 0 ); // screensave msg
+		TimeLastInputMessage = 0; // Reset the idLe timer
+	}
+IsUserIdLe_done:
+	#endif
 
 	FUNCTION_END
 	return TRUE;

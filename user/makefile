@@ -6,17 +6,22 @@
 PROJ     = user
 TRGT     = $(PROJ).exe
 DESC     = osFree Janus USER.EXE
-srcfiles = $(p)static$(e) $(p)button$(e) $(p)MessageBox$(e) $(p)keyboard$(e) $(p)display$(e) $(p)capture$(e) $(p)libentry$(e) $(p)libmain$(e) $(p)dce$(e) $(p)desktop$(e) $(p)winpos$(e) $(p)defwnd$(e) $(p)syscolor$(e) $(p)nonclient$(e) $(p)cursor$(e) $(p)queue$(e) $(p)win$(e) $(p)message$(e) $(p)GlobalData1$(e) $(p)div$(e) $(p)hook$(e) $(p)dialog$(e) $(p)defdlg$(e) $(p)Time$(e) $(p)Atoms$(e) $(p)comm$(e) $(p)Caret$(e) $(p)DrawText$(e)  $(p)SysMetrics$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Resources$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)printf$(e) $(p)Menu$(e) $(p)focus$(e) $(p)network$(e) # $(p)Listbox$(e) $(p)StringFunc$(e) $(p)InitApp$(e) 
-ADD_COPT = -zls -ms -zW -s -3 -DDEBUG=1 # optimize prolog, no stack checks
+srcfiles = $(p)static$(e) $(p)button$(e) $(p)MessageBox$(e) $(p)keyboard$(e) $(p)display$(e) $(p)capture$(e) $(p)libentry$(e) $(p)libmain$(e) $(p)dce$(e) $(p)desktop$(e) $(p)winpos$(e) $(p)defwnd$(e) $(p)syscolor$(e) $(p)nonclient$(e) $(p)cursor$(e) $(p)queue$(e) $(p)win$(e) $(p)message$(e) $(p)GlobalData1$(e) $(p)div$(e) $(p)hook$(e) $(p)dialog$(e) $(p)defdlg$(e) $(p)Time$(e) $(p)Atoms$(e) $(p)comm$(e) $(p)Caret$(e) $(p)DrawText$(e)  $(p)SysMetrics$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Resources$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)printf$(e) $(p)Menu$(e) $(p)focus$(e) $(p)network$(e) $(p)InitApp$(e) # $(p)Listbox$(e) $(p)StringFunc$(e) 
+ADD_COPT = -zc -zls -ms -s -0 -DDEBUG=1 # no stack checks
 ADD_ASMOPT = -ms
-# -zc
-# -3 must be replaced by -0 later
-ADD_LINKOPT = SEGMENT FIXED_TEXT preload fixed
+# -zW optimize prolog
+# -0 we must work under Real Mode too
+ADD_LINKOPT = SEGMENT FIXED_TEXT preload fixed &
+              SEGMENT DCE_TEXT preload fixed &
+              SEGMENT NETWORK_TEXT preload fixed &
+              SEGMENT DLG_TEXT preload fixed &
+              SEGMENT ATOM_TEXT preload fixed
+
 NOLIBS = 1 # Don't use default libentry
 NODEFAULTLIBS = 1 # Don't use libc
 
-STACKSIZE = 10k
-HEAPSIZE = 20k
+STACKSIZE = 40k
+HEAPSIZE = 45k
 
 # linking dll file
 DLL     = 1
@@ -24,6 +29,7 @@ EXPORTS = &
 	MessageBox.1, &
 	OldExitWindows .2, &
 	DisableOEMLayer .4, &
+	InitApp .5, &
 	ExitWindows .7, &
 	BEAR11 .11, &
 	GetTickCount .13, &
@@ -67,6 +73,7 @@ EXPORTS = &
 	FrameRect .83, &
 	DrawIcon .84, &
 	DialogBox .87, &
+	EndDialog .88, &
 	CreateDialog .89, &
 	GetDlgItem .91, &
 	SetDlgItemText .92, &

@@ -8,17 +8,17 @@
 #include "user.h"
 #include "static.h"
 
-extern void FAR DEFWND_SetText( WND *wndPtr, LPSTR text );  /* windows/defwnd.c */
+extern void FAR DEFWND_SetText( WND FAR *wndPtr, LPSTR text );  /* windows/defwnd.c */
 
-static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc );
-static void STATIC_PaintRectfn( WND *wndPtr, HDC hdc );
-static void STATIC_PaintIconfn( WND *wndPtr, HDC hdc );
+static void STATIC_PaintTextfn( WND FAR *wndPtr, HDC hdc );
+static void STATIC_PaintRectfn( WND FAR *wndPtr, HDC hdc );
+static void STATIC_PaintIconfn( WND FAR *wndPtr, HDC hdc );
 
 
 static COLORREF color_windowframe, color_background, color_window;
 
 
-typedef void (*pfPaint)( WND *, HDC);
+typedef void (*pfPaint)( WND FAR *, HDC);
 
 #define LAST_STATIC_TYPE  SS_LEFTNOWORDWRAP
 
@@ -46,17 +46,17 @@ static pfPaint staticPaintFunc[LAST_STATIC_TYPE+1] =
  *
  * Set the icon for an SS_ICON control.
  */
-static HICON STATIC_SetIcon( WND *wndPtr, HICON hicon )
+static HICON STATIC_SetIcon( WND FAR *wndPtr, HICON hicon )
 {
     HICON prevIcon;
-    STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
+    STATICINFO FAR *infoPtr = (STATICINFO FAR *)wndPtr->wExtra;
 
     if ((wndPtr->dwStyle & 0x0f) != SS_ICON) return 0;
     prevIcon = infoPtr->hIcon;
     infoPtr->hIcon = hicon;
     if (hicon)
     {
-        CURSORICONINFO *info = (CURSORICONINFO *) GlobalLock( hicon );
+        CURSORICONINFO FAR *info = (CURSORICONINFO FAR *) GlobalLock( hicon );
         SetWindowPos( wndPtr->hwndSelf, 0, 0, 0, info->nWidth, info->nHeight,
                      SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER );
         GlobalUnlock( hicon );
@@ -71,7 +71,7 @@ static HICON STATIC_SetIcon( WND *wndPtr, HICON hicon )
 LONG WINAPI StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	LONG lResult = 0;
-	WND *wndPtr = WIN_FindWndPtr(hWnd);
+	WND FAR *wndPtr = WIN_FindWndPtr(hWnd);
 	LONG style = wndPtr->dwStyle & 0x0000000F;
         STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
 
@@ -183,7 +183,7 @@ LONG WINAPI StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 
-static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc )
+static void STATIC_PaintTextfn( WND FAR *wndPtr, HDC hdc )
 {
     RECT rc;
     HBRUSH hBrush;
@@ -237,7 +237,7 @@ static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc )
 	FUNCTION_END
 }
 
-static void STATIC_PaintRectfn( WND *wndPtr, HDC hdc )
+static void STATIC_PaintRectfn( WND FAR *wndPtr, HDC hdc )
 {
     RECT rc;
     HBRUSH hBrush;
@@ -277,7 +277,7 @@ static void STATIC_PaintRectfn( WND *wndPtr, HDC hdc )
 }
 
 
-static void STATIC_PaintIconfn( WND *wndPtr, HDC hdc )
+static void STATIC_PaintIconfn( WND FAR *wndPtr, HDC hdc )
 {
     RECT 	rc;
     HBRUSH      hbrush;

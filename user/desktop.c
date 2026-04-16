@@ -96,7 +96,7 @@ static LONG DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc/*, DESKTOPINFO *infoPtr*/ )
 
 	GetClientRect(hwnd, &rect);
 
-	TRACE("hdc=%x", hdc);
+	//TRACE("hdc=%x", hdc);
 
 	/* Paint desktop pattern (only if wall paper does not cover everything) */
 
@@ -152,7 +152,7 @@ static LONG DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc/*, DESKTOPINFO *infoPtr*/ )
  */
 LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
-	WND *wndPtr = WIN_FindWndPtr( hwnd );
+//	WND FAR *wndPtr = WIN_FindWndPtr( hwnd );
 
 	FUNCTION_START
 

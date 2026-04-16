@@ -28,6 +28,8 @@
 // Here we allocate Global Atom Table heap, switch DS to it, initialize local heap and init atom table
 // After all done - switch DS back
 
+#pragma code_seg( "INIT_TEXT" );
+
 VOID WINAPI GlobalInitAtom(void)
 {
 	PushDS();
@@ -48,6 +50,8 @@ VOID WINAPI GlobalInitAtom(void)
 	FUNCTION_END
 	PopDS();
 }
+
+#pragma code_seg( "ATOM_TEXT" );
 
 /***********************************************************************
  *		GlobalAddAtom (USER.268)
@@ -147,3 +151,4 @@ UINT WINAPI GlobalGetAtomName(ATOM atom,LPSTR lpszbuf,int len)
 	return res;
 }
 
+#pragma code_seg();

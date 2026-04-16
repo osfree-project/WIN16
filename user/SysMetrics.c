@@ -95,9 +95,11 @@ int WINAPI GetSystemMetrics(int nIndex)
 {
 	int retVal;
 
+	FUNCTION_START
 	PushDS();
 	SetUserHeapDS();
-	FUNCTION_START
+
+	TRACE("nIndex=%d", nIndex);
 
 	retVal=0;
 	/* get system metrics value */

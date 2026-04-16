@@ -56,7 +56,7 @@ BOOL DIALOG_Init()
     return TRUE;
 }
 
-#pragma code_seg();
+#pragma code_seg("DLG_TEXT");
 
 /***********************************************************************
  *           DIALOG_GetFirstTabItem
@@ -619,19 +619,19 @@ int DIALOG_DoDialogBox( HWND hwnd, HWND owner )
     WND * wndPtr;
     DIALOGINFO * dlgInfo;
     HANDLE msgHandle;
-    MSG* lpmsg;
+    LPMSG lpmsg;
     int retval;
 
       /* Owner must be a top-level window */
     owner = WIN_GetTopParent( owner );
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return -1;
     if (!(msgHandle = LocalAlloc (LMEM_FIXED, sizeof(MSG) ))) return -1;
-    lpmsg = (MSG *) LocalLock( msgHandle );
+    lpmsg = (LPMSG) LocalLock( msgHandle );
     dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
     EnableWindow( owner, FALSE );
     ShowWindow( hwnd, SW_SHOW );
 
-    while (MSG_InternalGetMessage( (MSG FAR *)LocalLock(msgHandle), hwnd, owner,
+    while (MSG_InternalGetMessage( (LPMSG)LocalLock(msgHandle), hwnd, owner,
                                    MSGF_DIALOGBOX, PM_REMOVE,
                                    !(wndPtr->dwStyle & DS_NOIDLEMSG) ))
     {
@@ -904,12 +904,14 @@ VOID WINAPI SetDlgItemInt( HWND hwnd, int id, UINT value, BOOL fSigned )
     char str[20];
 
 	if (fSigned)
+	{
 		lstrcpy(str, itoa((int)value));
+	}
 	else
+	{
 		lstrcpy(str, uitoa((unsigned int)value));
+	}
 
-//    if (fSigned) sprintf( str, "%d", (int)value );
-//    else sprintf( str, "%u", value );
     SendDlgItemMessage( hwnd, id, WM_SETTEXT, 0, (LPARAM)str );
 }
 
@@ -1216,3 +1218,5 @@ HWND WINAPI GetNextDlgTabItem( HWND hwndDlg, HWND hwndCtrl, BOOL fPrevious )
     }
     return pWndLast->hwndSelf;
 }
+
+#pragma code_seg();

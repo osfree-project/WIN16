@@ -34,7 +34,7 @@ static void DEFDLG_SetFocus( HWND hwndDlg, HWND hwndCtrl )
 /***********************************************************************
  *           DEFDLG_SaveFocus
  */
-static BOOL DEFDLG_SaveFocus( HWND hwnd, DIALOGINFO *infoPtr )
+static BOOL DEFDLG_SaveFocus( HWND hwnd, DIALOGINFO FAR *infoPtr )
 {
     HWND hwndFocus = GetFocus();
 
@@ -49,7 +49,7 @@ static BOOL DEFDLG_SaveFocus( HWND hwnd, DIALOGINFO *infoPtr )
 /***********************************************************************
  *           DEFDLG_RestoreFocus
  */
-static BOOL DEFDLG_RestoreFocus( HWND hwnd, DIALOGINFO *infoPtr )
+static BOOL DEFDLG_RestoreFocus( HWND hwnd, DIALOGINFO FAR *infoPtr )
 {
     if (!infoPtr->hwndFocus || IsIconic(hwnd)) return FALSE;
     if (!IsWindow( infoPtr->hwndFocus )) return FALSE;
@@ -117,7 +117,7 @@ LRESULT WINAPI DefDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     WND * wndPtr = WIN_FindWndPtr( hwnd );
 	FUNCTION_START    
     if (!wndPtr) return 0;
-    dlgInfo = (DIALOGINFO FAR *)&wndPtr->wExtra;
+    dlgInfo = (DIALOGINFO *)&wndPtr->wExtra;
 
     dlgInfo->msgResult = 0;
     if (dlgInfo->dlgProc)

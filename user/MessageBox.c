@@ -123,7 +123,7 @@ int WINAPI MessageBox(HWND hWnd, LPCSTR text, LPCSTR caption, UINT flag)
 #pragma code_seg( "FIXED_TEXT" );
 
 /*
- * LATER
+ * @todo LATER
  *	the constant strings should be a the resource file...
  *	
  *	w/ keys, we need to lookup the default and cancel codes
@@ -145,7 +145,7 @@ static BOOL WINAPI MessageBoxHandler(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 	RECT		rcClient,rcDlg,crect;
 	int		nNCHeight, nNCWidth;
 	int		ctlid[3];
-	int		len;
+	DWORD		len;
 	int		cx,width,height,nlines;
 
 	FUNCTION_START
@@ -491,13 +491,13 @@ static BOOL WINAPI MessageBoxHandler(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 		return TRUE;
 
 	case DM_GETDEFID:
-		mbd = (MESSAGEBOXDATA *) GetWindowLong(hDlg,DWL_LPARAM);
+		mbd = (MESSAGEBOXDATA FAR *) GetWindowLong(hDlg,DWL_LPARAM);
 		SetWindowLong(hDlg,DWL_MSGRESULT, 
 			MAKELONG(mbd->lParam,DC_HASDEFID));
 		return  TRUE;   
 
 	case WM_COMMAND:
-		mbd = (MESSAGEBOXDATA *) GetWindowLong(hDlg,DWL_LPARAM);
+		mbd = (MESSAGEBOXDATA FAR *) GetWindowLong(hDlg,DWL_LPARAM);
 
 		/* get default value */
 		/* note: this may already have been set... */

@@ -1,25 +1,55 @@
 /*
+ * osFree Janus
  * USER DCE functions
  *
  * Copyright 1993 Alexandre Julliard
  *
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
+ */
 
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
+/**
+ * @file dce.c
+ * @brief USER DCE (Device Context Element) management
+ *
+ * This module handles the creation, caching, and management of Device Context
+ * Elements (DCEs) in the USER subsystem. DCEs are lightweight structures that
+ * associate a GDI device context (DC) with a specific window, caching the DC's
+ * origin and clipping information. They are stored in the USER local heap and
+ * are used to implement GetDC, ReleaseDC, and related functions in a 16-bit
+ * Windows-compatible environment.
+ *
+ * Key features:
+ * - Allocation and freeing of DCEs (both cache and window-specific)
+ * - Visible region calculation for windows, considering window styles
+ *   (WS_CLIPCHILDREN, WS_CLIPSIBLINGS) and DCX flags
+ * - Origin setting for DCs based on window client or whole-window coordinates
+ * - Caching of DCs to avoid repeated creation/destruction
+ * - Support for DCX_USESTYLE, DCX_PARENTCLIP, DCX_INTERSECTRGN, etc.
+ *
+ * The module maintains a linked list of all DCEs (firstDCE). Cache DCEs are
+ * created at startup (NB_DCE = 5) and reused as needed.
+ */
 
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, see
-<https://www.gnu.org/licenses/>.
-*/
-
+// Public headers
 #include "dce.h"
 #include "user.h"
+
+// Private headers
+#include "dce.ih"
+
+#pragma code_seg( "DCE_TEXT" );
 
 //@todo b31 and bDebug must be global. May be move hGDI to DATA segment too?
 
@@ -28,66 +58,66 @@ License along with this library; if not, see
 
 #define NB_DCE    5  /* Number of DCEs created at startup */
 
-static HDC defaultDCstate = 0;
 
-#if 0
 void DumpHeader(LPGDIOBJHDR goh)
 	{
 int b31=0;
 int bDebug=0;
 	if (b31)
 		{
-		printf(
-			"GDIOBJHDR:\n\r"
-			"hNext\t\t: %04X\twMagic\t\t: %04X (\"%c%c\")\n\r"
-			"\tdwCount\t\t: %ld\n\r"
-			"\twMetaList\t: %04X\n\r",
+		TRACE(
+			"GDIOBJHDR:\n"
+			"hNext\t\t: %04X\twMagic\t\t: %04X (\"%c%c\")\n"
+			"\tdwCount\t\t: %ld\n"
+			"\twMetaList\t: %04X",
 			goh->hNext, goh->wMagic,
 			goh->wMagic & 0xff, goh->wMagic >> 8,
 			goh->dwCount, goh->wMetaList);
 		if (bDebug)
-			printf(
-				"\twSelCount\t: %d\n\r"
-				"\thOwner\t\t: %04X\n\r",
+			TRACE(
+				"\twSelCount\t: %d\n"
+				"\thOwner\t\t: %04X\n",
 				((LPGDIOBJDBG) goh)->wSelCount,
 				((LPGDIOBJDBG) goh)->hOwner);
 		}
 	else
 		{
-		printf(
-			"GDIOBJHDR:\n\r"
-			"wFlags\t\t:%04X\twObjType\t:%04X\n\r"
-			"dwCount\t:%ld\twMetaList\t:%04X\n\r",
+		TRACE(
+			"GDIOBJHDR:\n"
+			"wFlags\t\t:%04X\twObjType\t:%04X\n"
+			"dwCount\t:%ld\twMetaList\t:%04X",
 			goh->hNext, goh->wMagic & 0xff,
 			goh->dwCount, goh->wMetaList);
 		}
 		
 	}
 
-VOID DumpDC(HDC hdc)
+VOID FAR DumpDC(HDC hdc)
 {
 int b31=0;
 int bDebug=0;
   DC FAR * dc;
   WORD gdi = 0;
-	PushDS();
+return;
 	gdi=SELECTOROF(GlobalLock(hGDI));
 //	gdi &= 0xfffc; 
 //	gdi |= 1;
+	PushDS();
 	SetDS(gdi);
 	dc=MK_FP(gdi, LocalLock(hdc));
+	PopDS();
 	DumpHeader((LPGDIOBJHDR) &(dc->header));
 	if (bDebug && b31) dc = (LPDC)((LPBYTE)dc+4);
-	printf(
-		"DC:\n\r"
-		"byFlags\t\t:%02X\tbyFlags2\t:%02X\thMetaFile\t:%04X\n\r"
-		"hrgnClip\t:%04X\thPDevice\t:%04XthLPen\t\t: %04X\n\r"
-		"hLBrush\t\t:%04X\thLFont\t\t:%04X\thBitmap\t\t:%04X\n\r"
-		"dchPal\t\t:%04X\thLDevice\t:%04X\n\r\thRaoClip\t:%04X\n\r"
-		"hPDeviceBlock\t: %04X\thPPen\t\t: %04X\n\r"
-		"hPBrush\t\t: %04XthPFontTrans\t: %04X\n\r"
-		"hPFont\t\t: %04X\tlpPDevice\t: %Fp\n\r"
-		"pLDevice\t: %04X\tpRaoClip\t: %04X\n\r",
+	TRACE(
+		"DC=%04x:\n"
+		"byFlags\t\t:%02X\tbyFlags2\t:%02X\thMetaFile\t:%04X\n"
+		"hrgnClip\t:%04X\thPDevice\t:%04X\thLPen\t\t: %04X\n"
+		"hLBrush\t\t:%04X\thLFont\t\t:%04X\thBitmap\t\t:%04X\n"
+		"dchPal\t\t:%04X\thLDevice\t:%04X\thRaoClip\t:%04X\n"
+		"hPDeviceBlock\t: %04X\thPPen\t\t: %04X\n"
+		"hPBrush\t\t: %04X\thPFontTrans\t: %04X\n"
+		"hPFont\t\t: %04X\tlpPDevice\t: %Fp\n"
+		"pLDevice\t: %04X\tpRaoClip\t: %04X", hdc,
 		dc->byFlags, dc->byFlags2, dc->hMetaFile, dc->hrgnClip,
 		dc->hPDevice, dc->hLPen, dc->hLBrush, dc->hLFont,
 		dc->hBitmap, dc->dchPal, dc->hLDevice, dc->hRaoClip,
@@ -95,18 +125,18 @@ int bDebug=0;
 		dc->hPFont, dc->lpPDevice, dc->pLDevice,
 		dc->pRaoClip);
 		
-	printf(
-		"pPDeviceBlock\t: %04X\tpPPen\t\t: %04X\n\r"
-		"pPBrush\t\t: %04X\tpPFontTrans\t: %04X\n\r"
-		"lpPFont\t\t: %Fp\tnPFTIndex\t: %04X\n\r"
-		"fnTransform\t: %Fp\twROP2\t\t: %04X\n\r"
-		"wBkMode\t\t: %04X\tdwBkColor\t: %08lX\n\r"
-		"dwTextColor\t: %08lX\tnTBreakExtra\t: %d\n\r"
-		"nBreakExtra\t: %d\twBreakErr\t: %04X\n\r"
-		"nBreakRem\t: %d\tnBreakCount\t: %d\n\r"
-		"nCharExtra\t: %d\tcrLbkColor\t: %08lX\n\r"
-		"crLTextColor\t: %08lX\tLCursPosX\t: %d\n\r"
-		"LCursPosY\t: %d\n\r",
+	TRACE(
+		"pPDeviceBlock\t: %04X\tpPPen\t\t: %04X\n"
+		"pPBrush\t\t: %04X\tpPFontTrans\t: %04X\n"
+		"lpPFont\t\t: %Fp\tnPFTIndex\t: %04X\n"
+		"fnTransform\t: %Fp\twROP2\t\t: %04X\n"
+		"wBkMode\t\t: %04X\tdwBkColor\t: %08lX\n"
+		"dwTextColor\t: %08lX\tnTBreakExtra\t: %d\n"
+		"nBreakExtra\t: %d\twBreakErr\t: %04X\n"
+		"nBreakRem\t: %d\tnBreakCount\t: %d\n"
+		"nCharExtra\t: %d\tcrLbkColor\t: %08lX\n"
+		"crLTextColor\t: %08lX\tLCursPosX\t: %d\n"
+		"LCursPosY\t: %d",
 		dc->pPDeviceBlock, dc->pPPen, dc->pPBrush, dc->pPFontTrans,
 		dc->lpPFont, dc->nPFTIndex, dc->Transform, dc->wROP2,
 		dc->wBkMode, dc->dwBkColor, dc->dwTextColor, dc->nTBreakExtra,
@@ -114,18 +144,18 @@ int bDebug=0;
 		dc->nCharExtra, dc->crLbkColor, dc->crLTextColor, dc->LCursPosX,
 		dc->LCursPosY);
 		
-	printf(
-		"WndOrgX\t\t: %d\tWndOrgX\t\t: %d\n\r"
-		"WndExtX\t\t: %d\tWndExtY\t\t: %d\n\r"
-		"VportOrgX\t: %d\tVportOrgY\t: %d\n\r"
-		"VportExtX\t: %d\tVportExtY\t: %d\n\r"
-		"UserVptOrgX\t: %d\tUserVptOrgY\t: %d\n\r"
-		"wMapMode\t: %04X\twXFormFlags\t: %04X\n\r"
-		"wRelAbs\t\t: %04X\twPolyFillMode\t: %04X\n\r"
-		"wStretchBltMode\t: %04X\tbyPlanes\t: %d\n\r"
-		"byBitsPix\t: %d\twPenWidth\t: %d\n\r"
-		"wPenHeight\t: %d\twTextAlign\t: %04X\n\r"
-		"dwMapperFlags\t: %08lX\n\r",
+	TRACE(
+		"WndOrgX\t\t: %d\tWndOrgX\t\t: %d\n"
+		"WndExtX\t\t: %d\tWndExtY\t\t: %d\n"
+		"VportOrgX\t: %d\tVportOrgY\t: %d\n"
+		"VportExtX\t: %d\tVportExtY\t: %d\n"
+		"UserVptOrgX\t: %d\tUserVptOrgY\t: %d\n"
+		"wMapMode\t: %04X\twXFormFlags\t: %04X\n"
+		"wRelAbs\t\t: %04X\twPolyFillMode\t: %04X\n"
+		"wStretchBltMode\t: %04X\tbyPlanes\t: %d\n"
+		"byBitsPix\t: %d\twPenWidth\t: %d\n"
+		"wPenHeight\t: %d\twTextAlign\t: %04X\n"
+		"dwMapperFlags\t: %08lX",
 		dc->WndOrgX, dc->WndOrgX, dc->WndExtX, dc->WndExtY,
 		dc->VportOrgX, dc->VportOrgY, dc->VportExtX, dc->VportExtY,
 		dc->UserVptOrgX, dc->UserVptOrgY, dc->wMapMode, dc->wXFormFlags,
@@ -133,13 +163,13 @@ int bDebug=0;
 		dc->byBitsPix, dc->wPenWidth, dc->wPenHeight, dc->wTextAlign,
 		dc->dwMapperFlags);
 		
-	printf(
-		"wBrushOrgX\t:%d\twBrushOrgY\t:%d\twFontAspectX\t:%d\n\r"
-		"wFontAspectY\t:%d\thFontWeights\t:%d\twDCSaveLevel\t:%d\n\r"
-		"wcDCLocks\t: %d\thVisRgn\t\t: %04X\twDCOrgX\t\t:%d\n\r"
-		"wDCOrgY\t\t:%d\tlpfnPrint\t:%Fp\twDCLogAtom\t:%04X\n\r"
-		"wDCPhysAtom\t: %04X\twDCFileAtom\t: %04X\n\r"
-		"wPostScaleX\t: %d\twPostScaleY\t: %d\n\r",
+	TRACE(
+		"wBrushOrgX\t:%d\twBrushOrgY\t:%d\twFontAspectX\t:%d\n"
+		"wFontAspectY\t:%d\thFontWeights\t:%d\twDCSaveLevel\t:%d\n"
+		"wcDCLocks\t: %d\thVisRgn\t\t: %04X\twDCOrgX\t\t:%d\n"
+		"wDCOrgY\t\t:%d\tlpfnPrint\t:%Fp\twDCLogAtom\t:%04X\n"
+		"wDCPhysAtom\t: %04X\twDCFileAtom\t: %04X\n"
+		"wPostScaleX\t: %d\twPostScaleY\t: %d",
 		dc->wBrushOrgX, dc->wBrushOrgY,
 		dc->wFontAspectX, dc->wFontAspectY,
 		dc->hFontWeights, dc->wDCSaveLevel,
@@ -149,10 +179,10 @@ int bDebug=0;
 		dc->wPostScaleX, dc->wPostScaleY);
 	if (b31)
 		{
-		printf(
-			"\trectBounds\t: (%d, %d, %d, %d)\trectLVB\t\t: (%d, %d, %d, %d)\n\r"
-			"\tlpfnNotify\t: %Fp\tlpHookData\t: %Fp\n\r"
-			"\twDCGlobFlags\t: %04X\n\r",
+		TRACE(
+			"\trectBounds\t: (%d, %d, %d, %d)\trectLVB\t\t: (%d, %d, %d, %d)\n"
+			"\tlpfnNotify\t: %Fp\tlpHookData\t: %Fp\n"
+			"\twDCGlobFlags\t: %04X",
 			dc->dc_tail.tail_3_1.rectBounds.left,
 			dc->dc_tail.tail_3_1.rectBounds.top,
 			dc->dc_tail.tail_3_1.rectBounds.right,
@@ -165,14 +195,14 @@ int bDebug=0;
 			dc->dc_tail.tail_3_1.lpHookData,
 			dc->dc_tail.tail_3_1.wDCGlobFlags);
 		if (bDebug)
-			printf(
-				"\thDCNext\t\t: %04X\n\r",
+			TRACE(
+				"\thDCNext\t\t: %04X\n",
 				dc->dc_tail.tail_3_1.hDCNext);
 		}
 	else
 		{
-		printf(
-			"wB4\t\t:%04X\trectB6\t\t:(%d, %d, %d, %d)\twDCGlobFlags\t:%04X\twC0\t\t:%04X\n\r",
+		TRACE(
+			"wB4\t\t:%04X\trectB6\t\t:(%d, %d, %d, %d)\twDCGlobFlags\t:%04X\twC0\t\t:%04X\n",
 			dc->dc_tail.tail_3_0.wB4,
 			dc->dc_tail.tail_3_0.rectB6.left,
 			dc->dc_tail.tail_3_0.rectB6.top,
@@ -181,51 +211,77 @@ int bDebug=0;
 			dc->dc_tail.tail_3_0.wDCGlobFlags,
 			dc->dc_tail.tail_3_0.wC0);
 		}
+	PushDS();
+	SetDS(gdi);
 	LocalUnlock(hdc);
-	GlobalUnlock(hGDI);
 	PopDS();
+	GlobalUnlock(hGDI);
 }
-#endif
+
 
 /***********************************************************************
  *           DCE_AllocDCE
  *
- * Allocate a new DCE.
+ * @brief Allocate a new DCE (Device Context Element)
+ *
+ * Creates a new DCE structure in the USER local heap. A GDI DC is also created
+ * using CreateDC for the display. The DCE is initialised with the given type
+ * and added to the global linked list (firstDCE).
+ *
+ * @param type  Type of DCE (e.g., DCE_CACHE_DC for cache DCs)
+ * @return Handle to the newly allocated DCE, or 0 on failure
  */
-HANDLE FAR DCE_AllocDCE( DCE_TYPE type )
+HANDLE FAR DCE_AllocDCE(DCE_TYPE type)
 {
 	DCE * dce;
-	HANDLE handle;
+	HANDLE retVal;
 
-	handle = LocalAlloc(LHND, sizeof(DCE));
-	if (!handle) return 0;
+	FUNCTION_START
 
-	dce = (DCE *) LocalLock( handle );
+	retVal=0;
 
-	if (!(dce->hDC = CreateDC( DISPLAY, NULL, NULL, NULL )))
+	retVal = LocalAlloc(LHND, sizeof(DCE));
+	if (retVal)
 	{
-		LocalUnlock(handle);
-		LocalFree(handle);
-		return 0;
+		dce = (DCE *) LocalLock(retVal);
+		if (dce)
+		{
+
+			dce->hDC = CreateDC( DISPLAY, NULL, NULL, NULL);
+			TRACE("hDC=0x%04x", dce->hDC);
+
+			if (dce->hDC)
+			{
+				DumpDC(dce->hDC);
+				dce->hwndCurr = 0;
+				dce->byFlags  = type;
+				dce->byInUse = (type != DCE_CACHE_DC);
+				dce->xOrigin = 0;
+				dce->yOrigin = 0;
+				dce->hdceNext = firstDCE;
+				LocalUnlock(retVal);
+				firstDCE = retVal;
+			} else {
+				LocalUnlock(retVal);
+				LocalFree(retVal);
+				retVal=0;
+			}
+		} else {
+			LocalFree(retVal);
+			retVal=0;
+		}
 	}
 
-//	DumpDC(dce->hDC);
-	dce->hwndCurr = 0;
-	dce->byFlags  = type;
-	dce->byInUse = (type != DCE_CACHE_DC);
-	dce->xOrigin = 0;
-	dce->yOrigin = 0;
-	dce->hdceNext = firstDCE;
-	LocalUnlock(handle);
-	firstDCE = handle;
-	return handle;
+	FUNCTION_END
+
+	return retVal;
 }
 
 
 /***********************************************************************
  *           DCE_FreeDCE
  */
-void DCE_FreeDCE(HANDLE hdce)
+VOID FAR DCE_FreeDCE(HANDLE hdce)
 {
 	DCE * dce;
 	HANDLE *handle = &firstDCE;
@@ -241,31 +297,10 @@ void DCE_FreeDCE(HANDLE hdce)
 
 	DeleteDC( dce->hDC );
 	LocalUnlock(hdce);
-	LocalFree( hdce );
+	LocalFree(hdce);
 }
 
 
-#pragma code_seg( "INIT_TEXT" );
-
-/***********************************************************************
- *           DCE_Init
- */
-VOID FAR DCE_Init()
-{
-    int i;
-    HANDLE handle;
-    DCE * dce;
-        
-    for (i = 0; i < NB_DCE; i++)
-    {
-	if (!(handle = DCE_AllocDCE(DCE_CACHE_DC))) return;
-	dce = (DCE *)LocalLock(handle);
-	if (!defaultDCstate) defaultDCstate = GetDCState(dce->hDC);
-	LocalUnlock(handle);
-    }
-}
-
-#pragma code_seg();
 
 #if 0
 static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT FAR *lprect )
@@ -409,10 +444,14 @@ HRGN DCE_GetVisRgn( HWND hwnd, WORD flags )
     RECT rect;
     HRGN hrgn;
     int xoffset, yoffset;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    WND *wndPtr;
+
+	FUNCTION_START
+	TRACE("hwnd=%04x", hwnd);
+	wndPtr = WIN_FindWndPtr( hwnd );
+	TRACE("wndPtr=%p", wndPtr);
 
       /* Get visible rectangle and create a region with it */
-
     if (!DCE_GetVisRect( wndPtr, !(flags & DCX_WINDOW), &rect ))
     {
         return CreateRectRgn( 0, 0, 0, 0 );  /* Visible region is empty */
@@ -474,9 +513,9 @@ HRGN DCE_GetVisRgn( HWND hwnd, WORD flags )
  */
 static void DCE_SetDrawable(DCE *dce, WND *wndPtr, HDC hdc, WORD flags )
 {
-    DC FAR * dc;
     WORD wNewOrgX, wNewOrgY;
-    WORD gdi = 0;
+
+	FUNCTION_START
 
     if (!wndPtr)  /* Get a DC for the whole screen */
     {
@@ -485,37 +524,54 @@ static void DCE_SetDrawable(DCE *dce, WND *wndPtr, HDC hdc, WORD flags )
     }
     else
     {
+	TRACE("DCE_SetDrawable: hwnd=%04x, flags=%04x, rectWindow=(%d,%d,%d,%d), rectClient=(%d,%d,%d,%d)",
+      wndPtr->hwndSelf, flags,
+      wndPtr->rectWindow.left, wndPtr->rectWindow.top,
+      wndPtr->rectWindow.right, wndPtr->rectWindow.bottom,
+      wndPtr->rectClient.left, wndPtr->rectClient.top,
+      wndPtr->rectClient.right, wndPtr->rectClient.bottom);
+
         if (flags & DCX_WINDOW)
         {
 		wNewOrgX  = wndPtr->rectWindow.left;
 		wNewOrgY  = wndPtr->rectWindow.top;
+		TRACE("DCX_WINDOW: origin=(%d,%d)", wNewOrgX, wNewOrgY);
         }
         else
         {
-            wNewOrgX  = wndPtr->rectClient.left;
-            wNewOrgY  = wndPtr->rectClient.top;
+		wNewOrgX  = wndPtr->rectClient.left;
+		wNewOrgY  = wndPtr->rectClient.top;
+		TRACE("!DCX_WINDOW: origin=(%d,%d)", wNewOrgX, wNewOrgY);
         }
 
-	if (wndPtr->parent->hwndSelf!=HWndDesktop) 
+	if ((wndPtr->parent) && (wndPtr->parent->hwndSelf!=HWndDesktop)) 
 	{
+		TRACE("Starting parent loop, parent hwnd=%04x", wndPtr->parent->hwndSelf);
         	while (wndPtr->parent)
 	        {
 	            wndPtr = wndPtr->parent;
+			TRACE("Parent %04x: rectClient=(%d,%d)", wndPtr->hwndSelf,
+				wndPtr->rectClient.left, wndPtr->rectClient.top);
 	            wNewOrgX += wndPtr->rectClient.left;
 	            wNewOrgY += wndPtr->rectClient.top;
 	        }
 	
 	        wNewOrgX -= wndPtr->rectWindow.left;
 	        wNewOrgY -= wndPtr->rectWindow.top;
+		TRACE("After parent loop: origin=(%d,%d)", wNewOrgX, wNewOrgY);
 	}
     }
 
 
+	TRACE("Final origin: (%d,%d)", wNewOrgX, wNewOrgY);
 	SetDCOrg(hdc, wNewOrgX, wNewOrgY);
+
 	dce->xOrigin = wNewOrgX;
 	dce->yOrigin = wNewOrgY;
+	FUNCTION_END
 }
 
+//#define NO_CACHE_DC
 
 /***********************************************************************
  *           GetDCEx    (USER.359)
@@ -533,6 +589,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
 	PushDS();
 	SetUserHeapDS();
+	FUNCTION_START
 
 	if (hwnd)
 	{
@@ -546,6 +603,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 	/* Not sure if this is the real meaning of the DCX_USESTYLE flag... */
 	flags &= ~(DCX_CACHE | DCX_CLIPCHILDREN |
                    DCX_CLIPSIBLINGS | DCX_PARENTCLIP);                           	
+
 	if (wndPtr)
 	{
             if (!(WIN_CLASS_STYLE(wndPtr) & (CS_OWNDC | CS_CLASSDC)))
@@ -557,13 +615,11 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 	else flags |= DCX_CACHE;
     }
 
-
       /* Can only use PARENTCLIP on child windows */
     if (!wndPtr || !(wndPtr->dwStyle & WS_CHILD)) flags &= ~DCX_PARENTCLIP;
 
       /* Whole window DC implies using cache DC and not clipping children */
     if (flags & DCX_WINDOW) flags = (flags & ~DCX_CLIPCHILDREN) | DCX_CACHE;
-
 
     if (flags & DCX_CACHE)
     {
@@ -609,22 +665,26 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 	dce->hwndCurr = hwnd;
 	dce->byInUse       = TRUE;
 	hdc = dce->hDC;
-
 	DCE_SetDrawable(dce, wndPtr, hdc, flags);
+
 	// Сохраняем xOrigin и yOrigin для последующего использования
 	xOrigin = dce->xOrigin;
 	yOrigin = dce->yOrigin;
 
 	LocalUnlock(hdce);
 
-//#endif
+	TRACE(__FUNCTION__ " 0");
+    
+
     if (hwnd)
     {
-        if (flags & DCX_PARENTCLIP)  /* Get a VisRgn for the parent */
+	TRACE(__FUNCTION__ " 0.0");
+        if (wndPtr && wndPtr->parent && (flags & DCX_PARENTCLIP))  /* Get a VisRgn for the parent */
         {
             WND *parentPtr = wndPtr->parent;
             DWORD newflags = flags & ~(DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN |
                                        DCX_WINDOW);
+	TRACE(__FUNCTION__ " 0.1");
             if (parentPtr->dwStyle & WS_CLIPSIBLINGS)
                 newflags |= DCX_CLIPSIBLINGS;
             hrgnVisible = DCE_GetVisRgn( parentPtr->hwndSelf, newflags );
@@ -634,13 +694,18 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
             else OffsetRgn( hrgnVisible, -wndPtr->rectClient.left,
                                          -wndPtr->rectClient.top );
         }
-        else hrgnVisible = DCE_GetVisRgn( hwnd, flags );
+        else 
+	{
+		TRACE(__FUNCTION__ " 0.x1");
+		hrgnVisible = DCE_GetVisRgn( hwnd, flags );
+	}
     }
     else  /* Get a VisRgn for the whole screen */
     {
         hrgnVisible = CreateRectRgn( 0, 0, GETSYSTEMMETRICS(SM_CXSCREEN), GETSYSTEMMETRICS(SM_CYSCREEN));
     }
 
+	TRACE(__FUNCTION__ " 1");
       /* Intersect VisRgn with the given region */
 
     if ((flags & DCX_INTERSECTRGN) || (flags & DCX_EXCLUDERGN))
@@ -649,6 +714,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
                     (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
     }
 
+	TRACE(__FUNCTION__ " 2");
     // После получения hrgnVisible и всех операций с ним:
     if (hwnd)  // Только для окон, не для экрана
     {
@@ -657,11 +723,14 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     }
 
     SelectVisRgn( hdc, hrgnVisible );
+	TRACE(__FUNCTION__ " 3");
+	DumpDC(dce->hDC);
+	// @todo А точно надо удалять тут?
     DeleteObject( hrgnVisible );
 
 
-//    TRACE("GetDCEx(%04x,%04x,0x%lx): returning %04x", 
-//	       hwnd, hrgnClip, flags, hdc);
+    TRACE("GetDCEx(%04x,%04x,0x%lx): returning %04x", 
+	       hwnd, hrgnClip, flags, hdc);
 	PopDS();
 	return hdc;
 }
@@ -673,7 +742,9 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 HDC WINAPI GetDC(HWND hwnd)
 {
 	HDC res;
+	FUNCTION_START
 	res=GetDCEx(hwnd, 0, DCX_USESTYLE);
+	FUNCTION_END
 	return res;
 }
 
@@ -717,7 +788,7 @@ int WINAPI ReleaseDC(HWND hwnd, HDC hdc)
 	HANDLE hdce;
 	DCE * dce;
     
-//	TRACE("ReleaseDC: %04x %04x\n", hwnd, hdc );
+	TRACE("ReleaseDC: %04x %04x\n", hwnd, hdc );
 
 	// Here we need to search DCE which lives in USER local heap
 	// So, switch to USER local heap, do things and switch back.
@@ -746,13 +817,59 @@ int WINAPI ReleaseDC(HWND hwnd, HDC hdc)
 		return 0;
 	}
 
+	dce = (DCE *) LocalLock(hdce);
+
 	if (dce->byFlags == DCE_CACHE_DC)
 	{
+		DumpDC(dce->hDC);
 		SetDCState(dce->hDC, defaultDCstate);
+		DumpDC(dce->hDC);
+		SetMapMode(dce->hDC, MM_TEXT);
+		TRACE("1");
+//		SetViewportOrgEx(dce->hDC, 0, 0, NULL);
+		TRACE("2");
+//		SetWindowOrgEx(dce->hDC, 0, 0, NULL);
+		TRACE("3");
+//		SetViewportExtEx(dce->hDC, 1, 1, NULL);
+		TRACE("4");
+//		SetWindowExtEx(dce->hDC, 1, 1, NULL);
+		TRACE("5");
+		SetDCOrg(dce->hDC, 0, 0);
+		TRACE("6");
+		DumpDC(dce->hDC);
+		TRACE("defaultDCstate=0x%04x", defaultDCstate);
 		dce->byInUse = FALSE;
 	}
 
 	LocalUnlock(hdce);
+
+	FUNCTION_END
 	PopDS();
 	return 1;
 }
+
+#pragma code_seg( "INIT_TEXT" );
+
+/***********************************************************************
+ *           DCE_Init
+ */
+VOID FAR DCE_Init()
+{
+    int i;
+    HANDLE handle;
+    DCE * dce;
+        
+    for (i = 0; i < NB_DCE; i++)
+    {
+	if (!(handle = DCE_AllocDCE(DCE_CACHE_DC))) return;
+	dce = (DCE *)LocalLock(handle);
+	if (!defaultDCstate)
+	{
+		defaultDCstate = GetDCState(dce->hDC);
+		TRACE("defaultDCstate=0x%04x", defaultDCstate);
+	}
+	LocalUnlock(handle);
+    }
+}
+
+#pragma code_seg();

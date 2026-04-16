@@ -1,20 +1,21 @@
 /*
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, see
+ *<https://www.gnu.org/licenses/>.
+ *
+ */
 
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, see
-<https://www.gnu.org/licenses/>.
-
-*/
 #include <stdarg.h>
 
 #include <user.h>
@@ -299,7 +300,7 @@ static int parse_format( LPCSTR format, WPRINTF_FORMAT FAR *res )
 {
     LPCSTR p = format;
 
-//	FUNCTION_START
+	FUNCTION_START
 
     res->flags = 0;
     res->width = 0;
@@ -356,7 +357,7 @@ static int parse_format( LPCSTR format, WPRINTF_FORMAT FAR *res )
         break;
     }
 	
-//	FUNCTION_END
+	FUNCTION_END
     return (p - format) + 1;
 }
 
@@ -373,23 +374,49 @@ int WINAPI wvsprintf( LPSTR buffer, LPCSTR spec, VA_LIST args )
     LPCSTR lpcstr_view = NULL;
     int int_view;
     LPCSTR seg_str;
+WORD  args_start;
 
-//	FUNCTION_START
+	FUNCTION_START
+
+    args_start = (WORD)args;
+
+    TRACE("==> wvsprintf enter: buffer=%04X:%04X spec=%04X:%04X args_offset=%04X",
+          HIWORD(buffer), LOWORD(buffer), HIWORD(spec), LOWORD(spec), args_start);
+
+    /* Дамп первых 16 байт форматной строки */
+    {
+        char fmt_dump[17];
+        _fmemcpy(fmt_dump, spec, 16);
+        fmt_dump[16] = 0;
+        TRACE("Format dump: '%Fs'", fmt_dump);
+    }
+
+    /* Дамп 8 слов из стека (аргументы) */
+    {
+        WORD far *stack = (WORD far *)args;
+        TRACE("Stack dump: %04X %04X %04X %04X %04X %04X %04X %04X",
+              stack[0], stack[1], stack[2], stack[3], stack[4], stack[5], stack[6], stack[7]);
+    }
 
     while (*spec)
     {
-		if (IsBadWritePtr(buffer, 1))
-		{
-			OutputDebugString("oops 1\r\n");
-		};
-		if (IsBadReadPtr(spec, 1))
-		{
-			OutputDebugString("oops 2\r\n");
-		};
+	TRACE("c='%c'", *spec);
+//		if (IsBadWritePtr(buffer, 1))
+//		{
+//			TRACE("oops 1");
+//			OutputDebugString("oops 1\r\n");
+//		};
+//		if (IsBadReadPtr(spec, 1))
+//		{
+//			TRACE("oops 2");
+//			OutputDebugString("oops 2\r\n");
+//		};
         if (*spec != '%') { *p = *spec; p++; spec++; continue; }
         spec++;
         if (*spec == '%') { *p++ = *spec++; continue; }
+	TRACE("1");
         spec += parse_format( spec, &format );
+	TRACE("format.type='%d'", format.type);
         switch(format.type)
         {
         case WPR_CHAR:
@@ -398,12 +425,17 @@ int WINAPI wvsprintf( LPSTR buffer, LPCSTR spec, VA_LIST args )
             break;
         case WPR_STRING:
             seg_str = VA_ARG( args, LPCSTR );
-            if (IsBadReadPtr( seg_str, 1 )) lpcstr_view = "";
-            else lpcstr_view = seg_str;
+		TRACE("x1 seg_str='%Fs'", seg_str);
+/*            if (IsBadReadPtr( seg_str, 1 )) lpcstr_view = "";
+            else*/ lpcstr_view = seg_str;
+		TRACE("x2");
             if (!lpcstr_view) lpcstr_view = "(null)";
+		TRACE("x3");
             for (len = 0; !format.precision || (len < format.precision); len++)
                 if (!lpcstr_view[len]) break;
+		TRACE("x4");
             format.precision = len;
+		TRACE("x5");
             break;
         case WPR_SIGNED:
             if (format.flags & WPRINTF_LONG) int_view = VA_ARG( args, int );
@@ -446,8 +478,10 @@ int WINAPI wvsprintf( LPSTR buffer, LPCSTR spec, VA_LIST args )
             else if (format.width > 1) *p++ = ' ';
             break;
         case WPR_STRING:
+		TRACE("xx1");
             if (len) _fmemcpy( p, lpcstr_view, len );
             p += len;
+		TRACE("buffer='%Fs'", buffer);
             break;
         case WPR_HEXA:
             if (format.flags & WPRINTF_PREFIX_HEX)
@@ -478,7 +512,7 @@ int WINAPI wvsprintf( LPSTR buffer, LPCSTR spec, VA_LIST args )
     }
     *p = 0;
 
-//	FUNCTION_END
+	FUNCTION_END
     return p - buffer;
 }
 
@@ -488,17 +522,14 @@ int WINAPI wvsprintf( LPSTR buffer, LPCSTR spec, VA_LIST args )
  */
 int FAR CDECL wsprintf( LPSTR buffer, LPCSTR spec, ... )
 {
-	int rc;
-	va_list valist;
+    int rc;
+    va_list valist;
 
-//	FUNCTION_START
+    va_start(valist, spec);
+    rc = wvsprintf( buffer, spec, *valist );
+    va_end(valist);
 
-	va_start(valist, spec);
-	rc=wvsprintf( buffer, spec, valist );
-	va_end(valist);
-
-//	FUNCTION_END
-	return rc;
+    return rc;
 }
 
 /***********************************************************************
@@ -687,10 +718,12 @@ int isalnum(int c)
 }
 
 
-char far *itoa(int i)
+static char toabuf[12]={0};
+char far * far itoa(int i)
 {
-  static char buf[12]={0};
-  char far * p = buf + sizeof(buf) -1;
+  char far * p;
+  _fmemset(toabuf, 0, sizeof(toabuf));
+  p = toabuf + sizeof(toabuf) -1;
   if (i >= 0) {
     do {
       *--p = '0' + (i % 10);
@@ -708,10 +741,12 @@ char far *itoa(int i)
   return p;
 }
 
-char far *uitoa(unsigned int i)
+char far * far uitoa(unsigned int i)
 {
-  static char buf[12]={0};
-  char far *p = buf + sizeof(buf)-1;
+//  static char buf[12]={0};
+  char far * p;
+  _fmemset(toabuf, 0, sizeof(toabuf));
+  p = toabuf + sizeof(toabuf)-1;
   do {
     *--p = '0' + (i % 10);
     i /= 10;

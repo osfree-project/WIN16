@@ -35,9 +35,11 @@ extern HCURSOR CURSORICON_IconToCursor(HICON);
  *
  * Return a pointer to the WND structure corresponding to a HWND.
  */
-WND * FAR WIN_FindWndPtr( HWND hwnd )
+WND * FAR WIN_FindWndPtr(HWND hwnd )
 {
 	WND * ptr=NULL;
+
+//	TRACE(__FUNCTION__ "hwnd=%04x", hwnd);
 
 	if (hwnd)
 	{
@@ -47,10 +49,21 @@ WND * FAR WIN_FindWndPtr( HWND hwnd )
 			if ((ptr->dwMagic != WND_MAGIC) || (ptr->hwndSelf != hwnd))
 			{
 				ptr = NULL;
+				TRACE("NOT A WINDOW!");
 				LocalUnlock(hwnd);
 			}
+			
+		} else {
+			TRACE("hwnd=%04x LOCK ERROR!", hwnd);
 		}
 	}
+//                TRACE("WIN_FindWndPtr: hwnd=%04x, rectWindow=(%d,%d,%d,%d), rectClient=(%d,%d,%d,%d), style=%08lx, flags=%04x",
+//                      hwnd,
+//                      ptr->rectWindow.left, ptr->rectWindow.top,
+//                      ptr->rectWindow.right, ptr->rectWindow.bottom,
+//                      ptr->rectClient.left, ptr->rectClient.top,
+//                      ptr->rectClient.right, ptr->rectClient.bottom,
+//                      ptr->dwStyle, ptr->flags);
 	return ptr;
 }
 
@@ -81,14 +94,14 @@ void WIN_DumpWindow( HWND hwnd )
 
     if (!(ptr = WIN_FindWndPtr( hwnd )))
     {
-        TRACE("%04x is not a window handle\n", hwnd );
+        TRACE("%04x is not a window handle", hwnd );
         return;
     }
 
     if (!GetClassName( hwnd, className, sizeof(className ) ))
         lstrcpy( className, "#NULL#" );
 
-    TRACE("Window %04x (%p):\n", hwnd, ptr );
+    TRACE("Window %04x (%p):", hwnd, ptr );
     TRACE(
              "next=%p  child=%p  parent=%p  owner=%p  class=%04x '%s'\n"
              "inst=%04x  taskQ=%04x  updRgn=%04x  active=%04x hdce=%04x  idmenu=%04x\n"
@@ -222,12 +235,24 @@ HWND WIN_FindWinToRepaint( HWND hwnd, HQUEUE hQueue )
     {
         if (!(pWnd->dwStyle & WS_VISIBLE) || (pWnd->flags & WIN_NO_REDRAW))
         {
-            TRACE("FindWinToRepaint: skipping window %04x\n",
-                         pWnd->hwndSelf );
+		//TRACE("WIN_FindWinToRepaint: checking window %04x, visible=%d, no_redraw=%d, hrgnUpdate=%04x, internal=%d, hmemTaskQ=%04x, hQueue=%04x, exStyle=%08lx",
+//              pWnd->hwndSelf,
+//              (pWnd->dwStyle & WS_VISIBLE) ? 1 : 0,
+//              (pWnd->flags & WIN_NO_REDRAW) ? 1 : 0,
+//              pWnd->hrgnUpdate,
+//              (pWnd->flags & WIN_INTERNAL_PAINT) ? 1 : 0,
+//              pWnd->hmemTaskQ, hQueue,
+//              pWnd->dwExStyle);
             continue;
         }
         if ((pWnd->hmemTaskQ == hQueue) &&
-            (pWnd->hrgnUpdate || (pWnd->flags & WIN_INTERNAL_PAINT))) break;
+            (pWnd->hrgnUpdate || (pWnd->flags & WIN_INTERNAL_PAINT)))
+	{
+		//TRACE("WIN_FindWinToRepaint: found candidate window %04x (hrgnUpdate=%04x, internal=%d)",
+//                  pWnd->hwndSelf, pWnd->hrgnUpdate,
+//                  (pWnd->flags & WIN_INTERNAL_PAINT) ? 1 : 0);
+		break;
+	}
         
         if (pWnd->child )
             if ((hwndRet = WIN_FindWinToRepaint( pWnd->child->hwndSelf, hQueue )) )
@@ -242,10 +267,11 @@ HWND WIN_FindWinToRepaint( HWND hwnd, HQUEUE hQueue )
     while (pWnd && ((pWnd->dwExStyle & WS_EX_TRANSPARENT) ||
                     !(pWnd->hrgnUpdate || (pWnd->flags & WIN_INTERNAL_PAINT))))
     {
+        //TRACE("WIN_FindWinToRepaint: skipping transparent/no-update sibling %04x", pWnd->hwndSelf);
         pWnd = pWnd->next;
     }
     if (pWnd) hwndRet = pWnd->hwndSelf;
-//    TRACE("FindWinToRepaint: found %04x\n",hwndRet);
+    //TRACE("FindWinToRepaint: found %04x",hwndRet);
     return hwndRet;
 }
 
@@ -423,7 +449,7 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
     {
 	/* Make sure parent is valid */
         if (!IsWindow( parent )) {
-	    TRACE("CreateWindowEx: Parent %04x is not a window\n", parent);
+	    //TRACE("CreateWindowEx: Parent %04x is not a window", parent);
 		PopDS();
 	    return 0;
 	}
@@ -431,7 +457,7 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
     else 
     {
 	if (style & WS_CHILD) {
-	    TRACE("CreateWindowEx: no parent\n");
+	    //TRACE("CreateWindowEx: no parent");
 		PopDS();
 	    return 0;  /* WS_CHILD needs a parent */
 	}
@@ -440,14 +466,14 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
     if (!(class = CLASS_FindClassByName( className, GetExePtr(instance),
                                          &classPtr )))
     {
-        TRACE("CreateWindowEx BAD CLASSNAME " );
+        //TRACE("CreateWindowEx BAD CLASSNAME " );
         if (HIWORD(className))
 	{
-		TRACE("'%S'\n", className);
+		TRACE("'%S'", className);
 	}
         else 
 	{
-		TRACE("%04x\n", LOWORD(className) );
+		TRACE("%04x", LOWORD(className) );
 	}
 	PopDS();
         return 0;
@@ -462,7 +488,7 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
 
     hwnd = LocalAlloc(LMEM_FIXED, sizeof(WND)+classPtr->wc.cbWndExtra );
     if (!hwnd) {
-	TRACE("CreateWindowEx: Out of memory\n");
+	TRACE("CreateWindowEx: Out of memory");
 	PopDS();
 	return 0;
     }
@@ -564,7 +590,7 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
 
     if (!wmcreate)
     {
-	TRACE("CreateWindowEx: WM_NCCREATE return 0\n");
+	//TRACE("CreateWindowEx: WM_NCCREATE return 0");
 	wmcreate = -1;
     }
     else
@@ -577,7 +603,7 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
     if (wmcreate == -1)
     {
 	  /* Abort window creation */
-	TRACE("CreateWindowEx: wmcreate==-1, aborting\n");
+	//TRACE("CreateWindowEx: wmcreate==-1, aborting");
 	LocalUnlock(hwnd);
         WIN_DestroyWindow( hwnd );
 	PopDS();
@@ -606,7 +632,7 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
     else if (style & WS_VISIBLE) ShowWindow( hwnd, SW_SHOW );
 
 	LocalUnlock(hwnd);
-    TRACE("CreateWindowEx: return %04x\n", hwnd);
+//    TRACE("CreateWindowEx: return %04x", hwnd);
 	PopDS();
     return hwnd;
 }
@@ -620,7 +646,7 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
     WND * wndPtr;
     CLASS * classPtr;
 
-    TRACE("DestroyWindow(%04x)\n", hwnd);
+    TRACE("DestroyWindow(%04x)", hwnd);
     
       /* Initialisation */
 
@@ -1276,7 +1302,7 @@ BOOL WINAPI EnumChildWindows(HWND hwnd, WNDENUMPROC wndenumprc, LPARAM lParam)
 {
     WND *wndPtr;
 
-//    dprintf_enum(stddeb,"EnumChildWindows\n");
+//    dprintf_enum(stddeb,"EnumChildWindows");
 
     if (hwnd == 0) return 0;
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
@@ -1304,7 +1330,7 @@ BOOL WINAPI FlashWindow(HWND hWnd, BOOL bInvert)
 {
     WND *wndPtr = WIN_FindWndPtr(hWnd);
 
-//    dprintf_win(stddeb,"FlashWindow: %04x\n", hWnd);
+//    dprintf_win(stddeb,"FlashWindow: %04x", hWnd);
 
     if (!wndPtr) return FALSE;
 
@@ -1565,7 +1591,7 @@ DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE hOfStruct,
     if( hCurrentCursor )
         SetCursor(hCurrentCursor);
 
-    dprintf_msg(stddeb,"drag: got %04x\n",btemp);
+    dprintf_msg(stddeb,"drag: got %04x",btemp);
 
     /* send WM_DRAGLOOP */
     SendMessage( hWnd, WM_DRAGLOOP, (WPARAM)(hCurrentCursor != hBummer) , 
@@ -1639,8 +1665,8 @@ void WIN_UpdateNCArea(WND* wnd, BOOL bUpdate)
     RECT rect = wnd->rectClient;
     HRGN hClip = 1;
 
-//    TRACE("NCUpdate: hwnd %04x, hrgnUpdate %04x", 
-//                      wnd->hwndSelf, wnd->hrgnUpdate );
+    TRACE("WIN_UpdateNCArea: hwnd=%04x, flags before=%04x, hrgnUpdate=%04x",
+          wnd->hwndSelf, wnd->flags, wnd->hrgnUpdate);
 
     /* desktop windows doesn't have nonclient area */
     if(wnd == WIN_GetDesktop()) 
@@ -1651,7 +1677,7 @@ void WIN_UpdateNCArea(WND* wnd, BOOL bUpdate)
 
     if( wnd->hrgnUpdate > 1 )
     {
-        MapWindowPoints(wnd->parent->hwndSelf, 0, (POINT*)&rect, 2);
+        MapWindowPoints(wnd->parent->hwndSelf, 0, (POINT FAR *)&rect, 2);
 
         hClip = CreateRectRgn( 0, 0, 0, 0 );
         if (!CombineRgn(hClip, wnd->hrgnUpdate, 0, RGN_COPY) )
@@ -1683,7 +1709,12 @@ void WIN_UpdateNCArea(WND* wnd, BOOL bUpdate)
         hClip = 1;
     }
 
-    if (hClip) SendMessage( wnd->hwndSelf, WM_NCPAINT, hClip, 0L );
+	if (hClip)
+	{
+	        TRACE("WIN_UpdateNCArea: sending WM_NCPAINT with clip=%04x", hClip);
+		 SendMessage( wnd->hwndSelf, WM_NCPAINT, hClip, 0L );
+	}
 
-    if (hClip > 1) DeleteObject( hClip );
+	if (hClip > 1) DeleteObject( hClip );
+	TRACE("WIN_UpdateNCArea: after, flags=%04x", wnd->flags);
 }

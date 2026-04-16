@@ -85,6 +85,7 @@ int WINAPI GetAsyncKeyState(int nKey)
 {
     short retval;	
 
+	FUNCTION_START
     switch (nKey) {
      case VK_LBUTTON:
 	retval = AsyncMouseButtonsStates[0] | 
@@ -107,6 +108,7 @@ int WINAPI GetAsyncKeyState(int nKey)
     _fmemset( AsyncMouseButtonsStates, 0, 3 );  /* all states to false */
     _fmemset( AsyncKeyStateTable, 0, 256 );
 
+	FUNCTION_END
     return retval;
 }
 

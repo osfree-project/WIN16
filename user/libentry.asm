@@ -32,15 +32,32 @@ _DATA ends
 FIXED_TEXT segment word public 'CODE'
 FIXED_TEXT ends
 
+; Global Atoms implementation
+ATOM_GROUP group ATOM_TEXT
+ATOM_TEXT segment word public 'CODE'
+ATOM_TEXT ends
+
+; DCE implementation
+DCE_TEXT segment word public 'CODE'
+DCE_TEXT ends
+
+; Network implementation
+NETWORK_GROUP group NETWORK_TEXT
+NETWORK_TEXT segment word public 'CODE'
+NETWORK_TEXT ends
+
+; Dialog implementation
+DLG_GROUP group DLG_TEXT
+DLG_TEXT segment word public 'CODE'
+DLG_TEXT ends
+
 DEBUG_TEXT segment word public 'CODE'
 DEBUG_TEXT ends
 
+; Initialization functions
 INIT_TEXT segment word public 'CODE'
 INIT_TEXT ends
 
-;*
-;*** the windows extender code lies here
-;*
 INIT_TEXT segment word public 'CODE'
 
         extrn   LIBMAIN     : near       ; startup code

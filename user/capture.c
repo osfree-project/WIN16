@@ -1,21 +1,21 @@
 /*    
-    	Copyright 2026 Yuri Prokushev
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, see
-<https://www.gnu.org/licenses/>.
-
-*/
+ *   	Copyright 2026 Yuri Prokushev
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
+ *
+ */
 
 #include <user.h>
 
@@ -26,9 +26,11 @@ VOID WINAPI ReleaseCapture()
 {
 	PushDS();
 	SetUserHeapDS();
+	FUNCTION_START
 
 	captureWnd = 0;
 
+	FUNCTION_END
 	PopDS();
 }
 
@@ -60,11 +62,11 @@ HWND WINAPI GetCapture()
 
 	PushDS();
 	SetUserHeapDS();
-//	FUNCTION_START
+	FUNCTION_START
 
 	retVal=captureWnd;
 
-//	FUNCTION_END
+	FUNCTION_END
 	PopDS();
 	return retVal;
 }

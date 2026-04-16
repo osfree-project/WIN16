@@ -25,14 +25,10 @@ License along with this library; if not, see
 #include <sys/types.h>
 
 #include <windows.h>
-//#include "winbase.h"
-//#include "winnetwk.h"
 
 #include "winnet.h"
 
-//#include "wine/debug.h"
-
-//WINE_DEFAULT_DEBUG_CHANNEL(wnet);
+#pragma code_seg( "NETWORK_TEXT" );
 
 /*
  * Remote printing
@@ -449,3 +445,5 @@ WORD WINAPI WNetErrorText( WORD nError, LPSTR lpszText, WORD cbText )
 //    FIXME("(%x, %p, %x): stub\n", nError, lpszText, cbText );
     return FALSE;
 }
+
+#pragma code_seg( );

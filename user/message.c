@@ -82,6 +82,8 @@ static BOOL MSG_TranslateMouseMsg( MSG FAR *msg, BOOL remove )
         //hook.hwnd = msg->hwnd;
 //	TRACE("123");
 //	for(;;);
+    TRACE("MSG_TranslateMouseMsg: returning TRUE, msg=%04x, hwnd=%04x, pt=(%d,%d)",
+          msg->message, msg->hwnd, msg->pt.x, msg->pt.y);
 	return TRUE;
 //        return !HOOK_CallHooks( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
 //                                msg->message, (LPARAM)MAKE_SEGPTR(&hook));
@@ -101,7 +103,7 @@ static BOOL MSG_TranslateMouseMsg( MSG FAR *msg, BOOL remove )
         {
             HWND hwndTop = WIN_GetTopParent( msg->hwnd );
 
-//		TRACE("MOUSE CLICK");
+		TRACE("MSG_TranslateMouseMsg: mouse click, hwndTop=%04x, active=%04x", hwndTop, GetActiveWindow());
 
             if (hwndTop != GetActiveWindow())
             {
@@ -174,6 +176,8 @@ static BOOL MSG_TranslateMouseMsg( MSG FAR *msg, BOOL remove )
 //    hook.wHitTestCode = hittest;
 //TRACE("321");
 //for(;;);
+    TRACE("MSG_TranslateMouseMsg: returning TRUE, msg=%04x, hwnd=%04x, pt=(%d,%d)",
+          msg->message, msg->hwnd, msg->pt.x, msg->pt.y);
 	return TRUE; 
 
 //    return !HOOK_CallHooks( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
@@ -226,6 +230,7 @@ static BOOL MSG_PeekHardwareMsg( MSG FAR *msg, HWND hwnd, WORD first, WORD last,
         if (pos >= sysMsgQueue->queueSize) pos = 0;
 	*msg = sysMsgQueue->messages[pos].msg;
 
+	TRACE("MSG_PeekHardwareMsg: raw message %04x", msg->message);
           /* Translate message */
         if ((msg->message >= WM_MOUSEFIRST) && (msg->message <= WM_MOUSELAST))
         {
@@ -351,7 +356,7 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
 	  /* First handle a message put by SendMessage() */
 	if (msgQueue->status & QS_SENDMESSAGE)
 	{
-		TRACE("SendMessage");
+		//TRACE("SendMessage");
 	    if (!hwnd || (msgQueue->hWnd == hwnd))
 	    {
 		if ((!first && !last) || 
@@ -454,10 +459,12 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
  * 'hwnd' must be the handle of the dialog or menu window.
  * 'code' is the message filter value (MSGF_??? codes).
  */
-#if 0
-BOOL MSG_InternalGetMessage( LPMSG msg, HWND hwnd, HWND hwndOwner, short code,
+
+BOOL FAR MSG_InternalGetMessage( LPMSG msg, HWND hwnd, HWND hwndOwner, short code,
 			     WORD flags, BOOL sendIdle ) 
 {
+TRACE("MSG_InternalGetMessage: entering, hwnd=%04x, hwndOwner=%04x, code=%d, flags=%04x",
+          hwnd, hwndOwner, code, flags);
     for (;;)
     {
 	if (sendIdle)
@@ -477,7 +484,10 @@ BOOL MSG_InternalGetMessage( LPMSG msg, HWND hwnd, HWND hwndOwner, short code,
                              0, 0, 0, flags, FALSE );
 
 	if (!CallMsgFilter( msg, code ))
+	{
+	    TRACE("MSG_InternalGetMessage: exiting after callmsgfilter, msg=%04x", msg->message);
             return (msg->message != WM_QUIT);
+	}
 
 	  /* Message filtered -> remove it from the queue */
 	  /* if it's still there. */
@@ -485,8 +495,9 @@ BOOL MSG_InternalGetMessage( LPMSG msg, HWND hwnd, HWND hwndOwner, short code,
 	    MSG_PeekMessage( msg,
                              0, 0, 0, PM_REMOVE, TRUE );
     }
+    TRACE("MSG_InternalGetMessage: exiting, msg=%04x", msg->message);
 }
-#endif
+#if 0
 BOOL MSG_InternalGetMessage( LPMSG msg, HWND hwnd, HWND hwndOwner, short code,
                              WORD flags, BOOL sendIdle ) 
 {
@@ -540,7 +551,7 @@ BOOL MSG_InternalGetMessage( LPMSG msg, HWND hwnd, HWND hwndOwner, short code,
         // Продолжаем цикл
     }
 }
-
+#endif
 /***********************************************************************
  *           PeekMessage   (USER.109)
  */
@@ -603,17 +614,17 @@ BOOL WINAPI PostMessage( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
     
     if (hwnd == HWND_BROADCAST)
     {
-        TRACE("PostMessage // HWND_BROADCAST !\n");
+        //TRACE("PostMessage // HWND_BROADCAST !\n");
         for (wndPtr = WIN_GetDesktop()->child; wndPtr; wndPtr = wndPtr->next)
         {
             if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION)
             {
-                TRACE("BROADCAST Message to hWnd=%04x m=%04X w=%04X l=%08lX !\n",
-                            wndPtr->hwndSelf, message, wParam, lParam);
+                //TRACE("BROADCAST Message to hWnd=%04x m=%04X w=%04X l=%08lX !\n",
+//                            wndPtr->hwndSelf, message, wParam, lParam);
                 PostMessage( wndPtr->hwndSelf, message, wParam, lParam );
             }
         }
-        TRACE("PostMessage // End of HWND_BROADCAST !\n");
+        //TRACE("PostMessage // End of HWND_BROADCAST !\n");
         return TRUE;
     }
 
@@ -658,6 +669,7 @@ LRESULT WINAPI SendMessage( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 	HWND hWnd;
     } msgstruct;
 
+	FUNCTION_START
 
 	msgstruct.lParam=lParam;
 	msgstruct.wParam=wParam;
@@ -671,17 +683,18 @@ LRESULT WINAPI SendMessage( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
     if (hwnd == HWND_BROADCAST)
     {
-        TRACE("SendMessage // HWND_BROADCAST !\n");
+        //TRACE("SendMessage // HWND_BROADCAST !\n");
         for (wndPtr = WIN_GetDesktop()->child; wndPtr; wndPtr = wndPtr->next)
         {
             if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION)
             {
-                TRACE("BROADCAST Message to hWnd=%04x m=%04X w=%04lX l=%08lX !\n",
-                            wndPtr->hwndSelf, msg, (DWORD)wParam, lParam);
+                //TRACE("BROADCAST Message to hWnd=%04x m=%04X w=%04lX l=%08lX !\n",
+//                            wndPtr->hwndSelf, msg, (DWORD)wParam, lParam);
                 ret |= SendMessage( wndPtr->hwndSelf, msg, wParam, lParam );
 	    }
         }
-        TRACE("SendMessage // End of HWND_BROADCAST !\n");
+        //TRACE("SendMessage // End of HWND_BROADCAST !\n");
+	FUNCTION_END
         return TRUE;
     }
 
@@ -690,11 +703,13 @@ LRESULT WINAPI SendMessage( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) 
     {
 //        SPY_ExitMessage( SPY_RESULT_INVALIDHWND, hwnd, msg, 0 );
+	FUNCTION_END
         return 0;
     }
     ret = CallWindowProc( (FARPROC)wndPtr->lpfnWndProc, msgstruct.hWnd, msgstruct.wMsg,
                           msgstruct.wParam, msgstruct.lParam );
 //    SPY_ExitMessage( SPY_RESULT_OK, hwnd, msg, ret );
+	FUNCTION_END
     return ret;
 }
 
@@ -741,8 +756,8 @@ BOOL WINAPI TranslateMessage(const MSG FAR *msg )
     if ((message == WM_KEYDOWN) || (message == WM_KEYUP) ||
 	(message == WM_SYSKEYDOWN) || (message == WM_SYSKEYUP))
     {
-	TRACE("Translating key %04x, scancode %04x\n", msg->wParam, 
-							      HIWORD(msg->lParam) );
+	//TRACE("Translating key %04x, scancode %04x\n", msg->wParam, 
+	//						      HIWORD(msg->lParam) );
 
 	if( HIWORD(msg->lParam) & ASCII_CHAR_HACK )
 
@@ -796,8 +811,8 @@ LONG WINAPI DispatchMessage( const MSG FAR * msg )
     if (painting && (wndPtr = WIN_FindWndPtr( msg->hwnd )) &&
         (wndPtr->flags & WIN_NEEDS_BEGINPAINT) && wndPtr->hrgnUpdate)
     {
-	TRACE("BeginPaint not called on WM_PAINT for hwnd %04x!\n", 
-		msg->hwnd);
+	//TRACE("BeginPaint not called on WM_PAINT for hwnd %04x!\n", 
+	//	msg->hwnd);
 	wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
         /* Validate the update region to avoid infinite WM_PAINT loop */
         ValidateRect( msg->hwnd, NULL );
@@ -811,7 +826,7 @@ LONG WINAPI DispatchMessage( const MSG FAR * msg )
  */
 UINT WINAPI RegisterWindowMessage( LPCSTR str )
 {
-    TRACE("RegisterWindowMessage: %08lx\n", (DWORD)str );
+    //TRACE("RegisterWindowMessage: %08lx\n", (DWORD)str );
     return GlobalAddAtom( str );
 }
 

@@ -20,7 +20,8 @@ License along with this library; if not, see
 
 BOOL first_program = TRUE;
 
-WORD WINAPI __loadds InitApp(HINSTANCE hInstance)
+#if 0
+WORD WINAPI InitApp(HINSTANCE hInstance)
 {
   char stringBuff[20];
   char is_setup;
@@ -29,17 +30,34 @@ WORD WINAPI __loadds InitApp(HINSTANCE hInstance)
   FUNCTION_START
 
   TRACE("InitApp(HINSTANCE=%x)\n\r",hInstance);
-  if (first_program)  // // Do onLy if the first task
+  if (first_program)  // // Do only if the first task
   {
-	SetTaskQueue(0, hwndDesktop.hQueue);
+	SetTaskQueue(0, HWndDesktop.hQueue);
 
 	// Plug the queue created for the desktop window with the
 	// current task and expected Win version for this task.
 	queuePtr = MK_FP( HWndDesktop, 0 );
 	queuePtr->hTask = GetCurrentTask();
-	queuePtr->ExpWinVersion = GetExeVefsion();
+	queuePtr->ExpWinVersion = GetExeVersion();
   }
 
   TRACE("InitApp: returns WORD %d\n\r",1);
   return 1;
+}
+
+#endif
+
+int WINAPI InitApp(HINSTANCE hInstance)
+{
+	int queueSize;
+
+	FUNCTION_START
+
+	/* Create task message queue */
+	queueSize = GetProfileInt( "windows", "DefaultQueueSize", 8 );
+	if (!SetMessageQueue( queueSize )) return 0;
+
+	FUNCTION_END
+
+	return 1;
 }

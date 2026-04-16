@@ -420,13 +420,24 @@ BOOL WINAPI MoveWindow( HWND hwnd, int x, int y, int cx, int cy, BOOL repaint)
  */
 BOOL WINAPI ShowWindow( HWND hwnd, int cmd ) 
 {    
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
+    WND * wndPtr;
     BOOL wasVisible;
     POINT maxSize;
     int swpflags = 0;
     short x = 0, y = 0, cx = 0, cy = 0;
 
-    if (!wndPtr) return FALSE;
+	PushDS();
+	SetUserHeapDS();
+	FUNCTION_START
+
+    wndPtr = WIN_FindWndPtr( hwnd );
+
+    if (!wndPtr) 
+	{
+		FUNCTION_END
+		PopDS();
+		return FALSE;
+	}
 
 //    TRACE("ShowWindow: hwnd=%04x, cmd=%d", hwnd, cmd);
 
@@ -435,6 +446,7 @@ BOOL WINAPI ShowWindow( HWND hwnd, int cmd )
     switch(cmd)
     {
         case SW_HIDE:
+            TRACE("ShowWindow: SW_HIDE for hwnd=%04x", hwnd);
 	    swpflags |= SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOMOVE | 
 		        SWP_NOACTIVATE | SWP_NOZORDER;
 	    break;
@@ -573,6 +585,8 @@ BOOL WINAPI ShowWindow( HWND hwnd, int cmd )
 		   MAKELONG(wndPtr->rectClient.left, wndPtr->rectClient.top) );
     }
 
+	FUNCTION_END
+	PopDS();
     return wasVisible;
 }
 
@@ -718,6 +732,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
     /* set active wnd */
     hwndActive = hWnd;
 
+
     /* send palette messages */
     if( SendMessage( hWnd, WM_QUERYNEWPALETTE, 0, 0L) )
 	SendMessage((HWND)-1, WM_PALETTEISCHANGING, (WPARAM)hWnd, 0L );
@@ -811,6 +826,8 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
 BOOL WINPOS_ChangeActiveWindow( HWND hWnd, BOOL mouseMsg )
 {
     WND *wndPtr = WIN_FindWndPtr(hWnd);
+
+	TRACE("WINPOS_ChangeActiveWindow: hWnd=%04x, mouseMsg=%d, current active=%04x", hWnd, mouseMsg, hwndActive);
 
     if( !wndPtr ) return FALSE;
 
@@ -1214,6 +1231,7 @@ BOOL WINAPI SetWindowPos(HWND hwnd, HWND hwndInsertAfter, int x, int y,
 
     if (flags & SWP_SHOWWINDOW)
     {
+	TRACE("SetWindowPos: SHOWWINDOW for hwnd=%04x", hwnd);
 	wndPtr->dwStyle |= WS_VISIBLE;
             if (!(flags & SWP_NOREDRAW))
                 RedrawWindow( winpos.hwnd, NULL, 0,
@@ -1222,6 +1240,7 @@ BOOL WINAPI SetWindowPos(HWND hwnd, HWND hwndInsertAfter, int x, int y,
     }
     else if (flags & SWP_HIDEWINDOW)
     {
+	TRACE("SetWindowPos: HIDEWINDOW for hwnd=%04x", hwnd);
 	wndPtr->dwStyle &= ~WS_VISIBLE;
             if (!(flags & SWP_NOREDRAW))
                 RedrawWindow( wndPtr->parent->hwndSelf, &wndPtr->rectWindow, 0,
@@ -1255,14 +1274,13 @@ BOOL WINAPI SetWindowPos(HWND hwnd, HWND hwndInsertAfter, int x, int y,
     
       /* Repaint the window */
 
-//    if (wndPtr->window) MSG_Synchronize();  /* Wait for all expose events */
-
 //    EVENT_DummyMotionNotify(); /* Simulate a mouse event to set the cursor */
 
     if ((flags & SWP_FRAMECHANGED) && !(flags & SWP_NOREDRAW))
         RedrawWindow( winpos.hwnd, NULL, 0,
                       RDW_ALLCHILDREN | /*FIXME: this should not be necessary*/
                       RDW_INVALIDATE | RDW_FRAME | RDW_ERASE );
+
     if (!(flags & SWP_DEFERERASE))
         RedrawWindow( wndPtr->parent->hwndSelf, NULL, 0,
                       RDW_ALLCHILDREN | RDW_ERASENOW );
@@ -1461,6 +1479,9 @@ HDC WINAPI BeginPaint( HWND hWnd, LPPAINTSTRUCT lps )
 	wndPtr = WIN_FindWndPtr(hWnd);
 	if (wndPtr)
 	{
+		TRACE("BeginPaint: hwnd=%04x, hrgnUpdate before=%04x, internal=%d",
+		      hWnd, wndPtr->hrgnUpdate, (wndPtr->flags & WIN_INTERNAL_PAINT) ? 1 : 0);
+
 		wndPtr->flags &= ~WIN_NEEDS_BEGINPAINT;
 
 		if (wndPtr->flags & WIN_NEEDS_NCPAINT) WIN_UpdateNCArea( wndPtr, TRUE );
@@ -1475,6 +1496,7 @@ HDC WINAPI BeginPaint( HWND hWnd, LPPAINTSTRUCT lps )
 		HideCaret( hWnd );
 
 		lps->hdc = GetDCEx( hWnd, hrgnUpdate, DCX_INTERSECTRGN | DCX_USESTYLE );
+		TRACE("BeginPaint: hdc=%04x", lps->hdc);
 		if(hrgnUpdate > 1) DeleteObject( hrgnUpdate );
 
 		if (lps->hdc)
@@ -1491,6 +1513,7 @@ HDC WINAPI BeginPaint( HWND hWnd, LPPAINTSTRUCT lps )
 
 			retVal=lps->hdc;
 		}
+		TRACE("BeginPaint: after, hrgnUpdate set to 0, internal cleared");
 	}
 
 	LocalUnlock(hWnd);
@@ -1506,10 +1529,20 @@ HDC WINAPI BeginPaint( HWND hWnd, LPPAINTSTRUCT lps )
  */
 VOID WINAPI EndPaint( HWND hWnd, const PAINTSTRUCT FAR * lps )
 {
+	WND * wndPtr; //DEEP
 	FUNCTION_START
+	TRACE("EndPaint: hwnd=%04x, before ReleaseDC\n", hWnd);
 
+	TRACE("EndPaint: hdc=%04x", lps->hdc);
 	ReleaseDC(hWnd, lps->hdc);
 	ShowCaret(hWnd);
+
+	wndPtr = WIN_FindWndPtr( hWnd );//DEEP start
+	if (wndPtr)
+	{
+		TRACE("EndPaint: after, hrgnUpdate=%04x, internal=%d\n",
+		      wndPtr->hrgnUpdate, (wndPtr->flags & WIN_INTERNAL_PAINT) ? 1 : 0);
+	}//DEEP end
 
 	FUNCTION_END
 }

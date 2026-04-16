@@ -217,8 +217,8 @@ extern void _cdecl far printf (char far *format,...);
 #define OutputDebugString printf
 #define FUNCTION_START \
 {\
-	static const char __based(__segname("DEBUG_TEXT")) msg[] = __FUNCTION__ " start\r\n"; \
-	OutputDebugString(msg);\
+	static const char __based(__segname("DEBUG_TEXT")) msg[] = __FUNCTION__ " start DS=0x%04x\r\n"; \
+	OutputDebugString(msg, GetDS());\
 }
 
 #define FUNCTION_END \
@@ -249,9 +249,9 @@ extern void _cdecl far printf (char far *format,...);
 #else
 #define FUNCTION_START
 #define FUNCTION_END
-#define TRACE(...) {};
-#define WARN(...) {};
-#define FIXME(...) {};
+#define TRACE(...) {}
+#define WARN(...) {}
+#define FIXME(...) {}
 #endif
 
 /* Resources */
@@ -470,8 +470,8 @@ int _tolower(int c);
 int isalnum(int c);
 int isalpha(int c);
 int _fstrnicmp(char const far *s1, const char far *s2, unsigned int n);
-char far *itoa(int i);
-char far *uitoa(unsigned int i);
+char far * far itoa(int i);
+char far * far uitoa(unsigned int i);
 char far *itox(int m);
 
 #define  UserLocalAlloc(tag, flags, size)   LocalAlloc(flags, size)
@@ -639,133 +639,8 @@ WORD WINAPI GetTaskQueue(HANDLE hTask);
 
 #pragma pack(1)
 
-typedef struct tagGDIOBJHDR
-{
-    HANDLE      hNext;
-    WORD        wMagic;
-    DWORD       dwCount;
-    WORD        wMetaList;
-/* additional 3.1 debug fields from here
-WORD wSelCount;
-HANDLE hOwner;
-*/
-} GDIOBJHDR, FAR * LPGDIOBJHDR;
-
-typedef struct tagGDIOBJDBG
-{
-    HANDLE      hNext;
-    WORD        wMagic;
-    DWORD       dwCount;
-    WORD        wMetaList;
-    WORD wSelCount;
-    HANDLE hOwner;
-
-} GDIOBJDBG, FAR * LPGDIOBJDBG;
-
-typedef struct tagDC {
-	GDIOBJHDR header; // 00h
-	BYTE byFlags; // OAh
-	BYTE byFlags2; // OBh
-	HANDLE hMetaFile; // OCh
-	HRGN hrgnClip; // OEh handle to (reclangular) clip region
-	HANDLE hPDevice; // 10h Phys device handle
-	HANDLE hLPen; // 12h Log. pen
-	HANDLE hLBrush; // 14h Log. brush
-	HANDLE hLFont; // 16h Log. Font
-	HANDLE hBitmap; // 18h Selected bitmap
-	HANDLE dchPal; // 1Ah Selected palette
-	HANDLE hLDevice; // 1Ch Log. device
-	HRGN hRaoClip; // 1Eh clip region
-	HANDLE hPDeviceBlock; // 20h
-	HANDLE hPPen; // 22h Phys. pen
-	HANDLE hPBrush; // 24h Phys. brush
-	HANDLE hPFontTrans; // 26h
-	HANDLE hPFont; // 28h Phys. font
-	LPVOID lpPDevice; // 2Ah
-	WORD pLDevice; // 2Eh near pointer to log. device info
-	WORD pRaoClip; // 30h near pointer to clip region
-	WORD pPDeviceBlock; // 32h near pointer to GDIINFO
-	WORD pPPen; // 34h
-	WORD pPBrush; // 36h
-	WORD pPFontTrans; // 38h near pointer to hPFontTrans
-	LPVOID lpPFont; // 3Ah Font engine entrypoint
-	int nPFTIndex; // 3Eh
-	LPVOID Transform; // 40h
-	// Begin DRAWMODE structure - see DDK doc *1
-	WORD wROP2; // 44h Raster Op drawing mode
-	WORD wBkMode; // 46h Background mode (opaque/transparent)
-	DWORD dwBkColor; // 48h Phys. Background color
-	DWORD dwTextColor; // 4Ch Phys. text color
-	int nTBreakExtra; // 50h Text padding: ExtTextOut justification
-	int nBreakExtra; // 52h pad per break = nTBreakExtra/BreakCount
-	WORD wBreakErr; // 54h SetTextJustify called with nBreakExtra=O?
-	int nBreakRem; // 56h remainder of TBreakExtra/nBreakCount
-	int nBreakCount; // 58h Count of break characters in string
-	int nCharExtra; // 5Ah Per char additional padding
-	DWORD crLbkColor; // 5Ch Logical background color
-	DWORD crLTextColor; // 60h Logical text color
-	// End DRAWMODE structure *1
-	int LCursPosX; // 64h
-	int LCursPosY; // 66h
-	int WndOrgX; // 68h
-	int WndOrgY; // 6Ah
-	int WndExtX; // 6Ch
-	int WndExtY; // 6Eh
-	int VportOrgX; // 70h
-	int VportOrgY; // 72h
-	int VportExtX; // 74h
-	int VportExtY; // 76h
-	int UserVptOrgX; // 78h
-	int UserVptOrgY; // 7Ah
-	WORD wMapMode; // 7Ch
-	WORD wXFormFlags; // 7Eh
-	WORD wRelAbs; // 80h
-	WORD wPolyFillMode; //82h
-	WORD wStretchBltMode; // 84h
-	BYTE byPlanes; // 86h
-	BYTE byBitsPix; // 87h
-	WORD wPenWidth; // 88h
-	WORD wPenHeight; // .8Ah
-	WORD wTextAlign; // 8Ch
-	DWORD dwMapperFlags; // 8Eh
-	WORD wBrushOrgX; // 92h
-	WORD wBrushOrgY; // 94h
-	WORD wFontAspectX; // 96h
-	WORD wFontAspectY; // 98h
-	HANDLE hFontWeights; // 9Ah
-	WORD wDCSaveLevel; // 9Ch
-	WORD wcDCLocks; // 9Eh
-	HRGN hVisRgn; // AOh
-	WORD wDCOrgX; // A2h
-	WORD wDCOrgY; // A4h
-	FARPROC lpfnPrint; // A6h
-	WORD wDCLogAtom; // AAh
-	WORD wDCPhysAtom; // ACh
-	WORD wDCFileAtom; // AEh
-	WORD wPostScaleX; // BOh
-	WORD wPostScaleY; // B2h
-	union {
-		struct { // 3.0
-			WORD wB4; // B4h
-			RECT rectB6; // B6h
-			WORD wDCGlobFlags; // BEh
-			WORD wC0; // COh
-		} tail_3_0; // 3.0
-		struct { // 3.1
-			RECT rectBounds; // B4h
-			RECT rectLVB; // BCh
-			FARPROC lpfnNotify; // C4h
-			LPSTR lpHookData; // C8h
-			WORD wDCGlobFlags;
-			HDC hDCNext;
-		} tail_3_1;
-	} dc_tail;
-} DC, FAR *LPDC;
-
 #define CLASS_MAGIC   0x4b4e      /* 'NK' */
-
-#pragma pack(1)
-
+extern VOID FAR DumpDC(HDC hdc);
 
 /* !! Don't change this structure (see GetClassLong()) */
 typedef struct tagCLASS
@@ -806,7 +681,6 @@ typedef struct tagWND
     UINT         wIDmenu;        /* ID or hmenu (from CreateWindow) */
     HANDLE       hText;          /* Handle of window text */
     WORD         flags;          /* Misc. flags (see below) */
-//    Window       window;         /* X window (only for top-level windows) */
     HMENU        hSysMenu;	 /* window's copy of System Menu */
     HANDLE       hProp;          /* Handle of Properties List */
     WORD         wExtra[1];      /* Window extra bytes */
@@ -866,8 +740,8 @@ int WINAPI SelectVisRgn(HDC hdc, HRGN hrgn);
 #define WINSWITCH_CLASS_ATOM MAKEINTATOM(32771)  /* WinSwitch */
 #define ICONTITLE_CLASS_ATOM MAKEINTATOM(32772)  /* IconTitle */
 
-  /* Window functions */
-extern WND * FAR WIN_FindWndPtr( HWND hwnd );
+/* Window functions */
+extern WND * FAR WIN_FindWndPtr(HWND hwnd);
 extern WND * WIN_GetDesktop(void);
 extern void WIN_DumpWindow( HWND hwnd );
 extern void WIN_WalkWindows( HWND hwnd, int indent );
@@ -934,7 +808,7 @@ char far * lstrchr (const char far *s, int c);
 int latoi(const char far *h);
 
 
-BOOL MSG_InternalGetMessage( LPMSG msg, HWND hwnd, HWND hwndOwner, short code,
+BOOL FAR MSG_InternalGetMessage( LPMSG msg, HWND hwnd, HWND hwndOwner, short code,
 			     WORD flags, BOOL sendIdle );
 
 

@@ -408,10 +408,12 @@ void NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down )
 
 	if (wndPtr)
 	{
+		TRACE("1");
 		NC_GetInsideRect( hwnd, &rect );
 		hdcMem = CreateCompatibleDC( hdc );
 		if (hdcMem)
 		{
+			TRACE("2");
 			hbitmap = SelectObject( hdcMem, hbitmapClose );
 			BitBlt( hdc, rect.left, rect.top, GETSYSTEMMETRICS(SM_CXSIZE), GETSYSTEMMETRICS(SM_CYSIZE),
 				hdcMem, (wndPtr->dwStyle & WS_CHILD) ? GETSYSTEMMETRICS(SM_CXSIZE) : 0, 0,
@@ -481,6 +483,7 @@ static void NC_DrawMinButton( HWND hwnd, HDC hdc, BOOL down )
 
 	PushDS();
 	SetDS(USER_HeapSel);
+	TRACE("NC_DrawMinButton: hwnd=%04x, down=%d", hwnd, down);
 	wndPtr = WIN_FindWndPtr(hwnd);
 
 	if (wndPtr)
@@ -512,7 +515,6 @@ static void NC_DrawMinButton( HWND hwnd, HDC hdc, BOOL down )
 				SelectObject( hdcMem, hbitmap );
 				DeleteDC( hdcMem );
 			}
-
 		}
 		LocalUnlock(hwnd);
 	}
@@ -531,14 +533,18 @@ static void NC_DrawFrame( HDC hdc, RECT FAR *rect, BOOL dlgFrame, BOOL active )
     short width, height, tmp;
 
 	PushDS();
-	SetDS(USER_HeapSel);
+	SetUserHeapDS();
+	FUNCTION_START
 
     if (dlgFrame)
     {
 	width = GETSYSTEMMETRICS(SM_CXDLGFRAME) - 1;
 	height = GETSYSTEMMETRICS(SM_CYDLGFRAME) - 1;
-        SelectObject( hdc, active ? GETSYSCOLORBRUSH(hbrushActiveCaption) :
-                                    GETSYSCOLORBRUSH(hbrushInactiveCaption));
+	TRACE(__FUNCTION__ "-1");
+// @todo Нет в win 3.0
+//        SelectObject( hdc, active ? GETSYSCOLORBRUSH(hbrushActiveCaption) :
+//                                    GETSYSCOLORBRUSH(hbrushInactiveCaption));
+        SelectObject( hdc, GETSYSCOLORBRUSH(hbrushActiveCaption));
     }
     else
     {
@@ -548,15 +554,22 @@ static void NC_DrawFrame( HDC hdc, RECT FAR *rect, BOOL dlgFrame, BOOL active )
                                     GETSYSCOLORBRUSH(hbrushInactiveBorder));
     }
 
+	TRACE(__FUNCTION__ "0");
+	TRACE("rect->left=%d rect->top=%d rect->right=%d height=%d", rect->left, rect->top, rect->right, height);
       /* Draw frame */
     PatBlt( hdc, rect->left, rect->top,
 	    rect->right - rect->left, height, PATCOPY );
+	TRACE(__FUNCTION__ "0.1");
     PatBlt( hdc, rect->left, rect->top,
 	    width, rect->bottom - rect->top, PATCOPY );
+	TRACE(__FUNCTION__ "0.2");
     PatBlt( hdc, rect->left, rect->bottom,
 	    rect->right - rect->left, -height, PATCOPY );
+	TRACE(__FUNCTION__ "0.3");
     PatBlt( hdc, rect->right, rect->top,
 	    -width, rect->bottom - rect->top, PATCOPY );
+
+	TRACE(__FUNCTION__ "1");
 
     if (dlgFrame)
     {
@@ -565,6 +578,8 @@ static void NC_DrawFrame( HDC hdc, RECT FAR *rect, BOOL dlgFrame, BOOL active )
 	return;
     }
     
+	TRACE(__FUNCTION__ "2");
+
       /* Draw inner rectangle */
     MoveTo( hdc, rect->left+width, rect->top+height );
     LineTo( hdc, rect->right-width-1, rect->top+height );
@@ -597,7 +612,10 @@ static void NC_DrawFrame( HDC hdc, RECT FAR *rect, BOOL dlgFrame, BOOL active )
     MoveTo( hdc, tmp, rect->bottom-height-1 );
     LineTo( hdc, tmp, rect->bottom-1 );
 
+	TRACE(__FUNCTION__ "5");
+
     InflateRect( rect, -width-1, -height-1 );
+	FUNCTION_END
 	PopDS();
 }
 
@@ -643,6 +661,8 @@ static void NC_DrawCaption( HDC hdc, RECT FAR *rect, HWND hwnd,
 
 	PushDS();
 	SetDS(USER_HeapSel);
+	TRACE("NC_DrawCaption: style=%08lx, WS_SYSMENU=%d, WS_MAXIMIZEBOX=%d, WS_MINIMIZEBOX=%d",
+	      style, (style & WS_SYSMENU)!=0, (style & WS_MAXIMIZEBOX)!=0, (style & WS_MINIMIZEBOX)!=0);
 	wndPtr=WIN_FindWndPtr( hwnd );
 
 	if (wndPtr)
@@ -663,6 +683,7 @@ static void NC_DrawCaption( HDC hdc, RECT FAR *rect, HWND hwnd,
 
 		if (style & WS_SYSMENU)
 		{
+			TRACE("Drawing sysmenu button");
 			NC_DrawSysButton( hwnd, hdc, FALSE );
 			r.left += GETSYSTEMMETRICS(SM_CXSIZE) + 1;
 			MoveTo( hdc, r.left - 1, r.top );
@@ -671,12 +692,14 @@ static void NC_DrawCaption( HDC hdc, RECT FAR *rect, HWND hwnd,
 
 		if (style & WS_MAXIMIZEBOX)
 		{
+			TRACE("Drawing maximize button");
 			NC_DrawMaxButton( hwnd, hdc, FALSE );
 			r.right -= GETSYSTEMMETRICS(SM_CXSIZE) + 1;
 		}
 
 		if (style & WS_MINIMIZEBOX)
 		{
+			TRACE("Drawing minimize button");
 			NC_DrawMinButton( hwnd, hdc, FALSE );
 			r.right -= GETSYSTEMMETRICS(SM_CXSIZE) + 1;
 		}
@@ -707,11 +730,17 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
 	RECT 	rect;
 	BOOL	active;
 	WND *wndPtr;
-	WORD gdi = 0;
+//	WORD gdi = 0;
 
 	PushDS();
 	SetDS(USER_HeapSel);
+
 	wndPtr = WIN_FindWndPtr( hwnd );
+	TRACE("NC_DoNCPaint: hwnd=%04x, rectWindow=(%d,%d,%d,%d), rectClient=(%d,%d,%d,%d)",
+	      hwnd, wndPtr->rectWindow.left, wndPtr->rectWindow.top,
+	      wndPtr->rectWindow.right, wndPtr->rectWindow.bottom,
+	      wndPtr->rectClient.left, wndPtr->rectClient.top,
+	      wndPtr->rectClient.right, wndPtr->rectClient.bottom);
 
 	if (wndPtr && (wndPtr->dwStyle & WS_VISIBLE))
 	{
@@ -719,8 +748,16 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
 		active  = wndPtr->flags & WIN_NCACTIVATED;
 
 		hdc = GetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW );
+		DumpDC(hdc);
 		if (hdc)
 		{
+
+TRACE("NC_DoNCPaint: hwnd=%04x, hdc=%04x", hwnd, hdc);
+if (!hdc)
+{
+    TRACE("NC_DoNCPaint: GetDCEx failed!");
+    return;
+}
 
 			/*
 			* If this is an icon, we don't want to do any more nonclient painting
@@ -761,7 +798,10 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
 				rect.right  = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
 				rect.bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
 
+				TRACE(__FUNCTION__ "0");
 				SelectObject( hdc, GETSYSCOLORBRUSH(hpenWindowFrame));
+
+				TRACE(__FUNCTION__ "1");
 
 				if ((wndPtr->dwStyle & WS_BORDER) || (wndPtr->dwStyle & WS_DLGFRAME) || (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME))
 				{
@@ -773,10 +813,14 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
 					InflateRect( &rect, -1, -1 );
 				}
 
+				TRACE(__FUNCTION__ "2");
+
 				if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle )) 
 					NC_DrawFrame( hdc, &rect, TRUE, active );
 				else if (wndPtr->dwStyle & WS_THICKFRAME)
 					NC_DrawFrame(hdc, &rect, FALSE, active );
+
+				TRACE(__FUNCTION__ "3");
 
 				if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
 				{
@@ -786,6 +830,7 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
 					NC_DrawCaption( hdc, &r, hwnd, wndPtr->dwStyle, active );
 				}
 
+				TRACE(__FUNCTION__ "4");
 
 				if (HAS_MENU(wndPtr))
 				{
@@ -799,6 +844,8 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
 //@todo    if (wndPtr->dwStyle & WS_VSCROLL) SCROLL_DrawScrollBar(hwnd, hdc, SB_VERT);
 //@todo    if (wndPtr->dwStyle & WS_HSCROLL) SCROLL_DrawScrollBar(hwnd, hdc, SB_HORZ);
 
+				TRACE(__FUNCTION__ "5");
+
 				/* Draw the "size-box" */
 				if ((wndPtr->dwStyle & WS_VSCROLL) && (wndPtr->dwStyle & WS_HSCROLL))
 				{
@@ -809,10 +856,12 @@ void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
 				}
 
 			}
+			DumpDC(hdc);
 			ReleaseDC(hwnd, hdc);
 		}
 		LocalUnlock(hwnd);
 	}
+	TRACE("NC_DoNCPaint: finished\n");
 	PopDS();
 }
 
@@ -842,15 +891,19 @@ LONG FAR NC_HandleNCActivate( HWND hwnd, WPARAM wParam )
 
 	PushDS();
 	SetDS(USER_HeapSel);
-
+	TRACE("NC_HandleNCActivate: hwnd=%04x, wParam=%04x", hwnd, wParam);
 	wndPtr=WIN_FindWndPtr(hwnd);
 
 	if (wndPtr)
 	{
-		if (wParam != 0) wndPtr->flags |= WIN_NCACTIVATED;
-		else wndPtr->flags &= ~WIN_NCACTIVATED;
+        // Обновляем флаг активности
+        if (wParam != 0)
+            wndPtr->flags |= WIN_NCACTIVATED;
+        else
+            wndPtr->flags &= ~WIN_NCACTIVATED;
 
-		NC_DoNCPaint( hwnd, (HRGN)1, FALSE );
+        // Немедленная перерисовка неклиентской области
+        NC_DoNCPaint( hwnd, (HRGN)1, FALSE );
 
 		LocalUnlock(hwnd);
 	}
@@ -1047,8 +1100,8 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     int moved = 0;
 
-    if (IsZoomed(hwnd) || !IsWindowVisible(hwnd) ||
-        (0/*wndPtr->flags & WIN_MANAGED*/)) return;
+    if (IsZoomed(hwnd) || !IsWindowVisible(hwnd)) return;
+
     hittest = wParam & 0x0f;
     thickframe = HAS_THICKFRAME( wndPtr->dwStyle );
 
@@ -1108,12 +1161,11 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
     if (wndPtr->dwStyle & WS_CHILD)
     {
           /* Retrieve a default cache DC (without using the window style) */
-        hdc = GetDCEx( wndPtr->parent->hwndSelf, 0, DCX_CACHE );
+        hdc = GetDCEx(wndPtr->parent->hwndSelf, 0, DCX_CACHE);
     }
     else
-    {  /* Grab the server only when moving top-level windows without desktop */
+    {
 	hdc = GetDC( 0 );
-//	if (rootWindow == DefaultRootWindow(display)) XGrabServer( display );
     }
     NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
 
@@ -1180,7 +1232,6 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
     else
     {
 	ReleaseDC( 0, hdc );
-//	if (rootWindow == DefaultRootWindow(display)) XUngrabServer( display );
     }
     SendMessage( hwnd, WM_EXITSIZEMOVE, 0, 0 );
     SendMessage( hwnd, WM_SETVISIBLE, !IsIconic(hwnd), 0L);
@@ -1214,7 +1265,10 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
 {
     MSG msg;
     BOOL pressed = TRUE;
-    HDC hdc = GetWindowDC( hwnd );
+    HDC hdc;
+
+	FUNCTION_START
+	hdc = GetWindowDC( hwnd );
 
     SetCapture( hwnd );
     if (wParam == HTMINBUTTON) NC_DrawMinButton( hwnd, hdc, TRUE );
@@ -1238,13 +1292,14 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
 
     ReleaseCapture();
     ReleaseDC( hwnd, hdc );
-    if (!pressed) return;
+    if (!pressed) { FUNCTION_END; return; }
 
     if (wParam == HTMINBUTTON) 
 	SendMessage( hwnd, WM_SYSCOMMAND, SC_MINIMIZE, *(LONG*)&msg.pt );
     else
 	SendMessage( hwnd, WM_SYSCOMMAND, 
 		  IsZoomed(hwnd) ? SC_RESTORE : SC_MAXIMIZE, *(LONG*)&msg.pt );
+	FUNCTION_END
 }
 
 #if 0
@@ -1312,7 +1367,6 @@ static void NC_TrackScrollBar( HWND hwnd, WORD wParam, POINT pt )
  */
 LONG FAR NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
-    HDC hdc = GetWindowDC( hwnd );
     POINT pt;
 
     pt.x = LOWORD(lParam);
@@ -1325,8 +1379,12 @@ LONG FAR NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
 	break;
 
     case HTSYSMENU:
-	NC_TrackSysMenu( hwnd, hdc, pt );
-	break;
+	{
+		HDC hdc = GetWindowDC( hwnd );
+		NC_TrackSysMenu( hwnd, hdc, pt );
+		ReleaseDC( hwnd, hdc );
+		break;
+	}
 
     case HTMENU:
 	SendMessage( hwnd, WM_SYSCOMMAND, SC_MOUSEMENU, lParam );
@@ -1360,7 +1418,6 @@ LONG FAR NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
 	break;
     }
 
-    ReleaseDC( hwnd, hdc );
     return 0;
 }
 
