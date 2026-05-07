@@ -160,7 +160,8 @@ LRESULT WINAPI ButtonWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     PAINTSTRUCT ps;
                     HDC hdc = BeginPaint( hWnd, &ps );
                     (btnPaintFunc[style])( wndPtr, hdc, ODA_DRAWENTIRE );
-                    ReleaseDC( hWnd, hdc );
+//BUG?                    ReleaseDC( hWnd, hdc );
+		    EndPaint(hWnd, &ps);
                 }
 		break;
 

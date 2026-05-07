@@ -169,9 +169,9 @@ int WINAPI DrawText(HDC hDC, LPCSTR lpsz, int cb, LPRECT lprc, UINT uFormat)
 	}
 
 	/* get character width array */
-//	GetCharWidth(hDC, 0,255, charwidth);
+	GetCharWidth(hDC, 0,255, charwidth);
 
-//	GetTextMetrics(hDC,(LPTEXTMETRIC) &TextMetrics);
+	GetTextMetrics(hDC,(LPTEXTMETRIC) &TextMetrics);
 
 	LineHeight = TextMetrics.tmHeight;
 
@@ -382,13 +382,75 @@ int WINAPI DrawText(HDC hDC, LPCSTR lpsz, int cb, LPRECT lprc, UINT uFormat)
 }
 
 /***********************************************************************
+ *           TEXT_TabbedTextOut
+ *
+ * Helper function for TabbedTextOut() and GetTabbedTextExtent().
+ * Note: this doesn't work too well for text-alignment modes other
+ *       than TA_LEFT|TA_TOP. But we want bug-for-bug compatibility :-)
+ */
+LONG TEXT_TabbedTextOut( HDC hdc, int x, int y, LPCSTR lpstr, int count, 
+                         int cTabStops, LPINT lpTabPos, int nTabOrg,
+                         BOOL fDisplayText)
+{
+    WORD defWidth;
+    DWORD extent = 0;
+    int i, tabPos = x;
+    int start = x;
+
+    if (cTabStops == 1)
+    {
+        defWidth = *lpTabPos;
+        cTabStops = 0;
+    }
+    else
+    {
+        TEXTMETRIC tm;
+        GetTextMetrics( hdc, &tm );
+        defWidth = 8 * tm.tmAveCharWidth;
+    }
+    
+    while (count > 0)
+    {
+        for (i = 0; i < count; i++)
+            if (lpstr[i] == '\t') break;
+        extent = GetTextExtent( hdc, lpstr, i );
+        while ((cTabStops > 0) && (nTabOrg + *lpTabPos <= x + LOWORD(extent)))
+        {
+            lpTabPos++;
+            cTabStops--;
+        }
+        if (i == count)
+            tabPos = x + LOWORD(extent);
+        else if (cTabStops > 0)
+            tabPos = nTabOrg + *lpTabPos;
+        else
+            tabPos = nTabOrg + ((x + LOWORD(extent) - nTabOrg) / defWidth + 1) * defWidth;
+        if (fDisplayText)
+        {
+            RECT r;
+            SetRect( &r, x, y, tabPos, y+HIWORD(extent) );
+            ExtTextOut( hdc, x, y,
+                        GetBkMode(hdc) == OPAQUE ? ETO_OPAQUE : 0,
+                        &r, lpstr, i, NULL );
+        }
+        x = tabPos;
+        count -= i+1;
+        lpstr += i+1;
+    }
+    return MAKELONG(tabPos - start, HIWORD(extent));
+}
+
+/***********************************************************************
  *           TabbedTextOut    (USER.196)
  */
 LONG WINAPI TabbedTextOut( HDC hdc, int x, int y, LPCSTR lpstr,
                              int count, int nb_tabs, int FAR *tabs16, int tab_org )
 {
 	FUNCTION_START
-	return 0;
+//    dprintf_text( stddeb, "TabbedTextOut: %04x %d,%d '%*.*s' %d\n",
+//                  hdc, x, y, count, count, lpstr, count );
+    return TEXT_TabbedTextOut( hdc, x, y, lpstr, count, nb_tabs,
+                               tabs16, tab_org, TRUE );
 }
 
 /***********************************************************************
@@ -398,5 +460,9 @@ DWORD WINAPI GetTabbedTextExtent( HDC hdc, LPCSTR lpstr, int count,
                                     int nb_tabs, LPINT tabs16 )
 {
 	FUNCTION_START
-    return 0;
+//    dprintf_text( stddeb, "GetTabbedTextExtent: %04x '%*.*s' %d\n",
+//                  hdc, count, count, lpstr, count );
+    return TEXT_TabbedTextOut( hdc, 0, 0, lpstr, count, nb_tabs,
+                               tabs16, 0, FALSE );
 }
+

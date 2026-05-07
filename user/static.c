@@ -49,7 +49,7 @@ static pfPaint staticPaintFunc[LAST_STATIC_TYPE+1] =
 static HICON STATIC_SetIcon( WND FAR *wndPtr, HICON hicon )
 {
     HICON prevIcon;
-    STATICINFO FAR *infoPtr = (STATICINFO FAR *)wndPtr->wExtra;
+    STATICINFO  *infoPtr = (STATICINFO *)wndPtr->wExtra;
 
     if ((wndPtr->dwStyle & 0x0f) != SS_ICON) return 0;
     prevIcon = infoPtr->hIcon;
@@ -86,13 +86,13 @@ LONG WINAPI StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		CREATESTRUCT FAR * createStruct = (CREATESTRUCT FAR *)lParam;
 		if (createStruct->lpszName)
                 {
-			HICON hicon;
+			HICON hIcon;
 			TRACE("static 1");
-                    hicon = LoadIcon( createStruct->hInstance,
+                    hIcon = LoadIcon( createStruct->hInstance,
                                             createStruct->lpszName );
-                    if (!hicon)  /* Try OEM icon (FIXME: is this right?) */
-                        hicon = LoadIcon( 0, createStruct->lpszName );
-                    STATIC_SetIcon( wndPtr, hicon );
+                    if (!hIcon)  /* Try OEM icon (FIXME: is this right?) */
+                        hIcon = LoadIcon( 0, createStruct->lpszName );
+                    STATIC_SetIcon( wndPtr, hIcon );
                 }
                 return 1;
             }
@@ -197,6 +197,12 @@ static void STATIC_PaintTextfn( WND FAR *wndPtr, HDC hdc )
 
     GetClientRect( wndPtr->hwndSelf, &rc);
     text = LocalLock( wndPtr->hText );
+
+if (!text) {
+    TRACE("STATIC_PaintTextfn: hText=%p, text=NULL\n", wndPtr->hText);
+} else {
+    TRACE("text='%s'\n", text);
+}
 
     switch (style & 0x0000000F)
     {

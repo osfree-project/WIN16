@@ -36,7 +36,7 @@ Optimal function prolog/epilog for USER.EXE
 ===========================================
 
 ; --- Prolog --- 
-mov     ax, DGROUP  ; Load USER.EXE DGROUP
+mov     ax, DGROUP  ; Load USER.EXE DGROUP <- this in memory. but in binary file it push ds/pop ax/nop or similar
 inc     bp          ; mark far return address
 push    bp          ; prepare stack frame
 mov     bp, sp
