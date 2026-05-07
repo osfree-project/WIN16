@@ -51,3 +51,21 @@ dec     bp          ; restore BP
 retf                ; return
 
 Such prolog/epilog works in Win 3.0 and later.
+
+inc bp/dec bp used to mark far call. Used by real-mode kernel and by debuggers to determine far call.
+mov ax, DGROUP safe to be patched by real mode kernel, if needed.
+
+Original windows prolog/epilogue
+================================
+
+; --- Prolog --- 
+call far _FFFE_FARFRAME
+db  0
+db  0
+; --- Function code ---
+; ...
+; --- Epilog ---
+retn                ; return
+
+_FFFE_FARFRAME is a method in original windows to make prolog/epilog smaller. prolog size is a 7 bytes length and epilog is a 1 byte in size.
+_FFFE_FARFRAME modifies stack frame and sets near return address point to restore stack frame code.
