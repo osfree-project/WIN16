@@ -58,6 +58,13 @@
 
 #define NB_DCE    5  /* Number of DCEs created at startup */
 
+/* DCE Heap operation macros */
+#define DCE_HEAP_ENTER()  { PushDS(); SetUserHeapDS(); }
+#define DCE_HEAP_LEAVE()  { PopDS(); }
+#define DCE_HEAP_ALLOC(size)   LocalAlloc(LHND, (size))
+#define DCE_HEAP_LOCK(handle)  LocalLock(handle)
+#define DCE_HEAP_UNLOCK(handle) LocalUnlock(handle)
+#define DCE_HEAP_FREE(handle)  LocalFree(handle)
 
 void DumpHeader(LPGDIOBJHDR goh)
 	{
@@ -238,8 +245,6 @@ HANDLE FAR DCE_AllocDCE(DCE_TYPE type)
 
 	FUNCTION_START
 
-	retVal=0;
-
 	retVal = LocalAlloc(LHND, sizeof(DCE));
 	if (retVal)
 	{
@@ -247,7 +252,7 @@ HANDLE FAR DCE_AllocDCE(DCE_TYPE type)
 		if (dce)
 		{
 
-			dce->hDC = CreateDC( DISPLAY, NULL, NULL, NULL);
+			dce->hDC = CreateDC(DISPLAY, NULL, NULL, NULL);
 			TRACE("hDC=0x%04x", dce->hDC);
 
 			if (dce->hDC)
@@ -278,13 +283,22 @@ HANDLE FAR DCE_AllocDCE(DCE_TYPE type)
 }
 
 
-/***********************************************************************
+/**
  *           DCE_FreeDCE
+ *
+ * @brief Free a DCE
+ *
+ * Removes the DCE from the global linked list, deletes the associated GDI DC,
+ * and frees the DCE memory from the USER local heap.
+ *
+ * @param hdce  Handle to the DCE to free
  */
 VOID FAR DCE_FreeDCE(HANDLE hdce)
 {
 	DCE * dce;
 	HANDLE *handle = &firstDCE;
+
+	FUNCTION_START
 
 	if (!(dce = (DCE *) LocalLock(hdce))) return;
 
@@ -298,62 +312,22 @@ VOID FAR DCE_FreeDCE(HANDLE hdce)
 	DeleteDC( dce->hDC );
 	LocalUnlock(hdce);
 	LocalFree(hdce);
+
+	FUNCTION_END
 }
 
-
-
-#if 0
-static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT FAR *lprect )
-{
-    int xoffset, yoffset;
-	int addX, addY;
-    WND *childPtr = NULL;  // для хранения предыдущего окна
-
-    *lprect = clientArea ? wndPtr->rectClient : wndPtr->rectWindow;
-    xoffset = lprect->left;
-    yoffset = lprect->top;
-
-    if (!(wndPtr->dwStyle & WS_VISIBLE) || (wndPtr->flags & WIN_NO_REDRAW))
-    {
-        SetRectEmpty( lprect );
-        return FALSE;
-    }
-
-    while (wndPtr->parent)
-    {
-        childPtr = wndPtr;               // запоминаем текущее окно (дочернее для следующего родителя)
-        wndPtr = wndPtr->parent;         // переходим к родителю
-
-        if (!(wndPtr->dwStyle & WS_VISIBLE) ||
-            (wndPtr->flags & WIN_NO_REDRAW) ||
-            (wndPtr->dwStyle & WS_ICONIC))
-        {
-            SetRectEmpty( lprect );
-            return FALSE;
-        }
-
-        // Правильное смещение: положение дочернего окна + смещение клиентской области родителя
-        addX = childPtr->rectWindow.left + wndPtr->rectClient.left;
-        addY = childPtr->rectWindow.top  + wndPtr->rectClient.top;
-
-        xoffset += addX;
-        yoffset += addY;
-        OffsetRect( lprect, addX, addY );
-
-        if (!IntersectRect( lprect, lprect, &wndPtr->rectClient ))
-            return FALSE;
-    }
-
-    OffsetRect( lprect, -xoffset, -yoffset );
-    return TRUE;
-}
-#endif 
-/***********************************************************************
+/**
  *           DCE_GetVisRect
  *
- * Calc the visible rectangle of a window, i.e. the client or
- * window area clipped by the client area of all ancestors.
- * Return FALSE if the visible region is empty.
+ * @brief Calculate the visible rectangle of a window
+ *
+ * Computes the visible portion of a window (client or whole-window area) after
+ * clipping by all ancestor windows. The result is in window-relative coordinates.
+ *
+ * @param wndPtr      Pointer to the window structure (must be locked)
+ * @param clientArea  If TRUE, use client area; otherwise use whole-window area
+ * @param lprect      Output rectangle (window-relative visible area)
+ * @return TRUE if visible area is non-empty, FALSE otherwise
  */
 static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT FAR *lprect )
 {
@@ -393,14 +367,21 @@ static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT FAR *lprect )
     return TRUE;
 }
 
-/***********************************************************************
+/**
  *           DCE_ClipWindows
  *
- * Go through the linked list of windows from hwndStart to hwndEnd,
- * removing from the given region the rectangle of each window offset
- * by a given amount.  The new region is returned, and the original one
- * is destroyed.  Used to implement DCX_CLIPSIBLINGS and
- * DCX_CLIPCHILDREN styles.
+ * @brief Subtract sibling/child windows from a region
+ *
+ * Iterates through a range of windows (from pWndStart to pWndEnd, exclusive
+ * of pWndEnd) and subtracts each visible window's rectangle from the given
+ * region. The rectangles are offset by (xoffset, yoffset) before subtraction.
+ *
+ * @param pWndStart  First window in the range (inclusive)
+ * @param pWndEnd    Window at which to stop (exclusive)
+ * @param hrgn       Region to modify (destroyed on failure)
+ * @param xoffset    X offset for window rectangles
+ * @param yoffset    Y offset for window rectangles
+ * @return Modified region on success, 0 on failure
  */
 static HRGN DCE_ClipWindows( WND *pWndStart, WND *pWndEnd,
                              HRGN hrgn, int xoffset, int yoffset )
@@ -432,12 +413,18 @@ static HRGN DCE_ClipWindows( WND *pWndStart, WND *pWndEnd,
 }
 
 
-/***********************************************************************
+/**
  *           DCE_GetVisRgn
  *
- * Return the visible region of a window, i.e. the client or window area
- * clipped by the client area of all ancestors, and then optionally
- * by siblings and children.
+ * @brief Generate the visible region of a window
+ *
+ * Creates a region representing the visible area of a window, taking into
+ * account clipping by ancestors and, optionally, siblings and children as
+ * specified by the DCX flags.
+ *
+ * @param hwnd   Handle to the window
+ * @param flags  DCX_* flags (DCX_WINDOW, DCX_CLIPCHILDREN, DCX_CLIPSIBLINGS)
+ * @return Handle to a new region (caller must delete it), or 0 on failure
  */
 HRGN DCE_GetVisRgn( HWND hwnd, WORD flags )
 {
@@ -505,11 +492,19 @@ HRGN DCE_GetVisRgn( HWND hwnd, WORD flags )
     return hrgn;
 }
 
-/***********************************************************************
+/**
  *           DCE_SetDrawable
  *
- * Set the origin and dimensions for the DC associated to
- * a given window.
+ * @brief Set the drawable origin for a DC based on its associated window
+ *
+ * Computes the screen origin for the DC's drawing surface (window client area
+ * or whole window) and sets it using SetDCOrg. Also stores the origin in the
+ * DCE for later use (e.g., region offsetting).
+ *
+ * @param dce     Pointer to the DCE (must be locked)
+ * @param wndPtr  Pointer to the window structure (or NULL for screen DC)
+ * @param hdc     Handle to the GDI DC
+ * @param flags   DCX_* flags (DCX_WINDOW, etc.)
  */
 static void DCE_SetDrawable(DCE *dce, WND *wndPtr, HDC hdc, WORD flags )
 {
@@ -571,12 +566,29 @@ static void DCE_SetDrawable(DCE *dce, WND *wndPtr, HDC hdc, WORD flags )
 	FUNCTION_END
 }
 
-//#define NO_CACHE_DC
-
-/***********************************************************************
+/**
  *           GetDCEx    (USER.359)
  *
- * Unimplemented flags: DCX_LOCKWINDOWUPDATE
+ * @brief Extended GetDC function (USER.359)
+ *
+ * Retrieves a device context for the specified window, with advanced options
+ * for clipping, caching, and region intersection. This is the core function
+ * behind GetDC and GetWindowDC.
+ *
+ * Supported flags (DCX_*):
+ * - DCX_WINDOW: Use whole window instead of client area
+ * - DCX_CACHE: Use a cached DC rather than a window-specific one
+ * - DCX_CLIPCHILDREN: Exclude child windows from the visible region
+ * - DCX_CLIPSIBLINGS: Exclude overlapping siblings
+ * - DCX_PARENTCLIP: Use parent's visible region (for child windows)
+ * - DCX_USESTYLE: Derive flags from window class/style
+ * - DCX_INTERSECTRGN / DCX_EXCLUDERGN: Combine with a supplied clip region
+ * - DCX_LOCKWINDOWUPDATE (unimplemented)
+ *
+ * @param hwnd       Handle to the window (NULL for screen DC)
+ * @param hrgnClip   Handle to a region for intersection/exclusion (optional)
+ * @param flags      Combination of DCX_* flags
+ * @return Handle to the device context, or 0 on failure
  */
 HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 {
@@ -736,8 +748,15 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 }
 
 
-/***********************************************************************
+/**
  *           GetDC    (USER.66)
+ *
+ * @brief Get a device context for a window (USER.66)
+ *
+ * Equivalent to GetDCEx(hwnd, 0, DCX_USESTYLE).
+ *
+ * @param hwnd  Handle to the window (NULL for screen DC)
+ * @return Handle to the device context
  */
 HDC WINAPI GetDC(HWND hwnd)
 {
@@ -749,8 +768,16 @@ HDC WINAPI GetDC(HWND hwnd)
 }
 
 
-/***********************************************************************
+/**
  *           GetWindowDC    (USER.67)
+ *
+ * @brief Get a device context for the whole window (including non-client area) (USER.67)
+ *
+ * Equivalent to GetDCEx with DCX_CACHE | DCX_WINDOW, and optionally
+ * DCX_CLIPSIBLINGS if the window style indicates it.
+ *
+ * @param hWnd  Handle to the window
+ * @return Handle to the device context
  */
 HDC WINAPI GetWindowDC(/* in */ HWND hWnd)
 {
@@ -780,9 +807,18 @@ HDC WINAPI GetWindowDC(/* in */ HWND hWnd)
 }
 
 
-/***********************************************************************
- *           ReleaseDC    (USER.68)
+/**
+ * @brief Release a device context obtained via GetDC or GetWindowDC (USER.68)
+ *
+ * If the DC belongs to a cache DCE, it is marked as unused and its state is
+ * reset to the saved default. For other DCEs (e.g., private DCs), this function
+ * may have no effect (they are not released back to a pool).
+ *
+ * @param hwnd  Handle to the window (may be ignored)
+ * @param hdc   Handle to the device context to release
+ * @return 1 on success, 0 on failure
  */
+
 int WINAPI ReleaseDC(HWND hwnd, HDC hdc)
 {
 	HANDLE hdce;
@@ -825,15 +861,6 @@ int WINAPI ReleaseDC(HWND hwnd, HDC hdc)
 		SetDCState(dce->hDC, defaultDCstate);
 		DumpDC(dce->hDC);
 		SetMapMode(dce->hDC, MM_TEXT);
-		TRACE("1");
-//		SetViewportOrgEx(dce->hDC, 0, 0, NULL);
-		TRACE("2");
-//		SetWindowOrgEx(dce->hDC, 0, 0, NULL);
-		TRACE("3");
-//		SetViewportExtEx(dce->hDC, 1, 1, NULL);
-		TRACE("4");
-//		SetWindowExtEx(dce->hDC, 1, 1, NULL);
-		TRACE("5");
 		SetDCOrg(dce->hDC, 0, 0);
 		TRACE("6");
 		DumpDC(dce->hDC);
@@ -850,15 +877,20 @@ int WINAPI ReleaseDC(HWND hwnd, HDC hdc)
 
 #pragma code_seg( "INIT_TEXT" );
 
-/***********************************************************************
- *           DCE_Init
+/**
+ * @brief Initialise the DCE subsystem
+ *
+ * Called during USER initialisation. Creates NB_DCE (5) cache DCEs and saves
+ * the default DC state (defaultDCstate) from the first created DC for later
+ * resetting of cache DCs.
  */
 VOID FAR DCE_Init()
 {
     int i;
     HANDLE handle;
     DCE * dce;
-        
+
+	FUNCTION_START        
     for (i = 0; i < NB_DCE; i++)
     {
 	if (!(handle = DCE_AllocDCE(DCE_CACHE_DC))) return;
@@ -870,6 +902,7 @@ VOID FAR DCE_Init()
 	}
 	LocalUnlock(handle);
     }
+	FUNCTION_END
 }
 
 #pragma code_seg();

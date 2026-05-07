@@ -19,10 +19,10 @@ License along with this library; if not, see
 #include "user.h"
 #include "syscolor.h"
 
+HGLOBAL ghGlobalAtomTable; // Handle of Global Atom Table
+
 /* Global variables in code segment to be accessable without DS touch */
-WORD __based(__segname("_TEXT")) GlobalAtomTable_Selector; // Selector of Global Atom Table
 WORD __based(__segname("_TEXT")) USER_HeapSel = 0;  /* USER heap selector (hinstance) */
-HANDLE __based(__segname("_TEXT")) firstDCE = 0;
 HANDLE __based(__segname("_TEXT")) hGDI = 0; /* Handle of GDI module */
 HMODULE hModuleWin = 0; /* Handle of USER module */
 HINSTANCE hInstanceDisplay = 0; /* hInstance of DISPLAY module */
@@ -231,4 +231,5 @@ BYTE KeyStateTable[256];
 BYTE AsyncKeyStateTable[256];
 
 /* dce.ih */
+HANDLE __based(__segname("_TEXT")) firstDCE = 0;
 HDC defaultDCstate = 0;

@@ -370,10 +370,11 @@ struct tagMOUSEINFO {
 	WORD msYRes;// y resolution
 } MOUSEINFO;
 
-
+/* Global Atom table */
+extern HGLOBAL ghGlobalAtomTable; /* Handle of Global Atom Table */
+VOID WINAPI InitGlobalAtomTable(void);
 
 /* Global variables in code segment to be accessable without DS touch */
-extern WORD __based(__segname("_TEXT")) GlobalAtomTable_Selector; // Selector of Global Atom Table
 extern WORD __based(__segname("_TEXT")) USER_HeapSel;  /* USER heap selector  */
 extern HANDLE __based(__segname("_TEXT")) firstDCE;
 extern HANDLE __based(__segname("_TEXT")) hGDI;
@@ -459,8 +460,6 @@ BOOL WINAPI MakeObjectPrivate(HANDLE hObject, BOOL bPrivate);
 
 #define GetStockBrush(i) ((HBRUSH)GetStockObject(i))
 
-VOID WINAPI GlobalInitAtom(void);
-
 void far * _fmemcpy(void far * s1, void const far * s2, unsigned length);
 void far * _fmemset (void far *start, int c, unsigned int len);
 int _islower(int c);
@@ -500,8 +499,6 @@ extern  void          SetDS( unsigned short );
         "mov    ds,ax"          \
         parm                   [ax];
 
-// Macro to switch DS to Global Atom Table selector
-#define  SetGlobalTableDS() SetDS(GlobalAtomTable_Selector)
 // Macro to switch DS to Global Atom Table selector
 #define  SetUserHeapDS() SetDS(USER_HeapSel)
 
@@ -697,7 +694,6 @@ typedef struct tagWND
 #define WIN_NO_REDRAW          0x0020 /* WM_SETREDRAW called for this window */
 #define WIN_GOT_SIZEMSG        0x0040 /* WM_SIZE has been sent to the window */
 #define WIN_NCACTIVATED        0x0080 /* last WM_NCACTIVATE was positive */
-//#define WIN_MANAGED            0x0100 /* Window managed by the X wm */
 
 #define WIN_CLASS_INFO(wndPtr)   (CLASS_FindClassPtr((wndPtr)->hClass)->wc)
 #define WIN_CLASS_STYLE(wndPtr)  (WIN_CLASS_INFO(wndPtr).style)
@@ -806,11 +802,10 @@ extern  void          SetDS( unsigned short );
 
 char far * lstrchr (const char far *s, int c);
 int latoi(const char far *h);
-
+LPSTR WINAPI lstrcat(LPSTR dst, LPCSTR t);
 
 BOOL FAR MSG_InternalGetMessage( LPMSG msg, HWND hwnd, HWND hwndOwner, short code,
 			     WORD flags, BOOL sendIdle );
-
 
 extern COLORREF SysColors[];
 
@@ -823,4 +818,3 @@ extern BOOL AsyncMouseButtonsStates[3];
 extern BYTE KeyStateTable[256];
 extern BYTE AsyncKeyStateTable[256];
 
-LPSTR WINAPI lstrcat( LPSTR dst, LPCSTR t );

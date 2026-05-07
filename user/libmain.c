@@ -110,7 +110,6 @@ VOID WINAPI RW_RegisterMenus()
 	pWndClass->lpszClassName = POPUPMENU_CLASS_ATOM;
 	pWndClass->hCursor = LoadCursor(0, IDC_ARROW);
 	pWndClass->lpfnWndProc = PopupMenuWndProc;
-//	pWndClass->hInstance = hInstance;
 	pWndClass->style = CS_GLOBALCLASS | CS_SAVEBITS;
 	pWndClass->hbrBackground = COLOR_BACKGROUND;
 	RegisterClass(pWndClass);
@@ -137,7 +136,6 @@ VOID WINAPI RW_RegisterButton()
 	pWndClass->hCursor = LoadCursor(0, IDC_ARROW);
 	pWndClass->lpfnWndProc = ButtonWndProc;
 	pWndClass->cbWndExtra = sizeof(BUTTONINFO);
-//	pWndClass->hInstance = hInstance;
 	pWndClass->style = CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC;
 	pWndClass->hbrBackground = COLOR_WINDOW;
 	RegisterClass(pWndClass);
@@ -164,7 +162,6 @@ VOID WINAPI RW_RegisterStatic()
 	pWndClass->hCursor = LoadCursor(0, IDC_ARROW);
 	pWndClass->lpfnWndProc = StaticWndProc;
 	pWndClass->cbWndExtra = sizeof(STATICINFO);
-//	pWndClass->hInstance = hInstance;
 	pWndClass->style = CS_GLOBALCLASS | CS_PARENTDC;
 	pWndClass->hbrBackground = COLOR_WINDOW;
 	RegisterClass(pWndClass);
@@ -191,7 +188,6 @@ VOID WINAPI RW_RegisterDlg()
 	pWndClass->hCursor = LoadCursor(0, IDC_ARROW);
 	pWndClass->lpfnWndProc = DefDlgProc;
 	pWndClass->cbWndExtra = DLGWINDOWEXTRA;
-//	pWndClass->hInstance = hInstance;
 	pWndClass->style = CS_GLOBALCLASS | CS_DBLCLKS;
 	pWndClass->hbrBackground = COLOR_WINDOW;
 	RegisterClass(pWndClass);
@@ -969,7 +965,7 @@ BOOL PASCAL LibMain(WORD wHeapSeg, HINSTANCE hInstance , WORD wHeapSize)
 		hwndFocus = 0; 
 
 		// Create the global atom table.
-		GlobalInitAtom();
+		InitGlobalAtomTable();
 
 		hbitmapClose = LoadBitmap(0, MAKEINTRESOURCE(OBM_CLOSE));
 		if (!hbitmapClose) TRACE("Failed to load OBM_CLOSE");

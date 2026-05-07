@@ -3,22 +3,22 @@
  *
  * Copyright 1993, 1996 Alexandre Julliard
  * Copyright 2002 Patrik Stridvall
-   Copyright 1997 Willows Software, Inc. 
+ * Copyright 1997 Willows Software, Inc. 
  *
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, see
-<https://www.gnu.org/licenses/>.
-
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
+ *
  */
 
 #include <string.h>
@@ -28,8 +28,7 @@ License along with this library; if not, see
 /***********************************************************************
  *		EqualRect (USER.244)
  */
-BOOL WINAPI
-EqualRect(const RECT far *r1, const RECT far *r2)
+BOOL WINAPI EqualRect(const RECT far *r1, const RECT far *r2)
 {
 	return ((r1->left   == r2->left) &&
 		(r1->top    == r2->top)  &&
@@ -41,8 +40,7 @@ EqualRect(const RECT far *r1, const RECT far *r2)
 /***********************************************************************
  *		CopyRect (USER.74)
  */
-void WINAPI
-CopyRect(LPRECT d, const RECT far *s)
+void WINAPI CopyRect(LPRECT d, const RECT far *s)
 {
 	d->left 	= s->left;
 	d->top 		= s->top;
@@ -54,8 +52,7 @@ CopyRect(LPRECT d, const RECT far *s)
 /***********************************************************************
  *		InflateRect (USER.78)
  */
-void WINAPI
-InflateRect(LPRECT r, int x, int y)
+void WINAPI InflateRect(LPRECT r, int x, int y)
 {
 	r->left   -= x;
 	r->right  += x;
@@ -92,25 +89,8 @@ PtInRect(const RECT far *lpr,POINT pt)
 /***********************************************************************
  *		IntersectRect (USER.79)
  */
-//BOOL WINAPI
-//IntersectRect(LPRECT lpDestRect, const RECT far *lpSrc1Rect,
-//	      const RECT far *lpSrc2Rect)
 BOOL WINAPI IntersectRect( LPRECT dest, const RECT FAR *src1, const RECT FAR * src2 )
 {
-/*
-    lpDestRect->left = max(lpSrc1Rect->left, lpSrc2Rect->left);
-    lpDestRect->top = max(lpSrc1Rect->top, lpSrc2Rect->top);
-    lpDestRect->right = min(lpSrc1Rect->right, lpSrc2Rect->right);
-    lpDestRect->bottom = min(lpSrc1Rect->bottom, lpSrc2Rect->bottom);
-
-    if ((lpDestRect->right <= lpDestRect->left) ||
-	(lpDestRect->bottom <= lpDestRect->top)) {
-	SetRectEmpty(lpDestRect);
-	return FALSE;
-    }
-    else
-	return TRUE;
-*/
     if (IsRectEmpty(src1) || IsRectEmpty(src2) ||
 	(src1->left >= src2->right) || (src2->left >= src1->right) ||
 	(src1->top >= src2->bottom) || (src2->top >= src1->bottom))
@@ -129,8 +109,7 @@ BOOL WINAPI IntersectRect( LPRECT dest, const RECT FAR *src1, const RECT FAR * s
 /***********************************************************************
  *		SubtractRect (USER.373)
  */
-BOOL    WINAPI 
-SubtractRect(RECT FAR* lpDestRect, const RECT FAR*lprc1, const RECT FAR*lprc2)
+BOOL WINAPI SubtractRect(RECT FAR* lpDestRect, const RECT FAR*lprc1, const RECT FAR*lprc2)
 {
 	RECT	rc;
 
@@ -180,20 +159,16 @@ SubtractRect(RECT FAR* lpDestRect, const RECT FAR*lprc1, const RECT FAR*lprc2)
  *
  * Bug compat: Windows checks for 0 or negative width/height.
  */
-BOOL WINAPI
-IsRectEmpty(const RECT far *lprcRect)
+BOOL WINAPI IsRectEmpty(const RECT far *lprcRect)
 {
     if (!lprcRect) return(TRUE);
     return ((lprcRect->left == lprcRect->right) || (lprcRect->top == lprcRect->bottom));
-//    return ((lprcRect->right <= lprcRect->left) ||
-//        (lprcRect->bottom <= lprcRect->top));
 }
  
 /***********************************************************************
  *		SetRect (USER.72)
  */
-void WINAPI
-SetRect(LPRECT r, int left, int top, int right, int bottom)
+void WINAPI SetRect(LPRECT r, int left, int top, int right, int bottom)
 {
     r->left     = left;
     r->top      = top;
@@ -204,8 +179,7 @@ SetRect(LPRECT r, int left, int top, int right, int bottom)
 /***********************************************************************
  *		SetRectEmpty (USER.73)
  */
-void WINAPI
-SetRectEmpty(LPRECT lpRect)
+void WINAPI SetRectEmpty(LPRECT lpRect)
 {
     lpRect->left = lpRect->top = lpRect->right = lpRect->bottom = 0;
 }
@@ -213,8 +187,7 @@ SetRectEmpty(LPRECT lpRect)
 /***********************************************************************
  *		UnionRect (USER.80)
  */
-int WINAPI
-UnionRect(LPRECT lpDestRect, const RECT far *lpSrc1Rect,
+int WINAPI UnionRect(LPRECT lpDestRect, const RECT far *lpSrc1Rect,
 	  const RECT far *lpSrc2Rect)
 {
     BOOL bSrc1Empty, bSrc2Empty;

@@ -32,10 +32,6 @@ typedef DCE FAR	*LPDCE;
 
 extern HDC defaultDCstate;
 
-#define DCE_TEMP_DC  2   /* Temporary DC, not cached */
-
-
-
 typedef struct tagGDIOBJHDR
 {
     HANDLE      hNext;

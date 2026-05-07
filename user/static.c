@@ -71,7 +71,7 @@ static HICON STATIC_SetIcon( WND FAR *wndPtr, HICON hicon )
 LONG WINAPI StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	LONG lResult = 0;
-	WND FAR *wndPtr = WIN_FindWndPtr(hWnd);
+	WND *wndPtr = WIN_FindWndPtr(hWnd);
 	LONG style = wndPtr->dwStyle & 0x0000000F;
         STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
 
