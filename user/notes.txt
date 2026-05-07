@@ -31,3 +31,23 @@ Source code structure
 
 *.h - public headers
 *.ih - implementation private headers
+
+Optimal function prolog/epilog for USER.EXE
+===========================================
+
+; --- Prolog --- 
+mov     ax, DGROUP  ; Load USER.EXE DGROUP
+inc     bp          ; mark far return address
+push    bp          ; prepare stack frame
+mov     bp, sp
+push    ds          ; Save application DS
+mov     ds, ax      ; Set USER.EXE DGROUP
+; --- Function code ---
+; ...
+; --- Epilog ---
+pop     ds          ; Restore application DS
+pop     bp          ; restore stack frame
+dec     bp          ; restore BP
+retf                ; return
+
+Such prolog/epilog works in Win 3.0 and later.
