@@ -70,3 +70,16 @@ retn                ; return
 _FFFE_FARFRAME is a method in original windows to make prolog/epilog smaller. prolog size is a 7 bytes length and epilog is a 1 byte in size.
 _FFFE_FARFRAME modifies stack frame and sets near return address point to restore stack frame code (named FFFE_FarFrameUndo).
 See Undocumented Windows p.452
+
+; --- Prolog --- 
+call far WINFARFRAME
+db  0              ; Size of local variables in words
+db  0              ; Size of function arguments in words
+; --- Function code ---
+; ...
+; --- Epilog ---
+retn                ; return
+
+WINFARFRAME is a method in original windows to make prolog/epilog smaller. prolog size is a 7 bytes length and epilog is a 1 byte in size.
+WINFARFRAME modifies stack frame and sets near return address point to restore stack frame code (named WinFarUndoFrame).
+See Undocumented Windows p.407
