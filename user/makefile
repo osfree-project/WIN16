@@ -6,7 +6,7 @@
 PROJ     = user
 TRGT     = $(PROJ).exe
 DESC     = osFree Janus USER.EXE
-srcfiles = $(p)static$(e) $(p)button$(e) $(p)MessageBox$(e) $(p)keyboard$(e) $(p)display$(e) $(p)capture$(e) $(p)libentry$(e) $(p)libmain$(e) $(p)dce$(e) $(p)desktop$(e) $(p)winpos$(e) $(p)defwnd$(e) $(p)syscolor$(e) $(p)nonclient$(e) $(p)cursor$(e) $(p)queue$(e) $(p)win$(e) $(p)message$(e) $(p)GlobalData1$(e) $(p)div$(e) $(p)hook$(e) $(p)dialog$(e) $(p)defdlg$(e) $(p)Time$(e) $(p)Atoms$(e) $(p)comm$(e) $(p)Caret$(e) $(p)DrawText$(e)  $(p)SysMetrics$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Resources$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)printf$(e) $(p)Menu$(e) $(p)focus$(e) $(p)network$(e) $(p)InitApp$(e) # $(p)Listbox$(e) $(p)StringFunc$(e) 
+srcfiles = $(p)msgnames$(e) $(p)static$(e) $(p)button$(e) $(p)MessageBox$(e) $(p)keyboard$(e) $(p)display$(e) $(p)capture$(e) $(p)libentry$(e) $(p)libmain$(e) $(p)dce$(e) $(p)desktop$(e) $(p)winpos$(e) $(p)defwnd$(e) $(p)syscolor$(e) $(p)nonclient$(e) $(p)cursor$(e) $(p)queue$(e) $(p)win$(e) $(p)message$(e) $(p)GlobalData1$(e) $(p)div$(e) $(p)hook$(e) $(p)dialog$(e) $(p)defdlg$(e) $(p)Time$(e) $(p)Atoms$(e) $(p)comm$(e) $(p)Caret$(e) $(p)DrawText$(e)  $(p)SysMetrics$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Resources$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)printf$(e) $(p)Menu$(e) $(p)focus$(e) $(p)network$(e) $(p)InitApp$(e) # $(p)Listbox$(e) $(p)StringFunc$(e) 
 ADD_COPT = -zls -ms -s -0 -DDEBUG=1 
 ADD_ASMOPT = -ms
 # -s no stack checks
@@ -25,7 +25,7 @@ NOLIBS = 1 # Don't use default libentry
 NODEFAULTLIBS = 1 # Don't use libc
 
 STACKSIZE = 40k
-HEAPSIZE = 45k
+HEAPSIZE = 40k
 
 # linking dll file
 DLL     = 1
@@ -163,6 +163,10 @@ EXPORTS = &
 	SetWindowsHookEx .291, &
 	CallNextHookEx .293, &
 	mouse_event .299, &
+	DesktopWndProc.303, &
+	ButtonWndProc.305, &
+	MenuWndProc.306=PopupMenuWndProc, &
+	DefDlgProc.308, &
 	SignalProc .314, &
 	SysErrorBox .320, &
 	FillWindow .324, &
@@ -265,6 +269,7 @@ EXPORTS = &
 
 IMPORTS = GETEXEVERSION KERNEL.105, &
   GetTaskQueue KERNEL.35, &
+  SetTaskSignalProc KERNEL.38, &
   GETEXEPTR KERNEL.133, &
   LOCALCOUNTFREE KERNEL.161, &
   LOCALHEAPSIZE KERNEL.162, &
@@ -289,6 +294,8 @@ IMPORTS = GETEXEVERSION KERNEL.105, &
   InquireVisRgn  GDI.131, &
   ExcludeVisRect GDI.73, &
   SetDCOrg GDI.117, &
+  Death GDI.121, &
+  ExitKernel KERNEL.2, &
   SetSpeed KEYBOARD.7, &
   KeyboardEnable KEYBOARD.2, &
   MouseEnable MOUSE.2

@@ -428,7 +428,7 @@ extern int CYSize;
 extern int defaultVal;
 
 extern HWND hwndFocus;
-extern HWND HWndDesktop;
+extern HWND hwndDesktop;
 extern HWND HWndSwitch;
 extern HWND HWndRealPopup;
 extern HWND captureWnd;
@@ -444,7 +444,8 @@ extern HLOCAL hTaskManName;
 extern LPSTR PTaskManName;
 
 WORD WINAPI InquireMouse(MOUSEINFO FAR *MouseInfo);
-VOID WINAPI mouse_event(VOID);
+//VOID near cdecl mouse_event(VOID);
+__declspec(naked) void WINAPI mouse_event(void);
 VOID WINAPI MouseEnable(FARPROC proc);
 
 WORD WINAPI InquireDisplay(CURSORINFO FAR *CursorInfo);
@@ -818,3 +819,14 @@ extern BOOL AsyncMouseButtonsStates[3];
 extern BYTE KeyStateTable[256];
 extern BYTE AsyncKeyStateTable[256];
 
+extern BOOL fFirstProgram;
+
+FARPROC WINAPI SetTaskSignalProc(HANDLE hTask, FARPROC lpSignalProc);
+VOID WINAPI SignalProc(HANDLE hModule, UINT code, UINT uExitFn, HINSTANCE hInstance, UINT /*HQUEUE*/ hQueue);
+
+LPSTR WINAPI GetMessageName(UINT msgCode);
+
+
+BOOL MSG_GetHardwareMessage( LPMSG msg );
+VOID WINAPI Death(HDC hdc);
+VOID WINAPI ExitKernel(WORD wCode, WORD wReturnCode);

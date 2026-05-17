@@ -18,8 +18,6 @@ License along with this library; if not, see
 
 #include "user.h"
 
-BOOL first_program = TRUE;
-
 #if 0
 WORD WINAPI InitApp(HINSTANCE hInstance)
 {
@@ -32,11 +30,11 @@ WORD WINAPI InitApp(HINSTANCE hInstance)
   TRACE("InitApp(HINSTANCE=%x)\n\r",hInstance);
   if (first_program)  // // Do only if the first task
   {
-	SetTaskQueue(0, HWndDesktop.hQueue);
+	SetTaskQueue(0, hwndDesktop.hQueue);
 
 	// Plug the queue created for the desktop window with the
 	// current task and expected Win version for this task.
-	queuePtr = MK_FP( HWndDesktop, 0 );
+	queuePtr = MAKELP(hwndDesktop, 0);
 	queuePtr->hTask = GetCurrentTask();
 	queuePtr->ExpWinVersion = GetExeVersion();
   }
@@ -47,16 +45,45 @@ WORD WINAPI InitApp(HINSTANCE hInstance)
 
 #endif
 
+// @todo finish it!!!
+// Windows Internals p.278
+// Undocumented Windows p.379, p.465
 int WINAPI InitApp(HINSTANCE hInstance)
 {
-	int queueSize;
+	WND * pWnd;
+	LPQUEUE lpQueue;
 
 	FUNCTION_START
 
-	/* Create task message queue */
-	queueSize = GetProfileInt( "windows", "DefaultQueueSize", 8 );
-	if (!SetMessageQueue( queueSize )) return 0;
+ 	// if first app then relink queue to it. For now it disabled because Wine based code uses slightly another approach for
+	// desktop creation. @todo relink doesnt wotk because desktop window doesn't have a queue in Wine
+	if (0 & fFirstProgram)
+	{
+		pWnd = WIN_FindWndPtr(hwndDesktop);
+		SetTaskQueue(0, pWnd->hmemTaskQ);
 
+		// Plug the queue created for the desktop window with the
+		// current task and expected Win version for this task.
+		lpQueue = MAKELP(pWnd->hmemTaskQ, 0);
+		lpQueue->OwningTask = GetCurrentTask();
+		lpQueue->ExpWinVersion = GetExeVersion();
+	}
+	else //create new queue
+        {
+		/* Create task message queue */
+		if (!SetMessageQueue( DefQueueSize )) return 0;
+	}
+
+//	SetTaskSignalProc(0, (FARPROC)SignalProc);
+
+	// Set divide by zero interrupt handler
+	//SetDivZero();
+
+	if (fFirstProgram)
+	{
+		fFirstProgram = FALSE;
+	}
+	
 	FUNCTION_END
 
 	return 1;

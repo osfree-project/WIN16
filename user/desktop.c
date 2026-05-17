@@ -152,11 +152,11 @@ static LONG DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc/*, DESKTOPINFO *infoPtr*/ )
  */
 LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
-//	WND FAR *wndPtr = WIN_FindWndPtr( hwnd );
+	WND FAR *wndPtr = WIN_FindWndPtr( hwnd );
 
 	FUNCTION_START
 
-//    DESKTOPINFO *infoPtr = (DESKTOPINFO *)wndPtr->wExtra;
+//	DESKTOPINFO *infoPtr = (DESKTOPINFO *)wndPtr->wExtra;
 
       /* Most messages are ignored (we DON'T call DefWindowProc) */
 

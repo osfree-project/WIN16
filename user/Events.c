@@ -102,24 +102,35 @@ VOID WINAPI keybd_event(VOID)
  * DI  ExtraMessageInfo for 3.1
  */
 
-VOID WINAPI mouse_event(VOID)
+VOID WINAPI mouse_event_impl(WORD EventCodes, WORD hMouse, WORD vMouse, WORD NumButts)
 {
-	WORD EventCodes;
-	WORD hMouse;
-	WORD vMouse;
-	WORD NumButts;
+//	WORD EventCodes;
+//	WORD hMouse;
+//	WORD vMouse;
+//	WORD NumButts;
 	WORD KeyState;
     
-	_asm{
-		mov EventCodes, AX 
-		mov hMouse, BX
-		mov vMouse, CX
-		mov NumButts, DX
-	}
+//	_asm{
+//		mov EventCodes, AX 
+//		mov hMouse, BX
+//		mov vMouse, CX
+//		mov NumButts, DX
+//	}
 
-	PushDS();
+//	PushDS();
 	SetUserHeapDS();
-    
+
+
+//TRACE("mouse_event: AX=0x%04x (MOVE=%d LEFTDOWN=%d LEFTUP=%d RIGHTDOWN=%d RIGHTUP=%d) BX=%d CX=%d",
+//          EventCodes,
+//          (EventCodes & MOUSEEVENTF_MOVE) ? 1 : 0,
+//          (EventCodes & MOUSEEVENTF_LEFTDOWN) ? 1 : 0,
+//          (EventCodes & MOUSEEVENTF_LEFTUP) ? 1 : 0,
+//          (EventCodes & MOUSEEVENTF_RIGHTDOWN) ? 1 : 0,
+//          (EventCodes & MOUSEEVENTF_RIGHTUP) ? 1 : 0,
+//          hMouse, vMouse);
+
+#if 1
 	KeyState=0;
 	if (EventCodes & MOUSEEVENTF_LEFTDOWN)
 	{
@@ -198,8 +209,24 @@ VOID WINAPI mouse_event(VOID)
 	if (EventCodes & MOUSEEVENTF_RIGHTUP) {
 		hardware_event(WM_RBUTTONUP, KeyState, 0, wMouseX, wMouseY, GetTickCount(), 0);
 	}
-    
-	PopDS();
+#endif    
+//	PopDS();
+}
+
+//@todo Это вход из драйвера мыши. Надо сохранить сначала стек, потом переключиться на свой и при возврате - аернуть стек обратно.
+__declspec(naked) void WINAPI mouse_event(void)
+{
+    _asm {
+        ; на входе AX=EventCodes, BX=hMouse, CX=vMouse, DX=NumButts
+	cli
+        push ax          ; EventCodes
+        push bx          ; hMouse
+        push cx          ; vMouse
+        push dx          ; NumButts
+        call mouse_event_impl
+	sti
+        retf             ; FAR return
+    }
 }
 
 #pragma code_seg();
@@ -324,4 +351,5 @@ VOID WINAPI UserYield(VOID)
 	MSG msg;
 	FUNCTION_START
 	//PeekMessage( &msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE );
+	FUNCTION_END
 }

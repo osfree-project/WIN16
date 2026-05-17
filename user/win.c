@@ -140,7 +140,7 @@ void WIN_WalkWindows( HWND hwnd, int indent )
     CLASS *classPtr;
     char className[80];
 
-    ptr = hwnd ? WIN_FindWndPtr( hwnd ) : WIN_FindWndPtr(HWndDesktop);
+    ptr = hwnd ? WIN_FindWndPtr( hwnd ) : WIN_FindWndPtr(hwndDesktop);
     if (!ptr)
     {
         TRACE("*** Invalid window handle\n" );
@@ -229,7 +229,7 @@ HWND WIN_FindWinToRepaint( HWND hwnd, HQUEUE hQueue )
     WND *pWnd;
 
     /* Note: the desktop window never gets WM_PAINT messages */
-    pWnd = hwnd ? WIN_FindWndPtr( hwnd ) : WIN_FindWndPtr(HWndDesktop)->child;
+    pWnd = hwnd ? WIN_FindWndPtr( hwnd ) : WIN_FindWndPtr(hwndDesktop)->child;
 
     for ( ; pWnd ; pWnd = pWnd->next )
     {
@@ -370,16 +370,16 @@ BOOL FAR WIN_CreateDesktopWindow(void)
     if (!(hclass = CLASS_FindClassByName(DESKTOP_CLASS_ATOM, 0, &classPtr )))
 	return FALSE;
 
-    HWndDesktop = LocalAlloc(LMEM_FIXED, sizeof(WND)+classPtr->wc.cbWndExtra);
-    if (!HWndDesktop) return FALSE;
-    pWndDesktop = (WND *) LocalLock( HWndDesktop );
+    hwndDesktop = LocalAlloc(LMEM_FIXED, sizeof(WND)+classPtr->wc.cbWndExtra);
+    if (!hwndDesktop) return FALSE;
+    pWndDesktop = (WND *) LocalLock( hwndDesktop );
 
     pWndDesktop->next              = NULL;
     pWndDesktop->child             = NULL;
     pWndDesktop->parent            = NULL;
     pWndDesktop->owner             = NULL;
     pWndDesktop->dwMagic           = WND_MAGIC;
-    pWndDesktop->hwndSelf          = HWndDesktop;
+    pWndDesktop->hwndSelf          = hwndDesktop;
     pWndDesktop->hClass            = hclass;
     pWndDesktop->hInstance         = 0;
     pWndDesktop->rectWindow.left   = 0;
@@ -392,9 +392,9 @@ BOOL FAR WIN_CreateDesktopWindow(void)
     pWndDesktop->ptIconPos.y       = -1;
     pWndDesktop->ptMaxPos.x        = -1;
     pWndDesktop->ptMaxPos.y        = -1;
-    pWndDesktop->hmemTaskQ         = 0; /* Desktop does not belong to a task */
+    pWndDesktop->hmemTaskQ         = 0; /* Desktop does not belong to a task. Will me mapped in InitApp */
     pWndDesktop->hrgnUpdate        = 0;
-    pWndDesktop->hwndLastActive    = HWndDesktop;
+    pWndDesktop->hwndLastActive    = hwndDesktop;
     pWndDesktop->lpfnWndProc       = classPtr->wc.lpfnWndProc;
     pWndDesktop->dwStyle           = WS_VISIBLE | WS_CLIPCHILDREN |
                                      WS_CLIPSIBLINGS;
@@ -407,11 +407,11 @@ BOOL FAR WIN_CreateDesktopWindow(void)
     pWndDesktop->flags             = 0;
     pWndDesktop->hSysMenu          = 0;
     pWndDesktop->hProp	      = 0;
-    SendMessage( HWndDesktop, WM_NCCREATE, 0, 0 );
-    if ((hdc = GetDC( HWndDesktop )) != 0)
+    SendMessage( hwndDesktop, WM_NCCREATE, 0, 0 );
+    if ((hdc = GetDC( hwndDesktop )) != 0)
     {
-        SendMessage( HWndDesktop, WM_ERASEBKGND, hdc, 0 );
-        ReleaseDC( HWndDesktop, hdc );
+        SendMessage( hwndDesktop, WM_ERASEBKGND, hdc, 0 );
+        ReleaseDC( hwndDesktop, hdc );
     }
     return TRUE;
 }
@@ -498,7 +498,7 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
     wndPtr = (WND *) LocalLock( hwnd );
     wndPtr->next           = NULL;
     wndPtr->child          = NULL;
-    wndPtr->parent         = (style & WS_CHILD) ? WIN_FindWndPtr( parent ) : WIN_FindWndPtr(HWndDesktop);
+    wndPtr->parent         = (style & WS_CHILD) ? WIN_FindWndPtr( parent ) : WIN_FindWndPtr(hwndDesktop);
     wndPtr->owner          = (style & WS_CHILD) ? NULL : WIN_FindWndPtr(WIN_GetTopParent(parent));
     wndPtr->dwMagic        = WND_MAGIC;
     wndPtr->hwndSelf       = hwnd;
@@ -650,7 +650,7 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
     
       /* Initialisation */
 
-    if (hwnd == HWndDesktop) return FALSE; /* Can't destroy desktop*/
+    if (hwnd == hwndDesktop) return FALSE; /* Can't destroy desktop*/
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
     if (!(classPtr = CLASS_FindClassPtr( wndPtr->hClass ))) return FALSE;
 
@@ -730,7 +730,7 @@ HWND WINAPI FindWindow( LPCSTR ClassMatch, LPCSTR TitleMatch )
     }
     else hclass = 0;
 
-    wndPtr = ((WND *)LocalLock(HWndDesktop))->child;
+    wndPtr = ((WND *)LocalLock(hwndDesktop))->child;
     while (wndPtr)
     {
 	if (!hclass || (wndPtr->hClass == hclass))
@@ -758,7 +758,7 @@ WND *WIN_GetDesktop(void)
 
 	PushDS();
 	SetDS(USER_HeapSel);
-	retVal=(WND *)LocalLock(HWndDesktop);
+	retVal=(WND *)LocalLock(hwndDesktop);
 	PopDS();
 
 	return retVal;
@@ -774,7 +774,7 @@ HWND WINAPI GetDesktopWindow(void)
 
 	PushDS();
 	SetUserHeapDS();
-	retVal=HWndDesktop;
+	retVal=hwndDesktop;
 	PopDS();
 
 	return retVal;
@@ -793,7 +793,7 @@ HWND WINAPI GetDesktopHwnd(void)
 
 	PushDS();
 	SetUserHeapDS();
-	retVal=HWndDesktop;
+	retVal=hwndDesktop;
 	PopDS();
 
 	return retVal;
@@ -1153,9 +1153,9 @@ HWND WINAPI WINAPI GetNextWindow( HWND hwnd, UINT flag )
  */
 void WINAPI ShowOwnedPopups( HWND owner, BOOL fShow )
 {
-    WND *pWnd = (WND *)LocalLock(HWndDesktop);
+    WND *pWnd = (WND *)LocalLock(hwndDesktop);
 	pWnd=pWnd->child;
-	LocalUnlock(HWndDesktop);
+	LocalUnlock(hwndDesktop);
     while (pWnd)
     {
         if (pWnd->owner && (pWnd->owner->hwndSelf == owner) &&
@@ -1195,7 +1195,7 @@ BOOL WINAPI EnumWindows( WNDENUMPROC lpEnumFunc, LPARAM lParam )
 
       /* First count the windows */
 
-    pWndDesktop=(WND *)LocalLock(HWndDesktop);
+    pWndDesktop=(WND *)LocalLock(hwndDesktop);
     
     count = 0;
     for (wndPtr = pWndDesktop->child; wndPtr; wndPtr = wndPtr->next) count++;
@@ -1227,7 +1227,7 @@ BOOL WINAPI EnumWindows( WNDENUMPROC lpEnumFunc, LPARAM lParam )
 BOOL WINAPI EnumTaskWindows( HTASK hTask, WNDENUMPROC lpEnumFunc, LPARAM lParam )
 {
     WND *wndPtr;
-    WND *pWndDesktop=(WND *)LocalLock(HWndDesktop);
+    WND *pWndDesktop=(WND *)LocalLock(hwndDesktop);
     HWND *list, *pWnd;
     HLOCAL hlist;
     HANDLE hQueue = GetTaskQueue( hTask );
@@ -1316,7 +1316,7 @@ BOOL WINAPI EnumChildWindows(HWND hwnd, WNDENUMPROC wndenumprc, LPARAM lParam)
 BOOL WINAPI AnyPopup(void)
 {
     WND *wndPtr;
-    WND *pWndDesktop=(WND *)LocalLock(HWndDesktop);
+    WND *pWndDesktop=(WND *)LocalLock(hwndDesktop);
 
     for (wndPtr = pWndDesktop->child; wndPtr; wndPtr = wndPtr->next)
         if (wndPtr->owner && (wndPtr->dwStyle & WS_VISIBLE)) return TRUE;

@@ -364,7 +364,6 @@ VOID WINAPI PostQuitMessage( int exitCode )
 	}
 }
 
-
 /***********************************************************************
  *           GetWindowTask   (USER.224)
  */

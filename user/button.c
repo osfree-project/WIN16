@@ -80,6 +80,9 @@ void GRAPH_DrawReliefRect( HDC hdc, RECT FAR *rect, int highlight_size,
     HBRUSH hbrushOld;
     int i;
 
+    TRACE("Relief: pressed=%d, hHighlight=%04x, hShadow=%04x\n", pressed,
+      sysColorObjects.hbrushBtnHighlight, sysColorObjects.hbrushBtnShadow);
+
     hbrushOld = SelectObject( hdc, pressed ? sysColorObjects.hbrushBtnShadow :
 			                  sysColorObjects.hbrushBtnHighlight );
     for (i = 0; i < highlight_size; i++)
@@ -111,6 +114,10 @@ LRESULT WINAPI ButtonWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	WND *wndPtr = WIN_FindWndPtr(hWnd);
 	LONG style = wndPtr->dwStyle & 0x0000000F;
         BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
+
+    /* Трассировка всех сообщений для отладки */
+    TRACE(__FUNCTION__ ": hwnd=%04x msg=%Fs wParam=%04x lParam=%08lx",
+          hWnd, GetMessageName(uMsg), wParam, lParam);
 
 	switch (uMsg) {
 	case WM_GETDLGCODE:
@@ -160,7 +167,6 @@ LRESULT WINAPI ButtonWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     PAINTSTRUCT ps;
                     HDC hdc = BeginPaint( hWnd, &ps );
                     (btnPaintFunc[style])( wndPtr, hdc, ODA_DRAWENTIRE );
-//BUG?                    ReleaseDC( hWnd, hdc );
 		    EndPaint(hWnd, &ps);
                 }
 		break;
@@ -213,8 +219,18 @@ LRESULT WINAPI ButtonWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 break;
 
         case WM_NCHITTEST:
+{
+        RECT rc;
+        POINT pt;
+        pt.x = LOWORD(lParam);
+        pt.y = HIWORD(lParam);
+        GetClientRect(hWnd, &rc);
+        TRACE("WM_NCHITTEST: pt=(%d,%d), client=(%d,%d,%d,%d)\n",
+              pt.x, pt.y, rc.left, rc.top, rc.right, rc.bottom);
+    }
                 if(style == BS_GROUPBOX) return HTTRANSPARENT;
                 lResult = DefWindowProc(hWnd, uMsg, wParam, lParam);
+		TRACE("WM_NCHITTEST: result=%d\n", lResult);
                 break;
 
         case WM_SETTEXT:
@@ -304,6 +320,8 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
     DWORD dwTextSize;
     TEXTMETRIC tm;
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
+
+    TRACE("PB_Paint: state=%04x, action=%d\n", infoPtr->state, action);
 
     GetClientRect(wndPtr->hwndSelf, &rc);
 

@@ -665,12 +665,12 @@ for (;;);
 
 //	HWndSwitch = CreateWindowEx( 0, WINSWITCH_CLASS_ATOM,
 //		"test1", WS_OVERLAPPEDWINDOW /*WS_DISABLED | WS_POPUP*/, 50, 50, 150, 150,
-//		HWndDesktop, 0/*LoadMenu(hInstance, MAKEINTRESOURCE(555))*/, 0/*hInstance*/, 0 );
+//		hwndDesktop, 0/*LoadMenu(hInstance, MAKEINTRESOURCE(555))*/, 0/*hInstance*/, 0 );
 
 //@todo hm... must not be created because no such class!!!
 //	HWndRealPopup = CreateWindowEx( 0, MAKELP(0, 0x8003),
 //		"test2", WS_OVERLAPPEDWINDOW /*WS_DISABLED | WS_POPUP*/, 100, 100, 200, 200,
-//		HWndDesktop, 0, 0/*hInstance*/, 0 );
+//		hwndDesktop, 0, 0/*hInstance*/, 0 );
 
 	// Move the switch window to the center of the screen
 //	SetWindowPos( HWndSwitch, 0xFFFF, 0, 0, 0, 0,
@@ -682,7 +682,7 @@ for (;;);
 //if (1)
 // {
 // int msgboxID = MessageBox(
-//        HWndDesktop,
+//        hwndDesktop,
 //        (LPCSTR)"Resource not available\nDo you want to try again?",
 //        (LPCSTR)"Account Details",
 //        MB_ICONEXCLAMATION | MB_ABORTRETRYIGNORE | MB_DEFBUTTON2
@@ -705,7 +705,7 @@ for (;;);
 {
 	HPEN hPenBlue;
 	HBRUSH hBrushRed;
-	HDC xhdc=GetDC(HWndDesktop);
+	HDC xhdc=GetDC(hwndDesktop);
 
 	TRACE("xhdc=%x", xhdc);
 	SetPixel(xhdc, 10, 10, RGB(255, 0, 0));
@@ -717,7 +717,7 @@ for (;;);
 
 	DeleteObject(hPenBlue);
 	DeleteObject(hBrushRed);
-	ReleaseDC(HWndDesktop, xhdc);
+	ReleaseDC(hwndDesktop, xhdc);
 }
 
 //	HWndRealPopup = CreateWindowEx( 0, MAKELP(0, 0x8000), 0,
@@ -730,15 +730,15 @@ for (;;);
 	// Set the wallpaper and pattern. Read names from the WIN.INI fiLe
 	// Tell the desktop that the palette may have changed from
 	// loading the wallpaper image.
-	SendMessage(HWndDesktop, WM_SYSCOLORCHANGE, 0, 0);
+	SendMessage(hwndDesktop, WM_SYSCOLORCHANGE, 0, 0);
 
-//	Toggle a bit in the HWndDesktop flags //?
+//	Toggle a bit in the hwndDesktop flags //?
 
-//	InvalidateDCCache( HWndDesktop, 0); What this do??
+//	InvalidateDCCache( hwndDesktop, 0); What this do??
 
 	// Force the entire desktop to be refreshed
-	InvalidateRect(HWndDesktop, 0, 1);
-	UpdateWindow(HWndDesktop);
+	InvalidateRect(hwndDesktop, 0, 1);
+	UpdateWindow(hwndDesktop);
 
 	FUNCTION_END
 }
@@ -905,6 +905,7 @@ BOOL PASCAL LibMain(WORD wHeapSeg, HINSTANCE hInstance , WORD wHeapSize)
 		DefQueueSize=UT_GetIntFromProfile(IDS_DEFAULTQUEUESIZE, 8);
 
 		// Create an application message queue. This is needed to create windows.
+		// Later this queue will be relinked to firt application (see InitApp).
 		SetMessageQueue(DefQueueSize);
 
 		// GDI module handle

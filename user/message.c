@@ -176,8 +176,8 @@ static BOOL MSG_TranslateMouseMsg( MSG FAR *msg, BOOL remove )
 //    hook.wHitTestCode = hittest;
 //TRACE("321");
 //for(;;);
-    TRACE("MSG_TranslateMouseMsg: returning TRUE, msg=%04x, hwnd=%04x, pt=(%d,%d)",
-          msg->message, msg->hwnd, msg->pt.x, msg->pt.y);
+    TRACE("MSG_TranslateMouseMsg: returning TRUE, msg=%Fs, hwnd=%04x, pt=(%d,%d)",
+          GetMessageName(msg->message), msg->hwnd, msg->pt.x, msg->pt.y);
 	return TRUE; 
 
 //    return !HOOK_CallHooks( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
@@ -230,7 +230,7 @@ static BOOL MSG_PeekHardwareMsg( MSG FAR *msg, HWND hwnd, WORD first, WORD last,
         if (pos >= sysMsgQueue->queueSize) pos = 0;
 	*msg = sysMsgQueue->messages[pos].msg;
 
-	TRACE("MSG_PeekHardwareMsg: raw message %04x", msg->message);
+	TRACE("MSG_PeekHardwareMsg: raw message %Fs", GetMessageName(msg->message));
           /* Translate message */
         if ((msg->message >= WM_MOUSEFIRST) && (msg->message <= WM_MOUSELAST))
         {
@@ -485,7 +485,7 @@ TRACE("MSG_InternalGetMessage: entering, hwnd=%04x, hwndOwner=%04x, code=%d, fla
 
 	if (!CallMsgFilter( msg, code ))
 	{
-	    TRACE("MSG_InternalGetMessage: exiting after callmsgfilter, msg=%04x", msg->message);
+	    TRACE("MSG_InternalGetMessage: exiting after callmsgfilter, msg=%Fs", GetMessageName(msg->message));
             return (msg->message != WM_QUIT);
 	}
 
@@ -670,6 +670,7 @@ LRESULT WINAPI SendMessage( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     } msgstruct;
 
 	FUNCTION_START
+	TRACE("SendMessage: hwnd=%04x msg=%04x wParam=%04x lParam=%08lx", hwnd, msg, wParam, lParam);
 
 	msgstruct.lParam=lParam;
 	msgstruct.wParam=wParam;

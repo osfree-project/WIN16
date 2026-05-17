@@ -19,7 +19,7 @@ License along with this library; if not, see
 #include "user.h"
 #include "syscolor.h"
 
-HGLOBAL ghGlobalAtomTable; // Handle of Global Atom Table
+HGLOBAL ghGlobalAtomTable = 0; // Handle of Global Atom Table
 
 /* Global variables in code segment to be accessable without DS touch */
 WORD __based(__segname("_TEXT")) USER_HeapSel = 0;  /* USER heap selector (hinstance) */
@@ -184,9 +184,11 @@ int CYSize;
 int defaultVal;
 
 HWND hwndFocus;
-HWND HWndDesktop;
+HWND hwndDesktop;
 HWND HWndSwitch;
 HWND HWndRealPopup;
+
+BOOL fFirstProgram = TRUE;
 
 HGLOBAL MenuBase;
 HGLOBAL HMenuHeap;

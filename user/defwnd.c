@@ -60,11 +60,9 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
     int len;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
 
-//    SPY_EnterMessage( SPY_DEFWNDPROC, hwnd, msg, wParam, lParam );
-
- /* Трассировка всех сообщений для отладки */
-    TRACE("DefWindowProc: hwnd=%04x msg=%04x wParam=%04x lParam=%08lx",
-          hwnd, msg, wParam, lParam);
+    /* Трассировка всех сообщений для отладки */
+    TRACE(__FUNCTION__ ": hwnd=%04x msg=(%04x)%Fs wParam=%04x lParam=%08lx",
+          hwnd, msg, GetMessageName(msg), wParam, lParam);
 
     switch(msg)
     {
@@ -79,6 +77,11 @@ LRESULT WINAPI DefWindowProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
 	}
 
     case WM_NCCALCSIZE:
+{
+    NCCALCSIZE_PARAMS *p = (NCCALCSIZE_PARAMS *)lParam;
+    TRACE("NCCALCSIZE: rgrc[0]=(%d,%d,%d,%d)\n",
+          p->rgrc[0].left, p->rgrc[0].top, p->rgrc[0].right, p->rgrc[0].bottom);
+}
 	return NC_HandleNCCalcSize(hwnd, (NCCALCSIZE_PARAMS FAR *)lParam);
 
 //    case WM_PAINTICON: ???

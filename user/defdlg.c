@@ -116,6 +116,9 @@ LRESULT WINAPI DefDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     BOOL result = FALSE;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
 	FUNCTION_START    
+    /* Трассировка всех сообщений для отладки */
+    TRACE(__FUNCTION__ ": hwnd=%04x msg=(%04x)%Fs wParam=%04x lParam=%08lx",
+          hwnd, msg, GetMessageName(msg), wParam, lParam);
     if (!wndPtr) return 0;
     dlgInfo = (DIALOGINFO *)&wndPtr->wExtra;
 

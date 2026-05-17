@@ -3,22 +3,22 @@
  *
  * Copyright 1993, 1994, 1995 Alexandre Julliard
  *                       1995,1996 Alex Korobka
-
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, see
-<https://www.gnu.org/licenses/>.
-
+ *
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
+ *
  */
 
 #include "user.h"
@@ -129,8 +129,17 @@ void WINAPI GetWindowRect( HWND hwnd, LPRECT rect )
     if (!wndPtr) return;
     
     *rect = wndPtr->rectWindow;
+TRACE("GetWindowRect: hwnd=%04x style=%08lx rect before=(%d,%d,%d,%d)",
+          hwnd, wndPtr->dwStyle, rect->left, rect->top, rect->right, rect->bottom);
     if (wndPtr->dwStyle & WS_CHILD)
-	MapWindowPoints( wndPtr->parent->hwndSelf, 0, (POINT *)rect, 2 );
+	{
+	        TRACE("GetWindowRect: child window, calling MapWindowPoints(parent=%04x, 0)", wndPtr->parent->hwndSelf);
+		MapWindowPoints( wndPtr->parent->hwndSelf, 0, (LPPOINT)rect, 2 );
+		TRACE("GetWindowRect: after MapWindowPoints rect=(%d,%d,%d,%d)",
+	              rect->left, rect->top, rect->right, rect->bottom);
+	} else {
+		 TRACE("GetWindowRect: not a child window, no conversion\n");
+	}
 }
 
 
@@ -310,6 +319,9 @@ void WINAPI MapWindowPoints( HWND hwndFrom, HWND hwndTo, LPPOINT lppt, UINT coun
     POINT origin = { 0, 0 };
     WORD i;
 
+ TRACE("MapWindowPoints: from=%04x to=%04x count=%u first pt=(%d,%d)",
+          hwndFrom, hwndTo, count, lppt->x, lppt->y);
+
     if( hwndFrom == hwndTo ) return;
 
       /* Translate source window origin to screen coords */
@@ -320,8 +332,11 @@ void WINAPI MapWindowPoints( HWND hwndFrom, HWND hwndTo, LPPOINT lppt, UINT coun
             TRACE("MapWindowPoints: bad hwndFrom = %04x\n",hwndFrom);
             return;
         }
+        TRACE("MapWindowPoints: found hwndFrom, dwStyle=%08lx", wndPtr->dwStyle);
         while (wndPtr->parent)
         {
+		TRACE("MapWindowPoints: adding parent %04x client (%d,%d)",
+                  wndPtr->parent->hwndSelf, wndPtr->rectClient.left, wndPtr->rectClient.top);
             origin.x += wndPtr->rectClient.left;
             origin.y += wndPtr->rectClient.top;
             wndPtr = wndPtr->parent;
@@ -344,12 +359,15 @@ void WINAPI MapWindowPoints( HWND hwndFrom, HWND hwndTo, LPPOINT lppt, UINT coun
         }    
     }
 
+	TRACE("MapWindowPoints: origin=(%d,%d)", origin.x, origin.y);
+
       /* Translate points */
     for (i = 0, curpt = lppt; i < count; i++, curpt++)
     {
 	curpt->x += origin.x;
 	curpt->y += origin.y;
     }
+	TRACE("MapWindowPoints: after conversion first pt=(%d,%d)", lppt->x, lppt->y);
 }
 
 
@@ -1449,15 +1467,11 @@ HWND WINAPI GetActiveWindow()
 {
 	HWND retVal;
 
-	PushDS();
-	SetUserHeapDS();
 	FUNCTION_START
 
     	retVal=hwndActive;
 
 	FUNCTION_END
-	PopDS();
-
 	return retVal;
 }
 
@@ -1529,20 +1543,12 @@ HDC WINAPI BeginPaint( HWND hWnd, LPPAINTSTRUCT lps )
  */
 VOID WINAPI EndPaint( HWND hWnd, const PAINTSTRUCT FAR * lps )
 {
-	WND * wndPtr; //DEEP
 	FUNCTION_START
 	TRACE("EndPaint: hwnd=%04x, before ReleaseDC\n", hWnd);
 
 	TRACE("EndPaint: hdc=%04x", lps->hdc);
 	ReleaseDC(hWnd, lps->hdc);
 	ShowCaret(hWnd);
-
-	wndPtr = WIN_FindWndPtr( hWnd );//DEEP start
-	if (wndPtr)
-	{
-		TRACE("EndPaint: after, hrgnUpdate=%04x, internal=%d\n",
-		      wndPtr->hrgnUpdate, (wndPtr->flags & WIN_INTERNAL_PAINT) ? 1 : 0);
-	}//DEEP end
 
 	FUNCTION_END
 }

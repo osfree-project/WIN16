@@ -239,7 +239,16 @@ static MENUITEM *MENU_FindItemByCoords( POPUPMENU *menu, int x, int y, UINT FAR 
     WND *wndPtr;
     int i;
 
-    if (!(wndPtr = WIN_FindWndPtr( menu->hWnd ))) return NULL;
+    if (!(wndPtr = WIN_FindWndPtr( menu->hWnd )))
+	{
+		return NULL;
+	}
+    TRACE("MENU_FindItemByCoords: screen(%d,%d) windowOrg(%d,%d) rectWnd(%d,%d,%d,%d)",
+          x, y, wndPtr->rectWindow.left, wndPtr->rectWindow.top,
+          wndPtr->rectWindow.left, wndPtr->rectWindow.top,
+          wndPtr->rectWindow.right, wndPtr->rectWindow.bottom);
+	
+
     x -= wndPtr->rectWindow.left;
     y -= wndPtr->rectWindow.top;
     item = (MENUITEM *) LocalLock( menu->hItems );
@@ -1321,8 +1330,10 @@ static BOOL MENU_ExecFocusedItem( HWND hwndOwner, HMENU hmenu,
     {
 	if (!(item->item_flags & (MF_GRAYED | MF_DISABLED)))
 	{
-	    PostMessage( hwndOwner, (menu->wFlags & MF_SYSMENU) ? 
-			WM_SYSCOMMAND : WM_COMMAND, item->item_id, 0 );
+		UINT msg = (menu->wFlags & MF_SYSMENU) ? WM_SYSCOMMAND : WM_COMMAND;
+		TRACE("MENU_ExecFocusedItem: posting msg=%04x id=%04x to hwnd=%04x",
+                  msg, item->item_id, hwndOwner);
+	    PostMessage( hwndOwner, msg, item->item_id, 0 );
 	    return FALSE;
 	}
 	else return TRUE;
@@ -1409,6 +1420,7 @@ static BOOL MENU_ButtonUp( HWND hwndOwner, HMENU hmenu, HMENU FAR *hmenuCurrent,
     if (!hmenu) return FALSE;  /* Outside all menus */
     menu = (POPUPMENU *) LocalLock( hmenu );
     item = MENU_FindItemByCoords( menu, pt.x, pt.y, &id );
+    TRACE("MENU_ButtonUp: found item id=%04x flags=%04x", id, item ? item->item_flags : 0);
     if (!item)  /* Maybe in system menu */
     {
 	if (!MENU_IsInSysMenu( menu, pt )) return FALSE;
@@ -1422,6 +1434,7 @@ static BOOL MENU_ButtonUp( HWND hwndOwner, HMENU hmenu, HMENU FAR *hmenuCurrent,
     {
 	if (!(item->item_flags & MF_POPUP))
 	{
+            TRACE("MENU_ButtonUp: about to execute item id=%04x", id);
 	    return MENU_ExecFocusedItem( hwndOwner, hmenu, hmenuCurrent );
 	}
 	hsubmenu = (HMENU)item->item_id;
@@ -1590,16 +1603,12 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, int x, int y,
     msg = (MSG *)LocalLock( hMsg );
     while (!fClosed)
     {
-        PushDS();	//DEEP
-        SetUserHeapDS();  //DEEP
 	if (!MSG_InternalGetMessage( msg/*LocalLock(hMsg)*/, 0,
-                                     hwnd, MSGF_MENU, 0, TRUE ))
+                                     hwnd, MSGF_MENU, PM_REMOVE/* DEEP 0 */, TRUE ))
 	{
-		PopDS();//DEEP
 	    break;
 	}
         fRemove = FALSE;
-		PopDS();//DEEP
 	if ((msg->message >= WM_MOUSEFIRST) && (msg->message <= WM_MOUSELAST))
 	{
 	      /* Find the sub-popup for this mouse event (if any) */
@@ -1876,6 +1885,7 @@ BOOL WINAPI TrackPopupMenu( HMENU hMenu, UINT wFlags, int x, int y,
  */
 LRESULT WINAPI PopupMenuWndProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
 {    
+    TRACE("PopupMenuWndProc START: hwnd=%04x msg=%04x %Fs DS=%04x", hwnd, message, GetMessageName(message), HIWORD(GetDS()));
     switch(message)
     {
     case WM_CREATE:

@@ -539,7 +539,7 @@ static void DCE_SetDrawable(DCE *dce, WND *wndPtr, HDC hdc, WORD flags )
 		TRACE("!DCX_WINDOW: origin=(%d,%d)", wNewOrgX, wNewOrgY);
         }
 
-	if ((wndPtr->parent) && (wndPtr->parent->hwndSelf!=HWndDesktop)) 
+	if ((wndPtr->parent) && (wndPtr->parent->hwndSelf!=hwndDesktop)) 
 	{
 		TRACE("Starting parent loop, parent hwnd=%04x", wndPtr->parent->hwndSelf);
         	while (wndPtr->parent)

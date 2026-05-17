@@ -275,7 +275,14 @@ LONG FAR NC_HandleNCHitTest( HWND hwnd, POINT pt )
     if (!wndPtr) return HTERROR;
 
     GetWindowRect( hwnd, &rect );
-    if (!PtInRect( &rect, pt )) return HTNOWHERE;
+ TRACE("NC_HandleNCHitTest: hwnd=%04x, style=WS_CHILD=%d, pt=(%d,%d), GetWindowRect=(%d,%d,%d,%d)\n",
+          hwnd, (wndPtr->dwStyle & WS_CHILD)!=0, pt.x, pt.y,
+          rect.left, rect.top, rect.right, rect.bottom);
+    if (!PtInRect( &rect, pt )) 
+	{
+	        TRACE("NC_HandleNCHitTest: pt NOT in WindowRect -> HTNOWHERE\n");
+		return HTNOWHERE;
+	}
 
     if (wndPtr->dwStyle & WS_MINIMIZE) return HTCAPTION;
 
@@ -1465,7 +1472,7 @@ LONG FAR NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
-	TRACE("Handling WM_SYSCOMMAND %x %d,%d", wParam, pt.x, pt.y );
+	TRACE("NC_HandleSysCommand: wParam=%04x (cmd=%04x) pt=(%d,%d)", wParam, wParam & 0xFFF0, pt.x, pt.y);
 
     if (wndPtr->dwStyle & WS_CHILD && wParam != SC_KEYMENU )
         ScreenToClient( wndPtr->parent->hwndSelf, &pt );
@@ -1474,6 +1481,7 @@ LONG FAR NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt )
     {
     case SC_SIZE:
     case SC_MOVE:
+	TRACE("NC_HandleSysCommand: SC_MOVE");
 	NC_DoSizeMove( hwnd, wParam, pt );
 	break;
 
@@ -1494,6 +1502,7 @@ LONG FAR NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt )
 	break;
 
     case SC_CLOSE:
+        TRACE("NC_HandleSysCommand: SC_CLOSE -> sending WM_CLOSE");
 	return SendMessage( hwnd, WM_CLOSE, 0, 0 );
 
     case SC_VSCROLL:

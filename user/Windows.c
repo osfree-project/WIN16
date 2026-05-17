@@ -157,22 +157,18 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT FAR * rectUpdate, HRGN hrgnUpdat
     TRACE("RedrawWindow: hwnd=%04x, rectUpdate=%Fp, hrgnUpdate=%04x, flags=%04x (%Fs)",
           hwnd, rectUpdate, hrgnUpdate, flags, flagbuf);
 
-	TRACE(__FUNCTION__ "-3");
     if (!hwnd) hwnd = GetDesktopWindow();
-	TRACE(__FUNCTION__ "-2");
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) 
 	{
 		PopDS();
 		return FALSE;
 	}
-	TRACE(__FUNCTION__ "-1");
     if (!IsWindowVisible(hwnd) || (wndPtr->flags & WIN_NO_REDRAW))
 	{
 		PopDS();
 	        return TRUE;  /* No redraw needed */
 	}
 
-	TRACE(__FUNCTION__ "0");
 //    if (rectUpdate)
 //    {
 //        TRACE("RedrawWindow: %04x %d,%d-%d,%d %04x flags=%04x\n",
@@ -246,7 +242,6 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT FAR * rectUpdate, HRGN hrgnUpdat
 	if (flags & RDW_NOERASE) wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
     }
 
-	TRACE(__FUNCTION__ "2");
       /* Set/clear internal paint flag */
 
     if (flags & RDW_INTERNALPAINT)
@@ -262,7 +257,6 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT FAR * rectUpdate, HRGN hrgnUpdat
 	wndPtr->flags &= ~WIN_INTERNAL_PAINT;
     }
 
-	TRACE(__FUNCTION__ "3");
 
       /* Erase/update window */
 
@@ -291,7 +285,6 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT FAR * rectUpdate, HRGN hrgnUpdat
         }
     }
 
-	TRACE(__FUNCTION__ "4");
       /* Recursively process children */
 
     if (!(flags & RDW_NOCHILDREN) &&
@@ -374,7 +367,7 @@ void WINAPI ShowScrollBar( HWND hwnd, int nBar, BOOL fShow )
 
 /**************************************************************************
  *              GetScrollRange   (USER.65)
- * VOID in watcom headers
+ * @todo VOID in watcom headers
  */
 VOID /*BOOL*/ WINAPI GetScrollRange( HWND hwnd, int nBar, LPINT lpMin, LPINT lpMax)
 {

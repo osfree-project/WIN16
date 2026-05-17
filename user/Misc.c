@@ -16,7 +16,8 @@ License along with this library; if not, see
 
 */
 
-#include <user.h>
+#include "user.h"
+#include "dce.ih"
 
 BOOL WINAPI
 GrayString(HDC hDC, HBRUSH hBr, GRAYSTRINGPROC gsprc, LPARAM lParam,
@@ -56,11 +57,66 @@ GrayString(HDC hDC, HBRUSH hBr, GRAYSTRINGPROC gsprc, LPARAM lParam,
 
 /***********************************************************************
  *		ExitWindows (USER.7)
+ *@todo refer to pietrek for better implementation
  */
 BOOL WINAPI ExitWindows( DWORD dwReturnCode, UINT wReserved )
 {
+    HWND hwndDesktop;
+    WND *wndPtr;
+    HWND *list, *pWnd;
+    int count, i;
+    BOOL result;
+        
 	FUNCTION_START
-    return 0;
+
+    //api_assert("ExitWindows", wReserved == 0);
+    //api_assert("ExitWindows", HIWORD(dwReturnCode) == 0);
+
+    /* We have to build a list of all windows first, as in EnumWindows */
+
+    /* First count the windows */
+
+    hwndDesktop = GetDesktopWindow();
+    count = 0;
+    for (wndPtr = WIN_GetDesktop()->child; wndPtr; wndPtr = wndPtr->next)
+        count++;
+    if (!count) /* No windows, we can exit at once */
+	{
+		Death(((DCE *)LocalLock(firstDCE))->hDC);//Switch back to text mode
+		ExitKernel(wReserved, LOWORD(dwReturnCode));//EXEC_ExitWindows( LOWORD(dwReturnCode) );
+	}
+
+      /* Now build the list of all windows */
+
+    if (!(pWnd = list = (HWND *)LocalAlloc(LMEM_FIXED, sizeof(HWND) * count ))) return FALSE;
+    for (wndPtr = WIN_GetDesktop()->child; wndPtr; wndPtr = wndPtr->next)
+        *pWnd++ = wndPtr->hwndSelf;
+
+      /* Now send a WM_QUERYENDSESSION message to every window */
+
+    for (pWnd = list, i = 0; i < count; i++, pWnd++)
+    {
+          /* Make sure that window still exists */
+        if (!IsWindow(*pWnd)) continue;
+	if (!SendMessage( *pWnd, WM_QUERYENDSESSION, 0, 0 )) break;
+    }
+    result = (i == count);
+
+    /* Now notify all windows that got a WM_QUERYENDSESSION of the result */
+
+    for (pWnd = list; i > 0; i--, pWnd++)
+    {
+	if (!IsWindow(*pWnd)) continue;
+	SendMessage( *pWnd, WM_ENDSESSION, result, 0 );
+    }
+    LocalFree((UINT) list );
+
+    if (result)
+	{
+		Death(((DCE *)LocalLock(firstDCE))->hDC);//Switch back to text mode
+		ExitKernel(wReserved, LOWORD(dwReturnCode));//EXEC_ExitWindows( LOWORD(dwReturnCode) );
+	}
+    return FALSE;
 }
 
 /***********************************************************************
