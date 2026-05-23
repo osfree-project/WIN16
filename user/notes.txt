@@ -83,3 +83,9 @@ retn                ; return
 WINFARFRAME is a method in original windows to make prolog/epilog smaller. prolog size is a 7 bytes length and epilog is a 1 byte in size.
 WINFARFRAME modifies stack frame and sets near return address point to restore stack frame code (named WinFarUndoFrame).
 See Undocumented Windows p.407
+
+
+System menu usage
+=================
+
+todo: add switch to... support

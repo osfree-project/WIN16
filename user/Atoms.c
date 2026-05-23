@@ -44,7 +44,6 @@
  *   - Pietrek, M. Windows Internals. Addison-Wesley, 1993, p. 68.
  *   - Schulman, A., Maxey, D., Pietrek, M. Undocumented Windows.
  *     Addison-Wesley, 1992, p. 220.
- *   - Microsoft KB Archive/106079: Difference between local and global atom tables.
  */
 
 #include <windows.h>

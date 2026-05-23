@@ -95,16 +95,6 @@ IDM_SYSMENUMDI MENU
 }
 
 
-// This is temporary for debuging...
-555 MENU
-{
- POPUP "&Settings" {
-  MENUITEM "&Analog", 555
-  MENUITEM "&Digital", 556
-  MENUITEM SEPARATOR
-  MENUITEM "A&bout Clock", 557
- }
-}
 
 MESSAGEBOX  DIALOG 26,50,100,92
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU

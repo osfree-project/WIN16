@@ -1511,18 +1511,19 @@ LONG FAR NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT pt )
 	break;
 
     case SC_MOUSEMENU:
-	MENU_TrackMouseMenuBar( hwnd, pt );
+	MENU_TrackMouseMenuBar(hwnd, pt);
 	break;
 
     case SC_KEYMENU:
-	MENU_TrackKbdMenuBar( wndPtr , wParam , pt.x );
+	MENU_TrackKbdMenuBar(wndPtr , wParam , pt.x);
 	break;
 	
     case SC_ARRANGE:
 	break;
 
     case SC_TASKLIST:
-	WinExec( "taskman.exe", SW_SHOWNORMAL ); 
+	TRACE("NC_HandleSysCommand: SC_TASKLIST");
+	TRACE("NC_HandleSysCommand: rc=%d", WinExec("taskman.exe", SW_SHOWNORMAL));
 	break;
 
     case SC_HOTKEY:

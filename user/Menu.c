@@ -33,24 +33,27 @@
 #include "syscolor.h"
 
 
-  /* Dimension of the menu bitmaps */
+/* Dimension of the menu bitmaps */
 static WORD check_bitmap_width = 0, check_bitmap_height = 0;
 static WORD arrow_bitmap_width = 0, arrow_bitmap_height = 0;
 
-  /* Flag set by EndMenu() to force an exit from menu tracking */
+/* Flag set by EndMenu() to force an exit from menu tracking */
 static BOOL fEndMenuCalled = FALSE;
 
-  /* Space between 2 menu bar items */
+/* Default system menu */
+static HMENU MENU_DefSysMenu = 0;
+
+/* Space between 2 menu bar items */
 #define MENU_BAR_ITEMS_SPACE  16
 
-  /* Minimum width of a tab character */
+/* Minimum width of a tab character */
 #define MENU_TAB_SPACE        8
 
-  /* Height of a separator item */
+/* Height of a separator item */
 #define SEPARATOR_HEIGHT      5
 
-  /* Values for menu->FocusedItem */
-  /* (other values give the position of the focused item) */
+/* Values for menu->FocusedItem */
+/* (other values give the position of the focused item) */
 #define NO_SELECTED_ITEM  0xffff
 #define SYSMENU_SELECTED  0xfffe  /* Only valid on menu-bars */
 
@@ -67,36 +70,19 @@ static BOOL fEndMenuCalled = FALSE;
 extern void NC_DrawSysButton(HWND hwnd, HDC hdc, BOOL down);  /* nonclient.c */
 
 
-#pragma code_seg( "INIT_TEXT" );
 
 /***********************************************************************
- *           MENU_Init
+ *           MENU_GetDefSysMenu
  *
- * Menus initialisation.
+ * Return the default system menu.
  */
-BOOL FAR MENU_Init()
+
+HMENU MENU_GetDefSysMenu(void)
 {
-	BITMAP bm;
-
-	FUNCTION_START
-
-	/* Load bitmaps */
-	if (!(hbitmapStdCheck = LoadBitmap( 0, MAKEINTRESOURCE(OBM_CHECK) )))
-		return FALSE;
-	GetObject( hbitmapStdCheck, sizeof(BITMAP), (LPSTR)&bm );
-	check_bitmap_width = bm.bmWidth;
-	check_bitmap_height = bm.bmHeight;
-	if (!(hbitmapStdMnArrow = LoadBitmap( 0, MAKEINTRESOURCE(OBM_MNARROW) )))
-		return FALSE;
-	GetObject( hbitmapStdMnArrow, sizeof(BITMAP), (LPSTR)&bm );
-	arrow_bitmap_width = bm.bmWidth;
-	arrow_bitmap_height = bm.bmHeight;
-
-	FUNCTION_END
-	return TRUE;
+    return MENU_DefSysMenu;
 }
 
-#pragma code_seg();
+
 
 /***********************************************************************
  *           MENU_HasSysMenu
@@ -116,7 +102,7 @@ static BOOL MENU_HasSysMenu( POPUPMENU *menu )
 /**********************************************************************
  *           MENU_CopySysMenu
  */
-static HMENU MENU_CopySysMenu(void)
+static HMENU FAR MENU_CopySysMenu(void)
 {
 	HMENU hMenu;
 	HGLOBAL handle;
@@ -278,7 +264,7 @@ static UINT MENU_FindItemByKey( HWND hwndOwner, HMENU hmenu, UINT key )
     int i;
     LONG menuchar;
 
-    if (!IsMenu( hmenu )) hmenu = GetSystemMenu( hwndOwner, FALSE);
+    if (!IsMenu( hmenu )) hmenu = WIN_FindWndPtr(hwndOwner)->hSysMenu;
     if (!hmenu) return -1;
 
     menu = (POPUPMENU *) LocalLock( hmenu );
@@ -902,7 +888,7 @@ static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, UINT wIndex )
         {
 	    NC_DrawSysButton( ppop->hWnd, hdc, TRUE );
             SendMessage( hwndOwner, WM_MENUSELECT,
-                         GetSystemMenu( ppop->hWnd, FALSE ),
+                         WIN_FindWndPtr(ppop->hWnd)->hSysMenu,
                          MAKELONG( ppop->wFlags | MF_MOUSESELECT, hmenu ) );
         }
 	else
@@ -1185,7 +1171,7 @@ static HMENU MENU_GetSubPopup( HMENU hmenu )
     menu = (POPUPMENU *) LocalLock( hmenu );
     if (menu->FocusedItem == NO_SELECTED_ITEM) return 0;
     else if (menu->FocusedItem == SYSMENU_SELECTED)
-	return GetSystemMenu( menu->hWnd, FALSE );
+	return WIN_FindWndPtr(menu->hWnd)->hSysMenu;
 
     item = ((MENUITEM *)LocalLock(menu->hItems)) + menu->FocusedItem;
     if (!(item->item_flags & MF_POPUP) || !(item->item_flags & MF_MOUSESELECT))
@@ -1209,7 +1195,7 @@ static void MENU_HideSubPopups( HWND hwndOwner, HMENU hmenu )
     if (menu->FocusedItem == NO_SELECTED_ITEM) return;
     if (menu->FocusedItem == SYSMENU_SELECTED)
     {
-	hsubmenu = GetSystemMenu( menu->hWnd, FALSE );
+	hsubmenu = WIN_FindWndPtr(menu->hWnd)->hSysMenu;
     }
     else
     {
@@ -1425,7 +1411,7 @@ static BOOL MENU_ButtonUp( HWND hwndOwner, HMENU hmenu, HMENU FAR *hmenuCurrent,
     {
 	if (!MENU_IsInSysMenu( menu, pt )) return FALSE;
 	id = SYSMENU_SELECTED;
-	hsubmenu = GetSystemMenu( menu->hWnd, FALSE );
+	hsubmenu = WIN_FindWndPtr(menu->hWnd)->hSysMenu;
     }	
 
     if (menu->FocusedItem != id) return FALSE;
@@ -2577,6 +2563,13 @@ BOOL WINAPI DestroyMenu(HMENU hMenu)
 		PopDS();
 		return FALSE;
 	}
+	/* Silently ignore attempts to destroy default system menu */
+	if (hMenu == MENU_DefSysMenu) 
+	{
+		FUNCTION_END
+		PopDS();
+		return TRUE;
+	}
 
 	lppop = (POPUPMENU *) LocalLock(hMenu);
 	if (!lppop || (lppop->wMagic != MENU_MAGIC))
@@ -2631,6 +2624,16 @@ HMENU WINAPI GetSystemMenu(HWND hWnd, BOOL bRevert)
 	wndPtr = WIN_FindWndPtr( hWnd );
     	if (wndPtr) 
 	{
+		if (!wndPtr->hSysMenu || (wndPtr->hSysMenu == MENU_DefSysMenu))
+		{
+			wndPtr->hSysMenu = MENU_CopySysMenu();
+			retVal=wndPtr->hSysMenu;
+			LocalUnlock(hWnd);
+
+			FUNCTION_END
+			PopDS();
+			return retVal;
+		}
 	    	if (bRevert) 
 		{
 			if (wndPtr->hSysMenu) DestroyMenu(wndPtr->hSysMenu);
@@ -2664,7 +2667,7 @@ BOOL WINAPI SetSystemMenu(HWND hWnd, HMENU hMenu)
 
 	if ((wndPtr = WIN_FindWndPtr(hWnd)))
 	{
-		if (wndPtr->hSysMenu) DestroyMenu(wndPtr->hSysMenu);
+		if (wndPtr->hSysMenu && (wndPtr->hSysMenu != MENU_DefSysMenu)) DestroyMenu(wndPtr->hSysMenu);
 		wndPtr->hSysMenu = hMenu;
 		LocalUnlock(hWnd);
 	}
@@ -2974,3 +2977,41 @@ BOOL WINAPI IsMenu(HMENU hMenu)
 	return retVal;
 }
 
+
+#pragma code_seg( "INIT_TEXT" );
+
+/***********************************************************************
+ *           MENU_Init
+ *
+ * Menus initialisation.
+ */
+BOOL FAR MENU_Init()
+{
+	BITMAP bm;
+
+	FUNCTION_START
+
+	/* Load bitmaps */
+	if (!(hbitmapStdCheck = LoadBitmap( 0, MAKEINTRESOURCE(OBM_CHECK) )))
+		return FALSE;
+	GetObject( hbitmapStdCheck, sizeof(BITMAP), (LPSTR)&bm );
+	check_bitmap_width = bm.bmWidth;
+	check_bitmap_height = bm.bmHeight;
+	if (!(hbitmapStdMnArrow = LoadBitmap( 0, MAKEINTRESOURCE(OBM_MNARROW) )))
+		return FALSE;
+	GetObject( hbitmapStdMnArrow, sizeof(BITMAP), (LPSTR)&bm );
+	arrow_bitmap_width = bm.bmWidth;
+	arrow_bitmap_height = bm.bmHeight;
+
+	if (!(MENU_DefSysMenu = MENU_CopySysMenu()))
+	{
+		TRACE("Unable to create default system menu");
+		FUNCTION_END
+		return FALSE;
+	}
+
+	FUNCTION_END
+	return TRUE;
+}
+
+#pragma code_seg();
