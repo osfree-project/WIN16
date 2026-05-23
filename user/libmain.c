@@ -875,7 +875,7 @@ EmptyMessages:
  *
  */
 
-BOOL PASCAL LibMain(WORD wHeapSeg, HINSTANCE hInstance , WORD wHeapSize)
+BOOL PASCAL LibMain(HINSTANCE hInstance, WORD wHeapSeg, WORD wHeapSize)
 {
 	TRACE("Windows user interface implementation.\r\n"
 		"osFree Janus project (c) 2026 osFree\r\n"

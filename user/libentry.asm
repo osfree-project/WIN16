@@ -79,8 +79,8 @@ __DLLstart_:
 ;       es               ; command line segment
 ;       si               ; command line offset
 
-	push	ds
 	push	di
+	push	ds
 	push	cx
         call	LIBMAIN         ; invoke the 'C' routine (result in AX)
 
