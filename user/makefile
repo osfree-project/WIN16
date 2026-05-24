@@ -34,8 +34,11 @@ EXPORTS = &
 	OldExitWindows .2, &
 	DisableOEMLayer .4, &
 	InitApp .5, &
+	PostQuitMessage.6, &
 	ExitWindows .7, &
+	SetTimer.10, &
 	BEAR11 .11, &
+	KillTimer.12, &
 	GetTickCount .13, &
 	GetCurrentTime .15, &
 	SetCapture .18, &
@@ -51,6 +54,7 @@ EXPORTS = &
 	BeginPaint .39, &
 	EndPaint .40, &
 	CreateWindow .41, &
+	ShowWindow.42, &
 	GetParent .46, &
 	IsWindow .47, &
 	IsWindowVisible .49, &
@@ -91,6 +95,7 @@ EXPORTS = &
 	PeekMessage  .109, &
 	PostMessage .110, &
 	SendMessage .111, &
+	TranslateMessage.113, &
 	DispatchMessage .114, &
 	SetWindowsHook .121, &
 	CallMsgFilter .123, &
@@ -103,6 +108,8 @@ EXPORTS = &
 	SetWindowWord .134, &
 	GetWindowLong .135, &
 	SetWindowLong .136, &
+	CheckMenuItem .154, &
+	GetMenu .157, &
 	CreateCaret .163, &
 	DestroyCaret .164, &
 	SetCaretPos .165, &
@@ -110,6 +117,8 @@ EXPORTS = &
 	ShowCaret .167, &
 	SetCaretBlinkTime .168, &
 	GetCaretBlinkTime .169, &
+	LoadCursor.173,&
+	LoadIcon.174, &
 	LoadBitmap.175, &
 	LoadString .176, &
 	LoadAccelerators .177, &
@@ -254,10 +263,8 @@ EXPORTS = &
 #	SetMenuItemBitmaps .418, &
 #	LoadMenu .150, &
 #	ChangeMenu .153, &
-#	CheckMenuItem .154, &
 #	EnableMenuItem .155, &
 #	GetSystemMenu .156, &
-#	GetMenu .157, &
 #	SetMenu .158, &
 #	GetSubMenu .159, &
 #	DrawMenuBar .160, &

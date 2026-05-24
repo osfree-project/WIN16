@@ -23,8 +23,6 @@ License along with this library; if not, see
 #if 0
 //#include "kerndef.h"
 
-// This  is undoc message, but known by many...
-#define WM_SYSTIMER 0x0118
 
 // Some tricks to use export names... This is staring from 3.1. Under 3.0 name is normal.
 

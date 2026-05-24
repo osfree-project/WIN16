@@ -2,27 +2,27 @@
  * Message queues related functions
  *
  * Copyright 1993, 1994 Alexandre Julliard
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, see
-<https://www.gnu.org/licenses/>.
-
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
+ *
  */
 
 #include "user.h"
 #include "queue.h"
 
-#define MAX_QUEUE_SIZE   120  /* Max. size of a message queue */
+#define MAX_QUEUE_SIZE   120  /* Max. size of a system message queue */
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -312,7 +312,7 @@ VOID QUEUE_DecPaintCount( HQUEUE hQueue )
 /***********************************************************************
  *           QUEUE_IncTimerCount
  */
-VOID QUEUE_IncTimerCount( HQUEUE hQueue )
+VOID FAR QUEUE_IncTimerCount( HQUEUE hQueue )
 {
 	MESSAGEQUEUE FAR *queue;
 
@@ -329,7 +329,7 @@ VOID QUEUE_IncTimerCount( HQUEUE hQueue )
 /***********************************************************************
  *           QUEUE_DecTimerCount
  */
-VOID QUEUE_DecTimerCount( HQUEUE hQueue )
+VOID FAR QUEUE_DecTimerCount( HQUEUE hQueue )
 {
 	MESSAGEQUEUE FAR *queue;
 

@@ -48,9 +48,12 @@ HWND WINAPI CreateWindow( LPCSTR className, LPCSTR windowName,
                               int height, HWND parent, HMENU menu,
                               HINSTANCE instance, LPVOID data )
 {
-//	FUNCTION_START
-    return CreateWindowEx( 0, className, windowName, style,
+	HWND retVal;
+	FUNCTION_START
+	retVal=CreateWindowEx( 0, className, windowName, style,
                              x, y, width, height, parent, menu, instance, data );
+	FUNCTION_END
+	return retVal;
 }
 
 

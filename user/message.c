@@ -341,7 +341,7 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
 	if ((first <= WM_KEYLAST) && (last >= WM_KEYFIRST)) mask |= QS_KEY;
 	if ((first <= WM_MOUSELAST) && (last >= WM_MOUSEFIRST)) mask |= QS_MOUSE;
 	if ((first <= WM_TIMER) && (last >= WM_TIMER)) mask |= QS_TIMER;
-//@todo fix?	if ((first <= WM_SYSTIMER) && (last >= WM_SYSTIMER)) mask |= QS_TIMER;
+	if ((first <= WM_SYSTIMER) && (last >= WM_SYSTIMER)) mask |= QS_TIMER;
 	if ((first <= WM_PAINT) && (last >= WM_PAINT)) mask |= QS_PAINT;
     }
     else mask = QS_MOUSE | QS_KEY | QS_POSTMESSAGE | QS_TIMER | QS_PAINT;
@@ -789,7 +789,7 @@ LONG WINAPI DispatchMessage( const MSG FAR * msg )
 
 //FUNCTION_START
       /* Process timer messages */
-    if ((msg->message == WM_TIMER) /*|| (msg->message == WM_SYSTIMER)*/)
+    if ((msg->message == WM_TIMER) || (msg->message == WM_SYSTIMER))
     {
 	if (msg->lParam)
         {

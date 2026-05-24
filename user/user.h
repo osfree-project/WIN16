@@ -212,7 +212,7 @@ extern char szNo[0x14];
 extern char szAm[0x14];
 extern char szPm[0x14];
 
-#undef DEBUG
+#undef DEBUGx
 
 #ifdef DEBUG 
 extern void _cdecl far printf (char far *format,...);
@@ -628,14 +628,16 @@ WORD WINAPI GetTaskQueue(HANDLE hTask);
 
 #include "events.h"
 
-//@todo is it really existent???
 #define WM_SETVISIBLE           0x0009
+#define WM_SYSTIMER	    0x0118
 #define WM_ENTERSIZEMOVE    0x0231
 #define WM_EXITSIZEMOVE     0x0232
 #define WM_DROPFILES	    0x0233
 
 #define WM_ENTERMENULOOP    0x0211
 #define WM_EXITMENULOOP     0x0212
+
+#define SW_SHOWDEFAULT	    10
 
 #pragma pack(1)
 
