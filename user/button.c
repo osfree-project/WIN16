@@ -334,10 +334,10 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
     Rectangle(hDC, rc.left, rc.top, rc.right, rc.bottom);
     if (action == ODA_DRAWENTIRE)
     {
-        SetPixel( hDC, rc.left, rc.top, GetSysColor(COLOR_WINDOW) );
-        SetPixel( hDC, rc.left, rc.bottom-1, GetSysColor(COLOR_WINDOW) );
-        SetPixel( hDC, rc.right-1, rc.top, GetSysColor(COLOR_WINDOW) );
-        SetPixel( hDC, rc.right-1, rc.bottom-1, GetSysColor(COLOR_WINDOW) );
+        SetPixel( hDC, rc.left, rc.top, GETSYSCOLOR(COLOR_WINDOW) );
+        SetPixel( hDC, rc.left, rc.bottom-1, GETSYSCOLOR(COLOR_WINDOW) );
+        SetPixel( hDC, rc.right-1, rc.top, GETSYSCOLOR(COLOR_WINDOW) );
+        SetPixel( hDC, rc.right-1, rc.bottom-1, GETSYSCOLOR(COLOR_WINDOW) );
     }
     InflateRect( &rc, -1, -1 );
 
@@ -363,7 +363,7 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
     if (text && text[0])
     {
         SetTextColor( hDC, (wndPtr->dwStyle & WS_DISABLED) ?
-                     GetSysColor(COLOR_GRAYTEXT) : GetSysColor(COLOR_BTNTEXT));
+                     GETSYSCOLOR(COLOR_GRAYTEXT) : GETSYSCOLOR(COLOR_BTNTEXT));
         DrawText(hDC, text, -1, &rc,
                  DT_SINGLELINE | DT_CENTER | DT_VCENTER);
         /* do we have the focus? */
@@ -445,7 +445,7 @@ if (hbitmapCheckBoxes != NULL)
     if (action == ODA_DRAWENTIRE)
     {
         if (wndPtr->dwStyle & WS_DISABLED)
-            SetTextColor( hDC, GetSysColor(COLOR_GRAYTEXT) );
+            SetTextColor( hDC, GETSYSCOLOR(COLOR_GRAYTEXT) );
         DrawText(hDC, text, textlen, &rc, DT_SINGLELINE | DT_VCENTER);
     }
     
@@ -513,7 +513,7 @@ static void GB_Paint( WND *wndPtr, HDC hDC, WORD action )
     rc.right  = rc.left + size.cx + 1;
     rc.bottom = size.cy;
     if (wndPtr->dwStyle & WS_DISABLED)
-        SetTextColor( hDC, GetSysColor(COLOR_GRAYTEXT) );
+        SetTextColor( hDC, GETSYSCOLOR(COLOR_GRAYTEXT) );
     DrawText(hDC, text, -1, &rc, DT_SINGLELINE );
 }
 

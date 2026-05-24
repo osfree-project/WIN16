@@ -212,7 +212,9 @@ extern char szNo[0x14];
 extern char szAm[0x14];
 extern char szPm[0x14];
 
-#ifdef DEBUG
+#undef DEBUG
+
+#ifdef DEBUG 
 extern void _cdecl far printf (char far *format,...);
 #define OutputDebugString printf
 #define FUNCTION_START \

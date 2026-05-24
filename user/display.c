@@ -123,7 +123,7 @@ static COLORREF g_SysColorDefaultsBinary[] = {
     RGB(0, 0, 0),        /* ButtonText */
 #if (WINVER >= 0x030a)
     RGB(0, 0, 0),        /* InactiveTitleText */
-    RGB(0, 0, 0)         /* ButtonHilight */
+    RGB(255, 255, 255)         /* ButtonHilight */
 #endif
 };
 
@@ -231,7 +231,7 @@ VOID FAR DISPLAY_Init()
 
 					pColors = lpData + sizeof(DISPLAY_CONFIG_HEADER);
 
-					for (i = 0; i < DISPLAY_GetSysColorCount(); i++) 
+					for (i = 0; i < OEM_CONFIG_WIN30/*DISPLAY_GetSysColorCount()*/; i++) 
 					{
 						g_SysColorDefaultsBinary[i] = RGB(pColors[i * 4 + 0], pColors[i * 4 + 1], pColors[i * 4 + 2]);
 					}

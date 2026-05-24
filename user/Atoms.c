@@ -49,6 +49,7 @@
 #include <windows.h>
 #include "user.h"
 
+
 /**
  * @brief Size of the memory segment allocated for the Global Atom Table.
  *

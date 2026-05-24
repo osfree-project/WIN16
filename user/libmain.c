@@ -366,7 +366,6 @@ VOID WINAPI LW_LoadResources()
 
 	// Load some heavily used cursors
 	HCursNormal = LoadCursor(0, IDC_ARROW);
-	TRACE("TEST");
 	HCursIBeam = LoadCursor(0, IDC_IBEAM);
 	HCursUpArrow= LoadCursor(0, IDC_UPARROW);
 	HIconSample = LoadIcon(0, IDI_APPLICATION);

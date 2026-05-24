@@ -106,9 +106,9 @@ LONG WINAPI StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
             }
 	    /* initialise colours */
-	    color_windowframe  = GetSysColor(COLOR_WINDOWFRAME);
-	    color_background   = GetSysColor(COLOR_BACKGROUND);
-	    color_window       = GetSysColor(COLOR_WINDOW);
+	    color_windowframe  = GETSYSCOLOR(COLOR_WINDOWFRAME);
+	    color_background   = GETSYSCOLOR(COLOR_BACKGROUND);
+	    color_window       = GETSYSCOLOR(COLOR_WINDOW);
 	    break;
 
         case WM_NCDESTROY:
@@ -129,9 +129,9 @@ LONG WINAPI StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    break;
 
 	case WM_SYSCOLORCHANGE:
-	    color_windowframe  = GetSysColor(COLOR_WINDOWFRAME);
-	    color_background   = GetSysColor(COLOR_BACKGROUND);
-	    color_window       = GetSysColor(COLOR_WINDOW);
+	    color_windowframe  = GETSYSCOLOR(COLOR_WINDOWFRAME);
+	    color_background   = GETSYSCOLOR(COLOR_BACKGROUND);
+	    color_window       = GETSYSCOLOR(COLOR_WINDOW);
 	    InvalidateRect(hWnd, NULL, TRUE);
 	    break;
 

@@ -1589,8 +1589,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, int x, int y,
     msg = (MSG *)LocalLock( hMsg );
     while (!fClosed)
     {
-	if (!MSG_InternalGetMessage( msg/*LocalLock(hMsg)*/, 0,
-                                     hwnd, MSGF_MENU, PM_REMOVE/* DEEP 0 */, TRUE ))
+	if (!MSG_InternalGetMessage( msg, 0, hwnd, MSGF_MENU, PM_REMOVE, TRUE ))
 	{
 	    break;
 	}

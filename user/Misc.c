@@ -154,6 +154,7 @@ void WINAPI SignalProc( HANDLE hModule, UINT code,
         free_module_icons( hModule );
     }
 #endif
+	FUNCTION_END
 }
 
 /***********************************************************************
@@ -161,4 +162,6 @@ void WINAPI SignalProc( HANDLE hModule, UINT code,
  */
 VOID WINAPI MessageBeep(UINT i)
 {
+	FUNCTION_START
+	FUNCTION_END
 }
