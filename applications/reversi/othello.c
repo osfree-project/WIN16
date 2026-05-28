@@ -13,6 +13,7 @@ static short     sLevel;
 static BOOL      fSound = TRUE;
 static char      szApp[] = "Othello";
 static COLORREF  bgcolor = RGB(0,128,0);
+static int       clientHeight = 0;
 
 static char *pszEvent[] = {
     "Start game", "End game", "New game",
@@ -176,16 +177,22 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_SIZE:
         cxBlock = LOWORD(lParam) / (DIVISIONS + 2);
         cyBlock = HIWORD(lParam) / (DIVISIONS + 2);
+    {
+        RECT rc;
+        GetClientRect(hwnd, &rc);
+        clientHeight = rc.bottom - rc.top;
+    }
         break;
 
     case WM_MOUSEMOVE:
-        if (GameOver) break;
-        if (cxBlock > 0 && cyBlock > 0) {
-            sX = LOWORD(lParam) / cxBlock;
-            sY = HIWORD(lParam) / cyBlock;
-            SetPointer(sX, sY);
-        }
-        return 0;
+    if (GameOver) break;
+    if (cxBlock > 0 && cyBlock > 0) {
+        /* Переводим Windows-координаты в индексы OS/2 */
+        sX = LOWORD(lParam) / cxBlock;
+        sY = (clientHeight - HIWORD(lParam)) / cyBlock;
+        SetPointer(sX, sY);
+    }
+    return 0;
 
     case WM_CHAR:
         if (GameOver) return 0;
@@ -195,7 +202,7 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             GetCursorPos(&pt);
             ScreenToClient(hwnd, &pt);
             sX = pt.x / cxBlock;
-            sY = pt.y / cyBlock;
+	    sY = (clientHeight - pt.y) / cyBlock;
             sX = max(0, min(DIVISIONS + 2, sX));
             sY = max(0, min(DIVISIONS + 2, sY));
         }
@@ -228,11 +235,13 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_LBUTTONUP:
-        if (GameOver) break;
+    if (GameOver) break;
+    if (cxBlock > 0 && cyBlock > 0) {
         sX = LOWORD(lParam) / cxBlock;
-        sY = HIWORD(lParam) / cyBlock;
+        sY = (clientHeight - HIWORD(lParam)) / cyBlock;
         SendMessage(hwnd, WM_USER, 0, MAKELPARAM(sX, sY));
-        break;
+    }
+    break;
 
     case WM_USER: {
         if (GameOver) break;
@@ -463,70 +472,187 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         break;
     }
 
-    case WM_PAINT: {
-        hdc = BeginPaint(hwnd, &ps);
-        {
-            RECT src, dest;
-            HBRUSH hBrushBg = CreateSolidBrush(bgcolor);
-            HPEN hPen = CreatePen(PS_SOLID, 1, RGB(192,192,192));
-            HBRUSH hOldBr;
-            HPEN hOldPen;
+case WM_PAINT: {
+    RECT rcClient, src, dest, rText, chip;
+    int sOffset;
+    HBRUSH hBrushBg, hBrDark, hBrBlack, hOldBr;
+    HPEN hPen, hOldPen;
+    int left, right, top, bottom;
+    int w, h;
+    COLORREF clr;
+    POINT pt[4];
+    int sX, sY;
 
-            SetRect(&src, 0, 0, cxBlock, (DIVISIONS+3)*cyBlock);
+    GetClientRect(hwnd, &rcClient);
+    clientHeight = rcClient.bottom - rcClient.top;
+
+    hdc = BeginPaint(hwnd, &ps);
+
+    /* ===== Фон (четыре полосы, координаты строго из OS/2) ===== */
+    hBrushBg = CreateSolidBrush(bgcolor);
+
+    left   = 0;
+    top    = clientHeight - ((DIVISIONS + 3) * cyBlock);
+    right  = cxBlock;
+    bottom = clientHeight;
+    SetRect(&src, left, top, right, bottom);
+    if (IntersectRect(&dest, &src, &ps.rcPaint))
+        FillRect(hdc, &src, hBrushBg);
+
+    left   = cxBlock;
+    top    = clientHeight - ((DIVISIONS + 3) * cyBlock);
+    right  = (DIVISIONS + 3) * cxBlock;
+    bottom = clientHeight - ((DIVISIONS + 1) * cyBlock + 1);
+    SetRect(&src, left, top, right, bottom);
+    if (IntersectRect(&dest, &src, &ps.rcPaint))
+        FillRect(hdc, &src, hBrushBg);
+
+    left   = (DIVISIONS + 1) * cxBlock + 1;
+    top    = clientHeight - ((DIVISIONS + 2) * cyBlock);
+    right  = (DIVISIONS + 3) * cxBlock;
+    bottom = clientHeight;
+    SetRect(&src, left, top, right, bottom);
+    if (IntersectRect(&dest, &src, &ps.rcPaint))
+        FillRect(hdc, &src, hBrushBg);
+
+    left   = cxBlock;
+    top    = clientHeight - (cyBlock + 1);
+    right  = (DIVISIONS + 1) * cxBlock + 1;
+    bottom = clientHeight;
+    SetRect(&src, left, top, right, bottom);
+    if (IntersectRect(&dest, &src, &ps.rcPaint))
+        FillRect(hdc, &src, hBrushBg);
+
+    DeleteObject(hBrushBg);
+
+    /* ===== Сетка (OS/2 -> Windows Y) ===== */
+    hPen = CreatePen(PS_SOLID, 1, RGB(192, 192, 192));
+    hOldPen = SelectObject(hdc, hPen);
+    for (sX = 1; sX <= DIVISIONS; sX++) {
+        for (sY = 1; sY <= DIVISIONS; sY++) {
+            left   = sX * cxBlock;
+            top    = clientHeight - ((sY + 1) * cyBlock + 1);
+            right  = (sX + 1) * cxBlock + 1;
+            bottom = clientHeight - (sY * cyBlock);
+            SetRect(&src, left, top, right, bottom);
             if (IntersectRect(&dest, &src, &ps.rcPaint))
-                FillRect(hdc, &src, hBrushBg);
-            SetRect(&src, cxBlock, (DIVISIONS+1)*cyBlock+1, (DIVISIONS+3)*cxBlock, (DIVISIONS+3)*cyBlock);
-            if (IntersectRect(&dest, &src, &ps.rcPaint))
-                FillRect(hdc, &src, hBrushBg);
-            SetRect(&src, (DIVISIONS+1)*cxBlock+1, 0, (DIVISIONS+3)*cxBlock, (DIVISIONS+2)*cyBlock);
-            if (IntersectRect(&dest, &src, &ps.rcPaint))
-                FillRect(hdc, &src, hBrushBg);
-            SetRect(&src, cxBlock, 0, (DIVISIONS+1)*cxBlock+1, cyBlock+1);
-            if (IntersectRect(&dest, &src, &ps.rcPaint))
-                FillRect(hdc, &src, hBrushBg);
-
-            hOldPen = SelectObject(hdc, hPen);
-            for (sX = 1; sX <= DIVISIONS; sX++)
-                for (sY = 1; sY <= DIVISIONS; sY++) {
-                    SetRect(&src, sX*cxBlock, sY*cyBlock, (sX+1)*cxBlock+1, (sY+1)*cyBlock+1);
-                    if (IntersectRect(&dest, &src, &ps.rcPaint))
-                        Rectangle(hdc, src.left, src.top, src.right, src.bottom);
-                }
-            SelectObject(hdc, hOldPen);
-
-            for (sX = 1; sX <= DIVISIONS; sX++) {
-                for (sY = 1; sY <= DIVISIONS; sY++) {
-                    if (Board.sField[sX-1][sY-1] != EMPTY) {
-                        SetRect(&src, sX*cxBlock, sY*cyBlock, (sX+1)*cxBlock, (sY+1)*cyBlock);
-                        if (IntersectRect(&dest, &src, &ps.rcPaint)) {
-                            COLORREF clr;
-                            if (Board.sField[sX-1][sY-1] == COMPUTER)
-                                clr = (lColors==2) ? RGB(255,255,255) : RGB(255,0,0);
-                            else
-                                clr = (lColors==2) ? RGB(0,0,0) : RGB(0,0,255);
-                            hOldBr = SelectObject(hdc, CreateSolidBrush(clr));
-                            Ellipse(hdc, src.left+2, src.top+2, src.right-2, src.bottom-2);
-                            DeleteObject(SelectObject(hdc, hOldBr));
-                        }
-                    }
-                }
-            }
-
-            if (GameOver || fDisplayText) {
-                RECT rText;
-                GetClientRect(hwnd, &rText);
-                rText.top = rText.bottom - cyBlock;
-                SetBkMode(hdc, TRANSPARENT);
-                SetTextColor(hdc, (bgcolor != RGB(255,255,255)) ? RGB(255,255,255) : RGB(0,0,0));
-                DrawText(hdc, text, -1, &rText, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-            }
-
-            DeleteObject(hBrushBg);
-            DeleteObject(hPen);
+                Rectangle(hdc, src.left, src.top, src.right, src.bottom);
         }
-        EndPaint(hwnd, &ps);
-        break;
     }
+    SelectObject(hdc, hOldPen);
+    DeleteObject(hPen);
+
+    /* ===== Рамки (тёмно-серые полигоны, исправлен clipping rect) ===== */
+    hBrDark = CreateSolidBrush(RGB(128, 128, 128));
+
+    /* Верхняя рамка (на самом деле нижняя в Windows, но соответствует оригиналу) */
+    pt[0].x = cxBlock;
+    pt[0].y = clientHeight - cyBlock;                         /* OS/2 y = cyBlock        -> низ */
+    pt[1].x = cxBlock + cxBlock / 4;
+    pt[1].y = clientHeight - (cyBlock - cyBlock / 4);        /* OS/2 y = cyBlock-cyBlock/4 -> чуть выше */
+    pt[2].x = (DIVISIONS + 1) * cxBlock + cxBlock / 4;
+    pt[2].y = pt[1].y;
+    pt[3].x = (DIVISIONS + 1) * cxBlock;
+    pt[3].y = pt[0].y;
+    /* Правильный прямоугольник: top = pt[3].y (меньший Y), bottom = pt[1].y (больший) */
+    SetRect(&src, pt[1].x, pt[3].y, pt[2].x, pt[1].y);
+    if (IntersectRect(&dest, &src, &ps.rcPaint)) {
+        hOldBr = SelectObject(hdc, hBrDark);
+        Polygon(hdc, pt, 4);
+        SelectObject(hdc, hOldBr);
+    }
+
+    /* Правая рамка */
+    pt[0].x = (DIVISIONS + 1) * cxBlock;
+    pt[0].y = clientHeight - (DIVISIONS + 1) * cyBlock;                  /* верх */
+    pt[1].x = pt[0].x + cxBlock / 4;
+    pt[1].y = clientHeight - ((DIVISIONS + 1) * cyBlock - cyBlock / 4); /* чуть ниже */
+    pt[2].x = pt[1].x;
+    pt[2].y = clientHeight - (cyBlock - cyBlock / 4);                   /* низ */
+    pt[3].x = pt[0].x;
+    pt[3].y = clientHeight - cyBlock;                                    /* низ */
+    /* Правильный прямоугольник: top = pt[0].y (меньший), bottom = pt[2].y (больший) */
+    SetRect(&src, pt[3].x, pt[0].y, pt[1].x, pt[2].y);
+    if (IntersectRect(&dest, &src, &ps.rcPaint)) {
+        hOldBr = SelectObject(hdc, hBrDark);
+        Polygon(hdc, pt, 4);
+        SelectObject(hdc, hOldBr);
+    }
+    DeleteObject(hBrDark);
+
+    /* ===== Тени (чёрные) ===== */
+    hBrBlack = CreateSolidBrush(RGB(0, 0, 0));
+    left   = cxBlock + cxBlock / 2;
+    top    = clientHeight - (3 * cyBlock / 4 + 1);
+    right  = (DIVISIONS + 1) * cxBlock + cxBlock / 2 + 1;
+    bottom = clientHeight - (cyBlock / 2);
+    SetRect(&src, left, top, right, bottom);
+    if (IntersectRect(&dest, &src, &ps.rcPaint))
+        FillRect(hdc, &src, hBrBlack);
+
+    left   = (DIVISIONS + 1) * cxBlock + cxBlock / 4;
+    top    = clientHeight - ((DIVISIONS + 1) * cyBlock - cyBlock / 2 + 1);
+    right  = (DIVISIONS + 1) * cxBlock + cxBlock / 2 + 1;
+    bottom = clientHeight - (cyBlock / 2);
+    SetRect(&src, left, top, right, bottom);
+    if (IntersectRect(&dest, &src, &ps.rcPaint))
+        FillRect(hdc, &src, hBrBlack);
+    DeleteObject(hBrBlack);
+
+    /* ===== Фишки ===== */
+    sOffset = (cxBlock < cyBlock ? cxBlock : cyBlock) / 10;
+    for (sX = 1; sX <= DIVISIONS; sX++) {
+        for (sY = 1; sY <= DIVISIONS; sY++) {
+            if (Board.sField[sX - 1][sY - 1] != EMPTY) {
+                left   = sX * cxBlock;
+                top    = clientHeight - ((sY + 1) * cyBlock);
+                right  = (sX + 1) * cxBlock;
+                bottom = clientHeight - (sY * cyBlock);
+                SetRect(&src, left, top, right, bottom);
+                if (IntersectRect(&dest, &src, &ps.rcPaint)) {
+                    if (Board.sField[sX - 1][sY - 1] == COMPUTER)
+                        clr = (lColors == 2) ? RGB(255, 255, 255) : RGB(255, 0, 0);
+                    else
+                        clr = (lColors == 2) ? RGB(0, 0, 0) : RGB(0, 0, 255);
+
+                    chip = src;
+                    w = chip.right - chip.left;
+                    h = chip.bottom - chip.top;
+                    if (w < h) {
+                        chip.top += (h - w) / 2;
+                        chip.bottom -= (h - w) / 2;
+                    } else if (h < w) {
+                        chip.left += (w - h) / 2;
+                        chip.right -= (w - h) / 2;
+                    }
+                    chip.left   += sOffset;
+                    chip.top    += sOffset;
+                    chip.right  -= sOffset;
+                    chip.bottom -= sOffset;
+
+                    hOldBr = SelectObject(hdc, CreateSolidBrush(clr));
+                    Ellipse(hdc, chip.left, chip.top, chip.right, chip.bottom);
+                    DeleteObject(SelectObject(hdc, hOldBr));
+                }
+            }
+        }
+    }
+
+    /* ===== Текстовая строка ===== */
+    if (GameOver || fDisplayText) {
+        left   = 0;
+        top    = clientHeight - ((DIVISIONS + 3) * cyBlock);
+        right  = (DIVISIONS + 3) * cxBlock;
+        bottom = clientHeight - ((DIVISIONS + 1) * cyBlock);
+        SetRect(&rText, left, top, right, bottom);
+        SetBkMode(hdc, TRANSPARENT);
+        SetTextColor(hdc, (bgcolor != RGB(255, 255, 255)) ? RGB(255, 255, 255) : RGB(0, 0, 0));
+        DrawText(hdc, text, -1, &rText, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+    }
+
+    EndPaint(hwnd, &ps);
+    break;
+}
 
     case WM_CLOSE:
         DestroyWindow(hwnd);
