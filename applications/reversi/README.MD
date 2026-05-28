@@ -1,4 +1,4 @@
-# osFree Janus Othello
+# osFree Janus Reversi
 
 ![Language: C](https://img.shields.io/badge/language-C-blue)
 ![Standard: C89](https://img.shields.io/badge/standard-C89-lightgrey)
@@ -6,89 +6,80 @@
 ![Status: Stable](https://img.shields.io/badge/status-stable-brightgreen)
 ![Based on: OS/2 PM](https://img.shields.io/badge/based%20on-OS%2F2%20PM-orange)
 
-A faithful port of the classic **Othello** board game from OS/2 Presentation Manager to 16-bit Windows 3.0.  
-Originally written by Peter Wansch for the OS/2 Entertainment Pack (1994), ported to the [osFree Win16 Personality](https://github.com/osfree-project/WIN16) project ó an open-source implementation of the 16-bit Windows environment.
+![Screenshot](reversi.png)
 
-## ?? About
+A faithful port of the classic **Othello** board game from OS/2 Presentation Manager to 16-bit Windows 3.0.  
+Originally written by Peter Wansch for the OS/2 Entertainment Pack (1994), ported to the [osFree Win16 Personality](https://github.com/osfree-project/WIN16) project ‚Äî an open-source implementation of the 16-bit Windows environment.
+
+## üìñ About
 
 This application brings the complete Othello (Reversi) experience to Windows 3.0. It includes the full original game logic and computer AI, adapted from the OS/2 Presentation Manager API to the Win16 API. The port preserves every algorithm, heuristic, and gameplay element of the original, with only the system-dependent parts rewritten for Windows 3.0.
 
 The computer opponent uses a minimax algorithm with alpha-beta pruning, configurable to three difficulty levels. The game supports both mouse and keyboard input, visual move hints, background colour customization, and basic sound feedback.
 
-## ? Features
+## ‚ú® Features
 
-- **Authentic game logic** ñ Exact copy of the original OS/2 AI and board evaluation
-- **Three difficulty levels** ñ Beginner, Advanced, and Master
-- **Configurable start** ñ Player or computer can move first
-- **Interactive board** ñ Mouse clicks and keyboard navigation (arrow keys, Space/Enter to place)
-- **Visual hints** ñ Computer suggests its recommended move (cursor jumps to the cell)
-- **Background colours** ñ 16 selectable board background colours via menu
-- **Sound feedback** ñ Audio cues for moves, illegal actions, and game end (emulated via `MessageBeep`)
-- **Keyboard accelerators** ñ `Ctrl+N` (New game), `Ctrl+H` (Hint)
-- **INI persistence** ñ Remembers colour, sound, level, and first-player settings in `WIN.INI`
-- **Dialog boxes** ñ Product information and sound settings dialogs
-- **Clean C89 code** ñ Strict adherence to ANSI C, compiled with OpenWatcom 1.9
+- **Authentic game logic** ‚Äì Exact copy of the original OS/2 AI and board evaluation
+- **Three difficulty levels** ‚Äì Beginner, Advanced, and Master
+- **Configurable start** ‚Äì Player or computer can move first
+- **Interactive board** ‚Äì Mouse clicks and keyboard navigation (arrow keys, Space/Enter to place)
+- **Visual hints** ‚Äì Computer suggests its recommended move (cursor jumps to the cell)
+- **Background colours** ‚Äì 16 selectable board background colours via menu
+- **Sound feedback** ‚Äì Audio cues for moves, illegal actions, and game end (emulated via `MessageBeep`)
+- **Keyboard accelerators** ‚Äì `Ctrl+N` (New game), `Ctrl+H` (Hint)
+- **INI persistence** ‚Äì Remembers colour, sound, level, and first-player settings in `WIN.INI`
+- **Dialog boxes** ‚Äì Product information and sound settings dialogs
+- **Clean C89 code** ‚Äì Strict adherence to ANSI C, compiled with OpenWatcom 1.9
 
-## ?? Project Structure
+## üß© Project Structure
 
 | File | Description |
 | :--- | :--- |
-| `othello.c` | Main game source ó WinMain, WndProc, dialogs, game logic, AI |
-| `othello.h` | Header file ó constants, resource IDs, type definitions, prototypes |
-| `othello.rc` | Resource file ó menus, accelerators, dialogs, bitmaps |
-| `othello.def` | Module definition file for the linker |
+| `othello.c` | Main game source ‚Äî WinMain, WndProc, dialogs, game logic, AI |
+| `othello.h` | Header file ‚Äî constants, resource IDs, type definitions, prototypes |
+| `othello.rc` | Resource file ‚Äî menus, accelerators, dialogs, bitmaps |
 | `makefile` | Build file for OpenWatcom Make |
-| `color0.bmp` Ö `color15.bmp` | Bitmap files for the background colour sub-menu (optional) |
+| `color0.bmp` ‚Ä¶ `color15.bmp` | Bitmap files for the background colour sub-menu (optional) |
 | `othello.ico` | Application icon (optional) |
+| `reversi.png` | Screenshot of the running application |
 | `readme.md` | This documentation file |
 
-## ??? How to Build
+## üïπÔ∏è How to Play
 
-1. Install **OpenWatcom 1.9** for 16-bit Windows development
-2. Ensure `%WATCOM%` and `%PATH%` are set correctly
-3. Place all source files in one directory
-4. Run `wmake`
+- **New game** ‚Äî `Ctrl+N` or *Game ‚Üí New*
+- **Player's move** ‚Äî Click on a board cell (cursor becomes a cross when a move is possible)
+- **Computer's move** ‚Äî Automatic after the player has moved
+- **Hint** ‚Äî `Ctrl+H` or *Game ‚Üí Hint*; the mouse pointer jumps to the suggested cell
+- **Difficulty** ‚Äî *Options ‚Üí Beginner / Advanced / Master*
+- **Who starts** ‚Äî *Options ‚Üí Player starts / Computer starts*
+- **Background colour** ‚Äî *Options ‚Üí Background color* (16 colours)
+- **Sound** ‚Äî *Options ‚Üí Sound‚Ä¶* (toggles beeps on/off)
+- **About** ‚Äî *Help ‚Üí Product information‚Ä¶*
 
-The output is `othello.exe` ó a 16-bit Windows executable ready to run under Windows 3.0 or 3.1.
-
-## ??? How to Play
-
-- **New game** ó `Ctrl+N` or *Game > New*
-- **Player's move** ó Click on a board cell (cursor becomes a cross when a move is possible)
-- **Computer's move** ó Automatic after the player has moved
-- **Hint** ó `Ctrl+H` or *Game > Hint*; the mouse pointer jumps to the suggested cell
-- **Difficulty** ó *Options > Beginner / Advanced / Master*
-- **Who starts** ó *Options > Player starts / Computer starts*
-- **Background colour** ó *Options > Background color* (16 colours)
-- **Sound** ó *Options > SoundÖ* (toggles beeps on/off)
-- **About** ó *Help > Product informationÖ*
-
-## ?? Contributing
+## ü§ù Contributing
 
 We welcome your contributions! Please keep the following in mind:
 
-- **Bug reports** ñ Create issues in the [Issues](https://github.com/osfree-project/WIN16/issues) section of the WIN16 repository.
-- **Pull requests** ñ Send your improvements and fixes.
-- **Code style** ñ The project uses C89; please follow the existing conventions.
-- **Documentation** ñ Help improve this README and other project documentation.
+- **Bug reports** ‚Äì Create issues in the [Issues](https://github.com/osfree-project/WIN16/issues) section of the WIN16 repository.
+- **Pull requests** ‚Äì Send your improvements and fixes.
+- **Code style** ‚Äì The project uses C89; please follow the existing conventions.
+- **Documentation** ‚Äì Help improve this README and other project documentation.
 
-## ?? License
+## üìú License
 
 The original Othello code is copyright (C) 1994 Peter Wansch.  
-This port is provided for historical preservation and educational purposes.  
-The osFree project is distributed under the **BSD 3-Clause License**.  
-You can find the full license text at the [osFree wiki](http://osfree.org/doku/doku.php?id=en:legal:osfree).
+The osFree Janus Reversi is distributed under the **BSD 3-Clause License**.  
 
-## ?? Related Projects
+## üîó Related Projects
 
-- [osFree Win16 Personality (WIN16)](https://github.com/osfree-project/WIN16) ñ the main project to create an open-source clone of Windows 3.x
-- [osFree Project](https://github.com/osfree-project) ñ the parent project for an open-source OS/2 clone
-- [Control Panel](https://github.com/osfree-project/control) ñ a clone of the Windows 3.x Control Panel
-- [winver](https://github.com/osfree-project/winver) ñ a clone of the About dialog
-- [Notepad](https://github.com/osfree-project/notepad) ñ a clone of Notepad
-- [Taskman](https://github.com/osfree-project/taskman) ñ a clone of Task Manager
+- [osFree Win16 Personality (WIN16)](https://github.com/osfree-project/WIN16) ‚Äì the main project to create an open-source clone of Windows 3.x
+- [osFree Project](https://github.com/osfree-project) ‚Äì the parent project for an open-source OS/2 clone
+- [Control Panel](https://github.com/osfree-project/control) ‚Äì a clone of the Windows 3.x Control Panel
+- [winver](https://github.com/osfree-project/winver) ‚Äì a clone of the About dialog
+- [Notepad](https://github.com/osfree-project/notepad) ‚Äì a clone of Notepad
+- [Taskman](https://github.com/osfree-project/taskman) ‚Äì a clone of Task Manager
 
-## ?? Copyright
+## üë§ Copyright
 
 - Original Othello (C) 1994 Peter Wansch
 - Port to Windows 3.0 (C) 2026 Yuri Prokushev and the [osFree](https://github.com/osfree-project) team
