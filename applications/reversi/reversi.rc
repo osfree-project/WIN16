@@ -1,0 +1,90 @@
+#include "othello.h"
+
+/* Иконка приложения */
+//ICON    WD_MAIN    othello.ico
+
+/* Битмапы для меню цветов (должны лежать в папке проекта) */
+MI_COLOR0  BITMAP color0.bmp
+MI_COLOR1  BITMAP color1.bmp
+MI_COLOR2  BITMAP color2.bmp
+MI_COLOR3  BITMAP color3.bmp
+MI_COLOR4  BITMAP color4.bmp
+MI_COLOR5  BITMAP color5.bmp
+MI_COLOR6  BITMAP color6.bmp
+MI_COLOR7  BITMAP color7.bmp
+MI_COLOR8  BITMAP color8.bmp
+MI_COLOR9  BITMAP color9.bmp
+MI_COLOR10 BITMAP color10.bmp
+MI_COLOR11 BITMAP color11.bmp
+MI_COLOR12 BITMAP color12.bmp
+MI_COLOR13 BITMAP color13.bmp
+MI_COLOR14 BITMAP color14.bmp
+MI_COLOR15 BITMAP color15.bmp
+
+WD_MAIN MENU
+BEGIN
+    POPUP "&Game"
+    BEGIN
+        MENUITEM "&New\tCtrl+N", MI_NEW
+        MENUITEM "&Hint\tCtrl+H", MI_HINT
+    END
+    POPUP "&Options"
+    BEGIN
+        MENUITEM "&Beginner", MI_BEGINNER
+        MENUITEM "&Advanced", MI_ADVANCED
+        MENUITEM "&Master",   MI_MASTER
+        MENUITEM SEPARATOR
+        MENUITEM "&Player starts",   MI_PLAYER
+        MENUITEM "&Computer starts", MI_COMPUTER
+        MENUITEM SEPARATOR
+        POPUP "Background &color"
+        BEGIN
+            MENUITEM "", MI_COLOR0,  BITMAP
+            MENUITEM "", MI_COLOR1,  BITMAP
+            MENUITEM "", MI_COLOR2,  BITMAP
+            MENUITEM "", MI_COLOR3,  BITMAP
+            MENUITEM "", MI_COLOR4,  BITMAP
+            MENUITEM "", MI_COLOR5,  BITMAP
+            MENUITEM "", MI_COLOR6,  BITMAP
+            MENUITEM "", MI_COLOR7,  BITMAP
+            MENUITEM "", MI_COLOR8,  BITMAP
+            MENUITEM "", MI_COLOR9,  BITMAP
+            MENUITEM "", MI_COLOR10, BITMAP
+            MENUITEM "", MI_COLOR11, BITMAP
+            MENUITEM "", MI_COLOR12, BITMAP
+            MENUITEM "", MI_COLOR13, BITMAP
+            MENUITEM "", MI_COLOR14, BITMAP
+            MENUITEM "", MI_COLOR15, BITMAP
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&Sound...", MI_SOUND
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&Product information...", MI_HELPPRODUCTINFO
+    END
+END
+
+WD_MAIN ACCELERATORS
+BEGIN
+    "N", MI_NEW, CONTROL, VIRTKEY
+    "H", MI_HINT, CONTROL, VIRTKEY
+END
+
+DB_PRODINFO DIALOG 50, 40, 170, 75
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Product information"
+BEGIN
+    LTEXT   "Othello, Version 1.0", -1, 35, 60, 130, 8
+    LTEXT   "Copyright (C) Peter Wansch, 1994.", -1, 35, 50, 130, 8
+    DEFPUSHBUTTON "OK", IDOK, 4, 4, 50, 14
+END
+
+DB_EVE DIALOG 50, 40, 200, 128
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Sound"
+BEGIN
+    CONTROL "&Sound", CB_EVESOUNDS, "BUTTON", BS_AUTOCHECKBOX | WS_TABSTOP | WS_CHILD | WS_VISIBLE, 10, 111, 180, 10
+    DEFPUSHBUTTON "OK", DID_OK, 4, 4, 50, 14
+    PUSHBUTTON "Cancel", IDCANCEL, 64, 4, 50, 14
+END
