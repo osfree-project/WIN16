@@ -74,7 +74,7 @@ The osFree Janus Reversi is distributed under the **BSD 3-Clause License**.
 
 - [osFree Win16 Personality (WIN16)](https://github.com/osfree-project/WIN16) – the main project to create an open-source clone of Windows 3.x
 - [osFree Project](https://github.com/osfree-project) – the parent project for an open-source OS/2 clone
-- [Control Panel](https://github.com/osfree-project/control) – a clone of the Windows 3.x Control Panel
+- [Control Panel](https://github.com/osfree-project/WIN16/tree/master/applications/control) – a clone of the Windows 3.x Control Panel
 - [winver](https://github.com/osfree-project/winver) – a clone of the About dialog
 - [Notepad](https://github.com/osfree-project/notepad) – a clone of Notepad
 - [Taskman](https://github.com/osfree-project/taskman) – a clone of Task Manager
