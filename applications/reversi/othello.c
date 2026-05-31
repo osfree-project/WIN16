@@ -707,16 +707,22 @@ void DoComputerMove(HWND hwnd, BOOL fHint)
     else
         sOthello(Board, 0, 0, 0, sLevel+2, COMPUTER, &sX, &sY, &fValid, 0);
 
-    if (fHint && fValid) {
-        GetClientRect(hwnd, &rc);
-        cX = (short)((rc.right - rc.left) / (DIVISIONS + 2));
-        cY = (short)((rc.bottom - rc.top) / (DIVISIONS + 2));
-        pt.x = (sX + 1) * cX + cX / 2;
-        pt.y = (sY + 1) * cY + cY / 2;
-        ClientToScreen(hwnd, &pt);
-        SetCursorPos(pt.x, pt.y);
-        return;
-    }
+if (fHint && fValid) {
+    int left, top_y, bottom_y;
+    RECT rc;
+    GetClientRect(hwnd, &rc);
+    cX = (short)((rc.right - rc.left) / (DIVISIONS + 2));
+    cY = (short)((rc.bottom - rc.top) / (DIVISIONS + 2));
+    /* sX, sY – логические индексы: 0..7, sY=0 соответствует нижней строке */
+    left   = (sX + 1) * cX;
+    top_y  = clientHeight - ((sY + 2) * cY);   /* верхний край клетки в Windows */
+    bottom_y = clientHeight - ((sY + 1) * cY); /* нижний край */
+    pt.x = left + cX / 2;                     /* центр клетки по X */
+    pt.y = (top_y + bottom_y) / 2;            /* центр клетки по Y */
+    ClientToScreen(hwnd, &pt);
+    SetCursorPos(pt.x, pt.y);
+    return;
+}
 
     if (!fHint && fValid) {
         if(fSound) {
