@@ -1,17 +1,26 @@
 #
 # A Makefile for lzexpand.dll
 # (c) osFree project,
-# author, date
 #
 
 PROJ     = main
-TRGT     = $(PROJ).dll
+TRGT     = $(PROJ).cpl
 DESC     = Main CPL
 srcfiles = $(p)main$(e)
+ADD_COPT = -I=$(MYDIR)$(SEP)..$(SEP)..
 # linking dll file
 DLL     = 1
-EXPORTS = CPlApplet       .1
+EXPORTS = CPlApplet       .1, &
+	MouseDlgProc.2
 
 DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 
 !include $(%ROOT)tools/mk/appsw16.mk
+
+TARGETS = $(PATH)$(PROJ).cpl
+
+.ico: $(MYDIR)res
+
+$(PATH)$(PROJ).cpl: $(PATH)$(PROJ).dll $(MYDIR)$(PROJ).rc
+ @$(SAY) RESCMP   $^. $(LOG)
+ @$(RC) -q -30 -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win

@@ -1,0 +1,213 @@
+#include <windows.h>
+#include "main.h"
+
+STRINGTABLE BEGIN
+    IDS_COLOR_NAME,  "Color"
+    IDS_COLOR_INFO,  "Change the color scheme"
+    IDS_FONTS_NAME,  "Fonts"
+    IDS_FONTS_INFO,  "Add or remove fonts"
+    IDS_PORTS_NAME,  "Ports"
+    IDS_PORTS_INFO,  "Configure serial and parallel ports"
+    IDS_MOUSE_NAME,  "Mouse"
+    IDS_MOUSE_INFO,  "Change mouse settings"
+    IDS_DESKTOP_NAME, "Desktop"
+    IDS_DESKTOP_INFO, "Change desktop appearance"
+    IDS_KEYBOARD_NAME, "Keyboard"
+    IDS_KEYBOARD_INFO, "Change keyboard repeat rate and delay"
+    IDS_PRINTERS_NAME, "Printers"
+    IDS_PRINTERS_INFO, "Add, remove, and configure printers"
+    IDS_INTERNATIONAL_NAME, "International"
+    IDS_INTERNATIONAL_INFO, "Change country, language, and number formats"
+    IDS_DATETIME_NAME, "Date/Time"
+    IDS_DATETIME_INFO, "Change system date and time"
+    IDS_NETWORK_NAME, "Network"
+    IDS_NETWORK_INFO, "Configure network settings"
+END
+
+/* ----- Color ----- */
+DLG_COLOR DIALOG 10, 10, 220, 200
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Color"
+BEGIN
+    LTEXT           "Color Schemes", -1, 10, 10, 200, 12
+    COMBOBOX        IDC_COL_SCHEMES, 10, 25, 200, 80, CBS_DROPDOWNLIST | WS_VSCROLL
+    GROUPBOX        "Screen Element", -1, 10, 50, 200, 70
+    LISTBOX         IDC_COL_ELEMENTS, 15, 65, 100, 50, LBS_STANDARD | WS_VSCROLL
+    CONTROL         "", IDC_COL_SAMPLE, "static", SS_BLACKFRAME, 125, 65, 80, 50
+    PUSHBUTTON      "Color Palette...", IDC_COL_CHANGE, 10, 130, 100, 14
+    PUSHBUTTON      "Default Colors", IDC_COL_DEFCOLORS, 120, 130, 90, 14
+    DEFPUSHBUTTON   "OK", IDOK, 50, 160, 50, 14
+    PUSHBUTTON      "Cancel", IDCANCEL, 120, 160, 50, 14
+END
+
+/* ----- Fonts ----- */
+DLG_FONTS DIALOG 10, 10, 230, 200
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Fonts"
+BEGIN
+    LISTBOX         IDC_FNT_LIST, 10, 10, 120, 100, LBS_STANDARD | WS_VSCROLL
+    LTEXT           "Sample", -1, 140, 10, 80, 12
+    CONTROL         "", IDC_FNT_SAMPLE, "static", SS_BLACKFRAME, 140, 25, 80, 40
+    PUSHBUTTON      "Add...", IDC_FNT_ADD, 20, 120, 50, 14
+    PUSHBUTTON      "Remove", IDC_FNT_REMOVE, 90, 120, 50, 14
+    DEFPUSHBUTTON   "OK", IDOK, 50, 150, 50, 14
+    PUSHBUTTON      "Cancel", IDCANCEL, 120, 150, 50, 14
+END
+
+/* ----- Ports ----- */
+DLG_PORTS DIALOG 10, 10, 150, 150
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Ports"
+BEGIN
+    LISTBOX         IDC_PRT_LIST, 10, 10, 130, 60, LBS_STANDARD | WS_VSCROLL
+    PUSHBUTTON      "Settings...", IDC_PRT_SETTINGS, 35, 80, 80, 14
+    DEFPUSHBUTTON   "OK", IDOK, 20, 110, 50, 14
+    PUSHBUTTON      "Cancel", IDCANCEL, 80, 110, 50, 14
+END
+
+/* ----- Mouse (воспроизведение диалога Windows 3.0) ----- */
+DLG_MOUSE DIALOG FIXED IMPURE 10, 10, 200, 104
+STYLE DS_MODALFRAME | WS_POPUPWINDOW | WS_DLGFRAME
+CAPTION "Mouse"
+FONT 8, "Helv"
+BEGIN
+    CONTROL "&Mouse Tracking Speed",    -1, "BUTTON", BS_GROUPBOX | WS_CHILD | WS_VISIBLE, 4, 4, 96, 36
+    CONTROL "Slow",                     -1, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 6, 16, 44, 9
+    CONTROL "Fast",                     -1, "STATIC", SS_RIGHT | WS_CHILD | WS_VISIBLE | WS_GROUP, 54, 16, 44, 9
+    CONTROL "",                         IDC_MS_SPEED, "SCROLLBAR", SBS_HORZ | WS_CHILD | WS_VISIBLE | WS_GROUP | WS_TABSTOP, 6, 26, 92, 12
+    CONTROL "&Double Click Speed",      -1, "BUTTON", BS_GROUPBOX | WS_CHILD | WS_VISIBLE, 4, 44, 96, 56
+    CONTROL "Slow",                     -1, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 6, 56, 44, 9
+    CONTROL "Fast",                     -1, "STATIC", SS_RIGHT | WS_CHILD | WS_VISIBLE | WS_GROUP, 54, 56, 44, 9
+    CONTROL "",                         IDC_MS_DOUBLECLICK, "SCROLLBAR", SBS_HORZ | WS_CHILD | WS_VISIBLE | WS_GROUP | WS_TABSTOP, 6, 66, 92, 12
+    CONTROL "",                         IDC_MS_TEST, "STATIC", SS_BLACKFRAME | WS_CHILD | WS_VISIBLE, 31, 80, 36, 16
+    CONTROL "TEST",                     -1, "STATIC", SS_CENTER | SS_NOPREFIX | WS_CHILD | WS_VISIBLE | WS_GROUP, 33, 84, 32, 9
+    CONTROL "&Swap Left/Right Buttons", IDC_MS_SWAP, "BUTTON", BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_GROUP | WS_TABSTOP, 104, 78, 158, 12
+    CONTROL "",                         IDC_MS_BUTTON_FRAME, "STATIC", SS_BLACKFRAME | WS_CHILD | WS_VISIBLE, 108, 21, 42, 50
+    CONTROL "",                         IDC_MS_L_FRAME, "STATIC", SS_BLACKFRAME | WS_CHILD | WS_VISIBLE, 108, 21, 21, 14
+    CONTROL "",                         IDC_MS_R_FRAME, "STATIC", SS_BLACKFRAME | WS_CHILD | WS_VISIBLE, 129, 21, 21, 14
+    CONTROL "L",                        IDC_MS_L, "STATIC", SS_CENTER | SS_NOPREFIX | WS_CHILD | WS_VISIBLE | WS_GROUP, 109, 24, 19, 8
+    CONTROL "R",                        IDC_MS_R, "STATIC", SS_CENTER | SS_NOPREFIX | WS_CHILD | WS_VISIBLE | WS_GROUP, 130, 24, 19, 8
+    CONTROL "OK",                       IDOK, "BUTTON", BS_DEFPUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_GROUP | WS_TABSTOP, 160, 4, 36, 14
+    CONTROL "Cancel",                   IDCANCEL, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_GROUP | WS_TABSTOP, 160, 20, 36, 14
+END
+
+/* ----- Desktop ----- */
+DLG_DESKTOP DIALOG 10, 10, 240, 150
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Desktop"
+BEGIN
+    LTEXT           "Pattern", -1, 10, 10, 50, 12
+    EDITTEXT        IDC_DT_PATTERN, 60, 8, 100, 14
+    LTEXT           "Wallpaper", -1, 10, 35, 50, 12
+    EDITTEXT        IDC_DT_WALLPAPER, 60, 33, 100, 14
+    PUSHBUTTON      "Browse...", IDC_DT_BROWSE_WP, 165, 33, 60, 14
+    CONTROL         "Tile", IDC_DT_TILE, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 60, 60, 50, 14
+    DEFPUSHBUTTON   "OK", IDOK, 50, 90, 50, 14
+    PUSHBUTTON      "Cancel", IDCANCEL, 130, 90, 50, 14
+END
+
+/* ----- Keyboard ----- */
+DLG_KEYBOARD DIALOG 10, 10, 220, 150
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Keyboard"
+BEGIN
+    LTEXT           "Delay Before First Repeat", -1, 10, 15, 120, 12
+    SCROLLBAR       IDC_KB_DELAY, 135, 13, 80, 14, SBS_HORZ
+    LTEXT           "Repeat Rate", -1, 10, 40, 120, 12
+    SCROLLBAR       IDC_KB_RATE, 135, 38, 80, 14, SBS_HORZ
+    LTEXT           "Test:", -1, 10, 65, 30, 12
+    EDITTEXT        IDC_KB_TEST, 45, 62, 120, 14
+    DEFPUSHBUTTON   "OK", IDOK, 50, 95, 50, 14
+    PUSHBUTTON      "Cancel", IDCANCEL, 120, 95, 50, 14
+END
+
+/* ----- Printers ----- */
+DLG_PRINTERS DIALOG 10, 10, 230, 160
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Printers"
+BEGIN
+    LISTBOX         IDC_PRN_LIST, 10, 10, 210, 60, LBS_STANDARD | WS_VSCROLL
+    PUSHBUTTON      "Connect...", IDC_PRN_CONNECT, 10, 80, 60, 14
+    PUSHBUTTON      "Setup...", IDC_PRN_SETUP, 80, 80, 60, 14
+    PUSHBUTTON      "Remove", IDC_PRN_REMOVE, 150, 80, 60, 14
+    DEFPUSHBUTTON   "OK", IDOK, 50, 110, 50, 14
+    PUSHBUTTON      "Cancel", IDCANCEL, 130, 110, 50, 14
+END
+
+/* ----- International ----- */
+DLG_INTERNATIONAL DIALOG 10, 10, 320, 290
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "International"
+BEGIN
+    GROUPBOX        "Country", -1, 5, 5, 150, 45
+    COMBOBOX        IDC_INTL_COUNTRY, 10, 20, 140, 80, CBS_DROPDOWNLIST | WS_VSCROLL
+    GROUPBOX        "Language", -1, 5, 55, 150, 45
+    EDITTEXT        IDC_INTL_LANGUAGE, 10, 70, 140, 14
+    GROUPBOX        "Keyboard Layout", -1, 5, 105, 150, 45
+    COMBOBOX        IDC_INTL_LISTSEP, 10, 120, 140, 80, CBS_DROPDOWNLIST | WS_VSCROLL
+    GROUPBOX        "Measurement", -1, 5, 155, 150, 45
+    CONTROL         "Metric", IDC_INTL_MEASURE, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 15, 170, 60, 14
+    GROUPBOX        "List Separator", -1, 5, 205, 150, 45
+    EDITTEXT        IDC_INTL_LISTSEP, 10, 220, 30, 14
+
+    GROUPBOX        "Date Format", -1, 170, 5, 140, 85
+    RADIOBUTTON     "MDY (12/31/90)", IDC_INTL_DATEFORMAT, 180, 20, 120, 14, WS_GROUP
+    RADIOBUTTON     "DMY (31/12/90)", -1, 180, 35, 120, 14
+    RADIOBUTTON     "YMD (90/12/31)", -1, 180, 50, 120, 14
+    LTEXT           "Sample:", -1, 180, 70, 40, 10
+    LTEXT           "01/15/91", IDC_INTL_SAMPLE_DATE, 225, 70, 80, 10
+
+    GROUPBOX        "Currency Format", -1, 170, 95, 140, 85
+    RADIOBUTTON     "$1 (prefix)", IDC_INTL_CURRENCY, 180, 110, 120, 14, WS_GROUP
+    RADIOBUTTON     "1$ (suffix)", -1, 180, 125, 120, 14
+    RADIOBUTTON     "$ 1 (prefix, space)", -1, 180, 140, 120, 14
+    RADIOBUTTON     "1 $ (suffix, space)", -1, 180, 155, 120, 14
+    LTEXT           "Sample:", -1, 180, 175, 40, 10
+    LTEXT           "$123.45", IDC_INTL_SAMPLE_CURR, 225, 175, 80, 10
+
+    GROUPBOX        "Number Format", -1, 5, 255, 150, 55
+    LTEXT           "Decimal digits:", -1, 10, 272, 70, 10
+    EDITTEXT        IDC_INTL_DIGITS, 85, 270, 30, 14, ES_LEFT
+    CONTROL         "Leading zero (0.7)", IDC_INTL_LEADZERO, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 10, 290, 80, 14
+
+    GROUPBOX        "Time Format", -1, 170, 185, 140, 45
+    RADIOBUTTON     "12 hour (11:59 PM)", IDC_INTL_TIMEFORMAT, 180, 200, 120, 14, WS_GROUP
+    RADIOBUTTON     "24 hour (23:59)", -1, 180, 215, 120, 14
+
+    DEFPUSHBUTTON   "OK", IDOK, 180, 320, 50, 14
+    PUSHBUTTON      "Cancel", IDCANCEL, 240, 320, 50, 14
+END
+
+/* ----- Date/Time ----- */
+DLG_DATETIME DIALOG 10, 10, 340, 190
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Date & Time"
+BEGIN
+    GROUPBOX        "Date", -1, 5, 5, 210, 160
+    LTEXT           "", IDC_DT_DATE_TEXT, 10, 18, 200, 12, SS_CENTER
+    PUSHBUTTON      "<", IDC_DT_MONTH_PREV, 40, 40, 18, 14
+    LTEXT           "", IDC_DT_MONTH_TITLE, 60, 40, 100, 12, SS_CENTER
+    PUSHBUTTON      ">", IDC_DT_MONTH_NEXT, 160, 40, 18, 14
+    CONTROL         "", IDC_DT_CALENDAR, "static", 0x000D, 10, 58, 200, 100
+
+    GROUPBOX        "Time", -1, 220, 5, 110, 70
+    LTEXT           "", IDC_DT_TIME_TEXT, 225, 20, 100, 12, SS_CENTER
+    PUSHBUTTON      "+", IDC_DT_HOUR_UP, 235, 40, 18, 14
+    PUSHBUTTON      "-", IDC_DT_HOUR_DOWN, 235, 56, 18, 14
+    PUSHBUTTON      "+", IDC_DT_MIN_UP, 265, 40, 18, 14
+    PUSHBUTTON      "-", IDC_DT_MIN_DOWN, 265, 56, 18, 14
+    PUSHBUTTON      "+", IDC_DT_SEC_UP, 295, 40, 18, 14
+    PUSHBUTTON      "-", IDC_DT_SEC_DOWN, 295, 56, 18, 14
+
+    DEFPUSHBUTTON   "OK", IDOK, 240, 150, 40, 14
+    PUSHBUTTON      "Cancel", IDCANCEL, 290, 150, 40, 14
+END
+
+/* ----- Network ----- */
+DLG_NETWORK DIALOG 10, 10, 220, 120
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Network"
+BEGIN
+    LTEXT           "Network settings are not implemented.", IDC_NET_MSG, 10, 10, 200, 20
+    DEFPUSHBUTTON   "OK", IDOK, 80, 70, 50, 14
+END

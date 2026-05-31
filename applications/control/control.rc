@@ -1,0 +1,39 @@
+#include <windows.h>
+#include "control.h"
+
+CTLPANELMENU MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&Run...",              IDM_FILE_RUN
+        MENUITEM "E&xit",                IDM_FILE_EXIT
+    END
+    POPUP "&Settings"
+    BEGIN
+        MENUITEM "&Color...",            IDM_SETTINGS_COLOR
+        MENUITEM "&Desktop...",          IDM_SETTINGS_DESKTOP
+        MENUITEM "Date/&Time...",        IDM_SETTINGS_DATETIME
+        MENUITEM "&Fonts...",            IDM_SETTINGS_FONTS
+        MENUITEM "&International...",    IDM_SETTINGS_INTERNATIONAL
+        MENUITEM "&Keyboard...",         IDM_SETTINGS_KEYBOARD
+        MENUITEM "&Mouse...",            IDM_SETTINGS_MOUSE
+        MENUITEM "&Network...",          IDM_SETTINGS_NETWORK
+        MENUITEM "P&orts...",            IDM_SETTINGS_PORTS
+        MENUITEM "&Printers...",         IDM_SETTINGS_PRINTERS
+        MENUITEM "&Sound...",            IDM_SETTINGS_SOUND
+        MENUITEM "&386 Enhanced...",     IDM_SETTINGS_386ENHANCED
+        MENUITEM "&Drivers...",          IDM_SETTINGS_DRIVERS
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit Control Panel",  IDM_FILE_EXIT
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&Index",               IDM_HELP_INDEX
+        MENUITEM "&Keyboard",            IDM_HELP_KEYBOARD
+        MENUITEM "&Commands",            IDM_HELP_COMMANDS
+        MENUITEM "&Procedures",          IDM_HELP_PROCEDURES
+        MENUITEM "&Using Help",          IDM_HELP_USING_HELP
+        MENUITEM SEPARATOR
+        MENUITEM "&About Control Panel...", IDM_HELP_ABOUT
+    END
+END
