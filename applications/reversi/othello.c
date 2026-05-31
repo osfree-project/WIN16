@@ -14,6 +14,8 @@ static BOOL      fSound = TRUE;
 static char      szApp[] = "Othello";
 static COLORREF  bgcolor = RGB(0,128,0);
 static int       clientHeight = 0;
+static BOOL fDisplayText = FALSE;
+static char text[129];
 
 static char *pszEvent[] = {
     "Start game", "End game", "New game",
@@ -118,11 +120,11 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     POINT point;
     short sX, sY, sPlayer, sComputer;
-    static char text[129];
+//    static char text[129];
     static BOOL fPtrInstalled;
     static short cxBlock, cyBlock;
     static BOOL fPlayerStarts;
-    static BOOL fDisplayText;
+//    static BOOL fDisplayText;
     static BOOL fFirst;
     RECT rect;
     HDC hdc;
@@ -243,110 +245,127 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
     break;
 
-    case WM_USER: {
-        if (GameOver) break;
-        sX = LOWORD(lParam);
-        sY = HIWORD(lParam);
+case WM_USER: {
+    int left, top, right, bottom;
+    if (GameOver) break;
+    sX = LOWORD(lParam);
+    sY = HIWORD(lParam);
 
-        if (fDisplayText) {
-            fDisplayText = FALSE;
-            SetRect(&rect, 0, (DIVISIONS+1)*cyBlock, (DIVISIONS+3)*cxBlock, (DIVISIONS+3)*cyBlock);
-            InvalidateRect(hwnd, &rect, FALSE);
-        }
+    /* Очистка сообщения "I must pass", если оно было */
+    if (fDisplayText) {
+        fDisplayText = FALSE;
+        left   = 0;
+        top    = clientHeight - ((DIVISIONS + 3) * cyBlock);
+        right  = (DIVISIONS + 3) * cxBlock;
+        bottom = clientHeight - ((DIVISIONS + 1) * cyBlock);
+        SetRect(&rect, left, top, right, bottom);
+        InvalidateRect(hwnd, &rect, FALSE);
+    }
 
-        if (sX == 0 || sX == 9 || sY == 0 || sY == 9) {
-            if(fSound) {
-                PSOUNDEVENT pSE = malloc(sizeof(SOUNDEVENT));
-                if(pSE) { pSE->sEvent = 4; vdGetWavFile(4, pSE->chWavFile); vdPlayWavFileAsyncEve(pSE); }
-            }
-            break;
-        }
-
-        sX--; sY--;
-        if(!fIsMovePossible(Board, sX, sY, PLAYER)) {
-            if(fSound) {
-                PSOUNDEVENT pSE = malloc(sizeof(SOUNDEVENT));
-                if(pSE) { pSE->sEvent = 4; vdGetWavFile(4, pSE->chWavFile); vdPlayWavFileAsyncEve(pSE); }
-            }
-            break;
-        }
-
+    if (sX == 0 || sX == 9 || sY == 0 || sY == 9) {
         if(fSound) {
             PSOUNDEVENT pSE = malloc(sizeof(SOUNDEVENT));
-            if(pSE) { pSE->sEvent = 3; vdGetWavFile(3, pSE->chWavFile); vdPlayWavFileAsyncEve(pSE); }
-        }
-        MakeMove(&Board, sX, sY, PLAYER, TRUE, TRUE, cxBlock, cyBlock, hwnd);
-
-        if (fGameOver(Board)) {
-            GameOver = TRUE;
-            if (cxBlock > 0 && cyBlock > 0) {
-                GetCursorPos(&point);
-                ScreenToClient(hwnd, &point);
-                point.x /= cxBlock;
-                point.y /= cyBlock;
-                SetPointer(point.x, point.y);
-            }
-            Result(Board, &sComputer, &sPlayer);
-            if(sComputer == sPlayer) {
-                if(fSound) {
-                    PSOUNDEVENT pSE = malloc(sizeof(SOUNDEVENT));
-                    if(pSE) { pSE->sEvent = 9; vdGetWavFile(9, pSE->chWavFile); vdPlayWavFileAsyncEve(pSE); }
-                }
-#ifdef GERMAN
-                strcpy(text, "Das Spiel ist unentschieden.");
-#else
-                strcpy(text, "The game is a draw.");
-#endif
-            } else if(sComputer > sPlayer) {
-                if(fSound) {
-                    PSOUNDEVENT pSE = malloc(sizeof(SOUNDEVENT));
-                    if(pSE) { pSE->sEvent = 8; vdGetWavFile(8, pSE->chWavFile); vdPlayWavFileAsyncEve(pSE); }
-                }
-#ifdef GERMAN
-                sprintf(text, "Sie haben um %d Punkte verloren.", sComputer - sPlayer);
-#else
-                sprintf(text, "You lost by %d.", sComputer - sPlayer);
-#endif
-            } else {
-                if(fSound) {
-                    PSOUNDEVENT pSE = malloc(sizeof(SOUNDEVENT));
-                    if(pSE) { pSE->sEvent = 7; vdGetWavFile(7, pSE->chWavFile); vdPlayWavFileAsyncEve(pSE); }
-                }
-#ifdef GERMAN
-                sprintf(text, "Sie haben um %d Punkte gewonnen.", sPlayer - sComputer);
-#else
-                sprintf(text, "You won by %d.", sPlayer - sComputer);
-#endif
-            }
-            SetRect(&rect, 0, (DIVISIONS+1)*cyBlock, (DIVISIONS+3)*cxBlock, (DIVISIONS+3)*cyBlock);
-            InvalidateRect(hwnd, &rect, FALSE);
-            break;
-        }
-
-        if (fMustPass(Board, COMPUTER)) {
-            if(fSound) {
-                PSOUNDEVENT pSE = malloc(sizeof(SOUNDEVENT));
-                if(pSE) { pSE->sEvent = 6; vdGetWavFile(6, pSE->chWavFile); vdPlayWavFileAsyncEve(pSE); }
-            }
-            fDisplayText = TRUE;
-            strcpy(text, "I must pass.");
-            SetRect(&rect, 0, (DIVISIONS+1)*cyBlock, (DIVISIONS+3)*cxBlock, (DIVISIONS+3)*cyBlock);
-            InvalidateRect(hwnd, &rect, FALSE);
-            if (cxBlock > 0 && cyBlock > 0) {
-                GetCursorPos(&point);
-                ScreenToClient(hwnd, &point);
-                point.x /= cxBlock;
-                point.y /= cyBlock;
-                SetPointer(point.x, point.y);
-            }
-        } else {
-            SetCursor(hptrWait);
-            DoComputerMove(hwnd, FALSE);
-            SetCursor(hptrSystem);
+            if(pSE) { pSE->sEvent = 4; vdGetWavFile(4, pSE->chWavFile); vdPlayWavFileAsyncEve(pSE); }
         }
         break;
     }
 
+    sX--; sY--;
+    if(!fIsMovePossible(Board, sX, sY, PLAYER)) {
+        if(fSound) {
+            PSOUNDEVENT pSE = malloc(sizeof(SOUNDEVENT));
+            if(pSE) { pSE->sEvent = 4; vdGetWavFile(4, pSE->chWavFile); vdPlayWavFileAsyncEve(pSE); }
+        }
+        break;
+    }
+
+    if(fSound) {
+        PSOUNDEVENT pSE = malloc(sizeof(SOUNDEVENT));
+        if(pSE) { pSE->sEvent = 3; vdGetWavFile(3, pSE->chWavFile); vdPlayWavFileAsyncEve(pSE); }
+    }
+    MakeMove(&Board, sX, sY, PLAYER, TRUE, TRUE, cxBlock, cyBlock, hwnd);
+
+    /* Проверка конца игры после хода игрока */
+    if (fGameOver(Board)) {
+        GameOver = TRUE;
+        if (cxBlock > 0 && cyBlock > 0) {
+            GetCursorPos(&point);
+            ScreenToClient(hwnd, &point);
+            point.x /= cxBlock;
+            point.y /= cyBlock;
+            SetPointer(point.x, point.y);
+        }
+        Result(Board, &sComputer, &sPlayer);
+        if(sComputer == sPlayer) {
+            if(fSound) {
+                PSOUNDEVENT pSE = malloc(sizeof(SOUNDEVENT));
+                if(pSE) { pSE->sEvent = 9; vdGetWavFile(9, pSE->chWavFile); vdPlayWavFileAsyncEve(pSE); }
+            }
+#ifdef GERMAN
+            strcpy(text, "Das Spiel ist unentschieden.");
+#else
+            strcpy(text, "The game is a draw.");
+#endif
+        } else if(sComputer > sPlayer) {
+            if(fSound) {
+                PSOUNDEVENT pSE = malloc(sizeof(SOUNDEVENT));
+                if(pSE) { pSE->sEvent = 8; vdGetWavFile(8, pSE->chWavFile); vdPlayWavFileAsyncEve(pSE); }
+            }
+#ifdef GERMAN
+            sprintf(text, "Sie haben um %d Punkte verloren.", sComputer - sPlayer);
+#else
+            sprintf(text, "You lost by %d.", sComputer - sPlayer);
+#endif
+        } else {
+            if(fSound) {
+                PSOUNDEVENT pSE = malloc(sizeof(SOUNDEVENT));
+                if(pSE) { pSE->sEvent = 7; vdGetWavFile(7, pSE->chWavFile); vdPlayWavFileAsyncEve(pSE); }
+            }
+#ifdef GERMAN
+            sprintf(text, "Sie haben um %d Punkte gewonnen.", sPlayer - sComputer);
+#else
+            sprintf(text, "You won by %d.", sPlayer - sComputer);
+#endif
+        }
+        left   = 0;
+        top    = clientHeight - ((DIVISIONS + 3) * cyBlock);
+        right  = (DIVISIONS + 3) * cxBlock;
+        bottom = clientHeight - ((DIVISIONS + 1) * cyBlock);
+        SetRect(&rect, left, top, right, bottom);
+        InvalidateRect(hwnd, &rect, FALSE);
+        UpdateWindow(hwnd);
+        break;
+    }
+
+    /* Компьютер пасует – игра продолжается */
+    if (fMustPass(Board, COMPUTER)) {
+        if(fSound) {
+            PSOUNDEVENT pSE = malloc(sizeof(SOUNDEVENT));
+            if(pSE) { pSE->sEvent = 6; vdGetWavFile(6, pSE->chWavFile); vdPlayWavFileAsyncEve(pSE); }
+        }
+        fDisplayText = TRUE;
+        strcpy(text, "I must pass.");
+        left   = 0;
+        top    = clientHeight - ((DIVISIONS + 3) * cyBlock);
+        right  = (DIVISIONS + 3) * cxBlock;
+        bottom = clientHeight - ((DIVISIONS + 1) * cyBlock);
+        SetRect(&rect, left, top, right, bottom);
+        InvalidateRect(hwnd, &rect, FALSE);
+        if (cxBlock > 0 && cyBlock > 0) {
+            GetCursorPos(&point);
+            ScreenToClient(hwnd, &point);
+            point.x /= cxBlock;
+            point.y /= cyBlock;
+            SetPointer(point.x, point.y);
+        }
+        /* Игра не заканчивается, ждём следующего хода игрока */
+    } else {
+        SetCursor(hptrWait);
+        DoComputerMove(hwnd, FALSE);
+        SetCursor(hptrSystem);
+    }
+    break;
+}
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
         case MI_COLOR0:  bgcolor = RGB(0,0,0);       InvalidateRect(hwnd, NULL, FALSE); break;
@@ -701,28 +720,30 @@ void DoComputerMove(HWND hwnd, BOOL fHint)
     RECT rc;
     short cX, cY;
     POINT pt;
+    short sComputer, sPlayer;
+    int localHeight;
+    int left, top, right, bottom;
 
     if (fHint)
         sOthello(BoardHilf, 0, 0, 0, sLevel+2, COMPUTER, &sX, &sY, &fValid, 0);
     else
         sOthello(Board, 0, 0, 0, sLevel+2, COMPUTER, &sX, &sY, &fValid, 0);
 
-if (fHint && fValid) {
-    int left, top_y, bottom_y;
-    RECT rc;
-    GetClientRect(hwnd, &rc);
-    cX = (short)((rc.right - rc.left) / (DIVISIONS + 2));
-    cY = (short)((rc.bottom - rc.top) / (DIVISIONS + 2));
-    /* sX, sY – логические индексы: 0..7, sY=0 соответствует нижней строке */
-    left   = (sX + 1) * cX;
-    top_y  = clientHeight - ((sY + 2) * cY);   /* верхний край клетки в Windows */
-    bottom_y = clientHeight - ((sY + 1) * cY); /* нижний край */
-    pt.x = left + cX / 2;                     /* центр клетки по X */
-    pt.y = (top_y + bottom_y) / 2;            /* центр клетки по Y */
-    ClientToScreen(hwnd, &pt);
-    SetCursorPos(pt.x, pt.y);
-    return;
-}
+    if (fHint && fValid) {
+        /* Подсказка (уже исправлена) */
+        int top_y, bottom_y;
+        GetClientRect(hwnd, &rc);
+        cX = (short)((rc.right - rc.left) / (DIVISIONS + 2));
+        cY = (short)((rc.bottom - rc.top) / (DIVISIONS + 2));
+        left   = (sX + 1) * cX;
+        top_y  = clientHeight - ((sY + 2) * cY);
+        bottom_y = clientHeight - ((sY + 1) * cY);
+        pt.x = left + cX / 2;
+        pt.y = (top_y + bottom_y) / 2;
+        ClientToScreen(hwnd, &pt);
+        SetCursorPos(pt.x, pt.y);
+        return;
+    }
 
     if (!fHint && fValid) {
         if(fSound) {
@@ -730,11 +751,62 @@ if (fHint && fValid) {
             if(pSE) { pSE->sEvent = 3; vdGetWavFile(3, pSE->chWavFile); vdPlayWavFileAsyncEve(pSE); }
         }
         GetClientRect(hwnd, &rc);
+        localHeight = rc.bottom - rc.top;
         cX = (short)((rc.right - rc.left) / (DIVISIONS + 2));
         cY = (short)((rc.bottom - rc.top) / (DIVISIONS + 2));
         MakeMove(&Board, sX, sY, COMPUTER, TRUE, TRUE, cX, cY, hwnd);
+
+        /* Проверка конца игры */
         if (fGameOver(Board)) {
             GameOver = TRUE;
+            Result(Board, &sComputer, &sPlayer);
+            if(sComputer == sPlayer) {
+                strcpy(text, "The game is a draw.");
+            } else if(sComputer > sPlayer) {
+                sprintf(text, "You lost by %d.", sComputer - sPlayer);
+            } else {
+                sprintf(text, "You won by %d.", sPlayer - sComputer);
+            }
+            /* Инвалидация текстовой области */
+            left   = 0;
+            top    = localHeight - ((DIVISIONS + 3) * cY);
+            right  = (DIVISIONS + 3) * cX;
+            bottom = localHeight - ((DIVISIONS + 1) * cY);
+            SetRect(&rc, left, top, right, bottom);
+            InvalidateRect(hwnd, &rc, FALSE);
+            UpdateWindow(hwnd);
+            return;
+        }
+
+        /* Если игрок должен пасовать – ход компьютера повторяется */
+        if (fMustPass(Board, PLAYER)) {
+            fDisplayText = TRUE;
+            strcpy(text, "You must pass.");
+            left   = 0;
+            top    = localHeight - ((DIVISIONS + 3) * cY);
+            right  = (DIVISIONS + 3) * cX;
+            bottom = localHeight - ((DIVISIONS + 1) * cY);
+            SetRect(&rc, left, top, right, bottom);
+            InvalidateRect(hwnd, &rc, FALSE);
+            UpdateWindow(hwnd);
+
+            /* Пауза и обработка сообщений */
+            {
+                DWORD start = GetTickCount();
+                while (GetTickCount() - start < 500) {
+                    MSG msg;
+                    if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+                        TranslateMessage(&msg);
+                        DispatchMessage(&msg);
+                    }
+                }
+            }
+
+            /* Рекурсивный ход компьютера */
+            SetCursor(hptrWait);
+            DoComputerMove(hwnd, FALSE);
+            SetCursor(hptrSystem);
+            return;
         }
     }
     InvalidateRect(hwnd, NULL, FALSE);
