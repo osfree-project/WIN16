@@ -11,7 +11,7 @@ static BOARD     Board;
 static BOARD     BoardHilf;
 static short     sLevel;
 static BOOL      fSound = TRUE;
-static char      szApp[] = "Othello";
+static char      szApp[] = "Reversi";
 static COLORREF  bgcolor = RGB(0,128,0);
 static int       clientHeight = 0;
 static BOOL fDisplayText = FALSE;
@@ -156,12 +156,12 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         Board.sField[3][4] = COMPUTER;
         Board.sField[4][3] = COMPUTER;
 
-        GetProfileString(szApp, "BGColor", "0x00800000", szBuf, sizeof(szBuf));
-        sscanf(szBuf, "%lx", &bgcolor);
-        sVolumeEve = GetProfileInt(szApp, "Volume", 100);
-        fPlayerStarts = GetProfileInt(szApp, "PlayerStarts", TRUE);
-        fSound = GetProfileInt(szApp, "Sound", TRUE);
-        sLevel = abs(GetProfileInt(szApp, "Level", 0)) % 3;
+	GetPrivateProfileString(szApp, "BGColor", "0x00800000", szBuf, sizeof(szBuf), "reversi.ini");
+	sscanf(szBuf, "%lx", &bgcolor);
+	sVolumeEve = GetPrivateProfileInt(szApp, "Volume", 100, "reversi.ini");
+	fPlayerStarts = GetPrivateProfileInt(szApp, "PlayerStarts", TRUE, "reversi.ini");
+	fSound = GetPrivateProfileInt(szApp, "Sound", TRUE, "reversi.ini");
+	sLevel = abs(GetPrivateProfileInt(szApp, "Level", 0, "reversi.ini")) % 3;
 
         fPtrInstalled = GetSystemMetrics(SM_MOUSEPRESENT);
         PostMessage(hwnd, WM_COMMAND, MI_NEW, 0);
@@ -478,14 +478,14 @@ case WM_USER: {
 
     case WM_DESTROY: {
         char buf[32];
-        sprintf(buf, "0x%06lx", bgcolor);
-        WriteProfileString(szApp, "BGColor", buf);
-        sprintf(buf, "%d", sVolumeEve);
-        WriteProfileString(szApp, "Volume", buf);
-        WriteProfileString(szApp, "PlayerStarts", fPlayerStarts ? "1" : "0");
-        WriteProfileString(szApp, "Sound", fSound ? "1" : "0");
-        sprintf(buf, "%d", sLevel);
-        WriteProfileString(szApp, "Level", buf);
+	sprintf(buf, "0x%06lx", bgcolor);
+	WritePrivateProfileString(szApp, "BGColor", buf, "reversi.ini");
+	sprintf(buf, "%d", sVolumeEve);
+	WritePrivateProfileString(szApp, "Volume", buf, "reversi.ini");
+	WritePrivateProfileString(szApp, "PlayerStarts", fPlayerStarts ? "1" : "0", "reversi.ini");
+	WritePrivateProfileString(szApp, "Sound", fSound ? "1" : "0", "reversi.ini");
+	sprintf(buf, "%d", sLevel);
+	WritePrivateProfileString(szApp, "Level", buf, "reversi.ini");
         DestroyCursor(hptrCross);
         PostQuitMessage(0);
         break;
