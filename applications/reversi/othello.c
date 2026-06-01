@@ -456,6 +456,31 @@ case WM_USER: {
 		}
             break;
 
+case MI_PASS:
+    if (GameOver) break;
+    /* –азрешаем пас в любой момент, даже если есть допустимые ходы */
+    if (fSound) {
+        PSOUNDEVENT pSE = malloc(sizeof(SOUNDEVENT));
+        if (pSE) { pSE->sEvent = 6; vdGetWavFile(6, pSE->chWavFile); vdPlayWavFileAsyncEve(pSE); }
+    }
+    fDisplayText = TRUE;
+    strcpy(text, "You pass.");
+    {
+        RECT rect;
+        /* »нвалидаци€ текстовой области с правильными координатами */
+        int left   = 0;
+        int top    = clientHeight - ((DIVISIONS + 3) * cyBlock);
+        int right  = (DIVISIONS + 3) * cxBlock;
+        int bottom = clientHeight - ((DIVISIONS + 1) * cyBlock);
+        SetRect(&rect, left, top, right, bottom);
+        InvalidateRect(hwnd, &rect, FALSE);
+        UpdateWindow(hwnd);
+    }
+    SetCursor(hptrWait);
+    DoComputerMove(hwnd, FALSE);
+    SetCursor(hptrSystem);
+    break;
+
         default:
             return DefWindowProc(hwnd, msg, wParam, lParam);
         }
@@ -465,6 +490,7 @@ case WM_USER: {
         HMENU hMenu = (HMENU)wParam;
         EnableMenuItem(hMenu, MI_NEW, MF_ENABLED);
         EnableMenuItem(hMenu, MI_HINT, GameOver ? MF_GRAYED : MF_ENABLED);
+        EnableMenuItem(hMenu, MI_PASS, GameOver ? MF_GRAYED : MF_ENABLED);
         CheckMenuItem(hMenu, MI_BEGINNER, (sLevel==0) ? MF_CHECKED : MF_UNCHECKED);
         CheckMenuItem(hMenu, MI_ADVANCED, (sLevel==1) ? MF_CHECKED : MF_UNCHECKED);
         CheckMenuItem(hMenu, MI_MASTER,   (sLevel==2) ? MF_CHECKED : MF_UNCHECKED);
