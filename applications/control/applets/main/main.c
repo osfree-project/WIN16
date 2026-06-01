@@ -226,132 +226,216 @@ BOOL CALLBACK PortsDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
     return FALSE;
 }
 
-/* ============================================================
- *  Mouse
- * ============================================================ */
-static int g_mouseSpeed = 2;
-static int g_dblClickTime = 500;
+/* ------------------------------------------------------------
+   Mouse applet dialog procedure
+   ------------------------------------------------------------ */
+
+static int  g_mouseSpeed = 2;
+static int  g_dblClickTime = 500;
 static BOOL g_swapButtons = FALSE;
-static int g_origSpeed = 2;
-static int g_origDblClick = 500;
-static BOOL g_origSwap = FALSE;
+static int  g_origSpeed;
+static int  g_origDblClick;
+static BOOL g_origSwap;
+static HWND hLStatic;
+static HWND hRStatic;
+static BOOL g_bLeftDown;
+static BOOL g_bRightDown;
+static BOOL g_pressedSwap;   /* swap state at press time */
+
+/* Apply mouse speed using SystemParametersInfo (Win3.0) */
+static void NEAR ApplyMouseSpeed(int speed)
+{
+    int mouseParams[3];  /* [0]=threshold1, [1]=threshold2, [2]=speed */
+
+    /* Get current thresholds (we keep them unchanged) */
+    SystemParametersInfo(SPI_GETMOUSE, 0, (LPSTR)mouseParams, 0);
+    mouseParams[2] = speed;
+    SystemParametersInfo(SPI_SETMOUSE, 0, (LPSTR)mouseParams, SPIF_UPDATEINIFILE);
+}
+
+/* Invert the client area of a static control */
+static void NEAR InvertStatic(HWND hWnd)
+{
+    HDC hdc;
+    RECT rc;
+
+    if (!hWnd)
+        return;
+    hdc = GetDC(hWnd);
+    GetClientRect(hWnd, &rc);
+    InvertRect(hdc, &rc);
+    ReleaseDC(hWnd, hdc);
+}
 
 BOOL CALLBACK MouseDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    switch (msg) {
-    case WM_INITDIALOG: {
-        char buf[32];
+    char buf[32];
+    int pos, curPos, code;
+    HWND hScroll;
+    int id;
+    BOOL swap;
 
+    switch (msg) {
+    case WM_INITDIALOG:
+        /* Read mouse speed from WIN.INI */
         GetProfileString("windows", "MouseSpeed", "2", buf, sizeof(buf));
         g_mouseSpeed = atoi(buf);
         if (g_mouseSpeed < 1) g_mouseSpeed = 1;
         if (g_mouseSpeed > 3) g_mouseSpeed = 3;
         g_origSpeed = g_mouseSpeed;
 
-        SetScrollRange(GetDlgItem(hDlg, IDC_MS_SPEED), SB_CTL, 1, 3, FALSE);
-        SetScrollPos(GetDlgItem(hDlg, IDC_MS_SPEED), SB_CTL, g_mouseSpeed, TRUE);
+        hScroll = GetDlgItem(hDlg, IDC_MS_SPEED);
+        SetScrollRange(hScroll, SB_CTL, 1, 3, FALSE);
+        SetScrollPos(hScroll, SB_CTL, g_mouseSpeed, TRUE);
 
-        g_dblClickTime = GetDoubleClickTime();
+        /* Read double-click speed (use system default if not in WIN.INI) */
+        if (GetProfileString("windows", "DoubleClickSpeed", "", buf, sizeof(buf)) == 0)
+            g_dblClickTime = GetDoubleClickTime();
+        else
+            g_dblClickTime = atoi(buf);
+        if (g_dblClickTime < 100) g_dblClickTime = 100;
+        if (g_dblClickTime > 1000) g_dblClickTime = 1000;
         g_origDblClick = g_dblClickTime;
-        {
-            int pos = 100 - (g_dblClickTime / 10);
-            if (pos < 1) pos = 1;
-            if (pos > 100) pos = 100;
-            SetScrollRange(GetDlgItem(hDlg, IDC_MS_DOUBLECLICK), SB_CTL, 1, 100, FALSE);
-            SetScrollPos(GetDlgItem(hDlg, IDC_MS_DOUBLECLICK), SB_CTL, pos, TRUE);
-        }
 
+        pos = 100 - (g_dblClickTime / 10);
+        if (pos < 1) pos = 1;
+        if (pos > 100) pos = 100;
+        hScroll = GetDlgItem(hDlg, IDC_MS_DOUBLECLICK);
+        SetScrollRange(hScroll, SB_CTL, 1, 100, FALSE);
+        SetScrollPos(hScroll, SB_CTL, pos, TRUE);
+
+        /* Swap buttons state */
         g_swapButtons = GetSystemMetrics(SM_SWAPBUTTON);
         g_origSwap = g_swapButtons;
         CheckDlgButton(hDlg, IDC_MS_SWAP, g_swapButtons);
 
-        return TRUE;
-    }
+        /* Remember static controls for left/right test area */
+        hLStatic = GetDlgItem(hDlg, IDC_MS_L_FRAME);
+        hRStatic = GetDlgItem(hDlg, IDC_MS_R_FRAME);
 
-    case WM_HSCROLL: {
-        HWND hScroll = (HWND)lParam;
-        int id = GetDlgCtrlID(hScroll);
-        int code = LOWORD(wParam);
-        int pos = HIWORD(wParam);
+        g_bLeftDown = FALSE;
+        g_bRightDown = FALSE;
+        g_pressedSwap = FALSE;
+        return TRUE;
+
+    case WM_HSCROLL:
+        hScroll = (HWND)lParam;
+        id = GetDlgCtrlID(hScroll);
+        code = LOWORD(wParam);
+        pos = HIWORD(wParam);
 
         if (id == IDC_MS_SPEED) {
+            curPos = GetScrollPos(hScroll, SB_CTL);
             switch (code) {
             case SB_THUMBTRACK:
             case SB_THUMBPOSITION:
                 g_mouseSpeed = pos;
-                SetScrollPos(hScroll, SB_CTL, g_mouseSpeed, TRUE);
-                InvalidateRect(hScroll, NULL, TRUE);
                 break;
             case SB_LINEUP:
-                if (g_mouseSpeed > 1) {
-                    g_mouseSpeed--;
-                    SetScrollPos(hScroll, SB_CTL, g_mouseSpeed, TRUE);
-                    InvalidateRect(hScroll, NULL, TRUE);
-                }
+                if (g_mouseSpeed > 1) g_mouseSpeed--;
                 break;
             case SB_LINEDOWN:
-                if (g_mouseSpeed < 3) {
-                    g_mouseSpeed++;
-                    SetScrollPos(hScroll, SB_CTL, g_mouseSpeed, TRUE);
-                    InvalidateRect(hScroll, NULL, TRUE);
-                }
+                if (g_mouseSpeed < 3) g_mouseSpeed++;
                 break;
+            default:
+                return TRUE;
             }
+            SetScrollPos(hScroll, SB_CTL, g_mouseSpeed, TRUE);
+            /* Apply immediately */
+            ApplyMouseSpeed(g_mouseSpeed);
         } else if (id == IDC_MS_DOUBLECLICK) {
+            curPos = GetScrollPos(hScroll, SB_CTL);
             switch (code) {
             case SB_THUMBTRACK:
             case SB_THUMBPOSITION:
-                g_dblClickTime = (100 - pos) * 10;
+                curPos = pos;               /* FIX: update position from thumb */
+                g_dblClickTime = (100 - curPos) * 10;
+                if (g_dblClickTime < 100) g_dblClickTime = 100;
+                if (g_dblClickTime > 1000) g_dblClickTime = 1000;
                 SetDoubleClickTime(g_dblClickTime);
-                SetScrollPos(hScroll, SB_CTL, pos, TRUE);
-                InvalidateRect(hScroll, NULL, TRUE);
                 break;
             case SB_LINEUP:
-                pos = GetScrollPos(hScroll, SB_CTL);
-                if (pos < 100) {
-                    pos++;
-                    g_dblClickTime = (100 - pos) * 10;
+                if (curPos < 100) {
+                    curPos++;
+                    g_dblClickTime = (100 - curPos) * 10;
                     SetDoubleClickTime(g_dblClickTime);
-                    SetScrollPos(hScroll, SB_CTL, pos, TRUE);
-                    InvalidateRect(hScroll, NULL, TRUE);
                 }
                 break;
             case SB_LINEDOWN:
-                pos = GetScrollPos(hScroll, SB_CTL);
-                if (pos > 1) {
-                    pos--;
-                    g_dblClickTime = (100 - pos) * 10;
+                if (curPos > 1) {
+                    curPos--;
+                    g_dblClickTime = (100 - curPos) * 10;
                     SetDoubleClickTime(g_dblClickTime);
-                    SetScrollPos(hScroll, SB_CTL, pos, TRUE);
-                    InvalidateRect(hScroll, NULL, TRUE);
                 }
                 break;
+            default:
+                return TRUE;
             }
+            SetScrollPos(hScroll, SB_CTL, curPos, TRUE);
         }
         return TRUE;
-    }
+
+    case WM_LBUTTONDOWN:
+        if (g_bLeftDown)
+            return TRUE;
+        swap = IsDlgButtonChecked(hDlg, IDC_MS_SWAP);
+        g_bLeftDown = TRUE;
+        g_pressedSwap = swap;
+        InvertStatic(swap ? hRStatic : hLStatic);
+        return TRUE;
+
+    case WM_LBUTTONUP:
+        if (!g_bLeftDown)
+            return TRUE;
+        g_bLeftDown = FALSE;
+        InvertStatic(g_pressedSwap ? hRStatic : hLStatic);
+        return TRUE;
+
+    case WM_RBUTTONDOWN:
+        if (g_bRightDown)
+            return TRUE;
+        swap = IsDlgButtonChecked(hDlg, IDC_MS_SWAP);
+        g_bRightDown = TRUE;
+        g_pressedSwap = swap;
+        InvertStatic(swap ? hLStatic : hRStatic);
+        return TRUE;
+
+    case WM_RBUTTONUP:
+        if (!g_bRightDown)
+            return TRUE;
+        g_bRightDown = FALSE;
+        InvertStatic(g_pressedSwap ? hLStatic : hRStatic);
+        return TRUE;
 
     case WM_COMMAND:
-        if (LOWORD(wParam) == IDOK) {
-            char buf[4];
-            BOOL swap;
-
+        switch (LOWORD(wParam)) {
+        case IDOK:
+            /* Save mouse speed */
             wsprintf(buf, "%d", g_mouseSpeed);
             WriteProfileString("windows", "MouseSpeed", buf);
+            ApplyMouseSpeed(g_mouseSpeed);
 
+            /* Save double-click speed */
+            wsprintf(buf, "%d", g_dblClickTime);
+            WriteProfileString("windows", "DoubleClickSpeed", buf);
+
+            /* Save button swap state */
             swap = IsDlgButtonChecked(hDlg, IDC_MS_SWAP);
             if (swap != g_swapButtons) {
                 SwapMouseButton(swap);
+                wsprintf(buf, "%d", swap);
+                WriteProfileString("windows", "SwapButtons", buf);
             }
 
             EndDialog(hDlg, IDOK);
             return TRUE;
-        }
-        if (LOWORD(wParam) == IDCANCEL) {
+
+        case IDCANCEL:
+            /* Restore original values */
             SetDoubleClickTime(g_origDblClick);
-            if (g_origSwap != g_swapButtons) {
+            if (g_origSwap != g_swapButtons)
                 SwapMouseButton(g_origSwap);
-            }
+            ApplyMouseSpeed(g_origSpeed);
             EndDialog(hDlg, IDCANCEL);
             return TRUE;
         }
