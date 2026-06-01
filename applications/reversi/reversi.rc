@@ -34,6 +34,7 @@ BEGIN
         MENUITEM "&Beginner", MI_BEGINNER
         MENUITEM "&Advanced", MI_ADVANCED
         MENUITEM "&Master",   MI_MASTER
+        MENUITEM "&Expert",   MI_EXPERT
         MENUITEM SEPARATOR
         MENUITEM "&Player starts",   MI_PLAYER
         MENUITEM "&Computer starts", MI_COMPUTER

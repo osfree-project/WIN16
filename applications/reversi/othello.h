@@ -27,6 +27,7 @@
 #define MI_NEW             260
 #define MI_HINT            261
 #define MI_PASS            278
+#define MI_EXPERT          279
 
 #define SM_OPTIONS         262
 #define MI_BEGINNER        263

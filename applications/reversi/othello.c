@@ -161,7 +161,7 @@ LRESULT WINAPI WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	sVolumeEve = GetPrivateProfileInt(szApp, "Volume", 100, "reversi.ini");
 	fPlayerStarts = GetPrivateProfileInt(szApp, "PlayerStarts", TRUE, "reversi.ini");
 	fSound = GetPrivateProfileInt(szApp, "Sound", TRUE, "reversi.ini");
-	sLevel = abs(GetPrivateProfileInt(szApp, "Level", 0, "reversi.ini")) % 3;
+	sLevel = abs(GetPrivateProfileInt(szApp, "Level", 0, "reversi.ini")) % 4;
 
         fPtrInstalled = GetSystemMetrics(SM_MOUSEPRESENT);
         PostMessage(hwnd, WM_COMMAND, MI_NEW, 0);
@@ -494,6 +494,7 @@ case MI_PASS:
         CheckMenuItem(hMenu, MI_BEGINNER, (sLevel==0) ? MF_CHECKED : MF_UNCHECKED);
         CheckMenuItem(hMenu, MI_ADVANCED, (sLevel==1) ? MF_CHECKED : MF_UNCHECKED);
         CheckMenuItem(hMenu, MI_MASTER,   (sLevel==2) ? MF_CHECKED : MF_UNCHECKED);
+        CheckMenuItem(hMenu, MI_EXPERT,   (sLevel==3) ? MF_CHECKED : MF_UNCHECKED);
         EnableMenuItem(hMenu, MI_PLAYER,   (!fPlayerStarts) ? MF_ENABLED : MF_GRAYED);
         EnableMenuItem(hMenu, MI_COMPUTER, fPlayerStarts  ? MF_ENABLED : MF_GRAYED);
         return 0;
