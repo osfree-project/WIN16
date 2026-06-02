@@ -148,4 +148,6 @@
 
 extern HINSTANCE g_hInst;
 
+BOOL CALLBACK MouseDlgProc(HWND, UINT, WPARAM, LPARAM);
+
 #endif

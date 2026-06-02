@@ -6,7 +6,7 @@
 PROJ     = main
 TRGT     = $(PROJ).cpl
 DESC     = Main CPL
-srcfiles = $(p)main$(e)
+srcfiles = $(p)main$(e) $(p)mouse$(e)
 ADD_COPT = -I=$(MYDIR)$(SEP)..$(SEP)..
 # linking dll file
 DLL     = 1
