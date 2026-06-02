@@ -1,6 +1,7 @@
 /*
  * control.c -- Клон Панели управления для Windows 3.0
- * Поддержка вертикальной и горизонтальной прокрутки.
+ *
+ * Динамическое меню Settings, иконка приложения, обработчики Help.
  */
 
 #include <windows.h>
@@ -11,8 +12,8 @@
 #include "control.h"
 
 #define MAX_APPLETS         256
-#define ICON_SPACING_X      75   /* ширина ячейки */
-#define ICON_SPACING_Y      60   /* высота ячейки (было 70) */
+#define ICON_SPACING_X      75
+#define ICON_SPACING_Y      60   /* высота ячейки */
 #define MARGIN_X            15
 #define MARGIN_Y            15
 #define MAX_COLS            5
@@ -33,7 +34,7 @@ static int       g_numApplets = 0;
 static int       g_selectedApplet = -1;
 static HWND      g_hwndMain = NULL;
 static HINSTANCE g_hInst = NULL;
-static int       g_scrollPosY = 0;   /* было g_scrollPos */
+static int       g_scrollPosY = 0;
 static int       g_scrollPosX = 0;
 static int       g_totalHeight = 0;
 static int       g_totalWidth = 0;
@@ -46,7 +47,9 @@ static int  HitTest(int mx, int my);
 static void DrawApplets(HDC hdc);
 static void InvalidateApplet(int idx);
 static void ScrollTo(int newPosY, int newPosX);
-static void LaunchAppletByName(HWND hwnd, LPCSTR name);
+static void LaunchAppletByIndex(HWND hwnd, int appIndex);
+static void BuildSettingsMenu(HWND hwnd);
+static void OnHelpAbout(HWND hwnd);
 
 /* Оконная процедура */
 LRESULT WINAPI MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -66,7 +69,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         wc.cbClsExtra    = 0;
         wc.cbWndExtra    = 0;
         wc.hInstance     = hInstance;
-        wc.hIcon         = LoadIcon(NULL, IDI_APPLICATION);
+        wc.hIcon         = LoadIcon(hInstance, "MYICON");
         wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
         wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
         wc.lpszMenuName  = NULL;
@@ -102,16 +105,19 @@ LRESULT WINAPI MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg) {
     case WM_CREATE:
-    {
-        HMENU hMenu = LoadMenu(g_hInst, "CTLPANELMENU");
-        if (hMenu)
-            SetMenu(hwnd, hMenu);
-    }
+        {
+            HMENU hMenu = LoadMenu(g_hInst, "CTLPANELMENU");
+            if (hMenu)
+                SetMenu(hwnd, hMenu);
+        }
         g_numApplets = 0;
         g_selectedApplet = -1;
         g_scrollPosY = 0;
         g_scrollPosX = 0;
         ScanCplFiles();
+
+        /* Построение меню Settings на основе загруженных апплетов */
+        BuildSettingsMenu(hwnd);
 
         if (g_numApplets == 0) {
             MessageBox(hwnd, "No Control Panel applets could be loaded.\n"
@@ -231,26 +237,29 @@ LRESULT WINAPI MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
 
     case WM_COMMAND:
-        switch (LOWORD(wParam))
-        {
-        case IDM_FILE_EXIT:
+        if (LOWORD(wParam) == IDM_SETTINGS_EXIT) {
             PostMessage(hwnd, WM_CLOSE, 0, 0);
             return 0;
-        case IDM_SETTINGS_COLOR:        LaunchAppletByName(hwnd, "Color");        return 0;
-        case IDM_SETTINGS_DESKTOP:      LaunchAppletByName(hwnd, "Desktop");      return 0;
-        case IDM_SETTINGS_DATETIME:     LaunchAppletByName(hwnd, "Date/Time");    return 0;
-        case IDM_SETTINGS_FONTS:        LaunchAppletByName(hwnd, "Fonts");        return 0;
-        case IDM_SETTINGS_INTERNATIONAL:LaunchAppletByName(hwnd, "International");return 0;
-        case IDM_SETTINGS_KEYBOARD:     LaunchAppletByName(hwnd, "Keyboard");     return 0;
-        case IDM_SETTINGS_MOUSE:        LaunchAppletByName(hwnd, "Mouse");        return 0;
-        case IDM_SETTINGS_NETWORK:      LaunchAppletByName(hwnd, "Network");      return 0;
-        case IDM_SETTINGS_PORTS:        LaunchAppletByName(hwnd, "Ports");        return 0;
-        case IDM_SETTINGS_PRINTERS:     LaunchAppletByName(hwnd, "Printers");     return 0;
-        case IDM_SETTINGS_SOUND:        LaunchAppletByName(hwnd, "Sound");        return 0;
-        case IDM_SETTINGS_386ENHANCED:  LaunchAppletByName(hwnd, "386 Enhanced"); return 0;
-        case IDM_SETTINGS_DRIVERS:      LaunchAppletByName(hwnd, "Drivers");      return 0;
-        default:
-            break;
+        }
+        if (LOWORD(wParam) >= IDM_SETTINGS_APPS_BASE &&
+            LOWORD(wParam) < IDM_SETTINGS_APPS_BASE + g_numApplets) {
+            int idx = LOWORD(wParam) - IDM_SETTINGS_APPS_BASE;
+            LaunchAppletByIndex(hwnd, idx);
+            return 0;
+        }
+
+        /* Обработка пунктов Help */
+        switch (LOWORD(wParam)) {
+        case IDM_HELP_INDEX:
+        case IDM_HELP_KEYBOARD:
+        case IDM_HELP_COMMANDS:
+        case IDM_HELP_PROCEDURES:
+        case IDM_HELP_USING_HELP:
+            WinHelp(hwnd, "CONTROL.HLP", HELP_INDEX, 0L);
+            return 0;
+        case IDM_HELP_ABOUT:
+            OnHelpAbout(hwnd);
+            return 0;
         }
         break;
 
@@ -262,7 +271,6 @@ LRESULT WINAPI MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-/* Безопасное копирование строки */
 static void MyLstrcpyn(LPSTR dest, LPCSTR src, int iMaxLength)
 {
     int i;
@@ -398,6 +406,7 @@ static void ScanCplFiles(void)
     }
     _dos_findclose(&ff);
 
+    /* Секция [MMCPL] */
     {
         char key[32], buf[260];
         int i;
@@ -495,8 +504,8 @@ static void DrawApplets(HDC hdc)
     int i, x, y, col;
     int iconW = GetSystemMetrics(SM_CXICON);
     int iconH = GetSystemMetrics(SM_CYICON);
-    int cellWidth = iconW + 32;          /* ширина ячейки */
-    int textHeight = 16;                 /* высота подписи (подобрано под Helv 12) */
+    int cellWidth = iconW + 32;
+    int textHeight = 16;
     HFONT hFont, hOldFont;
     RECT rcClip;
 
@@ -510,48 +519,42 @@ static void DrawApplets(HDC hdc)
     x = MARGIN_X - g_scrollPosX;
     y = MARGIN_Y - g_scrollPosY;
     col = 0;
-
-    /* общая высота и ширина для скроллбаров */
     g_totalHeight = ((g_numApplets + MAX_COLS - 1) / MAX_COLS) * ICON_SPACING_Y + MARGIN_Y;
     g_totalWidth  = MAX_COLS * cellWidth + MARGIN_X;
 
     for (i = 0; i < g_numApplets; i++) {
-        /* отсечение по вертикали */
         if (y + ICON_SPACING_Y >= rcClip.top && y <= rcClip.bottom) {
             RECT rcCell, rcText;
 
-            /* 1. Фон всей ячейки */
+            /* Фон ячейки */
             rcCell.left   = x;
             rcCell.top    = y;
             rcCell.right  = x + cellWidth;
             rcCell.bottom = y + ICON_SPACING_Y;
-
             {
                 HBRUSH hBr = CreateSolidBrush(GetSysColor(COLOR_WINDOW));
                 FillRect(hdc, &rcCell, hBr);
                 DeleteObject(hBr);
             }
 
-            /* 2. Иконка по центру */
+            /* Иконка */
             if (g_applets[i].hIcon) {
                 int iconX = x + (cellWidth - iconW) / 2;
                 DrawIcon(hdc, iconX, y + 2, g_applets[i].hIcon);
             }
 
-            /* 3. Подпись */
+            /* Подпись */
             rcText.left   = x;
-            rcText.top    = y + iconH + 4;            /* небольшой отступ от иконки */
+            rcText.top    = y + iconH + 4;
             rcText.right  = x + cellWidth;
-            rcText.bottom = rcText.top + textHeight;  /* фиксированная высота */
+            rcText.bottom = rcText.top + textHeight;
 
             if (g_applets[i].bSelected) {
-                /* подсвечиваем ТОЛЬКО фон подписи */
                 HBRUSH hBr = CreateSolidBrush(GetSysColor(COLOR_HIGHLIGHT));
                 FillRect(hdc, &rcText, hBr);
                 DeleteObject(hBr);
                 SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
             } else {
-                /* обычный текст на цвете окна */
                 SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
             }
 
@@ -560,7 +563,6 @@ static void DrawApplets(HDC hdc)
                      DT_CENTER | DT_VCENTER | DT_SINGLELINE);
         }
 
-        /* переход к следующей ячейке */
         col++;
         if (col >= MAX_COLS) {
             col = 0;
@@ -577,31 +579,82 @@ static void DrawApplets(HDC hdc)
 
 static void ScrollTo(int newPosY, int newPosX)
 {
-    int curPosY = GetScrollPos(g_hwndMain, SB_VERT);
-    int curPosX = GetScrollPos(g_hwndMain, SB_HORZ);
     SetScrollPos(g_hwndMain, SB_VERT, newPosY, TRUE);
     SetScrollPos(g_hwndMain, SB_HORZ, newPosX, TRUE);
     g_scrollPosY = newPosY;
     g_scrollPosX = newPosX;
-    ScrollWindow(g_hwndMain, curPosX - newPosX, curPosY - newPosY, NULL, NULL);
-    InvalidateRect(g_hwndMain, NULL, FALSE);
+    InvalidateRect(g_hwndMain, NULL, TRUE);
     UpdateWindow(g_hwndMain);
 }
 
-static void LaunchAppletByName(HWND hwnd, LPCSTR name)
+static void LaunchAppletByIndex(HWND hwnd, int appIndex)
 {
-    int i;
-    for (i = 0; i < g_numApplets; i++) {
-        if (lstrcmpi(g_applets[i].szName, name) == 0) {
-            g_applets[i].proc(hwnd, CPL_DBLCLK,
-                              (LONG)g_applets[i].index,
-                              g_applets[i].lData);
-            return;
+    if (appIndex >= 0 && appIndex < g_numApplets) {
+        g_applets[appIndex].proc(hwnd, CPL_DBLCLK,
+                                 (LONG)g_applets[appIndex].index,
+                                 g_applets[appIndex].lData);
+    }
+}
+
+static void BuildSettingsMenu(HWND hwnd)
+{
+    HMENU hMenu, hSettings;
+    hMenu = GetMenu(hwnd);
+    if (!hMenu) return;
+
+    /* Первое подменю – Settings */
+    hSettings = GetSubMenu(hMenu, 0);
+    if (!hSettings) return;
+
+    /* Удаляем старые фиктивные пункты (кроме разделителя и Exit) */
+    {
+        int count = GetMenuItemCount(hSettings);
+        int i;
+        for (i = count - 1; i >= 0; i--) {
+            UINT id = GetMenuItemID(hSettings, i);
+            if (id != 0 && id != IDM_SETTINGS_EXIT) {
+                DeleteMenu(hSettings, i, MF_BYPOSITION);
+            }
         }
     }
+
+    /* Добавляем апплеты перед разделителем */
     {
-        char buf[150];
-        wsprintf(buf, "The '%s' Control Panel applet is not installed.", name);
-        MessageBox(hwnd, buf, "Control Panel", MB_ICONEXCLAMATION | MB_OK);
+        int i;
+        for (i = 0; i < g_numApplets; i++) {
+            int pos = GetMenuItemCount(hSettings) - 1;
+            if (pos < 0) pos = 0;
+            InsertMenu(hSettings, pos, MF_BYPOSITION | MF_STRING,
+                       IDM_SETTINGS_APPS_BASE + i,
+                       g_applets[i].szName);
+        }
     }
+}
+
+static void OnHelpAbout(HWND hwnd)
+{
+    HINSTANCE hShell;
+    UINT oldErrorMode = SetErrorMode(SEM_NOOPENFILEERRORBOX);
+    hShell = LoadLibrary("SHELL.DLL");
+    SetErrorMode(oldErrorMode);
+
+    if ((UINT)hShell >= 32) {
+        typedef BOOL (WINAPI *SHELLABOUTPROC)(HWND, LPCSTR, LPCSTR, HICON);
+        SHELLABOUTPROC lpShellAbout =
+            (SHELLABOUTPROC)GetProcAddress(hShell, "ShellAbout");
+        if (lpShellAbout) {
+            lpShellAbout(hwnd, "Control Panel",
+                         "osFree Janus Control Panel",
+                         LoadIcon(g_hInst, "MYICON"));
+        }
+        FreeLibrary(hShell);
+        return;
+    }
+
+    /* Если SHELL.DLL отсутствует – показываем собственное окно */
+    MessageBox(hwnd,
+               "Control Panel for Windows 3.0\n\n"
+               "Part of osFree Win16 Personality\n"
+               "Copyright (C) 2026 osFree Team",
+               "About Control Panel", MB_ICONINFORMATION | MB_OK);
 }
