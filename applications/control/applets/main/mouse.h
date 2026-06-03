@@ -8,3 +8,5 @@
 #define IDC_MS_BUTTON_FRAME  505
 #define IDC_MS_L_FRAME       506
 #define IDC_MS_R_FRAME       507
+
+#define IDI_MOUSE  110

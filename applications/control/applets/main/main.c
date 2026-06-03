@@ -52,6 +52,7 @@ LONG WINAPI CPlApplet(HWND hwndCPL, UINT msg, LONG lParam1, LONG lParam2)
         case MOUSE_IDX:
             lpInfo->idName = IDS_MOUSE_NAME;
             lpInfo->idInfo = IDS_MOUSE_INFO;
+	    lpInfo->idIcon = IDI_MOUSE;
             break;
         case DESKTOP_IDX:
             lpInfo->idName = IDS_DESKTOP_NAME;

@@ -1,6 +1,8 @@
 #include <windows.h>
 #include "main.h"
 
+IDI_MOUSE ICON "mouse.ico"
+
 STRINGTABLE BEGIN
     IDS_COLOR_NAME,  "Color"
     IDS_COLOR_INFO,  "Change the color scheme"
