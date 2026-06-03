@@ -17,8 +17,10 @@ static int   g_origDblClick;
 static BOOL  g_origSwap;
 static HWND  hLStatic;
 static HWND  hRStatic;
+static HWND  hTestStatic;
 static BOOL  g_bLeftDown;
 static BOOL  g_bRightDown;
+static BOOL  g_bTestInverted = FALSE;
 static BOOL  g_pressedSwap;          /* swap state at press time */
 static char  g_szOrigL[16], g_szOrigR[16];   /* original L/R texts from dialog */
 
@@ -65,6 +67,8 @@ BOOL CALLBACK MouseDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
     HWND hScroll;
     int id;
     BOOL swap;
+    POINT pt;
+    RECT rc;
 
     switch (msg) {
     case WM_INITDIALOG:
@@ -80,12 +84,7 @@ BOOL CALLBACK MouseDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         SetScrollPos(hScroll, SB_CTL, g_mouseSpeed, TRUE);
 
         /* Double-click speed */
-        if (GetProfileString("windows", "DoubleClickSpeed", "", buf, sizeof(buf)) == 0)
-            g_dblClickTime = GetDoubleClickTime();
-        else
-            g_dblClickTime = atoi(buf);
-        if (g_dblClickTime < 100) g_dblClickTime = 100;
-        if (g_dblClickTime > 1000) g_dblClickTime = 1000;
+        g_dblClickTime = GetDoubleClickTime();
         g_origDblClick = g_dblClickTime;
 
         pos = 100 - (g_dblClickTime / 10);
@@ -95,27 +94,34 @@ BOOL CALLBACK MouseDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         SetScrollRange(hScroll, SB_CTL, 1, 100, FALSE);
         SetScrollPos(hScroll, SB_CTL, pos, TRUE);
 
-        /* Swap buttons: read from WIN.INI, apply if needed */
-        if (GetProfileString("windows", "SwapButtons", "", buf, sizeof(buf)) != 0)
-            g_swapButtons = atoi(buf);
-        else
-            g_swapButtons = GetSystemMetrics(SM_SWAPBUTTON);
-        g_origSwap = g_swapButtons;
-        CheckDlgButton(hDlg, IDC_MS_SWAP, g_swapButtons);
-        if (g_swapButtons != GetSystemMetrics(SM_SWAPBUTTON))
-            SwapMouseButton(g_swapButtons);
-
+        /* Swap buttons */
         /* Store original L/R texts from the dialog resources */
         GetDlgItemText(hDlg, IDC_MS_L, g_szOrigL, sizeof(g_szOrigL));
         GetDlgItemText(hDlg, IDC_MS_R, g_szOrigR, sizeof(g_szOrigR));
-        UpdateButtonLabels(hDlg, g_swapButtons);
 
         /* Get handles for static frames (clickable squares) */
         hLStatic = GetDlgItem(hDlg, IDC_MS_L_FRAME);
         hRStatic = GetDlgItem(hDlg, IDC_MS_R_FRAME);
+        hTestStatic = GetDlgItem(hDlg, IDC_MS_TEST);
+
+	/* Here need to workaround bug 
+		PRWIN9103027: System Metrics Not Updated by SwapMouseButton 
+		(https://library.thedatadungeon.com/msdn-1992-09/kbase/html/kbas2q3l.content.htm)
+		Actually, GetSystemMetrics(SM_SWAPBUTTON) returns value from WIN.INI on windows startup, not current.
+		So, we try to read from win.ini first, if no succes, then use value from metric (default value);
+	*/
+	if (GetProfileString("windows", "SwapMouseButtons", "No", buf, sizeof(buf)) != 0)
+            g_swapButtons = (lstrcmpi(buf, "Yes") == 0);
+        else
+            g_swapButtons = GetSystemMetrics(SM_SWAPBUTTON);
+
+        g_origSwap = g_swapButtons;
+	CheckDlgButton(hDlg, IDC_MS_SWAP, g_swapButtons);
+	UpdateButtonLabels(hDlg, g_swapButtons);
 
         g_bLeftDown = FALSE;
         g_bRightDown = FALSE;
+        g_bTestInverted = FALSE;
         g_pressedSwap = FALSE;
         return TRUE;
 
@@ -203,6 +209,19 @@ BOOL CALLBACK MouseDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         InvertStatic(g_pressedSwap ? hLStatic : hRStatic);
         return TRUE;
 
+    case WM_LBUTTONDBLCLK:
+        if (!hTestStatic) return TRUE;
+        pt.x = LOWORD(lParam);
+        pt.y = HIWORD(lParam);
+        GetWindowRect(hTestStatic, &rc);
+        ScreenToClient(hDlg, (LPPOINT)&rc.left);
+        ScreenToClient(hDlg, (LPPOINT)&rc.right);
+        if (PtInRect(&rc, pt)) {
+            InvertStatic(hTestStatic);
+            g_bTestInverted = !g_bTestInverted;
+        }
+        return TRUE;
+
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
         case IDOK:
@@ -210,9 +229,15 @@ BOOL CALLBACK MouseDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
             return TRUE;
 
         case IDCANCEL:
-            SetDoubleClickTime(g_origDblClick);
-            SwapMouseButton(g_origSwap);
-            ApplyMouseSpeed(g_origSpeed);
+            	SetDoubleClickTime(g_origDblClick);
+		/* Windows 3.1 bug workaround
+			Q110662: BUG: SystemParametersInfo() Does Not Modify WIN.INI
+			(https://jeffpar.github.io/kbarchive/kb/110/Q110662/)
+			So we write ourself.
+		*/
+            	SwapMouseButton(g_origSwap);
+		WriteProfileString ("Windows", "SwapMouseButtons", g_origSwap?"Yes":"No");
+            //@todo trap ApplyMouseSpeed(g_origSpeed);
             EndDialog(hDlg, IDCANCEL);
             return TRUE;
 
@@ -220,7 +245,13 @@ BOOL CALLBACK MouseDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
             if (HIWORD(wParam) == BN_CLICKED) {
                 swap = IsDlgButtonChecked(hDlg, IDC_MS_SWAP);
                 UpdateButtonLabels(hDlg, swap);
+		/* Windows 3.1 bug workaround
+			Q110662: BUG: SystemParametersInfo() Does Not Modify WIN.INI
+			(https://jeffpar.github.io/kbarchive/kb/110/Q110662/)
+			So we write ourself.
+		*/
                 SwapMouseButton(swap);
+		WriteProfileString ("Windows", "SwapMouseButtons", swap?"Yes":"No");
                 g_swapButtons = swap;
                 /* Reset any pending press state to avoid stuck inverted squares */
                 if (g_bLeftDown) {
@@ -239,4 +270,3 @@ BOOL CALLBACK MouseDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
     }
     return FALSE;
 }
-
