@@ -17,10 +17,8 @@ BOOL CALLBACK ColorDlgProc(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK FontsDlgProc(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK PortsDlgProc(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK DesktopDlgProc(HWND, UINT, WPARAM, LPARAM);
-BOOL CALLBACK KeyboardDlgProc(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK PrintersDlgProc(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK InternationalDlgProc(HWND, UINT, WPARAM, LPARAM);
-BOOL CALLBACK DateTimeDlgProc(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK NetworkDlgProc(HWND, UINT, WPARAM, LPARAM);
 
 /* ----- Точка входа панели управления ----- */
@@ -40,10 +38,12 @@ LONG WINAPI CPlApplet(HWND hwndCPL, UINT msg, LONG lParam1, LONG lParam2)
         case COLOR_IDX:
             lpInfo->idName = IDS_COLOR_NAME;
             lpInfo->idInfo = IDS_COLOR_INFO;
+	    lpInfo->idIcon = IDI_COLORS;
             break;
         case FONTS_IDX:
             lpInfo->idName = IDS_FONTS_NAME;
             lpInfo->idInfo = IDS_FONTS_INFO;
+	    lpInfo->idIcon = IDI_FONTS;
             break;
         case PORTS_IDX:
             lpInfo->idName = IDS_PORTS_NAME;
@@ -57,22 +57,27 @@ LONG WINAPI CPlApplet(HWND hwndCPL, UINT msg, LONG lParam1, LONG lParam2)
         case DESKTOP_IDX:
             lpInfo->idName = IDS_DESKTOP_NAME;
             lpInfo->idInfo = IDS_DESKTOP_INFO;
+	    lpInfo->idIcon = IDI_DESKTOP;
             break;
         case KEYBOARD_IDX:
             lpInfo->idName = IDS_KEYBOARD_NAME;
             lpInfo->idInfo = IDS_KEYBOARD_INFO;
+	    lpInfo->idIcon = IDI_KEYBOARD;
             break;
         case PRINTERS_IDX:
             lpInfo->idName = IDS_PRINTERS_NAME;
             lpInfo->idInfo = IDS_PRINTERS_INFO;
+	    lpInfo->idIcon = IDI_PRINTERS;
             break;
         case INTERNATIONAL_IDX:
             lpInfo->idName = IDS_INTERNATIONAL_NAME;
             lpInfo->idInfo = IDS_INTERNATIONAL_INFO;
+	    lpInfo->idIcon = IDI_INTL;
             break;
         case DATETIME_IDX:
             lpInfo->idName = IDS_DATETIME_NAME;
             lpInfo->idInfo = IDS_DATETIME_INFO;
+	    lpInfo->idIcon = IDI_TIME;
             break;
         case NETWORK_IDX:
             lpInfo->idName = IDS_NETWORK_NAME;
@@ -272,38 +277,6 @@ BOOL CALLBACK DesktopDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 }
 
 
-/* ============================================================
- *  Keyboard
- * ============================================================ */
-BOOL CALLBACK KeyboardDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    switch (msg) {
-    case WM_INITDIALOG: {
-        int delay, speed;
-        SystemParametersInfo(SPI_GETKEYBOARDDELAY, 0, &delay, 0);
-        SystemParametersInfo(SPI_GETKEYBOARDSPEED, 0, &speed, 0);
-        SetScrollRange(GetDlgItem(hDlg, IDC_KB_DELAY), SB_CTL, 0, 3, FALSE);
-        SetScrollPos(GetDlgItem(hDlg, IDC_KB_DELAY), SB_CTL, delay, TRUE);
-        SetScrollRange(GetDlgItem(hDlg, IDC_KB_RATE), SB_CTL, 0, 31, FALSE);
-        SetScrollPos(GetDlgItem(hDlg, IDC_KB_RATE), SB_CTL, speed, TRUE);
-        return TRUE;
-    }
-    case WM_HSCROLL: {
-        int id = GetWindowWord((HWND)lParam, GWW_ID);
-        int pos = HIWORD(wParam);
-        if (id == IDC_KB_DELAY)
-            SystemParametersInfo(SPI_SETKEYBOARDDELAY, pos, NULL, 0);
-        else if (id == IDC_KB_RATE)
-            SystemParametersInfo(SPI_SETKEYBOARDSPEED, pos, NULL, 0);
-        return TRUE;
-    }
-    case WM_COMMAND:
-        if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
-            EndDialog(hDlg, LOWORD(wParam));
-        return TRUE;
-    }
-    return FALSE;
-}
 
 /* ============================================================
  *  Printers
@@ -425,75 +398,6 @@ BOOL CALLBACK InternationalDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lP
     return FALSE;
 }
 
-/* ============================================================
- *  Date/Time
- * ============================================================ */
-static WORD g_dtYear, g_dtMonth, g_dtDay, g_dtHour, g_dtMinute, g_dtSecond;
-static WORD g_origYear, g_origMonth, g_origDay, g_origHour, g_origMinute, g_origSecond;
-
-static void GetLocalDateTime(WORD *y, WORD *m, WORD *d, WORD *h, WORD *min, WORD *s)
-{
-    static union REGS regs;
-    regs.h.ah = 0x2A; intdos(&regs, &regs);
-    *y = regs.x.cx; *m = regs.h.dh; *d = regs.h.dl;
-    regs.h.ah = 0x2C; intdos(&regs, &regs);
-    *h = regs.h.ch; *min = regs.h.cl; *s = regs.h.dh;
-}
-
-static void SetLocalDateTime(WORD y, WORD m, WORD d, WORD h, WORD min, WORD s)
-{
-    static union REGS regs;
-    regs.h.ah = 0x2B; regs.x.cx = y; regs.h.dh = m; regs.h.dl = d;
-    intdos(&regs, &regs);
-    regs.h.ah = 0x2D; regs.h.ch = h; regs.h.cl = min; regs.h.dh = s;
-    intdos(&regs, &regs);
-}
-
-static void UpdateDateDisplay(HWND hDlg) {
-    char buf[64];
-    wsprintf(buf, "%s %u, %u", "Date", g_dtMonth, g_dtYear);
-    SetDlgItemText(hDlg, IDC_DT_DATE_TEXT, buf);
-}
-static void UpdateTimeDisplay(HWND hDlg) {
-    char buf[32];
-    wsprintf(buf, "%02u:%02u:%02u", g_dtHour, g_dtMinute, g_dtSecond);
-    SetDlgItemText(hDlg, IDC_DT_TIME_TEXT, buf);
-}
-static void DrawCalendar(HDC hdc, LPRECT rc) {
-    char buf[8];
-    wsprintf(buf, "%02u", g_dtDay);
-    DrawText(hdc, buf, -1, rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-}
-
-BOOL CALLBACK DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    switch (msg) {
-    case WM_INITDIALOG:
-        GetLocalDateTime(&g_dtYear, &g_dtMonth, &g_dtDay, &g_dtHour, &g_dtMinute, &g_dtSecond);
-        _fmemcpy(&g_origYear, &g_dtYear, sizeof(WORD)*6);
-        UpdateDateDisplay(hDlg);
-        UpdateTimeDisplay(hDlg);
-        return TRUE;
-    case WM_DRAWITEM:
-        if (wParam == IDC_DT_CALENDAR) {
-            LPDRAWITEMSTRUCT lpDIS = (LPDRAWITEMSTRUCT)lParam;
-            DrawCalendar(lpDIS->hDC, &lpDIS->rcItem);
-            return TRUE;
-        }
-        break;
-    case WM_COMMAND:
-        if (LOWORD(wParam) == IDOK) {
-            SetLocalDateTime(g_dtYear, g_dtMonth, g_dtDay, g_dtHour, g_dtMinute, g_dtSecond);
-            EndDialog(hDlg, IDOK);
-        }
-        if (LOWORD(wParam) == IDCANCEL) {
-            SetLocalDateTime(g_origYear, g_origMonth, g_origDay, g_origHour, g_origMinute, g_origSecond);
-            EndDialog(hDlg, IDCANCEL);
-        }
-        return TRUE;
-    }
-    return FALSE;
-}
 
 /* ============================================================
  *  Network

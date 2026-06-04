@@ -2,6 +2,13 @@
 #include "main.h"
 
 IDI_MOUSE ICON "mouse.ico"
+IDI_KEYBOARD ICON "keyboard.ico"
+IDI_TIME ICON "time.ico"
+IDI_FONTS ICON "fonts.ico"
+IDI_COLORS ICON "colors.ico"
+IDI_PRINTERS ICON "printers.ico"
+IDI_DESKTOP ICON "desktop.ico"
+IDI_INTL ICON "inter.ico"
 
 STRINGTABLE BEGIN
     IDS_COLOR_NAME,  "Color"
