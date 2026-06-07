@@ -207,8 +207,8 @@ LRESULT WINAPI MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
 
     case WM_LBUTTONDOWN: {
-        int mx = LOWORD(lParam) + g_scrollPosX;
-        int my = HIWORD(lParam) + g_scrollPosY;
+        int mx = LOWORD(lParam);
+        int my = HIWORD(lParam);
         int idx = HitTest(mx, my);
         if (g_selectedApplet >= 0 && g_selectedApplet != idx) {
             g_applets[g_selectedApplet].bSelected = FALSE;
@@ -225,8 +225,8 @@ LRESULT WINAPI MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
 
     case WM_LBUTTONDBLCLK: {
-        int mx = LOWORD(lParam) + g_scrollPosX;
-        int my = HIWORD(lParam) + g_scrollPosY;
+        int mx = LOWORD(lParam);
+        int my = HIWORD(lParam);
         int idx = HitTest(mx, my);
         if (idx >= 0) {
             g_applets[idx].proc(hwnd, CPL_DBLCLK,
