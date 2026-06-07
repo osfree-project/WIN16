@@ -48,11 +48,7 @@
 #include "printers.h"
 #include "desktop.h"
 #include "inter.h"
-
-
-
-/* Network */
-#define IDC_NET_MSG          2000
+#include "network.h"
 
 /* Icons (не используются, но оставлены для совместимости) */
 #define ICO_COLOR            300

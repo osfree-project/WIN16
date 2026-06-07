@@ -9,6 +9,7 @@ IDI_COLORS ICON "colors.ico"
 IDI_PRINTERS ICON "printers.ico"
 IDI_DESKTOP ICON "desktop.ico"
 IDI_INTL ICON "inter.ico"
+IDI_NETWORK ICON "network.ico"
 
 STRINGTABLE BEGIN
     IDS_COLOR_NAME,  "Color"

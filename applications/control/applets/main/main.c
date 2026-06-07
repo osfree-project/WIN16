@@ -82,6 +82,7 @@ LONG WINAPI CPlApplet(HWND hwndCPL, UINT msg, LONG lParam1, LONG lParam2)
         case NETWORK_IDX:
             lpInfo->idName = IDS_NETWORK_NAME;
             lpInfo->idInfo = IDS_NETWORK_INFO;
+	    lpInfo->idIcon = IDI_NETWORK;
             break;
         default:
             return FALSE;
