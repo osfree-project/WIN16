@@ -135,22 +135,33 @@ LRESULT WINAPI MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         return 0;
 
-    case WM_SIZE: {
-        RECT rc;
-        GetClientRect(hwnd, &rc);
-        {
-            int nMaxV = g_totalHeight - rc.bottom;
-            if (nMaxV < 0) nMaxV = 0;
-            SetScrollRange(hwnd, SB_VERT, 0, nMaxV, TRUE);
-        }
-        {
-            int nMaxH = g_totalWidth - rc.right;
-            if (nMaxH < 0) nMaxH = 0;
-            SetScrollRange(hwnd, SB_HORZ, 0, nMaxH, TRUE);
-        }
+case WM_SIZE: {
+    RECT rc;
+    int nMaxV, nMaxH;
+    int curPosV, curPosH;
+
+    GetClientRect(hwnd, &rc);
+
+    nMaxV = g_totalHeight - rc.bottom;
+    if (nMaxV < 0) nMaxV = 0;
+    SetScrollRange(hwnd, SB_VERT, 0, nMaxV, TRUE);
+
+    nMaxH = g_totalWidth - rc.right;
+    if (nMaxH < 0) nMaxH = 0;
+    SetScrollRange(hwnd, SB_HORZ, 0, nMaxH, TRUE);
+
+    curPosV = GetScrollPos(hwnd, SB_VERT);
+    if (curPosV > nMaxV) curPosV = nMaxV;
+    curPosH = GetScrollPos(hwnd, SB_HORZ);
+    if (curPosH > nMaxH) curPosH = nMaxH;
+
+    if (curPosV != g_scrollPosY || curPosH != g_scrollPosX)
+        ScrollTo(curPosV, curPosH);
+    else
         InvalidateRect(hwnd, NULL, TRUE);
-        return 0;
-    }
+
+    return 0;
+}
 
     case WM_VSCROLL: {
         int nMin, nMax, nPage, newPos;
