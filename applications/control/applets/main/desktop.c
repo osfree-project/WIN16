@@ -1,6 +1,7 @@
 /*
- *  desktop.c – каретка через SetSystemTimer (USER.11)
- *  Обрабатываем WM_SYSTIMER вместо callback'а.
+ *  desktop.c – финальная версия с системным таймером,
+ *  правильными секциями для GridGranularity (Desktop) и CursorBlinkRate (windows).
+ *  Все параметры читаются/записываются в соответствии с официальной документацией WIN.INI.
  */
 
 #include <windows.h>
@@ -30,6 +31,11 @@ static WORD g_currentBlinkTime = 500;
 static SETSYSTEMTIMERPROC g_lpfnSetSystemTimer = NULL;
 static KILLSYSTEMTIMERPROC g_lpfnKillSystemTimer = NULL;
 static WORD g_sysTimerID = 0;
+
+/* Исходные значения для отмены */
+static int  g_origCaretBlinkTime = 500;
+static int  g_origGridGranularity = 0;
+static int  g_origBorderWidth = 1;
 
 /* ------------------------------------------------------------
  * Безопасное копирование строки с ограничением длины
@@ -163,16 +169,13 @@ static void StartSystemTimer(HWND hDlg, WORD blinkTime)
             (LPSTR)(DWORD)ORD_KILLSYSTEMTIMER);
     }
 
-    /* Убиваем старый */
     if (g_sysTimerID && g_lpfnKillSystemTimer)
         g_lpfnKillSystemTimer(hDlg, g_sysTimerID);
 
-    /* Создаём новый – передаём NULL, чтобы получать WM_SYSTIMER */
     if (g_lpfnSetSystemTimer)
         g_sysTimerID = g_lpfnSetSystemTimer(hDlg, 1, blinkTime, NULL);
 
     if (g_sysTimerID == 0) {
-        /* Fallback: обычный SetTimer */
         SetTimer(hDlg, 1, blinkTime, NULL);
     }
 
@@ -232,7 +235,11 @@ BOOL CALLBACK DesktopDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         ControlPanelInfo(CPI_ICONSPACING, 0, (LPSTR)&w);
         SetDlgItemInt(hDlg, IDC_DT_ICON_SPACING, w, FALSE);
 
-        w = GetCaretBlinkTime();
+        /* Восстанавливаем скорость курсора из [windows] */
+        w = GetProfileInt("windows", "CursorBlinkRate", 530);
+        SetCaretBlinkTime(w);
+        g_origCaretBlinkTime = w;
+
         if (w < 200) w = 200;
         if (w > 1200) w = 1200;
         pos = 100 - (w - 200) / 10;
@@ -249,10 +256,13 @@ BOOL CALLBACK DesktopDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         StartSystemTimer(hDlg, w);
 
-        GetProfileString("windows", "GridGranularity", "0", buf, sizeof(buf));
-        SetDlgItemInt(hDlg, IDC_DT_GRANULARITY, atoi(buf), FALSE);
+        /* Grid Granularity из [Desktop] */
+        g_origGridGranularity = GetProfileInt("Desktop", "GridGranularity", 0);
+        SetDlgItemInt(hDlg, IDC_DT_GRANULARITY, g_origGridGranularity, FALSE);
 
+        /* Border Width */
         ControlPanelInfo(CPI_GETBORDER, 0, (LPSTR)&w);
+        g_origBorderWidth = w;
         SetDlgItemInt(hDlg, IDC_DT_BORDER_WIDTH, w, FALSE);
 
         return TRUE;
@@ -301,6 +311,7 @@ BOOL CALLBACK DesktopDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
             if (w > 1200) w = 1200;
 
             SetScrollPos(hScroll, SB_CTL, pos, TRUE);
+            SetCaretBlinkTime(w);
             StartSystemTimer(hDlg, w);
         }
         return TRUE;
@@ -336,15 +347,17 @@ BOOL CALLBACK DesktopDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
             w = GetDlgItemInt(hDlg, IDC_DT_ICON_SPACING, NULL, FALSE);
             ControlPanelInfo(CPI_ICONSPACING, w, NULL);
 
+            /* Сохраняем скорость курсора в [windows] */
             {
                 WORD caret = GetCaretBlinkTime();
                 wsprintf(buf, "%u", caret);
                 WriteProfileString("windows", "CursorBlinkRate", buf);
             }
 
+            /* Сохраняем GridGranularity в [Desktop] */
             w = GetDlgItemInt(hDlg, IDC_DT_GRANULARITY, NULL, FALSE);
             wsprintf(buf, "%u", w);
-            WriteProfileString("windows", "GridGranularity", buf);
+            WriteProfileString("Desktop", "GridGranularity", buf);
 
             w = GetDlgItemInt(hDlg, IDC_DT_BORDER_WIDTH, NULL, FALSE);
             ControlPanelInfo(CPI_SETBORDER, w, NULL);
@@ -367,6 +380,18 @@ BOOL CALLBACK DesktopDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         if (id == IDCANCEL) {
             StopSystemTimer(hDlg);
+
+            /* Восстанавливаем исходные значения */
+            SetCaretBlinkTime(g_origCaretBlinkTime);
+            {
+                WORD caret = g_origCaretBlinkTime;
+                wsprintf(buf, "%u", caret);
+                WriteProfileString("windows", "CursorBlinkRate", buf);
+            }
+            wsprintf(buf, "%u", g_origGridGranularity);
+            WriteProfileString("Desktop", "GridGranularity", buf);
+            ControlPanelInfo(CPI_SETBORDER, g_origBorderWidth, NULL);
+
             EndDialog(hDlg, IDCANCEL);
             return TRUE;
         }
