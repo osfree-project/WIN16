@@ -7,11 +7,15 @@ PROJ     = main
 TRGT     = $(PROJ).cpl
 DESC     = Main CPL
 srcfiles = $(p)main$(e) $(p)mouse$(e) $(p)keyboard$(e) $(p)time$(e) $(p)desktop$(e)
-ADD_COPT = -I=$(MYDIR)$(SEP)..$(SEP)..
+ADD_COPT = -ms -0 -sg -I=$(MYDIR)$(SEP)..$(SEP)..
+
 # linking dll file
 DLL     = 1
 EXPORTS = CPlApplet       .1, &
-	MouseDlgProc.2
+	MouseDlgProc.2, &
+	DesktopDlgProc.3
+
+HEAPSIZE = 30k
 
 DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 
