@@ -8,10 +8,11 @@
 /* ============================================================
    Mouse applet dialog procedure (Windows 3.0 compatible)
    ============================================================ */
+
 /* Таблица предустановок Mouse Tracking Speed (7 положений) в формате ControlPanelInfo:
    три WORD: [threshold1, threshold2, speed]  (именно в таком порядке: сначала первый порог,
-   затем второй, затем скорость – см. описание CPI_GETMOUSE, где массив интерпретируется как
-   три WORD: [0]=threshold1, [1]=threshold2, [2]=speed). */
+   затем второй, затем скорость – см. описание CPI_GETMOUSE Undocumented Windows, где массив
+   интерпретируется как три WORD: [0]=threshold1, [1]=threshold2, [2]=speed). */
 typedef struct {
     WORD threshold1;
     WORD threshold2;
