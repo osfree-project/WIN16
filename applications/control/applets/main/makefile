@@ -13,7 +13,11 @@ ADD_COPT = -ms -0 -sg -I=$(MYDIR)$(SEP)..$(SEP)..
 DLL     = 1
 EXPORTS = CPlApplet       .1, &
 	MouseDlgProc.2, &
-	DesktopDlgProc.3
+	DesktopDlgProc.3, &
+	SystemTimerProc.4
+
+IMPORTS =   CreateSystemTimer SYSTEM.2, &
+  KillSystemTimer SYSTEM.3
 
 HEAPSIZE = 30k
 

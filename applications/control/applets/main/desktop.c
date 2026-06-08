@@ -1,7 +1,6 @@
 /*
- *  desktop.c – финальная версия с системным таймером,
- *  правильными секциями для GridGranularity (Desktop) и CursorBlinkRate (windows).
- *  Все параметры читаются/записываются в соответствии с официальной документацией WIN.INI.
+ *  desktop.c – полная версия с отладочным счётчиком вызовов
+ *  асинхронного системного таймера.
  */
 
 #include <windows.h>
@@ -16,29 +15,43 @@ typedef BOOL (FAR PASCAL *SETDESKWALLPAPERPROC)(LPSTR);
 #define ORD_SETDESKPATTERN   279
 #define ORD_SETDESKWALLPAPER 285
 
-/* Системный таймер */
-#define ORD_SETSYSTEMTIMER   11
-#define ORD_KILLSYSTEMTIMER  182
-#define WM_SYSTIMER          0x0118
-
-typedef WORD (FAR PASCAL *SETSYSTEMTIMERPROC)(HWND, int, WORD, FARPROC);
-typedef BOOL (FAR PASCAL *KILLSYSTEMTIMERPROC)(HWND, WORD);
+/* Статически импортированные функции (main.def) */
+extern WORD FAR PASCAL CREATESYSTEMTIMER(WORD, FARPROC);
+extern void FAR PASCAL KILLSYSTEMTIMER(WORD);
 
 static HWND hCaretStatic = NULL;
 static BOOL bCaretVisible = FALSE;
-static WORD g_currentBlinkTime = 500;
-
-static SETSYSTEMTIMERPROC g_lpfnSetSystemTimer = NULL;
-static KILLSYSTEMTIMERPROC g_lpfnKillSystemTimer = NULL;
 static WORD g_sysTimerID = 0;
 
-/* Исходные значения для отмены */
-static int  g_origCaretBlinkTime = 500;
-static int  g_origGridGranularity = 0;
-static int  g_origBorderWidth = 1;
+/* Исходные значения для Cancel */
+static int g_origCaretBlinkTime = 500;
+static int g_origGridGranularity = 0;
+static int g_origBorderWidth = 1;
+
+/* Отладочный счётчик вызовов таймера */
+static DWORD g_timerTicks = 0;
 
 /* ------------------------------------------------------------
- * Безопасное копирование строки с ограничением длины
+ * Callback асинхронного таймера (безопасный для прерывания)
+ * ------------------------------------------------------------ */
+//@todo MUST BE IN FIXED SEGMENT!!!!!!
+void CALLBACK SystemTimerProc(void)
+{
+    g_timerTicks++;   /* увеличиваем счётчик */
+
+    if (hCaretStatic) {
+        HDC hdc = GetDC(hCaretStatic);
+        if (hdc) {
+            RECT rc;
+            GetClientRect(hCaretStatic, &rc);
+            InvertRect(hdc, &rc);
+            ReleaseDC(hCaretStatic, hdc);
+        }
+    }
+}
+
+/* ------------------------------------------------------------
+ * Безопасное копирование строки
  * ------------------------------------------------------------ */
 static void MyLstrcpyn(LPSTR dest, LPCSTR src, int maxLen)
 {
@@ -50,7 +63,7 @@ static void MyLstrcpyn(LPSTR dest, LPCSTR src, int maxLen)
 }
 
 /* ------------------------------------------------------------
- * Получить значение паттерна по его имени из CONTROL.INI
+ * GetPatternValue
  * ------------------------------------------------------------ */
 static void GetPatternValue(LPCSTR lpszName, LPSTR lpszValue, int cbValueMax)
 {
@@ -61,7 +74,7 @@ static void GetPatternValue(LPCSTR lpszName, LPSTR lpszValue, int cbValueMax)
 }
 
 /* ------------------------------------------------------------
- * Заполнить комбобокс именами паттернов из CONTROL.INI
+ * FillPatternCombo
  * ------------------------------------------------------------ */
 static void FillPatternCombo(HWND hCombo, LPCSTR currentPatternValue)
 {
@@ -74,7 +87,6 @@ static void FillPatternCombo(HWND hCombo, LPCSTR currentPatternValue)
     char searchValue[260];
 
     currentName[0] = '\0';
-
     MyLstrcpyn(searchValue, currentPatternValue, sizeof(searchValue));
 
     GetWindowsDirectory(szIniPath, sizeof(szIniPath));
@@ -118,7 +130,7 @@ static void FillPatternCombo(HWND hCombo, LPCSTR currentPatternValue)
 }
 
 /* ------------------------------------------------------------
- * Заполнить комбобокс именами .BMP из каталога Windows
+ * FillWallpaperCombo
  * ------------------------------------------------------------ */
 static void FillWallpaperCombo(HWND hCombo, LPCSTR currentWallpaper)
 {
@@ -155,31 +167,16 @@ static void FillWallpaperCombo(HWND hCombo, LPCSTR currentWallpaper)
 }
 
 /* ------------------------------------------------------------
- * Запуск системного таймера (USER)
+ * Запуск асинхронного системного таймера
  * ------------------------------------------------------------ */
-static void StartSystemTimer(HWND hDlg, WORD blinkTime)
+static void StartSystemTimer(WORD blinkTime)
 {
-    HMODULE hUser;
-
-    if (!g_lpfnSetSystemTimer) {
-        hUser = GetModuleHandle("USER");
-        g_lpfnSetSystemTimer = (SETSYSTEMTIMERPROC)GetProcAddress(hUser,
-            (LPSTR)(DWORD)ORD_SETSYSTEMTIMER);
-        g_lpfnKillSystemTimer = (KILLSYSTEMTIMERPROC)GetProcAddress(hUser,
-            (LPSTR)(DWORD)ORD_KILLSYSTEMTIMER);
+    if (g_sysTimerID) {
+        KILLSYSTEMTIMER(g_sysTimerID);
+        g_sysTimerID = 0;
     }
+    g_sysTimerID = CREATESYSTEMTIMER(blinkTime, (FARPROC)SystemTimerProc);
 
-    if (g_sysTimerID && g_lpfnKillSystemTimer)
-        g_lpfnKillSystemTimer(hDlg, g_sysTimerID);
-
-    if (g_lpfnSetSystemTimer)
-        g_sysTimerID = g_lpfnSetSystemTimer(hDlg, 1, blinkTime, NULL);
-
-    if (g_sysTimerID == 0) {
-        SetTimer(hDlg, 1, blinkTime, NULL);
-    }
-
-    g_currentBlinkTime = blinkTime;
     if (hCaretStatic) {
         bCaretVisible = TRUE;
         ShowWindow(hCaretStatic, SW_SHOW);
@@ -189,13 +186,11 @@ static void StartSystemTimer(HWND hDlg, WORD blinkTime)
 /* ------------------------------------------------------------
  * Остановка системного таймера
  * ------------------------------------------------------------ */
-static void StopSystemTimer(HWND hDlg)
+static void StopSystemTimer(void)
 {
-    if (g_sysTimerID && g_lpfnKillSystemTimer) {
-        g_lpfnKillSystemTimer(hDlg, g_sysTimerID);
+    if (g_sysTimerID) {
+        KILLSYSTEMTIMER(g_sysTimerID);
         g_sysTimerID = 0;
-    } else {
-        KillTimer(hDlg, 1);
     }
 }
 
@@ -235,7 +230,6 @@ BOOL CALLBACK DesktopDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         ControlPanelInfo(CPI_ICONSPACING, 0, (LPSTR)&w);
         SetDlgItemInt(hDlg, IDC_DT_ICON_SPACING, w, FALSE);
 
-        /* Восстанавливаем скорость курсора из [windows] */
         w = GetProfileInt("windows", "CursorBlinkRate", 530);
         SetCaretBlinkTime(w);
         g_origCaretBlinkTime = w;
@@ -254,26 +248,17 @@ BOOL CALLBACK DesktopDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
             SetWindowLong(hCaretStatic, GWL_STYLE,
                           (GetWindowLong(hCaretStatic, GWL_STYLE) & ~0x000F) | SS_BLACKRECT);
         }
-        StartSystemTimer(hDlg, w);
+        StartSystemTimer(w);
 
-        /* Grid Granularity из [Desktop] */
         g_origGridGranularity = GetProfileInt("Desktop", "GridGranularity", 0);
         SetDlgItemInt(hDlg, IDC_DT_GRANULARITY, g_origGridGranularity, FALSE);
 
-        /* Border Width */
         ControlPanelInfo(CPI_GETBORDER, 0, (LPSTR)&w);
         g_origBorderWidth = w;
         SetDlgItemInt(hDlg, IDC_DT_BORDER_WIDTH, w, FALSE);
 
         return TRUE;
     }
-
-    case WM_SYSTIMER:
-        if (wParam == 1 && hCaretStatic) {
-            bCaretVisible = !bCaretVisible;
-            ShowWindow(hCaretStatic, bCaretVisible ? SW_SHOW : SW_HIDE);
-        }
-        return TRUE;
 
     case WM_HSCROLL:
     {
@@ -312,7 +297,7 @@ BOOL CALLBACK DesktopDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 
             SetScrollPos(hScroll, SB_CTL, pos, TRUE);
             SetCaretBlinkTime(w);
-            StartSystemTimer(hDlg, w);
+            StartSystemTimer(w);
         }
         return TRUE;
     }
@@ -329,7 +314,7 @@ BOOL CALLBACK DesktopDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
             char szPatternName[260];
             char szPatternValue[260];
 
-            StopSystemTimer(hDlg);
+            StopSystemTimer();
 
             GetDlgItemText(hDlg, IDC_DT_PATTERN_COMBO, szPatternName, sizeof(szPatternName));
             GetPatternValue(szPatternName, szPatternValue, sizeof(szPatternValue));
@@ -347,14 +332,12 @@ BOOL CALLBACK DesktopDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
             w = GetDlgItemInt(hDlg, IDC_DT_ICON_SPACING, NULL, FALSE);
             ControlPanelInfo(CPI_ICONSPACING, w, NULL);
 
-            /* Сохраняем скорость курсора в [windows] */
             {
                 WORD caret = GetCaretBlinkTime();
                 wsprintf(buf, "%u", caret);
                 WriteProfileString("windows", "CursorBlinkRate", buf);
             }
 
-            /* Сохраняем GridGranularity в [Desktop] */
             w = GetDlgItemInt(hDlg, IDC_DT_GRANULARITY, NULL, FALSE);
             wsprintf(buf, "%u", w);
             WriteProfileString("Desktop", "GridGranularity", buf);
@@ -375,13 +358,13 @@ BOOL CALLBACK DesktopDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
             SendMessage(HWND_BROADCAST, WM_WININICHANGE, 0, (LPARAM)"windows");
             InvalidateRect(GetDesktopWindow(), NULL, TRUE);
 
+
             EndDialog(hDlg, IDOK);
             return TRUE;
         }
         if (id == IDCANCEL) {
-            StopSystemTimer(hDlg);
+            StopSystemTimer();
 
-            /* Восстанавливаем исходные значения */
             SetCaretBlinkTime(g_origCaretBlinkTime);
             {
                 WORD caret = g_origCaretBlinkTime;
@@ -392,6 +375,7 @@ BOOL CALLBACK DesktopDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
             WriteProfileString("Desktop", "GridGranularity", buf);
             ControlPanelInfo(CPI_SETBORDER, g_origBorderWidth, NULL);
 
+
             EndDialog(hDlg, IDCANCEL);
             return TRUE;
         }
@@ -399,7 +383,7 @@ BOOL CALLBACK DesktopDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
     }
 
     case WM_DESTROY:
-        StopSystemTimer(hDlg);
+        StopSystemTimer();
         break;
     }
 
