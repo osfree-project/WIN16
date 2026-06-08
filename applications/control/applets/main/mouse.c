@@ -8,22 +8,24 @@
 /* ============================================================
    Mouse applet dialog procedure (Windows 3.0 compatible)
    ============================================================ */
-
-/* Таблица предустановок Mouse Tracking Speed (7 положений ползунка) */
+/* Таблица предустановок Mouse Tracking Speed (7 положений) в формате ControlPanelInfo:
+   три WORD: [threshold1, threshold2, speed]  (именно в таком порядке: сначала первый порог,
+   затем второй, затем скорость – см. описание CPI_GETMOUSE, где массив интерпретируется как
+   три WORD: [0]=threshold1, [1]=threshold2, [2]=speed). */
 typedef struct {
-    int speed;
-    int threshold1;
-    int threshold2;
+    WORD threshold1;
+    WORD threshold2;
+    WORD speed;
 } MOUSETRACKPRESET;
 
 static const MOUSETRACKPRESET g_presets[] = {
-    {0,  0,  0},   /* позиция 1 */
-    {1, 10,  0},   /* позиция 2 */
-    {1,  7,  0},   /* позиция 3 */
-    {1,  4,  0},   /* позиция 4 */
-    {2,  4, 12},   /* позиция 5 */
-    {2,  4,  8},   /* позиция 6 */
-    {2,  4,  4}    /* позиция 7 */
+    /* n=1 */ {0,  0, 0},
+    /* n=2 */ {10, 0, 1},
+    /* n=3 */ {7,  0, 1},
+    /* n=4 */ {4,  0, 1},
+    /* n=5 */ {4,  9, 2},
+    /* n=6 */ {4,  6, 2},
+    /* n=7 */ {4,  3, 2}
 };
 
 #define NUM_PRESETS  7
@@ -32,24 +34,29 @@ static int   g_mouseTrackPos = 4;     /* текущая позиция ползунка скорости (1..7
 static int   g_dblClickPos = 50;      /* текущая позиция ползунка двойного щелчка (1..100) */
 static int   g_dblClickTime = 500;
 static BOOL  g_swapButtons = FALSE;
-static int   g_origTrackPos;          /* исходная позиция скорости */
-static int   g_origDblClick;
+static int   g_origTrackPos;           /* исходная позиция скорости */
+static int   g_origDblClick;           /* исходное время двойного щелчка */
 static BOOL  g_origSwap;
-static HWND  hLStatic;
-static HWND  hRStatic;
-static HWND  hTestStatic;
-static HWND  hSpeedScroll = NULL;
-static HWND  hDblClickScroll = NULL;
-static BOOL  g_bLeftDown;
-static BOOL  g_bRightDown;
+static HWND  hLStatic, hRStatic, hTestStatic;
+static HWND  hSpeedScroll = NULL, hDblClickScroll = NULL;
+static BOOL  g_bLeftDown, g_bRightDown;
 static BOOL  g_bTestInverted = FALSE;
 static BOOL  g_pressedSwap;
 static char  g_szOrigL[16], g_szOrigR[16];
 
-/* Применить тройку параметров для заданной позиции ползунка скорости */
+/* Прототипы внутренних функций */
+static void NEAR ApplyMouseTrackPos(int pos);
+static int  NEAR FindTrackPos(WORD thresh1, WORD thresh2, WORD speed);
+static void NEAR InvertStatic(HWND hWnd);
+static void NEAR UpdateButtonLabels(HWND hDlg, BOOL swapped);
+
+/*
+ * Применить параметры мыши для заданной позиции ползунка (1..NUM_PRESETS)
+ * через ControlPanelInfo. Это даёт немедленный эффект в Windows 3.0.
+ */
 static void NEAR ApplyMouseTrackPos(int pos)
 {
-    int mouseParams[3];
+    WORD mouseParams[3];
     if (pos < 1) pos = 1;
     if (pos > NUM_PRESETS) pos = NUM_PRESETS;
 
@@ -57,30 +64,34 @@ static void NEAR ApplyMouseTrackPos(int pos)
     mouseParams[1] = g_presets[pos - 1].threshold2;
     mouseParams[2] = g_presets[pos - 1].speed;
 
-//    SystemParametersInfo(SPI_SETMOUSE, 0, (LPSTR)mouseParams, SPIF_UPDATEINIFILE);
+    ControlPanelInfo(CPI_SETMOUSE, 0, (LPSTR)mouseParams);
 }
 
-/* Определить позицию ползунка (1..7) по тройке параметров.
-   Возвращает 0, если точного соответствия нет. */
-static int NEAR FindTrackPos(int speed, int thresh1, int thresh2)
+/*
+ * Определить позицию ползунка (1..NUM_PRESETS) по трём параметрам,
+ * полученным от ControlPanelInfo(CPI_GETMOUSE).
+ * Возвращает 0, если точного совпадения нет.
+ */
+static int NEAR FindTrackPos(WORD thresh1, WORD thresh2, WORD speed)
 {
     int i;
     for (i = 0; i < NUM_PRESETS; i++) {
-        if (g_presets[i].speed == speed &&
-            g_presets[i].threshold1 == thresh1 &&
-            g_presets[i].threshold2 == thresh2)
+        if (g_presets[i].threshold1 == thresh1 &&
+            g_presets[i].threshold2 == thresh2 &&
+            g_presets[i].speed == speed)
             return i + 1;
     }
     return 0;
 }
 
-/* Invert the client area of a static control (with safety check) */
+/*
+ * Инвертировать клиентскую область статического контрола
+ */
 static void NEAR InvertStatic(HWND hWnd)
 {
     HDC hdc;
     RECT rc;
-    if (!hWnd || !IsWindow(hWnd))
-        return;
+    if (!hWnd || !IsWindow(hWnd)) return;
     hdc = GetDC(hWnd);
     if (hdc) {
         GetClientRect(hWnd, &rc);
@@ -89,7 +100,9 @@ static void NEAR InvertStatic(HWND hWnd)
     }
 }
 
-/* Swap the labels L and R according to current swap state */
+/*
+ * Обновить метки L/R в соответствии с флагом Swap
+ */
 static void NEAR UpdateButtonLabels(HWND hDlg, BOOL swapped)
 {
     if (swapped) {
@@ -101,12 +114,12 @@ static void NEAR UpdateButtonLabels(HWND hDlg, BOOL swapped)
     }
 }
 
+/* =================================================================== */
 BOOL CALLBACK MouseDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     char buf[32];
-    int pos, curPos, code;
+    int pos, code;
     HWND hScroll;
-    int id;
     BOOL swap;
     POINT pt;
     RECT rc;
@@ -114,16 +127,15 @@ BOOL CALLBACK MouseDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
     switch (msg) {
     case WM_INITDIALOG:
     {
-        int speed, thresh1, thresh2;
+        WORD mouseParams[3];
 
-        /* Читаем текущие параметры мыши из WIN.INI */
-        speed   = GetProfileInt("windows", "MouseSpeed", 1);
-        thresh1 = GetProfileInt("windows", "MouseThreshold1", 5);
-        thresh2 = GetProfileInt("windows", "MouseThreshold2", 10);
+        /* Получаем текущие параметры мыши через ControlPanelInfo */
+        ControlPanelInfo(CPI_GETMOUSE, 0, (LPSTR)mouseParams);
 
-        /* Пытаемся найти точное совпадение с одной из предустановок */
-        g_mouseTrackPos = FindTrackPos(speed, thresh1, thresh2);
+        /* Находим позицию ползунка по таблице */
+        g_mouseTrackPos = FindTrackPos(mouseParams[0], mouseParams[1], mouseParams[2]);
         if (g_mouseTrackPos == 0) {
+            /* Если точного соответствия нет, ставим позицию 4 как умолчание */
             g_mouseTrackPos = 4;
         }
         g_origTrackPos = g_mouseTrackPos;
@@ -132,7 +144,7 @@ BOOL CALLBACK MouseDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         SetScrollRange(hSpeedScroll, SB_CTL, 1, NUM_PRESETS, TRUE);
         SetScrollPos(hSpeedScroll, SB_CTL, g_mouseTrackPos, TRUE);
 
-        /* Double-click speed: читаем из WIN.INI (100..900 мс) */
+        /* Двойной щелчок – по-прежнему из WIN.INI, т.к. ControlPanelInfo его не затрагивает */
         g_dblClickTime = GetProfileInt("windows", "DoubleClickSpeed", 500);
         if (g_dblClickTime < 100) g_dblClickTime = 100;
         if (g_dblClickTime > 900) g_dblClickTime = 900;
@@ -147,7 +159,7 @@ BOOL CALLBACK MouseDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         SetScrollRange(hDblClickScroll, SB_CTL, 1, 100, TRUE);
         SetScrollPos(hDblClickScroll, SB_CTL, g_dblClickPos, TRUE);
 
-        /* Swap buttons */
+        /* Swap Buttons */
         /* Store original L/R texts from the dialog resources */
         GetDlgItemText(hDlg, IDC_MS_L, g_szOrigL, sizeof(g_szOrigL));
         GetDlgItemText(hDlg, IDC_MS_R, g_szOrigR, sizeof(g_szOrigR));
@@ -179,77 +191,77 @@ BOOL CALLBACK MouseDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         return TRUE;
     }
 
-case WM_HSCROLL:
-{
-    code = wParam;                     /* уведомление */
-    pos  = LOWORD(lParam);             /* позиция (только для THUMB) */
-    hScroll = (HWND)HIWORD(lParam);    /* дескриптор окна скроллбара */
+    case WM_HSCROLL:
+    {
+        code = wParam;                  /* уведомление */
+        pos  = LOWORD(lParam);          /* позиция (для THUMB) */
+        hScroll = (HWND)HIWORD(lParam); /* хэндл скроллбара */
 
-    if (!hScroll) return TRUE;
+        if (!hScroll) return TRUE;
 
-    if (hScroll == hSpeedScroll) {
-        switch (code) {
-        case SB_THUMBTRACK:
-        case SB_THUMBPOSITION:
-            g_mouseTrackPos = pos;
-            break;
-        case SB_LINELEFT:
-            if (g_mouseTrackPos > 1) g_mouseTrackPos--;
-            break;
-        case SB_LINERIGHT:
-            if (g_mouseTrackPos < NUM_PRESETS) g_mouseTrackPos++;
-            break;
-        case SB_PAGELEFT:
-            if (g_mouseTrackPos > 1) {
-                g_mouseTrackPos--;
-                if (g_mouseTrackPos < 1) g_mouseTrackPos = 1;
+        if (hScroll == hSpeedScroll) {
+            switch (code) {
+            case SB_THUMBTRACK:
+            case SB_THUMBPOSITION:
+                g_mouseTrackPos = pos;
+                break;
+            case SB_LINELEFT:
+                if (g_mouseTrackPos > 1) g_mouseTrackPos--;
+                break;
+            case SB_LINERIGHT:
+                if (g_mouseTrackPos < NUM_PRESETS) g_mouseTrackPos++;
+                break;
+            case SB_PAGELEFT:
+                if (g_mouseTrackPos > 1) {
+                    g_mouseTrackPos--;
+                    if (g_mouseTrackPos < 1) g_mouseTrackPos = 1;
+                }
+                break;
+            case SB_PAGERIGHT:
+                if (g_mouseTrackPos < NUM_PRESETS) {
+                    g_mouseTrackPos++;
+                    if (g_mouseTrackPos > NUM_PRESETS) g_mouseTrackPos = NUM_PRESETS;
+                }
+                break;
+            default:
+                return TRUE;
             }
-            break;
-        case SB_PAGERIGHT:
-            if (g_mouseTrackPos < NUM_PRESETS) {
-                g_mouseTrackPos++;
-                if (g_mouseTrackPos > NUM_PRESETS) g_mouseTrackPos = NUM_PRESETS;
-            }
-            break;
-        default:
-            return TRUE;
+            SetScrollPos(hSpeedScroll, SB_CTL, g_mouseTrackPos, TRUE);
+            ApplyMouseTrackPos(g_mouseTrackPos);
         }
-        SetScrollPos(hSpeedScroll, SB_CTL, g_mouseTrackPos, TRUE);
-        ApplyMouseTrackPos(g_mouseTrackPos);
-    }
-    else if (hScroll == hDblClickScroll) {
-        switch (code) {
-        case SB_THUMBTRACK:
-        case SB_THUMBPOSITION:
-            g_dblClickPos = pos;
-            break;
-        case SB_LINELEFT:
-            if (g_dblClickPos > 1) g_dblClickPos--;
-            break;
-        case SB_LINERIGHT:
-            if (g_dblClickPos < 100) g_dblClickPos++;
-            break;
-        case SB_PAGELEFT:
-            if (g_dblClickPos > 1) {
-                g_dblClickPos -= 10;
-                if (g_dblClickPos < 1) g_dblClickPos = 1;
+        else if (hScroll == hDblClickScroll) {
+            switch (code) {
+            case SB_THUMBTRACK:
+            case SB_THUMBPOSITION:
+                g_dblClickPos = pos;
+                break;
+            case SB_LINELEFT:
+                if (g_dblClickPos > 1) g_dblClickPos--;
+                break;
+            case SB_LINERIGHT:
+                if (g_dblClickPos < 100) g_dblClickPos++;
+                break;
+            case SB_PAGELEFT:
+                if (g_dblClickPos > 1) {
+                    g_dblClickPos -= 10;
+                    if (g_dblClickPos < 1) g_dblClickPos = 1;
+                }
+                break;
+            case SB_PAGERIGHT:
+                if (g_dblClickPos < 100) {
+                    g_dblClickPos += 10;
+                    if (g_dblClickPos > 100) g_dblClickPos = 100;
+                }
+                break;
+            default:
+                return TRUE;
             }
-            break;
-        case SB_PAGERIGHT:
-            if (g_dblClickPos < 100) {
-                g_dblClickPos += 10;
-                if (g_dblClickPos > 100) g_dblClickPos = 100;
-            }
-            break;
-        default:
-            return TRUE;
+            g_dblClickTime = 100 + (100 - g_dblClickPos) * 800 / 99;
+            SetDoubleClickTime(g_dblClickTime);
+            SetScrollPos(hDblClickScroll, SB_CTL, g_dblClickPos, TRUE);
         }
-        g_dblClickTime = 100 + (100 - g_dblClickPos) * 800 / 99;
-        SetDoubleClickTime(g_dblClickTime);
-        SetScrollPos(hDblClickScroll, SB_CTL, g_dblClickPos, TRUE);
+        return TRUE;
     }
-    return TRUE;
-}
 
     case WM_LBUTTONDOWN:
         if (g_bLeftDown) return TRUE;
@@ -295,21 +307,45 @@ case WM_HSCROLL:
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
         case IDOK:
+        {
+            char buf[16];
+
+            /* Сохраняем скорость мыши в WIN.INI */
+            wsprintf(buf, "%d", g_presets[g_mouseTrackPos - 1].speed);
+            WriteProfileString("windows", "MouseSpeed", buf);
+            wsprintf(buf, "%d", g_presets[g_mouseTrackPos - 1].threshold1);
+            WriteProfileString("windows", "MouseThreshold1", buf);
+            wsprintf(buf, "%d", g_presets[g_mouseTrackPos - 1].threshold2);
+            WriteProfileString("windows", "MouseThreshold2", buf);
+
+            /* Сохраняем время двойного щелчка */
+            wsprintf(buf, "%d", g_dblClickTime);
+            WriteProfileString("windows", "DoubleClickSpeed", buf);
+
+            /* Сохраняем флаг Swap */
+            swap = IsDlgButtonChecked(hDlg, IDC_MS_SWAP);
+            WriteProfileString("windows", "SwapMouseButtons", swap ? "Yes" : "No");
+
             EndDialog(hDlg, IDOK);
             return TRUE;
+        }
 
         case IDCANCEL:
-            	SetDoubleClickTime(g_origDblClick);
+        {
+            /* Восстанавливаем исходные параметры мыши */
+            ApplyMouseTrackPos(g_origTrackPos);
+            SetDoubleClickTime(g_origDblClick);
 		/* Windows 3.1 bug workaround
 			Q110662: BUG: SystemParametersInfo() Does Not Modify WIN.INI
 			(https://jeffpar.github.io/kbarchive/kb/110/Q110662/)
 			So we write ourself.
 		*/
-            	SwapMouseButton(g_origSwap);
-		WriteProfileString ("Windows", "SwapMouseButtons", g_origSwap?"Yes":"No");
-            //@todo trap ApplyMouseSpeed(g_origSpeed);
+            SwapMouseButton(g_origSwap);
+            WriteProfileString("windows", "SwapMouseButtons", g_origSwap ? "Yes" : "No");
+
             EndDialog(hDlg, IDCANCEL);
             return TRUE;
+        }
 
         case IDC_MS_SWAP:
             if (HIWORD(wParam) == BN_CLICKED) {
@@ -321,7 +357,7 @@ case WM_HSCROLL:
 			So we write ourself.
 		*/
                 SwapMouseButton(swap);
-                WriteProfileString("Windows", "SwapMouseButtons", swap ? "Yes" : "No");
+                WriteProfileString("windows", "SwapMouseButtons", swap ? "Yes" : "No");
                 g_swapButtons = swap;
                 /* Reset any pending press state to avoid stuck inverted squares */
                 if (g_bLeftDown) {
