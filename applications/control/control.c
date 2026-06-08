@@ -247,6 +247,115 @@ case WM_SIZE: {
         return 0;
     }
 
+case WM_KEYDOWN:
+{
+    int newIdx = -1;
+    int curIdx = g_selectedApplet;
+
+    if (g_numApplets == 0)
+        return 0;
+
+    switch (wParam) {
+    case VK_LEFT:
+        if (curIdx >= 0) {
+            /* Если не крайний левый в строке */
+            if (curIdx % MAX_COLS > 0)
+                newIdx = curIdx - 1;
+        } else {
+            /* Если ничего не выделено – выбираем первый */
+            newIdx = 0;
+        }
+        break;
+
+    case VK_RIGHT:
+        if (curIdx >= 0) {
+            if (curIdx % MAX_COLS < MAX_COLS - 1 && curIdx + 1 < g_numApplets)
+                newIdx = curIdx + 1;
+        } else {
+            newIdx = 0;
+        }
+        break;
+
+    case VK_UP:
+        if (curIdx >= 0) {
+            if (curIdx >= MAX_COLS)
+                newIdx = curIdx - MAX_COLS;
+        } else {
+            newIdx = 0;
+        }
+        break;
+
+    case VK_DOWN:
+        if (curIdx >= 0) {
+            int downIdx = curIdx + MAX_COLS;
+            if (downIdx < g_numApplets)
+                newIdx = downIdx;
+        } else {
+            newIdx = 0;
+        }
+        break;
+
+    case VK_RETURN:
+    case VK_SPACE:
+        if (curIdx >= 0) {
+            LaunchAppletByIndex(hwnd, curIdx);
+        }
+        return 0;
+
+    default:
+        return DefWindowProc(hwnd, msg, wParam, lParam);
+    }
+
+    if (newIdx != -1 && newIdx != curIdx) {
+        int iconW = GetSystemMetrics(SM_CXICON);
+        int cellWidth = iconW + 32;
+        int row, col;
+        RECT rcClient;
+
+        if (curIdx >= 0) {
+            g_applets[curIdx].bSelected = FALSE;
+            InvalidateApplet(curIdx);
+        }
+        g_applets[newIdx].bSelected = TRUE;
+        g_selectedApplet = newIdx;
+        InvalidateApplet(newIdx);
+
+        /* Прокрутка, чтобы иконка была видна */
+        GetClientRect(hwnd, &rcClient);
+        col = newIdx % MAX_COLS;
+        row = newIdx / MAX_COLS;
+        {
+            int iconX = MARGIN_X + col * cellWidth - g_scrollPosX;
+            int iconY = MARGIN_Y + row * ICON_SPACING_Y - g_scrollPosY;
+            int needScrollX = 0, needScrollY = 0;
+
+            if (iconX < 0) needScrollX = iconX;
+            else if (iconX + cellWidth > rcClient.right)
+                needScrollX = iconX + cellWidth - rcClient.right;
+
+            if (iconY < 0) needScrollY = iconY;
+            else if (iconY + ICON_SPACING_Y > rcClient.bottom)
+                needScrollY = iconY + ICON_SPACING_Y - rcClient.bottom;
+
+            if (needScrollX != 0 || needScrollY != 0) {
+                int newPosX = g_scrollPosX + needScrollX;
+                int newPosY = g_scrollPosY + needScrollY;
+
+                /* Ограничиваем максимумами */
+                int nMaxV, nMaxH;
+                GetScrollRange(hwnd, SB_VERT, NULL, &nMaxV);
+                GetScrollRange(hwnd, SB_HORZ, NULL, &nMaxH);
+                if (newPosX < 0) newPosX = 0;
+                if (newPosX > nMaxH) newPosX = nMaxH;
+                if (newPosY < 0) newPosY = 0;
+                if (newPosY > nMaxV) newPosY = nMaxV;
+
+                ScrollTo(newPosY, newPosX);
+            }
+        }
+    }
+    return 0;
+}
     case WM_COMMAND:
         if (LOWORD(wParam) == IDM_SETTINGS_EXIT) {
             PostMessage(hwnd, WM_CLOSE, 0, 0);
