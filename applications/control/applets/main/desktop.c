@@ -236,9 +236,16 @@ BOOL CALLBACK DesktopDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         GetProfileString("Desktop", "Wallpaper", "", buf, sizeof(buf));
         FillWallpaperCombo(hCtrl, buf);
 
-        GetProfileString("Desktop", "TileWallpaper", "0", buf, sizeof(buf));
-        CheckRadioButton(hDlg, IDC_DT_CENTER, IDC_DT_TILE,
-                         atoi(buf) ? IDC_DT_TILE : IDC_DT_CENTER);
+{
+    int tile = GetProfileInt("Desktop", "TileWallpaper", 0);
+    if (tile) {
+        SendDlgItemMessage(hDlg, IDC_DT_TILE,   BM_SETCHECK, 1, 0);
+        SendDlgItemMessage(hDlg, IDC_DT_CENTER, BM_SETCHECK, 0, 0);
+    } else {
+        SendDlgItemMessage(hDlg, IDC_DT_CENTER, BM_SETCHECK, 1, 0);
+        SendDlgItemMessage(hDlg, IDC_DT_TILE,   BM_SETCHECK, 0, 0);
+    }
+}
 
         ControlPanelInfo(CPI_ICONSPACING, 0, (LPSTR)&w);
         SetDlgItemInt(hDlg, IDC_DT_ICON_SPACING, w, FALSE);
@@ -317,12 +324,20 @@ BOOL CALLBACK DesktopDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_COMMAND:
     {
-        WORD id = LOWORD(wParam);
+        WORD id = wParam;
 
         if (id == IDC_DT_EDIT_PATTERN) {
             MessageBox(hDlg, "Pattern Editor not implemented.", "Desktop", MB_OK);
             return TRUE;
         }
+if (id == IDC_DT_CENTER && HIWORD(lParam) == BN_CLICKED) {
+    CheckRadioButton(hDlg, IDC_DT_CENTER, IDC_DT_TILE, IDC_DT_CENTER);
+    return TRUE;
+}
+if (id == IDC_DT_TILE && HIWORD(lParam) == BN_CLICKED) {
+    CheckRadioButton(hDlg, IDC_DT_CENTER, IDC_DT_TILE, IDC_DT_TILE);
+    return TRUE;
+}
         if (id == IDOK) {
             char szPatternName[260];
             char szPatternValue[260];
