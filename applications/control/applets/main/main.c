@@ -16,7 +16,6 @@ HINSTANCE g_hInst = NULL;
 BOOL CALLBACK ColorDlgProc(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK FontsDlgProc(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK PortsDlgProc(HWND, UINT, WPARAM, LPARAM);
-BOOL CALLBACK DesktopDlgProc(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK PrintersDlgProc(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK InternationalDlgProc(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK NetworkDlgProc(HWND, UINT, WPARAM, LPARAM);
@@ -233,49 +232,6 @@ BOOL CALLBACK PortsDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 }
 
 
-/* ============================================================
- *  Desktop
- * ============================================================ */
-BOOL CALLBACK DesktopDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    switch (msg) {
-    case WM_INITDIALOG: {
-        char buf[260];
-        GetProfileString("Desktop", "Pattern", "(None)", buf, sizeof(buf));
-        SetDlgItemText(hDlg, IDC_DT_PATTERN, buf);
-        GetProfileString("Desktop", "Wallpaper", "", buf, sizeof(buf));
-        SetDlgItemText(hDlg, IDC_DT_WALLPAPER, buf);
-        GetProfileString("Desktop", "TileWallpaper", "0", buf, sizeof(buf));
-        CheckDlgButton(hDlg, IDC_DT_TILE, atoi(buf));
-        return TRUE;
-    }
-    case WM_COMMAND:
-        if (LOWORD(wParam) == IDC_DT_BROWSE_WP) {
-            MessageBox(hDlg, "Enter path to .BMP file in Wallpaper field.", "Browse", MB_OK);
-            return TRUE;
-        }
-        if (LOWORD(wParam) == IDOK) {
-            char pattern[260], wp[260], tile[4];
-            GetDlgItemText(hDlg, IDC_DT_PATTERN, pattern, sizeof(pattern));
-            WriteProfileString("Desktop", "Pattern", pattern);
-            GetDlgItemText(hDlg, IDC_DT_WALLPAPER, wp, sizeof(wp));
-            WriteProfileString("Desktop", "Wallpaper", wp);
-            wsprintf(tile, "%d", IsDlgButtonChecked(hDlg, IDC_DT_TILE) ? 1 : 0);
-            WriteProfileString("Desktop", "TileWallpaper", tile);
-            SystemParametersInfo(SPI_SETDESKPATTERN, 0, pattern, SPIF_UPDATEINIFILE);
-            if (lstrlen(wp) > 0)
-                SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, wp, SPIF_UPDATEINIFILE);
-            else
-                SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, "", SPIF_UPDATEINIFILE);
-            EndDialog(hDlg, IDOK);
-            return TRUE;
-        }
-        if (LOWORD(wParam) == IDCANCEL)
-            EndDialog(hDlg, IDCANCEL);
-        return TRUE;
-    }
-    return FALSE;
-}
 
 
 

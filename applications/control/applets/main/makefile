@@ -6,7 +6,7 @@
 PROJ     = main
 TRGT     = $(PROJ).cpl
 DESC     = Main CPL
-srcfiles = $(p)main$(e) $(p)mouse$(e) $(p)keyboard$(e) $(p)time$(e)
+srcfiles = $(p)main$(e) $(p)mouse$(e) $(p)keyboard$(e) $(p)time$(e) $(p)desktop$(e)
 ADD_COPT = -I=$(MYDIR)$(SEP)..$(SEP)..
 # linking dll file
 DLL     = 1
