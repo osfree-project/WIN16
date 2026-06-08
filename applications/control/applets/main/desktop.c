@@ -1,5 +1,6 @@
 /*
- *  desktop.c – без отладки, с рабочим восстановлением узора.
+ *  desktop.c – каретка через SetSystemTimer (USER.11)
+ *  Обрабатываем WM_SYSTIMER вместо callback'а.
  */
 
 #include <windows.h>
@@ -14,8 +15,21 @@ typedef BOOL (FAR PASCAL *SETDESKWALLPAPERPROC)(LPSTR);
 #define ORD_SETDESKPATTERN   279
 #define ORD_SETDESKWALLPAPER 285
 
-static HWND hCaretWnd = NULL;
-static BOOL bCaretCreated = FALSE;
+/* Системный таймер */
+#define ORD_SETSYSTEMTIMER   11
+#define ORD_KILLSYSTEMTIMER  182
+#define WM_SYSTIMER          0x0118
+
+typedef WORD (FAR PASCAL *SETSYSTEMTIMERPROC)(HWND, int, WORD, FARPROC);
+typedef BOOL (FAR PASCAL *KILLSYSTEMTIMERPROC)(HWND, WORD);
+
+static HWND hCaretStatic = NULL;
+static BOOL bCaretVisible = FALSE;
+static WORD g_currentBlinkTime = 500;
+
+static SETSYSTEMTIMERPROC g_lpfnSetSystemTimer = NULL;
+static KILLSYSTEMTIMERPROC g_lpfnKillSystemTimer = NULL;
+static WORD g_sysTimerID = 0;
 
 /* ------------------------------------------------------------
  * Безопасное копирование строки с ограничением длины
@@ -55,7 +69,6 @@ static void FillPatternCombo(HWND hCombo, LPCSTR currentPatternValue)
 
     currentName[0] = '\0';
 
-    /* Копируем искомое значение (из WIN.INI) */
     MyLstrcpyn(searchValue, currentPatternValue, sizeof(searchValue));
 
     GetWindowsDirectory(szIniPath, sizeof(szIniPath));
@@ -68,14 +81,12 @@ static void FillPatternCombo(HWND hCombo, LPCSTR currentPatternValue)
         return;
     }
 
-    /* Добавляем имена в комбобокс */
     p = (char FAR *)buf;
     while (*p) {
         SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)(LPSTR)p);
         p += lstrlen((LPSTR)p) + 1;
     }
 
-    /* Ищем имя текущего узора по его значению */
     if (searchValue[0]) {
         char FAR *pKey = (char FAR *)buf;
         while (*pKey) {
@@ -89,11 +100,9 @@ static void FillPatternCombo(HWND hCombo, LPCSTR currentPatternValue)
         }
     }
 
-    /* Устанавливаем выбор */
     if (currentName[0]) {
         idx = SendMessage(hCombo, CB_SELECTSTRING, (WPARAM)-1, (LPARAM)(LPSTR)currentName);
         if (idx == CB_ERR) {
-            /* Если не найден – добавляем и выбираем */
             SendMessage(hCombo, CB_INSERTSTRING, 0, (LPARAM)(LPSTR)currentName);
             SendMessage(hCombo, CB_SETCURSEL, 0, 0);
         }
@@ -120,7 +129,7 @@ static void FillWallpaperCombo(HWND hCombo, LPCSTR currentWallpaper)
 
     done = _dos_findfirst(szMask, _A_NORMAL, &ff);
     while (done == 0) {
-        SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)(LPSTR)ff.name);
+        SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)ff.name);
         count++;
         done = _dos_findnext(&ff);
     }
@@ -140,22 +149,50 @@ static void FillWallpaperCombo(HWND hCombo, LPCSTR currentWallpaper)
 }
 
 /* ------------------------------------------------------------
- * Пересоздать каретку с заданным временем мигания
+ * Запуск системного таймера (USER)
  * ------------------------------------------------------------ */
-static void RecreateCaret(WORD blinkTime)
+static void StartSystemTimer(HWND hDlg, WORD blinkTime)
 {
-    if (bCaretCreated) {
-        DestroyCaret();
-        bCaretCreated = FALSE;
+    HMODULE hUser;
+
+    if (!g_lpfnSetSystemTimer) {
+        hUser = GetModuleHandle("USER");
+        g_lpfnSetSystemTimer = (SETSYSTEMTIMERPROC)GetProcAddress(hUser,
+            (LPSTR)(DWORD)ORD_SETSYSTEMTIMER);
+        g_lpfnKillSystemTimer = (KILLSYSTEMTIMERPROC)GetProcAddress(hUser,
+            (LPSTR)(DWORD)ORD_KILLSYSTEMTIMER);
     }
-    if (hCaretWnd) {
-        RECT rc;
-        GetClientRect(hCaretWnd, &rc);
-        CreateCaret(hCaretWnd, NULL, 2, rc.bottom - rc.top);
-        SetCaretPos(0, 0);
-        ShowCaret(hCaretWnd);
-        bCaretCreated = TRUE;
-        SetCaretBlinkTime(blinkTime);
+
+    /* Убиваем старый */
+    if (g_sysTimerID && g_lpfnKillSystemTimer)
+        g_lpfnKillSystemTimer(hDlg, g_sysTimerID);
+
+    /* Создаём новый – передаём NULL, чтобы получать WM_SYSTIMER */
+    if (g_lpfnSetSystemTimer)
+        g_sysTimerID = g_lpfnSetSystemTimer(hDlg, 1, blinkTime, NULL);
+
+    if (g_sysTimerID == 0) {
+        /* Fallback: обычный SetTimer */
+        SetTimer(hDlg, 1, blinkTime, NULL);
+    }
+
+    g_currentBlinkTime = blinkTime;
+    if (hCaretStatic) {
+        bCaretVisible = TRUE;
+        ShowWindow(hCaretStatic, SW_SHOW);
+    }
+}
+
+/* ------------------------------------------------------------
+ * Остановка системного таймера
+ * ------------------------------------------------------------ */
+static void StopSystemTimer(HWND hDlg)
+{
+    if (g_sysTimerID && g_lpfnKillSystemTimer) {
+        g_lpfnKillSystemTimer(hDlg, g_sysTimerID);
+        g_sysTimerID = 0;
+    } else {
+        KillTimer(hDlg, 1);
     }
 }
 
@@ -205,8 +242,12 @@ BOOL CALLBACK DesktopDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         SetScrollRange(GetDlgItem(hDlg, IDC_DT_CURSOR_SPEED), SB_CTL, 1, 100, FALSE);
         SetScrollPos(GetDlgItem(hDlg, IDC_DT_CURSOR_SPEED), SB_CTL, pos, TRUE);
 
-        hCaretWnd = GetDlgItem(hDlg, IDC_DT_CARET);
-        RecreateCaret(w);
+        hCaretStatic = GetDlgItem(hDlg, IDC_DT_CARET);
+        if (hCaretStatic) {
+            SetWindowLong(hCaretStatic, GWL_STYLE,
+                          (GetWindowLong(hCaretStatic, GWL_STYLE) & ~0x000F) | SS_BLACKRECT);
+        }
+        StartSystemTimer(hDlg, w);
 
         GetProfileString("windows", "GridGranularity", "0", buf, sizeof(buf));
         SetDlgItemInt(hDlg, IDC_DT_GRANULARITY, atoi(buf), FALSE);
@@ -216,6 +257,13 @@ BOOL CALLBACK DesktopDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 
         return TRUE;
     }
+
+    case WM_SYSTIMER:
+        if (wParam == 1 && hCaretStatic) {
+            bCaretVisible = !bCaretVisible;
+            ShowWindow(hCaretStatic, bCaretVisible ? SW_SHOW : SW_HIDE);
+        }
+        return TRUE;
 
     case WM_HSCROLL:
     {
@@ -253,24 +301,24 @@ BOOL CALLBACK DesktopDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
             if (w > 1200) w = 1200;
 
             SetScrollPos(hScroll, SB_CTL, pos, TRUE);
-            RecreateCaret(w);
+            StartSystemTimer(hDlg, w);
         }
         return TRUE;
     }
 
     case WM_COMMAND:
-        if (LOWORD(wParam) == IDC_DT_EDIT_PATTERN) {
+    {
+        WORD id = LOWORD(wParam);
+
+        if (id == IDC_DT_EDIT_PATTERN) {
             MessageBox(hDlg, "Pattern Editor not implemented.", "Desktop", MB_OK);
             return TRUE;
         }
-        if (LOWORD(wParam) == IDOK) {
+        if (id == IDOK) {
             char szPatternName[260];
             char szPatternValue[260];
 
-            if (bCaretCreated) {
-                DestroyCaret();
-                bCaretCreated = FALSE;
-            }
+            StopSystemTimer(hDlg);
 
             GetDlgItemText(hDlg, IDC_DT_PATTERN_COMBO, szPatternName, sizeof(szPatternName));
             GetPatternValue(szPatternName, szPatternValue, sizeof(szPatternValue));
@@ -317,15 +365,18 @@ BOOL CALLBACK DesktopDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
             EndDialog(hDlg, IDOK);
             return TRUE;
         }
-        if (LOWORD(wParam) == IDCANCEL) {
-            if (bCaretCreated) {
-                DestroyCaret();
-                bCaretCreated = FALSE;
-            }
+        if (id == IDCANCEL) {
+            StopSystemTimer(hDlg);
             EndDialog(hDlg, IDCANCEL);
             return TRUE;
         }
         break;
     }
+
+    case WM_DESTROY:
+        StopSystemTimer(hDlg);
+        break;
+    }
+
     return FALSE;
 }
