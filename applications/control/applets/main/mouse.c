@@ -179,61 +179,77 @@ BOOL CALLBACK MouseDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         return TRUE;
     }
 
-    case WM_HSCROLL:
-    {
-        code = wParam;
-        hScroll = (HWND)HIWORD(lParam); /* дескриптор скроллбара */
+case WM_HSCROLL:
+{
+    code = wParam;                     /* уведомление */
+    pos  = LOWORD(lParam);             /* позиция (только для THUMB) */
+    hScroll = (HWND)HIWORD(lParam);    /* дескриптор окна скроллбара */
 
-        if (!hScroll) return TRUE;
+    if (!hScroll) return TRUE;
 
-        if (hScroll == hSpeedScroll) {
-            switch (code) {
-            case SB_THUMBTRACK:
-            case SB_THUMBPOSITION:
-                g_mouseTrackPos = LOWORD(lParam);
-                break;
-            case SB_LINELEFT:
-                if (g_mouseTrackPos > 1)
-                    g_mouseTrackPos--;
-                else return TRUE;
-                break;
-            case SB_LINERIGHT:
-                if (g_mouseTrackPos < NUM_PRESETS)
-                    g_mouseTrackPos++;
-                else return TRUE;
-                break;
-            default:
-                return TRUE;
+    if (hScroll == hSpeedScroll) {
+        switch (code) {
+        case SB_THUMBTRACK:
+        case SB_THUMBPOSITION:
+            g_mouseTrackPos = pos;
+            break;
+        case SB_LINELEFT:
+            if (g_mouseTrackPos > 1) g_mouseTrackPos--;
+            break;
+        case SB_LINERIGHT:
+            if (g_mouseTrackPos < NUM_PRESETS) g_mouseTrackPos++;
+            break;
+        case SB_PAGELEFT:
+            if (g_mouseTrackPos > 1) {
+                g_mouseTrackPos--;
+                if (g_mouseTrackPos < 1) g_mouseTrackPos = 1;
             }
-            SetScrollPos(hScroll, SB_CTL, g_mouseTrackPos, TRUE);
-            ApplyMouseTrackPos(g_mouseTrackPos);
-        }
-        else if (hScroll == hDblClickScroll) {
-            switch (code) {
-            case SB_THUMBTRACK:
-            case SB_THUMBPOSITION:
-                g_dblClickPos = LOWORD(lParam);
-                break;
-            case SB_LINELEFT:
-                if (g_dblClickPos > 1)
-                    g_dblClickPos--;
-                else return TRUE;
-                break;
-            case SB_LINERIGHT:
-                if (g_dblClickPos < 100)
-                    g_dblClickPos++;
-                else return TRUE;
-                break;
-            default:
-                return TRUE;
+            break;
+        case SB_PAGERIGHT:
+            if (g_mouseTrackPos < NUM_PRESETS) {
+                g_mouseTrackPos++;
+                if (g_mouseTrackPos > NUM_PRESETS) g_mouseTrackPos = NUM_PRESETS;
             }
-            /* Преобразуем позицию (1..100) во время (100..900) */
-            g_dblClickTime = 100 + (100 - g_dblClickPos) * 800 / 99;
-            SetDoubleClickTime(g_dblClickTime);
-            SetScrollPos(hScroll, SB_CTL, g_dblClickPos, TRUE);
+            break;
+        default:
+            return TRUE;
         }
-        return TRUE;
+        SetScrollPos(hSpeedScroll, SB_CTL, g_mouseTrackPos, TRUE);
+        ApplyMouseTrackPos(g_mouseTrackPos);
     }
+    else if (hScroll == hDblClickScroll) {
+        switch (code) {
+        case SB_THUMBTRACK:
+        case SB_THUMBPOSITION:
+            g_dblClickPos = pos;
+            break;
+        case SB_LINELEFT:
+            if (g_dblClickPos > 1) g_dblClickPos--;
+            break;
+        case SB_LINERIGHT:
+            if (g_dblClickPos < 100) g_dblClickPos++;
+            break;
+        case SB_PAGELEFT:
+            if (g_dblClickPos > 1) {
+                g_dblClickPos -= 10;
+                if (g_dblClickPos < 1) g_dblClickPos = 1;
+            }
+            break;
+        case SB_PAGERIGHT:
+            if (g_dblClickPos < 100) {
+                g_dblClickPos += 10;
+                if (g_dblClickPos > 100) g_dblClickPos = 100;
+            }
+            break;
+        default:
+            return TRUE;
+        }
+        g_dblClickTime = 100 + (100 - g_dblClickPos) * 800 / 99;
+        SetDoubleClickTime(g_dblClickTime);
+        SetScrollPos(hDblClickScroll, SB_CTL, g_dblClickPos, TRUE);
+    }
+    return TRUE;
+}
 
     case WM_LBUTTONDOWN:
         if (g_bLeftDown) return TRUE;
