@@ -135,32 +135,45 @@ static void FillPatternCombo(HWND hCombo, LPCSTR currentPatternValue)
 static void FillWallpaperCombo(HWND hCombo, LPCSTR currentWallpaper)
 {
     char szMask[260];
-    static struct find_t ff;
-    int done;
-    int count = 0;
-    LRESULT idx;
+    int len;
+    LRESULT idx, cnt, i;
+    char buf[260];
 
     GetWindowsDirectory(szMask, sizeof(szMask));
+
+    len = lstrlen(szMask);
+    if (len > 0 && szMask[len - 1] == '\\')
+        szMask[len - 1] = '\0';
+
     lstrcat(szMask, "\\*.BMP");
 
+    /* Добавляем «(None)» */
     SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"(None)");
 
-    done = _dos_findfirst(szMask, _A_NORMAL, &ff);
-    while (done == 0) {
-        SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)ff.name);
-        count++;
-        done = _dos_findnext(&ff);
-    }
-    _dos_findclose(&ff);
+    /* Заполняем список файлами */
+    SendMessage(hCombo, CB_DIR, (WPARAM)(DDL_ARCHIVE | DDL_READWRITE), (LPARAM)szMask);
 
+    /* Выделяем текущий файл */
     if (currentWallpaper[0]) {
-        idx = SendMessage(hCombo, CB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)currentWallpaper);
-        if (idx != CB_ERR)
-            SendMessage(hCombo, CB_SETCURSEL, idx, 0);
-        else {
-            SendMessage(hCombo, CB_INSERTSTRING, 0, (LPARAM)currentWallpaper);
-            SendMessage(hCombo, CB_SETCURSEL, 0, 0);
+        idx = SendMessage(hCombo, CB_FINDSTRING, (WPARAM)-1, (LPARAM)currentWallpaper);
+        if (idx != CB_ERR) {
+            SendMessage(hCombo, CB_GETLBTEXT, idx, (LPARAM)buf);
+            if (lstrcmpi(buf, currentWallpaper) == 0) {
+                SendMessage(hCombo, CB_SETCURSEL, idx, 0);
+                return;
+            }
+            cnt = SendMessage(hCombo, CB_GETCOUNT, 0, 0);
+            for (i = idx + 1; i < cnt; i++) {
+                SendMessage(hCombo, CB_GETLBTEXT, i, (LPARAM)buf);
+                if (lstrcmpi(buf, currentWallpaper) == 0) {
+                    SendMessage(hCombo, CB_SETCURSEL, i, 0);
+                    return;
+                }
+            }
         }
+        /* Не найдено – добавляем */
+        SendMessage(hCombo, CB_INSERTSTRING, 0, (LPARAM)currentWallpaper);
+        SendMessage(hCombo, CB_SETCURSEL, 0, 0);
     } else {
         SendMessage(hCombo, CB_SETCURSEL, 0, 0);
     }
@@ -318,11 +331,7 @@ BOOL CALLBACK DesktopDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 
             GetDlgItemText(hDlg, IDC_DT_PATTERN_COMBO, szPatternName, sizeof(szPatternName));
             GetPatternValue(szPatternName, szPatternValue, sizeof(szPatternValue));
-            if (szPatternValue[0]) {
-                WriteProfileString("Desktop", "Pattern", szPatternValue);
-            } else {
-                WriteProfileString("Desktop", "Pattern", szPatternName);
-            }
+            if (szPatternValue[0]) WriteProfileString("Desktop", "Pattern", szPatternValue);
 
             GetDlgItemText(hDlg, IDC_DT_WALLPAPER_COMBO, buf, sizeof(buf));
             WriteProfileString("Desktop", "Wallpaper", buf);
