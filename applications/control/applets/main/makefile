@@ -14,7 +14,8 @@ DLL     = 1
 EXPORTS = CPlApplet       .1, &
 	MouseDlgProc.2, &
 	DesktopDlgProc.3, &
-	SystemTimerProc.4
+	SystemTimerProc.4, &
+	DateTimeDlgProc.5
 
 IMPORTS =   CreateSystemTimer SYSTEM.2, &
   KillSystemTimer SYSTEM.3

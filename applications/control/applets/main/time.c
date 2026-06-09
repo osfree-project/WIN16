@@ -1,16 +1,42 @@
+/*
+ *  time.c Ц Date & Time dialog for Windows 3.0
+ *  Live clock display, ownerdrawn spin buttons.
+ *  Year is displayed and edited as 2 digits (80Ц99 = 1980Ц1999, 00Ц79 = 2000Ц2079).
+ */
+
 #include <windows.h>
 #include <dos.h>
 #include <string.h>
 #include <stdlib.h>
 #include "main.h"
 
-/* ============================================================
- *  Date/Time
- * ============================================================ */
-static WORD g_dtYear, g_dtMonth, g_dtDay, g_dtHour, g_dtMinute, g_dtSecond;
-static WORD g_origYear, g_origMonth, g_origDay, g_origHour, g_origMinute, g_origSecond;
+/* Spin button IDs */
+#define IDC_DT_DATE_UP       720
+#define IDC_DT_DATE_DOWN     721
+#define IDC_DT_TIME_UP       722
+#define IDC_DT_TIME_DOWN     723
 
-static void GetLocalDateTime(WORD *y, WORD *m, WORD *d, WORD *h, WORD *min, WORD *s)
+/* Timer ID for live clock */
+#define IDT_CLOCK_TIMER      1
+
+/* Global state */
+static WORD g_dtYear, g_dtMonth, g_dtDay;
+static WORD g_dtHour, g_dtMinute, g_dtSecond;
+static WORD g_origYear, g_origMonth, g_origDay;
+static WORD g_origHour, g_origMinute, g_origSecond;
+
+/* Flags to prevent timer from overwriting manual edits */
+static BOOL g_bDateModified = FALSE;
+static BOOL g_bTimeModified = FALSE;
+
+/* Last focused control for date and time (survives focus loss) */
+static WORD g_lastDateCtrl = IDC_DT_MONTH;
+static WORD g_lastTimeCtrl = IDC_DT_HOUR;
+
+/* ------------------------------------------------------------------ */
+/* DOS API for system time */
+static void GetLocalDateTime(WORD *y, WORD *m, WORD *d,
+                             WORD *h, WORD *min, WORD *s)
 {
     static union REGS regs;
     regs.h.ah = 0x2A; intdos(&regs, &regs);
@@ -19,7 +45,8 @@ static void GetLocalDateTime(WORD *y, WORD *m, WORD *d, WORD *h, WORD *min, WORD
     *h = regs.h.ch; *min = regs.h.cl; *s = regs.h.dh;
 }
 
-static void SetLocalDateTime(WORD y, WORD m, WORD d, WORD h, WORD min, WORD s)
+static void SetLocalDateTime(WORD y, WORD m, WORD d,
+                             WORD h, WORD min, WORD s)
 {
     static union REGS regs;
     regs.h.ah = 0x2B; regs.x.cx = y; regs.h.dh = m; regs.h.dl = d;
@@ -28,48 +55,372 @@ static void SetLocalDateTime(WORD y, WORD m, WORD d, WORD h, WORD min, WORD s)
     intdos(&regs, &regs);
 }
 
-static void UpdateDateDisplay(HWND hDlg) {
-    char buf[64];
-    wsprintf(buf, "%s %u, %u", "Date", g_dtMonth, g_dtYear);
-    SetDlgItemText(hDlg, IDC_DT_DATE_TEXT, buf);
-}
-static void UpdateTimeDisplay(HWND hDlg) {
-    char buf[32];
-    wsprintf(buf, "%02u:%02u:%02u", g_dtHour, g_dtMinute, g_dtSecond);
-    SetDlgItemText(hDlg, IDC_DT_TIME_TEXT, buf);
-}
-static void DrawCalendar(HDC hdc, LPRECT rc) {
-    char buf[8];
-    wsprintf(buf, "%02u", g_dtDay);
-    DrawText(hdc, buf, -1, rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+/* ------------------------------------------------------------------ */
+/* Date validation */
+static BOOL IsLeapYear(WORD year)
+{
+    return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
 }
 
-BOOL CALLBACK DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static WORD MaxDaysInMonth(WORD month, WORD year)
 {
+    static const WORD days[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+    if (month == 2 && IsLeapYear(year)) return 29;
+    return days[month-1];
+}
+
+/* ------------------------------------------------------------------ */
+/* Year helpers Ц convert between 2digit display and full year */
+static WORD YearToDisplay(WORD fullYear)
+{
+    return fullYear % 100;               /* 1980 -> 80, 2026 -> 26 */
+}
+
+static WORD YearFromDisplay(WORD displayYear)
+{
+    if (displayYear >= 80)               /* 80-99 -> 1980-1999 */
+        return displayYear + 1900;
+    else                                 /* 0-79 -> 2000-2079 */
+        return displayYear + 2000;
+}
+
+/* ------------------------------------------------------------------ */
+/* Spin helpers */
+static void SpinDateField(HWND hDlg, WORD ctrl, BOOL up)
+{
+    WORD *pVal;
+    WORD min, max;
+
+    if (ctrl == IDC_DT_MONTH)       { pVal = &g_dtMonth; min = 1; max = 12; }
+    else if (ctrl == IDC_DT_DAY)    { pVal = &g_dtDay;   min = 1; max = MaxDaysInMonth(g_dtMonth, g_dtYear); }
+    else if (ctrl == IDC_DT_YEAR)   { pVal = &g_dtYear;  min = 1980; max = 2099; }
+    else return;
+
+    if (up) { if (*pVal < max) (*pVal)++; else *pVal = min; }
+    else    { if (*pVal > min) (*pVal)--; else *pVal = max; }
+
+    if (pVal == &g_dtMonth || pVal == &g_dtYear) {
+        if (g_dtDay > MaxDaysInMonth(g_dtMonth, g_dtYear))
+            g_dtDay = MaxDaysInMonth(g_dtMonth, g_dtYear);
+    }
+}
+
+static void SpinTimeField(HWND hDlg, WORD ctrl, BOOL up)
+{
+    WORD *pVal;
+    WORD min, max;
+
+    if (ctrl == IDC_DT_HOUR)        { pVal = &g_dtHour;   min = 0; max = 23; }
+    else if (ctrl == IDC_DT_MINUTE) { pVal = &g_dtMinute; min = 0; max = 59; }
+    else if (ctrl == IDC_DT_SECOND) { pVal = &g_dtSecond; min = 0; max = 59; }
+    else return;
+
+    if (up) { if (*pVal < max) (*pVal)++; else *pVal = min; }
+    else    { if (*pVal > min) (*pVal)--; else *pVal = max; }
+}
+
+/* Update a single edit field Ц special treatment for year (2 digits) */
+static void UpdateField(HWND hDlg, WORD id, WORD value, int digits)
+{
+    char buf[8];
+    if (id == IDC_DT_YEAR) {
+        wsprintf(buf, "%02u", YearToDisplay(value));
+    } else {
+        if (digits == 2) wsprintf(buf, "%02u", value);
+        else wsprintf(buf, "%u", value);
+    }
+    SetDlgItemText(hDlg, id, buf);
+}
+
+/* ------------------------------------------------------------------ */
+/* Owner-draw painting for the flat spin buttons (up/down triangles).  */
+static void DrawSpinTriangle(HDC hdc, LPRECT prc, BOOL up)
+{
+    POINT pts[3];
+    int cx = (prc->right - prc->left) / 2;
+    int cy = (prc->bottom - prc->top) / 2;
+    int midx = prc->left + cx;
+    HBRUSH hBr, hOldBr;
+    HPEN hPen, hOldPen;
+
+    if (up) {
+        pts[0].x = midx;       pts[0].y = prc->top    + cy/2;
+        pts[1].x = midx - cx/2; pts[1].y = prc->bottom - cy/2;
+        pts[2].x = midx + cx/2; pts[2].y = prc->bottom - cy/2;
+    } else {
+        pts[0].x = midx;       pts[0].y = prc->bottom - cy/2;
+        pts[1].x = midx - cx/2; pts[1].y = prc->top    + cy/2;
+        pts[2].x = midx + cx/2; pts[2].y = prc->top    + cy/2;
+    }
+
+    hPen   = CreatePen(PS_SOLID, 1, GetSysColor(COLOR_WINDOWTEXT));
+    hBr    = CreateSolidBrush(GetSysColor(COLOR_WINDOWTEXT));
+    hOldPen   = SelectObject(hdc, hPen);
+    hOldBr    = SelectObject(hdc, hBr);
+
+    Polygon(hdc, pts, 3);
+
+    SelectObject(hdc, hOldPen);
+    SelectObject(hdc, hOldBr);
+    DeleteObject(hPen);
+    DeleteObject(hBr);
+}
+
+static void PaintSpinButton(HWND hwndBtn, HDC hdc, LPRECT prc)
+{
+    WORD id = GetWindowWord(hwndBtn, GWW_ID);
+    HBRUSH hBr;
+
+    hBr = CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
+    FillRect(hdc, prc, hBr);
+    DeleteObject(hBr);
+
+    DrawSpinTriangle(hdc, prc,
+        (id == IDC_DT_DATE_UP || id == IDC_DT_TIME_UP) ? TRUE : FALSE);
+}
+
+/* ================================================================== */
+BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    char buf[8];
+    BOOL ok;
+
     switch (msg) {
     case WM_INITDIALOG:
-        GetLocalDateTime(&g_dtYear, &g_dtMonth, &g_dtDay, &g_dtHour, &g_dtMinute, &g_dtSecond);
+    {
+        static WORD y, m, d, h, min, s;
+        HFONT hDlgFont;
+        HWND hChild;
+        RECT rcGroup;
+        int xRight, yTop, yBottom;
+
+        GetLocalDateTime(&y, &m, &d, &h, &min, &s);
+        g_dtYear = y; g_dtMonth = m; g_dtDay = d;
+        g_dtHour = h; g_dtMinute = min; g_dtSecond = s;
         _fmemcpy(&g_origYear, &g_dtYear, sizeof(WORD)*6);
-        UpdateDateDisplay(hDlg);
-        UpdateTimeDisplay(hDlg);
+
+        g_bDateModified = FALSE;
+        g_bTimeModified = FALSE;
+        g_lastDateCtrl = IDC_DT_MONTH;
+        g_lastTimeCtrl = IDC_DT_HOUR;
+
+        /* Year field Ц only 2 digits */
+        SendDlgItemMessage(hDlg, IDC_DT_MONTH,  EM_LIMITTEXT, 2, 0);
+        SendDlgItemMessage(hDlg, IDC_DT_DAY,    EM_LIMITTEXT, 2, 0);
+        SendDlgItemMessage(hDlg, IDC_DT_YEAR,   EM_LIMITTEXT, 2, 0);
+        SendDlgItemMessage(hDlg, IDC_DT_HOUR,   EM_LIMITTEXT, 2, 0);
+        SendDlgItemMessage(hDlg, IDC_DT_MINUTE, EM_LIMITTEXT, 2, 0);
+        SendDlgItemMessage(hDlg, IDC_DT_SECOND, EM_LIMITTEXT, 2, 0);
+
+        UpdateField(hDlg, IDC_DT_MONTH,  g_dtMonth, 2);
+        UpdateField(hDlg, IDC_DT_DAY,    g_dtDay,   2);
+        UpdateField(hDlg, IDC_DT_YEAR,   g_dtYear,  4);   /* digits игнорируетс€, выводитс€ 2 цифры */
+        UpdateField(hDlg, IDC_DT_HOUR,   g_dtHour,  2);
+        UpdateField(hDlg, IDC_DT_MINUTE, g_dtMinute,2);
+        UpdateField(hDlg, IDC_DT_SECOND, g_dtSecond,2);
+
+        SetWindowLong(GetDlgItem(hDlg, IDC_DT_DATE_GROUP), GWL_STYLE,
+                      GetWindowLong(GetDlgItem(hDlg, IDC_DT_DATE_GROUP), GWL_STYLE) | WS_CLIPSIBLINGS);
+        SetWindowLong(GetDlgItem(hDlg, IDC_DT_TIME_GROUP), GWL_STYLE,
+                      GetWindowLong(GetDlgItem(hDlg, IDC_DT_TIME_GROUP), GWL_STYLE) | WS_CLIPSIBLINGS);
+
+        hDlgFont = (HFONT)SendMessage(hDlg, WM_GETFONT, 0, 0);
+
+        /* ----- Date spin buttons (inside the Date group, forced on top) ----- */
+        GetWindowRect(GetDlgItem(hDlg, IDC_DT_DATE_GROUP), &rcGroup);
+        ScreenToClient(hDlg, (LPPOINT)&rcGroup.left);
+        ScreenToClient(hDlg, (LPPOINT)&rcGroup.right);
+        xRight  = rcGroup.right - 16;
+        yTop    = rcGroup.top + 12;
+        yBottom = rcGroup.top + 24;
+
+        hChild = CreateWindow("BUTTON", "", WS_CHILD | WS_VISIBLE | BS_OWNERDRAW | WS_CLIPSIBLINGS,
+                              xRight, yTop, 14, 10, hDlg, (HMENU)IDC_DT_DATE_UP, g_hInst, NULL);
+        if (hDlgFont) SendMessage(hChild, WM_SETFONT, (WPARAM)hDlgFont, 0);
+        SetWindowPos(hChild, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+
+        hChild = CreateWindow("BUTTON", "", WS_CHILD | WS_VISIBLE | BS_OWNERDRAW | WS_CLIPSIBLINGS,
+                              xRight, yBottom, 14, 10, hDlg, (HMENU)IDC_DT_DATE_DOWN, g_hInst, NULL);
+        if (hDlgFont) SendMessage(hChild, WM_SETFONT, (WPARAM)hDlgFont, 0);
+        SetWindowPos(hChild, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+
+        /* ----- Time spin buttons (inside the Time group, forced on top) ----- */
+        GetWindowRect(GetDlgItem(hDlg, IDC_DT_TIME_GROUP), &rcGroup);
+        ScreenToClient(hDlg, (LPPOINT)&rcGroup.left);
+        ScreenToClient(hDlg, (LPPOINT)&rcGroup.right);
+        xRight  = rcGroup.right - 16;
+        yTop    = rcGroup.top + 12;
+        yBottom = rcGroup.top + 24;
+
+        hChild = CreateWindow("BUTTON", "", WS_CHILD | WS_VISIBLE | BS_OWNERDRAW | WS_CLIPSIBLINGS,
+                              xRight, yTop, 14, 10, hDlg, (HMENU)IDC_DT_TIME_UP, g_hInst, NULL);
+        if (hDlgFont) SendMessage(hChild, WM_SETFONT, (WPARAM)hDlgFont, 0);
+        SetWindowPos(hChild, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+
+        hChild = CreateWindow("BUTTON", "", WS_CHILD | WS_VISIBLE | BS_OWNERDRAW | WS_CLIPSIBLINGS,
+                              xRight, yBottom, 14, 10, hDlg, (HMENU)IDC_DT_TIME_DOWN, g_hInst, NULL);
+        if (hDlgFont) SendMessage(hChild, WM_SETFONT, (WPARAM)hDlgFont, 0);
+        SetWindowPos(hChild, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+
+        SetTimer(hDlg, IDT_CLOCK_TIMER, 1000, NULL);
+
         return TRUE;
+    }
+
+    case WM_TIMER:
+    {
+        if (wParam == IDT_CLOCK_TIMER) {
+            if (!g_bTimeModified) {
+                static WORD y, m, d, h, min, s;
+                GetLocalDateTime(&y, &m, &d, &h, &min, &s);
+                if (h != g_dtHour || min != g_dtMinute || s != g_dtSecond) {
+                    g_dtHour   = h;
+                    g_dtMinute = min;
+                    g_dtSecond = s;
+                    UpdateField(hDlg, IDC_DT_HOUR,   h,   2);
+                    UpdateField(hDlg, IDC_DT_MINUTE, min, 2);
+                    UpdateField(hDlg, IDC_DT_SECOND, s,   2);
+                }
+                if (!g_bDateModified &&
+                    (y != g_dtYear || m != g_dtMonth || d != g_dtDay)) {
+                    g_dtYear  = y;
+                    g_dtMonth = m;
+                    g_dtDay   = d;
+                    UpdateField(hDlg, IDC_DT_MONTH, m, 2);
+                    UpdateField(hDlg, IDC_DT_DAY,   d, 2);
+                    UpdateField(hDlg, IDC_DT_YEAR,  y, 4);
+                }
+            } else {
+                /* Tick from manually edited time */
+                g_dtSecond++;
+                if (g_dtSecond > 59) {
+                    g_dtSecond = 0;
+                    g_dtMinute++;
+                    if (g_dtMinute > 59) {
+                        g_dtMinute = 0;
+                        g_dtHour++;
+                        if (g_dtHour > 23) {
+                            g_dtHour = 0;
+                            if (!g_bDateModified) {
+                                g_dtDay++;
+                                if (g_dtDay > MaxDaysInMonth(g_dtMonth, g_dtYear)) {
+                                    g_dtDay = 1;
+                                    g_dtMonth++;
+                                    if (g_dtMonth > 12) {
+                                        g_dtMonth = 1;
+                                        g_dtYear++;
+                                    }
+                                }
+                                UpdateField(hDlg, IDC_DT_MONTH, g_dtMonth, 2);
+                                UpdateField(hDlg, IDC_DT_DAY,   g_dtDay,   2);
+                                UpdateField(hDlg, IDC_DT_YEAR,  g_dtYear,  4);
+                            }
+                        }
+                    }
+                }
+                UpdateField(hDlg, IDC_DT_HOUR,   g_dtHour,   2);
+                UpdateField(hDlg, IDC_DT_MINUTE, g_dtMinute, 2);
+                UpdateField(hDlg, IDC_DT_SECOND, g_dtSecond, 2);
+            }
+        }
+        return TRUE;
+    }
+
     case WM_DRAWITEM:
-        if (wParam == IDC_DT_CALENDAR) {
-            LPDRAWITEMSTRUCT lpDIS = (LPDRAWITEMSTRUCT)lParam;
-            DrawCalendar(lpDIS->hDC, &lpDIS->rcItem);
+    {
+        LPDRAWITEMSTRUCT lpDIS = (LPDRAWITEMSTRUCT)lParam;
+        if (lpDIS->CtlType == ODT_BUTTON) {
+            PaintSpinButton(lpDIS->hwndItem, lpDIS->hDC, &lpDIS->rcItem);
             return TRUE;
         }
         break;
+    }
+
     case WM_COMMAND:
-        if (LOWORD(wParam) == IDOK) {
-            SetLocalDateTime(g_dtYear, g_dtMonth, g_dtDay, g_dtHour, g_dtMinute, g_dtSecond);
-            EndDialog(hDlg, IDOK);
+    {
+        WORD code = HIWORD(lParam);
+
+        if (wParam == IDC_DT_DATE_UP || wParam == IDC_DT_DATE_DOWN) {
+            g_bDateModified = TRUE;
+            SpinDateField(hDlg, g_lastDateCtrl, (wParam == IDC_DT_DATE_UP));
+            UpdateField(hDlg, g_lastDateCtrl,
+                        g_lastDateCtrl == IDC_DT_MONTH ? g_dtMonth :
+                        g_lastDateCtrl == IDC_DT_DAY   ? g_dtDay   : g_dtYear,
+                        g_lastDateCtrl == IDC_DT_YEAR ? 4 : 2);
+            return TRUE;
         }
-        if (LOWORD(wParam) == IDCANCEL) {
-            SetLocalDateTime(g_origYear, g_origMonth, g_origDay, g_origHour, g_origMinute, g_origSecond);
+
+        if (wParam == IDC_DT_TIME_UP || wParam == IDC_DT_TIME_DOWN) {
+            g_bTimeModified = TRUE;
+            SpinTimeField(hDlg, g_lastTimeCtrl, (wParam == IDC_DT_TIME_UP));
+            UpdateField(hDlg, g_lastTimeCtrl,
+                        g_lastTimeCtrl == IDC_DT_HOUR   ? g_dtHour   :
+                        g_lastTimeCtrl == IDC_DT_MINUTE ? g_dtMinute : g_dtSecond,
+                        2);
+            return TRUE;
+        }
+
+        if (code == EN_SETFOCUS) {
+            if (wParam >= IDC_DT_MONTH && wParam <= IDC_DT_YEAR)
+                g_lastDateCtrl = wParam;
+            else if (wParam >= IDC_DT_HOUR && wParam <= IDC_DT_SECOND)
+                g_lastTimeCtrl = wParam;
+            return TRUE;
+        }
+
+        if (code == EN_CHANGE) {
+            if (wParam >= IDC_DT_MONTH && wParam <= IDC_DT_YEAR)
+                g_bDateModified = TRUE;
+            else if (wParam >= IDC_DT_HOUR && wParam <= IDC_DT_SECOND)
+                g_bTimeModified = TRUE;
+            return TRUE;
+        }
+
+        if (wParam == IDCANCEL) {
+            KillTimer(hDlg, IDT_CLOCK_TIMER);
+            SetLocalDateTime(g_origYear, g_origMonth, g_origDay,
+                             g_origHour, g_origMinute, g_origSecond);
             EndDialog(hDlg, IDCANCEL);
+            return TRUE;
         }
-        return TRUE;
+
+        if (wParam == IDOK) {
+            GetDlgItemText(hDlg, IDC_DT_MONTH, buf, sizeof(buf));
+            g_dtMonth = (WORD)atoi(buf);
+            GetDlgItemText(hDlg, IDC_DT_DAY, buf, sizeof(buf));
+            g_dtDay = (WORD)atoi(buf);
+            GetDlgItemText(hDlg, IDC_DT_YEAR, buf, sizeof(buf));
+            g_dtYear = YearFromDisplay((WORD)atoi(buf));   /* 2-digit -> full year */
+
+            GetDlgItemText(hDlg, IDC_DT_HOUR, buf, sizeof(buf));
+            g_dtHour = (WORD)atoi(buf);
+            GetDlgItemText(hDlg, IDC_DT_MINUTE, buf, sizeof(buf));
+            g_dtMinute = (WORD)atoi(buf);
+            GetDlgItemText(hDlg, IDC_DT_SECOND, buf, sizeof(buf));
+            g_dtSecond = (WORD)atoi(buf);
+
+            ok = TRUE;
+            if (g_dtMonth < 1 || g_dtMonth > 12) ok = FALSE;
+            if (g_dtDay < 1 || g_dtDay > MaxDaysInMonth(g_dtMonth, g_dtYear)) ok = FALSE;
+            if (g_dtYear < 1980 || g_dtYear > 2099) ok = FALSE;
+            if (g_dtHour > 23) ok = FALSE;
+            if (g_dtMinute > 59) ok = FALSE;
+            if (g_dtSecond > 59) ok = FALSE;
+
+            if (!ok) {
+                MessageBox(hDlg, "Invalid date or time. Please re-enter.",
+                           "Date & Time", MB_ICONEXCLAMATION | MB_OK);
+                return TRUE;
+            }
+
+            KillTimer(hDlg, IDT_CLOCK_TIMER);
+            SetLocalDateTime(g_dtYear, g_dtMonth, g_dtDay,
+                             g_dtHour, g_dtMinute, g_dtSecond);
+            EndDialog(hDlg, IDOK);
+            return TRUE;
+        }
+        break;
+    }
     }
     return FALSE;
 }
