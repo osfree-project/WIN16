@@ -2,6 +2,7 @@
  *  time.c Ц Date & Time dialog for Windows 3.0
  *  Live clock display, ownerdrawn spin buttons.
  *  Year is displayed and edited as 2 digits (80Ц99 = 1980Ц1999, 00Ц79 = 2000Ц2079).
+ *  Supports 12-hour time format with automatic AM/PM label when system is set to 12-hour mode.
  */
 
 #include <windows.h>
@@ -32,6 +33,10 @@ static BOOL g_bTimeModified = FALSE;
 /* Last focused control for date and time (survives focus loss) */
 static WORD g_lastDateCtrl = IDC_DT_MONTH;
 static WORD g_lastTimeCtrl = IDC_DT_HOUR;
+
+/* ---------- 12-hour format support ---------- */
+static BOOL g_bUse12Hour = FALSE;          /* TRUE if system uses 12-hour time */
+static HWND g_hwndAmPmLabel = NULL;        /* handle of the AM/PM static text */
 
 /* ------------------------------------------------------------------ */
 /* DOS API for system time */
@@ -70,7 +75,7 @@ static WORD MaxDaysInMonth(WORD month, WORD year)
 }
 
 /* ------------------------------------------------------------------ */
-/* Year helpers Ц convert between 2digit display and full year */
+/* Year helpers Ц convert between 2-digit display and full year */
 static WORD YearToDisplay(WORD fullYear)
 {
     return fullYear % 100;               /* 1980 -> 80, 2026 -> 26 */
@@ -119,12 +124,27 @@ static void SpinTimeField(HWND hDlg, WORD ctrl, BOOL up)
     else    { if (*pVal > min) (*pVal)--; else *pVal = max; }
 }
 
-/* Update a single edit field Ц special treatment for year (2 digits) */
+/* ------------------------------------------------------------------ */
+/* AM/PM label update */
+static void UpdateAmPmLabel(void)
+{
+    if (g_bUse12Hour && g_hwndAmPmLabel) {
+        SetWindowText(g_hwndAmPmLabel, (g_dtHour >= 12) ? "PM" : "AM");
+    }
+}
+
+/* Update a single edit field Ц special treatment for year (2 digits)
+   and for hour in 12-hour mode. */
 static void UpdateField(HWND hDlg, WORD id, WORD value, int digits)
 {
     char buf[8];
     if (id == IDC_DT_YEAR) {
         wsprintf(buf, "%02u", YearToDisplay(value));
+    } else if (id == IDC_DT_HOUR && g_bUse12Hour) {
+        /* 24h -> 12h display */
+        WORD h12 = value % 12;
+        if (h12 == 0) h12 = 12;
+        wsprintf(buf, "%2u", h12);   /* right-aligned in a 2-char field */
     } else {
         if (digits == 2) wsprintf(buf, "%02u", value);
         else wsprintf(buf, "%u", value);
@@ -204,6 +224,9 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         g_lastDateCtrl = IDC_DT_MONTH;
         g_lastTimeCtrl = IDC_DT_HOUR;
 
+        /* Detect 12-hour vs 24-hour time format from WIN.INI */
+        g_bUse12Hour = (GetProfileInt("intl", "iTime", 0) == 0);
+
         /* Year field Ц only 2 digits */
         SendDlgItemMessage(hDlg, IDC_DT_MONTH,  EM_LIMITTEXT, 2, 0);
         SendDlgItemMessage(hDlg, IDC_DT_DAY,    EM_LIMITTEXT, 2, 0);
@@ -214,7 +237,7 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 
         UpdateField(hDlg, IDC_DT_MONTH,  g_dtMonth, 2);
         UpdateField(hDlg, IDC_DT_DAY,    g_dtDay,   2);
-        UpdateField(hDlg, IDC_DT_YEAR,   g_dtYear,  4);   /* digits игнорируетс€, выводитс€ 2 цифры */
+        UpdateField(hDlg, IDC_DT_YEAR,   g_dtYear,  4);   /* digits ignored, prints 2 digits */
         UpdateField(hDlg, IDC_DT_HOUR,   g_dtHour,  2);
         UpdateField(hDlg, IDC_DT_MINUTE, g_dtMinute,2);
         UpdateField(hDlg, IDC_DT_SECOND, g_dtSecond,2);
@@ -262,8 +285,21 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         if (hDlgFont) SendMessage(hChild, WM_SETFONT, (WPARAM)hDlgFont, 0);
         SetWindowPos(hChild, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 
-        SetTimer(hDlg, IDT_CLOCK_TIMER, 1000, NULL);
+        /* ----- AM/PM static label (only for 12-hour mode) ----- */
+        if (g_bUse12Hour) {
+            int xLabel = rcGroup.right - 32;   /* between seconds edit and spin buttons */
+            int yLabel = rcGroup.top + 18;     /* vertically aligned with edit fields */
+            g_hwndAmPmLabel = CreateWindow(
+                "STATIC", "",
+                WS_CHILD | WS_VISIBLE | SS_CENTER,
+                xLabel, yLabel, 16, 10,
+                hDlg, (HMENU)IDC_DT_AMPM_LABEL, g_hInst, NULL);
+            if (hDlgFont) SendMessage(g_hwndAmPmLabel, WM_SETFONT, (WPARAM)hDlgFont, 0);
+            SetWindowPos(g_hwndAmPmLabel, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+            UpdateAmPmLabel();
+        }
 
+        SetTimer(hDlg, IDT_CLOCK_TIMER, 1000, NULL);
         return TRUE;
     }
 
@@ -280,6 +316,7 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
                     UpdateField(hDlg, IDC_DT_HOUR,   h,   2);
                     UpdateField(hDlg, IDC_DT_MINUTE, min, 2);
                     UpdateField(hDlg, IDC_DT_SECOND, s,   2);
+                    UpdateAmPmLabel();
                 }
                 if (!g_bDateModified &&
                     (y != g_dtYear || m != g_dtMonth || d != g_dtDay)) {
@@ -316,6 +353,7 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
                                 UpdateField(hDlg, IDC_DT_YEAR,  g_dtYear,  4);
                             }
                         }
+                        UpdateAmPmLabel();   /* hour might have crossed AM/PM boundary */
                     }
                 }
                 UpdateField(hDlg, IDC_DT_HOUR,   g_dtHour,   2);
@@ -357,6 +395,9 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
                         g_lastTimeCtrl == IDC_DT_HOUR   ? g_dtHour   :
                         g_lastTimeCtrl == IDC_DT_MINUTE ? g_dtMinute : g_dtSecond,
                         2);
+            if (g_lastTimeCtrl == IDC_DT_HOUR) {
+                UpdateAmPmLabel();
+            }
             return TRUE;
         }
 
@@ -390,10 +431,25 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
             GetDlgItemText(hDlg, IDC_DT_DAY, buf, sizeof(buf));
             g_dtDay = (WORD)atoi(buf);
             GetDlgItemText(hDlg, IDC_DT_YEAR, buf, sizeof(buf));
-            g_dtYear = YearFromDisplay((WORD)atoi(buf));   /* 2-digit -> full year */
+            g_dtYear = YearFromDisplay((WORD)atoi(buf));
 
             GetDlgItemText(hDlg, IDC_DT_HOUR, buf, sizeof(buf));
-            g_dtHour = (WORD)atoi(buf);
+            if (g_bUse12Hour) {
+                WORD h12 = (WORD)atoi(buf);
+                if (h12 < 1 || h12 > 12) {
+                    ok = FALSE;
+                } else {
+                    /* Determine AM/PM from the current 24-hour hour */
+                    BOOL isPM = (g_dtHour >= 12);
+                    if (h12 == 12)
+                        g_dtHour = isPM ? 12 : 0;
+                    else
+                        g_dtHour = h12 + (isPM ? 12 : 0);
+                }
+            } else {
+                g_dtHour = (WORD)atoi(buf);
+            }
+
             GetDlgItemText(hDlg, IDC_DT_MINUTE, buf, sizeof(buf));
             g_dtMinute = (WORD)atoi(buf);
             GetDlgItemText(hDlg, IDC_DT_SECOND, buf, sizeof(buf));
