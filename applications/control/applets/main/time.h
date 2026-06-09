@@ -13,12 +13,15 @@
 #define IDC_DT_SEP_TIME2     710   /* ":" между минутой и сек.  */
 #define IDC_DT_SPACER        713   /* невидимый заполнитель      */
 
+
 #define IDC_DT_DATE_UP       720   /* дата: увеличить */
 #define IDC_DT_DATE_DOWN     721   /* дата: уменьшить */
 #define IDC_DT_TIME_UP       722   /* время: увеличить */
 #define IDC_DT_TIME_DOWN     723   /* время: уменьшить */
 #define IDC_DT_AMPM_LABEL    724   /* "AM"/"PM" статик */
 #define IDC_DT_AMPM_TOGGLE   725   /* кнопка переключения AM/PM */
+
+#define IDC_ANALOG_CLOCK    730
 
 
 #define IDI_TIME  112

@@ -15,7 +15,8 @@ EXPORTS = CPlApplet       .1, &
 	MouseDlgProc.2, &
 	DesktopDlgProc.3, &
 	SystemTimerProc.4, &
-	DateTimeDlgProc.5
+	DateTimeDlgProc.5, &
+	AnalogClockSubclassProc.6
 
 IMPORTS =   CreateSystemTimer SYSTEM.2, &
   KillSystemTimer SYSTEM.3

@@ -1,14 +1,17 @@
 /*
  *  time.c Ц Date & Time dialog for Windows 3.0
- *  Live clock display, ownerdrawn spin buttons.
+ *  Live clock display, ownerdrawn spin buttons, analog clock.
  *  Year is displayed and edited as 2 digits (80Ц99 = 1980Ц1999, 00Ц79 = 2000Ц2079).
  *  Supports 12-hour time format with automatic AM/PM label when system is set to 12-hour mode.
+ *  Includes an analog clock drawn directly on a subclassed static control.
+ *  Analog clock drawing math matches EXACTLY the original winclock.c.
  */
 
 #include <windows.h>
 #include <dos.h>
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 #include "main.h"
 
 /* Spin button IDs */
@@ -20,6 +23,11 @@
 /* Timer ID for live clock */
 #define IDT_CLOCK_TIMER      1
 
+/* M_PI exactly as in original winclock.c */
+#ifndef M_PI
+#define M_PI 3.1415926535
+#endif
+
 /* Global state */
 static WORD g_dtYear, g_dtMonth, g_dtDay;
 static WORD g_dtHour, g_dtMinute, g_dtSecond;
@@ -30,34 +38,61 @@ static WORD g_origHour, g_origMinute, g_origSecond;
 static BOOL g_bDateModified = FALSE;
 static BOOL g_bTimeModified = FALSE;
 
-/* Last focused control for date and time (survives focus loss) */
+/* Last focused control for date and time */
 static WORD g_lastDateCtrl = IDC_DT_MONTH;
 static WORD g_lastTimeCtrl = IDC_DT_HOUR;
 
 /* ---------- 12-hour format support ---------- */
-static BOOL g_bUse12Hour = FALSE;          /* TRUE if system uses 12-hour time */
-static HWND g_hwndAmPmLabel = NULL;        /* handle of the AM/PM static text */
+static BOOL g_bUse12Hour = FALSE;
+static HWND g_hwndAmPmLabel = NULL;
+
+/* ---------- Analog clock subclassing ---------- */
+static HWND g_hwndClockPlaceholder = NULL;
+static WNDPROC g_oldClockProc = NULL;
+
+/* ---- Colors for the clock (as in original, but background now matches window) ---- */
+#define FaceColor       (GetSysColor(COLOR_BTNFACE))
+#define HandColor       (GetSysColor(COLOR_WINDOWTEXT))
+#define TickColor       (GetSysColor(COLOR_WINDOWTEXT))
+#define BackgroundColor (GetSysColor(COLOR_WINDOW))
+
+/* ---------- Time delta for manual editing ---------- */
+static LONG g_timeDelta = 0;   /* разница в секундах: отображаемое = системное + дельта */
 
 /* ------------------------------------------------------------------ */
-/* DOS API for system time */
+/* DOS API for system time (reliable _dos_xxx functions) */
 static void GetLocalDateTime(WORD *y, WORD *m, WORD *d,
                              WORD *h, WORD *min, WORD *s)
 {
-    static union REGS regs;
-    regs.h.ah = 0x2A; intdos(&regs, &regs);
-    *y = regs.x.cx; *m = regs.h.dh; *d = regs.h.dl;
-    regs.h.ah = 0x2C; intdos(&regs, &regs);
-    *h = regs.h.ch; *min = regs.h.cl; *s = regs.h.dh;
+    static struct dosdate_t date;
+    static struct dostime_t time;
+
+    _dos_getdate(&date);
+    _dos_gettime(&time);
+
+    *y = date.year;
+    *m = date.month;
+    *d = date.day;
+    *h = time.hour;
+    *min = time.minute;
+    *s = time.second;
 }
 
 static void SetLocalDateTime(WORD y, WORD m, WORD d,
                              WORD h, WORD min, WORD s)
 {
-    static union REGS regs;
-    regs.h.ah = 0x2B; regs.x.cx = y; regs.h.dh = m; regs.h.dl = d;
-    intdos(&regs, &regs);
-    regs.h.ah = 0x2D; regs.h.ch = h; regs.h.cl = min; regs.h.dh = s;
-    intdos(&regs, &regs);
+    static struct dosdate_t date;
+    static struct dostime_t time;
+
+    date.year  = y;
+    date.month = m;
+    date.day   = d;
+    time.hour   = h;
+    time.minute = min;
+    time.second = s;
+
+    _dos_setdate(&date);
+    _dos_settime(&time);
 }
 
 /* ------------------------------------------------------------------ */
@@ -75,18 +110,16 @@ static WORD MaxDaysInMonth(WORD month, WORD year)
 }
 
 /* ------------------------------------------------------------------ */
-/* Year helpers Ц convert between 2-digit display and full year */
+/* Year helpers */
 static WORD YearToDisplay(WORD fullYear)
 {
-    return fullYear % 100;               /* 1980 -> 80, 2026 -> 26 */
+    return fullYear % 100;
 }
 
 static WORD YearFromDisplay(WORD displayYear)
 {
-    if (displayYear >= 80)               /* 80-99 -> 1980-1999 */
-        return displayYear + 1900;
-    else                                 /* 0-79 -> 2000-2079 */
-        return displayYear + 2000;
+    if (displayYear >= 80) return displayYear + 1900;
+    else return displayYear + 2000;
 }
 
 /* ------------------------------------------------------------------ */
@@ -125,6 +158,20 @@ static void SpinTimeField(HWND hDlg, WORD ctrl, BOOL up)
 }
 
 /* ------------------------------------------------------------------ */
+/* Recalculate time delta based on current fields vs system time */
+static void RecalcTimeDelta(void)
+{
+    static WORD sysH, sysM, sysS;
+    static WORD dummy;
+    LONG sysTotal, userTotal;
+
+    GetLocalDateTime(&dummy, &dummy, &dummy, &sysH, &sysM, &sysS);
+    sysTotal = (LONG)sysH * 3600 + sysM * 60 + sysS;
+    userTotal = (LONG)g_dtHour * 3600 + g_dtMinute * 60 + g_dtSecond;
+    g_timeDelta = userTotal - sysTotal;
+}
+
+/* ------------------------------------------------------------------ */
 /* AM/PM label update */
 static void UpdateAmPmLabel(void)
 {
@@ -133,18 +180,16 @@ static void UpdateAmPmLabel(void)
     }
 }
 
-/* Update a single edit field Ц special treatment for year (2 digits)
-   and for hour in 12-hour mode. */
+/* Update a single edit field */
 static void UpdateField(HWND hDlg, WORD id, WORD value, int digits)
 {
     char buf[8];
     if (id == IDC_DT_YEAR) {
         wsprintf(buf, "%02u", YearToDisplay(value));
     } else if (id == IDC_DT_HOUR && g_bUse12Hour) {
-        /* 24h -> 12h display */
         WORD h12 = value % 12;
         if (h12 == 0) h12 = 12;
-        wsprintf(buf, "%2u", h12);   /* right-aligned in a 2-char field */
+        wsprintf(buf, "%2u", h12);
     } else {
         if (digits == 2) wsprintf(buf, "%02u", value);
         else wsprintf(buf, "%u", value);
@@ -153,7 +198,7 @@ static void UpdateField(HWND hDlg, WORD id, WORD value, int digits)
 }
 
 /* ------------------------------------------------------------------ */
-/* Owner-draw painting for the flat spin buttons (up/down triangles).  */
+/* Owner-draw painting for the flat spin buttons */
 static void DrawSpinTriangle(HDC hdc, LPRECT prc, BOOL up)
 {
     POINT pts[3];
@@ -177,9 +222,7 @@ static void DrawSpinTriangle(HDC hdc, LPRECT prc, BOOL up)
     hBr    = CreateSolidBrush(GetSysColor(COLOR_WINDOWTEXT));
     hOldPen   = SelectObject(hdc, hPen);
     hOldBr    = SelectObject(hdc, hBr);
-
     Polygon(hdc, pts, 3);
-
     SelectObject(hdc, hOldPen);
     SelectObject(hdc, hOldBr);
     DeleteObject(hPen);
@@ -189,14 +232,205 @@ static void DrawSpinTriangle(HDC hdc, LPRECT prc, BOOL up)
 static void PaintSpinButton(HWND hwndBtn, HDC hdc, LPRECT prc)
 {
     WORD id = GetWindowWord(hwndBtn, GWW_ID);
-    HBRUSH hBr;
-
-    hBr = CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
+    HBRUSH hBr = CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
     FillRect(hdc, prc, hBr);
     DeleteObject(hBr);
-
     DrawSpinTriangle(hdc, prc,
         (id == IDC_DT_DATE_UP || id == IDC_DT_TIME_UP) ? TRUE : FALSE);
+}
+
+/* ================================================================== */
+/*                    Analog clock (EXACT copy from winclock.c)        */
+/* ================================================================== */
+
+typedef struct {
+    POINT Start;
+    POINT End;
+    POINT p2, p3, p4;
+} HandData;
+
+static HandData HourHand, MinuteHand, SecondHand;
+
+static void DrawTicks(HDC dc, const POINT* centre, int radius)
+{
+    int t;
+    HPEN oldhPen, hPen;
+    HBRUSH oldhBrush, hBrush;
+    int hourWidth = 0.09 * radius;
+
+    /* Minute divisions */
+    if (radius > 64)
+    {
+        hPen = CreatePen(PS_SOLID, 2, TickColor);
+        oldhPen = SelectObject(dc, hPen);
+        for (t = 0; t < 60; t++) {
+            MoveTo(dc,
+                     centre->x + sin(t * M_PI / 30) * 0.95 * radius,
+                     centre->y - cos(t * M_PI / 30) * 0.95 * radius);
+            LineTo(dc,
+                   centre->x + sin(t * M_PI / 30) * 0.94 * radius,
+                   centre->y - cos(t * M_PI / 30) * 0.94 * radius);
+        }
+        SelectObject(dc, oldhPen);
+        DeleteObject(hPen);
+    }
+
+    hBrush = CreateSolidBrush(RGB(00, 128, 128));
+    oldhBrush = SelectObject(dc, hBrush);
+    /* Hour divisions */
+    for (t = 0; t < 12; t++) {
+        hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+        oldhPen = SelectObject(dc, hPen);
+        Rectangle(dc,
+            centre->x + sin(t * M_PI / 6) * 0.95 * radius - hourWidth / 2,
+            centre->y - cos(t * M_PI / 6) * 0.95 * radius - hourWidth / 2,
+            centre->x + sin(t * M_PI / 6) * 0.95 * radius + hourWidth / 2,
+            centre->y - cos(t * M_PI / 6) * 0.95 * radius + hourWidth / 2);
+        SelectObject(dc, oldhPen);
+        DeleteObject(hPen);
+        hPen = CreatePen(PS_SOLID, 1, RGB(0, 255, 255));
+        oldhPen = SelectObject(dc, hPen);
+        MoveTo(dc,
+                 centre->x + sin(t * M_PI / 6) * 0.95 * radius - hourWidth / 2,
+                 centre->y - cos(t * M_PI / 6) * 0.95 * radius + hourWidth / 2);
+        LineTo(dc,
+               centre->x + sin(t * M_PI / 6) * 0.95 * radius - hourWidth / 2,
+               centre->y - cos(t * M_PI / 6) * 0.95 * radius - hourWidth / 2);
+        LineTo(dc,
+               centre->x + sin(t * M_PI / 6) * 0.95 * radius + hourWidth / 2,
+               centre->y - cos(t * M_PI / 6) * 0.95 * radius - hourWidth / 2);
+        SelectObject(dc, oldhPen);
+        DeleteObject(hPen);
+    }
+    SelectObject(dc, oldhBrush);
+    DeleteObject(hBrush);
+}
+
+static void DrawHand(HDC dc, HandData* hand)
+{
+    MoveTo(dc, hand->End.x, hand->End.y);
+    LineTo(dc, hand->p2.x, hand->p2.y);
+    LineTo(dc, hand->p3.x, hand->p3.y);
+    LineTo(dc, hand->p4.x, hand->p4.y);
+    LineTo(dc, hand->End.x, hand->End.y);
+}
+
+static void DrawHands(HDC dc, BOOL bSeconds)
+{
+    if (bSeconds) {
+        SelectObject(dc, CreatePen(PS_SOLID, 1, HandColor));
+        MoveTo(dc, SecondHand.Start.x, SecondHand.Start.y);
+        LineTo(dc, SecondHand.End.x, SecondHand.End.y);
+        DeleteObject(SelectObject(dc, GetStockObject(NULL_PEN)));
+    }
+
+    SelectObject(dc, CreatePen(PS_SOLID, 1, HandColor));
+    DrawHand(dc, &MinuteHand);
+    DrawHand(dc, &HourHand);
+    DeleteObject(SelectObject(dc, GetStockObject(NULL_PEN)));
+}
+
+static void PositionHand(const POINT* centre, double length, double angle, HandData* hand)
+{
+    hand->Start = *centre;
+    hand->End.x = centre->x + sin(angle) * length;
+    hand->End.y = centre->y - cos(angle) * length;
+    hand->p2.x = centre->x + sin(angle + M_PI / 2) * length * 0.07;
+    hand->p2.y = centre->y - cos(angle + M_PI / 2) * length * 0.07;
+    hand->p3.x = centre->x + sin(angle + M_PI) * length * 0.2;
+    hand->p3.y = centre->y - cos(angle + M_PI) * length * 0.2;
+    hand->p4.x = centre->x + sin(angle - M_PI / 2) * length * 0.07;
+    hand->p4.y = centre->y - cos(angle - M_PI / 2) * length * 0.07;
+}
+
+void PositionHands(const POINT* centre, int radius, BOOL bSeconds)
+{
+    double hour, minute, second;
+
+    /* »спользуем то же врем€, что показывают пол€ ввода */
+    hour   = g_dtHour % 12;
+    minute = g_dtMinute;
+    second = g_dtSecond;
+
+    PositionHand(centre, radius * 0.6,  ((hour * 5 + minute / 12) / (12 * 5)) * 2 * M_PI, &HourHand);
+    PositionHand(centre, radius * 0.79, minute / 60 * 2 * M_PI, &MinuteHand);
+    if (bSeconds)
+        PositionHand(centre, radius * 0.79, second / 60 * 2 * M_PI, &SecondHand);
+}
+
+void AnalogClock(HDC dc, int x, int y, BOOL bSeconds)
+{
+    static POINT centre;
+    int radius;
+
+    radius = min(x, y) / 2;
+    if (radius < 0) return;
+
+    centre.x = x / 2;
+    centre.y = y / 2;
+
+    DrawTicks(dc, &centre, radius);
+    PositionHands(&centre, radius, bSeconds);
+    DrawHands(dc, bSeconds);
+}
+
+/* ------------------------------------------------------------ */
+/* Subclass procedure for the static analog clock placeholder   */
+/* ------------------------------------------------------------ */
+LRESULT CALLBACK AnalogClockSubclassProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    WNDPROC oldProc = g_oldClockProc;
+
+    switch (msg) {
+    case WM_PAINT: {
+        PAINTSTRUCT ps;
+        RECT rc;
+        HDC dcScreen, dcMem;
+        HBITMAP bmMem, bmOld;
+        HBRUSH hBr;
+        int width, height;
+
+        dcScreen = BeginPaint(hWnd, &ps);
+        GetClientRect(hWnd, &rc);
+        width  = rc.right - rc.left;
+        height = rc.bottom - rc.top;
+
+        /* ƒвойна€ буферизаци€: рисуем в пам€ти, затем выводим на экран */
+        dcMem = CreateCompatibleDC(dcScreen);
+        bmMem = CreateCompatibleBitmap(dcScreen, width, height);
+        bmOld = SelectObject(dcMem, bmMem);
+
+        /* ‘он */
+        hBr = CreateSolidBrush(BackgroundColor);
+        FillRect(dcMem, &rc, hBr);
+        DeleteObject(hBr);
+
+        /* „асы */
+        AnalogClock(dcMem, width, height, TRUE);
+
+        /*  опируем на экран */
+        BitBlt(dcScreen, 0, 0, width, height, dcMem, 0, 0, SRCCOPY);
+
+        SelectObject(dcMem, bmOld);
+        DeleteObject(bmMem);
+        DeleteDC(dcMem);
+        EndPaint(hWnd, &ps);
+        return 0;
+    }
+    case WM_ERASEBKGND:
+        return 1;   /* не стираем фон, чтобы избежать мерцани€ */
+    case WM_DESTROY:
+        if (oldProc)
+            SetWindowLong(hWnd, GWL_WNDPROC, (LONG)oldProc);
+        g_hwndClockPlaceholder = NULL;
+        g_oldClockProc = NULL;
+        if (oldProc)
+            return CallWindowProc(oldProc, hWnd, msg, wParam, lParam);
+        return 0;
+    }
+    if (oldProc)
+        return CallWindowProc(oldProc, hWnd, msg, wParam, lParam);
+    return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
 /* ================================================================== */
@@ -223,11 +457,10 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         g_bTimeModified = FALSE;
         g_lastDateCtrl = IDC_DT_MONTH;
         g_lastTimeCtrl = IDC_DT_HOUR;
+        g_timeDelta = 0;
 
-        /* Detect 12-hour vs 24-hour time format from WIN.INI */
         g_bUse12Hour = (GetProfileInt("intl", "iTime", 0) == 0);
 
-        /* Year field Ц only 2 digits */
         SendDlgItemMessage(hDlg, IDC_DT_MONTH,  EM_LIMITTEXT, 2, 0);
         SendDlgItemMessage(hDlg, IDC_DT_DAY,    EM_LIMITTEXT, 2, 0);
         SendDlgItemMessage(hDlg, IDC_DT_YEAR,   EM_LIMITTEXT, 2, 0);
@@ -237,7 +470,7 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 
         UpdateField(hDlg, IDC_DT_MONTH,  g_dtMonth, 2);
         UpdateField(hDlg, IDC_DT_DAY,    g_dtDay,   2);
-        UpdateField(hDlg, IDC_DT_YEAR,   g_dtYear,  4);   /* digits ignored, prints 2 digits */
+        UpdateField(hDlg, IDC_DT_YEAR,   g_dtYear,  4);
         UpdateField(hDlg, IDC_DT_HOUR,   g_dtHour,  2);
         UpdateField(hDlg, IDC_DT_MINUTE, g_dtMinute,2);
         UpdateField(hDlg, IDC_DT_SECOND, g_dtSecond,2);
@@ -249,7 +482,7 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 
         hDlgFont = (HFONT)SendMessage(hDlg, WM_GETFONT, 0, 0);
 
-        /* ----- Date spin buttons (inside the Date group, forced on top) ----- */
+        /* Date spin buttons */
         GetWindowRect(GetDlgItem(hDlg, IDC_DT_DATE_GROUP), &rcGroup);
         ScreenToClient(hDlg, (LPPOINT)&rcGroup.left);
         ScreenToClient(hDlg, (LPPOINT)&rcGroup.right);
@@ -267,7 +500,7 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         if (hDlgFont) SendMessage(hChild, WM_SETFONT, (WPARAM)hDlgFont, 0);
         SetWindowPos(hChild, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 
-        /* ----- Time spin buttons (inside the Time group, forced on top) ----- */
+        /* Time spin buttons */
         GetWindowRect(GetDlgItem(hDlg, IDC_DT_TIME_GROUP), &rcGroup);
         ScreenToClient(hDlg, (LPPOINT)&rcGroup.left);
         ScreenToClient(hDlg, (LPPOINT)&rcGroup.right);
@@ -285,34 +518,41 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         if (hDlgFont) SendMessage(hChild, WM_SETFONT, (WPARAM)hDlgFont, 0);
         SetWindowPos(hChild, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 
-        /* ----- AM/PM static label (only for 12-hour mode) ----- */
+        /* AM/PM label (12-hour mode) */
         if (g_bUse12Hour) {
-            int xLabel = rcGroup.right - 32;   /* between seconds edit and spin buttons */
-            int yLabel = rcGroup.top + 18;     /* vertically aligned with edit fields */
-            g_hwndAmPmLabel = CreateWindow(
-                "STATIC", "",
-                WS_CHILD | WS_VISIBLE | SS_CENTER,
-                xLabel, yLabel, 16, 10,
-                hDlg, (HMENU)IDC_DT_AMPM_LABEL, g_hInst, NULL);
+            int xLabel = rcGroup.right - 32;
+            int yLabel = rcGroup.top + 18;
+            g_hwndAmPmLabel = CreateWindow("STATIC", "", WS_CHILD | WS_VISIBLE | SS_CENTER,
+                                           xLabel, yLabel, 16, 10,
+                                           hDlg, (HMENU)IDC_DT_AMPM_LABEL, g_hInst, NULL);
             if (hDlgFont) SendMessage(g_hwndAmPmLabel, WM_SETFONT, (WPARAM)hDlgFont, 0);
             SetWindowPos(g_hwndAmPmLabel, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
             UpdateAmPmLabel();
         }
 
-        SetTimer(hDlg, IDT_CLOCK_TIMER, 1000, NULL);
+        /* Subclass the static placeholder for analog clock */
+        g_hwndClockPlaceholder = GetDlgItem(hDlg, IDC_ANALOG_CLOCK);
+        if (g_hwndClockPlaceholder) {
+            g_oldClockProc = (WNDPROC)SetWindowLong(g_hwndClockPlaceholder, GWL_WNDPROC,
+                                                    (LONG)AnalogClockSubclassProc);
+        }
+
+        SetTimer(hDlg, IDT_CLOCK_TIMER, 100, NULL);   /* 100 мс дл€ плавности стрелки */
         return TRUE;
     }
 
     case WM_TIMER:
     {
         if (wParam == IDT_CLOCK_TIMER) {
+            /* Update analog clock */
+            if (g_hwndClockPlaceholder)
+                InvalidateRect(g_hwndClockPlaceholder, NULL, FALSE);
+
             if (!g_bTimeModified) {
                 static WORD y, m, d, h, min, s;
                 GetLocalDateTime(&y, &m, &d, &h, &min, &s);
                 if (h != g_dtHour || min != g_dtMinute || s != g_dtSecond) {
-                    g_dtHour   = h;
-                    g_dtMinute = min;
-                    g_dtSecond = s;
+                    g_dtHour = h; g_dtMinute = min; g_dtSecond = s;
                     UpdateField(hDlg, IDC_DT_HOUR,   h,   2);
                     UpdateField(hDlg, IDC_DT_MINUTE, min, 2);
                     UpdateField(hDlg, IDC_DT_SECOND, s,   2);
@@ -320,42 +560,24 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
                 }
                 if (!g_bDateModified &&
                     (y != g_dtYear || m != g_dtMonth || d != g_dtDay)) {
-                    g_dtYear  = y;
-                    g_dtMonth = m;
-                    g_dtDay   = d;
+                    g_dtYear = y; g_dtMonth = m; g_dtDay = d;
                     UpdateField(hDlg, IDC_DT_MONTH, m, 2);
                     UpdateField(hDlg, IDC_DT_DAY,   d, 2);
                     UpdateField(hDlg, IDC_DT_YEAR,  y, 4);
                 }
             } else {
-                /* Tick from manually edited time */
-                g_dtSecond++;
-                if (g_dtSecond > 59) {
-                    g_dtSecond = 0;
-                    g_dtMinute++;
-                    if (g_dtMinute > 59) {
-                        g_dtMinute = 0;
-                        g_dtHour++;
-                        if (g_dtHour > 23) {
-                            g_dtHour = 0;
-                            if (!g_bDateModified) {
-                                g_dtDay++;
-                                if (g_dtDay > MaxDaysInMonth(g_dtMonth, g_dtYear)) {
-                                    g_dtDay = 1;
-                                    g_dtMonth++;
-                                    if (g_dtMonth > 12) {
-                                        g_dtMonth = 1;
-                                        g_dtYear++;
-                                    }
-                                }
-                                UpdateField(hDlg, IDC_DT_MONTH, g_dtMonth, 2);
-                                UpdateField(hDlg, IDC_DT_DAY,   g_dtDay,   2);
-                                UpdateField(hDlg, IDC_DT_YEAR,  g_dtYear,  4);
-                            }
-                        }
-                        UpdateAmPmLabel();   /* hour might have crossed AM/PM boundary */
-                    }
-                }
+                /* ѕользователь редактировал врем€: идЄм по системному времени + дельта */
+                static WORD sysH, sysM, sysS, dummy;
+                LONG total;
+                GetLocalDateTime(&dummy, &dummy, &dummy, &sysH, &sysM, &sysS);
+                total = (LONG)sysH * 3600 + sysM * 60 + sysS + g_timeDelta;
+                /* Ќормализуем к 0..86399 */
+                total = (total % 86400 + 86400) % 86400;
+                g_dtHour   = (WORD)(total / 3600);
+                g_dtMinute = (WORD)((total % 3600) / 60);
+                g_dtSecond = (WORD)(total % 60);
+                UpdateAmPmLabel();
+                /* ќбновл€ем пол€ ввода, чтобы они шли синхронно с часами */
                 UpdateField(hDlg, IDC_DT_HOUR,   g_dtHour,   2);
                 UpdateField(hDlg, IDC_DT_MINUTE, g_dtMinute, 2);
                 UpdateField(hDlg, IDC_DT_SECOND, g_dtSecond, 2);
@@ -395,9 +617,12 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
                         g_lastTimeCtrl == IDC_DT_HOUR   ? g_dtHour   :
                         g_lastTimeCtrl == IDC_DT_MINUTE ? g_dtMinute : g_dtSecond,
                         2);
-            if (g_lastTimeCtrl == IDC_DT_HOUR) {
-                UpdateAmPmLabel();
-            }
+            if (g_lastTimeCtrl == IDC_DT_HOUR) UpdateAmPmLabel();
+            /* ѕересчитываем дельту от нового времени */
+            RecalcTimeDelta();
+            /* Ќемедленно перерисовать аналоговые часы */
+            if (g_hwndClockPlaceholder)
+                InvalidateRect(g_hwndClockPlaceholder, NULL, FALSE);
             return TRUE;
         }
 
@@ -419,8 +644,6 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 
         if (wParam == IDCANCEL) {
             KillTimer(hDlg, IDT_CLOCK_TIMER);
-            SetLocalDateTime(g_origYear, g_origMonth, g_origDay,
-                             g_origHour, g_origMinute, g_origSecond);
             EndDialog(hDlg, IDCANCEL);
             return TRUE;
         }
@@ -436,15 +659,10 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
             GetDlgItemText(hDlg, IDC_DT_HOUR, buf, sizeof(buf));
             if (g_bUse12Hour) {
                 WORD h12 = (WORD)atoi(buf);
-                if (h12 < 1 || h12 > 12) {
-                    ok = FALSE;
-                } else {
-                    /* Determine AM/PM from the current 24-hour hour */
+                if (h12 < 1 || h12 > 12) ok = FALSE;
+                else {
                     BOOL isPM = (g_dtHour >= 12);
-                    if (h12 == 12)
-                        g_dtHour = isPM ? 12 : 0;
-                    else
-                        g_dtHour = h12 + (isPM ? 12 : 0);
+                    g_dtHour = (h12 == 12) ? (isPM ? 12 : 0) : (h12 + (isPM ? 12 : 0));
                 }
             } else {
                 g_dtHour = (WORD)atoi(buf);
