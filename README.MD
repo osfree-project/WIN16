@@ -3,6 +3,8 @@
 ![Language: C](https://img.shields.io/badge/language-C-blue)
 ![Language: Assembly](https://img.shields.io/badge/language-Asm-purple)
 ![License: LGPL-2.1](https://img.shields.io/badge/license-LGPL%202.1-green)
+![License: GPL-2.1](https://img.shields.io/badge/license-GPL%202.1-green)
+![License: BSD](https://img.shields.io/badge/license-BSD-green)
 ![Platform: DOS](https://img.shields.io/badge/platform-DOS-lightgrey)
 ![Platform: Win16](https://img.shields.io/badge/platform-Win16-lightgrey)
 ![Status: Alpha](https://img.shields.io/badge/status-alpha-red)
