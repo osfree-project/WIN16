@@ -576,12 +576,14 @@ static void CalendarOnLButtonDown(HWND hWnd, int x, int y, int width, int height
         if (x < 16) {
             if (g_calMonth == 1) { g_calMonth = 12; g_calYear--; }
             else g_calMonth--;
-            InvalidateRect(hWnd, NULL, TRUE);
+            InvalidateRect(hWnd, NULL, FALSE);
+            UpdateWindow(hWnd);   /* <-- немедленная отрисовка */
             return;
         } else if (x > width - 16) {
             if (g_calMonth == 12) { g_calMonth = 1; g_calYear++; }
             else g_calMonth++;
-            InvalidateRect(hWnd, NULL, TRUE);
+            InvalidateRect(hWnd, NULL, FALSE);
+            UpdateWindow(hWnd);   /* <-- немедленная отрисовка */
             return;
         }
         return;
@@ -615,10 +617,14 @@ static void CalendarOnLButtonDown(HWND hWnd, int x, int y, int width, int height
             HWND hDlg = GetParent(hWnd);
             UpdateDateFields(hDlg);
         }
-        InvalidateRect(hWnd, NULL, TRUE);
+        InvalidateRect(hWnd, NULL, FALSE);
+        UpdateWindow(hWnd);   /* <-- немедленная отрисовка */
     }
 }
 
+/* ------------------------------------------------------------ */
+/* Subclass procedure for the calendar static placeholder        */
+/* ------------------------------------------------------------ */
 LRESULT WINAPI CalendarSubclassProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     WNDPROC oldProc = g_oldCalProc;
@@ -626,17 +632,33 @@ LRESULT WINAPI CalendarSubclassProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
     switch (msg) {
     case WM_PAINT: {
         PAINTSTRUCT ps;
-        HDC dc;
         RECT rc;
+        HDC dcScreen, dcMem;
+        HBITMAP bmMem, bmOld;
+        int width, height;
 
-        dc = BeginPaint(hWnd, &ps);
+        dcScreen = BeginPaint(hWnd, &ps);
         GetClientRect(hWnd, &rc);
-        DrawCalendar(dc, rc.right - rc.left, rc.bottom - rc.top);
+        width  = rc.right - rc.left;
+        height = rc.bottom - rc.top;
+
+        /* Двойная буферизация: рисуем в памяти, выводим на экран */
+        dcMem = CreateCompatibleDC(dcScreen);
+        bmMem = CreateCompatibleBitmap(dcScreen, width, height);
+        bmOld = SelectObject(dcMem, bmMem);
+
+        DrawCalendar(dcMem, width, height);   /* вся отрисовка в оффскрин */
+
+        BitBlt(dcScreen, 0, 0, width, height, dcMem, 0, 0, SRCCOPY);
+
+        SelectObject(dcMem, bmOld);
+        DeleteObject(bmMem);
+        DeleteDC(dcMem);
         EndPaint(hWnd, &ps);
         return 0;
     }
     case WM_ERASEBKGND:
-        return 1;
+        return 1;   /* фон уже заполняется в DrawCalendar */
     case WM_DESTROY:
         if (oldProc)
             SetWindowLong(hWnd, GWL_WNDPROC, (LONG)oldProc);
