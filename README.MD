@@ -1,7 +1,7 @@
 # osFree Janus: Open-Source Windows 3.0 Clone
 
 ![Language: C](https://img.shields.io/badge/language-C-blue)
-![Language: Assembly](https://img.shields.io/badge/language-Asm-purple)
+![Language: Assembly](https://img.shields.io/badge/language-Asm-blue)
 ![License: LGPL-2.1](https://img.shields.io/badge/license-LGPL%202.1-green)
 ![License: GPL-2.1](https://img.shields.io/badge/license-GPL%202.1-green)
 ![License: BSD](https://img.shields.io/badge/license-BSD-green)
