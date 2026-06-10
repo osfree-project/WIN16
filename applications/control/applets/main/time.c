@@ -500,34 +500,35 @@ static void DrawCalendar(HDC dc, int width, int height)
     FillRect(dc, &rc, hBr);
     DeleteObject(hBr);
 
+    /* Use SYSTEM_FONT for everything */
     hFont = (HFONT)GetStockObject(SYSTEM_FONT);
     hOldFont = SelectObject(dc, hFont);
     SetBkMode(dc, TRANSPARENT);
     SetTextColor(dc, HandColor);
 
-    /* Header */
-    rc.left = 16; rc.top = 0; rc.right = width - 16; rc.bottom = 18;
+    /* Header (16 pixels) */
+    rc.left = 16; rc.top = 0; rc.right = width - 16; rc.bottom = 16;
     wsprintf(buf, "%s %u", monthNames[thisMonth-1], thisYear);
     DrawText(dc, buf, -1, &rc, DT_CENTER | DT_TOP | DT_SINGLELINE);
 
     /* Left arrow */
-    rArrow.left = 2; rArrow.top = 2; rArrow.right = 14; rArrow.bottom = 16;
+    rArrow.left = 2; rArrow.top = 2; rArrow.right = 14; rArrow.bottom = 14;
     DrawArrow(dc, &rArrow, TRUE);
     /* Right arrow */
-    rArrow.left = width - 16; rArrow.top = 2; rArrow.right = width - 2; rArrow.bottom = 16;
+    rArrow.left = width - 16; rArrow.top = 2; rArrow.right = width - 2; rArrow.bottom = 14;
     DrawArrow(dc, &rArrow, FALSE);
 
-    /* Day names */
-    rc.left = 0; rc.top = 18; rc.right = width; rc.bottom = 30;
+    /* Day names (16 pixels, no more clipping) */
+    rc.left = 0; rc.top = 16; rc.right = width; rc.bottom = 32;
     DrawText(dc, "Su Mo Tu We Th Fr Sa", -1, &rc, DT_CENTER | DT_TOP | DT_SINGLELINE);
 
-    /* Grid */
+    /* Grid – 50 pixels remaining (32..82) */
     cellW = (width - 4) / 7;
-    cellH = (height - 32) / 6;
+    cellH = (height - 32) / 6;   /* (82-32)/6 = 8 */
     startY = 32;
     startX = 2;
 
-    textYOffset = (cellH > 10) ? ((cellH - 10) / 2) : 0;
+    textYOffset = 0;   /* 8px font in 8px cell – perfectly fits */
 
     a = (14 - thisMonth) / 12;
     y = thisYear - a;
@@ -555,7 +556,6 @@ static void DrawCalendar(HDC dc, int width, int height)
                 }
 
                 wsprintf(buf, "%d", day);
-                cellRect.top += textYOffset;
                 DrawText(dc, buf, -1, &cellRect, DT_CENTER | DT_TOP | DT_SINGLELINE);
                 SetTextColor(dc, HandColor);
                 day++;
@@ -572,7 +572,7 @@ static void CalendarOnLButtonDown(HWND hWnd, int x, int y, int width, int height
     int col, row;
     int a, y2, m, startDow, daysInMonth, dayIndex, day;
 
-    if (y < 18) {
+    if (y < 16) {   /* header area */
         if (x < 16) {
             if (g_calMonth == 1) { g_calMonth = 12; g_calYear--; }
             else g_calMonth--;
@@ -587,7 +587,7 @@ static void CalendarOnLButtonDown(HWND hWnd, int x, int y, int width, int height
         return;
     }
 
-    if (y < 32) return;
+    if (y < 32) return;   /* day names area */
 
     cellW = (width - 4) / 7;
     cellH = (height - 32) / 6;
@@ -851,17 +851,15 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_LBUTTONDOWN:
     {
-        /* Пробрасываем клики в календарь, так как статик без SS_NOTIFY не получает WM_LBUTTONDOWN */
         if (g_hwndCalPlaceholder) {
             RECT rcCal;
             POINT pt;
             pt.x = LOWORD(lParam);
             pt.y = HIWORD(lParam);
             GetWindowRect(g_hwndCalPlaceholder, &rcCal);
-            ScreenToClient(hDlg, (LPPOINT)&rcCal.left);  /* преобразуем к координатам диалога */
+            ScreenToClient(hDlg, (LPPOINT)&rcCal.left);
             ScreenToClient(hDlg, (LPPOINT)&rcCal.right);
             if (PtInRect(&rcCal, pt)) {
-                /* Переводим в координаты календаря */
                 pt.x -= rcCal.left;
                 pt.y -= rcCal.top;
                 CalendarOnLButtonDown(g_hwndCalPlaceholder, pt.x, pt.y,
@@ -869,7 +867,7 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
                 return TRUE;
             }
         }
-        return FALSE;   /* передаём остальные клики стандартной обработке */
+        return FALSE;
     }
 
     case WM_COMMAND:
