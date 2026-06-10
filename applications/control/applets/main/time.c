@@ -1,9 +1,9 @@
 /*
  *  time.c – Date & Time dialog for Windows 3.0
- *  Live clock display, ownerdrawn spin buttons, analog clock.
+ *  Live clock display, ownerdrawn spin buttons, analog clock, calendar.
  *  Year is displayed and edited as 2 digits (80–99 = 1980–1999, 00–79 = 2000–2079).
- *  Supports 12-hour time format with automatic AM/PM label when system is set to 12-hour mode.
- *  Includes an analog clock drawn directly on a subclassed static control.
+ *  Supports 12/24-hour time and date format from WIN.INI [intl] settings.
+ *  Includes an analog clock and a monthly calendar with navigation arrows.
  *  Analog clock drawing math matches EXACTLY the original winclock.c.
  */
 
@@ -45,22 +45,36 @@ static WORD g_lastTimeCtrl = IDC_DT_HOUR;
 /* ---------- 12-hour format support ---------- */
 static BOOL g_bUse12Hour = FALSE;
 static HWND g_hwndAmPmLabel = NULL;
+static char g_szAm[8] = "AM";
+static char g_szPm[8] = "PM";
+static BOOL g_bTLZero = TRUE;
+static char g_szTimeSep[4] = ":";
+
+/* ---------- Date format support ---------- */
+static int  g_iDateFormat = 0;
+static char g_szDateSep[2][4] = {"/", "/"};
+static WORD g_dateFieldMap[3] = {IDC_DT_MONTH, IDC_DT_DAY, IDC_DT_YEAR};
 
 /* ---------- Analog clock subclassing ---------- */
 static HWND g_hwndClockPlaceholder = NULL;
 static WNDPROC g_oldClockProc = NULL;
 
-/* ---- Colors for the clock (as in original, but background now matches window) ---- */
+/* ---------- Calendar subclassing ---------- */
+static HWND g_hwndCalPlaceholder = NULL;
+static WNDPROC g_oldCalProc = NULL;
+static WORD g_calYear, g_calMonth;
+
+/* ---- Colors ---- */
 #define FaceColor       (GetSysColor(COLOR_BTNFACE))
 #define HandColor       (GetSysColor(COLOR_WINDOWTEXT))
 #define TickColor       (GetSysColor(COLOR_WINDOWTEXT))
 #define BackgroundColor (GetSysColor(COLOR_WINDOW))
 
 /* ---------- Time delta for manual editing ---------- */
-static LONG g_timeDelta = 0;   /* разница в секундах: отображаемое = системное + дельта */
+static LONG g_timeDelta = 0;
 
 /* ------------------------------------------------------------------ */
-/* DOS API for system time (reliable _dos_xxx functions) */
+/* DOS API for system time */
 static void GetLocalDateTime(WORD *y, WORD *m, WORD *d,
                              WORD *h, WORD *min, WORD *s)
 {
@@ -109,8 +123,6 @@ static WORD MaxDaysInMonth(WORD month, WORD year)
     return days[month-1];
 }
 
-/* ------------------------------------------------------------------ */
-/* Year helpers */
 static WORD YearToDisplay(WORD fullYear)
 {
     return fullYear % 100;
@@ -157,8 +169,6 @@ static void SpinTimeField(HWND hDlg, WORD ctrl, BOOL up)
     else    { if (*pVal > min) (*pVal)--; else *pVal = max; }
 }
 
-/* ------------------------------------------------------------------ */
-/* Recalculate time delta based on current fields vs system time */
 static void RecalcTimeDelta(void)
 {
     static WORD sysH, sysM, sysS;
@@ -171,16 +181,13 @@ static void RecalcTimeDelta(void)
     g_timeDelta = userTotal - sysTotal;
 }
 
-/* ------------------------------------------------------------------ */
-/* AM/PM label update */
 static void UpdateAmPmLabel(void)
 {
     if (g_bUse12Hour && g_hwndAmPmLabel) {
-        SetWindowText(g_hwndAmPmLabel, (g_dtHour >= 12) ? "PM" : "AM");
+        SetWindowText(g_hwndAmPmLabel, (g_dtHour >= 12) ? g_szPm : g_szAm);
     }
 }
 
-/* Update a single edit field */
 static void UpdateField(HWND hDlg, WORD id, WORD value, int digits)
 {
     char buf[8];
@@ -189,7 +196,10 @@ static void UpdateField(HWND hDlg, WORD id, WORD value, int digits)
     } else if (id == IDC_DT_HOUR && g_bUse12Hour) {
         WORD h12 = value % 12;
         if (h12 == 0) h12 = 12;
-        wsprintf(buf, "%2u", h12);
+        if (g_bTLZero && h12 < 10)
+            wsprintf(buf, "0%u", h12);
+        else
+            wsprintf(buf, "%2u", h12);
     } else {
         if (digits == 2) wsprintf(buf, "%02u", value);
         else wsprintf(buf, "%u", value);
@@ -197,8 +207,15 @@ static void UpdateField(HWND hDlg, WORD id, WORD value, int digits)
     SetDlgItemText(hDlg, id, buf);
 }
 
+static void UpdateDateFields(HWND hDlg)
+{
+    UpdateField(hDlg, g_dateFieldMap[0], g_dtMonth, 2);
+    UpdateField(hDlg, g_dateFieldMap[1], g_dtDay, 2);
+    UpdateField(hDlg, g_dateFieldMap[2], g_dtYear, 4);
+}
+
 /* ------------------------------------------------------------------ */
-/* Owner-draw painting for the flat spin buttons */
+/* Owner-draw spin buttons */
 static void DrawSpinTriangle(HDC hdc, LPRECT prc, BOOL up)
 {
     POINT pts[3];
@@ -258,9 +275,7 @@ static void DrawTicks(HDC dc, const POINT* centre, int radius)
     HBRUSH oldhBrush, hBrush;
     int hourWidth = 0.09 * radius;
 
-    /* Minute divisions */
-    if (radius > 64)
-    {
+    if (radius > 64) {
         hPen = CreatePen(PS_SOLID, 2, TickColor);
         oldhPen = SelectObject(dc, hPen);
         for (t = 0; t < 60; t++) {
@@ -277,7 +292,6 @@ static void DrawTicks(HDC dc, const POINT* centre, int radius)
 
     hBrush = CreateSolidBrush(RGB(00, 128, 128));
     oldhBrush = SelectObject(dc, hBrush);
-    /* Hour divisions */
     for (t = 0; t < 12; t++) {
         hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
         oldhPen = SelectObject(dc, hPen);
@@ -347,7 +361,6 @@ void PositionHands(const POINT* centre, int radius, BOOL bSeconds)
 {
     double hour, minute, second;
 
-    /* Используем то же время, что показывают поля ввода */
     hour   = g_dtHour % 12;
     minute = g_dtMinute;
     second = g_dtSecond;
@@ -377,7 +390,7 @@ void AnalogClock(HDC dc, int x, int y, BOOL bSeconds)
 /* ------------------------------------------------------------ */
 /* Subclass procedure for the static analog clock placeholder   */
 /* ------------------------------------------------------------ */
-LRESULT CALLBACK AnalogClockSubclassProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT WINAPI AnalogClockSubclassProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     WNDPROC oldProc = g_oldClockProc;
 
@@ -395,20 +408,16 @@ LRESULT CALLBACK AnalogClockSubclassProc(HWND hWnd, UINT msg, WPARAM wParam, LPA
         width  = rc.right - rc.left;
         height = rc.bottom - rc.top;
 
-        /* Двойная буферизация: рисуем в памяти, затем выводим на экран */
         dcMem = CreateCompatibleDC(dcScreen);
         bmMem = CreateCompatibleBitmap(dcScreen, width, height);
         bmOld = SelectObject(dcMem, bmMem);
 
-        /* Фон */
         hBr = CreateSolidBrush(BackgroundColor);
         FillRect(dcMem, &rc, hBr);
         DeleteObject(hBr);
 
-        /* Часы */
         AnalogClock(dcMem, width, height, TRUE);
 
-        /* Копируем на экран */
         BitBlt(dcScreen, 0, 0, width, height, dcMem, 0, 0, SRCCOPY);
 
         SelectObject(dcMem, bmOld);
@@ -418,12 +427,221 @@ LRESULT CALLBACK AnalogClockSubclassProc(HWND hWnd, UINT msg, WPARAM wParam, LPA
         return 0;
     }
     case WM_ERASEBKGND:
-        return 1;   /* не стираем фон, чтобы избежать мерцания */
+        return 1;
     case WM_DESTROY:
         if (oldProc)
             SetWindowLong(hWnd, GWL_WNDPROC, (LONG)oldProc);
         g_hwndClockPlaceholder = NULL;
         g_oldClockProc = NULL;
+        if (oldProc)
+            return CallWindowProc(oldProc, hWnd, msg, wParam, lParam);
+        return 0;
+    }
+    if (oldProc)
+        return CallWindowProc(oldProc, hWnd, msg, wParam, lParam);
+    return DefWindowProc(hWnd, msg, wParam, lParam);
+}
+
+/* ================================================================== */
+/*                    Calendar drawing and logic                       */
+/* ================================================================== */
+
+static void DrawArrow(HDC dc, RECT* rc, BOOL left)
+{
+    HBRUSH hBr, hOldBr;
+    HPEN hPen, hOldPen;
+    POINT pts[3];
+    int cx = (rc->right - rc->left) / 2;
+    int cy = (rc->bottom - rc->top) / 2;
+    int mx = rc->left + cx;
+    int my = rc->top + cy;
+
+    if (left) {
+        pts[0].x = mx - cx/2; pts[0].y = my;
+        pts[1].x = mx + cx/2; pts[1].y = my - cy/2;
+        pts[2].x = mx + cx/2; pts[2].y = my + cy/2;
+    } else {
+        pts[0].x = mx + cx/2; pts[0].y = my;
+        pts[1].x = mx - cx/2; pts[1].y = my - cy/2;
+        pts[2].x = mx - cx/2; pts[2].y = my + cy/2;
+    }
+
+    hPen = CreatePen(PS_SOLID, 1, HandColor);
+    hBr  = CreateSolidBrush(HandColor);
+    hOldPen = SelectObject(dc, hPen);
+    hOldBr  = SelectObject(dc, hBr);
+    Polygon(dc, pts, 3);
+    SelectObject(dc, hOldPen);
+    SelectObject(dc, hOldBr);
+    DeleteObject(hPen);
+    DeleteObject(hBr);
+}
+
+static void DrawCalendar(HDC dc, int width, int height)
+{
+    static const char far * monthNames[] = {
+        "January","February","March","April","May","June",
+        "July","August","September","October","November","December"
+    };
+    char buf[40];
+    static RECT rc, rArrow, cellRect;
+    HBRUSH hBr;
+    int cellW, cellH, startX, startY;
+    int day, row, col, daysInMonth, startDayOfWeek;
+    int today = g_dtDay;
+    int thisMonth = g_calMonth, thisYear = g_calYear;
+    HFONT hFont, hOldFont;
+    int a, y, m;
+    int textYOffset;
+
+    /* Background */
+    rc.left = 0; rc.top = 0; rc.right = width; rc.bottom = height;
+    hBr = CreateSolidBrush(BackgroundColor);
+    FillRect(dc, &rc, hBr);
+    DeleteObject(hBr);
+
+    hFont = (HFONT)GetStockObject(SYSTEM_FONT);
+    hOldFont = SelectObject(dc, hFont);
+    SetBkMode(dc, TRANSPARENT);
+    SetTextColor(dc, HandColor);
+
+    /* Header */
+    rc.left = 16; rc.top = 0; rc.right = width - 16; rc.bottom = 18;
+    wsprintf(buf, "%s %u", monthNames[thisMonth-1], thisYear);
+    DrawText(dc, buf, -1, &rc, DT_CENTER | DT_TOP | DT_SINGLELINE);
+
+    /* Left arrow */
+    rArrow.left = 2; rArrow.top = 2; rArrow.right = 14; rArrow.bottom = 16;
+    DrawArrow(dc, &rArrow, TRUE);
+    /* Right arrow */
+    rArrow.left = width - 16; rArrow.top = 2; rArrow.right = width - 2; rArrow.bottom = 16;
+    DrawArrow(dc, &rArrow, FALSE);
+
+    /* Day names */
+    rc.left = 0; rc.top = 18; rc.right = width; rc.bottom = 30;
+    DrawText(dc, "Su Mo Tu We Th Fr Sa", -1, &rc, DT_CENTER | DT_TOP | DT_SINGLELINE);
+
+    /* Grid */
+    cellW = (width - 4) / 7;
+    cellH = (height - 32) / 6;
+    startY = 32;
+    startX = 2;
+
+    textYOffset = (cellH > 10) ? ((cellH - 10) / 2) : 0;
+
+    a = (14 - thisMonth) / 12;
+    y = thisYear - a;
+    m = thisMonth + 12 * a - 2;
+    startDayOfWeek = (1 + y + y/4 - y/100 + y/400 + (31*m)/12) % 7;
+    daysInMonth = MaxDaysInMonth(thisMonth, thisYear);
+
+    day = 1;
+    for (row = 0; row < 6; row++) {
+        for (col = 0; col < 7; col++) {
+            if (row == 0 && col < startDayOfWeek) continue;
+            if (day <= daysInMonth) {
+                int x = startX + col * cellW;
+                int yy = startY + row * cellH;
+                cellRect.left = x; cellRect.top = yy;
+                cellRect.right = x + cellW; cellRect.bottom = yy + cellH;
+
+                if (day == today && thisMonth == g_dtMonth && thisYear == g_dtYear) {
+                    HBRUSH hSel = CreateSolidBrush(GetSysColor(COLOR_HIGHLIGHT));
+                    FillRect(dc, &cellRect, hSel);
+                    DeleteObject(hSel);
+                    SetTextColor(dc, GetSysColor(COLOR_HIGHLIGHTTEXT));
+                } else {
+                    SetTextColor(dc, HandColor);
+                }
+
+                wsprintf(buf, "%d", day);
+                cellRect.top += textYOffset;
+                DrawText(dc, buf, -1, &cellRect, DT_CENTER | DT_TOP | DT_SINGLELINE);
+                SetTextColor(dc, HandColor);
+                day++;
+            }
+        }
+    }
+
+    SelectObject(dc, hOldFont);
+}
+
+static void CalendarOnLButtonDown(HWND hWnd, int x, int y, int width, int height)
+{
+    int cellW, cellH, startX, startY;
+    int col, row;
+    int a, y2, m, startDow, daysInMonth, dayIndex, day;
+
+    if (y < 18) {
+        if (x < 16) {
+            if (g_calMonth == 1) { g_calMonth = 12; g_calYear--; }
+            else g_calMonth--;
+            InvalidateRect(hWnd, NULL, TRUE);
+            return;
+        } else if (x > width - 16) {
+            if (g_calMonth == 12) { g_calMonth = 1; g_calYear++; }
+            else g_calMonth++;
+            InvalidateRect(hWnd, NULL, TRUE);
+            return;
+        }
+        return;
+    }
+
+    if (y < 32) return;
+
+    cellW = (width - 4) / 7;
+    cellH = (height - 32) / 6;
+    startX = 2;
+    startY = 32;
+    col = (x - startX) / cellW;
+    row = (y - startY) / cellH;
+
+    a = (14 - g_calMonth) / 12;
+    y2 = g_calYear - a;
+    m = g_calMonth + 12 * a - 2;
+    startDow = (1 + y2 + y2/4 - y2/100 + y2/400 + (31*m)/12) % 7;
+    daysInMonth = MaxDaysInMonth(g_calMonth, g_calYear);
+    dayIndex = row * 7 + col;
+
+    if (row < 0 || row >= 6 || col < 0 || col >= 7) return;
+    if (row == 0 && col < startDow) return;
+    day = dayIndex - startDow + 1;
+    if (day >= 1 && day <= daysInMonth) {
+        g_dtDay = day;
+        g_dtMonth = g_calMonth;
+        g_dtYear = g_calYear;
+        g_bDateModified = TRUE;
+        {
+            HWND hDlg = GetParent(hWnd);
+            UpdateDateFields(hDlg);
+        }
+        InvalidateRect(hWnd, NULL, TRUE);
+    }
+}
+
+LRESULT WINAPI CalendarSubclassProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    WNDPROC oldProc = g_oldCalProc;
+
+    switch (msg) {
+    case WM_PAINT: {
+        PAINTSTRUCT ps;
+        HDC dc;
+        RECT rc;
+
+        dc = BeginPaint(hWnd, &ps);
+        GetClientRect(hWnd, &rc);
+        DrawCalendar(dc, rc.right - rc.left, rc.bottom - rc.top);
+        EndPaint(hWnd, &ps);
+        return 0;
+    }
+    case WM_ERASEBKGND:
+        return 1;
+    case WM_DESTROY:
+        if (oldProc)
+            SetWindowLong(hWnd, GWL_WNDPROC, (LONG)oldProc);
+        g_hwndCalPlaceholder = NULL;
+        g_oldCalProc = NULL;
         if (oldProc)
             return CallWindowProc(oldProc, hWnd, msg, wParam, lParam);
         return 0;
@@ -447,6 +665,39 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         HWND hChild;
         RECT rcGroup;
         int xRight, yTop, yBottom;
+        char szSep[8];
+        int iDate;
+
+        /* Read international settings */
+        g_bUse12Hour = (GetProfileInt("intl", "iTime", 0) == 0);
+        g_bTLZero    = (GetProfileInt("intl", "iTLZero", 1) != 0);
+        GetProfileString("intl", "sTime", ":", g_szTimeSep, sizeof(g_szTimeSep));
+        GetProfileString("intl", "s1159", "AM", g_szAm, sizeof(g_szAm));
+        GetProfileString("intl", "s2359", "PM", g_szPm, sizeof(g_szPm));
+        GetProfileString("intl", "sDate", "/", szSep, sizeof(szSep));
+        g_szDateSep[0][0] = szSep[0]; g_szDateSep[0][1] = 0;
+        g_szDateSep[1][0] = szSep[0]; g_szDateSep[1][1] = 0;
+        iDate = GetProfileInt("intl", "iDate", 0);
+        g_iDateFormat = iDate;
+
+        if (iDate == 1) {
+            g_dateFieldMap[0] = IDC_DT_DAY;
+            g_dateFieldMap[1] = IDC_DT_MONTH;
+            g_dateFieldMap[2] = IDC_DT_YEAR;
+        } else if (iDate == 2) {
+            g_dateFieldMap[0] = IDC_DT_YEAR;
+            g_dateFieldMap[1] = IDC_DT_MONTH;
+            g_dateFieldMap[2] = IDC_DT_DAY;
+        } else {
+            g_dateFieldMap[0] = IDC_DT_MONTH;
+            g_dateFieldMap[1] = IDC_DT_DAY;
+            g_dateFieldMap[2] = IDC_DT_YEAR;
+        }
+
+        SetDlgItemText(hDlg, IDC_DT_SEP_DATE1, g_szDateSep[0]);
+        SetDlgItemText(hDlg, IDC_DT_SEP_DATE2, g_szDateSep[1]);
+        SetDlgItemText(hDlg, IDC_DT_SEP_TIME1, g_szTimeSep);
+        SetDlgItemText(hDlg, IDC_DT_SEP_TIME2, g_szTimeSep);
 
         GetLocalDateTime(&y, &m, &d, &h, &min, &s);
         g_dtYear = y; g_dtMonth = m; g_dtDay = d;
@@ -458,8 +709,7 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         g_lastDateCtrl = IDC_DT_MONTH;
         g_lastTimeCtrl = IDC_DT_HOUR;
         g_timeDelta = 0;
-
-        g_bUse12Hour = (GetProfileInt("intl", "iTime", 0) == 0);
+        g_calYear = y; g_calMonth = m;
 
         SendDlgItemMessage(hDlg, IDC_DT_MONTH,  EM_LIMITTEXT, 2, 0);
         SendDlgItemMessage(hDlg, IDC_DT_DAY,    EM_LIMITTEXT, 2, 0);
@@ -468,12 +718,10 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         SendDlgItemMessage(hDlg, IDC_DT_MINUTE, EM_LIMITTEXT, 2, 0);
         SendDlgItemMessage(hDlg, IDC_DT_SECOND, EM_LIMITTEXT, 2, 0);
 
-        UpdateField(hDlg, IDC_DT_MONTH,  g_dtMonth, 2);
-        UpdateField(hDlg, IDC_DT_DAY,    g_dtDay,   2);
-        UpdateField(hDlg, IDC_DT_YEAR,   g_dtYear,  4);
+        UpdateDateFields(hDlg);
         UpdateField(hDlg, IDC_DT_HOUR,   g_dtHour,  2);
-        UpdateField(hDlg, IDC_DT_MINUTE, g_dtMinute,2);
-        UpdateField(hDlg, IDC_DT_SECOND, g_dtSecond,2);
+        UpdateField(hDlg, IDC_DT_MINUTE, g_dtMinute, 2);
+        UpdateField(hDlg, IDC_DT_SECOND, g_dtSecond, 2);
 
         SetWindowLong(GetDlgItem(hDlg, IDC_DT_DATE_GROUP), GWL_STYLE,
                       GetWindowLong(GetDlgItem(hDlg, IDC_DT_DATE_GROUP), GWL_STYLE) | WS_CLIPSIBLINGS);
@@ -518,7 +766,7 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         if (hDlgFont) SendMessage(hChild, WM_SETFONT, (WPARAM)hDlgFont, 0);
         SetWindowPos(hChild, HWND_TOP, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 
-        /* AM/PM label (12-hour mode) */
+        /* AM/PM label */
         if (g_bUse12Hour) {
             int xLabel = rcGroup.right - 32;
             int yLabel = rcGroup.top + 18;
@@ -530,21 +778,27 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
             UpdateAmPmLabel();
         }
 
-        /* Subclass the static placeholder for analog clock */
+        /* Subclass clock */
         g_hwndClockPlaceholder = GetDlgItem(hDlg, IDC_ANALOG_CLOCK);
         if (g_hwndClockPlaceholder) {
             g_oldClockProc = (WNDPROC)SetWindowLong(g_hwndClockPlaceholder, GWL_WNDPROC,
                                                     (LONG)AnalogClockSubclassProc);
         }
 
-        SetTimer(hDlg, IDT_CLOCK_TIMER, 100, NULL);   /* 100 мс для плавности стрелки */
+        /* Subclass calendar */
+        g_hwndCalPlaceholder = GetDlgItem(hDlg, IDC_CALENDAR);
+        if (g_hwndCalPlaceholder) {
+            g_oldCalProc = (WNDPROC)SetWindowLong(g_hwndCalPlaceholder, GWL_WNDPROC,
+                                                  (LONG)CalendarSubclassProc);
+        }
+
+        SetTimer(hDlg, IDT_CLOCK_TIMER, 100, NULL);
         return TRUE;
     }
 
     case WM_TIMER:
     {
         if (wParam == IDT_CLOCK_TIMER) {
-            /* Update analog clock */
             if (g_hwndClockPlaceholder)
                 InvalidateRect(g_hwndClockPlaceholder, NULL, FALSE);
 
@@ -561,23 +815,22 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
                 if (!g_bDateModified &&
                     (y != g_dtYear || m != g_dtMonth || d != g_dtDay)) {
                     g_dtYear = y; g_dtMonth = m; g_dtDay = d;
-                    UpdateField(hDlg, IDC_DT_MONTH, m, 2);
-                    UpdateField(hDlg, IDC_DT_DAY,   d, 2);
-                    UpdateField(hDlg, IDC_DT_YEAR,  y, 4);
+                    UpdateDateFields(hDlg);
+                    if (m != g_calMonth || y != g_calYear) {
+                        g_calYear = y; g_calMonth = m;
+                        if (g_hwndCalPlaceholder) InvalidateRect(g_hwndCalPlaceholder, NULL, FALSE);
+                    }
                 }
             } else {
-                /* Пользователь редактировал время: идём по системному времени + дельта */
                 static WORD sysH, sysM, sysS, dummy;
                 LONG total;
                 GetLocalDateTime(&dummy, &dummy, &dummy, &sysH, &sysM, &sysS);
                 total = (LONG)sysH * 3600 + sysM * 60 + sysS + g_timeDelta;
-                /* Нормализуем к 0..86399 */
                 total = (total % 86400 + 86400) % 86400;
                 g_dtHour   = (WORD)(total / 3600);
                 g_dtMinute = (WORD)((total % 3600) / 60);
                 g_dtSecond = (WORD)(total % 60);
                 UpdateAmPmLabel();
-                /* Обновляем поля ввода, чтобы они шли синхронно с часами */
                 UpdateField(hDlg, IDC_DT_HOUR,   g_dtHour,   2);
                 UpdateField(hDlg, IDC_DT_MINUTE, g_dtMinute, 2);
                 UpdateField(hDlg, IDC_DT_SECOND, g_dtSecond, 2);
@@ -596,6 +849,29 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         break;
     }
 
+    case WM_LBUTTONDOWN:
+    {
+        /* Пробрасываем клики в календарь, так как статик без SS_NOTIFY не получает WM_LBUTTONDOWN */
+        if (g_hwndCalPlaceholder) {
+            RECT rcCal;
+            POINT pt;
+            pt.x = LOWORD(lParam);
+            pt.y = HIWORD(lParam);
+            GetWindowRect(g_hwndCalPlaceholder, &rcCal);
+            ScreenToClient(hDlg, (LPPOINT)&rcCal.left);  /* преобразуем к координатам диалога */
+            ScreenToClient(hDlg, (LPPOINT)&rcCal.right);
+            if (PtInRect(&rcCal, pt)) {
+                /* Переводим в координаты календаря */
+                pt.x -= rcCal.left;
+                pt.y -= rcCal.top;
+                CalendarOnLButtonDown(g_hwndCalPlaceholder, pt.x, pt.y,
+                                      rcCal.right - rcCal.left, rcCal.bottom - rcCal.top);
+                return TRUE;
+            }
+        }
+        return FALSE;   /* передаём остальные клики стандартной обработке */
+    }
+
     case WM_COMMAND:
     {
         WORD code = HIWORD(lParam);
@@ -603,10 +879,13 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         if (wParam == IDC_DT_DATE_UP || wParam == IDC_DT_DATE_DOWN) {
             g_bDateModified = TRUE;
             SpinDateField(hDlg, g_lastDateCtrl, (wParam == IDC_DT_DATE_UP));
-            UpdateField(hDlg, g_lastDateCtrl,
-                        g_lastDateCtrl == IDC_DT_MONTH ? g_dtMonth :
-                        g_lastDateCtrl == IDC_DT_DAY   ? g_dtDay   : g_dtYear,
-                        g_lastDateCtrl == IDC_DT_YEAR ? 4 : 2);
+            UpdateDateFields(hDlg);
+            if (g_calMonth != g_dtMonth || g_calYear != g_dtYear) {
+                g_calMonth = g_dtMonth;
+                g_calYear = g_dtYear;
+                if (g_hwndCalPlaceholder) InvalidateRect(g_hwndCalPlaceholder, NULL, FALSE);
+            } else if (g_hwndCalPlaceholder)
+                InvalidateRect(g_hwndCalPlaceholder, NULL, FALSE);
             return TRUE;
         }
 
@@ -618,9 +897,7 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
                         g_lastTimeCtrl == IDC_DT_MINUTE ? g_dtMinute : g_dtSecond,
                         2);
             if (g_lastTimeCtrl == IDC_DT_HOUR) UpdateAmPmLabel();
-            /* Пересчитываем дельту от нового времени */
             RecalcTimeDelta();
-            /* Немедленно перерисовать аналоговые часы */
             if (g_hwndClockPlaceholder)
                 InvalidateRect(g_hwndClockPlaceholder, NULL, FALSE);
             return TRUE;
@@ -649,12 +926,12 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         }
 
         if (wParam == IDOK) {
-            GetDlgItemText(hDlg, IDC_DT_MONTH, buf, sizeof(buf));
+            GetDlgItemText(hDlg, g_dateFieldMap[0], buf, sizeof(buf));
             g_dtMonth = (WORD)atoi(buf);
-            GetDlgItemText(hDlg, IDC_DT_DAY, buf, sizeof(buf));
-            g_dtDay = (WORD)atoi(buf);
-            GetDlgItemText(hDlg, IDC_DT_YEAR, buf, sizeof(buf));
-            g_dtYear = YearFromDisplay((WORD)atoi(buf));
+            GetDlgItemText(hDlg, g_dateFieldMap[1], buf, sizeof(buf));
+            g_dtDay   = (WORD)atoi(buf);
+            GetDlgItemText(hDlg, g_dateFieldMap[2], buf, sizeof(buf));
+            g_dtYear  = YearFromDisplay((WORD)atoi(buf));
 
             GetDlgItemText(hDlg, IDC_DT_HOUR, buf, sizeof(buf));
             if (g_bUse12Hour) {

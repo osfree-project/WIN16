@@ -22,6 +22,6 @@
 #define IDC_DT_AMPM_TOGGLE   725   /* кнопка переключения AM/PM */
 
 #define IDC_ANALOG_CLOCK    730
-
+#define IDC_CALENDAR         731
 
 #define IDI_TIME  112
