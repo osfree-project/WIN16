@@ -95,7 +95,6 @@ VOID WINAPI keybd_event(VOID)
 // This is not exported function. It is called by real mouse_event function which 
 // returned by GetMouseEventProc or directly exported (since 3.1)
 // Undocumented Windows p.477
-// @todo absolute coordinates
 // @todo mouse acceleration
 VOID WINAPI mouse_event_impl(WORD EventCodes, WORD hMouse, WORD vMouse, WORD NumButts)
 {
@@ -150,27 +149,32 @@ VOID WINAPI mouse_event_impl(WORD EventCodes, WORD hMouse, WORD vMouse, WORD Num
 
 	if (EventCodes & MOUSEEVENTF_MOVE)
 	{
-		// @todo Handle absolute position
-
-		if (((long)wMouseX + (int)hMouse)< 0) {
-			wMouseX = 0;
+                if (EventCodes & MOUSEEVENTF_ABSOLUTE)
+		{
+			wMouseX=hMouse;
+			wMouseY=vMouse;
 		} else {
-			wMouseX += (int)hMouse;
-		}
+			if (((long)wMouseX + (int)hMouse)< 0) {
+				wMouseX = 0;
+			} else {
+				wMouseX += (int)hMouse;
+			}
 
-		if (((long)wMouseY+(int)vMouse) < 0) {
-			wMouseY = 0;
-		} else {
-			wMouseY += (int)vMouse;
-		}
+			if (((long)wMouseY+(int)vMouse) < 0) {
+				wMouseY = 0;
+			} else {
+				wMouseY += (int)vMouse;
+			}
         
-		if (wMouseX > (GETSYSTEMMETRICS(SM_CXSCREEN) - 1)) {
-	            wMouseX = (GETSYSTEMMETRICS(SM_CXSCREEN) - 1);
+			if (wMouseX > (GETSYSTEMMETRICS(SM_CXSCREEN) - 1)) {
+		            wMouseX = (GETSYSTEMMETRICS(SM_CXSCREEN) - 1);
+			}
+
+			if (wMouseY > (GETSYSTEMMETRICS(SM_CYSCREEN) - 1)) {
+				wMouseY = (GETSYSTEMMETRICS(SM_CYSCREEN) - 1);
+			}
 		}
 
-		if (wMouseY > (GETSYSTEMMETRICS(SM_CYSCREEN) - 1)) {
-			wMouseY = (GETSYSTEMMETRICS(SM_CYSCREEN) - 1);
-		}
 		MoveCursor(wMouseX, wMouseY);
 		hardware_event(WM_MOUSEMOVE, KeyState, 0, wMouseX, wMouseY, GetTickCount(), 0);
 	}
@@ -192,9 +196,26 @@ VOID WINAPI mouse_event_impl(WORD EventCodes, WORD hMouse, WORD vMouse, WORD Num
 	}
 }
 
+/*		mouse_event (USER.299) */
 // mouse_event function address returned by GetMouseEventProc 
 // or directly exported (since 3.1)
 // Undocumented Windows p.477
+
+/*
+This function is the handler for mouse events. It is invoked (usually) by the mouse
+driver MOUSE.DRV within its IRQ 2 hardware interrupt handler. It generates a Sys-
+tem Message Queue entry for button press/release events and generates a new, or
+updates the existing, mouse movement queue entry. Note that this function ensures
+that there is only one mouse movement message in the queue at one time.
+This is the function whose address is returned by the undocumented Get-
+MouseEventProc function. See the description of that function for an example of how
+this function might be called by an application to generate system-level mouse events.
+This function is described, though without a name, in the Mouse Drivers chapter
+of the DDK manual. The address of Mouse_Event is passed to a mouse driver when its
+Enable() function is called.
+
+Support: Code present in 3.0, 3.1, but only visible as a USER.EXE export in 3.1
+*/
 
 /*
  * Register values:
