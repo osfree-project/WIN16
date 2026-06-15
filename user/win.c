@@ -449,7 +449,7 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
     {
 	/* Make sure parent is valid */
         if (!IsWindow( parent )) {
-	    //TRACE("CreateWindowEx: Parent %04x is not a window", parent);
+		TRACE("CreateWindowEx: Parent %04x is not a window", parent);
 		PopDS();
 	    return 0;
 	}
@@ -457,11 +457,13 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
     else 
     {
 	if (style & WS_CHILD) {
-	    //TRACE("CreateWindowEx: no parent");
+	    	TRACE("CreateWindowEx: no parent");
 		PopDS();
 	    return 0;  /* WS_CHILD needs a parent */
 	}
     }
+
+	//@todo add instance check. See Pietrek p.318
 
     if (!(class = CLASS_FindClassByName( className, GetExePtr(instance),
                                          &classPtr )))
@@ -632,7 +634,7 @@ HWND WINAPI CreateWindowEx( DWORD exStyle, LPCSTR className, LPCSTR windowName,
     else if (style & WS_VISIBLE) ShowWindow( hwnd, SW_SHOW );
 
 	LocalUnlock(hwnd);
-//    TRACE("CreateWindowEx: return %04x", hwnd);
+    TRACE("CreateWindowEx: return %04x", hwnd);
 	PopDS();
     return hwnd;
 }
