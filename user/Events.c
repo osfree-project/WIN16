@@ -1,20 +1,20 @@
 /*
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, see
-<https://www.gnu.org/licenses/>.
-
-*/
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, see
+ * <https://www.gnu.org/licenses/>.
+ *
+ */
 
 #include <user.h>
 
@@ -26,6 +26,7 @@ License along with this library; if not, see
  *           hardware_event
  *
  * Add an event to the system message queue.
+ * @todo need to investigate real interface and is it exported by real windows
  */
 void hardware_event( WORD message, WORD wParam, LONG lParam,
 		     WORD xPos, WORD yPos, DWORD time, DWORD extraInfo )
@@ -91,35 +92,16 @@ VOID WINAPI keybd_event(VOID)
 }
 
 
-/*
- * Register values:
- * AX = mouse event
- * BX = horizontal displacement if AX & ME_MOVE
- * CX = vertical displacement if AX & ME_MOVE
- * DX = buttons number
- * 
- * SI  ExtraMessageInfo for 3.1
- * DI  ExtraMessageInfo for 3.1
- */
-
+// This is not exported function. It is called by real mouse_event function which 
+// returned by GetMouseEventProc or directly exported (since 3.1)
+// Undocumented Windows p.477
+// @todo absolute coordinates
+// @todo mouse acceleration
 VOID WINAPI mouse_event_impl(WORD EventCodes, WORD hMouse, WORD vMouse, WORD NumButts)
 {
-//	WORD EventCodes;
-//	WORD hMouse;
-//	WORD vMouse;
-//	WORD NumButts;
 	WORD KeyState;
     
-//	_asm{
-//		mov EventCodes, AX 
-//		mov hMouse, BX
-//		mov vMouse, CX
-//		mov NumButts, DX
-//	}
-
-//	PushDS();
-	SetUserHeapDS();
-
+	SetUserHeapDS();	// Function not exported, so set DS manually
 
 //TRACE("mouse_event: AX=0x%04x (MOVE=%d LEFTDOWN=%d LEFTUP=%d RIGHTDOWN=%d RIGHTUP=%d) BX=%d CX=%d",
 //          EventCodes,
@@ -130,7 +112,6 @@ VOID WINAPI mouse_event_impl(WORD EventCodes, WORD hMouse, WORD vMouse, WORD Num
 //          (EventCodes & MOUSEEVENTF_RIGHTUP) ? 1 : 0,
 //          hMouse, vMouse);
 
-#if 1
 	KeyState=0;
 	if (EventCodes & MOUSEEVENTF_LEFTDOWN)
 	{
@@ -209,21 +190,36 @@ VOID WINAPI mouse_event_impl(WORD EventCodes, WORD hMouse, WORD vMouse, WORD Num
 	if (EventCodes & MOUSEEVENTF_RIGHTUP) {
 		hardware_event(WM_RBUTTONUP, KeyState, 0, wMouseX, wMouseY, GetTickCount(), 0);
 	}
-#endif    
-//	PopDS();
 }
 
-//@todo Это вход из драйвера мыши. Надо сохранить сначала стек, потом переключиться на свой и при возврате - аернуть стек обратно.
-__declspec(naked) void WINAPI mouse_event(void)
+// mouse_event function address returned by GetMouseEventProc 
+// or directly exported (since 3.1)
+// Undocumented Windows p.477
+
+/*
+ * Register values:
+ * AX = mouse event
+ * BX = horizontal displacement if AX & ME_MOVE
+ * CX = vertical displacement if AX & ME_MOVE
+ * DX = buttons number
+ * 
+ * SI  ExtraMessageInfo for 3.1
+ * DI  ExtraMessageInfo for 3.1
+ */
+
+//@todo This function called by MOUSE.DRV. Here we need switch to our stack on entry, and trstore vack on exit.
+__declspec(naked) VOID WINAPI mouse_event(void)
 {
     _asm {
-        ; на входе AX=EventCodes, BX=hMouse, CX=vMouse, DX=NumButts
+        ; On enter AX=EventCodes, BX=hMouse, CX=vMouse, DX=NumButts
 	cli
+	; Insert switch stack here
         push ax          ; EventCodes
         push bx          ; hMouse
         push cx          ; vMouse
         push dx          ; NumButts
         call mouse_event_impl
+	; Insert switch stack here
 	sti
         retf             ; FAR return
     }
@@ -234,20 +230,19 @@ __declspec(naked) void WINAPI mouse_event(void)
 
 /***********************************************************************
  *		GetMouseEventProc (USER.337)
+ *
+ * @todo replace GetProcAddress by direct address return, because mouse_event
+ * not exported by Windows 3.0
+ * Undocumented Windows p.477
  */
 FARPROC WINAPI GetMouseEventProc(void)
 {
-//	HMODULE hModule;
 	FARPROC retVal;
-
-	PushDS();
-	SetUserHeapDS();
 	FUNCTION_START
 
 	retVal=GetProcAddress(hModuleWin, "mouse_event");
 
 	FUNCTION_END
-	PopDS();
 	return retVal;
 }
 
