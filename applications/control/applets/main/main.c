@@ -17,7 +17,6 @@ BOOL CALLBACK ColorDlgProc(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK FontsDlgProc(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK PortsDlgProc(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK PrintersDlgProc(HWND, UINT, WPARAM, LPARAM);
-BOOL CALLBACK InternationalDlgProc(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK NetworkDlgProc(HWND, UINT, WPARAM, LPARAM);
 
 /* ----- Точка входа панели управления ----- */
@@ -256,100 +255,6 @@ BOOL CALLBACK PrintersDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_COMMAND:
         if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
             EndDialog(hDlg, LOWORD(wParam));
-        return TRUE;
-    }
-    return FALSE;
-}
-
-/* ============================================================
- *  International
- * ============================================================ */
-static const char *countries[] = {
-    "United States", "Canada", "United Kingdom", "Australia",
-    "France", "Germany", "Italy", "Japan", "Spain", "Sweden",
-    NULL
-};
-static const int countryCodes[] = {1,2,44,61,33,49,39,81,34,46};
-
-BOOL CALLBACK InternationalDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    switch (msg) {
-    case WM_INITDIALOG: {
-        HWND hCountry = GetDlgItem(hDlg, IDC_INTL_COUNTRY);
-        char buf[32];
-        int i, code, sel;
-        for (i = 0; countries[i]; i++)
-            SendMessage(hCountry, CB_ADDSTRING, 0, (LPARAM)countries[i]);
-        GetProfileString("intl", "iCountry", "1", buf, sizeof(buf));
-        code = atoi(buf);
-        sel = 0;
-        for (i = 0; countryCodes[i]; i++)
-            if (countryCodes[i] == code) { sel = i; break; }
-        SendMessage(hCountry, CB_SETCURSEL, sel, 0);
-        CheckDlgButton(hDlg, IDC_INTL_MEASURE,
-            GetProfileInt("intl", "iMeasure", 0) == 0);
-        GetProfileString("intl", "sList", ",", buf, sizeof(buf));
-        SetDlgItemText(hDlg, IDC_INTL_LISTSEP, buf);
-        {
-            int iDate = GetProfileInt("intl", "iDate", 0);
-            CheckRadioButton(hDlg, IDC_INTL_DATEFORMAT, IDC_INTL_DATEFORMAT+2, IDC_INTL_DATEFORMAT+iDate);
-        }
-        {
-            int iCurr = GetProfileInt("intl", "iCurrency", 0);
-            CheckRadioButton(hDlg, IDC_INTL_CURRENCY, IDC_INTL_CURRENCY+3, IDC_INTL_CURRENCY+iCurr);
-        }
-        SetDlgItemInt(hDlg, IDC_INTL_DIGITS, GetProfileInt("intl", "iDigits", 2), FALSE);
-        CheckDlgButton(hDlg, IDC_INTL_LEADZERO, GetProfileInt("intl", "iLzero", 0));
-        CheckRadioButton(hDlg, IDC_INTL_TIMEFORMAT, IDC_INTL_TIMEFORMAT+1,
-            IDC_INTL_TIMEFORMAT + (GetProfileInt("intl", "iTime", 0) ? 1 : 0));
-        return TRUE;
-    }
-    case WM_COMMAND:
-        if (LOWORD(wParam) == IDOK) {
-            HWND hCountry = GetDlgItem(hDlg, IDC_INTL_COUNTRY);
-            int idx = (int)SendMessage(hCountry, CB_GETCURSEL, 0, 0);
-            int i;
-            if (idx >= 0) {
-                char buf[10];
-                wsprintf(buf, "%d", countryCodes[idx]);
-                WriteProfileString("intl", "iCountry", buf);
-            }
-            WriteProfileString("intl", "iMeasure",
-                IsDlgButtonChecked(hDlg, IDC_INTL_MEASURE) ? "0" : "1");
-            {
-                char buf[32];
-                GetDlgItemText(hDlg, IDC_INTL_LISTSEP, buf, sizeof(buf));
-                WriteProfileString("intl", "sList", buf);
-            }
-            for (i=0;i<3;i++)
-                if (IsDlgButtonChecked(hDlg, IDC_INTL_DATEFORMAT+i)) {
-                    char buf[4];
-                    wsprintf(buf, "%d", i);
-                    WriteProfileString("intl", "iDate", buf);
-                    break;
-                }
-            for (i=0;i<4;i++)
-                if (IsDlgButtonChecked(hDlg, IDC_INTL_CURRENCY+i)) {
-                    char buf[4];
-                    wsprintf(buf, "%d", i);
-                    WriteProfileString("intl", "iCurrency", buf);
-                    break;
-                }
-            {
-                int dig = GetDlgItemInt(hDlg, IDC_INTL_DIGITS, NULL, FALSE);
-                char buf[4];
-                wsprintf(buf, "%d", dig);
-                WriteProfileString("intl", "iDigits", buf);
-            }
-            WriteProfileString("intl", "iLzero",
-                IsDlgButtonChecked(hDlg, IDC_INTL_LEADZERO) ? "1" : "0");
-            WriteProfileString("intl", "iTime",
-                IsDlgButtonChecked(hDlg, IDC_INTL_TIMEFORMAT) ? "0" : "1");
-            EndDialog(hDlg, IDOK);
-            return TRUE;
-        }
-        if (LOWORD(wParam) == IDCANCEL)
-            EndDialog(hDlg, IDCANCEL);
         return TRUE;
     }
     return FALSE;

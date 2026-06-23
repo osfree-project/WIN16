@@ -6,7 +6,7 @@
 PROJ     = main
 TRGT     = $(PROJ).cpl
 DESC     = Main CPL
-srcfiles = $(p)main$(e) $(p)mouse$(e) $(p)keyboard$(e) $(p)time$(e) $(p)desktop$(e)
+srcfiles = $(p)main$(e) $(p)mouse$(e) $(p)keyboard$(e) $(p)time$(e) $(p)desktop$(e) $(p)inter$(e) $(p)nlsapi$(e)
 ADD_COPT = -ms -0 -sg -I=$(MYDIR)$(SEP)..$(SEP)..
 
 # linking dll file
@@ -17,7 +17,10 @@ EXPORTS = CPlApplet       .1, &
 	SystemTimerProc.4, &
 	DateTimeDlgProc.5, &
 	AnalogClockSubclassProc.6, &
-	CalendarSubclassProc. 7
+	CalendarSubclassProc.7, &
+	InternationalDlgProc.8, &
+	TimeFmtDlgProc.9, &
+	DateFmtDlgProc.10
 
 IMPORTS =   CreateSystemTimer SYSTEM.2, &
   KillSystemTimer SYSTEM.3
