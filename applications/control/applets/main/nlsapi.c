@@ -243,7 +243,7 @@ int WINAPI GetDateFormatA(LCID Locale, DWORD dwFlags, const SYSTEMTIME FAR *lpDa
 int WINAPI GetTimeFormatA(LCID Locale, DWORD dwFlags, const SYSTEMTIME FAR *lpTime,
     LPCSTR lpFormat, LPSTR lpTimeStr, int cchTime) {
     static SYSTEMTIME FAR stCur; const SYSTEMTIME FAR *pSt;
-    char fmtBuf[80], outBuf[80], *f,*out, tmp[16], szTimeSep[4], szAm[8], szPm[8];
+    char fmtBuf[80], outBuf[80], FAR *f, FAR *out, tmp[16], szTimeSep[4], szAm[8], szPm[8];
     int hour24, remain, iTime, bTLZero; WORD h;
     if (Locale == 0) Locale = LOCALE_USER_DEFAULT;
     if (Locale != LOCALE_USER_DEFAULT) return 0;
@@ -283,7 +283,7 @@ int WINAPI GetTimeFormatA(LCID Locale, DWORD dwFlags, const SYSTEMTIME FAR *lpTi
     while (*f && remain > 0) {
         if (*f == '\'') { f++; while (*f && *f != '\'' && remain > 0) { *out++ = *f++; remain--; } if (*f == '\'') f++; }
         else {
-            char *p = f; int tokLen = 0;
+            char FAR *p = f; int tokLen = 0;
             if (*p == 'h' || *p == 'H' || *p == 'm' || *p == 's' || *p == 't') {
                 if (*p == 'h' || *p == 'H') { if (p[1]==*p) tokLen=2; else tokLen=1; }
                 else if (*p == 'm' || *p == 's') { if (p[1]==*p) tokLen=2; else tokLen=1; }
