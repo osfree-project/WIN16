@@ -497,11 +497,25 @@ BOOL WINAPI InternationalDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPar
     case WM_INITDIALOG: { HWND hCombo; int i,idx; LRESULT lr; 
 	LoadSetupInfData();
 	ReadInternationalSettings();
-        hCombo=GetDlgItem(hDlg,IDC_INTL_COUNTRY);
-	for (i=0;countries[i];i++) 
-		SendMessage(hCombo,CB_ADDSTRING,0,(LPARAM)countries[i]); 
-	idx=FindCountryIndex(atoi(g_iniCountry)); 
-	SendMessage(hCombo,CB_SETCURSEL,idx,0);
+hCombo = GetDlgItem(hDlg, IDC_INTL_COUNTRY);
+for (i = 0; countries[i]; i++)
+    SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)countries[i]);
+
+/* Определяем индекс страны по имени из WIN.INI, а не по коду */
+{
+    char szCountryName[64];
+    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SCOUNTRY, szCountryName, sizeof(szCountryName));
+    idx = 0;
+    for (i = 0; countries[i]; i++) {
+        if (lstrcmpi(countries[i], szCountryName) == 0) {
+            idx = i;
+            break;
+        }
+    }
+}
+SendMessage(hCombo, CB_SETCURSEL, (WPARAM)idx, 0);
+
+
 hCombo = GetDlgItem(hDlg, IDC_INTL_LANGUAGE);
 for (i = 0; languages[i]; i++)
     SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)languages[i]);
