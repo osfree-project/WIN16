@@ -14,6 +14,7 @@
 static char FAR * countries[MAX_LIST_ITEMS];
 static int   countryCodes[MAX_LIST_ITEMS];
 static char FAR * languages[MAX_LIST_ITEMS];
+static char FAR * languageCodes[MAX_LIST_ITEMS];
 static char FAR * keyboards[MAX_LIST_ITEMS];
 
 static char FAR szMetric[] = "Metric", FAR szEnglish[] = "English";
@@ -150,28 +151,57 @@ process_line:
                                 }
                             }
                         }
-                        else if (curSection == 2) {
-                            /* key = file,"LanguageName" */
-                            LPSTR p1 = _fstrchr(p, '\"');
-                            if (p1) {
-                                LPSTR p2 = _fstrchr(p1 + 1, '\"');
-                                if (p2) {
-                                    *p2 = '\0';
-                                    lstrcpy(szLangName, p1 + 1);
-                                    if (iLang < MAX_LIST_ITEMS) {
-                                        int cb = lstrlen(szLangName) + 1;
-                                        HLOCAL hStr = LocalAlloc(LMEM_FIXED, cb);
-                                        if (hStr) {
-                                            LPSTR lpStr = (LPSTR)LocalLock(hStr);
-                                            lstrcpy(lpStr, szLangName);
-                                            languages[iLang] = lpStr;
-                                            iLang++;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        else if (curSection == 3) {
+else if (curSection == 2) {
+    /* key = file,"LanguageName" */
+    LPSTR pEq = _fstrchr(p, '=');
+    LPSTR p1;
+    char szLangCode[32];
+    if (pEq) {
+        int len = (int)(pEq - p);
+        /* удалить пробелы с конца ключа */
+        while (len > 0 && (p[len-1] == ' ' || p[len-1] == '\t')) len--;
+        if (len > 31) len = 31;
+        _fmemcpy(szLangCode, p, len);
+        szLangCode[len] = '\0';
+    } else {
+        szLangCode[0] = '\0';
+    }
+
+    p1 = _fstrchr(p, '\"');
+    if (p1) {
+        LPSTR p2 = _fstrchr(p1 + 1, '\"');
+        if (p2) {
+            *p2 = '\0';
+            lstrcpy(szLangName, p1 + 1);
+            if (iLang < MAX_LIST_ITEMS) {
+                int cb;
+                HLOCAL hStr;
+
+                /* сохран€ем код */
+                cb = lstrlen(szLangCode) + 1;
+                hStr = LocalAlloc(LMEM_FIXED, cb);
+                if (hStr) {
+                    languageCodes[iLang] = (LPSTR)LocalLock(hStr);
+                    lstrcpy(languageCodes[iLang], szLangCode);
+                } else {
+                    languageCodes[iLang] = NULL;
+                }
+
+                /* сохран€ем полное им€ */
+                cb = lstrlen(szLangName) + 1;
+                hStr = LocalAlloc(LMEM_FIXED, cb);
+                if (hStr) {
+                    languages[iLang] = (LPSTR)LocalLock(hStr);
+                    lstrcpy(languages[iLang], szLangName);
+                } else {
+                    languages[iLang] = NULL;
+                }
+
+                iLang++;
+            }
+        }
+    }
+}                        else if (curSection == 3) {
                             /* key = file,"KeyboardName" (может не быть file) */
                             LPSTR p1 = _fstrchr(p, '\"');
                             if (p1) {
@@ -467,8 +497,23 @@ BOOL WINAPI InternationalDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPar
     case WM_INITDIALOG: { HWND hCombo; int i,idx; LRESULT lr; 
 	LoadSetupInfData();
 	ReadInternationalSettings();
-        hCombo=GetDlgItem(hDlg,IDC_INTL_COUNTRY); for (i=0;countries[i];i++) SendMessage(hCombo,CB_ADDSTRING,0,(LPARAM)countries[i]); idx=FindCountryIndex(atoi(g_iniCountry)); SendMessage(hCombo,CB_SETCURSEL,idx,0);
-        hCombo=GetDlgItem(hDlg,IDC_INTL_LANGUAGE); for (i=0;languages[i];i++) SendMessage(hCombo,CB_ADDSTRING,0,(LPARAM)languages[i]); lr=SendMessage(hCombo,CB_SELECTSTRING,-1,(LPARAM)g_iniLanguage); if (lr==CB_ERR) SendMessage(hCombo,CB_SETCURSEL,0,0);
+        hCombo=GetDlgItem(hDlg,IDC_INTL_COUNTRY);
+	for (i=0;countries[i];i++) 
+		SendMessage(hCombo,CB_ADDSTRING,0,(LPARAM)countries[i]); 
+	idx=FindCountryIndex(atoi(g_iniCountry)); 
+	SendMessage(hCombo,CB_SETCURSEL,idx,0);
+hCombo = GetDlgItem(hDlg, IDC_INTL_LANGUAGE);
+for (i = 0; languages[i]; i++)
+    SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)languages[i]);
+/* »щем индекс по коду €зыка */
+idx = 0;
+for (i = 0; languageCodes[i]; i++) {
+    if (lstrcmpi(languageCodes[i], g_iniLanguage) == 0) {
+        idx = i;
+        break;
+    }
+}
+SendMessage(hCombo, CB_SETCURSEL, (WPARAM)idx, 0);
         hCombo=GetDlgItem(hDlg,IDC_INTL_KEYBOARD); for (i=0;keyboards[i];i++) SendMessage(hCombo,CB_ADDSTRING,0,(LPARAM)keyboards[i]); lr=SendMessage(hCombo,CB_SELECTSTRING,-1,(LPARAM)g_iniKeyboard); if (lr==CB_ERR) SendMessage(hCombo,CB_SETCURSEL,0,0);
         hCombo=GetDlgItem(hDlg,IDC_INTL_MEASURE); SendMessage(hCombo,CB_ADDSTRING,0,(LPARAM)szMetric); SendMessage(hCombo,CB_ADDSTRING,0,(LPARAM)szEnglish); SendMessage(hCombo,CB_SETCURSEL,g_iniMeasure?1:0,0);
         SetDlgItemText(hDlg,IDC_INTL_LISTSEP,g_iniListSep);
