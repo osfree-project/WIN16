@@ -109,8 +109,8 @@ int WINAPI GetLocaleInfoA(LCID Locale, LCTYPE LCType, LPSTR lpLCData, int cchDat
         break;
     case LOCALE_SDATE:       if (returnNumber) return 0; GetProfileString("intl","sDate","/",lpLCData,cchData); break;
     case LOCALE_STIME:       if (returnNumber) return 0; GetProfileString("intl","sTime",":",lpLCData,cchData); break;
-    case LOCALE_S1159: case LOCALE_SAM: if (returnNumber) return 0; GetProfileString("intl","s1159","AM",lpLCData,cchData); break;
-    case LOCALE_S2359: case LOCALE_SPM: if (returnNumber) return 0; GetProfileString("intl","s2359","PM",lpLCData,cchData); break;
+    case LOCALE_S1159:       if (returnNumber) return 0; GetProfileString("intl","s1159","AM",lpLCData,cchData); break;
+    case LOCALE_S2359:       if (returnNumber) return 0; GetProfileString("intl","s2359","PM",lpLCData,cchData); break;
     case LOCALE_SCURRENCY:   if (returnNumber) return 0; GetProfileString("intl","sCurrency","$",lpLCData,cchData); break;
     case LOCALE_INEGCURR:   number = GetProfileInt("intl","iNegCurr",0); break;
     case LOCALE_SDECIMAL:    if (returnNumber) return 0; GetProfileString("intl","sDecimal",".",lpLCData,cchData); break;
@@ -118,7 +118,7 @@ int WINAPI GetLocaleInfoA(LCID Locale, LCTYPE LCType, LPSTR lpLCData, int cchDat
     case LOCALE_SLIST:       if (returnNumber) return 0; GetProfileString("intl","sList",",",lpLCData,cchData); break;
     case LOCALE_SCOUNTRY:    if (returnNumber) return 0; GetProfileString("intl","sCountry","United States",lpLCData,cchData); break;
     case LOCALE_SLANGUAGE:   if (returnNumber) return 0; GetProfileString("intl","sLanguage","usa",lpLCData,cchData); break;
-    case LOCALE_SKEYBOARDTOINSTALL: if (returnNumber) return 0; GetProfileString("intl","sKeyboard","US",lpLCData,cchData); break;
+    case LOCALE_SKEYBOARDSTOINSTALL: if (returnNumber) return 0; GetProfileString("intl","sKeyboard","US",lpLCData,cchData); break;
 
     case LOCALE_ILZERO:      number = GetProfileInt("intl","iLzero",0); break;
     case LOCALE_ICURRDIGITS: number = GetProfileInt("intl","iCurrDigits",2); break;
@@ -338,8 +338,8 @@ BOOL WINAPI SetLocaleInfoA(LCID Locale, LCTYPE LCType, LPCSTR lpLCData) {
     case LOCALE_SSHORTDATE:      return WriteProfileString("intl","sShortDate",lpLCData);
     case LOCALE_SDATE:           return WriteProfileString("intl","sDate",lpLCData);
     case LOCALE_STIME:           return WriteProfileString("intl","sTime",lpLCData);
-    case LOCALE_S1159: case LOCALE_SAM: return WriteProfileString("intl","s1159",lpLCData);
-    case LOCALE_S2359: case LOCALE_SPM: return WriteProfileString("intl","s2359",lpLCData);
+    case LOCALE_S1159:           return WriteProfileString("intl","s1159",lpLCData);
+    case LOCALE_S2359:           return WriteProfileString("intl","s2359",lpLCData);
     case LOCALE_SCURRENCY:       return WriteProfileString("intl","sCurrency",lpLCData);
     case LOCALE_INEGCURR:        return WriteProfileString("intl","iNegCurr",lpLCData);
     case LOCALE_SDECIMAL:        return WriteProfileString("intl","sDecimal",lpLCData);
@@ -347,7 +347,7 @@ BOOL WINAPI SetLocaleInfoA(LCID Locale, LCTYPE LCType, LPCSTR lpLCData) {
     case LOCALE_SLIST:           return WriteProfileString("intl","sList",lpLCData);
     case LOCALE_SCOUNTRY:        return WriteProfileString("intl","sCountry",lpLCData);
     case LOCALE_SLANGUAGE:       return WriteProfileString("intl","sLanguage",lpLCData);
-    case LOCALE_SKEYBOARDTOINSTALL: return WriteProfileString("intl","sKeyboard",lpLCData);
+    case LOCALE_SKEYBOARDSTOINSTALL: return WriteProfileString("intl","sKeyboard",lpLCData);
     case LOCALE_ILZERO:          return WriteProfileString("intl","iLzero",lpLCData);
     case LOCALE_ICURRDIGITS:     return WriteProfileString("intl","iCurrDigits",lpLCData);
     case LOCALE_ICURRENCY:       return WriteProfileString("intl","iCurrency",lpLCData);

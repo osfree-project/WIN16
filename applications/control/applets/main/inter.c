@@ -257,7 +257,7 @@ else if (curSection == 2) {
 static void FAR ReadInternationalSettings(void) {
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ICOUNTRY, g_iniCountry, sizeof(g_iniCountry));
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SLANGUAGE, g_iniLanguage, sizeof(g_iniLanguage));
-    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SKEYBOARDTOINSTALL, g_iniKeyboard, sizeof(g_iniKeyboard));
+    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SKEYBOARDSTOINSTALL, g_iniKeyboard, sizeof(g_iniKeyboard));
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_IMEASURE | LOCALE_RETURN_NUMBER, (LPSTR)&g_iniMeasure, sizeof(int));
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SLIST, g_iniListSep, sizeof(g_iniListSep));
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_IDATE | LOCALE_RETURN_NUMBER, (LPSTR)&g_iniDateFormat, sizeof(int));
@@ -542,7 +542,7 @@ SendMessage(hCombo, CB_SETCURSEL, (WPARAM)idx, 0);
         case IDOK: { HWND hCombo; LRESULT idx; char buf[10];
             hCombo=GetDlgItem(hDlg,IDC_INTL_COUNTRY); idx=SendMessage(hCombo,CB_GETCURSEL,0,0); if (idx>=0) { wsprintf(buf,"%d",countryCodes[idx]); SetLocaleInfo(LOCALE_USER_DEFAULT,LOCALE_ICOUNTRY,buf); }
             hCombo=GetDlgItem(hDlg,IDC_INTL_LANGUAGE); idx=SendMessage(hCombo,CB_GETCURSEL,0,0); if (idx>=0&&idx<7) SetLocaleInfo(LOCALE_USER_DEFAULT,LOCALE_SLANGUAGE,languages[idx]);
-            hCombo=GetDlgItem(hDlg,IDC_INTL_KEYBOARD); idx=SendMessage(hCombo,CB_GETCURSEL,0,0); if (idx>=0&&idx<8) SetLocaleInfo(LOCALE_USER_DEFAULT,LOCALE_SKEYBOARDTOINSTALL,keyboards[idx]);
+            hCombo=GetDlgItem(hDlg,IDC_INTL_KEYBOARD); idx=SendMessage(hCombo,CB_GETCURSEL,0,0); if (idx>=0&&idx<8) SetLocaleInfo(LOCALE_USER_DEFAULT,LOCALE_SKEYBOARDSTOINSTALL,keyboards[idx]);
             hCombo=GetDlgItem(hDlg,IDC_INTL_MEASURE); idx=SendMessage(hCombo,CB_GETCURSEL,0,0); wsprintf(buf,"%d",idx==0?0:1); SetLocaleInfo(LOCALE_USER_DEFAULT,LOCALE_IMEASURE,buf);
             GetDlgItemText(hDlg,IDC_INTL_LISTSEP,buf,sizeof(buf)); SetLocaleInfo(LOCALE_USER_DEFAULT,LOCALE_SLIST,buf);
             wsprintf(buf,"%d",g_iniDateFormat); SetLocaleInfo(LOCALE_USER_DEFAULT,LOCALE_IDATE,buf);
