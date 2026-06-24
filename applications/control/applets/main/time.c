@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "main.h"
+#include "winnls.h"
 
 /* Spin button IDs */
 #define IDC_DT_DATE_UP       720
@@ -691,16 +692,32 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         int iDate;
 
         /* Read international settings */
-        g_bUse12Hour = (GetProfileInt("intl", "iTime", 0) == 0);
-        g_bTLZero    = (GetProfileInt("intl", "iTLZero", 1) != 0);
-        GetProfileString("intl", "sTime", ":", g_szTimeSep, sizeof(g_szTimeSep));
-        GetProfileString("intl", "s1159", "AM", g_szAm, sizeof(g_szAm));
-        GetProfileString("intl", "s2359", "PM", g_szPm, sizeof(g_szPm));
-        GetProfileString("intl", "sDate", "/", szSep, sizeof(szSep));
-        g_szDateSep[0][0] = szSep[0]; g_szDateSep[0][1] = 0;
-        g_szDateSep[1][0] = szSep[0]; g_szDateSep[1][1] = 0;
-        iDate = GetProfileInt("intl", "iDate", 0);
-        g_iDateFormat = iDate;
+{
+    int val;
+    /* Time format: 0 = 12-hour, 1 = 24-hour */
+    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ITIME | LOCALE_RETURN_NUMBER, (LPSTR)&val, sizeof(val));
+    g_bUse12Hour = (val == 0);
+
+    /* Leading zero for hours */
+    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ITLZERO | LOCALE_RETURN_NUMBER, (LPSTR)&val, sizeof(val));
+    g_bTLZero = (val != 0);
+
+    /* Time separator */
+    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_STIME, g_szTimeSep, sizeof(g_szTimeSep));
+
+    /* AM/PM strings */
+    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_S1159, g_szAm, sizeof(g_szAm));
+    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_S2359, g_szPm, sizeof(g_szPm));
+
+    /* Date separator */
+    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SDATE, szSep, sizeof(szSep));
+    g_szDateSep[0][0] = szSep[0]; g_szDateSep[0][1] = 0;
+    g_szDateSep[1][0] = szSep[0]; g_szDateSep[1][1] = 0;
+
+    /* Date order: 0=MDY, 1=DMY, 2=YMD */
+    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_IDATE | LOCALE_RETURN_NUMBER, (LPSTR)&iDate, sizeof(iDate));
+    g_iDateFormat = iDate;
+}
 
         if (iDate == 1) {
             g_dateFieldMap[0] = IDC_DT_DAY;
