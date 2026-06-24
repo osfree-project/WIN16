@@ -48,13 +48,7 @@
 #define IDC_DATEFMT_L_COMBO4     243
 #define IDC_DATEFMT_L_SAMPLE     247
 
-/* Currency Format sub-dialog */
-#define DLG_CURRFMT              442
-#define IDC_CURRFMT_SYMBOL       420
-#define IDC_CURRFMT_FMT0         421
-#define IDC_CURRFMT_FMT1         422
-#define IDC_CURRFMT_FMT2         423
-#define IDC_CURRFMT_FMT3         424
+#include "currency.h"
 
 /* Number Format sub-dialog */
 #define DLG_NUMFMT               443

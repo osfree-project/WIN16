@@ -109,6 +109,7 @@ int WINAPI GetLocaleInfoA(LCID Locale, LCTYPE LCType, LPSTR lpLCData, int cchDat
     case LOCALE_S1159: case LOCALE_SAM: if (returnNumber) return 0; GetProfileString("intl","s1159","AM",lpLCData,cchData); break;
     case LOCALE_S2359: case LOCALE_SPM: if (returnNumber) return 0; GetProfileString("intl","s2359","PM",lpLCData,cchData); break;
     case LOCALE_SCURRENCY:   if (returnNumber) return 0; GetProfileString("intl","sCurrency","$",lpLCData,cchData); break;
+    case LOCALE_INEGCURR:   number = GetProfileInt("intl","iNegCurr",0); break;
     case LOCALE_SDECIMAL:    if (returnNumber) return 0; GetProfileString("intl","sDecimal",".",lpLCData,cchData); break;
     case LOCALE_STHOUSAND:   if (returnNumber) return 0; GetProfileString("intl","sThousand",",",lpLCData,cchData); break;
     case LOCALE_SLIST:       if (returnNumber) return 0; GetProfileString("intl","sList",",",lpLCData,cchData); break;
@@ -323,6 +324,7 @@ BOOL WINAPI SetLocaleInfoA(LCID Locale, LCTYPE LCType, LPCSTR lpLCData) {
     case LOCALE_S1159: case LOCALE_SAM: return WriteProfileString("intl","s1159",lpLCData);
     case LOCALE_S2359: case LOCALE_SPM: return WriteProfileString("intl","s2359",lpLCData);
     case LOCALE_SCURRENCY:       return WriteProfileString("intl","sCurrency",lpLCData);
+    case LOCALE_INEGCURR:        return WriteProfileString("intl","iNegCurr",lpLCData);
     case LOCALE_SDECIMAL:        return WriteProfileString("intl","sDecimal",lpLCData);
     case LOCALE_STHOUSAND:       return WriteProfileString("intl","sThousand",lpLCData);
     case LOCALE_SLIST:           return WriteProfileString("intl","sList",lpLCData);

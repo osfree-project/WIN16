@@ -35,14 +35,15 @@ static char FAR szMetric[] = "Metric", FAR szEnglish[] = "English";
 
 static char g_iniCountry[8]="1", g_iniLanguage[32]="English", g_iniKeyboard[32]="US";
 static int  g_iniMeasure=0; static char g_iniListSep[4]=",";
-static int  g_iniDateFormat=0, g_iniTimeFormat=0, g_iniCurrencyFmt=0;
-static char g_iniCurrencySym[8]="$", g_iniDecimal[4]=".", g_iniThousand[4]=",";
-static int  g_iniDigits=2, g_iniLZero=0;
+int  g_iniDateFormat=0, g_iniTimeFormat=0, g_iniCurrencyFmt=0;
+char g_iniCurrencySym[8]="$", g_iniDecimal[4]=".", g_iniThousand[4]=",";
+int  g_iniDigits=2, g_iniLZero=0;
 static char g_szTimeSep[4]=":", g_szAm[8]="AM", g_szPm[8]="PM";
 static int  g_iniTLZero=0;
 static char g_szDateSep[4]="/";
 static char g_szLongDateFmt[80]="dddd, MMMM dd, yyyy";
 static char g_szShortDateFmt[80]="M/d/yy";
+int  g_iniNegCurr        = 0;
 
 static int FarStrnicmp(const char FAR *s1, const char FAR *s2, int n) {
     while (n-- > 0) { char c1=*s1++,c2=*s2++;
@@ -59,29 +60,31 @@ static void FAR GetLocalDateTime(WORD FAR *y, WORD FAR *mo, WORD FAR *d, WORD FA
     *h=time.hour; *mi=time.minute; *s=time.second;
 }
 static int DayOfWeek(int y, int m, int d) { static int t[]={0,3,2,5,0,3,5,1,4,6,2,4}; y-=m<3; return (y+y/4-y/100+y/400+t[m-1]+d)%7; }
+
 static void FAR ReadInternationalSettings(void) {
-    char buf[4];
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ICOUNTRY, g_iniCountry, sizeof(g_iniCountry));
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SLANGUAGE, g_iniLanguage, sizeof(g_iniLanguage));
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SKEYBOARDTOINSTALL, g_iniKeyboard, sizeof(g_iniKeyboard));
-    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_IMEASURE, buf, sizeof(buf)); g_iniMeasure=atoi(buf);
+    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_IMEASURE | LOCALE_RETURN_NUMBER, (LPSTR)&g_iniMeasure, sizeof(int));
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SLIST, g_iniListSep, sizeof(g_iniListSep));
-    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_IDATE, buf, sizeof(buf)); g_iniDateFormat=atoi(buf);
-    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ITIME, buf, sizeof(buf)); g_iniTimeFormat=atoi(buf);
-    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ICURRENCY, buf, sizeof(buf)); g_iniCurrencyFmt=atoi(buf);
+    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_IDATE | LOCALE_RETURN_NUMBER, (LPSTR)&g_iniDateFormat, sizeof(int));
+    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ITIME | LOCALE_RETURN_NUMBER, (LPSTR)&g_iniTimeFormat, sizeof(int));
+    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ICURRENCY | LOCALE_RETURN_NUMBER, (LPSTR)&g_iniCurrencyFmt, sizeof(int));
+    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_INEGCURR | LOCALE_RETURN_NUMBER, (LPSTR)&g_iniNegCurr, sizeof(int));
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SCURRENCY, g_iniCurrencySym, sizeof(g_iniCurrencySym));
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, g_iniDecimal, sizeof(g_iniDecimal));
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, g_iniThousand, sizeof(g_iniThousand));
-    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ICURRDIGITS, buf, sizeof(buf)); g_iniDigits=atoi(buf);
-    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ILZERO, buf, sizeof(buf)); g_iniLZero=atoi(buf);
+    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ICURRDIGITS | LOCALE_RETURN_NUMBER, (LPSTR)&g_iniDigits, sizeof(int));
+    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ILZERO | LOCALE_RETURN_NUMBER, (LPSTR)&g_iniLZero, sizeof(int));
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_STIME, g_szTimeSep, sizeof(g_szTimeSep));
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_S1159, g_szAm, sizeof(g_szAm));
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_S2359, g_szPm, sizeof(g_szPm));
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SDATE, g_szDateSep, sizeof(g_szDateSep));
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SLONGDATE, g_szLongDateFmt, sizeof(g_szLongDateFmt));
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SSHORTDATE, g_szShortDateFmt, sizeof(g_szShortDateFmt));
-    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ITLZERO, buf, sizeof(buf)); g_iniTLZero=atoi(buf);
+    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ITLZERO | LOCALE_RETURN_NUMBER, (LPSTR)&g_iniTLZero, sizeof(int));
 }
+
 static int FindCountryIndex(int code) { int i; for (i=0; countries[i]; i++) if (countryCodes[i]==code) return i; return 0; }
 
 static void FAR UpdateDateSamples(HWND hDlg) {
@@ -99,13 +102,15 @@ static void FAR UpdateTimeSample(HWND hDlg) {
     SetDlgItemText(hDlg, IDC_INTL_TIME_SAMPLE, buf);
     InvalidateRect(GetDlgItem(hDlg, IDC_INTL_TIME_SAMPLE), NULL, TRUE);
 }
+
 static void FAR UpdateCurrencySamples(HWND hDlg) {
     char buf[40];
-    wsprintf(buf, "%s1.22", g_iniCurrencySym);
+    wsprintf((LPSTR)buf, "%s1.22", (LPSTR)g_iniCurrencySym);
     SetDlgItemText(hDlg, IDC_INTL_CURR_POS, buf); InvalidateRect(GetDlgItem(hDlg, IDC_INTL_CURR_POS), NULL, TRUE);
-    wsprintf(buf, "(%s1.22)", g_iniCurrencySym);
+    wsprintf(buf, "(%s1.22)", (LPSTR)g_iniCurrencySym);
     SetDlgItemText(hDlg, IDC_INTL_CURR_NEG, buf); InvalidateRect(GetDlgItem(hDlg, IDC_INTL_CURR_NEG), NULL, TRUE);
 }
+
 static void FAR UpdateNumberSample(HWND hDlg) {
     char buf[40];
     wsprintf(buf, "1%s234%s4444", g_iniThousand, g_iniDecimal);
@@ -131,6 +136,7 @@ static void FAR SaveOriginalPositions(HWND hDlg) {
     for (i=0;i<7;i++) { g_hwndAll[i]=hwndItems[i]; GetWindowRect(hwndItems[i],&rc); g_width[i]=rc.right-rc.left; g_height[i]=rc.bottom-rc.top; }
     for (i=0;i<6;i++) { RECT rL,rR; GetWindowRect(hwndItems[i],&rL); GetWindowRect(hwndItems[i+1],&rR); g_gap[i]=rR.left-rL.right; }
 }
+
 static void FAR ArrangeLongDateOrder(HWND hDlg, int order) {
     HWND hwndRow[7]; int i;
     if (order==0) { hwndRow[0]=GetDlgItem(hDlg,IDC_DATEFMT_L_COMBO4); hwndRow[1]=GetDlgItem(hDlg,IDC_DATEFMT_L_EDIT1); hwndRow[2]=GetDlgItem(hDlg,IDC_DATEFMT_L_COMBO1); hwndRow[3]=GetDlgItem(hDlg,IDC_DATEFMT_L_EDIT2); hwndRow[4]=GetDlgItem(hDlg,IDC_DATEFMT_L_COMBO2); hwndRow[5]=GetDlgItem(hDlg,IDC_DATEFMT_L_EDIT3); hwndRow[6]=GetDlgItem(hDlg,IDC_DATEFMT_L_COMBO3); }
@@ -138,6 +144,7 @@ static void FAR ArrangeLongDateOrder(HWND hDlg, int order) {
     else { hwndRow[0]=GetDlgItem(hDlg,IDC_DATEFMT_L_COMBO3); hwndRow[1]=GetDlgItem(hDlg,IDC_DATEFMT_L_EDIT1); hwndRow[2]=GetDlgItem(hDlg,IDC_DATEFMT_L_COMBO1); hwndRow[3]=GetDlgItem(hDlg,IDC_DATEFMT_L_EDIT2); hwndRow[4]=GetDlgItem(hDlg,IDC_DATEFMT_L_COMBO2); hwndRow[5]=GetDlgItem(hDlg,IDC_DATEFMT_L_EDIT3); hwndRow[6]=GetDlgItem(hDlg,IDC_DATEFMT_L_COMBO4); }
     { int x=g_rowX; for (i=0;i<7;i++) { int k; for (k=0;k<7;k++) if (g_hwndAll[k]==hwndRow[i]) break; SetWindowPos(hwndRow[i],NULL,x,g_rowY,g_width[k],g_height[k],SWP_NOZORDER|SWP_NOACTIVATE); if (i<6) x+=g_width[k]+g_gap[i]; } }
 }
+
 static void FAR FillComboWithDateValues(HWND hDlg, WORD year, WORD month, WORD day) {
     char buf[32]; HWND hCombo; int dow=DayOfWeek(year,month,day); LCTYPE lcFull, lcAbbr;
     hCombo=GetDlgItem(hDlg,IDC_DATEFMT_L_COMBO1); SendMessage(hCombo,CB_RESETCONTENT,0,0);
@@ -275,31 +282,6 @@ BOOL WINAPI TimeFmtDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam) {
     return FALSE;
 }
 
-BOOL WINAPI CurrencyFmtDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam) {
-    switch (msg) {
-    case WM_INITDIALOG:
-        SetDlgItemText(hDlg,IDC_CURRFMT_SYMBOL,g_iniCurrencySym);
-        CheckRadioButton(hDlg,IDC_CURRFMT_FMT0,IDC_CURRFMT_FMT3,IDC_CURRFMT_FMT0+g_iniCurrencyFmt); return TRUE;
-    case WM_COMMAND:
-        if (HIWORD(lParam)==BN_CLICKED) {
-            switch (wParam) {
-                case IDC_CURRFMT_FMT0: case IDC_CURRFMT_FMT1: case IDC_CURRFMT_FMT2: case IDC_CURRFMT_FMT3:
-                    CheckRadioButton(hDlg,IDC_CURRFMT_FMT0,IDC_CURRFMT_FMT3,wParam); break;
-            }
-        }
-        if (wParam==IDOK) {
-            GetDlgItemText(hDlg,IDC_CURRFMT_SYMBOL,g_iniCurrencySym,sizeof(g_iniCurrencySym));
-            if (IsDlgButtonChecked(hDlg,IDC_CURRFMT_FMT0)) g_iniCurrencyFmt=0;
-            else if (IsDlgButtonChecked(hDlg,IDC_CURRFMT_FMT1)) g_iniCurrencyFmt=1;
-            else if (IsDlgButtonChecked(hDlg,IDC_CURRFMT_FMT2)) g_iniCurrencyFmt=2;
-            else g_iniCurrencyFmt=3;
-            EndDialog(hDlg,IDOK); return TRUE;
-        }
-        if (wParam==IDCANCEL) EndDialog(hDlg,IDCANCEL); return TRUE;
-    }
-    return FALSE;
-}
-
 BOOL WINAPI NumberFmtDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
     case WM_INITDIALOG:
@@ -326,9 +308,9 @@ BOOL WINAPI InternationalDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPar
         hCombo=GetDlgItem(hDlg,IDC_INTL_MEASURE); SendMessage(hCombo,CB_ADDSTRING,0,(LPARAM)szMetric); SendMessage(hCombo,CB_ADDSTRING,0,(LPARAM)szEnglish); SendMessage(hCombo,CB_SETCURSEL,g_iniMeasure?1:0,0);
         SetDlgItemText(hDlg,IDC_INTL_LISTSEP,g_iniListSep);
         UpdateDateSamples(hDlg);
-#if 0
 	UpdateTimeSample(hDlg);
 	UpdateCurrencySamples(hDlg);
+#if 0
 	UpdateNumberSample(hDlg);
 #endif
         return TRUE; }
@@ -343,6 +325,7 @@ BOOL WINAPI InternationalDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPar
             wsprintf(buf,"%d",g_iniTimeFormat); SetLocaleInfo(LOCALE_USER_DEFAULT,LOCALE_ITIME,buf);
             wsprintf(buf,"%d",g_iniCurrencyFmt); SetLocaleInfo(LOCALE_USER_DEFAULT,LOCALE_ICURRENCY,buf);
             SetLocaleInfo(LOCALE_USER_DEFAULT,LOCALE_SCURRENCY,g_iniCurrencySym);
+            wsprintf(buf, "%d", g_iniNegCurr); SetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_INEGCURR, buf);
             SetLocaleInfo(LOCALE_USER_DEFAULT,LOCALE_SDECIMAL,g_iniDecimal);
             SetLocaleInfo(LOCALE_USER_DEFAULT,LOCALE_STHOUSAND,g_iniThousand);
             wsprintf(buf,"%d",g_iniDigits); SetLocaleInfo(LOCALE_USER_DEFAULT,LOCALE_ICURRDIGITS,buf);
