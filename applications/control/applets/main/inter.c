@@ -9,28 +9,13 @@
 #include "main.h"
 #include "winnls.h"
 
-static char FAR szCountry1[] = "United States";
-static char FAR szCountry2[] = "Canada";
-static char FAR szCountry3[] = "United Kingdom";
-static char FAR szCountry4[] = "Australia";
-static char FAR szCountry5[] = "France";
-static char FAR szCountry6[] = "Germany";
-static char FAR szCountry7[] = "Italy";
-static char FAR szCountry8[] = "Japan";
-static char FAR szCountry9[] = "Spain";
-static char FAR szCountry10[] = "Sweden";
-static char FAR * countries[] = { szCountry1,szCountry2,szCountry3,szCountry4,szCountry5,szCountry6,szCountry7,szCountry8,szCountry9,szCountry10,NULL };
-static int countryCodes[] = { 1,2,44,61,33,49,39,81,34,46 };
-static char FAR szLang1[] = "English"; static char FAR szLang2[] = "French";
-static char FAR szLang3[] = "German";  static char FAR szLang4[] = "Spanish";
-static char FAR szLang5[] = "Italian"; static char FAR szLang6[] = "Swedish";
-static char FAR szLang7[] = "Japanese";
-static char FAR * languages[] = { szLang1,szLang2,szLang3,szLang4,szLang5,szLang6,szLang7,NULL };
-static char FAR szKeyb1[] = "US"; static char FAR szKeyb2[] = "British";
-static char FAR szKeyb3[] = "French"; static char FAR szKeyb4[] = "German";
-static char FAR szKeyb5[] = "Spanish"; static char FAR szKeyb6[] = "Italian";
-static char FAR szKeyb7[] = "Swedish"; static char FAR szKeyb8[] = "Japanese";
-static char FAR * keyboards[] = { szKeyb1,szKeyb2,szKeyb3,szKeyb4,szKeyb5,szKeyb6,szKeyb7,szKeyb8,NULL };
+#define MAX_LIST_ITEMS  64
+
+static char FAR * countries[MAX_LIST_ITEMS];
+static int   countryCodes[MAX_LIST_ITEMS];
+static char FAR * languages[MAX_LIST_ITEMS];
+static char FAR * keyboards[MAX_LIST_ITEMS];
+
 static char FAR szMetric[] = "Metric", FAR szEnglish[] = "English";
 
 static char g_iniCountry[8]="1", g_iniLanguage[32]="English", g_iniKeyboard[32]="US";
@@ -60,6 +45,184 @@ static void FAR GetLocalDateTime(WORD FAR *y, WORD FAR *mo, WORD FAR *d, WORD FA
     *h=time.hour; *mi=time.minute; *s=time.second;
 }
 static int DayOfWeek(int y, int m, int d) { static int t[]={0,3,2,5,0,3,5,1,4,6,2,4}; y-=m<3; return (y+y/4-y/100+y/400+t[m-1]+d)%7; }
+
+static void FAR LoadSetupInfData(void)
+{
+    char szPath[144];
+    OFSTRUCT of;
+    HFILE hFile;
+    char szReadBuf[512];
+    char szLine[256];
+    int nLinePos = 0;
+    int nRead, i;
+    BOOL bEOF = FALSE;
+
+    char szCountryName[64];
+    char szParams[128];
+    char szLangName[64];
+    char szKbdName[64];
+    int iCountry = 0, iLang = 0, iKbd = 0;
+    int curSection = 0;  /* 0=none, 1=country, 2=language, 3=keyboard.tables */
+
+    GetSystemDirectory(szPath, sizeof(szPath) - 20);
+    lstrcat(szPath, "\\SETUP.INF");
+
+    hFile = OpenFile(szPath, &of, OF_READ);
+    if (hFile == HFILE_ERROR) {
+        countries[0] = NULL;
+        languages[0] = NULL;
+        keyboards[0] = NULL;
+        return;
+    }
+
+    _fmemset(countries, 0, sizeof(countries));
+    _fmemset(languages, 0, sizeof(languages));
+    _fmemset(keyboards, 0, sizeof(keyboards));
+    _fmemset(countryCodes, 0, sizeof(countryCodes));
+
+    while (!bEOF) {
+        nRead = _lread(hFile, szReadBuf, sizeof(szReadBuf));
+        if (nRead == HFILE_ERROR || nRead == 0) {
+            bEOF = TRUE;
+            if (nLinePos > 0) {
+                szLine[nLinePos] = '\0';
+                goto process_line;
+            }
+            break;
+        }
+
+        for (i = 0; i < nRead; i++) {
+            char c = szReadBuf[i];
+            if (c == '\r' || c == '\n') {
+                szLine[nLinePos] = '\0';
+process_line:
+                if (nLinePos > 0) {
+                    LPSTR p = szLine;
+                    while (*p == ' ' || *p == '\t') p++;
+                    if (*p != '\0' && *p != ';') {
+                        if (*p == '[') {
+                            LPSTR q = _fstrchr(p + 1, ']');
+                            if (q) {
+                                *q = '\0';
+                                if (lstrcmpi(p + 1, "country") == 0)
+                                    curSection = 1;
+                                else if (lstrcmpi(p + 1, "language") == 0)
+                                    curSection = 2;
+                                else if (lstrcmpi(p + 1, "keyboard.tables") == 0)
+                                    curSection = 3;
+                                else
+                                    curSection = 0;
+                            }
+                        }
+                        else if (curSection == 1) {
+                            /* "Country Name","param1!param2!..." */
+                            LPSTR p1 = _fstrchr(p, '\"');
+                            if (p1) {
+                                LPSTR p2 = _fstrchr(p1 + 1, '\"');
+                                if (p2) {
+                                    *p2 = '\0';
+                                    lstrcpy(szCountryName, p1 + 1);
+                                    p1 = _fstrchr(p2 + 1, '\"');
+                                    if (p1) {
+                                        p2 = _fstrchr(p1 + 1, '\"');
+                                        if (p2) {
+                                            *p2 = '\0';
+                                            lstrcpy(szParams, p1 + 1);
+                                            {
+                                                LPSTR pExcl = _fstrchr(szParams, '!');
+                                                int code = 0;
+                                                if (pExcl) *pExcl = '\0';
+                                                code = atoi(szParams);
+                                                if (iCountry < MAX_LIST_ITEMS) {
+                                                    int cb = lstrlen(szCountryName) + 1;
+                                                    HLOCAL hStr = LocalAlloc(LMEM_FIXED, cb);
+                                                    if (hStr) {
+                                                        LPSTR lpStr = (LPSTR)LocalLock(hStr);
+                                                        lstrcpy(lpStr, szCountryName);
+                                                        countries[iCountry] = lpStr;
+                                                        countryCodes[iCountry] = code;
+                                                        iCountry++;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else if (curSection == 2) {
+                            /* key = file,"LanguageName" */
+                            LPSTR p1 = _fstrchr(p, '\"');
+                            if (p1) {
+                                LPSTR p2 = _fstrchr(p1 + 1, '\"');
+                                if (p2) {
+                                    *p2 = '\0';
+                                    lstrcpy(szLangName, p1 + 1);
+                                    if (iLang < MAX_LIST_ITEMS) {
+                                        int cb = lstrlen(szLangName) + 1;
+                                        HLOCAL hStr = LocalAlloc(LMEM_FIXED, cb);
+                                        if (hStr) {
+                                            LPSTR lpStr = (LPSTR)LocalLock(hStr);
+                                            lstrcpy(lpStr, szLangName);
+                                            languages[iLang] = lpStr;
+                                            iLang++;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else if (curSection == 3) {
+                            /* key = file,"KeyboardName" (может не быть file) */
+                            LPSTR p1 = _fstrchr(p, '\"');
+                            if (p1) {
+                                LPSTR p2 = _fstrchr(p1 + 1, '\"');
+                                if (p2) {
+                                    *p2 = '\0';
+                                    lstrcpy(szKbdName, p1 + 1);
+                                    /* проверка на дубликат: две записи "US" – добавляем только одну */
+                                    {
+                                        int j;
+                                        BOOL bDup = FALSE;
+                                        for (j = 0; j < iKbd; j++) {
+                                            if (lstrcmpi(keyboards[j], szKbdName) == 0) {
+                                                bDup = TRUE;
+                                                break;
+                                            }
+                                        }
+                                        if (!bDup && iKbd < MAX_LIST_ITEMS) {
+                                            int cb = lstrlen(szKbdName) + 1;
+                                            HLOCAL hStr = LocalAlloc(LMEM_FIXED, cb);
+                                            if (hStr) {
+                                                LPSTR lpStr = (LPSTR)LocalLock(hStr);
+                                                lstrcpy(lpStr, szKbdName);
+                                                keyboards[iKbd] = lpStr;
+                                                iKbd++;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                nLinePos = 0;
+                if (c == '\r' && i + 1 < nRead && szReadBuf[i + 1] == '\n') {
+                    i++;
+                }
+            } else {
+                if (nLinePos < (int)sizeof(szLine) - 1) {
+                    szLine[nLinePos++] = c;
+                }
+            }
+        }
+    }
+
+    _lclose(hFile);
+
+    countries[iCountry] = NULL;
+    languages[iLang] = NULL;
+    keyboards[iKbd] = NULL;
+}
 
 static void FAR ReadInternationalSettings(void) {
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ICOUNTRY, g_iniCountry, sizeof(g_iniCountry));
@@ -301,7 +464,9 @@ BOOL WINAPI NumberFmtDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam) 
 
 BOOL WINAPI InternationalDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
-    case WM_INITDIALOG: { HWND hCombo; int i,idx; LRESULT lr; ReadInternationalSettings();
+    case WM_INITDIALOG: { HWND hCombo; int i,idx; LRESULT lr; 
+	LoadSetupInfData();
+	ReadInternationalSettings();
         hCombo=GetDlgItem(hDlg,IDC_INTL_COUNTRY); for (i=0;countries[i];i++) SendMessage(hCombo,CB_ADDSTRING,0,(LPARAM)countries[i]); idx=FindCountryIndex(atoi(g_iniCountry)); SendMessage(hCombo,CB_SETCURSEL,idx,0);
         hCombo=GetDlgItem(hDlg,IDC_INTL_LANGUAGE); for (i=0;languages[i];i++) SendMessage(hCombo,CB_ADDSTRING,0,(LPARAM)languages[i]); lr=SendMessage(hCombo,CB_SELECTSTRING,-1,(LPARAM)g_iniLanguage); if (lr==CB_ERR) SendMessage(hCombo,CB_SETCURSEL,0,0);
         hCombo=GetDlgItem(hDlg,IDC_INTL_KEYBOARD); for (i=0;keyboards[i];i++) SendMessage(hCombo,CB_ADDSTRING,0,(LPARAM)keyboards[i]); lr=SendMessage(hCombo,CB_SELECTSTRING,-1,(LPARAM)g_iniKeyboard); if (lr==CB_ERR) SendMessage(hCombo,CB_SETCURSEL,0,0);
