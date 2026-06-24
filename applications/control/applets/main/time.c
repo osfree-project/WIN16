@@ -480,10 +480,9 @@ static void DrawArrow(HDC dc, RECT* rc, BOOL left)
 
 static void DrawCalendar(HDC dc, int width, int height)
 {
-    static const char far * monthNames[] = {
-        "January","February","March","April","May","June",
-        "July","August","September","October","November","December"
-    };
+    char szMonthName[32];
+    char szDayNames[7][8];
+    char szDayHeader[64];
     char buf[40];
     static RECT rc, rArrow, cellRect;
     HBRUSH hBr;
@@ -493,7 +492,7 @@ static void DrawCalendar(HDC dc, int width, int height)
     int thisMonth = g_calMonth, thisYear = g_calYear;
     HFONT hFont, hOldFont;
     int a, y, m;
-    int textYOffset;
+    int iDay;
 
     /* Background */
     rc.left = 0; rc.top = 0; rc.right = width; rc.bottom = height;
@@ -507,9 +506,23 @@ static void DrawCalendar(HDC dc, int width, int height)
     SetBkMode(dc, TRANSPARENT);
     SetTextColor(dc, HandColor);
 
+    /* Month name from NLS API */
+    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SMONTHNAME1 + thisMonth - 1,
+                  szMonthName, sizeof(szMonthName));
+
+    /* Abbreviated day names: 1=Mon..7=Sun. We rearrange to Sun first. */
+for (iDay = 0; iDay < 7; iDay++) {
+    LCTYPE lc = (iDay == 0) ? LOCALE_SSHORTESTDAYNAME7
+                            : LOCALE_SSHORTESTDAYNAME1 + iDay - 1;
+    GetLocaleInfo(LOCALE_USER_DEFAULT, lc, szDayNames[iDay], sizeof(szDayNames[0]));
+}
+    wsprintf(szDayHeader, "%s %s %s %s %s %s %s",
+             szDayNames[0], szDayNames[1], szDayNames[2], szDayNames[3],
+             szDayNames[4], szDayNames[5], szDayNames[6]);
+
     /* Header (16 pixels) */
     rc.left = 16; rc.top = 0; rc.right = width - 16; rc.bottom = 16;
-    wsprintf(buf, "%s %u", monthNames[thisMonth-1], thisYear);
+    wsprintf(buf, "%s %u", szMonthName, thisYear);
     DrawText(dc, buf, -1, &rc, DT_CENTER | DT_TOP | DT_SINGLELINE);
 
     /* Left arrow */
@@ -519,17 +532,15 @@ static void DrawCalendar(HDC dc, int width, int height)
     rArrow.left = width - 16; rArrow.top = 2; rArrow.right = width - 2; rArrow.bottom = 14;
     DrawArrow(dc, &rArrow, FALSE);
 
-    /* Day names (16 pixels, no more clipping) */
+    /* Day names (16 pixels) */
     rc.left = 0; rc.top = 16; rc.right = width; rc.bottom = 32;
-    DrawText(dc, "Su Mo Tu We Th Fr Sa", -1, &rc, DT_CENTER | DT_TOP | DT_SINGLELINE);
+    DrawText(dc, szDayHeader, -1, &rc, DT_CENTER | DT_TOP | DT_SINGLELINE);
 
     /* Grid – 50 pixels remaining (32..82) */
     cellW = (width - 4) / 7;
-    cellH = (height - 32) / 6;   /* (82-32)/6 = 8 */
+    cellH = (height - 32) / 6;
     startY = 32;
     startX = 2;
-
-    textYOffset = 0;   /* 8px font in 8px cell – perfectly fits */
 
     a = (14 - thisMonth) / 12;
     y = thisYear - a;

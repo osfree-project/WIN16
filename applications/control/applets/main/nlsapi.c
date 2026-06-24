@@ -23,6 +23,9 @@ static const char FAR *DayFull[] = {
 static const char FAR *DayAbbr[] = {
     "Sun","Mon","Tue","Wed","Thu","Fri","Sat"
 };
+static const char FAR *DayShort[] = {
+    "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"
+};
 
 static int FAR MyStrnicmp(const char FAR *s1, const char FAR *s2, int n) {
     while (n-- > 0) { char c1=*s1++,c2=*s2++;
@@ -151,6 +154,20 @@ int WINAPI GetLocaleInfoA(LCID Locale, LCTYPE LCType, LPSTR lpLCData, int cchDat
     case LOCALE_SABBREVDAYNAME5: if (returnNumber) return 0; lstrcpy(lpLCData, DayAbbr[5]); break;
     case LOCALE_SABBREVDAYNAME6: if (returnNumber) return 0; lstrcpy(lpLCData, DayAbbr[6]); break;
     case LOCALE_SABBREVDAYNAME7: if (returnNumber) return 0; lstrcpy(lpLCData, DayAbbr[0]); break;
+
+case LOCALE_SSHORTESTDAYNAME1:
+case LOCALE_SSHORTESTDAYNAME2:
+case LOCALE_SSHORTESTDAYNAME3:
+case LOCALE_SSHORTESTDAYNAME4:
+case LOCALE_SSHORTESTDAYNAME5:
+case LOCALE_SSHORTESTDAYNAME6:
+case LOCALE_SSHORTESTDAYNAME7:
+{
+    int idx = (LCType - LOCALE_SSHORTESTDAYNAME1 + 1) % 7; /* 1->Mo(1), 7->Su(0) */
+    if (returnNumber) return 0;
+    lstrcpy(lpLCData, DayShort[idx]);
+    break;
+}
 
     case LOCALE_SMONTHNAME1:  if (returnNumber) return 0; lstrcpy(lpLCData, MonthFull[0]); break;
     case LOCALE_SMONTHNAME2:  if (returnNumber) return 0; lstrcpy(lpLCData, MonthFull[1]); break;
