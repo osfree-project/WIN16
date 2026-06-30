@@ -1,0 +1,96 @@
+#include <windows.h>
+#include "paint.h"
+#include "toolbox.h"
+
+MAINMENU MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&New",        IDM_FILE_NEW
+        MENUITEM "&Open...",    IDM_FILE_OPEN
+        MENUITEM "&Save",       IDM_FILE_SAVE
+        MENUITEM "Save &as...", IDM_FILE_SAVEAS
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",       IDM_FILE_EXIT
+    END
+    POPUP "&Edit"
+    BEGIN
+        MENUITEM "&Color...",   IDM_EDIT_COLOR
+        MENUITEM SEPARATOR
+        MENUITEM "&Select All", IDM_EDIT_SELECTALL
+        MENUITEM "&Copy",       IDM_EDIT_COPY
+        MENUITEM "&Paste",      IDM_EDIT_PASTE
+        MENUITEM "C&lear",      IDM_EDIT_CLEAR
+    END
+    POPUP "&Tools"
+    BEGIN
+        MENUITEM "&Pen",        IDM_TOOL_PEN
+        MENUITEM "&Line",       IDM_TOOL_LINE
+        MENUITEM "&Rectangle",  IDM_TOOL_RECT
+        MENUITEM "&Ellipse",    IDM_TOOL_ELLIPSE
+        MENUITEM "&Fill",       IDM_TOOL_FILL
+        MENUITEM "&Eraser",     IDM_TOOL_ERASER
+        MENUITEM "Color &Pick", IDM_TOOL_COLORPICK
+        MENUITEM "&Select",     IDM_TOOL_SELECT
+    END
+    POPUP "&Image"
+    BEGIN
+        MENUITEM "&Invert",     IDM_IMAGE_INVERT
+        MENUITEM "Flip &Horizontal", IDM_IMAGE_FLIPH
+        MENUITEM "Flip &Vertical",   IDM_IMAGE_FLIPV
+        MENUITEM "Rotate &90",  IDM_IMAGE_ROT90
+        MENUITEM "Rotate &180", IDM_IMAGE_ROT180
+        MENUITEM "Rotate &270", IDM_IMAGE_ROT270
+    END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "&Zoom 1x",    IDM_VIEW_ZOOM1
+        MENUITEM "Zoom &2x",    IDM_VIEW_ZOOM2
+        MENUITEM "Zoom &4x",    IDM_VIEW_ZOOM4
+        MENUITEM "Zoom &8x",    IDM_VIEW_ZOOM8
+        MENUITEM "&Grid",       IDM_VIEW_GRID
+        MENUITEM "&Palette",    IDM_VIEW_PALETTE
+        MENUITEM "&Toolbox",    IDM_VIEW_TOOLBOX
+    END
+END
+
+IDD_OPENFILE DIALOG 50, 50, 220, 120
+STYLE WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Open File"
+BEGIN
+    LTEXT "File name:", -1, 10, 10, 50, 10
+    EDITTEXT IDC_FILENAME, 70, 8, 140, 12
+    LTEXT "Files:", -1, 10, 30, 50, 10
+    LISTBOX IDC_FILELIST, 70, 28, 140, 40, LBS_NOTIFY | WS_BORDER | WS_VSCROLL
+    LTEXT "Drive:", -1, 10, 80, 50, 10
+    COMBOBOX IDC_DRIVELIST, 70, 78, 60, 40, CBS_DROPDOWNLIST | WS_VSCROLL
+    DEFPUSHBUTTON "OK", IDOK, 180, 8, 30, 14
+    PUSHBUTTON "Cancel", IDCANCEL, 180, 28, 30, 14
+END
+
+IDD_SAVEFILE DIALOG 50, 50, 220, 70
+STYLE WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Save As"
+BEGIN
+    LTEXT "File name:", -1, 10, 10, 50, 10
+    EDITTEXT IDC_FILENAME, 70, 8, 140, 12
+    DEFPUSHBUTTON "OK", IDOK, 180, 8, 30, 14
+    PUSHBUTTON "Cancel", IDCANCEL, 180, 28, 30, 14
+END
+
+IDD_COLOR DIALOG 50, 50, 120, 120
+STYLE WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Choose Color"
+BEGIN
+END
+
+IDB_TOOLBARICONS BITMAP "toolbar.bmp"
+
+/* Custom cursors as icons (converted to cursor in code) */
+IDC_PEN_CURSOR      CURSOR  "pen_cur.cur"
+IDC_FILL_CURSOR     CURSOR  "fill_cur.cur"
+IDC_COLOR_CURSOR    CURSOR  "color_cur.cur"
+IDC_ZOOM_CURSOR     CURSOR  "zoom_cur.cur"
+IDC_AIRBRUSH_CURSOR CURSOR  "airbrush_cur.cur"
+
+1 ICON "paint.ico"
