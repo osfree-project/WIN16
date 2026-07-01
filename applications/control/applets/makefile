@@ -5,7 +5,7 @@
 #
 
 
-DIRS = calc clipbrd clock notepad pifedit progman sysedit taskman winhelp winmine winver reversi pbrush control
+DIRS = main
 
 !include $(%ROOT)tools/mk/all.mk
 

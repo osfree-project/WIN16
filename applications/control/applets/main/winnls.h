@@ -1,6 +1,6 @@
 /*
  * winnls.h - Win16-совместимые объявления для NLS API
- *            Значения приведены к стандарту (см. olenls.h / winnls.h).
+ *            Полный файл без сокращений, для Windows 3.0
  */
 #ifndef _WINNLS_H_
 #define _WINNLS_H_
@@ -31,6 +31,7 @@ typedef SYSTEMTIME FAR *LPSYSTEMTIME;
 
 /* ------ Строковые типы ------ */
 #define LOCALE_SLANGUAGE             0x00000002L   /* localized name of locale */
+#define LOCALE_SABBREVLANGNAME       0x00000003L
 #define LOCALE_SCOUNTRY              0x00000006L   /* localized name of country/region */
 #define LOCALE_SLIST                 0x0000000CL
 #define LOCALE_SDECIMAL              0x0000000EL
@@ -140,6 +141,39 @@ typedef SYSTEMTIME FAR *LPSYSTEMTIME;
 #define TIME_NOTIMEMARKER            0x00000004L
 #define TIME_FORCE24HOURFORMAT       0x00000008L
 
+/* ------ Типы для колбэков перечисления ------ */
+typedef BOOL (CALLBACK FAR * LOCALE_ENUMPROCA)(LPSTR);
+typedef BOOL (CALLBACK FAR * UILANGUAGE_ENUMPROCA)(LPSTR, LONG);
+typedef BOOL (CALLBACK FAR * DATEFMT_ENUMPROCA)(LPSTR);
+typedef BOOL (CALLBACK FAR * TIMEFMT_ENUMPROCA)(LPSTR);
+typedef BOOL (CALLBACK FAR * CALINFO_ENUMPROCA)(LPSTR);
+
+/* Типы для календарей */
+typedef DWORD CALID;
+typedef DWORD CALTYPE;
+
+#define CAL_GREGORIAN           1
+
+/* CALTYPE */
+#define CAL_ICALINTVALUE        0x00000001
+#define CAL_SCALNAME            0x00000002
+#define CAL_SSHORTDATE          0x00000005
+#define CAL_SLONGDATE           0x00000006
+#define CAL_SDAYNAME1           0x00000007
+#define CAL_SDAYNAME2           0x00000008
+#define CAL_SDAYNAME3           0x00000009
+#define CAL_SDAYNAME4           0x0000000A
+#define CAL_SDAYNAME5           0x0000000B
+#define CAL_SDAYNAME6           0x0000000C
+#define CAL_SDAYNAME7           0x0000000D
+#define CAL_SABBREVDAYNAME1     0x0000000E
+#define CAL_SABBREVDAYNAME2     0x0000000F
+#define CAL_SABBREVDAYNAME3     0x00000010
+#define CAL_SABBREVDAYNAME4     0x00000011
+#define CAL_SABBREVDAYNAME5     0x00000012
+#define CAL_SABBREVDAYNAME6     0x00000013
+#define CAL_SABBREVDAYNAME7     0x00000014
+
 /* ------ Прототипы ------ */
 int WINAPI GetDateFormatA(LCID, DWORD, const SYSTEMTIME FAR *, LPCSTR, LPSTR, int);
 int WINAPI GetTimeFormatA(LCID, DWORD, const SYSTEMTIME FAR *, LPCSTR, LPSTR, int);
@@ -150,10 +184,22 @@ BOOL WINAPI SetThreadLocale(LCID);
 LCID WINAPI GetSystemDefaultLCID(void);
 LCID WINAPI GetUserDefaultLCID(void);
 
+BOOL WINAPI EnumSystemLocalesA(LOCALE_ENUMPROCA lpLocaleEnumProc, DWORD dwFlags);
+BOOL WINAPI EnumUILanguagesA(UILANGUAGE_ENUMPROCA lpUILanguageEnumProc, DWORD dwFlags, LONG lParam);
+BOOL WINAPI EnumDateFormatsA(DATEFMT_ENUMPROCA lpDateFmtEnumProc, LCID Locale, DWORD dwFlags);
+BOOL WINAPI EnumTimeFormatsA(TIMEFMT_ENUMPROCA lpTimeFmtEnumProc, LCID Locale, DWORD dwFlags);
+BOOL WINAPI EnumCalendarInfoA(CALINFO_ENUMPROCA lpCalInfoEnumProc, LCID Locale, CALID Calendar, CALTYPE CalType);
+BOOL WINAPI GetLanguageCodeFromName(LPCSTR lpszName, LPSTR lpszCode, int cchCode);
+
+/* Аналог Win32 GetKeyboardLayoutList */
+int WINAPI GetKeyboardLayoutList(int nBuff, LPSTR lpList);
+
 #define GetDateFormat  GetDateFormatA
 #define GetTimeFormat  GetTimeFormatA
 #define GetLocaleInfo  GetLocaleInfoA
 #define SetLocaleInfo  SetLocaleInfoA
+#define EnumSystemLocales EnumSystemLocalesA
+#define EnumUILanguages EnumUILanguagesA
 
 #ifdef __cplusplus
 }

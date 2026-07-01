@@ -435,11 +435,11 @@ LRESULT WINAPI AnalogClockSubclassProc(HWND hWnd, UINT msg, WPARAM wParam, LPARA
         g_hwndClockPlaceholder = NULL;
         g_oldClockProc = NULL;
         if (oldProc)
-            return CallWindowProc(oldProc, hWnd, msg, wParam, lParam);
+            return CallWindowProc((FARPROC)oldProc, hWnd, msg, wParam, lParam);
         return 0;
     }
     if (oldProc)
-        return CallWindowProc(oldProc, hWnd, msg, wParam, lParam);
+        return CallWindowProc((FARPROC)oldProc, hWnd, msg, wParam, lParam);
     return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
@@ -677,11 +677,11 @@ LRESULT WINAPI CalendarSubclassProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
         g_hwndCalPlaceholder = NULL;
         g_oldCalProc = NULL;
         if (oldProc)
-            return CallWindowProc(oldProc, hWnd, msg, wParam, lParam);
+            return CallWindowProc((FARPROC)oldProc, hWnd, msg, wParam, lParam);
         return 0;
     }
     if (oldProc)
-        return CallWindowProc(oldProc, hWnd, msg, wParam, lParam);
+        return CallWindowProc((FARPROC)oldProc, hWnd, msg, wParam, lParam);
     return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 

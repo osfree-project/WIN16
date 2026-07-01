@@ -21,7 +21,9 @@ EXPORTS = CPlApplet       .1, &
 	InternationalDlgProc.8, &
 	TimeFmtDlgProc.9, &
 	DateFmtDlgProc.10, &
-	CurrencyFmtDlgProc.11
+	CurrencyFmtDlgProc.11, &
+        LangEnumProc.12, &
+        GetLanguageCodeFromName.13
 
 IMPORTS =   CreateSystemTimer SYSTEM.2, &
   KillSystemTimer SYSTEM.3

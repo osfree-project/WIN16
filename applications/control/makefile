@@ -8,11 +8,14 @@ PROJ1 = control
 TRGT = $(PROJ1).exe
 DESC = osFree Janus Control Panel
 srcfiles = $(p)control$(e) 
+HEAPSIZE = 20k
 
 # defines additional options for C compiler
 ADD_COPT = -sg -0
 
 EXPORTS = MainWndProc.1
+
+DIRS=applets
 
 !include $(%ROOT)tools/mk/appsw16.mk
 
