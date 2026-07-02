@@ -11,7 +11,7 @@ srcfiles = $(p)control$(e)
 HEAPSIZE = 20k
 
 # defines additional options for C compiler
-ADD_COPT = -sg -0
+ADD_COPT = -sg -0 -I=$(MYDIR)$(SEP)..$(SEP)include
 
 EXPORTS = MainWndProc.1
 
