@@ -6,8 +6,9 @@
 PROJ     = main
 TRGT     = $(PROJ).cpl
 DESC     = Main CPL
-srcfiles = $(p)main$(e) $(p)mouse$(e) $(p)keyboard$(e) $(p)time$(e) $(p)desktop$(e) $(p)inter$(e) $(p)currency$(e) $(p)nlsapi$(e)
-ADD_COPT = -ms -0 -sg -I=$(MYDIR)$(SEP)..$(SEP)..
+srcfiles = $(p)main$(e) $(p)mouse$(e) $(p)keyboard$(e) $(p)time$(e) $(p)desktop$(e) $(p)inter$(e) $(p)currency$(e)
+ADD_COPT = -ms -0 -sg -I=$(MYDIR)$(SEP)..$(SEP).. -I=$(MYDIR)$(SEP)..$(SEP)..$(SEP)..$(SEP)include
+ADD_LINKOPT = lib nlsapi.lib
 
 # linking dll file
 DLL     = 1
@@ -21,9 +22,7 @@ EXPORTS = CPlApplet       .1, &
 	InternationalDlgProc.8, &
 	TimeFmtDlgProc.9, &
 	DateFmtDlgProc.10, &
-	CurrencyFmtDlgProc.11, &
-        LangEnumProc.12, &
-        GetLanguageCodeFromName.13
+	CurrencyFmtDlgProc.11
 
 IMPORTS =   CreateSystemTimer SYSTEM.2, &
   KillSystemTimer SYSTEM.3
