@@ -5,6 +5,7 @@
 PROJ = nlsapi
 TRGT = $(PROJ).lib
 srcfiles = $(p)nlsapi$(e)
+ADD_COPT = -I=$(MYDIR)..$(SEP)..$(SEP)include
 
 !include $(%ROOT)tools/mk/libsw16.mk
 

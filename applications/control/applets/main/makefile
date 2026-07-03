@@ -39,4 +39,4 @@ TARGETS = $(PATH)$(PROJ).cpl
 
 $(PATH)$(PROJ).cpl: $(PATH)$(PROJ).dll $(MYDIR)$(PROJ).rc
  @$(SAY) RESCMP   $^. $(LOG)
- @$(RC) -q -30 -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win
+ @$(RC) -q -30 -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win -i=$(MYDIR)$(SEP)..$(SEP)..$(SEP)..$(SEP)include
