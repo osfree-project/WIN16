@@ -6,8 +6,6 @@
 
 BOOL WINAPI __export EnumSystemLocalesA(LOCALE_ENUMPROCA lpLocaleEnumProc, DWORD dwFlags)
 {
-    static char szPath[144];
-    OFSTRUCT of;
     HFILE hFile;
     static char szReadBuf[512];
     static char szLine[256];
@@ -24,7 +22,7 @@ BOOL WINAPI __export EnumSystemLocalesA(LOCALE_ENUMPROCA lpLocaleEnumProc, DWORD
     static char szCountryName[64];
     static char szCode[16];
     static char szLang[8];
-    int code;
+    static int code;
     LCID lcid;
     char szLCID[16];
     int len;
@@ -35,17 +33,8 @@ BOOL WINAPI __export EnumSystemLocalesA(LOCALE_ENUMPROCA lpLocaleEnumProc, DWORD
 
     if (!lpLocaleEnumProc) return FALSE;
 
-    GetSystemDirectory(szPath, sizeof(szPath) - 20);
-    lstrcat(szPath, "\\SETUP.INF");
-
-//    MessageBox(0, "EnumSystemLocales: opening file", "Trace", MB_OK);
-
-    hFile = OpenFile(szPath, &of, OF_READ);
-    if (hFile == HFILE_ERROR) {
-//        MessageBox(0, "EnumSystemLocales: FAILED to open SETUP.INF", "Trace", MB_OK);
-        return FALSE;
-    }
-//    MessageBox(0, "EnumSystemLocales: file opened OK", "Trace", MB_OK);
+    hFile = OpenSetupInf();
+    if (hFile == HFILE_ERROR) return FALSE;
 
     while (!bEOF && bContinue) {
         nRead = _lread(hFile, szReadBuf, sizeof(szReadBuf));
@@ -85,111 +74,14 @@ parse_enum:
 //                            MessageBox(0, szMsg, "EnumSystemLocales: raw line", MB_OK);
 //                        }
 
-                        p1 = (char FAR *)_fstrchr(p, '\"');
-                        if (p1) {
-                            p2 = (char FAR *)_fstrchr(p1 + 1, '\"');
-                            if (p2) {
-                                /* ----- »звлекаем им€ страны (перва€ пара кавычек) ----- */
-                                nameLen = 0;
-                                {
-                                    char FAR *tmp = p1 + 1;
-                                    while (tmp < p2 && nameLen < 63) {
-                                        nameLen++;
-                                        tmp++;
-                                    }
-                                }
-                                {
-                                    int k;
-                                    for (k = 0; k < nameLen; k++) {
-                                        szCountryName[k] = (char)(*(p1 + 1 + k));
-                                    }
-                                    szCountryName[nameLen] = '\0';
-                                }
+                        ParseCountryLine(p, (LPSTR)szCountryName, sizeof(szCountryName), (int FAR *)&code, (LPSTR)szLang, sizeof(szLang), (LPSTR)szParams, sizeof(szParams));
 
-                                /* ѕокажем им€ страны и его длину */
 //                                {
-//                                    char szMsg[128];
-//                                    wsprintf(szMsg, "Country name length: %d", nameLen);
-//                                    MessageBox(0, szMsg, "EnumSystemLocales", MB_OK);
-//                                }
-//                                {
-//                                    char szMsg[128];
-//                                    wsprintf(szMsg, "Country name: '%s'", (LPSTR)szCountryName);
+//                                    char szMsg[300];
+//                                    wsprintf(szMsg, "Country name: '%s'\nParams: '%s'\ncode=%d", (LPSTR)szCountryName, (LPSTR)szParams, code);
 //                                    MessageBox(0, szMsg, "EnumSystemLocales", MB_OK);
 //                                }
 
-                                /* ----- »щем параметры (втора€ пара кавычек) ----- */
-                                p1 = (char FAR *)_fstrchr(p2 + 1, '\"');
-                                if (p1) {
-//                                    MessageBox(0, "EnumSystemLocales: found start of params", "Trace", MB_OK);
-                                    p2 = (char FAR *)_fstrchr(p1 + 1, '\"');
-                                    if (p2) {
-//                                        MessageBox(0, "EnumSystemLocales: found end of params", "Trace", MB_OK);
-
-                                        /* Ѕезопасное копирование параметров через индекс */
-                                        len = 0;
-                                        {
-                                            const char FAR *src = p1 + 1;
-                                            while (src + len < p2 && len < 255) {
-                                                len++;
-                                            }
-                                        }
-                                        {
-                                            int k;
-                                            for (k = 0; k < len; k++) {
-                                                szParams[k] = (char)(*(p1 + 1 + k));
-                                            }
-                                        }
-                                        szParams[len] = '\0';
-
-                                        /* “рассировка параметров */
-//                                        {
-//                                            char szMsg[300];
-//                                            wsprintf(szMsg, "Params: '%s'", (LPSTR)szParams);
-//                                            MessageBox(0, szMsg, "EnumSystemLocales", MB_OK);
-//                                        }
-
-                                        /* извлекаем код страны (первое поле) */
-                                        pos = 0;
-                                        while (pos < len && szParams[pos] != '!' && pos < 15)
-                                        {
-                                            szCode[pos] = szParams[pos];
-                                            pos++;
-                                        }
-                                        szCode[pos] = '\0';
-//                                        MessageBox(0, (LPSTR)szCode, "EnumSystemLocales", MB_OK);
-                                        /* “рассировка извлечЄнного кода */
-//                                        {
-//                                            char szMsg[128];
-//                                            wsprintf(szMsg, "Code substring: '%s', pos=%d", (LPSTR)szCode, pos);
-//                                            MessageBox(0, szMsg, "EnumSystemLocales", MB_OK);
-//                                        }
-
-                                        code = AtoiFar(szCode);
-
-//                                        {
-//                                            char szMsg[128];
-//                                            wsprintf(szMsg, "code=%d", code);
-//                                            MessageBox(0, szMsg, "EnumSystemLocales", MB_OK);
-//                                        }
-                                        /* ===================================================== */
-
-                                        /* извлекаем код €зыка (последнее поле после последнего '!') */
-                                        totalLen = lstrlen((LPSTR)szParams);
-                                        pos = totalLen - 1;
-                                        while (pos >= 0 && szParams[pos] != '!') {
-                                            pos--;
-                                        }
-                                        if (pos >= 0 && pos < totalLen - 1) {
-                                            langLen = 0;
-                                            pos++;
-                                            while (pos < totalLen && langLen < 7) {
-                                                szLang[langLen++] = szParams[pos++];
-                                            }
-                                            szLang[langLen] = '\0';
-                                        } else {
-                                            lstrcpy(szLang, "eng");
-                                        }
 
                                         /* “рассировка: код страны и €зык */
 //                                        {
@@ -214,10 +106,12 @@ parse_enum:
                                         } else {
 //                                            MessageBox(0, "EnumSystemLocales: callback returned TRUE", "Trace", MB_OK);
                                         }
+#if 0
                                     }
                                 }
                             }
                         }
+#endif
                     }
                 }
                 nLinePos = 0;
@@ -235,10 +129,10 @@ parse_enum:
 }
 
 
-BOOL WINAPI EnumUILanguagesA(UILANGUAGE_ENUMPROCA lpUILanguageEnumProc, DWORD dwFlags, LONG lParam)
+BOOL WINAPI __export EnumUILanguagesA(UILANGUAGE_ENUMPROCA lpUILanguageEnumProc, DWORD dwFlags, LONG lParam)
 {
-    static char szPath[144];
-    OFSTRUCT of;
+//    static char szPath[144];
+//    OFSTRUCT of;
     HFILE hFile;
     static char szReadBuf[512];
     static char szLine[256];
@@ -257,10 +151,7 @@ BOOL WINAPI EnumUILanguagesA(UILANGUAGE_ENUMPROCA lpUILanguageEnumProc, DWORD dw
 
     if (!lpUILanguageEnumProc) return FALSE;
 
-    GetSystemDirectory(szPath, sizeof(szPath) - 20);
-    lstrcat(szPath, "\\SETUP.INF");
-
-    hFile = OpenFile(szPath, &of, OF_READ);
+    hFile = OpenSetupInf();
     if (hFile == HFILE_ERROR) return FALSE;
 
     while (!bEOF && bContinue) {

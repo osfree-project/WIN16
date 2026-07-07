@@ -34,4 +34,8 @@ void StringCopyN(LPSTR dest, LPCSTR src, int n);
 /* Сравнение строк без учёта регистра (far) */
 int MyStrnicmp(const char FAR *s1, const char FAR *s2, int n);
 
+/* Парсер INF */
+HFILE OpenSetupInf(void);
+BOOL ParseCountryLine(LPCSTR line, LPSTR name, int nameSize, int FAR * lpCode, LPSTR lang, int langSize, LPSTR params, int paramsSize);
+
 #endif

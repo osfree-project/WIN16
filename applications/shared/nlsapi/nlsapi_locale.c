@@ -52,8 +52,6 @@ BOOL GetLocaleInfoFromInf(int iCountryCode, const char FAR *szLang,
                           LCTYPE LCType, LPSTR lpLCData, int cchData,
                           BOOL returnNumber)
 {
-    static char szPath[144];
-    OFSTRUCT of;
     HFILE hFile;
     static char szReadBuf[512];
     static char szLine[256];
@@ -74,6 +72,7 @@ BOOL GetLocaleInfoFromInf(int iCountryCode, const char FAR *szLang,
     int fieldIdx;
     char FAR *pField;
     int cur;
+    static int code;
     int len, totalLen, pos, langLen;
     static char szCountryName[64];
     int countryNameLen;
@@ -81,19 +80,8 @@ BOOL GetLocaleInfoFromInf(int iCountryCode, const char FAR *szLang,
     wsprintf(szTargetCountryCode, "%d", iCountryCode);
     lstrcpy(szTargetLang, szLang);
 
-    /* ----- отладка: вход в функцию ----- */
-//    {
-//        char szMsg[128];
-//        wsprintf(szMsg, "GetLocaleInfoFromInf: country=%d, lang=%s, LCTYPE=0x%08lX",
-//                 iCountryCode, (LPSTR)szLang, LCType);
-//        MessageBox(0, szMsg, "GetLocaleInfoFromInf", MB_OK);
-//    }
-
-    GetSystemDirectory(szPath, sizeof(szPath) - 20);
-    lstrcat(szPath, "\\SETUP.INF");
-    hFile = OpenFile(szPath, &of, OF_READ);
+    hFile = OpenSetupInf();
     if (hFile == HFILE_ERROR) {
-//        MessageBox(0, "GetLocaleInfoFromInf: FAILED to open SETUP.INF", "Trace", MB_OK);
         return FALSE;
     }
 
@@ -116,79 +104,18 @@ parse_line:
                         q = (char FAR *)_fstrchr(p + 1, ']');
                         if (q) { *q = '\0'; bInCountry = (lstrcmpi(p + 1, "country") == 0); }
                     } else if (bInCountry && *p != '\0' && *p != ';') {
-                        /* ----- отладка: сырая строка ----- */
-//                        {
-//                            char szMsg[300];
-//                            wsprintf(szMsg, "Raw line: %s", (LPSTR)p);
-//                            MessageBox(0, szMsg, "GetLocaleInfoFromInf", MB_OK);
-//                        }
 
-                        p1 = (char FAR *)_fstrchr(p, '\"');
-                        if (p1) {
-                            p2 = (char FAR *)_fstrchr(p1 + 1, '\"');
-                            if (p2) {
-                                /* Имя страны (посимвольно) */
-                                countryNameLen = 0;
-                                {
-                                    char FAR *tmp = p1 + 1;
-                                    while (tmp < p2 && countryNameLen < 63)
-                                        szCountryName[countryNameLen++] = *tmp++;
-                                }
-                                szCountryName[countryNameLen] = '\0';
-
-                                /* ----- отладка: имя страны ----- */
-//                                {
-//                                    char szMsg[128];
-//                                    wsprintf(szMsg, "Country name: '%s'", (LPSTR)szCountryName);
-//                                    MessageBox(0, szMsg, "GetLocaleInfoFromInf", MB_OK);
-//                                }
-
-                                p1 = (char FAR *)_fstrchr(p2 + 1, '\"');
-                                if (p1) {
-                                    p2 = (char FAR *)_fstrchr(p1 + 1, '\"');
-                                    if (p2) {
-                                        /* Параметры (посимвольно) */
-                                        len = 0;
-                                        {
-                                            char FAR *tmp = p1 + 1;
-                                            while (tmp < p2 && len < 255) {
-                                                szParams[len++] = *tmp++;
-                                            }
-                                        }
-                                        szParams[len] = '\0';
-
-                                        /* ----- отладка: параметры ----- */
-//                                        {
-//                                            char szMsg[300];
-//                                            wsprintf(szMsg, "Params: '%s'", (LPSTR)szParams);
-//                                            MessageBox(0, szMsg, "GetLocaleInfoFromInf", MB_OK);
-//                                        }
-
-                                        /* Код страны */
-                                        pos = 0;
-                                        while (pos < len && szParams[pos] != '!' && pos < 15)
-                                            szFirstParam[pos] = szParams[pos], pos++;
-                                        szFirstParam[pos] = '\0';
+                        ParseCountryLine(p, (LPSTR)szCountryName, sizeof(szCountryName), (int FAR *)&code, (LPSTR)szFileLang, sizeof(szFileLang), (LPSTR)szParams, sizeof(szParams));
 
                                         /* ----- отладка: код страны и сравнение ----- */
 //                                        {
 //                                            char szMsg[128];
-//                                            wsprintf(szMsg, "First param='%s', target='%s'",
-//                                                     (LPSTR)szFirstParam, (LPSTR)szTargetCountryCode);
+//                                            wsprintf(szMsg, "First param='%d', target='%d'",
+//                                                     code, iCountryCode);
 //                                            MessageBox(0, szMsg, "GetLocaleInfoFromInf", MB_OK);
 //                                        }
 
-                                        if (lstrcmp(szFirstParam, szTargetCountryCode) == 0) {
-                                            /* Код языка */
-                                            totalLen = lstrlen(szParams);
-                                            pos = totalLen - 1;
-                                            while (pos >= 0 && szParams[pos] != '!') pos--;
-                                            if (pos >= 0 && pos < totalLen - 1) {
-                                                langLen = 0; pos++;
-                                                while (pos < totalLen && langLen < 15)
-                                                    szFileLang[langLen++] = szParams[pos++];
-                                                szFileLang[langLen] = '\0';
-                                            } else lstrcpy(szFileLang, "eng");
+                                        if (code==iCountryCode) {
 
                                             /* ----- отладка: код языка и сравнение ----- */
 //                                            {
@@ -200,7 +127,6 @@ parse_line:
 
                                             if (lstrcmpi(szFileLang, szTargetLang) == 0) {
 //                                                MessageBox(0, "MATCH FOUND", "GetLocaleInfoFromInf", MB_OK);
-
                                                 if (LCType == LOCALE_SCOUNTRY) {
                                                     StringCopyN(lpLCData, szCountryName, cchData);
                                                     bFound = TRUE;
@@ -251,10 +177,10 @@ parse_line:
                                             }
                                         }
                                     }
-                                }
-                            }
-                        }
-                    }
+//                                }
+//                            }
+//                        }
+//                    }
                 }
                 nLinePos = 0;
                 if (c == '\r' && i + 1 < nRead && szReadBuf[i + 1] == '\n') i++;
@@ -275,8 +201,6 @@ parse_line:
 
 int WINAPI __export GetKeyboardLayoutList(int nBuff, LPSTR lpList)
 {
-    static char szPath[144];
-    OFSTRUCT of;
     HFILE hFile;
     static char szReadBuf[512];
     static char szLine[256];
@@ -294,9 +218,7 @@ int WINAPI __export GetKeyboardLayoutList(int nBuff, LPSTR lpList)
     int j;
     BOOL bDup;
 
-    GetSystemDirectory(szPath, sizeof(szPath) - 20);
-    lstrcat(szPath, "\\SETUP.INF");
-    hFile = OpenFile(szPath, &of, OF_READ);
+    hFile = OpenSetupInf();
     if (hFile == HFILE_ERROR) return 0;
 
     while (!bEOF) {

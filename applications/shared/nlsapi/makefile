@@ -4,7 +4,7 @@
 
 PROJ = nlsapi
 TRGT = $(PROJ).lib
-srcfiles = $(p)nlsapi_enum$(e) $(p)nlsapi_locale$(e) $(p)nlsapi_main$(e)
+srcfiles = $(p)nlsapi_enum$(e) $(p)nlsapi_locale$(e) $(p)nlsapi_main$(e) $(p)nlsapi_utils$(e)
 ADD_COPT = -0 -I=$(MYDIR)..$(SEP)..$(SEP)include
 
 

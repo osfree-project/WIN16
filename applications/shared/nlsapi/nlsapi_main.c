@@ -84,31 +84,6 @@ static int GetLongDateOrder(const char FAR *fmt) {
     return 0;
 }
 
-/* Безопасное преобразование FAR-строки в int */
-int AtoiFar(const char FAR *s)
-{
-    int result = 0;
-    int sign = 1;
-    while (*s == ' ' || *s == '\t') s++;
-    if (*s == '-') { sign = -1; s++; }
-    else if (*s == '+') { s++; }
-    while (*s >= '0' && *s <= '9') {
-        result = result * 10 + (*s - '0');
-        s++;
-    }
-    return sign * result;
-}
-
-/* Безопасное копирование строки с ограничением длины (far-совместимая) */
-void StringCopyN(LPSTR dest, LPCSTR src, int n)
-{
-    int i;
-    if (n <= 0) return;
-    for (i = 0; i < n - 1 && src[i] != '\0'; i++)
-        dest[i] = src[i];
-    dest[i] = '\0';
-}
-
 /* ================================================================== */
 int WINAPI __export GetLocaleInfoA(LCID Locale, LCTYPE LCType, LPSTR lpLCData, int cchData) {
     int number = 0;
