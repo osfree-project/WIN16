@@ -174,6 +174,9 @@ typedef DWORD CALTYPE;
 #define CAL_SABBREVDAYNAME6     0x00000013
 #define CAL_SABBREVDAYNAME7     0x00000014
 
+#define MUI_LANGUAGE_ID   0x4
+#define MUI_LANGUAGE_NAME 0x8
+
 /* ------ Прототипы ------ */
 int WINAPI GetDateFormatA(LCID, DWORD, const SYSTEMTIME FAR *, LPCSTR, LPSTR, int);
 int WINAPI GetTimeFormatA(LCID, DWORD, const SYSTEMTIME FAR *, LPCSTR, LPSTR, int);
@@ -189,7 +192,6 @@ BOOL WINAPI EnumUILanguagesA(UILANGUAGE_ENUMPROCA lpUILanguageEnumProc, DWORD dw
 BOOL WINAPI EnumDateFormatsA(DATEFMT_ENUMPROCA lpDateFmtEnumProc, LCID Locale, DWORD dwFlags);
 BOOL WINAPI EnumTimeFormatsA(TIMEFMT_ENUMPROCA lpTimeFmtEnumProc, LCID Locale, DWORD dwFlags);
 BOOL WINAPI EnumCalendarInfoA(CALINFO_ENUMPROCA lpCalInfoEnumProc, LCID Locale, CALID Calendar, CALTYPE CalType);
-BOOL WINAPI GetLanguageCodeFromName(LPCSTR lpszName, LPSTR lpszCode, int cchCode);
 
 /* Аналог Win32 GetKeyboardLayoutList */
 int WINAPI GetKeyboardLayoutList(int nBuff, LPSTR lpList);

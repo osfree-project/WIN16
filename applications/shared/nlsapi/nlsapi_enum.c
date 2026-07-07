@@ -1,0 +1,374 @@
+/*
+ * nlsapi_enum.c – функции перечисления NLS API
+ * Полный файл, безопасное копирование через индексы, C89, с трассировкой.
+ */
+#include "nlsapi_internal.h"
+
+BOOL WINAPI EnumSystemLocalesA(LOCALE_ENUMPROCA lpLocaleEnumProc, DWORD dwFlags)
+{
+    static char szPath[144];
+    OFSTRUCT of;
+    HFILE hFile;
+    static char szReadBuf[512];
+    static char szLine[256];
+    int nLinePos = 0;
+    int nRead, i;
+    BOOL bEOF = FALSE;
+    BOOL bInCountry = FALSE;
+    BOOL bContinue = TRUE;
+    char FAR *p;
+    char FAR *q;
+    char FAR *p1;
+    char FAR *p2;
+    static char szParams[256];
+    char szCode[16];
+    char szLang[8];
+    int code;
+    LCID lcid;
+    char szLCID[16];
+    int len;
+    int pos;
+    int totalLen;
+    int langLen;
+
+    if (!lpLocaleEnumProc) return FALSE;
+
+    GetSystemDirectory(szPath, sizeof(szPath) - 20);
+    lstrcat(szPath, "\\SETUP.INF");
+
+    MessageBox(0, "EnumSystemLocales: opening file", "Trace", MB_OK);
+
+    hFile = OpenFile(szPath, &of, OF_READ);
+    if (hFile == HFILE_ERROR) {
+        MessageBox(0, "EnumSystemLocales: FAILED to open SETUP.INF", "Trace", MB_OK);
+        return FALSE;
+    }
+    MessageBox(0, "EnumSystemLocales: file opened OK", "Trace", MB_OK);
+
+    while (!bEOF && bContinue) {
+        nRead = _lread(hFile, szReadBuf, sizeof(szReadBuf));
+        if (nRead == HFILE_ERROR || nRead == 0) {
+            MessageBox(0, "EnumSystemLocales: read error or EOF", "Trace", MB_OK);
+            bEOF = TRUE;
+            if (nLinePos > 0) {
+                szLine[nLinePos] = '\0';
+                goto parse_enum;
+            }
+            break;
+        }
+//        MessageBox(0, "EnumSystemLocales: read OK", "Trace", MB_OK);
+
+        for (i = 0; i < nRead && bContinue; i++) {
+            char c = szReadBuf[i];
+            if (c == '\r' || c == '\n') {
+                szLine[nLinePos] = '\0';
+//                MessageBox(0, "EnumSystemLocales: entering parse_enum", "Trace", MB_OK);
+parse_enum:
+                if (nLinePos > 0) {
+//                    MessageBox(0, "EnumSystemLocales: nLinePos > 0", "Trace", MB_OK);
+                    p = szLine;
+                    while (*p == ' ' || *p == '\t') p++;
+                    if (*p == '[') {
+                        q = (char FAR *)_fstrchr(p + 1, ']');
+                        if (q) {
+                            *q = '\0';
+                            bInCountry = (lstrcmpi(p + 1, "country") == 0);
+                            if (bInCountry)
+                                MessageBox(0, "EnumSystemLocales: found [country]", "Trace", MB_OK);
+                        }
+                    } else if (bInCountry && *p != '\0' && *p != ';') {
+                        MessageBox(0, "EnumSystemLocales: line in [country]", "Trace", MB_OK);
+                        p1 = (char FAR *)_fstrchr(p, '\"');
+                        if (p1) {
+                            p2 = (char FAR *)_fstrchr(p1 + 1, '\"');
+                            if (p2) {
+                                MessageBox(0, "EnumSystemLocales: found first quoted string (country name)", "Trace", MB_OK);
+                                p1 = (char FAR *)_fstrchr(p2 + 1, '\"');
+                                if (p1) {
+                                    MessageBox(0, "EnumSystemLocales: found start of params", "Trace", MB_OK);
+                                    p2 = (char FAR *)_fstrchr(p1 + 1, '\"');
+                                    if (p2) {
+                                        MessageBox(0, "EnumSystemLocales: found end of params", "Trace", MB_OK);
+
+                                        /* Безопасное копирование параметров через индекс */
+                                        len = 0;
+                                        {
+                                            const char FAR *src = p1 + 1;
+                                            while (src + len < p2 && len < 255) {
+                                                len++;
+                                            }
+                                        }
+                                        {
+                                            int k;
+                                            for (k = 0; k < len; k++) {
+                                                szParams[k] = (char)(*(p1 + 1 + k));
+                                            }
+                                        }
+                                        szParams[len] = '\0';
+
+                                        /* Трассировка параметров */
+                                        {
+                                            char szMsg[300];
+                                            wsprintf(szMsg, "Params: %s", szParams);
+                                            MessageBox(0, szMsg, "EnumSystemLocales", MB_OK);
+                                        }
+
+                                        /* извлекаем код страны (первое поле) */
+                                        pos = 0;
+                                        while (pos < len && szParams[pos] != '!' && pos < 15)
+                                        {
+                                            szCode[pos] = szParams[pos];
+                                            pos++;
+                                        }
+                                        szCode[pos] = '\0';
+                                        code = AtoiFar(szCode);
+
+                                        /* извлекаем код языка (последнее поле после последнего '!') */
+                                        totalLen = lstrlen(szParams);
+                                        pos = totalLen - 1;
+                                        while (pos >= 0 && szParams[pos] != '!') {
+                                            pos--;
+                                        }
+                                        if (pos >= 0 && pos < totalLen - 1) {
+                                            langLen = 0;
+                                            pos++;
+                                            while (pos < totalLen && langLen < 7) {
+                                                szLang[langLen++] = szParams[pos++];
+                                            }
+                                            szLang[langLen] = '\0';
+                                        } else {
+                                            lstrcpy(szLang, "eng");
+                                        }
+
+                                        /* Трассировка: код страны и язык */
+                                        {
+                                            char szMsg[128];
+                                            wsprintf(szMsg, "code=%d, lang='%s'", code, szLang);
+                                            MessageBox(0, szMsg, "EnumSystemLocales", MB_OK);
+                                        }
+
+                                        lcid = LookupLCID(code, szLang);
+                                        wsprintf(szLCID, "%08lX", lcid);
+
+                                        /* Трассировка: LCID */
+                                        {
+                                            char szMsg[128];
+                                            wsprintf(szMsg, "LCID=%s", szLCID);
+                                            MessageBox(0, szMsg, "EnumSystemLocales: before callback", MB_OK);
+                                        }
+
+                                        if (!lpLocaleEnumProc(szLCID)) {
+                                            MessageBox(0, "EnumSystemLocales: callback returned FALSE", "Trace", MB_OK);
+                                            bContinue = FALSE;
+                                        } else {
+                                            MessageBox(0, "EnumSystemLocales: callback returned TRUE", "Trace", MB_OK);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                nLinePos = 0;
+                if (c == '\r' && i + 1 < nRead && szReadBuf[i + 1] == '\n') i++;
+            } else {
+                if (nLinePos < (int)sizeof(szLine) - 1)
+                    szLine[nLinePos++] = c;
+            }
+        }
+    }
+
+    _lclose(hFile);
+    MessageBox(0, "EnumSystemLocales: function end", "Trace", MB_OK);
+    return TRUE;
+}
+
+BOOL WINAPI EnumUILanguagesA(UILANGUAGE_ENUMPROCA lpUILanguageEnumProc, DWORD dwFlags, LONG lParam)
+{
+    static char szPath[144];
+    OFSTRUCT of;
+    HFILE hFile;
+    static char szReadBuf[512];
+    static char szLine[256];
+    int nLinePos = 0;
+    int nRead, i;
+    BOOL bEOF = FALSE;
+    BOOL bInLang = FALSE;
+    BOOL bContinue = TRUE;
+    char FAR *p;
+    char FAR *q;
+    char FAR *p1;
+    char FAR *p2;
+    static char szLangName[64];
+    int len;
+    static char szKey[32];
+
+    if (!lpUILanguageEnumProc) return FALSE;
+
+    GetSystemDirectory(szPath, sizeof(szPath) - 20);
+    lstrcat(szPath, "\\SETUP.INF");
+
+    hFile = OpenFile(szPath, &of, OF_READ);
+    if (hFile == HFILE_ERROR) return FALSE;
+
+    while (!bEOF && bContinue) {
+        nRead = _lread(hFile, szReadBuf, sizeof(szReadBuf));
+        if (nRead == HFILE_ERROR || nRead == 0) {
+            bEOF = TRUE;
+            if (nLinePos > 0) {
+                szLine[nLinePos] = '\0';
+                goto lang_parse;
+            }
+            break;
+        }
+        for (i = 0; i < nRead && bContinue; i++) {
+            char c = szReadBuf[i];
+            if (c == '\r' || c == '\n') {
+                szLine[nLinePos] = '\0';
+lang_parse:
+                if (nLinePos > 0) {
+                    p = szLine;
+                    while (*p == ' ' || *p == '\t') p++;
+                    if (*p == '[') {
+                        q = (char FAR *)_fstrchr(p + 1, ']');
+                        if (q) {
+                            *q = '\0';
+                            bInLang = (lstrcmpi(p + 1, "language") == 0);
+                        }
+                    } else if (bInLang && *p != '\0' && *p != ';') {
+                        if (dwFlags == MUI_LANGUAGE_ID) {
+                            char FAR *pEq = (char FAR *)_fstrchr(p, '=');
+                            if (pEq) {
+                                int keyLen = (int)(pEq - p);
+                                while (keyLen > 0 && (p[keyLen-1] == ' ' || p[keyLen-1] == '\t')) keyLen--;
+                                if (keyLen > 0) {
+                                    if (keyLen > 31) keyLen = 31;
+                                    {
+                                        int k;
+                                        for (k = 0; k < keyLen; k++) szKey[k] = p[k];
+                                        szKey[k] = '\0';
+                                    }
+                                    if (!lpUILanguageEnumProc(szKey, lParam))
+                                        bContinue = FALSE;
+                                }
+                            }
+                        } else { /* MUI_LANGUAGE_NAME */
+                            p1 = (char FAR *)_fstrchr(p, '\"');
+                            if (p1) {
+                                p2 = (char FAR *)_fstrchr(p1 + 1, '\"');
+                                if (p2) {
+                                    len = 0;
+                                    {
+                                        char FAR *tmp = p1 + 1;
+                                        while (tmp < p2 && len < 63) {
+                                            szLangName[len++] = *tmp++;
+                                        }
+                                    }
+                                    szLangName[len] = '\0';
+                                    if (!lpUILanguageEnumProc(szLangName, lParam))
+                                        bContinue = FALSE;
+                                }
+                            }
+                        }
+                    }
+                }
+                nLinePos = 0;
+                if (c == '\r' && i + 1 < nRead && szReadBuf[i + 1] == '\n') i++;
+            } else {
+                if (nLinePos < (int)sizeof(szLine) - 1)
+                    szLine[nLinePos++] = c;
+            }
+        }
+    }
+
+    _lclose(hFile);
+    return TRUE;
+}
+
+BOOL WINAPI EnumDateFormatsA(DATEFMT_ENUMPROCA lpDateFmtEnumProc, LCID Locale, DWORD dwFlags)
+{
+    char szFormat[80];
+    if (!lpDateFmtEnumProc) return FALSE;
+
+    if (GetLocaleInfoA(Locale, LOCALE_SSHORTDATE, szFormat, sizeof(szFormat)))
+        if (!lpDateFmtEnumProc(szFormat)) return TRUE;
+
+    if (GetLocaleInfoA(Locale, LOCALE_SLONGDATE, szFormat, sizeof(szFormat)))
+        lpDateFmtEnumProc(szFormat);
+
+    return TRUE;
+}
+
+BOOL WINAPI EnumTimeFormatsA(TIMEFMT_ENUMPROCA lpTimeFmtEnumProc, LCID Locale, DWORD dwFlags)
+{
+    char szFormat[80];
+    int iTime;
+    char szTimeSep[4];
+    int bTLZero;
+    int val;
+
+    if (!lpTimeFmtEnumProc) return FALSE;
+
+    GetLocaleInfoA(Locale, LOCALE_STIME, szTimeSep, sizeof(szTimeSep));
+    GetLocaleInfoA(Locale, LOCALE_ITIME | LOCALE_RETURN_NUMBER, (LPSTR)&val, sizeof(val));
+    iTime = val;
+    GetLocaleInfoA(Locale, LOCALE_ITLZERO | LOCALE_RETURN_NUMBER, (LPSTR)&val, sizeof(val));
+    bTLZero = val;
+
+    if (iTime == 0) {
+        wsprintf(szFormat, "%s%smm%sss tt",
+                 bTLZero ? "hh" : "h",
+                 szTimeSep, szTimeSep);
+    } else {
+        wsprintf(szFormat, "%s%smm%sss",
+                 bTLZero ? "HH" : "H",
+                 szTimeSep, szTimeSep);
+    }
+    lpTimeFmtEnumProc(szFormat);
+    return TRUE;
+}
+
+BOOL WINAPI EnumCalendarInfoA(CALINFO_ENUMPROCA lpCalInfoEnumProc, LCID Locale, CALID Calendar, CALTYPE CalType)
+{
+    char szBuf[80];
+    int i;
+
+    if (!lpCalInfoEnumProc) return FALSE;
+    if (Calendar != CAL_GREGORIAN) return FALSE;
+
+    switch (CalType) {
+        case CAL_ICALINTVALUE:
+            wsprintf(szBuf, "%d", CAL_GREGORIAN);
+            lpCalInfoEnumProc(szBuf);
+            break;
+        case CAL_SCALNAME:
+            lstrcpy(szBuf, "Gregorian");
+            lpCalInfoEnumProc(szBuf);
+            break;
+        case CAL_SDAYNAME1: case CAL_SDAYNAME2: case CAL_SDAYNAME3:
+        case CAL_SDAYNAME4: case CAL_SDAYNAME5: case CAL_SDAYNAME6:
+        case CAL_SDAYNAME7:
+            i = CalType - CAL_SDAYNAME1;
+            if (GetLocaleInfoA(Locale, LOCALE_SDAYNAME1 + i, szBuf, sizeof(szBuf)))
+                lpCalInfoEnumProc(szBuf);
+            break;
+        case CAL_SABBREVDAYNAME1: case CAL_SABBREVDAYNAME2: case CAL_SABBREVDAYNAME3:
+        case CAL_SABBREVDAYNAME4: case CAL_SABBREVDAYNAME5: case CAL_SABBREVDAYNAME6:
+        case CAL_SABBREVDAYNAME7:
+            i = CalType - CAL_SABBREVDAYNAME1;
+            if (GetLocaleInfoA(Locale, LOCALE_SABBREVDAYNAME1 + i, szBuf, sizeof(szBuf)))
+                lpCalInfoEnumProc(szBuf);
+            break;
+        case CAL_SSHORTDATE:
+            GetLocaleInfoA(Locale, LOCALE_SSHORTDATE, szBuf, sizeof(szBuf));
+            lpCalInfoEnumProc(szBuf);
+            break;
+        case CAL_SLONGDATE:
+            GetLocaleInfoA(Locale, LOCALE_SLONGDATE, szBuf, sizeof(szBuf));
+            lpCalInfoEnumProc(szBuf);
+            break;
+        default:
+            return FALSE;
+    }
+    return TRUE;
+}

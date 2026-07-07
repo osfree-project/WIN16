@@ -47,7 +47,7 @@
 #include "colors.h"
 #include "printers.h"
 #include "desktop.h"
-#include "inter.h"
+#include "intl.h"
 #include "network.h"
 
 /* Icons (не используются, но оставлены для совместимости) */

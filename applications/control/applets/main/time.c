@@ -46,14 +46,14 @@ static WORD g_lastTimeCtrl = IDC_DT_HOUR;
 /* ---------- 12-hour format support ---------- */
 static BOOL g_bUse12Hour = FALSE;
 static HWND g_hwndAmPmLabel = NULL;
-static char g_szAm[8] = "AM";
-static char g_szPm[8] = "PM";
+static char dt_szAm[8] = "AM";       /* переименовано */
+static char dt_szPm[8] = "PM";       /* переименовано */
 static BOOL g_bTLZero = TRUE;
-static char g_szTimeSep[4] = ":";
+static char dt_szTimeSep[4] = ":";   /* переименовано */
 
 /* ---------- Date format support ---------- */
 static int  g_iDateFormat = 0;
-static char g_szDateSep[2][4] = {"/", "/"};
+static char dt_szDateSep[2][4] = {"/", "/"};   /* переименовано */
 static WORD g_dateFieldMap[3] = {IDC_DT_MONTH, IDC_DT_DAY, IDC_DT_YEAR};
 
 /* ---------- Analog clock subclassing ---------- */
@@ -185,7 +185,7 @@ static void RecalcTimeDelta(void)
 static void UpdateAmPmLabel(void)
 {
     if (g_bUse12Hour && g_hwndAmPmLabel) {
-        SetWindowText(g_hwndAmPmLabel, (g_dtHour >= 12) ? g_szPm : g_szAm);
+        SetWindowText(g_hwndAmPmLabel, (g_dtHour >= 12) ? dt_szPm : dt_szAm);
     }
 }
 
@@ -511,11 +511,11 @@ static void DrawCalendar(HDC dc, int width, int height)
                   szMonthName, sizeof(szMonthName));
 
     /* Abbreviated day names: 1=Mon..7=Sun. We rearrange to Sun first. */
-for (iDay = 0; iDay < 7; iDay++) {
-    LCTYPE lc = (iDay == 0) ? LOCALE_SSHORTESTDAYNAME7
-                            : LOCALE_SSHORTESTDAYNAME1 + iDay - 1;
-    GetLocaleInfo(LOCALE_USER_DEFAULT, lc, szDayNames[iDay], sizeof(szDayNames[0]));
-}
+    for (iDay = 0; iDay < 7; iDay++) {
+        LCTYPE lc = (iDay == 0) ? LOCALE_SSHORTESTDAYNAME7
+                                : LOCALE_SSHORTESTDAYNAME1 + iDay - 1;
+        GetLocaleInfo(LOCALE_USER_DEFAULT, lc, szDayNames[iDay], sizeof(szDayNames[0]));
+    }
     wsprintf(szDayHeader, "%s %s %s %s %s %s %s",
              szDayNames[0], szDayNames[1], szDayNames[2], szDayNames[3],
              szDayNames[4], szDayNames[5], szDayNames[6]);
@@ -703,32 +703,26 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         int iDate;
 
         /* Read international settings */
-{
-    int val;
-    /* Time format: 0 = 12-hour, 1 = 24-hour */
-    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ITIME | LOCALE_RETURN_NUMBER, (LPSTR)&val, sizeof(val));
-    g_bUse12Hour = (val == 0);
+        {
+            int val;
+            GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ITIME | LOCALE_RETURN_NUMBER, (LPSTR)&val, sizeof(val));
+            g_bUse12Hour = (val == 0);
 
-    /* Leading zero for hours */
-    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ITLZERO | LOCALE_RETURN_NUMBER, (LPSTR)&val, sizeof(val));
-    g_bTLZero = (val != 0);
+            GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ITLZERO | LOCALE_RETURN_NUMBER, (LPSTR)&val, sizeof(val));
+            g_bTLZero = (val != 0);
 
-    /* Time separator */
-    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_STIME, g_szTimeSep, sizeof(g_szTimeSep));
+            GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_STIME, dt_szTimeSep, sizeof(dt_szTimeSep));
 
-    /* AM/PM strings */
-    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_S1159, g_szAm, sizeof(g_szAm));
-    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_S2359, g_szPm, sizeof(g_szPm));
+            GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_S1159, dt_szAm, sizeof(dt_szAm));
+            GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_S2359, dt_szPm, sizeof(dt_szPm));
 
-    /* Date separator */
-    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SDATE, szSep, sizeof(szSep));
-    g_szDateSep[0][0] = szSep[0]; g_szDateSep[0][1] = 0;
-    g_szDateSep[1][0] = szSep[0]; g_szDateSep[1][1] = 0;
+            GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SDATE, szSep, sizeof(szSep));
+            dt_szDateSep[0][0] = szSep[0]; dt_szDateSep[0][1] = 0;
+            dt_szDateSep[1][0] = szSep[0]; dt_szDateSep[1][1] = 0;
 
-    /* Date order: 0=MDY, 1=DMY, 2=YMD */
-    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_IDATE | LOCALE_RETURN_NUMBER, (LPSTR)&iDate, sizeof(iDate));
-    g_iDateFormat = iDate;
-}
+            GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_IDATE | LOCALE_RETURN_NUMBER, (LPSTR)&iDate, sizeof(iDate));
+            g_iDateFormat = iDate;
+        }
 
         if (iDate == 1) {
             g_dateFieldMap[0] = IDC_DT_DAY;
@@ -744,10 +738,10 @@ BOOL WINAPI DateTimeDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
             g_dateFieldMap[2] = IDC_DT_YEAR;
         }
 
-        SetDlgItemText(hDlg, IDC_DT_SEP_DATE1, g_szDateSep[0]);
-        SetDlgItemText(hDlg, IDC_DT_SEP_DATE2, g_szDateSep[1]);
-        SetDlgItemText(hDlg, IDC_DT_SEP_TIME1, g_szTimeSep);
-        SetDlgItemText(hDlg, IDC_DT_SEP_TIME2, g_szTimeSep);
+        SetDlgItemText(hDlg, IDC_DT_SEP_DATE1, dt_szDateSep[0]);
+        SetDlgItemText(hDlg, IDC_DT_SEP_DATE2, dt_szDateSep[1]);
+        SetDlgItemText(hDlg, IDC_DT_SEP_TIME1, dt_szTimeSep);
+        SetDlgItemText(hDlg, IDC_DT_SEP_TIME2, dt_szTimeSep);
 
         GetLocalDateTime(&y, &m, &d, &h, &min, &s);
         g_dtYear = y; g_dtMonth = m; g_dtDay = d;
