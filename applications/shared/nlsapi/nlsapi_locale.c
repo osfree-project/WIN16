@@ -31,8 +31,8 @@ const KNOWN_LCID knownLCIDs[] = {
     { 41,  "frn", 0x100C },
     { 41,  "ger", 0x0807 },
     { 41,  "itn", 0x0810 },
-    { 82,  "eng", 0xE052 },
-    { 886, "eng", 0xE376 },
+    { 82,  "eng", 0xE052 }, // @@todo fix
+    { 886, "eng", 0xE376 }, // @@todo fix
 };
 
 const int KNOWN_LCID_COUNT = sizeof(knownLCIDs) / sizeof(knownLCIDs[0]);
@@ -107,80 +107,58 @@ parse_line:
 
                         ParseCountryLine(p, (LPSTR)szCountryName, sizeof(szCountryName), (int FAR *)&code, (LPSTR)szFileLang, sizeof(szFileLang), (LPSTR)szParams, sizeof(szParams));
 
-                                        /* ----- отладка: код страны и сравнение ----- */
-//                                        {
-//                                            char szMsg[128];
-//                                            wsprintf(szMsg, "First param='%d', target='%d'",
-//                                                     code, iCountryCode);
-//                                            MessageBox(0, szMsg, "GetLocaleInfoFromInf", MB_OK);
-//                                        }
+                        if (code==iCountryCode) {
+                            if (lstrcmpi(szFileLang, szTargetLang) == 0) {
+                                if (LCType == LOCALE_SCOUNTRY) {
+                                    StringCopyN(lpLCData, szCountryName, cchData);
+                                    bFound = TRUE;
+                                } else {
+                                    fieldIdx = -1;
+                                    if (LCType == LOCALE_ICOUNTRY) fieldIdx = 0;
+                                    else if (LCType == LOCALE_ICURRDIGITS) fieldIdx = 1;
+                                    else if (LCType == LOCALE_ICURRENCY) fieldIdx = 2;
+                                    else if (LCType == LOCALE_IDATE) fieldIdx = 3;
+                                    else if (LCType == LOCALE_IMEASURE) fieldIdx = 4;
+                                    else if (LCType == LOCALE_INEGCURR) fieldIdx = 5;
+                                    else if (LCType == LOCALE_ITIME) fieldIdx = 6;
+                                    else if (LCType == LOCALE_ITLZERO) fieldIdx = 7;
+                                    else if (LCType == LOCALE_ILZERO) fieldIdx = 8;
+                                    else if (LCType == LOCALE_IDIGITS) fieldIdx = 9;
+                                    else if (LCType == LOCALE_S1159) fieldIdx = 10;
+                                    else if (LCType == LOCALE_S2359) fieldIdx = 11;
+                                    else if (LCType == LOCALE_SCURRENCY) fieldIdx = 12;
+                                    else if (LCType == LOCALE_STHOUSAND) fieldIdx = 13;
+                                    else if (LCType == LOCALE_SDECIMAL) fieldIdx = 14;
+                                    else if (LCType == LOCALE_SDATE) fieldIdx = 15;
+                                    else if (LCType == LOCALE_STIME) fieldIdx = 16;
+                                    else if (LCType == LOCALE_SLIST) fieldIdx = 17;
+                                    else if (LCType == LOCALE_SSHORTDATE) fieldIdx = 18;
+                                    else if (LCType == LOCALE_SLONGDATE) fieldIdx = 19;
 
-                                        if (code==iCountryCode) {
-
-                                            /* ----- отладка: код языка и сравнение ----- */
-//                                            {
-//                                                char szMsg[128];
-//                                                wsprintf(szMsg, "File lang='%s', target lang='%s'",
-//                                                         (LPSTR)szFileLang, (LPSTR)szTargetLang);
-//                                                MessageBox(0, szMsg, "GetLocaleInfoFromInf", MB_OK);
-//                                            }
-
-                                            if (lstrcmpi(szFileLang, szTargetLang) == 0) {
-//                                                MessageBox(0, "MATCH FOUND", "GetLocaleInfoFromInf", MB_OK);
-                                                if (LCType == LOCALE_SCOUNTRY) {
-                                                    StringCopyN(lpLCData, szCountryName, cchData);
+                                    if (fieldIdx >= 0) {
+                                        pField = szParams; cur = 0;
+                                        while (cur < fieldIdx && *pField) {
+                                            pField = (char FAR *)_fstrchr(pField, '!');
+                                            if (pField) { pField++; cur++; } else break;
+                                        }
+                                        if (pField) {
+                                            char FAR *pEnd = (char FAR *)_fstrchr(pField, '!');
+                                            if (pEnd) *pEnd = '\0';
+                                            if (returnNumber) {
+                                                if (cchData >= (int)sizeof(int)) {
+                                                    *(int FAR*)lpLCData = AtoiFar(pField);
                                                     bFound = TRUE;
-                                                } else {
-                                                    fieldIdx = -1;
-                                                    if (LCType == LOCALE_ICOUNTRY) fieldIdx = 0;
-                                                    else if (LCType == LOCALE_ICURRDIGITS) fieldIdx = 1;
-                                                    else if (LCType == LOCALE_ICURRENCY) fieldIdx = 2;
-                                                    else if (LCType == LOCALE_IDATE) fieldIdx = 3;
-                                                    else if (LCType == LOCALE_IMEASURE) fieldIdx = 4;
-                                                    else if (LCType == LOCALE_INEGCURR) fieldIdx = 5;
-                                                    else if (LCType == LOCALE_ITIME) fieldIdx = 6;
-                                                    else if (LCType == LOCALE_ITLZERO) fieldIdx = 7;
-                                                    else if (LCType == LOCALE_ILZERO) fieldIdx = 8;
-                                                    else if (LCType == LOCALE_IDIGITS) fieldIdx = 9;
-                                                    else if (LCType == LOCALE_S1159) fieldIdx = 10;
-                                                    else if (LCType == LOCALE_S2359) fieldIdx = 11;
-                                                    else if (LCType == LOCALE_SCURRENCY) fieldIdx = 12;
-                                                    else if (LCType == LOCALE_STHOUSAND) fieldIdx = 13;
-                                                    else if (LCType == LOCALE_SDECIMAL) fieldIdx = 14;
-                                                    else if (LCType == LOCALE_SDATE) fieldIdx = 15;
-                                                    else if (LCType == LOCALE_STIME) fieldIdx = 16;
-                                                    else if (LCType == LOCALE_SLIST) fieldIdx = 17;
-                                                    else if (LCType == LOCALE_SSHORTDATE) fieldIdx = 18;
-                                                    else if (LCType == LOCALE_SLONGDATE) fieldIdx = 19;
-
-                                                    if (fieldIdx >= 0) {
-                                                        pField = szParams; cur = 0;
-                                                        while (cur < fieldIdx && *pField) {
-                                                            pField = (char FAR *)_fstrchr(pField, '!');
-                                                            if (pField) { pField++; cur++; } else break;
-                                                        }
-                                                        if (pField) {
-                                                            char FAR *pEnd = (char FAR *)_fstrchr(pField, '!');
-                                                            if (pEnd) *pEnd = '\0';
-                                                            if (returnNumber) {
-                                                                if (cchData >= (int)sizeof(int)) {
-                                                                    *(int FAR*)lpLCData = AtoiFar(pField);
-                                                                    bFound = TRUE;
-                                                                }
-                                                            } else {
-                                                                StringCopyN(lpLCData, pField, cchData);
-                                                                bFound = TRUE;
-                                                            }
-                                                        }
-                                                    }
                                                 }
+                                            } else {
+                                                StringCopyN(lpLCData, pField, cchData);
+                                                bFound = TRUE;
                                             }
                                         }
                                     }
-//                                }
-//                            }
-//                        }
-//                    }
+                                }
+                            }
+                        }
+                    }
                 }
                 nLinePos = 0;
                 if (c == '\r' && i + 1 < nRead && szReadBuf[i + 1] == '\n') i++;
@@ -191,11 +169,6 @@ parse_line:
     }
     _lclose(hFile);
 
-    if (!bFound) {
-//        MessageBox(0, "GetLocaleInfoFromInf: NOT FOUND", "Trace", MB_OK);
-    } else {
-//        MessageBox(0, "GetLocaleInfoFromInf: SUCCESS", "Trace", MB_OK);
-    }
     return bFound;
 }
 

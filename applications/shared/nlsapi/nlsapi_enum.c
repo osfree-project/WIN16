@@ -16,11 +16,8 @@ BOOL WINAPI __export EnumSystemLocalesA(LOCALE_ENUMPROCA lpLocaleEnumProc, DWORD
     BOOL bContinue = TRUE;
     char FAR *p;
     char FAR *q;
-    char FAR *p1;
-    char FAR *p2;
     static char szParams[256];
     static char szCountryName[64];
-    static char szCode[16];
     static char szLang[8];
     static int code;
     LCID lcid;
@@ -39,7 +36,6 @@ BOOL WINAPI __export EnumSystemLocalesA(LOCALE_ENUMPROCA lpLocaleEnumProc, DWORD
     while (!bEOF && bContinue) {
         nRead = _lread(hFile, szReadBuf, sizeof(szReadBuf));
         if (nRead == HFILE_ERROR || nRead == 0) {
-//            MessageBox(0, "EnumSystemLocales: read error or EOF", "Trace", MB_OK);
             bEOF = TRUE;
             if (nLinePos > 0) {
                 szLine[nLinePos] = '\0';
@@ -61,57 +57,14 @@ parse_enum:
                         if (q) {
                             *q = '\0';
                             bInCountry = (lstrcmpi(p + 1, "country") == 0);
-//                            if (bInCountry)
-//                                MessageBox(0, "EnumSystemLocales: found [country]", "Trace", MB_OK);
                         }
                     } else if (bInCountry && *p != '\0' && *p != ';') {
-//                        MessageBox(0, "EnumSystemLocales: line in [country]", "Trace", MB_OK);
-
-                        /* Покажем raw-строку для отладки */
-//                        {
-//                            char szMsg[300];
-//                            wsprintf(szMsg, "Raw line: %s", (LPSTR)p);
-//                            MessageBox(0, szMsg, "EnumSystemLocales: raw line", MB_OK);
-//                        }
-
                         ParseCountryLine(p, (LPSTR)szCountryName, sizeof(szCountryName), (int FAR *)&code, (LPSTR)szLang, sizeof(szLang), (LPSTR)szParams, sizeof(szParams));
-
-//                                {
-//                                    char szMsg[300];
-//                                    wsprintf(szMsg, "Country name: '%s'\nParams: '%s'\ncode=%d", (LPSTR)szCountryName, (LPSTR)szParams, code);
-//                                    MessageBox(0, szMsg, "EnumSystemLocales", MB_OK);
-//                                }
-
-
-                                        /* Трассировка: код страны и язык */
-//                                        {
-//                                            char szMsg[128];
-//                                            wsprintf(szMsg, "code=%d, lang='%s'", code, (LPSTR)szLang);
-//                                            MessageBox(0, szMsg, "EnumSystemLocales", MB_OK);
-//                                        }
-
-                                        lcid = LookupLCID(code, (LPCSTR)szLang);
-                                        wsprintf(szLCID, "%08lX", lcid);
-
-                                        /* Трассировка: LCID */
-//                                        {
-//                                            char szMsg[128];
-//                                            wsprintf(szMsg, "LCID=%s", (LPSTR)szLCID);
-//                                            MessageBox(0, szMsg, "EnumSystemLocales: before callback", MB_OK);
-//                                        }
-
-                                        if (!lpLocaleEnumProc(szLCID)) {
-//                                            MessageBox(0, "EnumSystemLocales: callback returned FALSE", "Trace", MB_OK);
-                                            bContinue = FALSE;
-                                        } else {
-//                                            MessageBox(0, "EnumSystemLocales: callback returned TRUE", "Trace", MB_OK);
-                                        }
-#if 0
-                                    }
-                                }
-                            }
+                        lcid = LookupLCID(code, (LPCSTR)szLang);
+                        wsprintf(szLCID, "%08lX", lcid);
+                        if (!lpLocaleEnumProc(szLCID)) {
+                          bContinue = FALSE;
                         }
-#endif
                     }
                 }
                 nLinePos = 0;
@@ -124,15 +77,12 @@ parse_enum:
     }
 
     _lclose(hFile);
-//    MessageBox(0, "EnumSystemLocales: function end", "Trace", MB_OK);
     return TRUE;
 }
 
 
 BOOL WINAPI __export EnumUILanguagesA(UILANGUAGE_ENUMPROCA lpUILanguageEnumProc, DWORD dwFlags, LONG lParam)
 {
-//    static char szPath[144];
-//    OFSTRUCT of;
     HFILE hFile;
     static char szReadBuf[512];
     static char szLine[256];
@@ -228,7 +178,7 @@ lang_parse:
     return TRUE;
 }
 
-BOOL WINAPI EnumDateFormatsA(DATEFMT_ENUMPROCA lpDateFmtEnumProc, LCID Locale, DWORD dwFlags)
+BOOL WINAPI __export EnumDateFormatsA(DATEFMT_ENUMPROCA lpDateFmtEnumProc, LCID Locale, DWORD dwFlags)
 {
     char szFormat[80];
     if (!lpDateFmtEnumProc) return FALSE;
@@ -242,7 +192,7 @@ BOOL WINAPI EnumDateFormatsA(DATEFMT_ENUMPROCA lpDateFmtEnumProc, LCID Locale, D
     return TRUE;
 }
 
-BOOL WINAPI EnumTimeFormatsA(TIMEFMT_ENUMPROCA lpTimeFmtEnumProc, LCID Locale, DWORD dwFlags)
+BOOL WINAPI __export EnumTimeFormatsA(TIMEFMT_ENUMPROCA lpTimeFmtEnumProc, LCID Locale, DWORD dwFlags)
 {
     char szFormat[80];
     int iTime;
@@ -271,7 +221,7 @@ BOOL WINAPI EnumTimeFormatsA(TIMEFMT_ENUMPROCA lpTimeFmtEnumProc, LCID Locale, D
     return TRUE;
 }
 
-BOOL WINAPI EnumCalendarInfoA(CALINFO_ENUMPROCA lpCalInfoEnumProc, LCID Locale, CALID Calendar, CALTYPE CalType)
+BOOL WINAPI __export EnumCalendarInfoA(CALINFO_ENUMPROCA lpCalInfoEnumProc, LCID Locale, CALID Calendar, CALTYPE CalType)
 {
     char szBuf[80];
     int i;
