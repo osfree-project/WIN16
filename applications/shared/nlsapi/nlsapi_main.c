@@ -110,7 +110,7 @@ void StringCopyN(LPSTR dest, LPCSTR src, int n)
 }
 
 /* ================================================================== */
-int WINAPI GetLocaleInfoA(LCID Locale, LCTYPE LCType, LPSTR lpLCData, int cchData) {
+int WINAPI __export GetLocaleInfoA(LCID Locale, LCTYPE LCType, LPSTR lpLCData, int cchData) {
     int number = 0;
     int returnNumber = (LCType & LOCALE_RETURN_NUMBER) ? 1 : 0;
     LCType &= ~LOCALE_RETURN_NUMBER;

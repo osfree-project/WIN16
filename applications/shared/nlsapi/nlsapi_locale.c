@@ -1,9 +1,10 @@
 /*
  * nlsapi_locale.c Ц работа с SETUP.INF, таблица LCID, GetKeyboardLayoutList
- *                   (исправлено копирование)
+ *                   (с отладкой в GetLocaleInfoFromInf)
  */
 #include "nlsapi_internal.h"
 
+/* “аблица сопоставлени€ */
 const KNOWN_LCID knownLCIDs[] = {
     { 1,   "usa", 0x0409 },
     { 44,  "eng", 0x0809 },
@@ -68,8 +69,8 @@ BOOL GetLocaleInfoFromInf(int iCountryCode, const char FAR *szLang,
     char FAR *p1;
     char FAR *p2;
     static char szParams[256];
-    char szFirstParam[16];
-    char szFileLang[16];
+    static char szFirstParam[16];
+    static char szFileLang[16];
     int fieldIdx;
     char FAR *pField;
     int cur;
@@ -80,10 +81,21 @@ BOOL GetLocaleInfoFromInf(int iCountryCode, const char FAR *szLang,
     wsprintf(szTargetCountryCode, "%d", iCountryCode);
     lstrcpy(szTargetLang, szLang);
 
+    /* ----- отладка: вход в функцию ----- */
+//    {
+//        char szMsg[128];
+//        wsprintf(szMsg, "GetLocaleInfoFromInf: country=%d, lang=%s, LCTYPE=0x%08lX",
+//                 iCountryCode, (LPSTR)szLang, LCType);
+//        MessageBox(0, szMsg, "GetLocaleInfoFromInf", MB_OK);
+//    }
+
     GetSystemDirectory(szPath, sizeof(szPath) - 20);
     lstrcat(szPath, "\\SETUP.INF");
     hFile = OpenFile(szPath, &of, OF_READ);
-    if (hFile == HFILE_ERROR) return FALSE;
+    if (hFile == HFILE_ERROR) {
+//        MessageBox(0, "GetLocaleInfoFromInf: FAILED to open SETUP.INF", "Trace", MB_OK);
+        return FALSE;
+    }
 
     while (!bEOF && !bFound) {
         nRead = _lread(hFile, szReadBuf, sizeof(szReadBuf));
@@ -104,6 +116,13 @@ parse_line:
                         q = (char FAR *)_fstrchr(p + 1, ']');
                         if (q) { *q = '\0'; bInCountry = (lstrcmpi(p + 1, "country") == 0); }
                     } else if (bInCountry && *p != '\0' && *p != ';') {
+                        /* ----- отладка: сыра€ строка ----- */
+//                        {
+//                            char szMsg[300];
+//                            wsprintf(szMsg, "Raw line: %s", (LPSTR)p);
+//                            MessageBox(0, szMsg, "GetLocaleInfoFromInf", MB_OK);
+//                        }
+
                         p1 = (char FAR *)_fstrchr(p, '\"');
                         if (p1) {
                             p2 = (char FAR *)_fstrchr(p1 + 1, '\"');
@@ -116,6 +135,13 @@ parse_line:
                                         szCountryName[countryNameLen++] = *tmp++;
                                 }
                                 szCountryName[countryNameLen] = '\0';
+
+                                /* ----- отладка: им€ страны ----- */
+//                                {
+//                                    char szMsg[128];
+//                                    wsprintf(szMsg, "Country name: '%s'", (LPSTR)szCountryName);
+//                                    MessageBox(0, szMsg, "GetLocaleInfoFromInf", MB_OK);
+//                                }
 
                                 p1 = (char FAR *)_fstrchr(p2 + 1, '\"');
                                 if (p1) {
@@ -131,11 +157,26 @@ parse_line:
                                         }
                                         szParams[len] = '\0';
 
+                                        /* ----- отладка: параметры ----- */
+//                                        {
+//                                            char szMsg[300];
+//                                            wsprintf(szMsg, "Params: '%s'", (LPSTR)szParams);
+//                                            MessageBox(0, szMsg, "GetLocaleInfoFromInf", MB_OK);
+//                                        }
+
                                         /*  од страны */
                                         pos = 0;
                                         while (pos < len && szParams[pos] != '!' && pos < 15)
                                             szFirstParam[pos] = szParams[pos], pos++;
                                         szFirstParam[pos] = '\0';
+
+                                        /* ----- отладка: код страны и сравнение ----- */
+//                                        {
+//                                            char szMsg[128];
+//                                            wsprintf(szMsg, "First param='%s', target='%s'",
+//                                                     (LPSTR)szFirstParam, (LPSTR)szTargetCountryCode);
+//                                            MessageBox(0, szMsg, "GetLocaleInfoFromInf", MB_OK);
+//                                        }
 
                                         if (lstrcmp(szFirstParam, szTargetCountryCode) == 0) {
                                             /*  од €зыка */
@@ -149,7 +190,17 @@ parse_line:
                                                 szFileLang[langLen] = '\0';
                                             } else lstrcpy(szFileLang, "eng");
 
+                                            /* ----- отладка: код €зыка и сравнение ----- */
+//                                            {
+//                                                char szMsg[128];
+//                                                wsprintf(szMsg, "File lang='%s', target lang='%s'",
+//                                                         (LPSTR)szFileLang, (LPSTR)szTargetLang);
+//                                                MessageBox(0, szMsg, "GetLocaleInfoFromInf", MB_OK);
+//                                            }
+
                                             if (lstrcmpi(szFileLang, szTargetLang) == 0) {
+//                                                MessageBox(0, "MATCH FOUND", "GetLocaleInfoFromInf", MB_OK);
+
                                                 if (LCType == LOCALE_SCOUNTRY) {
                                                     StringCopyN(lpLCData, szCountryName, cchData);
                                                     bFound = TRUE;
@@ -213,10 +264,16 @@ parse_line:
         }
     }
     _lclose(hFile);
+
+    if (!bFound) {
+//        MessageBox(0, "GetLocaleInfoFromInf: NOT FOUND", "Trace", MB_OK);
+    } else {
+//        MessageBox(0, "GetLocaleInfoFromInf: SUCCESS", "Trace", MB_OK);
+    }
     return bFound;
 }
 
-int WINAPI GetKeyboardLayoutList(int nBuff, LPSTR lpList)
+int WINAPI __export GetKeyboardLayoutList(int nBuff, LPSTR lpList)
 {
     static char szPath[144];
     OFSTRUCT of;
@@ -228,7 +285,7 @@ int WINAPI GetKeyboardLayoutList(int nBuff, LPSTR lpList)
     BOOL bEOF = FALSE;
     BOOL bInKbd = FALSE;
     char FAR *p, FAR *q, FAR *p1, FAR *p2;
-    char szName[64];
+    static char szName[64];
     int len;
     static char szPrevNames[64][64];
     int nPrev = 0, nCount = 0;
@@ -257,7 +314,7 @@ parse_kbd:
                 if (nLinePos > 0) {
                     p = szLine; while (*p == ' ' || *p == '\t') p++;
                     if (*p == '[') {
-                        q = _fstrchr(p + 1, ']');
+                        q = (char FAR *)_fstrchr(p + 1, ']');
                         if (q) { *q = '\0'; bInKbd = (lstrcmpi(p + 1, "keyboard.tables") == 0); }
                     } else if (bInKbd && *p != '\0' && *p != ';') {
                         p1 = (char FAR *)_fstrchr(p, '\"');

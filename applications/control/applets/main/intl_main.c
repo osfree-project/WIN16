@@ -101,7 +101,7 @@ static HWND g_hwndLangCombo;
 
 static BOOL CALLBACK CollectLangCodesProc(LPSTR lpszLangCode, LONG lParam)
 {
-    MessageBox(NULL, "CollectLangCodesProc: called", "Trace", MB_OK);
+//    MessageBox(NULL, "CollectLangCodesProc: called", "Trace", MB_OK);
     if (nLangCount < 64) {
         StringCopyN(szLangCodes[nLangCount], lpszLangCode, 8);
         nLangCount++;
@@ -113,7 +113,7 @@ static BOOL CALLBACK AddLangNamesProc(LPSTR lpszLangName, LONG lParam)
 {
     int *pIdx = (int *)lParam;
     LRESULT idx;
-    MessageBox(NULL, "AddLangNamesProc: called", "Trace", MB_OK);
+//    MessageBox(NULL, "AddLangNamesProc: called", "Trace", MB_OK);
     idx = SendMessage(g_hwndLangCombo, CB_ADDSTRING, 0, (LPARAM)lpszLangName);
     if (idx != CB_ERR && idx != CB_ERRSPACE) {
         HLOCAL hCode = LocalAlloc(LMEM_FIXED, lstrlen(szLangCodes[*pIdx]) + 1);
@@ -137,20 +137,20 @@ static BOOL CALLBACK CountryEnumProc(LPSTR lpszLCID) {
     LCID lcid;
     char szCountry[64];
     LRESULT idx;
-    char szMsg[128];
+//    char szMsg[128];
 
     lcid = HexStrToLCID(lpszLCID);
-    wsprintf(szMsg, "LCID=%08lX", lcid);
-    MessageBox(NULL, szMsg, "CountryEnumProc: LCID", MB_OK);
+//    wsprintf(szMsg, "LCID=%08lX", lcid);
+//    MessageBox(NULL, szMsg, "CountryEnumProc: LCID", MB_OK);
 
     if (GetLocaleInfo(lcid, LOCALE_SCOUNTRY, szCountry, sizeof(szCountry))) {
-        wsprintf(szMsg, "Country='%s'", szCountry);
-        MessageBox(NULL, szMsg, "CountryEnumProc: Got name", MB_OK);
+//        wsprintf(szMsg, "Country='%s'", szCountry);
+//        MessageBox(NULL, szMsg, "CountryEnumProc: Got name", MB_OK);
         idx = SendMessage(g_CountryCtx.hCombo, CB_ADDSTRING, 0, (LPARAM)szCountry);
         if (idx != CB_ERR && idx != CB_ERRSPACE)
             SendMessage(g_CountryCtx.hCombo, CB_SETITEMDATA, (WPARAM)idx, (LPARAM)lcid);
     } else {
-        MessageBox(NULL, "GetLocaleInfo FAILED", "CountryEnumProc", MB_OK);
+//        MessageBox(NULL, "GetLocaleInfo FAILED", "CountryEnumProc", MB_OK);
     }
     return TRUE;
 }
@@ -162,15 +162,15 @@ static void InitCountries(HWND hDlg)
     char szCurCountry[64];
     LRESULT lr;
 
-    MessageBox(hDlg, "TRACE: InitCountries start", "Debug", MB_OK);
+//    MessageBox(hDlg, "TRACE: InitCountries start", "Debug", MB_OK);
     g_CountryCtx.hCombo = hCombo;
     EnumSystemLocalesA(CountryEnumProc, 0);
-    MessageBox(hDlg, "TRACE: EnumSystemLocalesA done", "Debug", MB_OK);
+//    MessageBox(hDlg, "TRACE: EnumSystemLocalesA done", "Debug", MB_OK);
 
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SCOUNTRY, szCurCountry, sizeof(szCurCountry));
     lr = SendMessage(hCombo, CB_SELECTSTRING, (WPARAM)-1, (LPARAM)szCurCountry);
     if (lr == CB_ERR) SendMessage(hCombo, CB_SETCURSEL, 0, 0);
-    MessageBox(hDlg, "TRACE: InitCountries end", "Debug", MB_OK);
+//    MessageBox(hDlg, "TRACE: InitCountries end", "Debug", MB_OK);
 }
 
 static void InitLanguages(HWND hDlg)
@@ -181,7 +181,7 @@ static void InitLanguages(HWND hDlg)
     int count, i;
     BOOL bFound;
 
-    MessageBox(hDlg, "TRACE: InitLanguages start", "Debug", MB_OK);
+//    MessageBox(hDlg, "TRACE: InitLanguages start", "Debug", MB_OK);
     g_hwndLangCombo = hCombo;
     nLangCount = 0;
     EnumUILanguagesA(CollectLangCodesProc, MUI_LANGUAGE_ID, 0);
@@ -204,7 +204,7 @@ static void InitLanguages(HWND hDlg)
         }
     }
     if (!bFound) SendMessage(hCombo, CB_SETCURSEL, 0, 0);
-    MessageBox(hDlg, "TRACE: InitLanguages end", "Debug", MB_OK);
+//    MessageBox(hDlg, "TRACE: InitLanguages end", "Debug", MB_OK);
 }
 
 static void InitKeyboards(HWND hDlg)
@@ -215,14 +215,14 @@ static void InitKeyboards(HWND hDlg)
     HLOCAL hMem, hName;
     LRESULT lr;
 
-    MessageBox(hDlg, "TRACE: InitKeyboards start", "Debug", MB_OK);
+//    MessageBox(hDlg, "TRACE: InitKeyboards start", "Debug", MB_OK);
     nKbd = GetKeyboardLayoutList(0, NULL);
     if (nKbd > 0) {
-        MessageBox(hDlg, "TRACE: Keyboard count > 0", "Debug", MB_OK);
+//        MessageBox(hDlg, "TRACE: Keyboard count > 0", "Debug", MB_OK);
         nBufSize = nKbd * 64 + 1;
         hMem = LocalAlloc(LMEM_FIXED, nBufSize);
         if (hMem) {
-            MessageBox(hDlg, "TRACE: LocalAlloc OK", "Debug", MB_OK);
+//            MessageBox(hDlg, "TRACE: LocalAlloc OK", "Debug", MB_OK);
             lpList = (LPSTR)LocalLock(hMem);
             nActual = GetKeyboardLayoutList(nBufSize, lpList);
             for (k = 0; k < nActual; k++) {
@@ -240,15 +240,15 @@ static void InitKeyboards(HWND hDlg)
             }
             LocalUnlock(hMem);
             LocalFree(hMem);
-            MessageBox(hDlg, "TRACE: loop finished", "Debug", MB_OK);
+//            MessageBox(hDlg, "TRACE: loop finished", "Debug", MB_OK);
         } else {
-            MessageBox(hDlg, "TRACE: LocalAlloc FAILED", "Debug", MB_OK);
+//            MessageBox(hDlg, "TRACE: LocalAlloc FAILED", "Debug", MB_OK);
         }
     }
     lr = SendMessage(hCombo, CB_SELECTSTRING, (WPARAM)-1, (LPARAM)g_iniKeyboard);
     if (lr == CB_ERR)
         SendMessage(hCombo, CB_SETCURSEL, 0, 0);
-    MessageBox(hDlg, "TRACE: InitKeyboards end", "Debug", MB_OK);
+//    MessageBox(hDlg, "TRACE: InitKeyboards end", "Debug", MB_OK);
 }
 
 /* ---------- образцы (исправлены: буферы статические, far-указатели) ---------- */
@@ -287,7 +287,7 @@ void FAR UpdateNumberSample(HWND hDlg) {
 BOOL WINAPI InternationalDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
     case WM_INITDIALOG: {
-        MessageBox(hDlg, "TRACE: WM_INITDIALOG begin", "Debug", MB_OK);
+//        MessageBox(hDlg, "TRACE: WM_INITDIALOG begin", "Debug", MB_OK);
 
         ReadInternationalSettings();
 
@@ -310,7 +310,7 @@ BOOL WINAPI InternationalDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPar
         UpdateCurrencySamples(hDlg);
         UpdateNumberSample(hDlg);
 
-        MessageBox(hDlg, "TRACE: WM_INITDIALOG end", "Debug", MB_OK);
+//        MessageBox(hDlg, "TRACE: WM_INITDIALOG end", "Debug", MB_OK);
         return TRUE;
     }
 

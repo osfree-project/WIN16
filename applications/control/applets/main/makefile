@@ -8,7 +8,7 @@ TRGT     = $(PROJ).cpl
 DESC     = Main CPL
 srcfiles = $(p)main$(e) $(p)mouse$(e) $(p)keyboard$(e) $(p)time$(e) $(p)desktop$(e) $(p)intl_main$(e) $(p)intl_date$(e) $(p)intl_time$(e) &
            $(p)intl_num$(e) $(p)currency$(e)
-ADD_COPT = -ms -0 -sg -I=$(MYDIR)$(SEP)..$(SEP).. -I=$(MYDIR)$(SEP)..$(SEP)..$(SEP)..$(SEP)include
+ADD_COPT = -ms -0 -sg -I=$(MYDIR)..$(SEP).. -I=$(MYDIR)..$(SEP)..$(SEP)..$(SEP)include
 ADD_LINKOPT = lib nlsapi.lib
 
 # linking dll file
@@ -28,7 +28,7 @@ EXPORTS = CPlApplet       .1, &
 IMPORTS =   CreateSystemTimer SYSTEM.2, &
   KillSystemTimer SYSTEM.3
 
-HEAPSIZE = 30k
+HEAPSIZE = 10k
 
 DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 
@@ -40,4 +40,4 @@ TARGETS = $(PATH)$(PROJ).cpl
 
 $(PATH)$(PROJ).cpl: $(PATH)$(PROJ).dll $(MYDIR)$(PROJ).rc
  @$(SAY) RESCMP   $^. $(LOG)
- @$(RC) -q -30 -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win
+ @$(RC) -q -30 -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win -i=$(MYDIR)$(SEP)..$(SEP)..$(SEP)..$(SEP)include
