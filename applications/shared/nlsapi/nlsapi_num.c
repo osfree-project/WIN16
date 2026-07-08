@@ -4,15 +4,6 @@
 #include "nlsapi_internal.h"
 #include <ctype.h>
 
-/* Вспомогательная функция: проверка, состоит ли строка только из цифр */
-static BOOL IsDigitsOnly(LPCSTR str, int len)
-{
-    int i;
-    for (i = 0; i < len; i++)
-        if (!isdigit((unsigned char)str[i])) return FALSE;
-    return TRUE;
-}
-
 /* Формирование отрицательного числа по шаблону NegativeOrder */
 static int FormatNegative(LPSTR dest, int destSize, LPCSTR numberStr, UINT negOrder)
 {

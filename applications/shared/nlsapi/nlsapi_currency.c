@@ -2,26 +2,6 @@
  * nlsapi_currency.c – реализация GetCurrencyFormatA для Win16 NLS API
  */
 #include "nlsapi_internal.h"
-#include <ctype.h>
-
-/* Безопасное копирование строки с ограничением длины */
-static void safe_strcpy(LPSTR dest, LPCSTR src, int destSize)
-{
-    int i;
-    if (destSize <= 0) return;
-    for (i = 0; i < destSize - 1 && src[i] != '\0'; i++)
-        dest[i] = src[i];
-    dest[i] = '\0';
-}
-
-/* Проверка, состоит ли строка только из цифр */
-static BOOL IsDigitsOnly(LPCSTR str, int len)
-{
-    int i;
-    for (i = 0; i < len; i++)
-        if (!isdigit((unsigned char)str[i])) return FALSE;
-    return TRUE;
-}
 
 /* Форматирование отрицательной валюты согласно NegativeOrder */
 static int FormatCurrencyNegative(LPSTR dest, int destSize, LPCSTR numberStr,
@@ -118,9 +98,9 @@ int WINAPI DECLSPEC GetCurrencyFormatA(
         negOrder    = lpFormat->NegativeOrder;
         posOrder    = lpFormat->PositiveOrder;
 
-        safe_strcpy(decSep, lpFormat->lpDecimalSep ? lpFormat->lpDecimalSep : ".", sizeof(decSep));
-        safe_strcpy(thouSep, lpFormat->lpThousandSep ? lpFormat->lpThousandSep : ",", sizeof(thouSep));
-        safe_strcpy(symbol, lpFormat->lpCurrencySymbol ? lpFormat->lpCurrencySymbol : "$", sizeof(symbol));
+        StringCopyN(decSep, lpFormat->lpDecimalSep ? lpFormat->lpDecimalSep : ".", sizeof(decSep));
+        StringCopyN(thouSep, lpFormat->lpThousandSep ? lpFormat->lpThousandSep : ",", sizeof(thouSep));
+        StringCopyN(symbol, lpFormat->lpCurrencySymbol ? lpFormat->lpCurrencySymbol : "$", sizeof(symbol));
     }
     else
     {

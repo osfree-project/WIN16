@@ -367,12 +367,12 @@ int WINAPI DECLSPEC GetTimeFormatA(LCID Locale, DWORD dwFlags, const SYSTEMTIME 
     if (!lpTimeStr || cchTime < 1) return 0;
     out = outBuf; *out = '\0';
 
-    GetLocaleInfoA(Locale, LOCALE_STIME, szTimeSep, sizeof(szTimeSep));
-    GetLocaleInfoA(Locale, LOCALE_S1159, szAm, sizeof(szAm));
-    GetLocaleInfoA(Locale, LOCALE_S2359, szPm, sizeof(szPm));
+    GetLocaleInfo(Locale, LOCALE_STIME, szTimeSep, sizeof(szTimeSep));
+    GetLocaleInfo(Locale, LOCALE_S1159, szAm, sizeof(szAm));
+    GetLocaleInfo(Locale, LOCALE_S2359, szPm, sizeof(szPm));
     { int val;
-      GetLocaleInfoA(Locale, LOCALE_ITIME | LOCALE_RETURN_NUMBER, (LPSTR)&val, sizeof(val)); iTime = val;
-      GetLocaleInfoA(Locale, LOCALE_ITLZERO | LOCALE_RETURN_NUMBER, (LPSTR)&val, sizeof(val)); bTLZero = val;
+      GetLocaleInfo(Locale, LOCALE_ITIME | LOCALE_RETURN_NUMBER, (LPSTR)&val, sizeof(val)); iTime = val;
+      GetLocaleInfo(Locale, LOCALE_ITLZERO | LOCALE_RETURN_NUMBER, (LPSTR)&val, sizeof(val)); bTLZero = val;
     }
 
     if (!lpTime) { GetCurrentDateTime(&stCur); pSt = &stCur; } else pSt = lpTime;

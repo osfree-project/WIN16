@@ -2,6 +2,7 @@
  * nlsapi_utils.c – общие функции для работы с SETUP.INF
  */
 #include "nlsapi_internal.h"
+#include <ctype.h>
 
 /* ------------------------------------------------------------ */
 HFILE OpenSetupInf(void)
@@ -169,4 +170,13 @@ void StringCopyN(LPSTR dest, LPCSTR src, int n)
     for (i = 0; i < n - 1 && src[i] != '\0'; i++)
         dest[i] = src[i];
     dest[i] = '\0';
+}
+
+/* Проверка, состоит ли строка только из цифр */
+BOOL IsDigitsOnly(LPCSTR str, int len)
+{
+    int i;
+    for (i = 0; i < len; i++)
+        if (!isdigit((unsigned char)str[i])) return FALSE;
+    return TRUE;
 }

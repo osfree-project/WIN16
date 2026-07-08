@@ -183,10 +183,10 @@ BOOL WINAPI DECLSPEC EnumDateFormatsA(DATEFMT_ENUMPROCA lpDateFmtEnumProc, LCID 
     char szFormat[80];
     if (!lpDateFmtEnumProc) return FALSE;
 
-    if (GetLocaleInfoA(Locale, LOCALE_SSHORTDATE, szFormat, sizeof(szFormat)))
+    if (GetLocaleInfo(Locale, LOCALE_SSHORTDATE, szFormat, sizeof(szFormat)))
         if (!lpDateFmtEnumProc(szFormat)) return TRUE;
 
-    if (GetLocaleInfoA(Locale, LOCALE_SLONGDATE, szFormat, sizeof(szFormat)))
+    if (GetLocaleInfo(Locale, LOCALE_SLONGDATE, szFormat, sizeof(szFormat)))
         lpDateFmtEnumProc(szFormat);
 
     return TRUE;
@@ -202,10 +202,10 @@ BOOL WINAPI DECLSPEC EnumTimeFormatsA(TIMEFMT_ENUMPROCA lpTimeFmtEnumProc, LCID 
 
     if (!lpTimeFmtEnumProc) return FALSE;
 
-    GetLocaleInfoA(Locale, LOCALE_STIME, szTimeSep, sizeof(szTimeSep));
-    GetLocaleInfoA(Locale, LOCALE_ITIME | LOCALE_RETURN_NUMBER, (LPSTR)&val, sizeof(val));
+    GetLocaleInfo(Locale, LOCALE_STIME, szTimeSep, sizeof(szTimeSep));
+    GetLocaleInfo(Locale, LOCALE_ITIME | LOCALE_RETURN_NUMBER, (LPSTR)&val, sizeof(val));
     iTime = val;
-    GetLocaleInfoA(Locale, LOCALE_ITLZERO | LOCALE_RETURN_NUMBER, (LPSTR)&val, sizeof(val));
+    GetLocaleInfo(Locale, LOCALE_ITLZERO | LOCALE_RETURN_NUMBER, (LPSTR)&val, sizeof(val));
     bTLZero = val;
 
     if (iTime == 0) {
@@ -242,22 +242,22 @@ BOOL WINAPI DECLSPEC EnumCalendarInfoA(CALINFO_ENUMPROCA lpCalInfoEnumProc, LCID
         case CAL_SDAYNAME4: case CAL_SDAYNAME5: case CAL_SDAYNAME6:
         case CAL_SDAYNAME7:
             i = CalType - CAL_SDAYNAME1;
-            if (GetLocaleInfoA(Locale, LOCALE_SDAYNAME1 + i, szBuf, sizeof(szBuf)))
+            if (GetLocaleInfo(Locale, LOCALE_SDAYNAME1 + i, szBuf, sizeof(szBuf)))
                 lpCalInfoEnumProc(szBuf);
             break;
         case CAL_SABBREVDAYNAME1: case CAL_SABBREVDAYNAME2: case CAL_SABBREVDAYNAME3:
         case CAL_SABBREVDAYNAME4: case CAL_SABBREVDAYNAME5: case CAL_SABBREVDAYNAME6:
         case CAL_SABBREVDAYNAME7:
             i = CalType - CAL_SABBREVDAYNAME1;
-            if (GetLocaleInfoA(Locale, LOCALE_SABBREVDAYNAME1 + i, szBuf, sizeof(szBuf)))
+            if (GetLocaleInfo(Locale, LOCALE_SABBREVDAYNAME1 + i, szBuf, sizeof(szBuf)))
                 lpCalInfoEnumProc(szBuf);
             break;
         case CAL_SSHORTDATE:
-            GetLocaleInfoA(Locale, LOCALE_SSHORTDATE, szBuf, sizeof(szBuf));
+            GetLocaleInfo(Locale, LOCALE_SSHORTDATE, szBuf, sizeof(szBuf));
             lpCalInfoEnumProc(szBuf);
             break;
         case CAL_SLONGDATE:
-            GetLocaleInfoA(Locale, LOCALE_SLONGDATE, szBuf, sizeof(szBuf));
+            GetLocaleInfo(Locale, LOCALE_SLONGDATE, szBuf, sizeof(szBuf));
             lpCalInfoEnumProc(szBuf);
             break;
         default:
