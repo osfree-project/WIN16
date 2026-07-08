@@ -85,7 +85,7 @@ static int GetLongDateOrder(const char FAR *fmt) {
 }
 
 /* ================================================================== */
-int WINAPI __export GetLocaleInfoA(LCID Locale, LCTYPE LCType, LPSTR lpLCData, int cchData) {
+int WINAPI DECLSPEC GetLocaleInfoA(LCID Locale, LCTYPE LCType, LPSTR lpLCData, int cchData) {
     int number = 0;
     int returnNumber = (LCType & LOCALE_RETURN_NUMBER) ? 1 : 0;
     LCType &= ~LOCALE_RETURN_NUMBER;
@@ -308,7 +308,7 @@ int WINAPI __export GetLocaleInfoA(LCID Locale, LCTYPE LCType, LPSTR lpLCData, i
 }
 
 /* ================================================================== */
-int WINAPI GetDateFormatA(LCID Locale, DWORD dwFlags, const SYSTEMTIME FAR *lpDate,
+int WINAPI DECLSPEC GetDateFormatA(LCID Locale, DWORD dwFlags, const SYSTEMTIME FAR *lpDate,
     LPCSTR lpFormat, LPSTR lpDateStr, int cchDate) {
     static SYSTEMTIME stCur; const SYSTEMTIME FAR *pSt;
     char fmtBuf[80]; char outBuf[80]; char FAR *f, FAR *out; char tmp[16];
@@ -357,7 +357,7 @@ int WINAPI GetDateFormatA(LCID Locale, DWORD dwFlags, const SYSTEMTIME FAR *lpDa
 }
 
 /* ================================================================== */
-int WINAPI GetTimeFormatA(LCID Locale, DWORD dwFlags, const SYSTEMTIME FAR *lpTime,
+int WINAPI DECLSPEC GetTimeFormatA(LCID Locale, DWORD dwFlags, const SYSTEMTIME FAR *lpTime,
     LPCSTR lpFormat, LPSTR lpTimeStr, int cchTime) {
     static SYSTEMTIME FAR stCur; const SYSTEMTIME FAR *pSt;
     char fmtBuf[80], outBuf[80], FAR *f, FAR *out, tmp[16], szTimeSep[4], szAm[8], szPm[8];
@@ -429,7 +429,7 @@ int WINAPI GetTimeFormatA(LCID Locale, DWORD dwFlags, const SYSTEMTIME FAR *lpTi
 }
 
 /* ================================================================== */
-BOOL WINAPI SetLocaleInfoA(LCID Locale, LCTYPE LCType, LPCSTR lpLCData) {
+BOOL WINAPI DECLSPEC SetLocaleInfoA(LCID Locale, LCTYPE LCType, LPCSTR lpLCData) {
     if (Locale == 0) Locale = LOCALE_USER_DEFAULT;
     if (Locale != LOCALE_USER_DEFAULT) return FALSE;
     switch (LCType) {
@@ -460,7 +460,7 @@ BOOL WINAPI SetLocaleInfoA(LCID Locale, LCTYPE LCType, LPCSTR lpLCData) {
 }
 
 /* ================================================================== */
-LCID WINAPI GetThreadLocale(void) { return LOCALE_USER_DEFAULT; }
-BOOL WINAPI SetThreadLocale(LCID Locale) { return FALSE; }
-LCID WINAPI GetSystemDefaultLCID(void) { return LOCALE_SYSTEM_DEFAULT; }
-LCID WINAPI GetUserDefaultLCID(void) { return LOCALE_USER_DEFAULT; }
+LCID WINAPI DECLSPEC GetThreadLocale(void) { return LOCALE_USER_DEFAULT; }
+BOOL WINAPI DECLSPEC SetThreadLocale(LCID Locale) { return FALSE; }
+LCID WINAPI DECLSPEC GetSystemDefaultLCID(void) { return LOCALE_SYSTEM_DEFAULT; }
+LCID WINAPI DECLSPEC GetUserDefaultLCID(void) { return LOCALE_USER_DEFAULT; }

@@ -196,6 +196,82 @@ BOOL WINAPI EnumCalendarInfoA(CALINFO_ENUMPROCA lpCalInfoEnumProc, LCID Locale, 
 /* Аналог Win32 GetKeyboardLayoutList */
 int WINAPI GetKeyboardLayoutList(int nBuff, LPSTR lpList);
 
+/* ---------- Number formatting ---------- */
+typedef struct {
+    UINT   NumDigits;
+    UINT   LeadingZero;
+    UINT   Grouping;
+    LPSTR  lpDecimalSep;
+    LPSTR  lpThousandSep;
+    UINT   NegativeOrder;
+} NUMBERFMTA;
+
+/* NegativeOrder constants */
+#define NEGATIVE_LEFT_PAREN   0
+#define NEGATIVE_SIGN_LEFT    1
+#define NEGATIVE_SIGN_SPACE   2
+#define NEGATIVE_SIGN_RIGHT   3
+#define NEGATIVE_SPACE_RIGHT  4
+
+/* Locale type for negative number order (not in original Win3.1 SDK) */
+#define LOCALE_INEGNUMBER      0x00001010L
+
+/* Prototype */
+int WINAPI GetNumberFormatA(LCID Locale, DWORD dwFlags, LPCSTR lpValue,
+                            const NUMBERFMTA FAR *lpFormat,
+                            LPSTR lpNumberStr, int cchNumber);
+
+/* ---------- Currency formatting ---------- */
+typedef struct {
+    UINT   NumDigits;
+    UINT   LeadingZero;
+    UINT   Grouping;
+    LPSTR  lpDecimalSep;
+    LPSTR  lpThousandSep;
+    UINT   NegativeOrder;
+    UINT   PositiveOrder;
+    LPSTR  lpCurrencySymbol;
+} CURRENCYFMTA;
+
+/* PositiveOrder */
+#define CURRENCY_POS_LEADING_SYMBOL    0   /* $1.1  */
+#define CURRENCY_POS_TRAILING_SYMBOL   1   /* 1.1$  */
+#define CURRENCY_POS_LEADING_SPACE     2   /* $ 1.1 */
+#define CURRENCY_POS_TRAILING_SPACE    3   /* 1.1 $ */
+
+/* NegativeOrder (расширенный) */
+#define CURRENCY_NEG_LEADING_SYMBOL_PARENS  0   /* ($1.1) */
+#define CURRENCY_NEG_SIGN_SYMBOL_NUM       1   /* -$1.1  */
+#define CURRENCY_NEG_SYMBOL_SIGN_NUM       2   /* $-1.1  */
+#define CURRENCY_NEG_SIGN_NUM_SYMBOL       3   /* $1.1-  */
+#define CURRENCY_NEG_NUM_SIGN_SYMBOL       4   /* (1.1$) */
+#define CURRENCY_NEG_SIGN_SYMBOL_SPACE     5   /* -$ 1.1 */
+#define CURRENCY_NEG_SYMBOL_SIGN_SPACE     6   /* $- 1.1 */
+#define CURRENCY_NEG_NUM_SPACE_SYMBOL      7   /* 1.1 $- */
+#define CURRENCY_NEG_SIGN_SPACE_SYMBOL     8   /* - $1.1 */
+#define CURRENCY_NEG_SYMBOL_SPACE_SIGN     9   /* $ -1.1 */
+#define CURRENCY_NEG_NUM_SPACE_SYMBOL_P    10  /* 1.1 $ - */
+#define CURRENCY_NEG_SIGN_NUM_SYMBOL_P     11  /* $ 1.1- */
+#define CURRENCY_NEG_NUM_SIGN_SPACE_SYMBOL 12  /* 1.1- $ */
+#define CURRENCY_NEG_SIGN_SYMBOL_NUM_SPACE 13  /* -$ 1.1 */
+#define CURRENCY_NEG_NUM_SYMBOL_SPACE_SIGN 14  /* 1.1$ - */
+#define CURRENCY_NEG_SIGN_SPACE_NUM_SYMBOL 15  /* - 1.1$ */
+
+/* Locale type for positive currency order */
+#define LOCALE_IPOSITIVECURRENCY 0x0000101CL
+
+/* Prototype */
+int WINAPI GetCurrencyFormatA(
+    LCID     Locale,
+    DWORD    dwFlags,
+    LPCSTR   lpValue,
+    const CURRENCYFMTA FAR *lpFormat,
+    LPSTR    lpCurrencyStr,
+    int      cchCurrency
+);
+
+#define GetNumberFormat  GetNumberFormatA
+#define GetCurrencyFormat GetCurrencyFormatA
 #define GetDateFormat  GetDateFormatA
 #define GetTimeFormat  GetTimeFormatA
 #define GetLocaleInfo  GetLocaleInfoA

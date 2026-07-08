@@ -29,6 +29,8 @@ char g_szDateSep[4]="/";
 char g_szLongDateFmt[80]="dddd, MMMM dd, yyyy";
 char g_szShortDateFmt[80]="M/d/yy";
 int  g_iniNegCurr = 0;
+UINT  g_iniGrouping  = 0x30;    /* упакованная группировка "3;0" по умолчанию */
+UINT  g_iniNegNumber = 0;       /* NegativeOrder по умолчанию (1.1) */
 
 /* ---------- вспомогательные функции ---------- */
 static int FarStrnicmp(const char FAR *s1, const char FAR *s2, int n) {
@@ -70,7 +72,35 @@ static void StringCopyN(LPSTR dest, LPCSTR src, int n)
     dest[i] = '\0';
 }
 
+int Atoi(const char FAR *s)
+{
+    int result = 0;
+    int sign = 1;
+    while (*s == ' ' || *s == '\t') s++;
+    if (*s == '-') { sign = -1; s++; }
+    else if (*s == '+') { s++; }
+    while (*s >= '0' && *s <= '9') {
+        result = result * 10 + (*s - '0');
+        s++;
+    }
+    return sign * result;
+}
+
+static UINT PackGrouping(LPCSTR lpszGroup)
+{
+    UINT result = 0;
+    int n;
+    if (!lpszGroup || !*lpszGroup) return 0x30;  /* default "3;0" */
+
+    /* ищем первую цифру */
+    n = Atoi(lpszGroup);
+    if (n <= 0 || n > 9) n = 3;
+    result = (UINT)((n << 8) | 0x30);   /* старший байт = n, младший = '0' */
+    return result;
+}
+
 static void FAR ReadInternationalSettings(void) {
+    char bufGroup[10];
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ICOUNTRY, g_iniCountry, sizeof(g_iniCountry));
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SLANGUAGE, g_iniLanguage, sizeof(g_iniLanguage));
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SKEYBOARDSTOINSTALL, (LPSTR)g_iniKeyboard, sizeof(g_iniKeyboard));
@@ -92,6 +122,9 @@ static void FAR ReadInternationalSettings(void) {
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SLONGDATE, g_szLongDateFmt, sizeof(g_szLongDateFmt));
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SSHORTDATE, g_szShortDateFmt, sizeof(g_szShortDateFmt));
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ITLZERO | LOCALE_RETURN_NUMBER, (LPSTR)&g_iniTLZero, sizeof(int));
+    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SGROUPING, bufGroup, sizeof(bufGroup));
+    g_iniGrouping = PackGrouping(bufGroup);
+    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_INEGNUMBER | LOCALE_RETURN_NUMBER, (LPSTR)&g_iniNegNumber, sizeof(g_iniNegNumber));
 }
 
 /* ---------- глобальные переменные для языковых колбэков ---------- */
@@ -268,26 +301,63 @@ void FAR UpdateTimeSample(HWND hDlg) {
     InvalidateRect(GetDlgItem(hDlg, IDC_INTL_TIME_SAMPLE), NULL, TRUE);
 }
 
-void FAR UpdateCurrencySamples(HWND hDlg) {
-    static char buf[40];
-    wsprintf(buf, "%s1.22", (LPSTR)g_iniCurrencySym);
-    SetDlgItemText(hDlg, IDC_INTL_CURR_POS, buf); InvalidateRect(GetDlgItem(hDlg, IDC_INTL_CURR_POS), NULL, TRUE);
-    wsprintf(buf, "(%s1.22)", (LPSTR)g_iniCurrencySym);
-    SetDlgItemText(hDlg, IDC_INTL_CURR_NEG, buf); InvalidateRect(GetDlgItem(hDlg, IDC_INTL_CURR_NEG), NULL, TRUE);
+void FAR UpdateCurrencySamples(HWND hDlg)
+{
+    CURRENCYFMTA fmt;
+    char bufPos[40], bufNeg[40];
+
+    /* Заполняем структуру текущими (возможно, несохранёнными) значениями */
+    fmt.NumDigits        = g_iniDigits;
+    fmt.LeadingZero      = g_iniLZero;
+    fmt.Grouping         = g_iniGrouping;
+    fmt.lpDecimalSep     = g_iniDecimal;
+    fmt.lpThousandSep    = g_iniThousand;
+    fmt.NegativeOrder    = (UINT)g_iniNegCurr;
+    fmt.PositiveOrder    = (UINT)g_iniCurrencyFmt;
+    fmt.lpCurrencySymbol = g_iniCurrencySym;
+
+    if (GetCurrencyFormat(LOCALE_USER_DEFAULT, 0, "1.22", &fmt, bufPos, sizeof(bufPos)) > 0)
+    {
+        SetDlgItemText(hDlg, IDC_INTL_CURR_POS, bufPos);
+        InvalidateRect(GetDlgItem(hDlg, IDC_INTL_CURR_POS), NULL, TRUE);
+    }
+
+    if (GetCurrencyFormat(LOCALE_USER_DEFAULT, 0, "-1.22", &fmt, bufNeg, sizeof(bufNeg)) > 0)
+    {
+        SetDlgItemText(hDlg, IDC_INTL_CURR_NEG, bufNeg);
+        InvalidateRect(GetDlgItem(hDlg, IDC_INTL_CURR_NEG), NULL, TRUE);
+    }
 }
 
-void FAR UpdateNumberSample(HWND hDlg) {
-    static char buf[40];
-    wsprintf(buf, "1%s234%s4444", (LPSTR)g_iniThousand, (LPSTR)g_iniDecimal);
-    SetDlgItemText(hDlg, IDC_INTL_NUM_SAMPLE, buf);
-    InvalidateRect(GetDlgItem(hDlg, IDC_INTL_NUM_SAMPLE), NULL, TRUE);
+void FAR UpdateNumberSample(HWND hDlg)
+{
+    NUMBERFMTA fmt;
+    char buf[40];
+
+
+    fmt.NumDigits     = g_iniDigits;
+    fmt.LeadingZero   = g_iniLZero;
+    fmt.Grouping      = g_iniGrouping;
+    fmt.lpDecimalSep  = g_iniDecimal;
+    fmt.lpThousandSep = g_iniThousand;
+    fmt.NegativeOrder = g_iniNegNumber;
+
+    if (GetNumberFormat(LOCALE_USER_DEFAULT, 0, "1234.4444", &fmt, buf, sizeof(buf)) > 0)
+    {
+        SetDlgItemText(hDlg, IDC_INTL_NUM_SAMPLE, buf);
+        InvalidateRect(GetDlgItem(hDlg, IDC_INTL_NUM_SAMPLE), NULL, TRUE);
+    }
 }
+
+
+/* Преобразование строки вида "3;0" в упакованный UINT.
+   Для Win16 используется только первый компонент и завершающий 0. */
+
 
 /* ========== Основная диалоговая процедура International ========== */
 BOOL WINAPI InternationalDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
     case WM_INITDIALOG: {
-//        MessageBox(hDlg, "TRACE: WM_INITDIALOG begin", "Debug", MB_OK);
 
         ReadInternationalSettings();
 

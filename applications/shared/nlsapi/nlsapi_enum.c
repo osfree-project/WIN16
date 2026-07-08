@@ -4,7 +4,7 @@
  */
 #include "nlsapi_internal.h"
 
-BOOL WINAPI __export EnumSystemLocalesA(LOCALE_ENUMPROCA lpLocaleEnumProc, DWORD dwFlags)
+BOOL WINAPI DECLSPEC EnumSystemLocalesA(LOCALE_ENUMPROCA lpLocaleEnumProc, DWORD dwFlags)
 {
     HFILE hFile;
     static char szReadBuf[512];
@@ -81,7 +81,7 @@ parse_enum:
 }
 
 
-BOOL WINAPI __export EnumUILanguagesA(UILANGUAGE_ENUMPROCA lpUILanguageEnumProc, DWORD dwFlags, LONG lParam)
+BOOL WINAPI DECLSPEC EnumUILanguagesA(UILANGUAGE_ENUMPROCA lpUILanguageEnumProc, DWORD dwFlags, LONG lParam)
 {
     HFILE hFile;
     static char szReadBuf[512];
@@ -178,7 +178,7 @@ lang_parse:
     return TRUE;
 }
 
-BOOL WINAPI __export EnumDateFormatsA(DATEFMT_ENUMPROCA lpDateFmtEnumProc, LCID Locale, DWORD dwFlags)
+BOOL WINAPI DECLSPEC EnumDateFormatsA(DATEFMT_ENUMPROCA lpDateFmtEnumProc, LCID Locale, DWORD dwFlags)
 {
     char szFormat[80];
     if (!lpDateFmtEnumProc) return FALSE;
@@ -192,7 +192,7 @@ BOOL WINAPI __export EnumDateFormatsA(DATEFMT_ENUMPROCA lpDateFmtEnumProc, LCID 
     return TRUE;
 }
 
-BOOL WINAPI __export EnumTimeFormatsA(TIMEFMT_ENUMPROCA lpTimeFmtEnumProc, LCID Locale, DWORD dwFlags)
+BOOL WINAPI DECLSPEC EnumTimeFormatsA(TIMEFMT_ENUMPROCA lpTimeFmtEnumProc, LCID Locale, DWORD dwFlags)
 {
     char szFormat[80];
     int iTime;
@@ -221,7 +221,7 @@ BOOL WINAPI __export EnumTimeFormatsA(TIMEFMT_ENUMPROCA lpTimeFmtEnumProc, LCID 
     return TRUE;
 }
 
-BOOL WINAPI __export EnumCalendarInfoA(CALINFO_ENUMPROCA lpCalInfoEnumProc, LCID Locale, CALID Calendar, CALTYPE CalType)
+BOOL WINAPI DECLSPEC EnumCalendarInfoA(CALINFO_ENUMPROCA lpCalInfoEnumProc, LCID Locale, CALID Calendar, CALTYPE CalType)
 {
     char szBuf[80];
     int i;

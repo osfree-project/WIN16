@@ -7,6 +7,12 @@
 #include <string.h>
 #include "winnls.h"
 
+#ifdef STATIC
+#define DECLSPEC __export
+#else
+#define DECLSPEC __loadds
+#endif
+
 /* Таблица сопоставления кодов стран и языков в LCID */
 typedef struct {
     int   iCountry;      /* телефонный код страны */

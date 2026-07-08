@@ -172,7 +172,7 @@ parse_line:
     return bFound;
 }
 
-int WINAPI __export GetKeyboardLayoutList(int nBuff, LPSTR lpList)
+int WINAPI DECLSPEC GetKeyboardLayoutList(int nBuff, LPSTR lpList)
 {
     HFILE hFile;
     static char szReadBuf[512];

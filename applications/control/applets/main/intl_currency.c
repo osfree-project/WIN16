@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "winnls.h"
-#include "currency.h"
+#include "intl_currency.h"
 
 /* ¬нешние глобальные переменные (определены в inter.c) */
 extern char g_iniCurrencySym[8];

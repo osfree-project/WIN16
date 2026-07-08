@@ -1,7 +1,7 @@
 /*
  * currency.rc - ресурс для диалога Currency Format (новый)
  */
-#include "currency.h"
+#include "intl_currency.h"
 
 DLG_CURRFMT DIALOG FIXED IMPURE 0, 98, 210, 70
 STYLE DS_MODALFRAME | WS_POPUPWINDOW | WS_VISIBLE | WS_DLGFRAME

@@ -13,8 +13,6 @@
 
 #define DLG_DATEFMT                 210   /* изменено для избежания конфликта с currency.rc */
 #define DLG_TIMEFMT                 211
-#define DLG_CURRFMT                 212
-#define DLG_NUMFMT                  213
 
 /* ID для основного диалога */
 #define IDC_INTL_COUNTRY            300
@@ -74,21 +72,8 @@
 #define IDC_TIMEFMT_LZ_OFF          345
 #define IDC_TIMEFMT_LZ_ON           346
 
-/* ID для диалога Number Format */
-#define IDC_NUMFMT_DECIMAL          350
-#define IDC_NUMFMT_THOUSAND         351
-#define IDC_NUMFMT_DIGITS           352
-#define IDC_NUMFMT_LEADZERO         353
-
-/* ID для диалога Currency Format */
-#define IDC_CURRFMT_POS             360
-#define IDC_CURRFMT_NEG             361
-#define IDC_CURRFMT_SYMBOL          362
-#define IDC_CURRFMT_DIGITS          363
-#define IDC_CURRFMT_SYMBOL_EDIT     364
-#define IDC_CURRFMT_DIGITS_EDIT     365
-#define IDC_CURRFMT_PLACEMENT       366
-#define IDC_CURRFMT_NEGATIVE        367
+#include "intl_number.h"
+#include "intl_currency.h"
 
 /* ---------- общие глобальные переменные ---------- */
 extern char g_iniCountry[8];
@@ -112,13 +97,14 @@ extern char g_szDateSep[4];
 extern char g_szLongDateFmt[80];
 extern char g_szShortDateFmt[80];
 extern int  g_iniNegCurr;
+extern UINT  g_iniGrouping;
+extern UINT  g_iniNegNumber;
 
 /* ---------- прототипы общих функций ---------- */
 void FAR UpdateDateSamples(HWND hDlg);
 void FAR UpdateTimeSample(HWND hDlg);
 void FAR UpdateCurrencySamples(HWND hDlg);
 void FAR UpdateNumberSample(HWND hDlg);
-
 
 /* Прототипы диалоговых процедур */
 BOOL WINAPI DateFmtDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam);
