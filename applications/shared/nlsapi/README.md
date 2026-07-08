@@ -1,4 +1,3 @@
-```markdown
 # osFree Win16 NLS API Library
 
 ![Language: C](https://img.shields.io/badge/language-C-blue)
@@ -114,4 +113,3 @@ You can find the full license text at the [osFree wiki](http://osfree.org/doku/d
 ---
 
 *Last updated: July 8, 2026*
-```
