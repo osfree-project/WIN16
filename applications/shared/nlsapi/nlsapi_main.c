@@ -90,6 +90,7 @@ int WINAPI DECLSPEC GetLocaleInfoA(LCID Locale, LCTYPE LCType, LPSTR lpLCData, i
     int returnNumber = (LCType & LOCALE_RETURN_NUMBER) ? 1 : 0;
     LCType &= ~LOCALE_RETURN_NUMBER;
     if (Locale == 0) Locale = LOCALE_USER_DEFAULT;
+    if (Locale == LOCALE_SYSTEM_DEFAULT) Locale = LOCALE_USER_DEFAULT
     if (!lpLCData || cchData <= 0) { if(returnNumber) return 0; return 0; }
 
     if (Locale != LOCALE_USER_DEFAULT) {
@@ -314,7 +315,6 @@ int WINAPI DECLSPEC GetDateFormatA(LCID Locale, DWORD dwFlags, const SYSTEMTIME 
     char fmtBuf[80]; char outBuf[80]; char FAR *f, FAR *out; char tmp[16];
     int dow, remain;
     if (Locale == 0) Locale = LOCALE_USER_DEFAULT;
-    if (Locale != LOCALE_USER_DEFAULT) return 0;
     if (!lpDateStr || cchDate < 1) return 0;
     out = outBuf; *out = '\0';
 
@@ -363,7 +363,6 @@ int WINAPI DECLSPEC GetTimeFormatA(LCID Locale, DWORD dwFlags, const SYSTEMTIME 
     char fmtBuf[80], outBuf[80], FAR *f, FAR *out, tmp[16], szTimeSep[4], szAm[8], szPm[8];
     int hour24, remain, iTime, bTLZero; WORD h;
     if (Locale == 0) Locale = LOCALE_USER_DEFAULT;
-    if (Locale != LOCALE_USER_DEFAULT) return 0;
     if (!lpTimeStr || cchTime < 1) return 0;
     out = outBuf; *out = '\0';
 
