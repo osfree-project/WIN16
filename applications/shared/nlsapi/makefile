@@ -4,7 +4,7 @@
 
 PROJ = nlsapi
 TRGT = $(PROJ).lib
-srcfiles = $(p)nlsapi_enum$(e) $(p)nlsapi_locale$(e) $(p)nlsapi_main$(e) $(p)nlsapi_utils$(e) $(p)nlsapi_num$(e) $(p)nlsapi_currency$(e)
+srcfiles = $(p)nlsapi_enum$(e) $(p)nlsapi_locale$(e) $(p)nlsapi_main$(e) $(p)nlsapi_utils$(e) $(p)nlsapi_num$(e) $(p)nlsapi_currency$(e) $(p)nlsapi_keyboard$(e)
 ADD_COPT = -0 -I=$(MYDIR)..$(SEP)..$(SEP)include -DSTATIC
 ADD_LINKOPT = lib setupinf.lib
 
