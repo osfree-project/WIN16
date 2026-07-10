@@ -4,6 +4,7 @@
 #include "nlsapi_internal.h"
 #include <ctype.h>
 
+#if 0
 /* ------------------------------------------------------------ */
 HFILE OpenSetupInf(void)
 {
@@ -13,6 +14,7 @@ HFILE OpenSetupInf(void)
     lstrcat(szPath, "\\SETUP.INF");
     return OpenFile(szPath, &of, OF_READ);
 }
+#endif
 
 #if 0
 /* ------------------------------------------------------------ */

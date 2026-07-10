@@ -4,6 +4,7 @@
  */
 #include "nlsapi_internal.h"
 
+#if 0
 BOOL WINAPI DECLSPEC EnumSystemLocalesA(LOCALE_ENUMPROCA lpLocaleEnumProc, DWORD dwFlags)
 {
     HFILE hFile;
@@ -79,8 +80,45 @@ parse_enum:
     _lclose(hFile);
     return TRUE;
 }
+#endif
 
+BOOL WINAPI DECLSPEC EnumSystemLocalesA(LOCALE_ENUMPROCA lpLocaleEnumProc, DWORD dwFlags)
+{
+    LPINF_SECTION sec;
+    int i, count;
+    LPCSTR line;
+    static char szCountryName[64];
+    static char szParams[256];
+    static char szLang[16];
+    static int code;
+    LCID lcid;
+    char szLCID[16];
 
+    if (!lpLocaleEnumProc || !g_hInf) return FALSE;
+
+    sec = InfFindSection(g_hInf, "country");
+    if (!sec) return FALSE;
+
+    count = InfGetLineCount(sec);
+    for (i = 0; i < count; i++)
+    {
+        line = InfGetLine(sec, i);
+        if (!line) continue;
+        while (*line == ' ' || *line == '\t') line++;
+        if (*line == ';' || *line == '\0') continue;
+
+        ParseCountryLine(line, (LPSTR)szCountryName, sizeof(szCountryName),
+                         (int FAR *)&code, (LPSTR)szLang, sizeof(szLang),
+                         (LPSTR)szParams, sizeof(szParams));
+        lcid = LookupLCID(code, (LPCSTR)szLang);
+        wsprintf(szLCID, "%08lX", lcid);
+        if (!lpLocaleEnumProc(szLCID))
+            break;
+    }
+    return TRUE;
+}
+
+#if 0
 BOOL WINAPI DECLSPEC EnumUILanguagesA(UILANGUAGE_ENUMPROCA lpUILanguageEnumProc, DWORD dwFlags, LONG lParam)
 {
     HFILE hFile;
@@ -175,6 +213,73 @@ lang_parse:
     }
 
     _lclose(hFile);
+    return TRUE;
+}
+
+#endif
+
+BOOL WINAPI DECLSPEC EnumUILanguagesA(UILANGUAGE_ENUMPROCA lpUILanguageEnumProc,
+                                      DWORD dwFlags, LONG lParam)
+{
+    LPINF_SECTION sec;
+    int i, count;
+    LPCSTR line;
+    static char szLangName[64];
+    static char szKey[32];
+
+    if (!lpUILanguageEnumProc || !g_hInf) return FALSE;
+
+    sec = InfFindSection(g_hInf, "language");
+    if (!sec) return FALSE;
+
+    count = InfGetLineCount(sec);
+    for (i = 0; i < count; i++)
+    {
+        line = InfGetLine(sec, i);
+        if (!line) continue;
+        while (*line == ' ' || *line == '\t') line++;
+        if (*line == ';' || *line == '\0') continue;
+
+        if (dwFlags == MUI_LANGUAGE_ID)
+        {
+            char FAR *pEq = (char FAR *)_fstrchr(line, '=');
+            if (pEq)
+            {
+                int keyLen = (int)(pEq - line);
+                while (keyLen > 0 && (line[keyLen-1] == ' ' || line[keyLen-1] == '\t'))
+                    keyLen--;
+                if (keyLen > 0)
+                {
+                    if (keyLen > 31) keyLen = 31;
+                    {
+                        int k;
+                        for (k = 0; k < keyLen; k++) szKey[k] = line[k];
+                        szKey[k] = '\0';
+                    }
+                    if (!lpUILanguageEnumProc(szKey, lParam))
+                        return TRUE;
+                }
+            }
+        }
+        else /* MUI_LANGUAGE_NAME */
+        {
+            char FAR *p1 = (char FAR *)_fstrchr(line, '\"');
+            if (p1)
+            {
+                char FAR *p2 = (char FAR *)_fstrchr(p1 + 1, '\"');
+                if (p2)
+                {
+                    int len = 0;
+                    char FAR *tmp = p1 + 1;
+                    while (tmp < p2 && len < 63)
+                        szLangName[len++] = *tmp++;
+                    szLangName[len] = '\0';
+                    if (!lpUILanguageEnumProc(szLangName, lParam))
+                        return TRUE;
+                }
+            }
+        }
+    }
     return TRUE;
 }
 
