@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "main.h"
+#define STATIC
 #include "winnls.h"
 
 /* ---------- Resource IDs ---------- */

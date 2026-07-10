@@ -26,7 +26,7 @@ typedef struct {
 typedef SYSTEMTIME FAR *LPSYSTEMTIME;
 
 /* Default locales */
-#define LOCALE_SYSTEM_DEFAULT   0x0400L
+#define LOCALE_SYSTEM_DEFAULT   0x0800L
 #define LOCALE_USER_DEFAULT     0x0400L
 
 /* ------ Строковые типы ------ */
@@ -278,6 +278,11 @@ int WINAPI GetCurrencyFormatA(
 #define SetLocaleInfo  SetLocaleInfoA
 #define EnumSystemLocales EnumSystemLocalesA
 #define EnumUILanguages EnumUILanguagesA
+
+#ifdef STATIC
+VOID WINAPI InitNLS(VOID);
+VOID WINAPI DoneNLS(VOID);
+#endif
 
 #ifdef __cplusplus
 }

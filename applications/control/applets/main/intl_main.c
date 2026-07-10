@@ -353,11 +353,13 @@ void FAR UpdateNumberSample(HWND hDlg)
 /* Преобразование строки вида "3;0" в упакованный UINT.
    Для Win16 используется только первый компонент и завершающий 0. */
 
-
 /* ========== Основная диалоговая процедура International ========== */
 BOOL WINAPI InternationalDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
     case WM_INITDIALOG: {
+
+	// @todo move to DLL init
+	InitNLS();
 
         ReadInternationalSettings();
 

@@ -4,6 +4,10 @@
  */
 #include "nlsapi_internal.h"
 #include <dos.h>
+#include "setupinf.h"
+
+// SETUP.INF
+HINF g_hInf;
 
 /* ---------- встроенные строки (дни, мес€цы) ---------- */
 static const char FAR *MonthFull[] = {
@@ -90,7 +94,7 @@ int WINAPI DECLSPEC GetLocaleInfoA(LCID Locale, LCTYPE LCType, LPSTR lpLCData, i
     int returnNumber = (LCType & LOCALE_RETURN_NUMBER) ? 1 : 0;
     LCType &= ~LOCALE_RETURN_NUMBER;
     if (Locale == 0) Locale = LOCALE_USER_DEFAULT;
-    if (Locale == LOCALE_SYSTEM_DEFAULT) Locale = LOCALE_USER_DEFAULT
+    if (Locale == LOCALE_SYSTEM_DEFAULT) Locale = LOCALE_USER_DEFAULT;
     if (!lpLCData || cchData <= 0) { if(returnNumber) return 0; return 0; }
 
     if (Locale != LOCALE_USER_DEFAULT) {
@@ -463,3 +467,19 @@ LCID WINAPI DECLSPEC GetThreadLocale(void) { return LOCALE_USER_DEFAULT; }
 BOOL WINAPI DECLSPEC SetThreadLocale(LCID Locale) { return FALSE; }
 LCID WINAPI DECLSPEC GetSystemDefaultLCID(void) { return LOCALE_SYSTEM_DEFAULT; }
 LCID WINAPI DECLSPEC GetUserDefaultLCID(void) { return LOCALE_USER_DEFAULT; }
+
+#ifdef STATIC
+VOID WINAPI DECLSPEC InitNLS(VOID)
+{
+    static char szPath[144];
+
+    GetSystemDirectory(szPath, sizeof(szPath) - 20);
+    lstrcat(szPath, "\\SETUP.INF");
+    g_hInf = InfOpen(szPath);
+}
+
+VOID WINAPI DECLSPEC DoneNLS(VOID)
+{
+    InfClose(g_hInf);
+}
+#endif

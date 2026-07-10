@@ -5,6 +5,7 @@
 #define NLSAPI_INTERNAL_H
 
 #include <string.h>
+#include "setupinf.h"
 #include "winnls.h"
 
 #ifdef STATIC
@@ -20,6 +21,7 @@ typedef struct {
     LCID  lcid;
 } KNOWN_LCID;
 
+extern HINF g_hInf;
 extern const KNOWN_LCID knownLCIDs[];
 extern const int KNOWN_LCID_COUNT;   /* <-- вместо макроса */
 

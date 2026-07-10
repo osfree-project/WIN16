@@ -48,6 +48,7 @@ LCID LookupLCID(int countryCode, const char FAR *szLang)
     return (LCID)(0xE000 + (WORD)countryCode);
 }
 
+#if 0
 BOOL GetLocaleInfoFromInf(int iCountryCode, const char FAR *szLang,
                           LCTYPE LCType, LPSTR lpLCData, int cchData,
                           BOOL returnNumber)
@@ -170,6 +171,109 @@ parse_line:
     _lclose(hFile);
 
     return bFound;
+}
+#endif
+
+
+BOOL GetLocaleInfoFromInf(int iCountryCode, const char FAR *szLang,
+                          LCTYPE LCType, LPSTR lpLCData, int cchData,
+                          BOOL returnNumber)
+{
+    LPINF_SECTION sec;
+    int i, count;
+    LPCSTR line;
+    char szTargetCountryCode[16];
+    static char szCountryName[64];
+    static char szParams[256];
+    static char szFileLang[16];
+    static int code;
+    int fieldIdx;
+    char FAR *pField;
+    int cur;
+
+    if (!g_hInf) return FALSE;
+
+    sec = InfFindSection(g_hInf, "country");
+    if (!sec) return FALSE;
+
+    wsprintf(szTargetCountryCode, "%d", iCountryCode);
+    count = InfGetLineCount(sec);
+
+    for (i = 0; i < count; i++)
+    {
+        line = InfGetLine(sec, i);
+        if (!line) continue;
+
+        while (*line == ' ' || *line == '\t') line++;
+        if (*line == ';' || *line == '\0') continue;
+
+        ParseCountryLine(line, (LPSTR)szCountryName, sizeof(szCountryName),
+                         (int FAR *)&code, (LPSTR)szFileLang, sizeof(szFileLang),
+                         (LPSTR)szParams, sizeof(szParams));
+
+        if (code == iCountryCode && lstrcmpi(szFileLang, szLang) == 0)
+        {
+            if (LCType == LOCALE_SCOUNTRY)
+            {
+                StringCopyN(lpLCData, szCountryName, cchData);
+                return TRUE;
+            }
+
+            fieldIdx = -1;
+            if (LCType == LOCALE_ICOUNTRY) fieldIdx = 0;
+            else if (LCType == LOCALE_ICURRDIGITS) fieldIdx = 1;
+            else if (LCType == LOCALE_ICURRENCY) fieldIdx = 2;
+            else if (LCType == LOCALE_IDATE) fieldIdx = 3;
+            else if (LCType == LOCALE_IMEASURE) fieldIdx = 4;
+            else if (LCType == LOCALE_INEGCURR) fieldIdx = 5;
+            else if (LCType == LOCALE_ITIME) fieldIdx = 6;
+            else if (LCType == LOCALE_ITLZERO) fieldIdx = 7;
+            else if (LCType == LOCALE_ILZERO) fieldIdx = 8;
+            else if (LCType == LOCALE_IDIGITS) fieldIdx = 9;
+            else if (LCType == LOCALE_S1159) fieldIdx = 10;
+            else if (LCType == LOCALE_S2359) fieldIdx = 11;
+            else if (LCType == LOCALE_SCURRENCY) fieldIdx = 12;
+            else if (LCType == LOCALE_STHOUSAND) fieldIdx = 13;
+            else if (LCType == LOCALE_SDECIMAL) fieldIdx = 14;
+            else if (LCType == LOCALE_SDATE) fieldIdx = 15;
+            else if (LCType == LOCALE_STIME) fieldIdx = 16;
+            else if (LCType == LOCALE_SLIST) fieldIdx = 17;
+            else if (LCType == LOCALE_SSHORTDATE) fieldIdx = 18;
+            else if (LCType == LOCALE_SLONGDATE) fieldIdx = 19;
+
+            if (fieldIdx >= 0)
+            {
+                pField = szParams;
+                cur = 0;
+                while (cur < fieldIdx && *pField)
+                {
+                    pField = (char FAR *)_fstrchr(pField, '!');
+                    if (pField) { pField++; cur++; }
+                    else break;
+                }
+                if (pField)
+                {
+                    char FAR *pEnd = (char FAR *)_fstrchr(pField, '!');
+                    if (pEnd) *pEnd = '\0';
+                    if (returnNumber)
+                    {
+                        if (cchData >= (int)sizeof(int))
+                        {
+                            *(int FAR*)lpLCData = AtoiFar(pField);
+                            return TRUE;
+                        }
+                    }
+                    else
+                    {
+                        StringCopyN(lpLCData, pField, cchData);
+                        return TRUE;
+                    }
+                }
+            }
+        }
+    }
+
+    return FALSE;
 }
 
 int WINAPI DECLSPEC GetKeyboardLayoutList(int nBuff, LPSTR lpList)
