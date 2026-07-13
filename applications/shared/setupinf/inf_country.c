@@ -127,55 +127,18 @@ void InfFreeCountryEntry(COUNTRY_ENTRY FAR *entry)
 {
     if (!entry) return;
 
-
-    if (entry->name) {
-        FREE(entry->name);
-        entry->name = NULL;
-    }
-    if (entry->lang) {
-        FREE(entry->lang);
-        entry->lang = NULL;
-    }
-    if (entry->S1159) {
-        FREE(entry->S1159);
-        entry->S1159 = NULL;
-    }
-    if (entry->S2359) {
-        FREE(entry->S2359);
-        entry->S2359 = NULL;
-    }
-    if (entry->SCURRENCY) {
-        FREE(entry->SCURRENCY);
-        entry->SCURRENCY = NULL;
-    }
-    if (entry->STHOUSAND) {
-        FREE(entry->STHOUSAND);
-        entry->STHOUSAND = NULL;
-    }
-    if (entry->SDECIMAL) {
-        FREE(entry->SDECIMAL);
-        entry->SDECIMAL = NULL;
-    }
-    if (entry->SDATE) {
-        FREE(entry->SDATE);
-        entry->SDATE = NULL;
-    }
-    if (entry->STIME) {
-        FREE(entry->STIME);
-        entry->STIME = NULL;
-    }
-    if (entry->SLIST) {
-        FREE(entry->SLIST);
-        entry->SLIST = NULL;
-    }
-    if (entry->SSHORTDATE) {
-        FREE(entry->SSHORTDATE);
-        entry->SSHORTDATE = NULL;
-    }
-    if (entry->SLONGDATE) {
-        FREE(entry->SLONGDATE);
-        entry->SLONGDATE = NULL;
-    }
+    if (entry->name) FREE(entry->name);
+    if (entry->lang) FREE(entry->lang);
+    if (entry->S1159) FREE(entry->S1159);
+    if (entry->S2359) FREE(entry->S2359);
+    if (entry->SCURRENCY) FREE(entry->SCURRENCY);
+    if (entry->STHOUSAND) FREE(entry->STHOUSAND);
+    if (entry->SDECIMAL) FREE(entry->SDECIMAL);
+    if (entry->SDATE) FREE(entry->SDATE);
+    if (entry->STIME) FREE(entry->STIME);
+    if (entry->SLIST) FREE(entry->SLIST);
+    if (entry->SSHORTDATE) FREE(entry->SSHORTDATE);
+    if (entry->SLONGDATE) FREE(entry->SLONGDATE);
 
     MEMSET(entry, 0, sizeof(COUNTRY_ENTRY));
 }

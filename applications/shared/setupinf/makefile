@@ -4,7 +4,7 @@
 
 PROJ = setupinf
 TRGT = $(PROJ).lib
-srcfiles = $(p)setupinf$(e) $(p)string_utils$(e) $(p)inf_country$(e) $(p)inf_language$(e)
+srcfiles = $(p)setupinf$(e) $(p)string_utils$(e) $(p)inf_country$(e) $(p)inf_language$(e) $(p)inf_keyboard$(e)
 ADD_COPT = -0 -I=$(MYDIR)..$(SEP)..$(SEP)include #-ml
 
 

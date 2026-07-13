@@ -82,6 +82,7 @@ parse_kbd:
 
 */
 
+#if 0
 int WINAPI DECLSPEC GetKeyboardLayoutList(int nBuff, LPSTR lpList)
 {
     LPINF_SECTION sec;
@@ -157,5 +158,79 @@ int WINAPI DECLSPEC GetKeyboardLayoutList(int nBuff, LPSTR lpList)
         else break;
     }
     if (nRemain >= 1) *lpDest = '\0';
+    return nCount;
+}
+#endif
+
+int WINAPI DECLSPEC GetKeyboardLayoutList(int nBuff, LPSTR lpList)
+{
+    LPINF_SECTION sec;
+    int i, count;
+    LPCSTR line;
+    static KEYBOARD_ENTRY entry;
+    static char szPrevNames[24][32];
+    static int nPrev = 0;
+    int nCount = 0;
+    LPSTR lpDest = lpList;
+    int nRemain = (lpList && nBuff > 0) ? nBuff : 0;
+    int j, k;
+    BOOL bDup;
+    static char dbg[256];
+
+    if (!g_hInf) {
+        return 0;
+    }
+
+    sec = InfFindSection(g_hInf, "keyboard.tables");
+    if (!sec) {
+        return 0;
+    }
+
+    count = InfGetLineCount(sec);
+
+    if (nBuff == 0) {
+        nPrev = 0;
+        for (i = 0; i < count; i++) {
+            line = InfGetLine(sec, i);
+            if (!line) continue;
+
+            if (InfParseKeyboardLine(line, &entry)) {
+                if (entry.description) {
+                    bDup = FALSE;
+                    for (j = 0; j < nPrev; j++) {
+                        if (lstrcmpi(szPrevNames[j], entry.description) == 0) {
+                            bDup = TRUE;
+                            break;
+                        }
+                    }
+                    if (!bDup && nPrev < 24) {
+                        int descLen = lstrlen(entry.description);
+                        if (descLen > 31) descLen = 31;
+                        for (k = 0; k < descLen; k++)
+                            szPrevNames[nPrev][k] = entry.description[k];
+                        szPrevNames[nPrev][descLen] = '\0';
+                        nPrev++;
+                    }
+                }
+                InfFreeKeyboardEntry(&entry);
+            }
+        }
+    }
+
+    nCount = nPrev;
+    if (!lpList || nBuff <= 0) {
+        return nCount;
+    }
+
+    for (j = 0; j < nCount; j++) {
+        int cb = lstrlen(szPrevNames[j]) + 1;
+        if (cb <= nRemain) {
+            lstrcpy(lpDest, szPrevNames[j]);
+            lpDest += cb;
+            nRemain -= cb;
+        } else break;
+    }
+    if (nRemain >= 1) *lpDest = '\0';
+
     return nCount;
 }

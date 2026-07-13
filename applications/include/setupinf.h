@@ -18,7 +18,7 @@ LPCSTR InfGetLine(LPINF_SECTION hSection, int index);
 void InfFreeSection(HINF hInf, LPCSTR sectionName);
 void InfClearAllCache(HINF hInf);
 
-/* ---- высокоуровневый разбор country ---- */
+/* ---- высокоуровневые функции разбора ---- */
 
 typedef struct {
     LPSTR   name;                /* название страны (первое поле в кавычках) */
@@ -53,7 +53,6 @@ typedef struct {
 BOOL InfParseCountryLine(LPCSTR line, COUNTRY_ENTRY FAR *entry);
 void InfFreeCountryEntry(COUNTRY_ENTRY FAR *entry);
 
-/* setupinf.h */
 typedef struct {
     LPSTR code;          /* код языка (например, "usa") */
     int   disk;          /* номер диска (0, если не указан) */
@@ -63,5 +62,15 @@ typedef struct {
 
 BOOL InfParseLanguageLine(LPCSTR line, LANGUAGE_ENTRY FAR *entry);
 void InfFreeLanguageEntry(LANGUAGE_ENTRY FAR *entry);
+
+typedef struct {
+    LPSTR code;          /* код раскладки (например, "beldll") */
+    int   disk;          /* номер диска (0, если нет префикса) */
+    LPSTR file;          /* имя файла DLL или "" */
+    LPSTR description;   /* описание (из кавычек) или NULL */
+} KEYBOARD_ENTRY;
+
+BOOL InfParseKeyboardLine(LPCSTR line, KEYBOARD_ENTRY FAR *entry);
+void InfFreeKeyboardEntry(KEYBOARD_ENTRY FAR *entry);
 
 #endif
