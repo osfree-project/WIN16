@@ -35,30 +35,21 @@ HINF InfOpen(LPCSTR filename) {
     LPSTR nameCopy;
 
     if (!filename) {
-        MessageBox(0, "InfOpen: filename is NULL", "TRACE", MB_OK);
         return NULL;
     }
 
     hInf = (HINF)ALLOC(sizeof(INF_FILE));
     if (!hInf) {
-        MessageBox(0, "InfOpen: ALLOC(sizeof(INF_FILE)) failed", "TRACE", MB_OK);
         return NULL;
     }
 
     nameCopy = (LPSTR)ALLOC(STRLEN(filename) + 1);
     if (!nameCopy) {
-        MessageBox(0, "InfOpen: ALLOC for nameCopy failed", "TRACE", MB_OK);
         FREE(hInf);
         return NULL;
     }
 
     STRCPY(nameCopy, filename);
-
-    {
-        static char dbg[256];
-        wsprintf(dbg, "InfOpen: filename='%s'", filename);
-        MessageBox(0, dbg, "InfOpen success", MB_OK);
-    }
 
     hInf->filename = nameCopy;
     hInf->firstSection = NULL;
@@ -143,7 +134,6 @@ LPINF_SECTION InfFindSection(HINF hInf, LPCSTR sectionName) {
 
     file = INF_FILE_OPEN(hInf->filename);
     if (file == HFILE_ERROR) {
-        MessageBox(0, "InfFindSection: OpenFile failed", "TRACE", MB_OK);
         return NULL;
     }
 
@@ -203,11 +193,6 @@ LPINF_SECTION InfFindSection(HINF hInf, LPCSTR sectionName) {
         newSec->next = hInf->firstSection;
         hInf->firstSection = newSec;
      
-        {
-            static char buf[80];
-            wsprintf(buf, "InfFindSection: [%s] has %d lines", sectionName, newSec->lineCount);
-            MessageBox(0, buf, "TRACE", MB_OK);
-        }
         return newSec;
     }
     return NULL;

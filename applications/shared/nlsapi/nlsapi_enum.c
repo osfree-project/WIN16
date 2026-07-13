@@ -81,7 +81,7 @@ parse_enum:
     return TRUE;
 }
 #endif
-
+#if 0
 BOOL WINAPI DECLSPEC EnumSystemLocalesA(LOCALE_ENUMPROCA lpLocaleEnumProc, DWORD dwFlags)
 {
     LPINF_SECTION sec;
@@ -116,6 +116,42 @@ BOOL WINAPI DECLSPEC EnumSystemLocalesA(LOCALE_ENUMPROCA lpLocaleEnumProc, DWORD
         wsprintf(szLCID, "%08lX", lcid);
         if (!lpLocaleEnumProc(szLCID))
             break;
+    }
+    return TRUE;
+}
+#endif
+
+BOOL WINAPI DECLSPEC EnumSystemLocalesA(LOCALE_ENUMPROCA lpLocaleEnumProc, DWORD dwFlags)
+{
+    LPINF_SECTION sec;
+    int i, count;
+    LPCSTR line;
+    static COUNTRY_ENTRY entry;
+    LCID lcid;
+    char szLCID[16];
+
+    if (!lpLocaleEnumProc || !g_hInf) return FALSE;
+
+    sec = InfFindSection(g_hInf, "country");
+    if (!sec) return FALSE;
+
+    count = InfGetLineCount(sec);
+    for (i = 0; i < count; i++)
+    {
+        line = InfGetLine(sec, i);
+        if (!line) continue;
+
+        if (InfParseCountryLine(line, &entry))
+        {
+            lcid = LookupLCID(entry.ICOUNTRY, (LPCSTR)entry.lang);
+            wsprintf(szLCID, "%08lX", lcid);
+            if (!lpLocaleEnumProc(szLCID))
+            {
+                InfFreeCountryEntry(&entry);
+                break;
+            }
+            InfFreeCountryEntry(&entry);
+        }
     }
     return TRUE;
 }

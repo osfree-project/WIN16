@@ -85,6 +85,7 @@ parse_line:
 
 #endif
 
+#if 0
 /* ------------------------------------------------------------ */
 BOOL ParseCountryLine(LPCSTR line, LPSTR name, int nameSize, int FAR * lpCode, LPSTR lang, int langSize, LPSTR params, int paramsSize)
 {
@@ -149,6 +150,7 @@ BOOL ParseCountryLine(LPCSTR line, LPSTR name, int nameSize, int FAR * lpCode, L
 
     return TRUE;
 }
+#endif
 
 /* ------------------------------------------------------------ */
 int AtoiFar(const char FAR *s)
