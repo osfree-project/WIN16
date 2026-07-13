@@ -19,11 +19,6 @@ void InfFreeSection(HINF hInf, LPCSTR sectionName);
 void InfClearAllCache(HINF hInf);
 
 /* ---- высокоуровневый разбор country ---- */
-/* inf_country.h – окончательная версия */
-#ifndef INF_COUNTRY_H
-#define INF_COUNTRY_H
-
-#include "common_types.h"
 
 typedef struct {
     LPSTR   name;                /* название страны (первое поле в кавычках) */
@@ -58,6 +53,15 @@ typedef struct {
 BOOL InfParseCountryLine(LPCSTR line, COUNTRY_ENTRY FAR *entry);
 void InfFreeCountryEntry(COUNTRY_ENTRY FAR *entry);
 
-#endif
+/* setupinf.h */
+typedef struct {
+    LPSTR code;          /* код языка (например, "usa") */
+    int   disk;          /* номер диска (0, если не указан) */
+    LPSTR file;          /* имя файла без префикса диска, или "" */
+    LPSTR description;   /* описание (из кавычек) или NULL */
+} LANGUAGE_ENTRY;
+
+BOOL InfParseLanguageLine(LPCSTR line, LANGUAGE_ENTRY FAR *entry);
+void InfFreeLanguageEntry(LANGUAGE_ENTRY FAR *entry);
 
 #endif

@@ -256,6 +256,7 @@ lang_parse:
 
 #endif
 
+#if 0
 BOOL WINAPI DECLSPEC EnumUILanguagesA(UILANGUAGE_ENUMPROCA lpUILanguageEnumProc,
                                       DWORD dwFlags, LONG lParam)
 {
@@ -316,6 +317,53 @@ BOOL WINAPI DECLSPEC EnumUILanguagesA(UILANGUAGE_ENUMPROCA lpUILanguageEnumProc,
                         return TRUE;
                 }
             }
+        }
+    }
+    return TRUE;
+}
+#endif
+
+BOOL WINAPI DECLSPEC EnumUILanguagesA(UILANGUAGE_ENUMPROCA lpUILanguageEnumProc,
+                                      DWORD dwFlags, LONG lParam)
+{
+    LPINF_SECTION sec;
+    int i, count;
+    LPCSTR line;
+    static LANGUAGE_ENTRY entry;
+
+    if (!lpUILanguageEnumProc || !g_hInf) return FALSE;
+
+    sec = InfFindSection(g_hInf, "language");
+    if (!sec) return FALSE;
+
+    count = InfGetLineCount(sec);
+    for (i = 0; i < count; i++)
+    {
+        line = InfGetLine(sec, i);
+        if (!line) continue;
+
+        if (InfParseLanguageLine(line, &entry))
+        {
+            if (dwFlags == MUI_LANGUAGE_ID)
+            {
+                if (!lpUILanguageEnumProc(entry.code, lParam))
+                {
+                    InfFreeLanguageEntry(&entry);
+                    break;
+                }
+            }
+            else /* MUI_LANGUAGE_NAME */
+            {
+                if (entry.description)
+                {
+                    if (!lpUILanguageEnumProc(entry.description, lParam))
+                    {
+                        InfFreeLanguageEntry(&entry);
+                        break;
+                    }
+                }
+            }
+            InfFreeLanguageEntry(&entry);
         }
     }
     return TRUE;

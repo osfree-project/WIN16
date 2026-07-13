@@ -1,7 +1,4 @@
 /* inf_country.c Ц окончательна€ реализаци€ InfParseCountryLine */
-#include "setupinf.h"
-#include "string_utils.h"
-#include "mem_platf.h"
 #include "setupinf_internal.h"
 
 static int AtoiFarLocal(LPCSTR s)
