@@ -94,6 +94,8 @@ BOOL WINAPI DECLSPEC EnumSystemLocalesA(LOCALE_ENUMPROCA lpLocaleEnumProc, DWORD
     LCID lcid;
     char szLCID[16];
 
+    MessageBox(0, "EnumSystemLocalesA called", "TRACE", MB_OK);
+
     if (!lpLocaleEnumProc || !g_hInf) return FALSE;
 
     sec = InfFindSection(g_hInf, "country");

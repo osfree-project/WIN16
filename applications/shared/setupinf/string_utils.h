@@ -14,6 +14,7 @@
   #define STRRCHR(s,c)    _fstrrchr(s,c)
   #define MEMMOVE(d,s,l)  _fmemmove(d,s,l)
   #define STRDUP(s)       StrDup(s)
+  #define MEMSET(d,c,s)   _fmemset(d,c,s)
 #else
   #define STRLEN(s)       _fstrlen(s)
   #define STRCPY(d,s)     _fstrcpy(d,s)
@@ -23,6 +24,7 @@
   #define STRRCHR(s,c)    _fstrrchr(s,c)
   #define MEMMOVE(d,s,l)  _fmemmove(d,s,l)
   #define STRDUP(s)       _fstrdup(s)
+  #define MEMSET(d,c,s)   _fmemset(d,c,s)
 #endif
 
 void StrTrimInternal(LPSTR str);

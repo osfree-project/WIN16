@@ -4,8 +4,8 @@
 
 PROJ = setupinf
 TRGT = $(PROJ).lib
-srcfiles = $(p)setupinf$(e) $(p)string_utils$(e)
-ADD_COPT = -I=$(MYDIR)..$(SEP)..$(SEP)include #-ml
+srcfiles = $(p)setupinf$(e) $(p)string_utils$(e) $(p)inf_country$(e)
+ADD_COPT = -0 -I=$(MYDIR)..$(SEP)..$(SEP)include #-ml
 
 
 !include $(%ROOT)tools/mk/libsw16.mk

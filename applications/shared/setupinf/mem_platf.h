@@ -3,9 +3,7 @@
 
 #if defined(_WINDOWS) || defined(__WINDOWS__)
   #include <windows.h>
-
-
-  #define ALLOC(size)       ( (LPSTR)GlobalLock( GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, (DWORD)(size))) )
+  #define ALLOC(size)       ((LPSTR)GlobalLock( GlobalAlloc(GMEM_FIXED | GMEM_ZEROINIT, (DWORD)(size))))
   #define FREE(ptr)         (GlobalUnlock((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(ptr)))),(BOOL)GlobalFree((HGLOBAL)LOWORD(GlobalHandle(SELECTOROF(ptr)))))
   #define REALLOC(ptr,sz)   (GlobalUnlock(GlobalHandle(SELECTOROF(ptr))), (LPSTR)GlobalLock(GlobalReAlloc(GlobalHandle(SELECTOROF(ptr)), (DWORD)(sz), GMEM_MOVEABLE)))
 #else

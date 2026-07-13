@@ -8,9 +8,6 @@
 
 #if defined(_WINDOWS) || defined(__WINDOWS__)
   #include <windows.h>
-  #define INF_ALLOC(sz)       ALLOC(sz)
-  #define INF_FREE(ptr)       FREE(ptr)
-  #define INF_REALLOC(p,sz)   REALLOC(p,sz)
 
   typedef HFILE INF_FILE_HANDLE;
 
@@ -20,9 +17,6 @@
   #define INF_FILE_CLOSE(h)   _lclose(h)
 #else
   #include <stdio.h>
-  #define INF_ALLOC(sz)       ALLOC(sz)
-  #define INF_FREE(ptr)       FREE(ptr)
-  #define INF_REALLOC(p,sz)   REALLOC(p,sz)
 
   typedef FILE* INF_FILE_HANDLE;
   #define INF_READ_LINE(f,b,s)  (fgets((b),(s),(f)) ? 1 : 0)

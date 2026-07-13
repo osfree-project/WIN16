@@ -476,6 +476,13 @@ VOID WINAPI DECLSPEC InitNLS(VOID)
     GetSystemDirectory(szPath, sizeof(szPath) - 20);
     lstrcat(szPath, "\\SETUP.INF");
     g_hInf = InfOpen(szPath);
+    if (g_hInf) {
+        static char dbg[80];
+        wsprintf(dbg, "g_hInf = %04X:%04X", FP_SEG(g_hInf), FP_OFF(g_hInf));
+        MessageBox(0, dbg, "InitNLS: InfOpen OK", MB_OK);
+    } else {
+        MessageBox(0, "InitNLS: InfOpen FAILED", "TRACE", MB_OK);
+    }
 }
 
 VOID WINAPI DECLSPEC DoneNLS(VOID)

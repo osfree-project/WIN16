@@ -1,4 +1,4 @@
-/* setupinf.c */
+ /* setupinf.c */
 #include "setupinf_internal.h"
 
 #if defined(__WINDOWS__) || defined(_WINDOWS)
@@ -35,20 +35,30 @@ HINF InfOpen(LPCSTR filename) {
     LPSTR nameCopy;
 
     if (!filename) {
+        MessageBox(0, "InfOpen: filename is NULL", "TRACE", MB_OK);
         return NULL;
     }
 
-    hInf = (HINF)INF_ALLOC(sizeof(INF_FILE));
+    hInf = (HINF)ALLOC(sizeof(INF_FILE));
     if (!hInf) {
+        MessageBox(0, "InfOpen: ALLOC(sizeof(INF_FILE)) failed", "TRACE", MB_OK);
         return NULL;
     }
 
-    nameCopy = (LPSTR)INF_ALLOC(STRLEN(filename) + 1);
+    nameCopy = (LPSTR)ALLOC(STRLEN(filename) + 1);
     if (!nameCopy) {
-        INF_FREE(hInf);
+        MessageBox(0, "InfOpen: ALLOC for nameCopy failed", "TRACE", MB_OK);
+        FREE(hInf);
         return NULL;
     }
+
     STRCPY(nameCopy, filename);
+
+    {
+        static char dbg[256];
+        wsprintf(dbg, "InfOpen: filename='%s'", filename);
+        MessageBox(0, dbg, "InfOpen success", MB_OK);
+    }
 
     hInf->filename = nameCopy;
     hInf->firstSection = NULL;
@@ -58,8 +68,8 @@ HINF InfOpen(LPCSTR filename) {
 void InfClose(HINF hInf) {
     if (!hInf) return;
     InfClearAllCache(hInf);
-    if (hInf->filename) INF_FREE(hInf->filename);
-    INF_FREE(hInf);
+    if (hInf->filename) FREE(hInf->filename);
+    FREE(hInf);
 }
 
 void InfClearAllCache(HINF hInf) {
@@ -71,14 +81,14 @@ void InfClearAllCache(HINF hInf) {
     sec = hInf->firstSection;
     while (sec) {
         next = sec->next;
-        if (sec->name) INF_FREE(sec->name);
+        if (sec->name) FREE(sec->name);
         if (sec->lines) {
             for (i = 0; i < sec->lineCount; i++) {
-                if (sec->lines[i]) INF_FREE(sec->lines[i]);
+                if (sec->lines[i]) FREE(sec->lines[i]);
             }
-            INF_FREE(sec->lines);
+            FREE(sec->lines);
         }
-        INF_FREE(sec);
+        FREE(sec);
         sec = next;
     }
     hInf->firstSection = NULL;
@@ -98,13 +108,13 @@ void InfFreeSection(HINF hInf, LPCSTR sectionName) {
             else
                 hInf->firstSection = sec->next;
 
-            if (sec->name) INF_FREE(sec->name);
+            if (sec->name) FREE(sec->name);
             if (sec->lines) {
                 for (i = 0; i < sec->lineCount; i++)
-                    if (sec->lines[i]) INF_FREE(sec->lines[i]);
-                INF_FREE(sec->lines);
+                    if (sec->lines[i]) FREE(sec->lines[i]);
+                FREE(sec->lines);
             }
-            INF_FREE(sec);
+            FREE(sec);
             return;
         }
         prev = sec;
@@ -133,10 +143,11 @@ LPINF_SECTION InfFindSection(HINF hInf, LPCSTR sectionName) {
 
     file = INF_FILE_OPEN(hInf->filename);
     if (file == HFILE_ERROR) {
+        MessageBox(0, "InfFindSection: OpenFile failed", "TRACE", MB_OK);
         return NULL;
     }
 
-    lineBuf = (LPSTR)INF_ALLOC(256);
+    lineBuf = (LPSTR)ALLOC(256);
     if (!lineBuf) {
         INF_FILE_CLOSE(file);
         return NULL;
@@ -157,9 +168,9 @@ LPINF_SECTION InfFindSection(HINF hInf, LPCSTR sectionName) {
             LPSTR lineCopy;
 
             if (!newSec) {
-                newSec = (LPINF_SECTION)INF_ALLOC(sizeof(INF_SECTION));
+                newSec = (LPINF_SECTION)ALLOC(sizeof(INF_SECTION));
                 if (!newSec) break;
-                newSec->name = (LPSTR)INF_ALLOC(STRLEN(sectionName) + 1);
+                newSec->name = (LPSTR)ALLOC(STRLEN(sectionName) + 1);
                 STRCPY(newSec->name, sectionName);
                 newSec->lines = NULL;
                 newSec->lineCount = 0;
@@ -171,12 +182,12 @@ LPINF_SECTION InfFindSection(HINF hInf, LPCSTR sectionName) {
                 LPINF_LINE newLines;
 
                 newAlloc = newSec->linesAllocated ? newSec->linesAllocated + 16 : 16;
-		newLines = (newSec->linesAllocated ? ((LPINF_LINE)INF_REALLOC(newSec->lines, newAlloc * sizeof(INF_LINE))) : ((LPINF_LINE)INF_ALLOC(newAlloc * sizeof(INF_LINE))));
+		newLines = (newSec->linesAllocated ? ((LPINF_LINE)REALLOC(newSec->lines, newAlloc * sizeof(INF_LINE))) : ((LPINF_LINE)ALLOC(newAlloc * sizeof(INF_LINE))));
                 if (!newLines) break;
                 newSec->lines = newLines;
                 newSec->linesAllocated = newAlloc;
             }
-            lineCopy = (LPSTR)INF_ALLOC(STRLEN(lineBuf) + 1);
+            lineCopy = (LPSTR)ALLOC(STRLEN(lineBuf) + 1);
             if (!lineCopy) break;
             STRCPY(lineCopy, lineBuf);
             newSec->lines[newSec->lineCount++] = lineCopy;
@@ -185,13 +196,18 @@ LPINF_SECTION InfFindSection(HINF hInf, LPCSTR sectionName) {
         }
     }
 
-    INF_FREE(lineBuf);
+    FREE(lineBuf);
     INF_FILE_CLOSE(file);
 
     if (newSec) {
         newSec->next = hInf->firstSection;
         hInf->firstSection = newSec;
      
+        {
+            static char buf[80];
+            wsprintf(buf, "InfFindSection: [%s] has %d lines", sectionName, newSec->lineCount);
+            MessageBox(0, buf, "TRACE", MB_OK);
+        }
         return newSec;
     }
     return NULL;

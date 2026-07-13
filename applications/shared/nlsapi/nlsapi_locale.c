@@ -174,7 +174,7 @@ parse_line:
 }
 #endif
 
-
+#if 0
 BOOL GetLocaleInfoFromInf(int iCountryCode, const char FAR *szLang,
                           LCTYPE LCType, LPSTR lpLCData, int cchData,
                           BOOL returnNumber)
@@ -276,3 +276,93 @@ BOOL GetLocaleInfoFromInf(int iCountryCode, const char FAR *szLang,
     return FALSE;
 }
 
+#endif
+
+BOOL GetLocaleInfoFromInf(int iCountryCode, const char FAR *szLang,
+                          LCTYPE LCType, LPSTR lpLCData, int cchData,
+                          BOOL returnNumber)
+{
+    LPINF_SECTION sec;
+    int i, count;
+    LPCSTR line;
+    static COUNTRY_ENTRY entry;
+//    static char dbg[512];
+
+    if (!g_hInf) return FALSE;
+
+    sec = InfFindSection(g_hInf, "country");
+    if (!sec) return FALSE;
+
+    count = InfGetLineCount(sec);
+    for (i = 0; i < count; i++)
+    {
+        line = InfGetLine(sec, i);
+        if (!line) continue;
+
+//        wsprintf(dbg, "Line %d: parsing...", i);
+//        MessageBox(0, dbg, "TRACE", MB_OK);
+
+        if (InfParseCountryLine(line, &entry))
+        {
+//            wsprintf(dbg, "Parsed: ICOUNTRY=%d, lang='%s'",
+//                     entry.ICOUNTRY,
+//                     entry.lang ? entry.lang : "NULL");
+//            MessageBox(0, dbg, "TRACE", MB_OK);
+
+            if (entry.ICOUNTRY == iCountryCode &&
+                lstrcmpi(entry.lang, szLang) == 0)
+            {
+//                MessageBox(0, "Match found!", "TRACE", MB_OK);
+
+                if (LCType == LOCALE_SCOUNTRY) {
+                    if (entry.name)
+                        StringCopyN(lpLCData, entry.name, cchData);
+                    InfFreeCountryEntry(&entry);
+                    return TRUE;
+                }
+
+                if (returnNumber && cchData >= (int)sizeof(int)) {
+                    int value = 0;
+                    switch (LCType) {
+                    case LOCALE_ICOUNTRY:    value = entry.ICOUNTRY;    break;
+                    case LOCALE_ICURRDIGITS: value = entry.ICURRDIGITS; break;
+                    case LOCALE_ICURRENCY:   value = entry.ICURRENCY;   break;
+                    case LOCALE_IDATE:       value = entry.IDATE;       break;
+                    case LOCALE_IMEASURE:    value = entry.IMEASURE;    break;
+                    case LOCALE_INEGCURR:    value = entry.INEGCURR;    break;
+                    case LOCALE_ITIME:       value = entry.ITIME;       break;
+                    case LOCALE_ITLZERO:     value = entry.ITLZERO;     break;
+                    case LOCALE_ILZERO:      value = entry.ILZERO;      break;
+                    case LOCALE_IDIGITS:     value = entry.IDIGITS;     break;
+                    default: InfFreeCountryEntry(&entry); return FALSE;
+                    }
+                    *(int FAR*)lpLCData = value;
+                    InfFreeCountryEntry(&entry);
+                    return TRUE;
+                }
+                else if (!returnNumber) {
+                    LPSTR str = NULL;
+                    switch (LCType) {
+                    case LOCALE_S1159:      str = entry.S1159;      break;
+                    case LOCALE_S2359:      str = entry.S2359;      break;
+                    case LOCALE_SCURRENCY:  str = entry.SCURRENCY;  break;
+                    case LOCALE_STHOUSAND:  str = entry.STHOUSAND;  break;
+                    case LOCALE_SDECIMAL:   str = entry.SDECIMAL;   break;
+                    case LOCALE_SDATE:      str = entry.SDATE;      break;
+                    case LOCALE_STIME:      str = entry.STIME;      break;
+                    case LOCALE_SLIST:      str = entry.SLIST;      break;
+                    case LOCALE_SSHORTDATE: str = entry.SSHORTDATE; break;
+                    case LOCALE_SLONGDATE:  str = entry.SLONGDATE;  break;
+                    default: InfFreeCountryEntry(&entry); return FALSE;
+                    }
+                    if (str) StringCopyN(lpLCData, str, cchData);
+                    InfFreeCountryEntry(&entry);
+                    return TRUE;
+                }
+            }
+        }
+        InfFreeCountryEntry(&entry);
+    }
+
+    return FALSE;
+}
