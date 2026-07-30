@@ -4,6 +4,6 @@
 # valerius, 2006/10/30
 #
 
-DIRS = nlsapi
+DIRS = nlsapi setupinf
 
 !include $(%ROOT)tools/mk/all.mk

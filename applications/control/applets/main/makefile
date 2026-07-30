@@ -7,7 +7,7 @@ PROJ     = main
 TRGT     = $(PROJ).cpl
 DESC     = Main CPL
 srcfiles = $(p)main$(e) $(p)mouse$(e) $(p)keyboard$(e) $(p)time$(e) $(p)desktop$(e) $(p)intl_main$(e) $(p)intl_date$(e) $(p)intl_time$(e) &
-           $(p)intl_num$(e) $(p)currency$(e)
+           $(p)intl_number$(e) $(p)intl_currency$(e)
 ADD_COPT = -ms -0 -sg -I=$(MYDIR)..$(SEP).. -I=$(MYDIR)..$(SEP)..$(SEP)..$(SEP)include
 ADD_LINKOPT = lib nlsapi.lib lib setupinf.lib
 
