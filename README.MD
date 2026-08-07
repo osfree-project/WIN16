@@ -109,8 +109,7 @@ and submit pull requests to the main repository.
 
 ## 📜 License
 
-Distributed under the **GNU Lesser General Public License v2.1 (LGPL‑2.1)**.
-See [LICENSE](LICENSE) for details.
+Distributed under various open source licenses. See in corresponding directories.
 
 ## 🔗 Related Projects
 
