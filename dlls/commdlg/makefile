@@ -1,16 +1,12 @@
 #
 # A Makefile for commdlg.dll
-# (c) osFree project,
-# prokushev, 2023
+# (c) osFree project
 #
 
-PROJ     = commdlg
-PROJ1     = commdlg1
-TRGT     = $(PROJ).dll
-DESC     = Windows Common Dialogs Library
-srcfiles = $(p)libmain$(e) $(p)ChooseColor$(e) $(p)ChooseFont$(e) $(p)Commdlg$(e) $(p)FindReplDlg$(e) $(p)GetOpenFileName$(e) $(p)PrintDlg$(e)
-# linking dll file
-DLL     = 1
+DESCRIPTION  = osFree Janus Common Dialogs Library
+SOURCES      = libmain ChooseColor ChooseFont Commdlg FindReplDlg GetOpenFileName PrintDlg
+TARGET_API   = WIN
+TARGET_CLASS = LIBRARY
 EXPORTS = &
 	GetOpenFileName	.1, &
 	GetSaveFileName .2, &
@@ -39,18 +35,7 @@ EXPORTS = &
 #	DWUPARROWHACK.30, &
 #	DWOKSUBCLASS.31
 
-DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
+DESTINATION = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 
-!include $(%ROOT)tools/mk/appsw16.mk
+!include $(%ROOT)tools/mk/build.mk
 
-TARGETS = $(PATH)$(PROJ1).dll
-
-.ico: $(MYDIR)res
-
-#.cur: $(MYDIR)res
-
-#.bmp: $(MYDIR)res
-
-$(PATH)$(PROJ1).dll: $(PATH)$(PROJ).dll $(MYDIR)Commdlg.rc
- @$(SAY) RESCMP   $^. $(LOG)
- @$(RC) -q -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win
