@@ -1,5 +1,9 @@
 # osFree Janus: Open-Source Windows 3.0 Clone
 
+<!-- hy-mt2-i18n:start -->
+**English** · [中文](./README_zh-CN.md) · [日本語](./README_ja.md) · [Español](./README_es.md)
+<!-- hy-mt2-i18n:end -->
+
 ![Language: C](https://img.shields.io/badge/language-C-blue)
 ![Language: Assembly](https://img.shields.io/badge/language-Asm-blue)
 ![License: LGPL-2.1](https://img.shields.io/badge/license-LGPL%202.1-green)
@@ -105,8 +109,7 @@ and submit pull requests to the main repository.
 
 ## 📜 License
 
-Distributed under the **GNU Lesser General Public License v2.1 (LGPL‑2.1)**.
-See [LICENSE](LICENSE) for details.
+Distributed under various open source licenses. See in corresponding directories.
 
 ## 🔗 Related Projects
 

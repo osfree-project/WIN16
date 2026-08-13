@@ -140,43 +140,84 @@ MS Serif  = charter
 ##################################################################
 #
 # This [colors] section describes the color mapping for
-# built in controls, and MDI windows. 
+# built in controls, and MDI windows.
 #
-#	format:	
-#		color = blue green red		0 - 255
-#		      = #hex			0 - ffffff
+#	SUPPORTED FORMATS:
 #
-#		red|green|blue  = #hex		0 - ff
-#				= decimal	0 - 255
-#	         
-#	keywords:
+#	   1. Decimal RGB Triplet:
+#	         Component = Red Green Blue          (0-255)
+#	         Example:   Hilight = 0 0 255
 #
-#	Scrollbar
-#	Background
-#	ActiveTitle
-#	InactiveTitle
-#	Menu
-#	Window
-#	WindowFrame
-#	MenuText
-#	WindowText
-#	TitleText
-#	ActiveBorder
-#	InactiveBorder
-#	AppWorkspace
-#	Hilight
-#	HilightText
-#	ButtonFace
-#	ButtonShadow
-#	GrayText
-#	ButtonText
-#	InactiveTitleText
+#	   2. Single Hexadecimal Value (osFree Janus extension):
+#	         Component = #RRGGBB                 (0-ffffff)
+#	         Example:   Hilight = #0000FF
+#
+#	   3. Hexadecimal Triplet (osFree Janus extension):
+#	         Component = #R #G #B                (0-ff each)
+#	         Example:   Hilight = #0 #0 #ff
+#
+#	DEFAULT BEHAVIOR AND SOURCE:
+#
+#	   - If the entire [colors] section is MISSING or EMPTY,
+#	     the system will use the HARD-CODED DEFAULT COLOR SET
+#	     provided by the active display driver (DISPLAY.DRV).
+#
+#	   - If a SPECIFIC keyword (e.g., 'Hilight') is not defined
+#	     within the [colors] section, its default value is also
+#	     fetched from the display driver.
+#
+#	   - The ultimate source for all default color values is the
+#	     current DISPLAY.DRV. The driver's internal tables define
+#	     the standard system palette used when WIN.INI gives no
+#	     overriding instructions.
+#
+#	   - The Control Panel 'Color' applet modifies this section
+#	     to persist user overrides of the driver's defaults.
+#
+#	CONFIGURATION NOTE:
+#	   Most colors are configured via Control Panel -> Color.
+#	   The following six parameters must be edited manually:
+#	     ButtonFace, ButtonShadow, ButtonText, GrayText,
+#	     Hilight, HilightText
+#
+#	KEYWORD REFERENCE:
+#	   ActiveBorder       Active window border
+#	   ActiveTitle        Active title bar
+#	   AppWorkspace       MDI application workspace
+#	   Background         Desktop background
+#	   ButtonFace         Button face color
+#	   ButtonShadow       Button shadow color
+#	   ButtonText         Text color on buttons
+#	   GrayText           Disabled (grayed) text color
+#	   Hilight            Selection highlight background
+#	   HilightText        Highlighted text color
+#	   InactiveBorder     Inactive window border
+#	   InactiveTitle      Inactive title bar
+#	   Menu               Menu background
+#	   MenuText           Text color in menus
+#	   Scrollbar          Scroll bar area
+#	   TitleText          Title bar text color
+#	   Window             Window client area background
+#	   WindowFrame        Window frame color
+#	   WindowText         Text color in window client area
+#	   InactiveTitleText  Inactive title bar text color
+#
+#	COMMON FALLBACK DEFAULTS (may vary by driver):
+#	   Window=255 255 255        (White)
+#	   WindowText=0 0 0          (Black)
+#	   Hilight=0 0 255           (Blue)
+#	   HilightText=255 255 255   (White)
+#	   Background=0 128 128      (Teal)
 #
 ################################################################
 
 [colors]
-#Hilight=0 0 255
-#HilightText=255 255 255
+; Example using Decimal RGB:
+;   Hilight=0 0 255
+; Example using Single Hex Value:
+;   Hilight=#0000FF
+; Example using Hex Triplet:
+;   Hilight=#0 #0 #ff
 
 ################################################################
 #

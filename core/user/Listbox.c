@@ -21,7 +21,7 @@ License along with this library; if not, see
 #include "user.h"
 
 #include "Listbox.h"
-#include "menu.h"
+#include "Menu.h"
 
 #define GET_WM_VKEYTOITEM_CODE(wp, lp)              (wp)
 #define GET_WM_VKEYTOITEM_ITEM(wp, lp)              (INT)HIWORD(lp)
