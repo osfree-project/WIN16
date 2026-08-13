@@ -12,5 +12,4 @@
 #define IDC_DT_GRANULARITY       113
 #define IDC_DT_BORDER_WIDTH      954
 
-
-#define IDI_DESKTOP  116
+#define IDI_DESKTOP  116 

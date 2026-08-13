@@ -1,15 +1,12 @@
 #
-# A Makefile for EXIT_VDM
-# (c) osFree project,
-# author, date
+# A Makefile for osFree diagnostic tool
+# (c) osFree project
 #
 
-PROJ      = msd
-TRGT      = $(PROJ).exe
-DESC      = osFree Diagnostic
-srcfiles  = $(p)infoplus$(e) 
+DESCRIPTION = osFree Diagnostic tools
+TARGET_API  = DOS
+SOURCES     = common globals system lowlevel main init run help page00 scrprint
+JWASM       = 1
+LIBS        = dos_shared
 
-#ADD_COPT  = -i=$(MYDIR)..$(SEP)..$(SEP)include
-ADD_LINKOPT = lib $(BLD)lib$(SEP)dos_shared.lib
-
-!include $(%ROOT)tools/mk/appsdos.mk
+!include $(%ROOT)tools/mk/build.mk

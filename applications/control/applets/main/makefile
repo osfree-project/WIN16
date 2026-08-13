@@ -1,19 +1,19 @@
 #
-# A Makefile for lzexpand.dll
-# (c) osFree project,
+# A Makefile for osFree Janus Main Control Panel applet
+# (c) osFree project
 #
 
-PROJ     = main
-TRGT     = $(PROJ).cpl
-DESC     = Main CPL
-srcfiles = $(p)main$(e) $(p)mouse$(e) $(p)keyboard$(e) $(p)time$(e) $(p)desktop$(e) $(p)intl_main$(e) $(p)intl_date$(e) $(p)intl_time$(e) &
-           $(p)intl_num$(e) $(p)currency$(e)
-ADD_COPT = -ms -0 -sg -I=$(MYDIR)..$(SEP).. -I=$(MYDIR)..$(SEP)..$(SEP)..$(SEP)include
-ADD_LINKOPT = lib nlsapi.lib lib setupinf.lib
+DESC         = Main System Settings
+TARGET_API   = WIN
+TARGET_CLASS = LIBRARY
+TARGET_EXT   = cpl
+SOURCES      = main mouse keyboard time desktop intl_main intl_date intl_time intl_number intl_currency
+LIBS         = nlsapi
 
-# linking dll file
-DLL     = 1
-EXPORTS = CPlApplet       .1, &
+ADD_COPT    = -ms -sg -I=$(MYDIR)..$(SEP).. -I=$(MYDIR)..$(SEP)..$(SEP)..$(SEP)..$(SEP)include
+
+
+EXPORTS = CPlApplet.1, &
 	MouseDlgProc.2, &
 	DesktopDlgProc.3, &
 	SystemTimerProc.4, &
@@ -26,19 +26,10 @@ EXPORTS = CPlApplet       .1, &
 	CurrencyFmtDlgProc.11, &
 	NumberFmtDlgProc.12
 
-IMPORTS =   CreateSystemTimer SYSTEM.2, &
-  KillSystemTimer SYSTEM.3
-
-HEAPSIZE = 10k
+IMPORTS = CreateSystemTimer SYSTEM.2, &
+	KillSystemTimer SYSTEM.3
 
 DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
+                       
+!include $(%ROOT)tools/mk/build.mk
 
-!include $(%ROOT)tools/mk/appsw16.mk
-
-TARGETS = $(PATH)$(PROJ).cpl
-
-.ico: $(MYDIR)res
-
-$(PATH)$(PROJ).cpl: $(PATH)$(PROJ).dll $(MYDIR)$(PROJ).rc
- @$(SAY) RESCMP   $^. $(LOG)
- @$(RC) -q -30 -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win -i=$(MYDIR)$(SEP)..$(SEP)..$(SEP)..$(SEP)include
