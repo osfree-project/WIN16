@@ -1,0 +1,112 @@
+#include "cardfile.h"
+
+MAINMENU MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&New\tCtrl+N",              IDM_NEW
+        MENUITEM "&Open...\tCtrl+O",         IDM_OPEN
+        MENUITEM "&Save\tCtrl+S",            IDM_SAVE
+        MENUITEM "Save &as...",              IDM_SAVEAS
+        MENUITEM "&Merge...",                IDM_MERGE
+        MENUITEM SEPARATOR
+        MENUITEM "&About...",                IDM_ABOUT
+        MENUITEM "E&xit\tF3",                IDM_EXIT
+    END
+    POPUP "&Edit"
+    BEGIN
+        MENUITEM "&Copy\tCtrl+C",            IDM_COPY
+        MENUITEM "Cu&t\tCtrl+X",            IDM_CUT
+        MENUITEM "&Paste\tCtrl+V",           IDM_PASTE
+        MENUITEM "&Index...\tF6",            IDM_INDEX
+    END
+    POPUP "&Card"
+    BEGIN
+        MENUITEM "&Add...\tF7",              IDM_ADD
+        MENUITEM "&Delete",                  IDM_DELETE
+        MENUITEM "D&uplicate",               IDM_DUP
+    END
+    MENUITEM "F&ind...\tCtrl+F",             IDM_FIND
+END
+
+/* Акселераторы */
+ACCELTABLE ACCELERATORS
+BEGIN
+    VK_F3,   IDM_EXIT,   VIRTKEY
+    VK_F6,   IDM_INDEX,  VIRTKEY
+    VK_F7,   IDM_ADD,    VIRTKEY
+    "^S",    IDM_SAVE
+    "^F",    IDM_FIND
+    "^C",    IDM_COPY
+    "^X",    IDM_CUT
+    "^V",    IDM_PASTE
+    "^+C",   SRCH_C      /* Ctrl+Shift+C */
+    "^+V",   SRCH_V
+    "^+X",   SRCH_X
+END
+
+/* Собственный диалог открытия/сохранения файлов */
+FILEOPEN DIALOG 0, 0, 200, 80
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Select File"
+FONT 8, "Helv"
+BEGIN
+    LTEXT "File &Name:", -1, 5, 10, 40, 12
+    EDITTEXT 500, 50, 8, 100, 12, ES_AUTOHSCROLL
+    DEFPUSHBUTTON "OK", IDOK, 5, 30, 50, 14
+    PUSHBUTTON "Cancel", IDCANCEL, 65, 30, 50, 14
+END
+
+FILESAVE DIALOG 0, 0, 200, 80
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Save File As"
+FONT 8, "Helv"
+BEGIN
+    LTEXT "File &Name:", -1, 5, 10, 40, 12
+    EDITTEXT 500, 50, 8, 100, 12, ES_AUTOHSCROLL
+    DEFPUSHBUTTON "OK", IDOK, 5, 30, 50, 14
+    PUSHBUTTON "Cancel", IDCANCEL, 65, 30, 50, 14
+END
+
+FINDDLG DIALOG 0, 0, 200, 60
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Find"
+FONT 8, "Helv"
+BEGIN
+    LTEXT "Search for:", -1, 5, 10, 40, 12
+    EDITTEXT IDD_SEARCH, 50, 8, 100, 12, ES_AUTOHSCROLL
+    DEFPUSHBUTTON "OK", IDOK, 5, 30, 50, 14
+    PUSHBUTTON "Cancel", IDCANCEL, 65, 30, 50, 14
+END
+
+ADDDLG DIALOG 0, 0, 200, 60
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Add Card"
+FONT 8, "Helv"
+BEGIN
+    LTEXT "Add card:", -1, 5, 10, 40, 12
+    EDITTEXT IDD_ADD, 50, 8, 100, 12, ES_AUTOHSCROLL
+    DEFPUSHBUTTON "OK", IDOK, 5, 30, 50, 14
+    PUSHBUTTON "Cancel", IDCANCEL, 65, 30, 50, 14
+END
+
+INDEXDLG DIALOG 0, 0, 200, 60
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Edit Index"
+FONT 8, "Helv"
+BEGIN
+    LTEXT "Index:", -1, 5, 10, 40, 12
+    EDITTEXT IDD_INDEX, 50, 8, 100, 12, ES_AUTOHSCROLL
+    DEFPUSHBUTTON "OK", IDOK, 5, 30, 50, 14
+    PUSHBUTTON "Cancel", IDCANCEL, 65, 30, 50, 14
+END
+
+ABOUTDLG DIALOG 0, 0, 150, 70
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About Wincards"
+FONT 8, "Helv"
+BEGIN
+    CTEXT "Wincards for Windows 3.0", -1, 0, 10, 150, 12
+    CTEXT "Ported from OS/2 Presentation Manager", -1, 0, 25, 150, 12
+    DEFPUSHBUTTON "OK", IDOK, 50, 45, 50, 14
+END
