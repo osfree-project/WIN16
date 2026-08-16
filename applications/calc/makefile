@@ -11,4 +11,3 @@ LIBS = commdlg
 ADD_COPT =  -dDEBUG=0
 
 !include $(%ROOT)tools/mk/build.mk
-
