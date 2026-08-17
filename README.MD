@@ -85,12 +85,11 @@ The project includes reimplementations of all key Windows 3.0 system components:
 | `dosx`          | 286 DPMI Host and Extender (not yet implemented, HXDOS used as a base)                           |
 | `drivers`       | Standard Windows/DOS drivers                                                                      |
 | `include`       | Include files (reference only – OpenWatcom headers are used)                                     |
-| `kernel`        | KERNEL.EXE / KRNL286.EXE / KRNL386.EXE — the new kernel                                          |
+| `core`          | KERNEL.EXE / KRNL286.EXE / KRNL386.EXE / USER.EXE                                                |
 | `MME`           | Multimedia Extensions                                                                             |
 | `pal`           | Platform Abstraction Layer – X11 drivers (not used, reference only)                              |
 | `samples`       | Various sample programs                                                                           |
 | `tests`         | WIN16 unit tests                                                                                  |
-| `user`          | USER.EXE                                                                                          |
 | `utilities`     | Utility programs                                                                                  |
 | `win`           | WIN.COM — Windows loader                                                                          |
 | `winkrnl`       | Windows kernel, GDI, USER from TWIN project (reference only – current kernel is in `kernel/`)    |
