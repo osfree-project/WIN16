@@ -1,0 +1,54 @@
+/* p tag align center */
+.has-text-align-center {
+    text-align: center;
+}
+/* pull quote padding */
+figure.wp-block-pullquote {
+    padding: 1rem;
+}
+/* core/code scroll */
+.wp-block-code code {
+white-space: inherit !important;
+}
+/* core/code color option */
+pre mark.has-inline-color span {
+    color: inherit !important;
+}
+pre.is-style-no-highlight span {
+    color: #212529 !important;
+}
+/* Alignment for video */
+.wp-block-embed .iframe-responsive-16x9 {
+    position: relative;
+    padding-top: 56.25%;
+    height: 0;
+    overflow: hidden;
+}
+.wp-block-embed iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+.aligncenter {
+    clear: both;
+    text-align: center;
+}
+figure.wp-block-table table, 
+figure.wp-block-video video {
+    width: 100%;
+}
+/* image block padding */
+.row figure {
+    margin-bottom: 1rem;
+}
+/* Responsive youtube mixin with dist.css */
+figure.wp-block-embed {
+    text-align: center;
+}
+@media (max-width: 991px) {
+    figure.wp-block-embed.wp-block-embed-youtube iframe {
+        width: 100%;
+    }
+}

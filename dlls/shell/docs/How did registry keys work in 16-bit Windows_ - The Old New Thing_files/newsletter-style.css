@@ -1,0 +1,52 @@
+/* Newsletter Custom Styles */
+.newsletter-form input[type="email"] {
+    background-color: var(--clr-card-bg);
+    border-radius: 4px;
+}
+
+.tnp-subscription select#tnp-profile_1 {
+    width: 100%;
+    border-radius: 4px;
+}
+
+.newsletter-form  select:focus,
+.newsletter-form input:focus {
+    outline: 2px solid var(--clr-body);
+    outline-offset: -2px;
+}
+
+.tnp-submit {
+    cursor: pointer;
+}
+
+select#tnp-profile_1 {
+    appearance: auto;
+    background-color: var(--clr-card-bg);
+    padding: 4px 10px;
+    font-family: Segoe UI;
+    color: var(--clr-body);
+    height: 32px;
+    border-radius: 4px;
+    border: 1px solid var(--clr-border);
+    width: 90%;
+}
+
+.newsletter-form form label span {
+    color: red;
+}
+
+.tnp-privacy-field a, .tnp-consent-field a {
+    color: var(--clr-body-link);
+    text-decoration: underline;
+}
+
+.newsletter-form .tnp-consent-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.newsletter-form input[type="checkbox"] {
+    position: relative;
+    top: 2px;
+}
