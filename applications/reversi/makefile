@@ -4,7 +4,6 @@
 #
 
 DESCRIPTION = osFree Janus Reversi
-TARGET_API=WIN
 
 ADD_COPT = -sg
 EXPORTS =WndProc, dpProdInfo, dpEve

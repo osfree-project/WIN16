@@ -4,7 +4,6 @@
 #
 
 DESC         = Main System Settings
-TARGET_API   = WIN
 TARGET_CLASS = LIBRARY
 TARGET_EXT   = cpl
 SOURCES      = main mouse keyboard time desktop intl_main intl_date intl_time intl_number intl_currency

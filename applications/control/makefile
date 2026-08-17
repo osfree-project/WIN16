@@ -6,7 +6,6 @@
 DIRS=applets
 
 DESCRIPTION = osFree Janus Control Panel
-TARGET_API = WIN
 EXPORTS = MainWndProc
 
 # defines additional options for C compiler

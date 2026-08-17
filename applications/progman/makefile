@@ -4,7 +4,6 @@
 #
 
 DESCRIPTION = osFree Janus Program Manager
-TARGET_API = WIN
 TARGET_VERSION = 310
 SOURCES = dialog group grpfile main program string
 LIBS = commdlg

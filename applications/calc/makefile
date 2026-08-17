@@ -4,10 +4,10 @@
 #
 
 DESCRIPTION = osFree Janus Calculator
-TARGET_API = WIN
 TARGET_VERSION = 310
 SOURCES = stats winecalc
 LIBS = commdlg
+
 ADD_COPT =  -dDEBUG=0
 
 !include $(%ROOT)tools/mk/build.mk

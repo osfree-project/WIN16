@@ -5,7 +5,6 @@
 
 DESCRIPTION = osFree Janus Cardfile
 SOURCES = main cardfile
-TARGET_API = WIN
 EXPORTS = FileOpenDlgProc, SearchDlgProc, AddDlgProc, IndexDlgProc, AboutDlgProc
 
 ADD_COPT = -sg

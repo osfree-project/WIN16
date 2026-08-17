@@ -4,7 +4,6 @@
 #
 
 DESCRIPTION = osFree Janus Paint
-TARGET_API = WIN
 TARGET_VERSION = 310
 SOURCES = paint canvas toolbox palette textedit clipboard file tools
 
