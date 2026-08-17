@@ -6,7 +6,6 @@
 DESCRIPTION = osFree Janus Calculator
 TARGET_VERSION = 310
 SOURCES = stats winecalc
-LIBS = commdlg
 
 ADD_COPT =  -dDEBUG=0
 
