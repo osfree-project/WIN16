@@ -7,7 +7,5 @@ DESCRIPTION = osFree Janus Cardfile
 SOURCES = main cardfile
 EXPORTS = FileOpenDlgProc, SearchDlgProc, AddDlgProc, IndexDlgProc, AboutDlgProc
 
-ADD_COPT = -sg
-
 !include $(%ROOT)tools/mk/build.mk
 
