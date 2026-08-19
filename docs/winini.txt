@@ -278,28 +278,6 @@ FAXMODEM=
 [boot]
 directories=/home/robf;/usr/lib/X11;/etc
 
-#######################################################################
-#
-# The following is used to pick up the display.drv string
-# this is used by some applications...
-#
-#######################################################################
-
-[boot.description]
-display.drv=XFree86 2.0
-
-#######################################################################
-#
-#	Drive mapping table...
-#
-#######################################################################
-#
-# The following are drive mappings, which means that all references to
-# a given drive letter are mapped to the following directory.
-#
-[xdos]
-D=/usr2
-E=/etc
 
 #######################################################################
 #
