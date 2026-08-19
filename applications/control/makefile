@@ -5,7 +5,7 @@
 
 DIRS=applets
 
-DESCRIPTION = osFree Janus Control Panel
+DESCRIPTION = Janus Control Panel
 EXPORTS = MainWndProc
 
 # defines additional options for C compiler
