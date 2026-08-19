@@ -3,9 +3,8 @@
 # (c) osFree project
 #
 
-DESCRIPTION = osFree Janus Paint
+DESCRIPTION = Janus Paint
 TARGET_VERSION = 310
-SOURCES = paint canvas toolbox palette textedit clipboard file tools
 
 EXPORTS = MainWndProc, CanvasWndProc, PaletteWndProc, TextEdit_SubclassProc, OpenDlgProc, SaveDlgProc, ColorDlgProc, ToolboxWndProc
 
