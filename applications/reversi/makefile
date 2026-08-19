@@ -3,7 +3,7 @@
 # (c) osFree project
 #
 
-DESCRIPTION = osFree Janus Reversi
+DESCRIPTION = Janus Reversi
 
 EXPORTS =WndProc, dpProdInfo, dpEve
 
