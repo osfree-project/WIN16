@@ -3,8 +3,7 @@
 # (c) osFree project
 #
 
-DESCRIPTION = osFree Janus Cardfile
-SOURCES = main cardfile
+DESCRIPTION = Janus Cardfile
 EXPORTS = FileOpenDlgProc, SearchDlgProc, AddDlgProc, IndexDlgProc, AboutDlgProc
 
 !include $(%ROOT)tools/mk/build.mk
