@@ -1,15 +1,10 @@
 #
 # A Makefile for lzexpand.dll
-# (c) osFree project,
-# author, date
+# (c) osFree project
 #
 
-PROJ     = lzexpand
-TRGT     = $(PROJ).dll
-DESC     = Windows file expansion library
-srcfiles = $(p)LZExpand$(e)
-# linking dll file
-DLL     = 1
+DESCRIPTION     = Janus file expansion library
+TARGET_CLASS    = LIBRARY
 EXPORTS = LZCOPY          .1, &
           LZOPENFILE      .2, &
           LZINIT          .3, &
@@ -23,4 +18,4 @@ EXPORTS = LZCOPY          .1, &
 
 DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 
-!include $(%ROOT)tools/mk/appsw16.mk
+!include $(%ROOT)tools/mk/build.mk

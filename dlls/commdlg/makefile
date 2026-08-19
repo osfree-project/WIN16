@@ -3,9 +3,7 @@
 # (c) osFree project
 #
 
-DESCRIPTION  = osFree Janus Common Dialogs Library
-SOURCES      = libmain ChooseColor ChooseFont Commdlg FindReplDlg GetOpenFileName PrintDlg
-TARGET_API   = WIN
+DESCRIPTION  = Janus Common Dialogs Library
 TARGET_CLASS = LIBRARY
 EXPORTS = &
 	GetOpenFileName	.1, &

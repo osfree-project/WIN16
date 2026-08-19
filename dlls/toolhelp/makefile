@@ -1,15 +1,10 @@
 #
 # A Makefile for toolhelp.dll
-# (c) osFree project,
-# author, date
+# (c) osFree project
 #
 
-PROJ     = toolhelp
-TRGT     = $(PROJ).dll
-DESC     = Windows Toolhelp API Library
-srcfiles = $(p)toolhelp$(e)
-# linking dll file
-DLL     = 1
+DESC         = Janus Toolhelp API Library
+TARGET_CLASS = LIBRARY
 EXPORTS = &
 	GlobalHandleToSel.50, &
 	GlobalFirst.51, &
@@ -52,6 +47,5 @@ EXPORTS = &
 # 83 is last for 3.10
 
 DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
-#ADD_COPT=-pl
 
-!include $(%ROOT)tools/mk/appsw16.mk
+!include $(%ROOT)tools/mk/build.mk
