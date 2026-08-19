@@ -9,7 +9,7 @@ TARGET_EXT   = cpl
 SOURCES      = main mouse keyboard time desktop intl_main intl_date intl_time intl_number intl_currency
 LIBS         = nlsapi
 
-ADD_COPT    = -ms -sg -i=$(MYDIR)..$(SEP).. -i=$(MYDIR)..$(SEP)..$(SEP)..$(SEP)..$(SEP)include
+ADD_COPT    = -ms -i=$(MYDIR)..$(SEP).. -i=$(MYDIR)..$(SEP)..$(SEP)..$(SEP)..$(SEP)include
 ADD_RCOPT   = -i=$(MYDIR)..$(SEP).. -i=$(MYDIR)..$(SEP)..$(SEP)..$(SEP)..$(SEP)include
 
 
