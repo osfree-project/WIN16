@@ -3,13 +3,11 @@
 # (c) osFree project
 #
 
-DESCRIPTION = osFree Janus Help
+DESCRIPTION = Janus Help
 SOURCES = winhelp hlpfile macro string callback macro_lex
 
-
 # defines additional options for C compiler
-#ADD_COPT = -0 -sg -zw -bw -bg -d3 -db -hw -ml -od #-pl
-ADD_COPT = -zc -dDEBUG #-dSTRICT
+ADD_COPT = -zc -dDEBUG
 IMPORTS  = GETOPENFILENAME     COMMDLG.1, &
            PRINTDLG       COMMDLG.20
 
