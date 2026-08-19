@@ -3,9 +3,8 @@
 # (c) osFree project
 #
 
-DESCRIPTION = osFree Janus Calculator
+DESCRIPTION = Janus Calculator
 TARGET_VERSION = 310
-SOURCES = stats winecalc
 
 ADD_COPT =  -dDEBUG=0
 
