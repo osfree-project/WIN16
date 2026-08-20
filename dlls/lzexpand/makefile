@@ -16,6 +16,6 @@ EXPORTS = LZCOPY          .1, &
           LZDONE          .9, &
           GETEXPANDEDNAME .10
 
-DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
+DESTINATION = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 
 !include $(%ROOT)tools/mk/build.mk

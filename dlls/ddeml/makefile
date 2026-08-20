@@ -1,15 +1,12 @@
 #
 # A Makefile for lzexpand.dll
-# (c) osFree project,
-# author, date
+# (c) osFree project
 #
 
-PROJ     = ddeml
-TRGT     = $(PROJ).dll
-DESC     = Windows file expansion library
-srcfiles = $(p)DdeML$(e)
-# linking dll file
-DLL     = 1
+DESCRIPTION = Janus file expansion library
+TARGET_CLASS = LIBRARY
+TARGET_VERSION = 310
+
 EXPORTS = 	DdeInitialize		.2, &
 	DdeUninitialize		.3, &
 	DdePostAdvise		.13, &
@@ -20,8 +17,7 @@ EXPORTS = 	DdeInitialize		.2, &
 	DdeNameService 		.27
 
 
-DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
-OPTIONS = heapsize=1K lib lzexpand.lib
+DESTINATION = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 
-!include $(%ROOT)tools/mk/appsw16.mk
+!include $(%ROOT)tools/mk/build.mk
 

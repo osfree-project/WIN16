@@ -3,7 +3,7 @@
 # (c) osFree project
 #
 
-DESC         = Janus Toolhelp API Library
+DESCRIPTION  = Janus Toolhelp API Library
 TARGET_CLASS = LIBRARY
 EXPORTS = &
 	GlobalHandleToSel.50, &
@@ -46,6 +46,6 @@ EXPORTS = &
 
 # 83 is last for 3.10
 
-DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
+DESTINATION = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 
 !include $(%ROOT)tools/mk/build.mk

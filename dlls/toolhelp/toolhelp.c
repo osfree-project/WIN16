@@ -317,15 +317,18 @@ static GLOBALARENA far *get_global_arena(void)
 	{
 		return *(GLOBALARENA far **)lpTH;
 	}
-	if (KernelType==KT_KRNL286) 
+	else if (KernelType==KT_KRNL286) 
 	{
 		LPBURGERMASTER_KRNL286 lpBM = MAKELP(lpTH->pGlobalHeap, 0);
 		return (MAKELP(lpBM->nwFirst, 0));
 	}
-	if (KernelType==KT_KRNL386) 
+	else if (KernelType==KT_KRNL386) 
 	{
 		LPBURGERMASTER_KRNL386 lpBM = MAKELP(lpTH->pGlobalHeap, 0);
 		return (MAKELP(lpTH->pGlobalHeap, lpBM->nwFirst));
+	} else
+	{
+		return NULL;
 	}
 }
 
@@ -790,10 +793,10 @@ void WINAPI TerminateApp(HTASK hTask, WORD wFlags)
 
     /* UndocWin says to call int 0x21/0x4c exit=0xff here,
        but let's just call ExitThread */
-//    ExitThread(0xff);
     in.h.al = 0xff;
-    in.h.ah = 0x4c; /* установка номера функции */
-    int86 (0x21, &in, & out);
+    in.h.ah = 0x4c;
+	// @todo use Dos3Call here
+    int86 (0x21, &in, &out);
 }
 
 /***********************************************************************
