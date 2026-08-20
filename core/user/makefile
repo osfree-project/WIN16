@@ -1,12 +1,12 @@
 #
 # A Makefile for user.exe
-# (c) osFree project,
+# (c) osFree project
 #
 
-PROJ     = user
-TRGT     = $(PROJ).exe
-DESC     = osFree Janus USER.EXE
-srcfiles = $(p)msgnames$(e) $(p)static$(e) $(p)button$(e) $(p)MessageBox$(e) $(p)keyboard$(e) $(p)display$(e) $(p)capture$(e) $(p)libentry$(e) $(p)libmain$(e) $(p)dce$(e) $(p)desktop$(e) $(p)winpos$(e) $(p)defwnd$(e) $(p)syscolor$(e) $(p)nonclient$(e) $(p)cursor$(e) $(p)queue$(e) $(p)win$(e) $(p)message$(e) $(p)GlobalData1$(e) $(p)div$(e) $(p)hook$(e) $(p)dialog$(e) $(p)defdlg$(e) $(p)Time$(e) $(p)Atoms$(e) $(p)comm$(e) $(p)Caret$(e) $(p)DrawText$(e)  $(p)SysMetrics$(e) $(p)Windows$(e) $(p)Controls$(e) $(p)Rect$(e) $(p)WinInit$(e) $(p)Icon$(e) $(p)Strings$(e) $(p)Accelerators$(e) $(p)Events$(e) $(p)Resources$(e) $(p)Misc$(e) $(p)Classes$(e) $(p)printf$(e) $(p)menu$(e) $(p)focus$(e) $(p)network$(e) $(p)InitApp$(e) # $(p)Listbox$(e) $(p)StringFunc$(e) 
+DESC     = Janus USER.EXE
+SOURCES  = msgnames static button MessageBox keyboard display capture libentry libmain dce desktop winpos defwnd syscolor nonclient cursor queue win message GlobalData1 div hook dialog defdlg Time Atoms comm Caret DrawText SysMetrics Windows Controls Rect WinInit Icon Strings Accelerators Events Resources Misc Classes printf menu focus network InitApp # Listbox StringFunc
+TARGET_CLASS = LIBRARY
+TARGET_EXT = exe
 ADD_COPT = -zls -ms -s -0 -DDEBUG=1 
 ADD_ASMOPT = -ms
 # -s no stack checks
@@ -28,7 +28,6 @@ STACKSIZE = 40k
 HEAPSIZE = 40k
 
 # linking dll file
-DLL     = 1
 EXPORTS = &
 	MessageBox.1, &
 	OldExitWindows .2, &
@@ -310,15 +309,15 @@ IMPORTS = GETEXEVERSION KERNEL.105, &
 # GETPRIVATEPROFILEINT KERNEL.127, &
 #          __AHSHIFT KERNEL.113
 
-DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
+#DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 
-!include $(%ROOT)tools/mk/appsw16.mk
+!include $(%ROOT)tools/mk/build.mk
 
-TARGETS = $(PATH)$(PROJ).exe
+#TARGETS = $(PATH)$(PROJ).exe
 
-.ico: $(MYDIR)res
+#.ico: $(MYDIR)res
 
-$(PATH)$(PROJ).exe: $(PATH)$(PROJ).dll $(MYDIR)$(PROJ).rc
- @$(SAY) RESCMP   $^. $(LOG)
- $(RC) -q -bt=windows -30 $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win
+#$(PATH)$(PROJ).exe: $(PATH)$(PROJ).dll $(MYDIR)$(PROJ).rc
+# @$(SAY) RESCMP   $^. $(LOG)
+# $(RC) -q -bt=windows -30 $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win
 
