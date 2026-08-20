@@ -3,7 +3,6 @@
 # (c) osFree project
 #
 
-PROJ      = cards
 TARGET_CLASS = LIBRARY
 TARGET_SUBCLASS = STATIC
 

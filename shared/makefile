@@ -3,7 +3,7 @@
 # (c) osFree project
 #
 
-DIRS     = setupinf nlsapi cardlib # mfc
+DIRS = setupinf nlsapi cards # mfc
 
 #PROJECT         = win_shared
 #TARGET_API      = WIN
