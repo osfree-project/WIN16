@@ -1,7 +1,17 @@
 #ifndef SETUPINF_H
 #define SETUPINF_H
 
-#include "common_types.h"
+#if defined(_WINDOWS) || defined(__WINDOWS__)
+  #include <windows.h>
+#else
+  #define FAR            far
+  typedef unsigned long  DWORD;
+  typedef unsigned int   UINT;
+  typedef int            BOOL;
+  typedef char FAR       *LPSTR;
+  typedef const char FAR *LPCSTR;
+  #define CALLBACK        FAR __pascal
+#endif
 
 /* ---- базовый доступ к INF ---- */
 typedef struct INF_FILE_TAG   FAR *HINF;

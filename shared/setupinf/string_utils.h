@@ -1,8 +1,10 @@
 #ifndef STRING_UTILS_H
 #define STRING_UTILS_H
 
-#include "common_types.h"
+#include <setupinf.h>
+
 #include <string.h>
+
 
 #if defined(_WINDOWS) || defined(__WINDOWS__)
   #include <windows.h>
