@@ -1,3 +1,10 @@
+/*!
+
+   (c) osFree Project 2002-2026, <https://www.osFree.org>
+ 
+   SPDX-License-Identifier: BSD-3-Clause
+
+*/
 /* Date/Time */
 #define IDC_DT_MONTH        704
 #define IDC_DT_DAY          705

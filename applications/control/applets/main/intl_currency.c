@@ -1,3 +1,10 @@
+/*!
+
+   (c) osFree Project 2002-2026, <https://www.osFree.org>
+ 
+   SPDX-License-Identifier: BSD-3-Clause
+
+*/
 /*
  * currency.c - Диалог формата валюты (новый ресурс)
  *              Все near-буферы переданы через FAR-указатели.

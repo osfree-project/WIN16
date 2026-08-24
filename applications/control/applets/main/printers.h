@@ -1,3 +1,10 @@
+/*!
+
+   (c) osFree Project 2002-2026, <https://www.osFree.org>
+ 
+   SPDX-License-Identifier: BSD-3-Clause
+
+*/
 /* Printers */
 #define IDC_PRN_LIST        1700
 #define IDC_PRN_CONNECT     1701

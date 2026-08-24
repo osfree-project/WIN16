@@ -1,3 +1,10 @@
+/*!
+
+   (c) osFree Project 2002-2026, <https://www.osFree.org>
+ 
+   SPDX-License-Identifier: BSD-3-Clause
+
+*/
 /*
  *  intl_main.c – основной диалог International, образцы, колбэки стран/языков
  *  ВРЕМЕННАЯ ТРАССИРОВКА ДЛЯ ПОИСКА ТРАПА
