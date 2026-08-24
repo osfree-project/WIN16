@@ -1,4 +1,7 @@
 /*
+ *
+ * SPDX-License-Identifier: LGPL-2.1-or-later
+ *
 
 .GRP Group File Format Overview (3.1)
 
