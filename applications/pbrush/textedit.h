@@ -1,3 +1,11 @@
+/*!
+
+   (c) ReactOS project
+   (c) osFree Project 2002-2026, <https://www.osFree.org>
+ 
+   SPDX-License-Identifier: LGPL-2.1-or-later
+
+*/
 /*
  * textedit.h – Текстовый редактор поверх холста (Windows 3.0, C89)
  */

@@ -1,3 +1,11 @@
+/*!
+
+   (c) ReactOS project
+   (c) osFree Project 2002-2026, <https://www.osFree.org>
+ 
+   SPDX-License-Identifier: LGPL-2.1-or-later
+
+*/
 /*
  * file.c – Загрузка и сохранение BMP (C89, Win16)
  * Исправлены предупреждения GlobalFree и логика копирования.

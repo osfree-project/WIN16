@@ -1,3 +1,11 @@
+/*!
+
+   (c) ReactOS project
+   (c) osFree Project 2002-2026, <https://www.osFree.org>
+ 
+   SPDX-License-Identifier: LGPL-2.1-or-later
+
+*/
 /*
  * textedit.c – Simplified text editor for Paint 3.0 (C89, Win16)
  * No Unicode. Uses system font to avoid CreateFontIndirect issues.

@@ -1,3 +1,11 @@
+/*!
+
+   (c) ReactOS project
+   (c) osFree Project 2002-2026, <https://www.osFree.org>
+ 
+   SPDX-License-Identifier: LGPL-2.1-or-later
+
+*/
 /*
  * canvas.c – Canvas with selection drawing and cursors from .cur files (C89, Win16)
  * No Unicode.  Cursors are loaded directly from CURSOR resources – no runtime conversion.

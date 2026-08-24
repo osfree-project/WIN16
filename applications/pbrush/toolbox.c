@@ -1,3 +1,11 @@
+/*!
+
+   (c) ReactOS project
+   (c) osFree Project 2002-2026, <https://www.osFree.org>
+ 
+   SPDX-License-Identifier: LGPL-2.1-or-later
+
+*/
 /*
  * toolbox.c – Toolbar with 32x32 icons and manual dragging (no system caption drag)
  * Completely avoids ghosting by managing repositioning itself.
