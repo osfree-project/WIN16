@@ -57,6 +57,8 @@ wdh = William D. Herndon (shadowdog@users.sourceforge.net)
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+  SPDX-License-Identifier: GPL-2.0-or-later
+
  ------------------------------------------------------------------------
   Copyright (c) 2000-04 The Open Foundation Classes
   Copyright (c) 2000 Carsten Breuer

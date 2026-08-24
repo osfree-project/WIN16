@@ -1,3 +1,6 @@
+//
+//    SPDX-License-Identifier: LicenseRef-PD-2
+//
 #ifndef DROPZONE_INCLUDED
 #define DROPZONE_INCLUDED
 

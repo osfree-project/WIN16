@@ -1,3 +1,6 @@
+//
+//    SPDX-License-Identifier: LicenseRef-PD-2
+//
 #ifndef CARDLIB_INCLUDED
 #define CARDLIB_INCLUDED
 

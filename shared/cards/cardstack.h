@@ -1,3 +1,6 @@
+//
+//    SPDX-License-Identifier: LicenseRef-PD-2
+//
 #ifndef CARDSTACK_INCLUDED
 #define CARDSTACK_INCLUDED
 

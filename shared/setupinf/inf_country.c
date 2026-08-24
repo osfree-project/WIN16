@@ -1,4 +1,11 @@
-/* inf_country.c Ц окончательна€ реализаци€ InfParseCountryLine */
+/*!
+
+   (c) osFree Project 2002-2026, <https://www.osFree.org>
+ 
+   SPDX-License-Identifier: BSD-3-Clause
+
+*/
+
 #include "setupinf_internal.h"
 
 static int AtoiFarLocal(LPCSTR s)

@@ -1,3 +1,6 @@
+//
+//    SPDX-License-Identifier: LicenseRef-PD-2
+//
 #ifndef _CARDCOUNT_INCLUDED
 #define _CARDCOUNT_INCLUDED
 

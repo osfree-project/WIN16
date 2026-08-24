@@ -1,3 +1,11 @@
+/*!
+
+   (c) osFree Project 2002-2026, <https://www.osFree.org>
+ 
+   SPDX-License-Identifier: BSD-3-Clause
+
+*/
+
 /*
  * nlsapi_locale.c – работа с SETUP.INF, таблица LCID, GetKeyboardLayoutList
  *                   (с отладкой в GetLocaleInfoFromInf)

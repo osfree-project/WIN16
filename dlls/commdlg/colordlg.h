@@ -6,7 +6,9 @@
 *               Version 1.0                                                   *
 *                                                                             *
 *               Copyright (c) 1992, Microsoft Corp.  All rights reserved.     *
-*                                                                             *
+ *
+ * SPDX-License-Identifier: LGPL-2.0-or-later
+ *
 \*****************************************************************************/
 
 #ifndef _INC_COLORDLG

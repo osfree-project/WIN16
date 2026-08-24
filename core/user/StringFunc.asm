@@ -1,3 +1,6 @@
+;
+; SPDX-License-Identifier: LGPL-2.1-or-later
+;
 .8086
 
 extern AnsiNext: far

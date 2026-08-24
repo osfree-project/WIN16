@@ -1,6 +1,9 @@
 /* 
  *
  * Menu definitions
+ *
+ * SPDX-License-Identifier: LGPL-2.1-or-later
+ *
 
 
 This library is free software; you can redistribute it and/or

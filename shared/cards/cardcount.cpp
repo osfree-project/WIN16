@@ -1,4 +1,7 @@
 //
+//    SPDX-License-Identifier: LicenseRef-PD-2
+//
+//
 //    CardCount is a helper library for CardStacks.
 //
 //    When you initialize a CardCount object with a

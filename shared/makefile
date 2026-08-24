@@ -3,7 +3,7 @@
 # (c) osFree project
 #
 
-DIRS = setupinf nlsapi cards # mfc
+DIRS = setupinf nlsapi cards shell # mfc
 
 PROJECT         = win_shared
 TARGET_API      = WIN

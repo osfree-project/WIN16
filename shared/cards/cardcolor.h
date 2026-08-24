@@ -1,3 +1,7 @@
+//
+//    SPDX-License-Identifier: LicenseRef-PD-2
+//
+
 #pragma once
 
 COLORREF ColorScaleRGB(	const COLORREF Col1,

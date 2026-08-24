@@ -3,6 +3,9 @@
  *
  * Copyright 1993 Alexandre Julliard
  *
+ *
+ * SPDX-License-Identifier: LGPL-2.1-or-later
+ *
  */
 
 #include "user.h"

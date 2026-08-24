@@ -4,6 +4,8 @@
 //	Freeware
 //	Copyright J Brown 2001
 //
+//      SPDX-License-Identifier: LicenseRef-PD-2
+//
 
 #ifndef _CARD_INCLUDED
 #define _CARD_INCLUDED

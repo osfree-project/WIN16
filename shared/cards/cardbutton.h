@@ -1,3 +1,7 @@
+//
+//    SPDX-License-Identifier: LicenseRef-PD-2
+//
+
 #ifndef CARDBUTTON_INCLUDED
 #define CARDBUTTON_INCLUDED
 

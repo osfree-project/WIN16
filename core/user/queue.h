@@ -2,6 +2,9 @@
  * Message queues definitions
  *
  * Copyright 1993 Alexandre Julliard
+ *
+ * SPDX-License-Identifier: LGPL-2.1-or-later
+ *
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public

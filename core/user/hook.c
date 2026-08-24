@@ -4,6 +4,8 @@
  * Copyright 1994, 1995, 2002 Alexandre Julliard
  * Copyright 1996 Andrew Lewycky
  *
+ * SPDX-License-Identifier: LGPL-2.1-or-later
+ *
  * Based on investigations by Alex Korobka
  *
 This library is free software; you can redistribute it and/or

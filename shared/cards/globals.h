@@ -1,3 +1,6 @@
+//
+//    SPDX-License-Identifier: LicenseRef-PD-2
+//
 #ifndef GLOBALS_INCLUDED
 #define GLOBALS_INCLUDED
 

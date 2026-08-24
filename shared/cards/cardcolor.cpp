@@ -1,4 +1,7 @@
 //
+//    SPDX-License-Identifier: LicenseRef-PD-2
+//
+//
 //    Colour support
 //
 

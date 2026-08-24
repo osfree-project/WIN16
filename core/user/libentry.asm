@@ -1,3 +1,6 @@
+;
+; SPDX-License-Identifier: LGPL-2.1-or-later
+;
 
 DGROUP group _NULL,_DATA,CONST,_BSS
 

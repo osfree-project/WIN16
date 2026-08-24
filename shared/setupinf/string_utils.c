@@ -1,3 +1,11 @@
+/*!
+
+   (c) osFree Project 2002-2026, <https://www.osFree.org>
+ 
+   SPDX-License-Identifier: BSD-3-Clause
+
+*/
+
 #include "string_utils.h"
 #include "mem_platf.h"
 #include <ctype.h>

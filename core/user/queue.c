@@ -1,6 +1,8 @@
 /*
  * Message queues related functions
  *
+ * SPDX-License-Identifier: LGPL-2.1-or-later
+ *
  * Copyright 1993, 1994 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or

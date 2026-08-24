@@ -1,4 +1,7 @@
 //
+//    SPDX-License-Identifier: LicenseRef-PD-2
+//
+//
 //    CardLib - not much of interest in here
 //
 //    Freeware

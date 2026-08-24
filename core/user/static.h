@@ -2,6 +2,9 @@
  * Static-class extra info
  *
  * Copyright 1994 Alexandre Julliard
+ *
+ * SPDX-License-Identifier: LGPL-2.1-or-later
+ *
  */
 
 #ifndef STATIC_H

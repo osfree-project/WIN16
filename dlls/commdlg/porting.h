@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: LGPL-2.0-or-later
+ */
+
 #define GET_WM_CTLCOLOR_MSG(type)		    (UINT)(WM_CTLCOLOR)
 #define GET_WM_CTLCOLOR_MPS(hdc, hwnd, type) \
         (WPARAM)(hdc), MAKELONG(hwnd, type)

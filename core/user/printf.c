@@ -1,3 +1,6 @@
+/*
+ * SPDX-License-Identifier: LGPL-2.1-or-later
+ */
 #pragma code_seg( "DEBUG_TEXT" )
 
 #ifndef MK_FP

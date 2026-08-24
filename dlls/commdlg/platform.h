@@ -1,5 +1,8 @@
 /*  platform.h	1.25
     Copyright 1997 Willows Software, Inc. 
+ *
+ * SPDX-License-Identifier: LGPL-2.0-or-later
+ *
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public License as

@@ -3,7 +3,9 @@
 * print.h -     Printing helper functions, types, and definitions             *
 *                                                                             *
 *               Copyright (c) 1985-1992. Microsoft Corp.  All rights reserved.*
-*                                                                             *
+*
+* SPDX-License-Identifier: LGPL-2.0-or-later
+*
 *******************************************************************************
 *
 *  PRINTDRIVER       - For inclusion with a printer driver

@@ -1,3 +1,4 @@
+/*  SPDX-License-Identifier: GPL-2.0-or-later */
 /* Replace "dll.h" with the name of your header */
 #include "dll.h"
 #include <windows.h>

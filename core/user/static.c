@@ -3,6 +3,8 @@
  *
  * Copyright  David W. Metcalfe, 1993
  *
+ * SPDX-License-Identifier: LGPL-2.1-or-later
+ *
  */
 
 #include "user.h"

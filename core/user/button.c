@@ -3,6 +3,9 @@
  * Copyright (C) 1993 Johannes Ruscheinski
  * Copyright (C) 1993 David Metcalfe
  * Copyright (C) 1994 Alexandre Julliard
+ *
+ * SPDX-License-Identifier: LGPL-2.1-or-later
+ *
  */
 
 #include "user.h"

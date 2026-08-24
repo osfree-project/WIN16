@@ -1,3 +1,11 @@
+/*!
+
+   (c) osFree Project 2002-2026, <https://www.osFree.org>
+ 
+   SPDX-License-Identifier: BSD-3-Clause
+
+*/
+
 /*
  * nlsapi_internal.h - Внутренние функции и данные NLS API (не экспортируются)
  */

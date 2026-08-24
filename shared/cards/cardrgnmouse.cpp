@@ -1,4 +1,7 @@
 //
+//    SPDX-License-Identifier: LicenseRef-PD-2
+//
+//
 //    CardLib - CardRegion mouse-related stuff
 //
 //    Freeware

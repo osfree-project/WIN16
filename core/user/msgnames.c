@@ -1,4 +1,7 @@
 /*
+ *
+ * SPDX-License-Identifier: LGPL-2.1-or-later
+ *
  * msgconv.c - Win16 Message Code to Name Conversion (полная проверенная таблица)
  * Стандарт: C89
  * Компилятор: Open Watcom 1.9 (16-bit)

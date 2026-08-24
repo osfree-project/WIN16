@@ -1,3 +1,6 @@
+//
+//    SPDX-License-Identifier: LicenseRef-PD-2
+//
 #ifndef CARDREGION_INCLUDED
 #define CARDREGION_INCLUDED
 

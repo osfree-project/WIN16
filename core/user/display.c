@@ -3,6 +3,9 @@
  *
  * Copyright 2026 Yuri Prokushev
  *
+ *
+ * SPDX-License-Identifier: LGPL-2.1-or-later
+ *
  * This is interface to DISPLAY.DRV. For now it is support only Windows 3.0 things.
  *
  * This library is free software; you can redistribute it and/or
