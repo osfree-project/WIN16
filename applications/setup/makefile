@@ -5,7 +5,7 @@
 #
 
 
-DIRS = calc cardfile clipbrd clock notepad pifedit progman sysedit taskman winhelp winmine winver reversi pbrush control
+DIRS = stage1 #stage2
 
 !include $(%ROOT)tools/mk/build.mk
 

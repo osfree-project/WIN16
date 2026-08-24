@@ -4,11 +4,7 @@
 # valerius, 2006/10/30
 #
 
-# First directory must be UNI which produces C/C++ header files
-
 DIRS = src
 
-!include $(%ROOT)tools/mk/all.mk
+!include $(%ROOT)tools/mk/build.mk
 
-#TARGETS=subdirs
-#TARGET=all

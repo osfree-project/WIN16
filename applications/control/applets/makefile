@@ -6,5 +6,4 @@
 
 DIRS = main
 
-!include $(%ROOT)tools/mk/all.mk
-
+!include $(%ROOT)tools/mk/build.mk
