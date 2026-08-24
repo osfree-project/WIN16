@@ -16,7 +16,7 @@
 #define CPL_DBLCLK          5
 #define CPL_STOP            6
 #define CPL_EXIT            7
-#define CPL_NEWINQUIRE      8   /* только Windows 3.1+, но объявим для совместимости */
+#define CPL_NEWINQUIRE      8   /* только Windows 3.1+ */
 
 /* Структура CPLINFO (Windows 3.0) */
 typedef struct tagCPLINFO {

@@ -1,17 +1,13 @@
 #
 # A Makefile for shell.dll
-# (c) osFree project,
-# author, date
+# (c) osFree project
 #
 
-PROJ     = shell1
-PROJ1    = shell
-TRGT     = $(PROJ1).dll
-DESC     = Windows Shell API Library
-srcfiles = $(p)GlobalData$(e) $(p)About$(e) $(p)Environment$(e) $(p)AtomEx$(e) $(p)Strings$(e) $(p)Shell$(e) $(p)Registry$(e) $(p)DragDrop$(e) $(p)Exec$(e) $(p)Hook$(e) # $(p)Icon$(e)
-# linking dll file
-DLL     = 1
-HEAPSIZE= 16k
+@todo Need to handle such type of library
+
+DESC     = Janus Shell API Library
+TARGET_CLASS = LIBRARY
+LIBS = shell
 EXPORTS = &
 	RegOpenKey				.1, &
 	RegCreateKey			.2, &
@@ -52,12 +48,12 @@ EXPORTS = &
 
 DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 
-!include $(%ROOT)tools/mk/appsw16.mk
+!include $(%ROOT)tools/mk/build.mk
 
-TARGETS = $(PATH)$(PROJ1).dll
+#TARGETS = $(PATH)$(PROJ1).dll
 
-.ico: $(MYDIR)res
+#.ico: $(MYDIR)res
 
-$(PATH)$(PROJ1).dll: $(PATH)$(PROJ).dll $(MYDIR)$(PROJ1).rc
- @$(SAY) RESCMP   $^. $(LOG)
- @$(RC) -q -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win
+#$(PATH)$(PROJ1).dll: $(PATH)$(PROJ).dll $(MYDIR)$(PROJ1).rc
+# @$(SAY) RESCMP   $^. $(LOG)
+# @$(RC) -q -bt=windows $]@ $[@ -fe=$@ -fo=$^@ -i=$(MYDIR) -i=$(%WATCOM)$(SEP)h$(SEP)win

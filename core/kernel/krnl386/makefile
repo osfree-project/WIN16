@@ -1,6 +1,6 @@
 #
 # A Makefile for KRNL286.EXE
-# (c) osFree project,
+# (c) osFree project
 #
 
 
