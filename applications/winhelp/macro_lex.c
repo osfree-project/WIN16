@@ -2,6 +2,9 @@
 
 /* Scanner skeleton version:
  * $Header: /home/daffy/u0/vern/flex/RCS/flex.skl,v 2.91 96/09/10 16:58:48 vern Exp $
+ *
+ * SPDX-License-Identifier: LGPL-2.1-or-later
+ *
  */
 
 #define FLEX_SCANNER
