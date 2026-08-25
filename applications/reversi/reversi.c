@@ -1,3 +1,10 @@
+/*!
+
+   (c) osFree Project 2002-2026, <https://www.osFree.org>
+ 
+   SPDX-License-Identifier: BSD-3-Clause
+
+*/
 /* othello.c – Windows 3.0, OpenWatcom 1.9, C89 */
 #include "othello.h"
 
