@@ -2,7 +2,7 @@
 //Байты:  [0]      [1]      [2]      [3]      [4]      [5]      [6]      [7]
 //Поля:   | LimitLow       | BaseLow        | BaseMid | Flags1  | Flags2  | BaseHi  |
 //Биты:   | 15..0 предела  | 15..0 базы     | база    |T T T T T|L L L L S R D G| база    |
-                                            |23..16  |D D P    |          |31..24  |
+//|23..16  |D D P    |          |31..24  |
 #pragma pack(push,1)
 typedef struct _LDT_ENTRY {
     WORD	LimitLow;
