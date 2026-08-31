@@ -128,7 +128,7 @@ void SwitchToPMode()
 		}
 	}
 
-	_dos_setumblink(strat);
-	_dos_setmemstrategy(umblink);
+	_dos_setumblink(umblink);
+	_dos_setmemstrategy(strat);
 	FUNCTIONEND;
 }

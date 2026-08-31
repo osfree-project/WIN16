@@ -235,3 +235,27 @@ extern BOOL DPMI_FreeMem(DWORD handle);
     parm [si di] \
     value [ax] \
     modify [];
+
+/* Получение инкремента селектора (DPMI Int 31h AX=0003h) */
+extern WORD DPMI_GetIncrement(void);
+#pragma aux DPMI_GetIncrement = \
+    "mov ax, 0003h" \
+    "int 31h" \
+    parm [] \
+    value [ax] \
+    modify [];
+
+/* Функция DPMI Segment to Descriptor (Int 31h AX=0002h)
+ * Преобразует реальный сегмент (параграф) в защищённый селектор.
+ * Возвращает селектор или 0 при ошибке.
+ */
+WORD DPMI_SegmentToDescriptor(WORD segment);
+#pragma aux DPMI_SegmentToDescriptor = \
+    "mov ax, 0002h" \
+    "int 31h" \
+    "jnc short exit" \
+    "xor ax, ax" \
+    "exit:" \
+    parm [bx] \
+    value [ax] \
+    modify [];

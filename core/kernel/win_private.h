@@ -371,8 +371,19 @@ extern WORD pascal wCurPSP;
 extern WORD pascal TH_PGLOBALHEAP;
 extern WORD pascal TH_HGLOBALHEAP;
 extern char FAR * pascal szPgmName;
+
 extern pascal __AHSHIFT;
 extern pascal __AHINCR;
+extern pascal __0000H;
+extern pascal __0040H;
+extern pascal __A000H;
+extern pascal __B000H;
+extern pascal __B800H;
+extern pascal __C000H;
+extern pascal __D000H;
+extern pascal __E000H;
+extern pascal __F000H;
+extern pascal __ROMBIOS;
 
 void memcpy(void far * s1, void far * s2, unsigned length);
 void far * memset (void far *start, int c, int len);
@@ -403,6 +414,12 @@ extern  unsigned short          GetES( void );
 extern  unsigned short          GetDS( void );
 #pragma aux GetDS               = \
         "mov    ax,ds"          \
+        value                   [ax];
+
+/* This function returns current CS value */
+extern  unsigned short          GetCS( void );
+#pragma aux GetCS               = \
+        "mov    ax,cs"          \
         value                   [ax];
 
 /* This function sets current DS value */

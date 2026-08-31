@@ -183,6 +183,7 @@ extern pascal Copyright: far
 
 ife ?REAL
 extern SwitchToPMode_: near
+extern InitSelectors_: near
 endif
 
 		include ascii.inc
@@ -528,10 +529,11 @@ endif	; not ?REAL
 main_1:
 	mov szPath,0
 
-	call KernelMain		; C-part initialization
-
 	@trace_s <"Set INT 21H handler",lf>
 	call setvec21	   ;now set int 21h vector
+
+	call KernelMain		; C-part initialization
+
 if ?LOADDBGDLL
 	call loaddbg
 endif
@@ -7228,6 +7230,10 @@ endif
 InitProtMode proc
 
 	@trace_s <"enter initialize PM",lf>
+
+ife ?REAL
+        call InitSelectors_
+endif
 
 	@DPMI_GetPMIntVec 21h				;get int 21 PM vector
 

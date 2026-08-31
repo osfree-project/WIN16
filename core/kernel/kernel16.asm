@@ -639,10 +639,9 @@ KernelEntries label byte
 public __AHSHIFT
 eSHIFT	ENTRY <1,3>			;113 _AHSHIFT
 __AHSHIFT equ eSHIFT.wOfs
-eINCR	ENTRY <1,8>			;114 _AHINCR
+eINCR	ENTRY <1,8>			;114 _AHINCR  ;__AHINCR equ 8
 public __AHINCR
-;__AHINCR equ 8
-__AHINCR equ eINCR.wOfs
+__AHINCR equ eINCR.wOfs		
 	db 1,1
 	ENTRY <1,OutputDebugString>	;115
 	db 1,0				;116
@@ -707,8 +706,12 @@ __AHINCR equ eINCR.wOfs
 	ENTRY <1,AllocDSToCSAlias>	;171
 	ENTRY <1,AllocCSToDSAlias>	;172 AllocAlias
 	db 2,-2
-eROMBIOS ENTRY <1,0>			;173 _ROMBIOS
-eA000 ENTRY <1,00h>			;174 _A000H
+eROMBIOS ENTRY <1,0F000H>			;173 _ROMBIOS
+public __ROMBIOS
+__ROMBIOS equ eROMBIOS.wOfs
+eA000 ENTRY <1,0A000h>			;174 _A000H
+public __A000H
+__A000H equ eA000.wOfs
 	db 3,1
 	ENTRY <1,AllocSelector>		;175
 	ENTRY <1,FreeSelector>		;176
@@ -717,13 +720,21 @@ eA000 ENTRY <1,00h>			;174 _A000H
 eWinFlags ENTRY <1,0>			;178 __WINFLAGS
 
 	db 1,-2
-eD000	ENTRY <1,0>			;179
+eD000	ENTRY <1,0D000h>			;179
+public __D000H
+__D000H equ eD000.wOfs
 	db 1,1
 	ENTRY <1, LongPtrAdd>		;180
 	db 3,-2
-eB000	ENTRY <1,0>			;181 _B000H
-eB800	ENTRY <1,0>			;182 _B800H
-e0000	ENTRY <1,0>			;183 _0000H
+eB000	ENTRY <1,0B000h>		;181 _B000H
+public __B000H
+__B000H equ eB000.wOfs
+eB800	ENTRY <1,0B800h>		;182 _B800H
+public __B800H
+__B800H equ eB800.wOfs
+e0000	ENTRY <1,0000H>			;183 _0000H
+public __0000H
+__0000H equ e0000.wOfs		
 	db 6,1
 	ENTRY <1,GlobalDOSAlloc>	;184
 	ENTRY <1,GlobalDOSFree>		;185
@@ -732,12 +743,20 @@ e0000	ENTRY <1,0>			;183 _0000H
 	ENTRY <1,GetSelectorLimit>	;188
 	ENTRY <1,SetSelectorLimit>	;189
 	db 1,-2
-eE000 ENTRY <1,0>			;190 _E000H
+eE000 ENTRY <1,0D000h>			;190 _E000H
+public __E000H
+__E000H equ eE000.wOfs
 	db 2,0				;191-192
 	db 3,-2
 e0040 ENTRY <1,0040h>			;193
-eF000 ENTRY <1,0>			;194 _F000H
-eC000 ENTRY <1,0>			;195 _C000H
+public __0040H
+__0040H equ e0040.wOfs
+eF000 ENTRY <1,0F000h>			;194 _F000H
+public __F000H
+__F000H equ eF000.wOfs
+eC000 ENTRY <1,0C000H>			;195 _C000H
+public __C000H
+__C000H equ eC000.wOfs
 	db 3,1
 	ENTRY <1,SelectorAccessRights>	;196
 	ENTRY <1,GlobalFixReal>		;197
