@@ -743,7 +743,7 @@ __0000H equ e0000.wOfs
 	ENTRY <1,GetSelectorLimit>	;188
 	ENTRY <1,SetSelectorLimit>	;189
 	db 1,-2
-eE000 ENTRY <1,0D000h>			;190 _E000H
+eE000 ENTRY <1,0E000h>			;190 _E000H
 public __E000H
 __E000H equ eE000.wOfs
 	db 2,0				;191-192
