@@ -134,13 +134,24 @@ UINT WINAPI AllocSelector(UINT sel)
 */
 UINT WINAPI FreeSelector( UINT sel )
 {
+	WORD count = 1;
+	DWORD limit;
+	WORD i;
+
 	FUNCTIONSTART;
 
-	DPMI_FreeDesc(sel);
+	if (!sel) return 0;
+
+	limit = GetSelectorLimit(sel);
+	if (limit)
+		count = (limit >> 16) + 1;
+
+	for (i = 0; i < count; i++)
+		DPMI_FreeDesc( sel + (i << __AHSHIFT) );
 
 	FUNCTIONEND;
 
-    return 0;
+	return 0;
 }
 
 /***********************************************************************
@@ -186,7 +197,7 @@ DWORD WINAPI GetSelectorLimit( UINT sel )
 
 	FUNCTIONEND;
 
-	return (entry.HighWord.Bits.LimitHi<<16+entry.LimitLow);
+	return ((DWORD)entry.HighWord.Bits.LimitHi << 16) + entry.LimitLow;
 }
 
 

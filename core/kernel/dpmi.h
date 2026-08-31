@@ -1,8 +1,12 @@
 /* DPMI Library */
-//–ë–∞–π—Ç—ã:  [0]      [1]      [2]      [3]      [4]      [5]      [6]      [7]
-//–ü–æ–ª—è:   | LimitLow       | BaseLow        | BaseMid | Flags1  | Flags2  | BaseHi  |
-//–ë–∏—Ç—ã:   | 15..0 –ø—Ä–µ–¥–µ–ª–∞  | 15..0 –±–∞–∑—ã     | –±–∞–∑–∞    |T T T T T|L L L L S R D G| –±–∞–∑–∞    |
-//|23..16  |D D P    |          |31..24  |
+
+/*
+Bytes:  [0]      [1]      [2]      [3]      [4]      [5]      [6]             [7]
+Fields: | LimitLow       | BaseLow        | BaseMid | Flags1  | Flags2        | BaseHi  |
+Bits:   | 15..0 ÔÂ‰ÂÎ‡  | 15..0 ·‡Á˚     | ·‡Á‡    |T T T T T|L L L L S R D G| ·‡Á‡    |
+                                          | 23..16  |D D P    |               | 31..24  |
+*/
+
 #pragma pack(push,1)
 typedef struct _LDT_ENTRY {
     WORD	LimitLow;
@@ -69,7 +73,7 @@ extern int DPMI_SetBase(unsigned int, unsigned long);
         "mov    ax,0007h"          \
 	"int    31h"\
 	"sbb	ax,ax"\
-	parm [bx] [cx bx] \
+	parm [bx] [cx dx] \
         value [ax];
 
 extern int DPMI_SetLimit(unsigned int, unsigned long);
@@ -77,14 +81,14 @@ extern int DPMI_SetLimit(unsigned int, unsigned long);
         "mov    ax,0008h"          \
 	"int    31h"\
 	"sbb	ax,ax"\
-	parm [bx] [cx bx] \
+	parm [bx] [cx dx] \
         value [ax];
 
 
 
 extern int DPMI_CreateCSAlias(unsigned int);
 #pragma aux DPMI_CreateCSAlias        = \
-        "mov    ax,0008h"          \
+        "mov    ax,000Ah"          \
 	"int    31h"\
 	"jnc	exit"\
 	"xor	ax,ax"\
@@ -103,7 +107,7 @@ extern int DPMI_GetDescriptor(unsigned int, LDT_ENTRY far *);
 
 extern int DPMI_SetDescriptor(unsigned int, LDT_ENTRY far *);
 #pragma aux DPMI_SetDescriptor        = \
-        "mov  ax,000Bh"   \
+        "mov  ax,000Ch"   \
         "int 31h"       \
         "sbb  ax,ax"    \
     parm [bx] [di es] \
@@ -208,3 +212,26 @@ extern WORD DPMI_FreeDOSMem(WORD sel);
 	"L1:" \
 	parm [dx] \
 	value [ax];
+
+extern BOOL DPMI_AllocMem(DWORD size, DWORD *handle, DWORD *linear);
+#pragma aux DPMI_AllocMem = \
+    "mov ax, 0501h" \
+    "int 31h" \
+    "jnc ok" \
+    "xor si, si" \
+    "xor di, di" \
+    "xor bx, bx" \
+    "xor cx, cx" \
+    "ok:" \
+    parm [bx cx] [si di] [bx cx] \
+    value [ax] \
+    modify [];
+
+extern BOOL DPMI_FreeMem(DWORD handle);
+#pragma aux DPMI_FreeMem = \
+    "mov ax, 0502h" \
+    "int 31h" \
+    "sbb ax, ax" \
+    parm [si di] \
+    value [ax] \
+    modify [];
