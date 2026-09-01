@@ -718,6 +718,8 @@ __A000H equ eA000.wOfs
 	ENTRY <1,PrestoChangoSelector>	;177
 	db 1,-2
 eWinFlags ENTRY <1,0>			;178 __WINFLAGS
+public pascal __WinFlags
+__WinFlags equ eWinFlags.wOfs
 
 	db 1,-2
 eD000	ENTRY <1,0D000h>			;179

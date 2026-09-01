@@ -23,6 +23,8 @@ public pascal szPgmName
 public TH_HGLOBALHEAP
 public TH_PGLOBALHEAP
 public TH_LOCKTDB
+public SELTABLELEN
+public SELTABLESTART
 public pascal wKernelDS
 
 if ?DEBUG
@@ -183,6 +185,7 @@ extern pascal Copyright: far
 
 ife ?REAL
 extern SwitchToPMode_: near
+extern InitBurgermaster_: near
 extern InitSelectors_: near
 endif
 
@@ -7232,6 +7235,7 @@ InitProtMode proc
 	@trace_s <"enter initialize PM",lf>
 
 ife ?REAL
+        call InitBurgermaster_
         call InitSelectors_
 endif
 

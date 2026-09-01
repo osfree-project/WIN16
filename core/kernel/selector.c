@@ -29,9 +29,16 @@
 #include "dpmi.h"
 #include "win_private.h"
 
+/* DPMI-хэндл Burgermaster (32 бита) */
+DWORD hBMDPMI = 0;
+
+
 #define LDT_FLAGS_DATA      0x13  /* Data segment */
 #define LDT_FLAGS_CODE      0x1b  /* Code segment */
 #define LDT_FLAGS_32BIT     0x40  /* Segment is 32-bit (code or stack) */
+
+static WORD FirstFreeSel = 0;   /* первый свободный селектор */
+static WORD CountFreeSel = 0;   /* количество свободных селекторов */
 
 static LDT_ENTRY ldt_make_entry( const void *base, unsigned long limit, unsigned char flags )
 {
@@ -59,6 +66,192 @@ static LDT_ENTRY ldt_make_entry( const void *base, unsigned long limit, unsigned
 
 
 /***********************************************************************
+ *           Free_Sel
+ */
+static void Free_Sel(WORD sel)
+{
+    LDT_ENTRY entry;
+
+    if ((sel >> 3) >= (SelTableLen / 4))
+    {
+        DPMI_FreeDesc(sel);
+        return;
+    }
+
+    if (DPMI_GetDescriptor(sel, &entry) == 0)
+    {
+        entry.LimitLow = FirstFreeSel;
+        DPMI_SetDescriptor(sel, &entry);
+        FirstFreeSel = sel;
+        CountFreeSel++;
+    }
+}
+
+/***********************************************************************
+ *           Get_Sel
+ */
+static WORD Get_Sel(WORD count)
+{
+    WORD ret = 0;
+    LDT_ENTRY entry;
+    WORD cur, prev, start, run, expected, prev_before_start, next;
+    BOOL found;
+
+    if (count == 1)
+    {
+        if (FirstFreeSel)
+        {
+            ret = FirstFreeSel;
+            if (DPMI_GetDescriptor(ret, &entry) == 0)
+                FirstFreeSel = entry.LimitLow;
+            else
+                ret = 0;
+        }
+        else
+        {
+            ret = DPMI_AllocDesc(1);
+        }
+    }
+    else
+    {
+        /* Поиск непрерывного блока в списке */
+        cur = FirstFreeSel;
+        prev = 0;
+        start = 0;
+        run = 0;
+        expected = 0;
+        prev_before_start = 0;
+        found = FALSE;
+
+        while (cur)
+        {
+            if (!DPMI_GetDescriptor(cur, &entry))
+                break;
+
+            if (run == 0)
+            {
+                start = cur;
+                run = 1;
+                expected = cur + __AHSHIFT;
+                prev_before_start = prev;
+            }
+            else if (cur == expected)
+            {
+                run++;
+                expected += __AHSHIFT;
+                if (run == count)
+                {
+                    found = TRUE;
+                    break;
+                }
+            }
+            else
+            {
+                start = cur;
+                run = 1;
+                expected = cur + __AHSHIFT;
+                prev_before_start = prev;
+            }
+
+            prev = cur;
+            cur = entry.LimitLow;
+        }
+
+        if (found)
+        {
+            WORD last = start + (count - 1) * __AHSHIFT;
+            if (!DPMI_GetDescriptor(last, &entry))
+                return 0;
+            next = entry.LimitLow;
+
+            if (start == FirstFreeSel)
+                FirstFreeSel = next;
+            else
+            {
+                LDT_ENTRY prevEntry;
+                if (!DPMI_GetDescriptor(prev_before_start, &prevEntry))
+                    return 0;
+                prevEntry.LimitLow = next;
+                DPMI_SetDescriptor(prev_before_start, &prevEntry);
+            }
+            CountFreeSel -= count;
+            ret = start;
+        }
+        else
+        {
+            ret = DPMI_AllocDesc(count);
+        }
+    }
+
+    /* Пополнение пула при необходимости */
+    if (CountFreeSel < 0x100 && (WinFlags & WF_ENHANCED))
+    {
+        WORD block = DPMI_AllocDesc(0x100);
+        if (block)
+        {
+            WORD i;
+            for (i = 0; i < 0x100; i++)
+                Free_Sel(block + i * __AHSHIFT);
+        }
+    }
+
+    /* Проверка выхода за пределы таблицы селекторов */
+    if (ret && ((DWORD)(ret >> 3) + count > (SelTableLen / 4)))
+    {
+        WORD i;
+        for (i = 0; i < count; i++)
+        {
+            WORD s = ret + i * __AHSHIFT;
+            /* Освобождаем все селекторы через DPMI, как в оригинале */
+            DPMI_FreeDesc(s);
+        }
+        ret = 0;
+    }
+
+    return ret;
+}
+
+
+/***********************************************************************
+ *           SetSelectorArena
+ */
+void SetSelectorArena(WORD sel, DWORD arenaOffset)
+{
+    DWORD index;
+    DWORD far *table;
+
+    if (!TH_PGLOBALHEAP || !SelTableLen)
+        return;
+
+    index = (sel >> 3);
+    if (index >= (SelTableLen / 4))
+        return;
+
+    table = (DWORD far *)MAKELP(TH_PGLOBALHEAP, SelTableStart);
+    table[index] = arenaOffset;
+}
+
+/***********************************************************************
+ *           GetSelectorArena
+ */
+DWORD GetSelectorArena(WORD sel)
+{
+    DWORD index;
+    DWORD far *table;
+
+    if (!TH_PGLOBALHEAP || !SelTableLen)
+        return 0;
+
+    index = (sel >> 3);
+    if (index >= (SelTableLen / 4))
+        return 0;
+
+    table = (DWORD far *)MAKELP(TH_PGLOBALHEAP, SelTableStart);
+    return table[index];
+}
+
+
+/***********************************************************************
  *           AllocSelectorArray   (KERNEL.206)
  *
  * count    Необходимое количество селекторов.
@@ -77,12 +270,16 @@ WORD WINAPI AllocSelectorArray(WORD count)
 
 	FUNCTIONSTART;
 
-	sel = DPMI_AllocDesc(count);
+	sel = Get_Sel(count);
 
 	if (sel)
 	{
-		LDT_ENTRY entry = ldt_make_entry(0, 1, LDT_FLAGS_DATA ); /* avoid 0 base and limit */
-		for (i = 0; i < count; i++) DPMI_SetDescriptor( sel + (i << __AHSHIFT), &entry );
+		LDT_ENTRY entry = ldt_make_entry(0, 1, LDT_FLAGS_DATA );
+		for (i = 0; i < count; i++)
+		{
+			DPMI_SetDescriptor( sel + (i << __AHSHIFT), &entry );
+			SetSelectorArena(sel + (i << __AHSHIFT), 0);
+		}
 	}
 	FUNCTIONEND;
 	return sel;
@@ -106,21 +303,31 @@ WORD WINAPI AllocSelectorArray(WORD count)
 UINT WINAPI AllocSelector(UINT sel)
 {
 	WORD newsel, count, i;
+	DWORD base;
 
 	FUNCTIONSTART;
 
 	/* get the number of selectors needed to cover up to the selector limit */
 	count = sel ? ((GetSelectorLimit(sel) >> 16) + 1) : 1;
-	newsel = DPMI_AllocDesc(count);
+	newsel = Get_Sel(count);
 //    TRACE("(%04x): returning %04x\n", sel, newsel );
 	if (!newsel) return 0;
-	if (!sel) return newsel;  /* nothing to copy */
+	if (!sel)
+	{
+		for (i = 0; i < count; i++)
+			SetSelectorArena(newsel + (i << __AHSHIFT), 0);
+		return newsel;  /* nothing to copy */
+	}
+
+	base = GetSelectorBase(sel);
 	for (i = 0; i < count; i++)
 	{
 		LDT_ENTRY entry;
 		if (!DPMI_GetDescriptor( sel + (i << __AHSHIFT ), &entry )) break;
 		DPMI_SetDescriptor( newsel + (i << __AHSHIFT ), &entry );
-	}
+		/* Тайлинг баз: каждый следующий селектор +64К */
+		SetSelectorBase( newsel + (i << __AHSHIFT ), base + i * 0x10000 );
+		SetSelectorArena(newsel + (i << __AHSHIFT), 0);	}
 	FUNCTIONEND;
 	return newsel;
 }
@@ -138,19 +345,42 @@ UINT WINAPI FreeSelector( UINT sel )
 {
 	WORD count = 1;
 	DWORD limit;
+	DWORD base;
 	WORD i;
+	LDT_ENTRY entry;
 
 	FUNCTIONSTART;
 
 	if (!sel) return 0;
 
-	limit = GetSelectorLimit(sel);
-	if (limit)
-		count = (limit >> 16) + 1;
+	/* Проверяем, присутствует ли сегмент в памяти */
+	if (DPMI_GetDescriptor(sel, &entry) != 0)
+	{
+		/* Ошибка получения дескриптора — освобождаем только один */
+		count = 1;
+	}
+	else
+	{
+		if (entry.HighWord.Bits.Pres)
+		{
+			/* Сегмент присутствует — считаем по лимиту */
+			limit = GetSelectorLimit(sel);
+			if (limit)
+				count = (limit >> 16) + 1;
+		}
+		else
+		{
+			/* Сегмент отсутствует (discarded) — число селекторов хранится в базе */
+			base = DPMI_GetBase(sel);
+			count = (WORD)(base) >> 8;
+		}
+	}
 
 	for (i = 0; i < count; i++)
-		DPMI_FreeDesc( sel + (i << __AHSHIFT) );
-
+	{
+		SetSelectorArena(sel + (i << __AHSHIFT), 0);
+		Free_Sel( sel + (i << __AHSHIFT) );
+	}
 	FUNCTIONEND;
 
 	return 0;
@@ -249,15 +479,33 @@ WORD WINAPI SelectorAccessRights( WORD sel, WORD op, WORD val )
  */
 WORD WINAPI AllocCStoDSAlias(WORD sel)
 {
-	WORD	res;
+ 	WORD newsel;
+ 	LDT_ENTRY entry;
 
 	FUNCTIONSTART;
 
-	res = DPMI_CreateCSAlias(sel);
+//	res = DPMI_CreateCSAlias(sel);
+
+	/* Создаём data alias для кодового сегмента, используя собственный
+	 * пул селекторов (Get_Sel). Это обеспечивает попадание селектора
+	 * в free-list и таблицу селекторов, что необходимо для корректного
+	 * освобождения через FreeSelector. Прямой вызов DPMI Create Alias
+	 * (Int 31h AX=000Ah) дал бы селектор, не учтённый в пуле KERNEL,
+	 * и при освобождении мог бы нарушить целостность списка. */
+ 	newsel = AllocSelector(0);
+ 	if (!newsel) return 0;
+ 
+ 	entry = ldt_make_entry(
+ 		(void *) GetSelectorBase(sel),
+ 		GetSelectorLimit(sel),
+ 		LDT_FLAGS_DATA
+ 	);
+ 	DPMI_SetDescriptor(newsel, &entry);
+ 	SetSelectorArena(newsel, 0);
 
 	FUNCTIONEND;
 
-	return res;
+ 	return newsel;
 }
 
 /***********************************************************************
@@ -267,15 +515,27 @@ UINT WINAPI AllocDStoCSAlias( UINT sel )
 {
 	WORD newsel;
 	LDT_ENTRY entry;
+	WORD dataHandle;
 
 	FUNCTIONSTART;
 
-//    if (!ldt_is_valid( sel )) return 0;
+	/* Проверяем, что селектор данных корректен и принадлежит глобальной куче */
+	dataHandle = GlobalHandle(sel);
+	if (!dataHandle)
+		return 0;
+
+	/* Если блок не FIXED и не заблокирован, фиксируем его */
+	if (!(dataHandle & 1) && (LOBYTE(GlobalFlags(dataHandle)) == 0))
+	{
+		GlobalFixReal(dataHandle);
+	}
+
     newsel = AllocSelector( 0 );
 //    TRACE("(%04x): returning %04x\n", sel, newsel );
 	if (!newsel) return 0;
 	entry=ldt_make_entry((void *) GetSelectorBase(sel), GetSelectorLimit(sel), LDT_FLAGS_CODE );
 	DPMI_SetDescriptor(newsel, &entry);
+	SetSelectorArena(newsel, GetSelectorArena(sel));
 
 	FUNCTIONEND;
 
@@ -467,8 +727,69 @@ void InitSelectors()
 	__E000H=DPMI_SegmentToDescriptor(0xE000);
 	__F000H=DPMI_SegmentToDescriptor(0xF000);
 	__ROMBIOS=DPMI_SegmentToDescriptor(0xF000);
+	SetSelectorLimit(__0040H, 0x2FF);
+
+	/* Инициализация free-list */
+	{
+		WORD block = DPMI_AllocDesc(256);
+		WORD i;
+		LDT_ENTRY entry;
+
+		if (block)
+		{
+			for (i = 0; i < 256; i++)
+			{
+				WORD sel = block + i * __AHSHIFT;
+				if (DPMI_GetDescriptor(sel, &entry) == 0)
+				{
+					entry.LimitLow = FirstFreeSel;
+					DPMI_SetDescriptor(sel, &entry);
+				}
+				FirstFreeSel = sel;
+				CountFreeSel++;
+			}
+		}
+	}
 
 	FUNCTIONEND;
+}
+
+
+/***********************************************************************
+ *           InitBurgermaster
+ */
+BOOL InitBurgermaster(void)
+{
+    DWORD linear;
+    DWORD size;
+    WORD  totalPages;
+
+    TH_PGLOBALHEAP = DPMI_AllocDesc(1);
+    if (!TH_PGLOBALHEAP) return FALSE;
+
+    totalPages = DPMI_GetFreePages();
+    SelTableLen = (totalPages < 0x100) ? 16384 : 32768;
+
+    SelTableStart = 0x80 + 0x8000;
+    size = SelTableStart + SelTableLen;
+
+    if (!DPMI_AllocMem(size, &hBMDPMI, &linear))
+    {
+        DPMI_FreeDesc(TH_PGLOBALHEAP);
+        TH_PGLOBALHEAP = 0;
+        TH_HGLOBALHEAP = TH_PGLOBALHEAP;
+        return FALSE;
+    }
+
+    SetSelectorBase(TH_PGLOBALHEAP, linear);
+    SetSelectorLimit(TH_PGLOBALHEAP, size - 1);
+
+    /* В оригинале hGlobalHeap хранит селектор Burgermaster (PGlobalHeap) */
+    TH_HGLOBALHEAP = TH_PGLOBALHEAP;
+
+    memset(MAKELP(TH_PGLOBALHEAP, SelTableStart), 0, SelTableLen);
+
+    return TRUE;
 }
 
 /* ============================================================

@@ -372,18 +372,24 @@ extern WORD pascal TH_PGLOBALHEAP;
 extern WORD pascal TH_HGLOBALHEAP;
 extern char FAR * pascal szPgmName;
 
-extern pascal __AHSHIFT;
-extern pascal __AHINCR;
-extern pascal __0000H;
-extern pascal __0040H;
-extern pascal __A000H;
-extern pascal __B000H;
-extern pascal __B800H;
-extern pascal __C000H;
-extern pascal __D000H;
-extern pascal __E000H;
-extern pascal __F000H;
-extern pascal __ROMBIOS;
+extern pascal __WINFLAGS;
+#define WinFlags __WINFLAGS
+
+extern WORD pascal __AHSHIFT;
+extern WORD pascal __AHINCR;
+extern WORD pascal __0000H;
+extern WORD pascal __0040H;
+extern WORD pascal __A000H;
+extern WORD pascal __B000H;
+extern WORD pascal __B800H;
+extern WORD pascal __C000H;
+extern WORD pascal __D000H;
+extern WORD pascal __E000H;
+extern WORD pascal __F000H;
+extern WORD pascal __ROMBIOS;
+
+extern WORD pascal SelTableLen;
+extern WORD pascal SelTableStart;
 
 void memcpy(void far * s1, void far * s2, unsigned length);
 void far * memset (void far *start, int c, int len);
@@ -551,3 +557,5 @@ typedef struct tagLOCALARENA
 #define FUNCTIONSTART
 #define FUNCTIONEND
 #endif
+
+WORD WINAPI GlobalFixReal(HGLOBAL handle);
