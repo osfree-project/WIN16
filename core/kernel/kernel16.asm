@@ -419,21 +419,6 @@ GetProcAddress proc far pascal uses ds hInst:word, lpszProcName:far ptr byte
 GetProcAddress endp
 
 
-segments label word
-ife ?32BIT
-	dw eA000, 0A000h
-	dw eB000, 0B000h
-	dw eB800, 0B800h
-	dw e0000, 00000h
-	dw eF000, 0F000h
-	dw eROMBIOS, 0F000h
-	dw eC000, 0C000h
-	dw eD000, 0D000h
-	dw eE000, 0E000h
-endif
-SIZESEGS equ ($ - segments) / 4
-
-
 InitKernel_ proc public
 	@push_a
 	mov KernelNE.ne_cseg, 1
@@ -441,26 +426,6 @@ InitKernel_ proc public
 	mov KernelNE.ne_restab, KernelNames - KernelNE
 	mov KernelSeg.wSel, cs
 
-if SIZESEGS
-	mov si,offset segments
-	mov cx,SIZESEGS
-nextseg:
-	lodsw
-	push ax
-	lodsw
-	xchg bx,ax
-	@DPMI_Seg2Desc		;alloc rm selector
-	pop bx
-	jc @F
-	mov [bx].ENTRY.wOfs,ax
-@@:
-	loop nextseg
-endif
-
-	@DPMI_GetIncValue	   ;get AHINC value
-	jc @F
-	mov [__AHINCR],ax
-@@:
 
 if ?MEMFORKERNEL
 	xor bx,bx

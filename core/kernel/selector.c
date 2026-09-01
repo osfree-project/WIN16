@@ -40,6 +40,19 @@ DWORD hBMDPMI = 0;
 static WORD FirstFreeSel = 0;   /* первый свободный селектор */
 static WORD CountFreeSel = 0;   /* количество свободных селекторов */
 
+/**
+ * @brief Construct an LDT descriptor entry from a base address, limit and flags.
+ *
+ * Builds a 32-bit ring-3 segment descriptor (present, DPL=3, not system).
+ * If the limit is >= 0x100000 the granularity bit is set and the limit is
+ * scaled down to 4K units. The `Default_Big` bit is set when `LDT_FLAGS_32BIT`
+ * is present in `flags`.
+ *
+ * @param base    Linear base address of the segment.
+ * @param limit   Segment limit in bytes (or 4K pages if >= 0x100000).
+ * @param flags   Type flags (e.g. LDT_FLAGS_DATA, LDT_FLAGS_CODE, LDT_FLAGS_32BIT).
+ * @return        Initialised LDT_ENTRY structure.
+ */
 static LDT_ENTRY ldt_make_entry( const void *base, unsigned long limit, unsigned char flags )
 {
 	LDT_ENTRY entry;
@@ -65,8 +78,16 @@ static LDT_ENTRY ldt_make_entry( const void *base, unsigned long limit, unsigned
 }
 
 
-/***********************************************************************
- *           Free_Sel
+/**
+ * @brief Return a selector to the free pool or to DPMI.
+ *
+ * If the selector index is outside the local selector table, it is released
+ * directly with DPMI_FreeDesc(). Otherwise the selector is linked into the
+ * internal free list: the current `FirstFreeSel` value is stored in the
+ * descriptorТs LimitLow field, `FirstFreeSel` is updated to this selector,
+ * and `CountFreeSel` is incremented.
+ *
+ * @param sel   Selector to free.
  */
 static void Free_Sel(WORD sel)
 {
@@ -87,8 +108,20 @@ static void Free_Sel(WORD sel)
     }
 }
 
-/***********************************************************************
- *           Get_Sel
+/**
+ * @brief Allocate one or more consecutive selectors.
+ *
+ * For a single selector, first tries the internal free list; if empty, calls
+ * DPMI_AllocDesc(1). For `count > 1`, searches the free list for a contiguous
+ * run of `count` selectors, unlinks it, and returns the first selector. If no
+ * such run exists, falls back to DPMI_AllocDesc(count). When the free pool is
+ * low (fewer than 0x100 selectors) and the system is running in enhanced mode,
+ * an additional block of 0x100 selectors is allocated and added to the pool.
+ * Finally, if the returned selectors would exceed the local selector table,
+ * they are freed via DPMI and zero is returned.
+ *
+ * @param count   Number of consecutive selectors required.
+ * @return        First selector of the allocated block, or 0 on failure.
  */
 static WORD Get_Sel(WORD count)
 {
@@ -212,8 +245,16 @@ static WORD Get_Sel(WORD count)
 }
 
 
-/***********************************************************************
- *           SetSelectorArena
+/**
+ * @brief Store the arena offset for a selector in the selector table.
+ *
+ * Writes `arenaOffset` into the 32-bit slot of the global heapТs selector
+ * table that corresponds to `sel`. The table resides at `SelTableStart`
+ * inside the Burgermaster segment (`TH_PGLOBALHEAP`). Selectors outside the
+ * table bounds are ignored.
+ *
+ * @param sel          Selector whose arena offset is to be set.
+ * @param arenaOffset  Offset of the corresponding arena within the global heap.
  */
 void SetSelectorArena(WORD sel, DWORD arenaOffset)
 {
@@ -231,8 +272,14 @@ void SetSelectorArena(WORD sel, DWORD arenaOffset)
     table[index] = arenaOffset;
 }
 
-/***********************************************************************
- *           GetSelectorArena
+/**
+ * @brief Retrieve the arena offset stored for a selector.
+ *
+ * Reads the 32-bit value from the selector table. Returns 0 if the selector
+ * lies outside the table or if the table is not initialised.
+ *
+ * @param sel   Selector to query.
+ * @return      Arena offset, or 0 if unavailable.
  */
 DWORD GetSelectorArena(WORD sel)
 {
@@ -254,15 +301,15 @@ DWORD GetSelectorArena(WORD sel)
 /***********************************************************************
  *           AllocSelectorArray   (KERNEL.206)
  *
- * count    Ќеобходимое количество селекторов.
+ * @brief Allocate a block of consecutive selectors.
  *
- * Returns:
- * —електор первого дескриптора из таблицы последовательных дескрипторов сегментов.
+ * Allocates `count` adjacent selectors and initialises each one as a data
+ * segment with base 0, limit 1 (bytes), DPL=3, and present. The selectors
+ * are spaced by `__AHINCR` bytes as required by the Windows selector
+ * architecture. Each selectorТs arena entry is set to 0.
  *
- * ‘ункци€ избавл€ет вас от необходимости многократного вызова функции AllocSelector().
- * –ассто€ние между селекторами в таблице определ€етс€ документированной константой 
- * __AHINCR.  аждый селектор должен быть освобожден отдельным вызовом FreeSelector().
- *
+ * @param count   Number of selectors to allocate (must be > 0).
+ * @return        First selector of the array, or 0 on failure.
  */
 WORD WINAPI AllocSelectorArray(WORD count)
 {
@@ -288,17 +335,18 @@ WORD WINAPI AllocSelectorArray(WORD count)
 /***********************************************************************
  *           AllocSelector   (KERNEL.175)
  *
- * ѕаpаметpы:
- * 
- * Sel:  опиpуемый селектоp.
+ * @brief Allocate a new selector, optionally copying an existing one.
  *
- * ¬озвpащаемое значение:
+ * If `sel` is 0, allocates one uninitialised selector (or a block large enough
+ * to cover the default limit) and returns it. Otherwise determines how many
+ * 64K УtilesФ are needed to represent the limit of `sel`
+ * (`(limit >> 16) + 1`), allocates that many consecutive selectors, and copies
+ * the descriptor of each tile. For each tile the base address is adjusted to
+ * `base + i*0x10000`, so that the whole range is covered by consecutive
+ * selectors. Arena entries are reset to 0.
  *
- * ¬ случае успешного завеpшени€ - селектоp; в пpотивном случае, 0.
- *
- * –аспpедел€ет новый селектоp, котоpый €вл€етс€ точной копией sel. ≈сли
- * sel имеет значение NULL, то выдел€ет пам€ть под новый, неинициализиpованный селектоp.
- *
+ * @param sel   Selector to copy, or 0 for a new uninitialised selector.
+ * @return      New selector (or first of a block), or 0 on failure.
  */
 UINT WINAPI AllocSelector(UINT sel)
 {
@@ -335,12 +383,17 @@ UINT WINAPI AllocSelector(UINT sel)
 /***********************************************************************
  *           FreeSelector   (KERNEL.176)
  *
- * sel должен содержать селектор, соответствующий 
- * удал€емому дескриптору. ≈сли функци€ выполнилась без ошибок, 
- * она возвращает нулевое значение. ¬ случае ошибки возвращаетс€
- * значение параметра sel.
+ * @brief Free a selector (or a block of tiled selectors).
  *
-*/
+ * Determines how many consecutive selectors were allocated together. If the
+ * descriptor is present, the number is derived from the limit
+ * (`(limit >> 16) + 1`). If the segment is not present (discarded), the
+ * count is stored in the low byte of the base field (shifted left by 8).
+ * Frees all involved selectors using `Free_Sel` and clears their arena slots.
+ *
+ * @param sel   First selector of the block to free.
+ * @return      0 on success, or `sel` if an error occurred (e.g. invalid selector).
+ */
 UINT WINAPI FreeSelector( UINT sel )
 {
 	WORD count = 1;
@@ -388,6 +441,11 @@ UINT WINAPI FreeSelector( UINT sel )
 
 /***********************************************************************
  *             GetSelectorBase   (KERNEL.186)
+ *
+ * @brief Return the 32-bit linear base address of a selector.
+ *
+ * @param sel   Selector to query.
+ * @return      Base address, or 0 if the selector is invalid.
  */
 DWORD WINAPI GetSelectorBase(UINT sel)
 {
@@ -404,6 +462,12 @@ DWORD WINAPI GetSelectorBase(UINT sel)
 
 /***********************************************************************
  *             SetSelectorBase   (KERNEL.187)
+ *
+ * @brief Set the 32-bit linear base address of a selector.
+ *
+ * @param sel    Selector to modify.
+ * @param base   New base address.
+ * @return       The selector on success, or 0 if the selector is invalid.
  */
 UINT WINAPI SetSelectorBase( UINT sel, DWORD base )
 {
@@ -418,6 +482,17 @@ UINT WINAPI SetSelectorBase( UINT sel, DWORD base )
 
 /***********************************************************************
  *           GetSelectorLimit   (KERNEL.188)
+ *
+ * @brief Return the raw 20-bit limit field of a selector.
+ *
+ * Reads the descriptor and combines the high and low limit parts. Note that
+ * this function does **not** apply the granularity bit Ц the returned value
+ * is always the raw 20-bit limit field (0 Ц 0xFFFFF). For a limit set with
+ * granularity enabled (>= 1 MB), the actual byte limit would be
+ * `(raw_limit + 1) * 4096 - 1`.
+ *
+ * @param sel   Selector to query.
+ * @return      Raw limit field, or 0 if the selector is invalid.
  */
 DWORD WINAPI GetSelectorLimit( UINT sel )
 {
@@ -435,6 +510,15 @@ DWORD WINAPI GetSelectorLimit( UINT sel )
 
 /***********************************************************************
  *           SetSelectorLimit   (KERNEL.189)
+ *
+ * @brief Set the limit of a selector.
+ *
+ * Calls DPMI to update the descriptorТs limit. The granularity is automatically
+ * adjusted by DPMI if necessary.
+ *
+ * @param sel     Selector to modify.
+ * @param limit   New limit in bytes.
+ * @return        The selector on success, or 0 if the selector is invalid.
  */
 UINT WINAPI SetSelectorLimit( UINT sel, DWORD limit )
 {
@@ -450,6 +534,19 @@ UINT WINAPI SetSelectorLimit( UINT sel, DWORD limit )
 
 /***********************************************************************
  *           SelectorAccessRights   (KERNEL.196)
+ *
+ * @brief Read or modify the access rights (type) byte(s) of a selector.
+ *
+ * When `op == 0`, returns the combined access rights word (bits 0Ц7 and the
+ * high nibble of bits 8Ц15 from the descriptorТs Flags1/Flags2 fields).
+ * When `op != 0`, the access rights are set from `val`: the low byte replaces
+ * Flags1 (with the lower 4 bits forced to 0xF0), and the high nibble of
+ * `val` is merged into the upper nibble of Flags2.
+ *
+ * @param sel   Selector to inspect or modify.
+ * @param op    Operation: 0 = get, non-zero = set.
+ * @param val   New access rights (used only when `op != 0`).
+ * @return      Current access rights when `op == 0`; otherwise 0.
  */
 WORD WINAPI SelectorAccessRights( WORD sel, WORD op, WORD val )
 {
@@ -476,6 +573,15 @@ WORD WINAPI SelectorAccessRights( WORD sel, WORD op, WORD val )
 /***********************************************************************
  *           AllocCStoDSAlias   (KERNEL.170)
  *           AllocAlias         (KERNEL.172)
+ *
+ * @brief Create a data-segment alias for a code selector.
+ *
+ * Allocates a new selector from the internal pool, then initialises it as a
+ * data segment with the same base and limit as the source code selector.
+ * The arena entry of the new selector is set to 0.
+ *
+ * @param sel   Code selector for which a data alias is required.
+ * @return      New data alias selector, or 0 on failure.
  */
 WORD WINAPI AllocCStoDSAlias(WORD sel)
 {
@@ -510,6 +616,16 @@ WORD WINAPI AllocCStoDSAlias(WORD sel)
 
 /***********************************************************************
  *           AllocDStoCSAlias   (KERNEL.171)
+ *
+ * @brief Create a code-segment alias for a data selector.
+ *
+ * Verifies that `sel` refers to a block in the global heap. If the block is
+ * movable and not locked, it is fixed first. Then a new selector is allocated
+ * and set up as a code segment with the same base and limit as the original
+ * data selector. The arena pointer is copied from the source selector.
+ *
+ * @param sel   Data selector for which a code alias is required.
+ * @return      New code alias selector, or 0 on failure.
  */
 UINT WINAPI AllocDStoCSAlias( UINT sel )
 {
@@ -544,6 +660,16 @@ UINT WINAPI AllocDStoCSAlias( UINT sel )
 
 /***********************************************************************
  *           PrestoChangoSelector   (KERNEL.177)
+ *
+ * @brief Toggle the code/data bit of a selector and copy the result.
+ *
+ * Reads the descriptor of `selSrc`, flips the executable bit (bit 3 of the
+ * type field), and writes the modified descriptor to `selDst`. The base,
+ * limit, and other attributes remain unchanged.
+ *
+ * @param selSrc   Source selector whose type is to be toggled.
+ * @param selDst   Destination selector that receives the modified descriptor.
+ * @return         `selDst` on success, or 0 if `selSrc` is invalid.
  */
 UINT WINAPI PrestoChangoSelector( UINT selSrc, UINT selDst )
 {
@@ -567,6 +693,15 @@ UINT WINAPI PrestoChangoSelector( UINT selSrc, UINT selDst )
 
 /***********************************************************************
  *           IsBadCodePtr   (KERNEL.336)
+ *
+ * @brief Determine whether a far pointer is a valid code pointer.
+ *
+ * Checks that the selector is present, describes a code segment (ignoring
+ * conforming, read-only, and accessed bits), and that the offset lies within
+ * the segment limit.
+ *
+ * @param ptr   Far pointer to a code location.
+ * @return      TRUE if the pointer is bad, FALSE if it is valid.
  */
 BOOL WINAPI IsBadCodePtr( FARPROC ptr )
 {
@@ -586,6 +721,18 @@ BOOL WINAPI IsBadCodePtr( FARPROC ptr )
 
 /***********************************************************************
  *           IsBadStringPtr   (KERNEL.337)
+ *
+ * @brief Determine whether a far pointer points to a valid string of at least `size` bytes.
+ *
+ * First checks that the selector is valid and describes a readable segment
+ * (data or readable code). Then, if the actual length of the string (via
+ * `lstrlen`) is less than `size`, the check is performed over the string
+ * length plus one (for the terminating null). Finally verifies that
+ * `offset + size - 1` does not exceed the segment limit.
+ *
+ * @param ptr    Far pointer to a null-terminated string.
+ * @param size   Minimum number of bytes to validate.
+ * @return       TRUE if the pointer is bad, FALSE otherwise.
  */
 BOOL WINAPI IsBadStringPtr( const void far * ptr, UINT size )
 {
@@ -607,6 +754,16 @@ BOOL WINAPI IsBadStringPtr( const void far * ptr, UINT size )
 
 /***********************************************************************
  *           IsBadHugeReadPtr   (KERNEL.346)
+ *
+ * @brief Determine whether a huge pointer can be read for `size` bytes.
+ *
+ * Checks the selectorТs type (data or readable code, not system) and verifies
+ * that the address range from the pointerТs offset to `offset + size - 1`
+ * falls within the segment limit.
+ *
+ * @param ptr    Huge pointer to check.
+ * @param size   Number of bytes that must be readable.
+ * @return       TRUE if the pointer is bad, FALSE otherwise.
  */
 BOOL WINAPI IsBadHugeReadPtr( const void huge * ptr, DWORD size )
 {
@@ -627,6 +784,16 @@ BOOL WINAPI IsBadHugeReadPtr( const void huge * ptr, DWORD size )
 
 /***********************************************************************
  *           IsBadHugeWritePtr   (KERNEL.347)
+ *
+ * @brief Determine whether a huge pointer can be written for `size` bytes.
+ *
+ * Checks that the selector describes a writable data segment (ignoring
+ * expand-down and accessed bits) and that the range up to `offset + size - 1`
+ * is within the segment limit.
+ *
+ * @param ptr    Huge pointer to check.
+ * @param size   Number of bytes that must be writable.
+ * @return       TRUE if the pointer is bad, FALSE otherwise.
  */
 BOOL WINAPI IsBadHugeWritePtr( void huge * ptr, DWORD size )
 {
@@ -645,6 +812,12 @@ BOOL WINAPI IsBadHugeWritePtr( void huge * ptr, DWORD size )
 
 /***********************************************************************
  *           IsBadReadPtr   (KERNEL.334)
+ *
+ * @brief Wrapper around IsBadHugeReadPtr for far pointers.
+ *
+ * @param ptr    Far pointer to check.
+ * @param size   Number of bytes that must be readable.
+ * @return       TRUE if the pointer is bad, FALSE otherwise.
  */
 BOOL WINAPI IsBadReadPtr(const void far * ptr, UINT size)
 {
@@ -662,6 +835,12 @@ BOOL WINAPI IsBadReadPtr(const void far * ptr, UINT size)
 
 /***********************************************************************
  *           IsBadWritePtr   (KERNEL.335)
+ *
+ * @brief Wrapper around IsBadHugeWritePtr for far pointers.
+ *
+ * @param ptr    Far pointer to check.
+ * @param size   Number of bytes that must be writable.
+ * @return       TRUE if the pointer is bad, FALSE otherwise.
  */
 BOOL WINAPI IsBadWritePtr(void far * ptr, UINT size)
 {
@@ -678,6 +857,15 @@ BOOL WINAPI IsBadWritePtr(void far * ptr, UINT size)
 
 /***********************************************************************
  *           IsBadFlatReadWritePtr   (KERNEL.627)
+ *
+ * @brief Check read or write access for a flat pointer.
+ *
+ * Depending on `bWrite`, calls either IsBadHugeWritePtr or IsBadHugeReadPtr.
+ *
+ * @param ptr     Flat pointer to check.
+ * @param size    Number of bytes to validate.
+ * @param bWrite  If TRUE, check for write access; otherwise read access.
+ * @return        TRUE if the pointer is bad, FALSE otherwise.
  */
 // @todo Not exported in this version
 BOOL WINAPI IsBadFlatReadWritePtr( void far * ptr, DWORD size, BOOL bWrite )
@@ -695,6 +883,14 @@ BOOL WINAPI IsBadFlatReadWritePtr( void far * ptr, DWORD size, BOOL bWrite )
 
 /***********************************************************************
  *           LongPtrAdd   (KERNEL.180)
+ *
+ * @brief Add an offset to the base address of a selector in a long pointer.
+ *
+ * Extracts the selector from the low word of `dwLongPtr`, retrieves its
+ * current base, adds `dwAdd`, and writes the new base back to the selector.
+ *
+ * @param dwLongPtr   Long pointer (selector:offset). The offset part is ignored.
+ * @param dwAdd       Value to add to the selectorТs base address.
  */
 void WINAPI LongPtrAdd(DWORD dwLongPtr, DWORD dwAdd)
 {
@@ -707,11 +903,23 @@ void WINAPI LongPtrAdd(DWORD dwLongPtr, DWORD dwAdd)
 	FUNCTIONEND;
 }
 
+/**
+ * @brief Initialise selector-related global variables and the free selector pool.
+ *
+ * Reads the DPMI selector increment and computes the shift value (`__AHSHIFT`).
+ * Creates descriptors for the standard BIOS and video segments (0x0000,
+ * 0x0040, 0xA000, 0xB000, 0xB800, 0xC000, 0xD000, 0xE000, 0xF000) and stores
+ * them in the corresponding global variables (`__0000H`, etc.). Sets the limit
+ * of the `__0040H` selector to 0x2FF (BIOS data area). Finally, allocates a
+ * block of 256 selectors from DPMI and adds them to the internal free list.
+ */
 void InitSelectors()
 {
 	WORD ahincr;
 
 	FUNCTIONSTART;
+
+	//@ todo InitKernel_ in kernel16.asm already do similar initialixation
 
 	__AHINCR=DPMI_GetIncrement();;
         ahincr=__AHINCR;
@@ -756,9 +964,19 @@ void InitSelectors()
 
 
 /***********************************************************************
- *           InitBurgermaster
+ *           InitBurgerMaster
+ *
+ * @brief Allocate and initialise the Burgermaster (global heap) segment.
+ *
+ * Creates a selector (`TH_PGLOBALHEAP`), determines the size of the selector
+ * table based on the number of free pages (16 KB for <256 pages, 32 KB
+ * otherwise), and allocates memory for the heap and selector table via DPMI.
+ * The heap selectorТs base and limit are set to cover the allocated memory,
+ * and the selector table area is zeroed.
+ *
+ * @return   TRUE on success, FALSE if allocation fails.
  */
-BOOL InitBurgermaster(void)
+BOOL InitBurgerMaster(void)
 {
     DWORD linear;
     DWORD size;

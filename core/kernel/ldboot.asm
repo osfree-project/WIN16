@@ -185,7 +185,7 @@ extern pascal Copyright: far
 
 ife ?REAL
 extern SwitchToPMode_: near
-extern InitBurgermaster_: near
+extern InitBurgerMaster_: near
 extern InitSelectors_: near
 endif
 
@@ -520,7 +520,10 @@ endif	; not ?REAL
 	mov bEnvFlgs, 0
 
 ife ?REAL
-	call InitProtMode	;init vectors, alloc internal selectors
+	call InitProtMode		; Init vectors, alloc internal selectors
+        call InitBurgerMaster_		; Allocate and init BurgerMaster
+        call InitSelectors_		; Init selectors functions and variables
+;	call InitGlobal_		; Init global heap manager
 	jc main_err6		;--->
 endif	; not ?REAL
 
@@ -7233,11 +7236,6 @@ endif
 InitProtMode proc
 
 	@trace_s <"enter initialize PM",lf>
-
-ife ?REAL
-        call InitBurgermaster_
-        call InitSelectors_
-endif
 
 	@DPMI_GetPMIntVec 21h				;get int 21 PM vector
 
