@@ -1,0 +1,27 @@
+version = 1
+
+[[annotations]]
+path = [
+    "color0.bmp",
+    "color1.bmp",
+    "color2.bmp",
+    "color3.bmp",
+    "color4.bmp",
+    "color5.bmp",
+    "color6.bmp",
+    "color7.bmp",
+    "color8.bmp",
+    "color9.bmp",
+    "color10.bmp",
+    "color11.bmp",
+    "color12.bmp",
+    "color13.bmp",
+    "color14.bmp",
+    "color15.bmp",
+    "othello.hpj",
+    "othello.rtf",
+    "README.MD",
+    "reversi.png"
+]
+SPDX-License-Identifier = "CC0-1.0"
+SPDX-FileCopyrightText = "Copyright (C) 2026 osFree Project"
