@@ -1,9 +1,12 @@
 #
-# Makefile for common shared libs
+# Makefile for setupinf lib
 #
 
-TARGET_CLASS = LIBRARY
+DESCRIPTION     = SETUP.INF parser
+TARGET_CLASS    = LIBRARY
 TARGET_SUBCLASS = STATIC
+LICENSE         = BSD-3-clause
+
 ADD_COPT = -I=$(MYDIR)..$(SEP)..$(SEP)include
 
 !include $(%ROOT)tools/mk/build.mk

@@ -3,7 +3,9 @@
 # (c) osFree project
 #
 
-TARGET_CLASS = LIBRARY
+DESCRIPTION     = Cards support library
+TARGET_CLASS    = LIBRARY
 TARGET_SUBCLASS = STATIC
+LICENSE         = LicenseRef-PD-2
 
 !include $(%ROOT)tools/mk/build.mk

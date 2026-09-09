@@ -1,9 +1,11 @@
 #
-# Makefile for common shared libs
+# Makefile for NLS API lib
 #
 
-TARGET_CLASS = LIBRARY
+DESCRIPTION     = NLS API library
+TARGET_CLASS    = LIBRARY
 TARGET_SUBCLASS = STATIC
+LICENSE         = BSD-3-clause
 ADD_COPT = -I=$(MYDIR)..$(SEP)..$(SEP)include -DSTATIC
 LIBS = setupinf
 
