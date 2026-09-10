@@ -1,5 +1,6 @@
 //
 //    SPDX-License-Identifier: LicenseRef-PD-2
+//    SPDX-FileCopyrightText: J Brown 2001
 //
 #ifndef GLOBALS_INCLUDED
 #define GLOBALS_INCLUDED

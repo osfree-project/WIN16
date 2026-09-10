@@ -1,6 +1,6 @@
 //
 //    SPDX-License-Identifier: LicenseRef-PD-2
-//
+//    SPDX-FileCopyrightText: J Brown 2001
 //
 //    Colour support
 //

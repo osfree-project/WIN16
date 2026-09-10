@@ -1,5 +1,6 @@
 //
 //    SPDX-License-Identifier: LicenseRef-PD-2
+//    SPDX-FileCopyrightText: J Brown 2001
 //
 #ifndef CARDREGION_INCLUDED
 #define CARDREGION_INCLUDED

@@ -1,5 +1,6 @@
 //
 //    SPDX-License-Identifier: LicenseRef-PD-2
+//    SPDX-FileCopyrightText: J Brown 2001
 //
 #ifndef CARDLIB_INCLUDED
 #define CARDLIB_INCLUDED
