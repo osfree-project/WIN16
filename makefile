@@ -6,4 +6,3 @@
 DIRS = shared core dlls dosx drivers applications win.cnf samples test
 
 !include $(%ROOT)tools/mk/build.mk
-
