@@ -1,4 +1,6 @@
 #! /bin/sh
+# SPDX-FileCopyrightText: (C) 2026 osFree Project
+# SPDX-License-Identifier: LGPL-2.1-or-later
 #
 
 export ROOT=.
