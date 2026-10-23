@@ -1,4 +1,6 @@
 @echo off
+@REM SPDX-FileCopyrightText: (C) 2026 osFree Project
+@REM SPDX-License-Identifier: LGPL-2.1-or-later
 rem set VERBOSE=yes
 set root=.
 :loop
