@@ -25,6 +25,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+/*! @file Environment.c
+    @brief DOS environment lookup and %KEYWORD% substitution.
+*/
+
 #include "Shell.h"
 
 /*************************************************************************
@@ -32,6 +36,16 @@
  *
  * Returns a pointer into the DOS environment... Ugh.
  */
+
+/*! @brief Return a pointer into the DOS environment for the given key.
+
+    @param[in] lpEnv Environment block (double-NUL terminated).
+    @param[in] entry Variable name to look for.
+
+    @return Pointer past '=' (or past the name for empty entries), or NULL.
+
+    @retval NULL Variable not found.
+*/
 static LPSTR SHELL_FindString(LPSTR lpEnv, LPCSTR entry)
 { UINT l;
 
@@ -51,6 +65,14 @@ static LPSTR SHELL_FindString(LPSTR lpEnv, LPCSTR entry)
 
 /**********************************************************************/
 
+/*! @brief Return a pointer into the DOS environment for the given key.
+
+    @param[in] str Variable name to look up.
+
+    @return Pointer to the value string, or NULL if not found.
+
+    @retval 0 Variable not found.
+*/
 LPSTR WINAPI FindEnvironmentString(LPCSTR str)
 { LPSTR  spEnv;
   LPSTR lpEnv,lpString;
@@ -81,6 +103,21 @@ LPSTR WINAPI FindEnvironmentString(LPCSTR str)
  * RETURNS
  *  str length in the LOWORD and 1 in HIWORD if subst was successful.
  */
+
+/*! @brief Substitute %KEYWORD% tokens in a string from the DOS environment.
+
+    Replaces %KEYWORD% in @p str with the value of the variable KEYWORD
+    from the "DOS" environment. If the variable is not found, the
+    %KEYWORD% token is left intact. If the buffer is too small, @p str is
+    not modified.
+
+    @param[in,out] str    '\0'-terminated string with %keyword% tokens;
+                          replaced in-place on success.
+    @param[in]     length Size of @p str in bytes.
+
+    @return LOWORD is the resulting length, HIWORD is 1 on success,
+            0 on failure.
+*/
 DWORD WINAPI DoEnvironmentSubst(LPSTR str,WORD length)
 {
   LPSTR   lpEnv = GetDOSEnvironment();
