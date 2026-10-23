@@ -56,11 +56,11 @@ static unsigned int hash_sum_toupper(const char *s, unsigned int buckets)
     return h % buckets;
 }
 
-/*! @brief Compute the legacy XOR-based hash (current implementation).
+/*! @brief Compute the legacy XOR-based hash.
 
-    Sums nothing; XORs `toupper(c) + i` for each character position i,
-    then reduces modulo @p buckets. This is the algorithm currently used
-    by atomex.c and is kept here only for comparison.
+    XORs `toupper(c) + i` for each character position i, then reduces
+    modulo @p buckets. This is the algorithm currently used by
+    atomex.c; kept here only for comparison.
 
     @param[in] s       Null-terminated string to hash.
     @param[in] buckets Number of hash buckets.
@@ -79,7 +79,7 @@ static unsigned int hash_xor(const char *s, unsigned int buckets)
     return h % buckets;
 }
 
-/*! @brief Print both hashes for a set of strings and self-check.
+/*! @brief Print both hashes for sample strings and self-check.
 
     Computes the sum(toupper) and XOR hashes for several sample strings
     and prints them side by side. Then verifies that ".classes" maps to
