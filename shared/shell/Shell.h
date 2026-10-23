@@ -93,10 +93,8 @@ extern GLOBALS Globals;
 #define IDS_NOCOMMDLG		226
 #define IDS_REGCLOSE		227
 
-/* Atom table */
-#define DEFAULT_ATOMTABLE_SIZE    37
+/* String length limit for REG.DAT text entries */
 #define MAX_ATOM_LEN              255
-#define MAXINTATOM          0xc000
 
 void lmemcpy(void FAR * s1, void FAR * s2, unsigned length);
 int lstrnicmp(char FAR *s1, const char FAR *s2, int n);
@@ -123,34 +121,10 @@ typedef struct {
 #define GlobalAllocPtr(flags, cb) \
   (GlobalLock(GlobalAlloc((flags), (cb))))
 
-typedef struct
-{
-	WORD	size;
-	HANDLE	entries[DEFAULT_ATOMTABLE_SIZE];
-} ATOMTABLE;
-typedef ATOMTABLE FAR *LPATOMTABLE;
-
-
-ATOM WINAPI DeleteAtomEx(LPATOMTABLE atomtable, ATOM atom );
-ATOM WINAPI FindAtomEx(LPATOMTABLE atomtable, LPCSTR str );
-UINT WINAPI GetAtomNameEx(LPATOMTABLE atomtable, ATOM atom, LPSTR buffer, int count );
-ATOM WINAPI AddAtomEx(LPATOMTABLE atomtable, LPCSTR str );
-
-#define ATOMTOHANDLE(atom)        ((HANDLE)(atom) << 2)
-#define HANDLETOATOM(handle)      ((ATOM)(0xc000 | ((handle) >> 2)))
-
 extern  unsigned short          GetDS( void );
 #pragma aux GetDS               = \
         "mov    ax,ds"          \
         value                   [ax];
-
-typedef struct
-{
-	HANDLE	next;
-	WORD	refCount;
-	BYTE	length;
-	char	str[1];
-} ATOMENTRY, FAR * LPATOMENTRY;
 
 #ifndef	WM_DROPOBJECT
 #define	WM_DROPOBJECT		0x022a
@@ -381,20 +355,6 @@ struct cursoricon_desc
 #pragma pack(pop)
 
 
-typedef struct keyKEYSTRUCT {
-	HKEY hParentKey;
-	ATOM atomKey;
-	BOOL fOpen;
-	HKEY hSubKey;
-	HKEY hNext;
-	LPSTR lpszValue;
-} KEYSTRUCT;
-
-typedef KEYSTRUCT FAR * LPKEYSTRUCT;
-
-#define IFK_FIND	0
-#define IFK_CREATE	1
-
 extern char szWindows[20];
 extern char szPrograms[20];
 extern char szProgramsValue[20];
@@ -415,11 +375,7 @@ extern UINT	uMsgShellActivate;
 
 extern HDC display_dc;
 
-extern ATOMTABLE AtomTable;
-
 extern BOOL fRegInitialized;
-
-extern KEYSTRUCT RootKey;
 
 /* REG.DAT structures */
 
@@ -430,16 +386,29 @@ extern KEYSTRUCT RootKey;
 #pragma pack(push, 1)
 
 typedef struct tagDATHEADER {
-	char szSignature[8];	//0x0000  8 Byte  ASCII-Text: "SHCC3.10"
-	DWORD unk1;		//0x0008  DWord  ?
-	DWORD unk2;		//0x000C  DWord  ? (always equal the D-Word at 0x0008) Note: May be first is header size, second is offset of navblock
-	DWORD dwEntries;	//0x0010  DWord  Number of entries in the navigation-block
-	DWORD offsetDataBlock;	//0x0014  DWord  Offset of the data-block
-	DWORD sizeDataBlock;	//0x0018  DWord  Size of the data-block
-	WORD  hashsize;		//0x00??  Word   Hash size
-	WORD  freeidx;		//0x00??  Word   Free index
+	char szSignature[8];	//0x0000  8 Byte   ASCII-Text: "SHCC3.10"
+	DWORD unk1;		//0x0008  DWord   Offset of hash table (??) = 0x20; see note.txt:
+				//                "not known which offset for which table;
+				//                 one of offset can be just size of header"
+	DWORD unk2;		//0x000C  DWord   Offset of index table (??) = 0x20; always equals unk1
+	DWORD dwEntries;	//0x0010  DWord   Number of 8-byte entries in the index table
+	DWORD offsetDataBlock;	//0x0014  DWord   Offset of the text part in the file
+	DWORD sizeDataBlock;	//0x0018  DWord   Byte size of the text part
+	WORD  hashsize;		//0x001C  Word    Hash size (number of buckets)
+	WORD  freeidx;		//0x001E  Word    Free index (first free entry)
 } DATHEADER;
 typedef DATHEADER FAR * LPDATHEADER;
+
+/* The entry table (tabent[]) consists of 8-byte records. Their
+ * interpretation depends on the index:
+ *   tab[0]            - root record; second word holds the root index
+ *   tab[1..hashsize]  - hash buckets; only the first word is used
+ *                       (chain head of a circular list); the other
+ *                       three words are always zero
+ *   tab[hashsize+1..] - tree records: either DATNAVIGATION (dirent)
+ *                       or DATTEXT (keyent/valent), distinguished
+ *                       by context
+ * See note.txt for details. */
 
 typedef struct tagDATNAVIGATION {
 	WORD	Next;	//0x00    Word    Next Key (same level)

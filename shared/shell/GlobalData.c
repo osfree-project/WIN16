@@ -62,18 +62,8 @@ UINT	uMsgShellActivate = 0;
 /*! @brief Cached display device context. */
 HDC display_dc;
 
-/*! @brief Global atom table used by AddAtomEx/FindAtomEx.
-
-    Pre-initialised with DEFAULT_ATOMTABLE_SIZE buckets so that the first
-    AddAtomEx() call does not divide by zero.
-*/
-ATOMTABLE AtomTable = { DEFAULT_ATOMTABLE_SIZE, { 0 } };
-
 /*! @brief TRUE once the registry has been initialised. */
 BOOL fRegInitialized = FALSE;
-
-/*! @brief Root key of the in-memory registry. */
-KEYSTRUCT RootKey;
 
 /*! @brief Text of the OTHERWINDOWCREATED system message. */
 const char lpstrMsgWndCreated[] = "OTHERWINDOWCREATED";

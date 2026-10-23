@@ -26,195 +26,675 @@
  */
 
 /*! @file Registry.c
-    @brief Windows 3.1 registry (in-memory tree, setup.reg loader).
+    @brief Windows 3.1 registry backed directly by REG.DAT structures.
 
-    @todo This module uses its own global atom table. See:
-          https://devblogs.microsoft.com/oldnewthing/20080117-00/?p=23783
-          https://devblogs.microsoft.com/oldnewthing/20120521-00/?p=7573
-
-    @todo Registry is in-memory only. See note.txt for the REG.DAT format.
+    Keys and strings live in Globals.EntryTable (DATNAVIGATION and
+    DATTEXT records) and Globals.StringTable (text block). There is no
+    runtime KEYSTRUCT tree: an HKEY is the index of a dirent in the
+    entry table. HKEY_CLASSES_ROOT is represented by 0 or 1, exactly as
+    in Win16; both values are accepted interchangeably.
 */
 
 #include "Shell.h"
 
-/*! @brief Find (and optionally create) a key by its backslash-separated path.
+/*! @def IFK_FIND
+    @brief Path resolution mode: only look up existing keys. */
+#define IFK_FIND   0
+
+/*! @def IFK_CREATE
+    @brief Path resolution mode: create missing keys. */
+#define IFK_CREATE 1
+
+/*! @def REG_TEXT_NUL
+    @brief Number of bytes to reserve after each string in the text block. */
+#define REG_TEXT_NUL 1
+
+/* ------------------------------------------------------------------ */
+/* Forward declarations                                                */
+/* ------------------------------------------------------------------ */
+
+/*! @brief Allocate a new dirent and attach it to a parent.
 
     Defined below.
 
-    @param[in] lpKeyStruct Starting key.
-    @param[in] lpszSubKey  Path of subkeys, or NULL/empty for @p lpKeyStruct.
-    @param[in] wFlag       IFK_FIND (no create) or IFK_CREATE (create missing).
+    @param[in] parentHkey Parent key (0/1 for root, or dirent index).
+    @param[in] nameAtom   DATTEXT index for the new key's name.
 
-    @return The target key, or NULL if not found and @p wFlag is IFK_FIND.
-
-    @retval NULL The key was not found.
+    @return New dirent's HKEY, or 0 on failure.
 */
-static LPKEYSTRUCT InternalFindKey(LPKEYSTRUCT,LPCSTR,WORD);
+static HKEY InternalCreateKey(HKEY parentHkey, ATOM nameAtom);
 
-/*! @brief Allocate a new key and attach it as the last child of @p lpKeyStruct.
+/* ------------------------------------------------------------------ */
+/* Lock helpers                                                        */
+/* ------------------------------------------------------------------ */
 
-    Defined below.
+/*! @brief Lock the registry header.
 
-    @param[in] lpKeyStruct Parent key.
-    @param[in] atomSubKey  Atom for the new key's name.
-
-    @return Pointer to the newly created KEYSTRUCT.
+    @return Pointer to DATHEADER, or NULL on failure.
 */
-static LPKEYSTRUCT InternalCreateKey(LPKEYSTRUCT,ATOM);
+static LPDATHEADER RegLockHdr(void)
+{
+    return (LPDATHEADER)GlobalLock(Globals.Registry);
+}
 
-/******************************************************************************/
+/*! @brief Unlock the registry header. */
+static void RegUnlockHdr(void)
+{
+    GlobalUnlock(Globals.Registry);
+}
 
-/*! @brief Read setup.reg and populate the in-memory registry.
+/*! @brief Lock the entry table.
 
-    Parses HKEY_CLASSES_ROOT\\<path> = <value> lines from setup.reg in
-    the Windows directory (or the current directory if the former is
-    unavailable) and creates the corresponding keys.
+    @return Pointer to the entry table, or NULL on failure.
 */
-static void ReadSetupReg()
+static LPDATNAVIGATION RegLockTab(void)
+{
+    return (LPDATNAVIGATION)GlobalLock(Globals.EntryTable);
+}
+
+/*! @brief Unlock the entry table. */
+static void RegUnlockTab(void)
+{
+    GlobalUnlock(Globals.EntryTable);
+}
+
+/*! @brief Lock the text block.
+
+    @return Pointer to the text block, or NULL on failure.
+*/
+static LPSTR RegLockText(void)
+{
+    return (LPSTR)GlobalLock(Globals.StringTable);
+}
+
+/*! @brief Unlock the text block. */
+static void RegUnlockText(void)
+{
+    GlobalUnlock(Globals.StringTable);
+}
+
+/* ------------------------------------------------------------------ */
+/* HKEY helpers                                                        */
+/* ------------------------------------------------------------------ */
+
+/*! @brief Check whether @p hkey denotes HKEY_CLASSES_ROOT.
+
+    In Win16, 0 and 1 both identify HKEY_CLASSES_ROOT. This helper
+    accepts both spellings.
+
+    @param[in] hkey Key handle to test.
+
+    @return Non-zero if @p hkey is HKEY_CLASSES_ROOT, 0 otherwise.
+*/
+static int IsRootKey(HKEY hkey)
+{
+    return (hkey == 0 || hkey == (HKEY)1);
+}
+
+/*! @brief Return the dirent index of the root key.
+
+    The root dirent is stored in tab[0].Sub. Returns 0 if the root
+    dirent is not yet created.
+
+    @param[in] tab Locked entry table.
+
+    @return Root dirent index, or 0 if absent.
+*/
+static WORD GetRootDirent(LPDATNAVIGATION tab)
+{
+    return tab[0].Sub;
+}
+
+/* ------------------------------------------------------------------ */
+/* Slot management                                                     */
+/* ------------------------------------------------------------------ */
+
+/*! @brief Allocate a slot in the entry table.
+
+    @return Index of the new slot, or 0 on failure.
+
+    @retval 0 Out of memory or GlobalReAlloc failed.
+*/
+static WORD RegAllocSlot(void)
+{
+    LPDATHEADER hdr;
+    LPDATNAVIGATION tab;
+    WORD idx;
+    DWORD newDwEntries;
+
+    hdr = RegLockHdr();
+    if (!hdr) return 0;
+
+    if (hdr->freeidx != 0 && hdr->freeidx != 0xFFFF) {
+        idx = hdr->freeidx;
+        tab = RegLockTab();
+        if (!tab) { RegUnlockHdr(); return 0; }
+        hdr->freeidx = tab[idx].Next;
+        RegUnlockTab();
+        RegUnlockHdr();
+        return idx;
+    }
+
+    idx = (WORD)hdr->dwEntries;
+    newDwEntries = hdr->dwEntries + 1;
+    hdr->dwEntries = newDwEntries;
+    hdr->offsetDataBlock = hdr->unk1 + newDwEntries * sizeof(DATNAVIGATION);
+    RegUnlockHdr();
+
+    if (!GlobalReAlloc(Globals.EntryTable,
+                       newDwEntries * sizeof(DATNAVIGATION),
+                       GMEM_MOVEABLE)) {
+        hdr = RegLockHdr();
+        if (hdr) {
+            hdr->dwEntries = newDwEntries - 1;
+            hdr->offsetDataBlock =
+                hdr->unk1 + (newDwEntries - 1) * sizeof(DATNAVIGATION);
+            RegUnlockHdr();
+        }
+        return 0;
+    }
+    return idx;
+}
+
+/*! @brief Return a slot to the free list.
+
+    @param[in] idx Slot index.
+*/
+static void RegFreeSlot(WORD idx)
+{
+    LPDATHEADER hdr;
+    LPDATNAVIGATION tab;
+
+    if (idx == 0) return;
+
+    hdr = RegLockHdr();
+    if (!hdr) return;
+    tab = RegLockTab();
+    if (tab) {
+        tab[idx].Next = hdr->freeidx;
+        hdr->freeidx = idx;
+        RegUnlockTab();
+    }
+    RegUnlockHdr();
+}
+
+/* ------------------------------------------------------------------ */
+/* String storage                                                      */
+/* ------------------------------------------------------------------ */
+
+/*! @brief Find a string in the REG.DAT text block.
+
+    @param[in] str NUL-terminated string.
+
+    @return DATTEXT index on success, 0 if not found.
+
+    @retval 0 The string was not found, or the string was too long.
+*/
+static ATOM RegFindString(LPCSTR str)
+{
+    LPDATHEADER hdr;
+    LPDATNAVIGATION tab;
+    LPSTR text;
+    WORD hash, bucket, cur, len;
+    ATOM result = 0;
+
+    if (!str) return 0;
+    len = (WORD)lstrlen(str);
+    if (len > MAX_ATOM_LEN) return 0;
+
+    hdr = RegLockHdr();
+    if (!hdr || !hdr->hashsize) { RegUnlockHdr(); return 0; }
+    hash = 0;
+    { LPCSTR s = str; while (*s) hash += (WORD)AnsiUpperChar(*s++); }
+    hash = (WORD)(hash % hdr->hashsize);
+    RegUnlockHdr();
+
+    bucket = (WORD)(1 + hash);
+
+    tab = RegLockTab();
+    if (!tab) return 0;
+    text = RegLockText();
+
+    cur = tab[bucket].Next;
+    while (cur != 0 && cur != bucket) {
+        LPDATTEXT dt = (LPDATTEXT)&tab[cur];
+        if (dt->Length == len && text &&
+            lstrnicmp(text + dt->offset, str, len) == 0) {
+            result = cur;
+            break;
+        }
+        cur = dt->Index;
+    }
+
+    if (text) RegUnlockText();
+    RegUnlockTab();
+    return result;
+}
+
+/*! @brief Add a string to the REG.DAT text block, or bump RefCount.
+
+    @param[in] str NUL-terminated string.
+
+    @return DATTEXT index on success, 0 on failure.
+
+    @retval 0 Out of memory or the string was too long.
+*/
+static ATOM RegAddString(LPCSTR str)
+{
+    ATOM existing;
+    LPDATHEADER hdr;
+    LPDATNAVIGATION tab;
+    LPSTR text;
+    WORD hash, bucket, new_idx, len, cur;
+    DWORD old_size, new_size;
+
+    if (!str) return 0;
+    len = (WORD)lstrlen(str);
+    if (len > MAX_ATOM_LEN) return 0;
+
+    existing = RegFindString(str);
+    if (existing) {
+        tab = RegLockTab();
+        if (tab) { ((LPDATTEXT)&tab[existing])->RefCount++; RegUnlockTab(); }
+        return existing;
+    }
+
+    hdr = RegLockHdr();
+    if (!hdr || !hdr->hashsize) { RegUnlockHdr(); return 0; }
+    hash = 0;
+    { LPCSTR s = str; while (*s) hash += (WORD)AnsiUpperChar(*s++); }
+    hash = (WORD)(hash % hdr->hashsize);
+    RegUnlockHdr();
+    bucket = (WORD)(1 + hash);
+
+    new_idx = RegAllocSlot();
+    if (!new_idx) return 0;
+
+    hdr = RegLockHdr();
+    if (!hdr) { RegFreeSlot(new_idx); return 0; }
+    old_size = hdr->sizeDataBlock;
+    new_size = old_size + 2 + len + REG_TEXT_NUL;
+    RegUnlockHdr();
+
+    if (!GlobalReAlloc(Globals.StringTable, new_size, GMEM_MOVEABLE)) {
+        RegFreeSlot(new_idx);
+        return 0;
+    }
+
+    hdr = RegLockHdr();
+    if (!hdr) { RegFreeSlot(new_idx); return 0; }
+    text = RegLockText();
+    if (!text) { RegUnlockHdr(); RegFreeSlot(new_idx); return 0; }
+
+    *((LPWORD)(text + old_size)) = (WORD)(new_idx * 2 + 1);
+    lstrcpy(text + old_size + 2, str);
+    text[old_size + 2 + len] = 0;
+    hdr->sizeDataBlock = new_size;
+
+    tab = RegLockTab();
+    if (!tab) {
+        RegUnlockText(); RegUnlockHdr();
+        RegFreeSlot(new_idx);
+        return 0;
+    }
+
+    cur = tab[bucket].Next;
+    if (cur == 0) cur = bucket;
+
+    ((LPDATTEXT)&tab[new_idx])->Index    = cur;
+    ((LPDATTEXT)&tab[new_idx])->RefCount = 1;
+    ((LPDATTEXT)&tab[new_idx])->Length   = len;
+    ((LPDATTEXT)&tab[new_idx])->offset   = (WORD)(old_size + 2);
+
+    tab[bucket].Next = new_idx;
+
+    RegUnlockTab();
+    RegUnlockText();
+    RegUnlockHdr();
+    return new_idx;
+}
+
+/*! @brief Copy a string from the text block into @p buf.
+
+    @param[in]  atom  DATTEXT index.
+    @param[out] buf   Output buffer (NUL-terminated).
+    @param[in]  count Size of @p buf in bytes.
+
+    @return Length of the copied string, excluding NUL.
+
+    @retval 0 Failure, or @p atom was invalid.
+*/
+static UINT RegGetString(ATOM atom, LPSTR buf, int count)
+{
+    LPDATHEADER hdr;
+    LPDATNAVIGATION tab;
+    LPDATTEXT dt;
+    LPSTR text;
+    WORD len;
+
+    if (!atom || !buf || count <= 0) return 0;
+
+    hdr = RegLockHdr();
+    if (!hdr || (DWORD)atom >= hdr->dwEntries) {
+        RegUnlockHdr();
+        return 0;
+    }
+    RegUnlockHdr();
+
+    tab = RegLockTab();
+    if (!tab) return 0;
+
+    dt = (LPDATTEXT)&tab[atom];
+    len = dt->Length;
+
+    text = RegLockText();
+    if (!text) { RegUnlockTab(); return 0; }
+
+    if (len >= count) len = (WORD)(count - 1);
+    lmemcpy(buf, text + dt->offset, len);
+    buf[len] = '\0';
+
+    RegUnlockText();
+    RegUnlockTab();
+    return len;
+}
+
+/*! @brief Release one reference to a DATTEXT record.
+
+    If RefCount drops to zero, the slot is removed from its hash chain
+    and returned to the free list.
+
+    @param[in] atom DATTEXT index.
+*/
+static void RegDelString(ATOM atom)
+{
+    LPDATHEADER hdr;
+    LPDATNAVIGATION tab;
+    LPDATTEXT dt;
+    LPSTR text;
+    WORD hash, bucket, cur, prev_idx, len;
+    LPSTR s;
+
+    if (!atom) return;
+
+    hdr = RegLockHdr();
+    if (!hdr || (DWORD)atom >= hdr->dwEntries) {
+        RegUnlockHdr();
+        return;
+    }
+
+    tab = RegLockTab();
+    if (!tab) { RegUnlockHdr(); return; }
+
+    dt = (LPDATTEXT)&tab[atom];
+    if (dt->RefCount > 1) {
+        dt->RefCount--;
+        RegUnlockTab();
+        RegUnlockHdr();
+        return;
+    }
+
+    text = RegLockText();
+    if (!text) { RegUnlockTab(); RegUnlockHdr(); return; }
+
+    hash = 0;
+    s = text + dt->offset;
+    len = dt->Length;
+    while (len--) hash += (WORD)AnsiUpperChar(*s++);
+    hash = (WORD)(hash % hdr->hashsize);
+    bucket = (WORD)(1 + hash);
+
+    prev_idx = bucket;
+    cur = tab[bucket].Next;
+    while (cur != 0 && cur != bucket && cur != atom) {
+        prev_idx = cur;
+        cur = ((LPDATTEXT)&tab[cur])->Index;
+    }
+
+    if (cur == atom) {
+        tab[prev_idx].Next = dt->Index;
+        if (tab[prev_idx].Next == 0) tab[prev_idx].Next = bucket;
+
+        dt->Index    = hdr->freeidx;
+        dt->RefCount = 0;
+        hdr->freeidx = atom;
+    }
+
+    RegUnlockText();
+    RegUnlockTab();
+    RegUnlockHdr();
+}
+
+/* ------------------------------------------------------------------ */
+/* Path resolution                                                     */
+/* ------------------------------------------------------------------ */
+
+/*! @brief Resolve a path of subkeys, optionally creating missing ones.
+
+    @param[in] parentHkey Starting key: 0 or 1 for HKEY_CLASSES_ROOT,
+                          otherwise a dirent index.
+    @param[in] lpszSubKey Backslash-separated path, or NULL/empty.
+    @param[in] wFlag      IFK_FIND (no create) or IFK_CREATE.
+
+    @return Final HKEY (dirent index, or 0/1 for root), or 0 if not
+            found and @p wFlag is IFK_FIND.
+
+    @retval 0 The path was not found or could not be created.
+*/
+static HKEY InternalFindKey(HKEY parentHkey, LPCSTR lpszSubKey, WORD wFlag)
+{
+    HKEY cur;
+    char buf[256];
+    LPSTR ptr, lpTmp;
+    ATOM nameAtom;
+    LPDATNAVIGATION tab;
+    WORD childIdx;
+
+    if (!lpszSubKey || !*lpszSubKey) return parentHkey;
+    if (lstrlen(lpszSubKey) >= sizeof(buf)) return 0;
+    lstrcpy(buf, lpszSubKey);
+
+    cur = parentHkey;
+    ptr = buf;
+    while (1) {
+        HKEY found = 0;
+
+        lpTmp = lstrchr(ptr, '\\');
+        if (lpTmp) *lpTmp = 0;
+
+        nameAtom = RegFindString(ptr);
+        if (nameAtom == 0) {
+            if (wFlag == IFK_CREATE) nameAtom = RegAddString(ptr);
+            if (nameAtom == 0) return 0;
+        }
+
+        tab = RegLockTab();
+        if (!tab) return 0;
+        if (IsRootKey(cur)) {
+            WORD rootDirent = GetRootDirent(tab);
+            childIdx = (rootDirent != 0) ? tab[rootDirent].Sub : 0;
+        } else {
+            childIdx = tab[cur].Sub;
+        }
+        while (childIdx != 0) {
+            if (tab[childIdx].Name == nameAtom) { found = (HKEY)childIdx; break; }
+            childIdx = tab[childIdx].Next;
+        }
+        RegUnlockTab();
+
+        if (found == 0) {
+            if (wFlag == IFK_CREATE) {
+                found = InternalCreateKey(cur, nameAtom);
+                if (found == 0) return 0;
+            } else return 0;
+        }
+        cur = found;
+
+        if (lpTmp) ptr = lpTmp + 1;
+        else break;
+    }
+    return cur;
+}
+
+/*! @brief Allocate a new dirent and attach it to a parent.
+
+    @param[in] parentHkey Parent key: 0 or 1 for HKEY_CLASSES_ROOT,
+                          otherwise a dirent index.
+    @param[in] nameAtom   DATTEXT index for the new key's name.
+
+    @return New dirent's HKEY, or 0 on failure.
+
+    @retval 0 Allocation failed or the parent's root dirent is missing.
+*/
+static HKEY InternalCreateKey(HKEY parentHkey, ATOM nameAtom)
+{
+    LPDATNAVIGATION tab;
+    WORD parentIdx, newIdx, cur;
+
+    newIdx = RegAllocSlot();
+    if (!newIdx) return 0;
+
+    tab = RegLockTab();
+    if (!tab) { RegFreeSlot(newIdx); return 0; }
+
+    tab[newIdx].Next  = 0;
+    tab[newIdx].Sub   = 0;
+    tab[newIdx].Name  = nameAtom;
+    tab[newIdx].Value = 0;
+
+    if (IsRootKey(parentHkey)) {
+        parentIdx = GetRootDirent(tab);
+        if (parentIdx == 0) {
+            RegUnlockTab();
+            RegFreeSlot(newIdx);
+            return 0;
+        }
+    } else {
+        parentIdx = (WORD)parentHkey;
+    }
+
+    if (tab[parentIdx].Sub == 0) {
+        tab[parentIdx].Sub = newIdx;
+    } else {
+        cur = tab[parentIdx].Sub;
+        while (tab[cur].Next != 0) cur = tab[cur].Next;
+        tab[cur].Next = newIdx;
+    }
+
+    RegUnlockTab();
+    return (HKEY)newIdx;
+}
+
+/* ------------------------------------------------------------------ */
+/* InitReg and ReadSetupReg                                            */
+/* ------------------------------------------------------------------ */
+
+/*! @brief Read setup.reg and populate the in-memory registry. */
+static void ReadSetupReg(void)
 {
     char buf[MAX_PATH];
     HFILE hf;
-    LPSTR lpBuffer,ptr;
+    LPSTR lpBuffer, ptr;
     char lpTmp[0x100];
     DWORD dwFileSize;
-    int i = 0,j;
-    LPKEYSTRUCT lpKeyStruct;
+    int i = 0, j;
     HKEY hk;
 
-	if (!GetWindowsDirectory(buf,MAX_PATH)) getcwd(buf,MAX_PATH);
-	if (buf[lstrlen(buf)-1]!='\\') lstrcat(buf, "\\");
-	lstrcat(buf,"setup.reg");
+    if (!GetWindowsDirectory(buf, MAX_PATH)) getcwd(buf, MAX_PATH);
+    if (buf[lstrlen(buf)-1] != '\\') lstrcat(buf, "\\");
+    lstrcat(buf, "setup.reg");
 
-	if ((hf = _lopen(buf,READ)) == HFILE_ERROR) return;
-	dwFileSize = _llseek(hf,0,2);
-	lpBuffer = (LPSTR) GlobalAllocPtr(GPTR, dwFileSize+2);
-	_llseek(hf,0,0);
-	_lread(hf,lpBuffer,dwFileSize);
-	_lclose(hf);
+    hf = _lopen(buf, READ);
+    if (hf == HFILE_ERROR) return;
+    dwFileSize = _llseek(hf, 0, 2);
+    lpBuffer = (LPSTR)GlobalAllocPtr(GPTR, dwFileSize + 2);
+    if (!lpBuffer) { _lclose(hf); return; }
+    _llseek(hf, 0, 0);
+    _lread(hf, lpBuffer, dwFileSize);
+    _lclose(hf);
 
-	ptr = lpBuffer;
-    while (i < dwFileSize) {
-	while ((lpBuffer[i] != '\n') && (i < dwFileSize))
-	    i++;
-	if (lpBuffer[i] == '\n')
-	    lpBuffer[i] = '\0';
-	else
-	    lpBuffer[i+1] ='\0';
-	if (lpBuffer[i-1] == 0xd)	/* strip ^M */
-	    lpBuffer[i-1] = 0;
-	lstrcpyn(lpTmp,ptr,17);
-	lpTmp[17] = 0;
-	if (!lstrcmpi(lpTmp,"HKEY_CLASSES_ROOT")) { /* <key> <value> pair */
-	    lstrcpy(lpTmp,ptr);
-	    lpKeyStruct = &RootKey;
-	    while (*ptr++ != '\\');
-	    j = 0;
-	    while (ptr[j] != ' ') j++;
-	    ptr[j] = 0;
-	    if (RegCreateKey((HKEY)lpKeyStruct,ptr,&hk) != ERROR_SUCCESS)
-		break;
-	    ptr += j+3;
-	    if (RegSetValue(hk,NULL,REG_SZ,ptr,lstrlen(ptr)) != ERROR_SUCCESS)
-		break;
-	}
-	ptr = &lpBuffer[i+1];
+    ptr = lpBuffer;
+    while (i < (int)dwFileSize) {
+        while ((lpBuffer[i] != '\n') && (i < (int)dwFileSize)) i++;
+        if (lpBuffer[i] == '\n') lpBuffer[i] = '\0';
+        else lpBuffer[i+1] = '\0';
+        if (i > 0 && lpBuffer[i-1] == 0x0d) lpBuffer[i-1] = 0;
+
+        lstrcpyn(lpTmp, ptr, 17);
+        lpTmp[17] = 0;
+        if (!lstrcmpi(lpTmp, "HKEY_CLASSES_ROOT")) {
+            while (*ptr++ != '\\');
+            j = 0;
+            while (ptr[j] != ' ') j++;
+            ptr[j] = 0;
+            if (RegCreateKey(0, ptr, &hk) == ERROR_SUCCESS) {
+                ptr += j + 3;
+                RegSetValue(hk, NULL, REG_SZ, ptr, lstrlen(ptr));
+            }
+        }
+        ptr = &lpBuffer[i+1];
     }
     GlobalFreePtr(lpBuffer);
 }
 
-/*! @brief Map legacy HKEY values 0 and 1 to HKEY_CLASSES_ROOT.
+/*! @brief Initialise the in-memory registry.
 
-    0 and 1 are valid rootkeys in Win16 shell.dll and are used by some
-    programs. Do not remove those cases. -MM
+    Ensures the root dirent (".classes") exists, then loads setup.reg.
+    Safe to call multiple times.
 
-    @param[in,out] hkey Pointer to the HKEY to normalise in place.
+    @return TRUE on success, FALSE on failure.
+
+    @retval TRUE  Registry is ready (or was already initialised).
+    @retval FALSE Allocation of the root dirent or of ".classes" failed.
 */
-static inline void fix_win16_hkey( HKEY *hkey )
+BOOL InitReg(void)
 {
-    if (*hkey == 0 || *hkey == (HKEY)1) *hkey = HKEY_CLASSES_ROOT;
-}
+    LPDATHEADER hdr;
+    LPDATNAVIGATION tab;
+    ATOM nameAtom;
+    WORD rootIdx;
 
-/*! @brief Compute the REG.DAT hash bucket for a string.
-
-    Uses the Windows 3.1 formula: sum(toupper(c)) % hashsize.
-    Confirmed against a real REG.DAT: ".classes" -> bucket 0x11 with
-    hashsize 37.
-
-    @param[in] str String to hash.
-
-    @return Bucket index in [0, hashsize).
-
-    @retval 0 The hash table is uninitialised (@p hashsize is zero).
-*/
-static WORD StringHash(LPCSTR str)
-{
-	WORD i, hash = 0;
-	LPDATHEADER lpDatHeader;
-
-	lpDatHeader=(LPDATHEADER)GlobalLock(Globals.Registry);
-
-	if (!lpDatHeader || !lpDatHeader->hashsize) {
-		GlobalUnlock(Globals.Registry);
-		return 0;
-	}
-
-	for (i = 0; i < lstrlen(str); i++) hash += (WORD)AnsiUpperChar(str[i]);
-	hash=hash % lpDatHeader->hashsize;
-	GlobalUnlock(Globals.Registry);
-	return hash;
-}
-
-/*! @brief Add a string to the REG.DAT text block (stub).
-
-    @todo This function is a work-in-progress. See note.txt, section
-          "Adding value to Registry", for the intended algorithm.
-
-    @param[in] str String to add.
-*/
-static void AddString(LPCSTR str)
-{
-	LPDATHEADER lpDatHeader;
-	LPDATNAVIGATION lpDatNavigation;
-	WORD hash=StringHash(str);
-
-	(void)str;
-
-	lpDatHeader=(LPDATHEADER)GlobalLock(Globals.Registry);
-	lpDatNavigation=(LPDATNAVIGATION)GlobalLock(Globals.EntryTable);
-
-	if (lpDatNavigation && lpDatHeader &&
-	    lpDatNavigation[hash+1].Next == hash+1)	/* Empty bucket */
-	{
-		lpDatHeader->dwEntries++;
-		GlobalUnlock(Globals.EntryTable);
-		GlobalReAlloc(Globals.EntryTable,
-		              lpDatHeader->dwEntries*sizeof(DATNAVIGATION),
-		              GMEM_MOVEABLE);
-		lpDatNavigation=(LPDATNAVIGATION)GlobalLock(Globals.EntryTable);
-		/* TODO: fill in the new string entry. */
-	}
-
-	GlobalUnlock(Globals.EntryTable);
-	GlobalUnlock(Globals.Registry);
-}
-
-/*! @brief Initialise the in-memory registry tree.
-
-    Creates the ".classes" root atom and loads setup.reg.
-
-    @return TRUE on success.
-
-    @retval TRUE Always returned by this implementation.
-*/
-BOOL InitReg()
-{
-    RootKey.hParentKey = (HKEY)0L;
-    if (!RootKey.atomKey)
-	RootKey.atomKey = AddAtomEx(&AtomTable,".classes");
-    RootKey.fOpen = TRUE;
+    if (fRegInitialized) return TRUE;
     fRegInitialized = TRUE;
-    ReadSetupReg();
 
+    if (!Globals.Registry || !Globals.EntryTable || !Globals.StringTable)
+        return TRUE;
+
+    hdr = RegLockHdr();
+    if (!hdr) return FALSE;
+    tab = RegLockTab();
+    if (!tab) { RegUnlockHdr(); return FALSE; }
+
+    if (tab[0].Sub != 0) {
+        RegUnlockTab();
+        RegUnlockHdr();
+        ReadSetupReg();
+        return TRUE;
+    }
+    RegUnlockTab();
+    RegUnlockHdr();
+
+    nameAtom = RegAddString(".classes");
+    if (!nameAtom) return FALSE;
+    rootIdx = RegAllocSlot();
+    if (!rootIdx) return FALSE;
+
+    tab = RegLockTab();
+    if (!tab) return FALSE;
+    tab[rootIdx].Next  = 0;
+    tab[rootIdx].Sub   = 0;
+    tab[rootIdx].Name  = nameAtom;
+    tab[rootIdx].Value = 0;
+    tab[0].Sub = rootIdx;
+    RegUnlockTab();
+
+    hdr = RegLockHdr();
+    if (hdr) {
+        hdr->unk2 = hdr->unk1;
+        RegUnlockHdr();
+    }
+
+    ReadSetupReg();
     return TRUE;
 }
 
@@ -224,37 +704,27 @@ BOOL InitReg()
 
 /*! @brief Open an existing registry key.
 
-    @param[in]  hKey       Parent key handle (HKEY_CLASSES_ROOT, 0, or 1).
+    @param[in]  hKey       Parent key handle.
     @param[in]  lpszSubKey Subkey path, or NULL/empty for @p hKey itself.
     @param[out] phkResult  Receives the opened key handle.
 
     @return ERROR_SUCCESS or ERROR_BADKEY.
+
+    @retval ERROR_SUCCESS The key was opened.
+    @retval ERROR_BADKEY  The key handle or path was invalid.
 */
 LONG WINAPI
 RegOpenKey(HKEY hKey, LPCSTR lpszSubKey, PHKEY phkResult)
 {
-    LPKEYSTRUCT lpKeyStruct;
-    LPKEYSTRUCT lpSubKey;
-    LONG rc;
+    HKEY found;
 
-    fix_win16_hkey( &hKey );
+    if (!phkResult) return ERROR_BADKEY;
+    if (!fRegInitialized) InitReg();
 
-    if (!fRegInitialized)
-	InitReg();
-
-    if (hKey == HKEY_CLASSES_ROOT)
-	lpKeyStruct = &RootKey;
-    else
-	lpKeyStruct = (LPKEYSTRUCT)hKey;
-
-    lpSubKey = InternalFindKey(lpKeyStruct,lpszSubKey,IFK_FIND);
-
-    if ((*phkResult = (HKEY)lpSubKey))
-	rc = ERROR_SUCCESS;
-    else
-	rc = ERROR_BADKEY;
-
-    return rc;
+    found = InternalFindKey(hKey, lpszSubKey, IFK_FIND);
+    if (found) { *phkResult = found; return ERROR_SUCCESS; }
+    *phkResult = 0;
+    return ERROR_BADKEY;
 }
 
 /******************************************************************************
@@ -267,36 +737,22 @@ RegOpenKey(HKEY hKey, LPCSTR lpszSubKey, PHKEY phkResult)
     @param[in]  lpszSubKey Subkey path to create.
     @param[out] phkResult  Receives the new key handle.
 
-    @return ERROR_SUCCESS on success, ERROR_BADKEY on failure.
+    @return ERROR_SUCCESS or ERROR_BADKEY.
 
     @retval ERROR_SUCCESS The key was created or opened.
-    @retval ERROR_BADKEY  The parent key was invalid or the child could not be created.
+    @retval ERROR_BADKEY  The key could not be created.
 */
 LONG WINAPI
 RegCreateKey(HKEY hKey, LPCSTR lpszSubKey, PHKEY phkResult)
 {
-    LPKEYSTRUCT lpKeyStruct;
-    LPKEYSTRUCT lpSubKey;
+    HKEY found;
 
-    fix_win16_hkey( &hKey );
+    if (!phkResult) return ERROR_BADKEY;
+    if (!fRegInitialized) InitReg();
 
-    if (!fRegInitialized)
-	InitReg();
-
-    if (hKey == HKEY_CLASSES_ROOT) 
-	lpKeyStruct = &RootKey;
-    else  {
-	lpKeyStruct = (LPKEYSTRUCT)hKey;
-	if (!lpKeyStruct || !lpKeyStruct->fOpen) {
-	    return ERROR_BADKEY;
-	}
-    }
-    lpSubKey = InternalFindKey(lpKeyStruct,lpszSubKey,IFK_CREATE);
-
-    if ((*phkResult = (HKEY)lpSubKey)) {
-	return (LONG)ERROR_SUCCESS;
-    }
-
+    found = InternalFindKey(hKey, lpszSubKey, IFK_CREATE);
+    if (found) { *phkResult = found; return ERROR_SUCCESS; }
+    *phkResult = 0;
     return ERROR_BADKEY;
 }
 
@@ -316,25 +772,19 @@ RegCreateKey(HKEY hKey, LPCSTR lpszSubKey, PHKEY phkResult)
 LONG WINAPI
 RegCloseKey(HKEY hKey)
 {
-    LPKEYSTRUCT lpKeyStruct;
+    LPDATHEADER hdr;
 
-    fix_win16_hkey( &hKey );
+    if (!fRegInitialized) InitReg();
+    if (IsRootKey(hKey)) return ERROR_SUCCESS;
 
-    if (!fRegInitialized)
-	InitReg();
-
-    if (hKey == HKEY_CLASSES_ROOT)
-	lpKeyStruct = &RootKey;
-    else
-	lpKeyStruct = (LPKEYSTRUCT)hKey;
-
-    if (!lpKeyStruct) {
-	return ERROR_BADKEY;
+    hdr = RegLockHdr();
+    if (!hdr) return ERROR_BADKEY;
+    if ((DWORD)hKey >= hdr->dwEntries || (WORD)hKey <= hdr->hashsize) {
+        RegUnlockHdr();
+        return ERROR_BADKEY;
     }
-
-    lpKeyStruct->fOpen = 0;
-
-    return (LONG)ERROR_SUCCESS;
+    RegUnlockHdr();
+    return ERROR_SUCCESS;
 }
 
 /******************************************************************************
@@ -346,53 +796,63 @@ RegCloseKey(HKEY hKey)
     @param[in] hKey       Parent key handle.
     @param[in] lpszSubKey Subkey path to delete.
 
-    @return ERROR_SUCCESS, ERROR_BADKEY, or ERROR_ACCESS_DENIED.
+    @return ERROR_SUCCESS or ERROR_BADKEY.
 
-    @retval ERROR_SUCCESS       The key was deleted.
-    @retval ERROR_BADKEY        The key handle was invalid or the key not found.
-    @retval ERROR_ACCESS_DENIED Attempt to delete the root key itself.
+    @retval ERROR_SUCCESS The key was deleted.
+    @retval ERROR_BADKEY  The key could not be deleted.
 */
 LONG WINAPI
 RegDeleteKey(HKEY hKey, LPCSTR lpszSubKey)
 {
-    LPKEYSTRUCT lpKeyStruct,lpKeyParent,lpKeyTmp;
+    HKEY target;
+    LPDATNAVIGATION tab;
+    WORD parentIdx, targetIdx, cur, prev, nameAtom, valueAtom;
 
-    fix_win16_hkey( &hKey );
+    if (!fRegInitialized) InitReg();
 
-    if (!fRegInitialized)
-	InitReg();
+    target = InternalFindKey(hKey, lpszSubKey, IFK_FIND);
+    if (target == 0 || IsRootKey(target)) return ERROR_BADKEY;
+    targetIdx = (WORD)target;
 
-    lpKeyStruct = InternalFindKey((LPKEYSTRUCT)hKey,lpszSubKey,IFK_FIND);
-
-    if (!lpKeyStruct || !lpKeyStruct->fOpen) {
-	return ERROR_BADKEY;
+    for (;;) {
+        WORD child;
+        tab = RegLockTab();
+        if (!tab) return ERROR_BADKEY;
+        child = tab[targetIdx].Sub;
+        RegUnlockTab();
+        if (child == 0) break;
+        RegDeleteKey((HKEY)child, "");
     }
 
-    if (lpKeyStruct == &RootKey) {
-	return ERROR_ACCESS_DENIED;
+    if (IsRootKey(hKey)) {
+        tab = RegLockTab();
+        if (!tab) return ERROR_BADKEY;
+        parentIdx = GetRootDirent(tab);
+        RegUnlockTab();
+        if (parentIdx == 0) return ERROR_BADKEY;
+    } else {
+        parentIdx = (WORD)hKey;
     }
 
-    if (lpKeyStruct->lpszValue)
-	GlobalFreePtr(lpKeyStruct->lpszValue);
+    tab = RegLockTab();
+    if (!tab) return ERROR_BADKEY;
+    nameAtom  = tab[targetIdx].Name;
+    valueAtom = tab[targetIdx].Value;
 
-    while (lpKeyStruct->hSubKey) 
-	RegDeleteKey(lpKeyStruct->hSubKey,"");
-
-    lpKeyParent = (LPKEYSTRUCT)lpKeyStruct->hParentKey;
-
-    if (lpKeyParent->hSubKey == (HKEY)lpKeyStruct)
-	lpKeyParent->hSubKey = lpKeyStruct->hNext;
-    else {
-	for (lpKeyTmp = (LPKEYSTRUCT)lpKeyParent->hSubKey;
-			lpKeyTmp;
-			lpKeyTmp = (LPKEYSTRUCT)lpKeyTmp->hNext) 
-	    if (lpKeyTmp->hNext == (HKEY)lpKeyStruct)
-		lpKeyTmp->hNext = lpKeyStruct->hNext;
+    if (tab[parentIdx].Sub == targetIdx) {
+        tab[parentIdx].Sub = tab[targetIdx].Next;
+    } else {
+        prev = tab[parentIdx].Sub;
+        while (tab[prev].Next != 0 && tab[prev].Next != targetIdx)
+            prev = tab[prev].Next;
+        if (tab[prev].Next == targetIdx)
+            tab[prev].Next = tab[targetIdx].Next;
     }
+    RegUnlockTab();
 
-    DeleteAtomEx(&AtomTable,lpKeyStruct->atomKey);
-
-	GlobalFreePtr((LPSTR)lpKeyStruct);
+    if (valueAtom) RegDelString(valueAtom);
+    if (nameAtom)  RegDelString(nameAtom);
+    RegFreeSlot(targetIdx);
 
     return ERROR_SUCCESS;
 }
@@ -412,42 +872,46 @@ RegDeleteKey(HKEY hKey, LPCSTR lpszSubKey)
     @return ERROR_SUCCESS or ERROR_BADKEY.
 
     @retval ERROR_SUCCESS The value was set.
-    @retval ERROR_BADKEY  The key was invalid or not found.
+    @retval ERROR_BADKEY  The key was invalid or the value could not be stored.
 */
 LONG WINAPI
 RegSetValue(HKEY hKey, LPCSTR lpszSubKey,
-		DWORD fdwType, LPCSTR lpszValue, DWORD cb)
+            DWORD fdwType, LPCSTR lpszValue, DWORD cb)
 {
-    LPKEYSTRUCT lpKeyStruct;
-    LPKEYSTRUCT lpSubKeyStruct;
+    HKEY target;
+    LPDATNAVIGATION tab;
+    WORD targetIdx, oldValue;
+    ATOM newValue;
 
-    fix_win16_hkey( &hKey );
+    if (fdwType != REG_SZ) return ERROR_BADKEY;
 
-    if (!fRegInitialized)
-	InitReg();
+    if (!fRegInitialized) InitReg();
 
-    if (hKey == HKEY_CLASSES_ROOT)
-	lpKeyStruct = &RootKey;
-    else
-	lpKeyStruct = (LPKEYSTRUCT)hKey;
+    target = InternalFindKey(hKey, lpszSubKey, IFK_FIND);
+    if (target == 0) return ERROR_BADKEY;
+    targetIdx = (WORD)target;
 
-    if (!lpKeyStruct || !(lpKeyStruct->fOpen)) {
-	return ERROR_BADKEY;
+    tab = RegLockTab();
+    if (!tab) return ERROR_BADKEY;
+    oldValue = tab[targetIdx].Value;
+    RegUnlockTab();
+
+    if (lpszValue && *lpszValue) {
+        newValue = RegAddString(lpszValue);
+        if (!newValue) return ERROR_BADKEY;
+    } else {
+        newValue = 0;
     }
 
-    lpSubKeyStruct = InternalFindKey(lpKeyStruct,lpszSubKey,IFK_FIND);
-
-    if (!lpSubKeyStruct) {
-	return ERROR_BADKEY;
+    tab = RegLockTab();
+    if (!tab) {
+        if (newValue) RegDelString(newValue);
+        return ERROR_BADKEY;
     }
+    tab[targetIdx].Value = newValue;
+    RegUnlockTab();
 
-    if (lpSubKeyStruct->lpszValue)
-	GlobalFreePtr(lpSubKeyStruct->lpszValue);
-
-    if (lpszValue && (*lpszValue != 0)) {
-	lpSubKeyStruct->lpszValue = (LPSTR) GlobalAllocPtr(GPTR, lstrlen(lpszValue)+1);
-	lstrcpy(lpSubKeyStruct->lpszValue,lpszValue);
-    }
+    if (oldValue && oldValue != newValue) RegDelString(oldValue);
 
     return ERROR_SUCCESS;
 }
@@ -466,61 +930,62 @@ RegSetValue(HKEY hKey, LPCSTR lpszSubKey,
 
 /*! @brief Retrieve the default string value of a registry key.
 
-    @param[in]  hKey       Parent key handle.
-    @param[in]  lpszSubKey Subkey path, or NULL for @p hKey itself.
-    @param[out] lpszValue  Buffer receiving the value string.
-    @param[in,out] lpcb    Size of @p lpszValue; receives copied length.
+    Win16 callers may pass an LPLONG whose high 16 bits contain selector
+    garbage; the high word is masked off before use (see the HACK note
+    above).
+
+    @param[in]     hKey       Parent key handle.
+    @param[in]     lpszSubKey Subkey path, or NULL for @p hKey itself.
+    @param[out]    lpszValue  Buffer receiving the value string.
+    @param[in,out] lpcb       Size of @p lpszValue; receives copied length.
 
     @return ERROR_SUCCESS or ERROR_BADKEY.
 
     @retval ERROR_SUCCESS The value was retrieved.
-    @retval ERROR_BADKEY  The key was invalid or not found.
+    @retval ERROR_BADKEY  The key was invalid, not found, or the buffer too small.
 */
 LONG WINAPI
 RegQueryValue(HKEY hKey, LPCSTR lpszSubKey, LPSTR lpszValue, LPLONG lpcb)
 {
-    LPKEYSTRUCT lpKeyStruct;
-    LPKEYSTRUCT lpSubKeyStruct;
+    HKEY target;
+    LPDATNAVIGATION tab;
+    WORD targetIdx, valueAtom, len;
+    DWORD required;
 
-    if (lpcb) *lpcb &= 0xffff;
+    if (!lpcb || !lpszValue) return ERROR_BADKEY;
+    *lpcb &= 0xffff;
 
-    fix_win16_hkey( &hKey );
+    if (!fRegInitialized) InitReg();
 
-    if (!fRegInitialized)
-	InitReg();
+    target = InternalFindKey(hKey, lpszSubKey, IFK_FIND);
+    if (target == 0) return ERROR_BADKEY;
+    targetIdx = (WORD)target;
 
-    if (hKey == HKEY_CLASSES_ROOT)
-	lpKeyStruct = &RootKey;
-    else 
-	lpKeyStruct = (LPKEYSTRUCT)hKey;
+    tab = RegLockTab();
+    if (!tab) return ERROR_BADKEY;
+    valueAtom = tab[targetIdx].Value;
+    RegUnlockTab();
 
-    if (!lpKeyStruct) {
-	return ERROR_BADKEY;
+    if (valueAtom == 0) {
+        lpszValue[0] = 0;
+        *lpcb = 0;
+        return ERROR_SUCCESS;
     }
 
-#ifdef LATER
-    if (!(lpKeyStruct->fOpen)) {
-	return ERROR_BADKEY;
-    }
-#endif
+    tab = RegLockTab();
+    if (!tab) return ERROR_BADKEY;
+    len = ((LPDATTEXT)&tab[valueAtom])->Length;
+    RegUnlockTab();
 
+    required = (DWORD)len + 1;
 
-    lpSubKeyStruct = InternalFindKey(lpKeyStruct,lpszSubKey,IFK_FIND);
-
-    if (!lpSubKeyStruct) {
-	return ERROR_BADKEY;
-    }
-
-    if (lpSubKeyStruct->lpszValue && (*lpSubKeyStruct->lpszValue != 0)) {
-	lstrcpyn(lpszValue,lpSubKeyStruct->lpszValue,min(*lpcb,
-		(int)lstrlen(lpSubKeyStruct->lpszValue)+1));
-	*lpcb = lstrlen(lpszValue) + 1;
-    }
-    else {
-	lpszValue[0] = '\0';
-	*lpcb = 0;
+    if ((DWORD)*lpcb < required) {
+        *lpcb = (LONG)required;
+        return ERROR_BADKEY;
     }
 
+    RegGetString(valueAtom, lpszValue, (int)*lpcb);
+    *lpcb = (LONG)required;
     return ERROR_SUCCESS;
 }
 
@@ -531,49 +996,47 @@ RegQueryValue(HKEY hKey, LPCSTR lpszSubKey, LPSTR lpszValue, LPLONG lpcb)
 /*! @brief Enumerate the subkeys of a registry key.
 
     @param[in]  hKey       Parent key handle.
-    @param[in]  iSubKey    Zero-based index of the subkey to retrieve.
+    @param[in]  iSubKey    Zero-based index of the subkey.
     @param[out] lpszBuffer Buffer receiving the subkey name.
     @param[in]  cbBuffer   Size of @p lpszBuffer.
 
     @return ERROR_SUCCESS or ERROR_BADKEY.
 
     @retval ERROR_SUCCESS The subkey name was retrieved.
-    @retval ERROR_BADKEY  The key handle or index was invalid.
+    @retval ERROR_BADKEY  The key or index was invalid.
 */
 LONG WINAPI
 RegEnumKey(HKEY hKey, DWORD iSubKey, LPSTR lpszBuffer, DWORD cbBuffer)
 {
-    LPKEYSTRUCT lpKeyStruct;
-    char buf[128];
-    int i;
+    LPDATNAVIGATION tab;
+    WORD parentIdx, childIdx, nameAtom, nameLen;
+    DWORD i;
 
-    fix_win16_hkey( &hKey );
+    if (!lpszBuffer || !cbBuffer) return ERROR_BADKEY;
 
-    if (!fRegInitialized)
-	InitReg();
+    if (!fRegInitialized) InitReg();
 
-    if (hKey == HKEY_CLASSES_ROOT)
-	lpKeyStruct = &RootKey;
-    else
-	lpKeyStruct = (LPKEYSTRUCT)hKey;
+    tab = RegLockTab();
+    if (!tab) return ERROR_BADKEY;
 
-    if (!lpKeyStruct) {
-	return ERROR_BADKEY;
-    }
+    if (IsRootKey(hKey)) parentIdx = GetRootDirent(tab);
+    else parentIdx = (WORD)hKey;
 
-    for (i=0,lpKeyStruct = (LPKEYSTRUCT)lpKeyStruct->hSubKey; 
-		i< iSubKey && lpKeyStruct;
-		i++,lpKeyStruct = (LPKEYSTRUCT)lpKeyStruct->hNext);
+    if (parentIdx == 0) { RegUnlockTab(); return ERROR_BADKEY; }
 
-    if ((i != iSubKey) || (lpKeyStruct == NULL)) {
-	return ERROR_BADKEY;
-    }
+    childIdx = tab[parentIdx].Sub;
+    for (i = 0; i < iSubKey && childIdx != 0; i++)
+        childIdx = tab[childIdx].Next;
 
-    if (GetAtomNameEx(&AtomTable,lpKeyStruct->atomKey,buf,sizeof(buf)))
-	lstrcpyn(lpszBuffer,buf,min(cbBuffer,lstrlen(buf)+1));
-    else
-	lpszBuffer[0] = '\0';
+    if (childIdx == 0) { RegUnlockTab(); return ERROR_BADKEY; }
 
+    nameAtom = tab[childIdx].Name;
+    nameLen  = ((LPDATTEXT)&tab[nameAtom])->Length;
+    RegUnlockTab();
+
+    if ((DWORD)(nameLen + 1) > cbBuffer) return ERROR_BADKEY;
+
+    RegGetString(nameAtom, lpszBuffer, (int)cbBuffer);
     return ERROR_SUCCESS;
 }
 
@@ -608,94 +1071,3 @@ RegQueryValueEx
 }
 
 #endif
-
-/******************************************************************************
- *           InternalFindKey [Internal]
- */
-
-/*! @brief Find (and optionally create) a key by its backslash-separated path.
-
-    @param[in] lpKeyStruct Starting key.
-    @param[in] lpszSubKey  Path of subkeys, or NULL/empty for @p lpKeyStruct.
-    @param[in] wFlag       IFK_FIND (no create) or IFK_CREATE (create missing).
-
-    @return The target key, or NULL if not found and @p wFlag is IFK_FIND.
-
-    @retval NULL The key was not found.
-*/
-static LPKEYSTRUCT
-InternalFindKey(LPKEYSTRUCT lpKeyStruct, LPCSTR lpszSubKey, WORD wFlag)
-{
-    LPKEYSTRUCT lpKeyTmp;
-    char buf[80];
-    LPSTR ptr,lpTmp;
-    ATOM atomSubKey;
-
-    if (lpszSubKey)
-	lstrcpy(buf,lpszSubKey);
-    if (lpszSubKey && (lstrlen(lpszSubKey) != 0)) {
-	ptr = buf;
-	while (1) {
-	    lpTmp = lstrchr(ptr,'\\');
-	    if (lpTmp)
-		*lpTmp = '\0';
-	    atomSubKey = FindAtomEx(&AtomTable,ptr);
-	    if (atomSubKey == 0) 
-		if (wFlag == IFK_CREATE)
-		    atomSubKey = AddAtomEx(&AtomTable,ptr);
-		else
-		    return NULL;
-	    for (lpKeyTmp = (LPKEYSTRUCT)lpKeyStruct->hSubKey;
-			lpKeyTmp;
-			lpKeyTmp = (LPKEYSTRUCT)lpKeyTmp->hNext) {
-		if (lpKeyTmp->atomKey == atomSubKey)
-		    break;
-	    }
-	    if (lpKeyTmp)
-		lpKeyStruct = lpKeyTmp;
-	    else 
-		if (wFlag == IFK_CREATE)
-		    lpKeyStruct = InternalCreateKey(lpKeyStruct,atomSubKey);
-		else
-		    return NULL;
-	    lpKeyStruct->fOpen = TRUE;
-	    if (lpTmp)
-		ptr = lpTmp + 1;
-	    else
-		break;
-	}
-    }
-    return lpKeyStruct;
-}
-
-/******************************************************************************
- *           InternalCreateKey [Internal]
- */
-
-/*! @brief Allocate a new key and attach it as the last child of @p lpKeyStruct.
-
-    @param[in] lpKeyStruct Parent key.
-    @param[in] atomSubKey  Atom for the new key's name.
-
-    @return Pointer to the newly created KEYSTRUCT.
-*/
-static LPKEYSTRUCT
-InternalCreateKey(LPKEYSTRUCT lpKeyStruct, ATOM atomSubKey)
-{
-    LPKEYSTRUCT lpSubKey;
-    LPKEYSTRUCT lpKeyTmp;
-
-    lpSubKey = (LPKEYSTRUCT)GlobalAllocPtr(GPTR, sizeof(KEYSTRUCT));
-
-    if (!lpKeyStruct->hSubKey)
-	lpKeyStruct->hSubKey = (HKEY)lpSubKey;
-    else {
-	for (lpKeyTmp = (LPKEYSTRUCT)lpKeyStruct->hSubKey;
-		lpKeyTmp->hNext;
-		lpKeyTmp = (LPKEYSTRUCT)lpKeyTmp->hNext);
-	lpKeyTmp->hNext = (HKEY)lpSubKey;
-    }
-    lpSubKey->hParentKey = (HKEY)lpKeyStruct;
-    lpSubKey->atomKey = atomSubKey;
-    return lpSubKey;
-}
