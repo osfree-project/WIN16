@@ -25,6 +25,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+/*! @file DragDrop.c
+    @brief Drag-and-drop file handling functions.
+*/
+
 #include "Shell.h"
 
 /******************************************************************************
@@ -39,6 +43,12 @@
  *	This value is TRUE to accept dropped files or FALSE to discontinue accepting dropped files.
  *
  */
+
+/*! @brief Register whether a window accepts dropped files.
+
+    @param[in] hWnd    Window that is registering its drag-drop acceptance.
+    @param[in] fAccept TRUE to accept dropped files, FALSE to stop accepting.
+*/
 void WINAPI DragAcceptFiles(HWND hWnd, BOOL fAccept)
 {
 	DWORD dwExStyle;
@@ -68,6 +78,16 @@ void WINAPI DragAcceptFiles(HWND hWnd, BOOL fAccept)
 /*************************************************************************
  * DragQueryFile		[SHELL.11]
  */
+
+/*! @brief Retrieve the name of a dropped file from a drop handle.
+
+    @param[in]  hDrop    Drop handle.
+    @param[in]  wFile    File index, or 0xFFFF to get the number of files.
+    @param[out] lpszFile Output buffer, or NULL to query the required size.
+    @param[in]  wLength  Size of @p lpszFile in bytes.
+
+    @return File name length (excluding NUL) or the file count.
+*/
 UINT WINAPI DragQueryFile(
 	HDROP hDrop,
 	UINT wFile,
@@ -106,6 +126,11 @@ end:
 /*************************************************************************
  * DragFinish		[SHELL.12]
  */
+
+/*! @brief Release the memory associated with a drop handle.
+
+    @param[in] hDrop Drop handle to release.
+*/
 void WINAPI DragFinish(HDROP hDrop)
 {
 
@@ -122,6 +147,18 @@ void WINAPI DragFinish(HDROP hDrop)
 /*************************************************************************
  * DragQueryPoint		[SHELL.13]
  */
+
+/*! @brief Retrieve the mouse position at which the drop occurred.
+
+    @param[in]  hDrop Drop handle.
+    @param[out] lppt  Receives the drop position in screen coordinates.
+
+    @return TRUE if the drop was inside the client area, FALSE otherwise.
+
+    @retval TRUE  The drop was inside the client area.
+    @retval FALSE The drop was outside the client area, or the drop handle
+                  could not be locked.
+*/
 BOOL WINAPI DragQueryPoint(HDROP hDrop, LPPOINT lppt)
 {
 	LPDROPFILESTRUCT lpDragInfo;

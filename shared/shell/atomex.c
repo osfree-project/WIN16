@@ -25,6 +25,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+/*! @file atomex.c
+    @brief Local atom table implementation (AddAtomEx/FindAtomEx family).
+*/
+
 #include "Shell.h"
 
 /***********************************************************************
@@ -32,6 +36,15 @@
  * RETURNS
  *	The hash value for the input string
  */
+
+/*! @brief Compute the hash bucket index for a string.
+
+    @param[in] entries Total number of buckets.
+    @param[in] str     Pointer to the string to hash.
+    @param[in] len     Length of the string in bytes.
+
+    @return The bucket index in [0, entries).
+*/
 static WORD ATOM_Hash(
             WORD entries, /* [in] Total number of entries */
             LPCSTR str,   /* [in] Pointer to string to hash */
@@ -49,6 +62,17 @@ static WORD ATOM_Hash(
 /***********************************************************************
  *           ATOM_IsIntAtom
  */
+
+/*! @brief Check whether a string denotes an integer atom and decode it.
+
+    @param[in]  atomstr String to inspect (LOWORD is the atom if HIWORD is 0).
+    @param[out] atomid  Decoded integer atom value.
+
+    @return TRUE if @p atomstr denotes an integer atom, FALSE otherwise.
+
+    @retval TRUE  The string is an integer atom.
+    @retval FALSE The string is not an integer atom.
+*/
 static BOOL ATOM_IsIntAtom(LPCSTR atomstr,WORD *atomid)
 {
     UINT atom = 0;
@@ -78,6 +102,15 @@ static BOOL ATOM_IsIntAtom(LPCSTR atomstr,WORD *atomid)
  *
  * Make an ATOMENTRY pointer from a handle (obtained from GetAtomHandle()).
  */
+
+/*! @brief Convert an atom-table handle into a pointer in our data segment.
+
+    @param[in] handle Handle obtained from GetAtomHandle().
+
+    @return Pointer to the corresponding ATOMENTRY.
+
+    @retval MAKELP Pointer to the ATOMENTRY in our data segment.
+*/
 LPATOMENTRY ATOM_MakePtr( HANDLE handle /* [in] Handle */ )
 {
     return MAKELP(GetDS(), handle);
@@ -96,6 +129,21 @@ LPATOMENTRY ATOM_MakePtr( HANDLE handle /* [in] Handle */ )
  *	Atom: Success
  *	0: Failure
  */
+
+/*! @brief Add a string to the atom table, or bump its reference count.
+
+    Windows DWORD-aligns the atom entry size. The remaining unused string
+    space created by the alignment gets padded with '\0's to ensure that
+    at least one trailing '\0' remains.
+
+    @param[in] atomtable Atom table to modify.
+    @param[in] str       String to add.
+
+    @return The atom on success, 0 on failure.
+
+    @retval HANDLETOATOM The atom of the existing or newly added entry.
+    @retval 0            Failure.
+*/
 ATOM WINAPI AddAtomEx(LPATOMTABLE atomtable, LPCSTR str )
 {
     char buffer[MAX_ATOM_LEN+1];
@@ -153,6 +201,16 @@ ATOM WINAPI AddAtomEx(LPATOMTABLE atomtable, LPCSTR str )
 /***********************************************************************
  *           DeleteAtomEx
  */
+
+/*! @brief Remove one reference to an atom and free it when unused.
+
+    @param[in] atomtable Atom table to modify.
+    @param[in] atom      Atom to delete.
+
+    @return 0 on success or for an integer atom, the atom if not found.
+
+    @retval 0 Deletion succeeded, or the atom was an integer atom.
+*/
 ATOM WINAPI DeleteAtomEx(LPATOMTABLE atomtable, ATOM atom )
 {
     LPATOMENTRY entryPtr;
@@ -191,6 +249,17 @@ ATOM WINAPI DeleteAtomEx(LPATOMTABLE atomtable, ATOM atom )
 /***********************************************************************
  *           FindAtomEx
  */
+
+/*! @brief Look up a string in the atom table.
+
+    @param[in] atomtable Atom table to search.
+    @param[in] str       String to look up.
+
+    @return The atom if found, 0 otherwise.
+
+    @retval HANDLETOATOM The atom of the found entry.
+    @retval 0            Atom not found.
+*/
 ATOM WINAPI FindAtomEx(LPATOMTABLE atomtable, LPCSTR str )
 {
     LPATOMTABLE table;
@@ -224,6 +293,18 @@ ATOM WINAPI FindAtomEx(LPATOMTABLE atomtable, LPCSTR str )
 /***********************************************************************
  *           GetAtomNameEx
  */
+
+/*! @brief Copy the string associated with an atom into a caller buffer.
+
+    @param[in]  atomtable Atom table to query.
+    @param[in]  atom      Atom to resolve.
+    @param[out] buffer    Output buffer.
+    @param[in]  count     Size of @p buffer in bytes.
+
+    @return Length of the copied string (without the terminating NUL).
+
+    @retval 0 Failure, or @p count was zero.
+*/
 UINT WINAPI GetAtomNameEx(LPATOMTABLE atomtable, ATOM atom, LPSTR buffer, int count )
 {
     LPATOMENTRY  entryPtr;
