@@ -25,8 +25,20 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+/*! @file Strings.c
+    @brief Far-pointer string and memory helpers used by the shell library.
+*/
+
 #include "Shell.h"
 
+/*! @brief Fill a far memory block with a byte value.
+
+    @param[out] dest Far pointer to destination.
+    @param[in]  val  Byte value to fill with.
+    @param[in]  len  Number of bytes to write.
+
+    @return @p dest.
+*/
 void FAR * lmemset (void FAR * dest, int val, int len)
 {
   char FAR *ptr = (char FAR *)dest;
@@ -35,6 +47,12 @@ void FAR * lmemset (void FAR * dest, int val, int len)
   return dest;
 }
 
+/*! @brief Copy a block of far memory.
+
+    @param[out] s1     Far pointer to destination.
+    @param[in]  s2     Far pointer to source.
+    @param[in]  length Number of bytes to copy.
+*/
 void lmemcpy(void FAR * s1, void FAR * s2, unsigned length)
 {	char FAR * p;
 	char FAR * q;
@@ -47,6 +65,16 @@ void lmemcpy(void FAR * s1, void FAR * s2, unsigned length)
 	}
 }
 
+/*! @brief Case-insensitive compare of two far strings, up to @p n bytes.
+
+    @param[in] s1 First string.
+    @param[in] s2 Second string.
+    @param[in] n  Maximum number of bytes to compare.
+
+    @return <0, 0, >0 as in strnicmp().
+
+    @retval 0 The strings are equal up to @p n bytes, or @p n is zero.
+*/
 int lstrnicmp(char FAR *s1, const char FAR *s2, int n)
 {
 
@@ -62,6 +90,15 @@ int lstrnicmp(char FAR *s1, const char FAR *s2, int n)
 	return 0;
 }
 
+/*! @brief Locate a character in a far string.
+
+    @param[in] s Far string to search.
+    @param[in] c Character to look for.
+
+    @return Far pointer to the matching character, or NULL.
+
+    @retval 0 Character not found.
+*/
 char FAR *lstrchr(const char FAR *s, int c)
 {
 	const char ch = c;

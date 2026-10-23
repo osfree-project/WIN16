@@ -25,13 +25,29 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-void main(void)
-{
-  unsigned int entries=0x25;
-    unsigned int i, hash = 0;
-   char str[]=".classes";
+/*! @file hashtest.c
+    @brief Standalone test for the ATOM_Hash function.
+*/
 
+#include <stdio.h>
+
+/*! @brief Print the hash bucket for the string ".classes".
+
+    Computes the XOR-based hash used by ATOM_Hash() for the 8-character
+    string ".classes" and prints the resulting bucket index for 0x25
+    buckets.
+
+    @return Always 0.
+
+    @retval 0 Always returned.
+*/
+int main(void)
+{
+    unsigned int entries = 0x25;
+    unsigned int i, hash = 0;
+    char str[] = ".classes";
 
     for (i = 0; i < 8; i++) hash ^= str[i] + i;
     printf("%x", hash % entries);
+    return 0;
 }

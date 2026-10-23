@@ -25,12 +25,18 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifndef SHELL_H
+#define SHELL_H
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <direct.h>
 #include <dos.h>
+
+#ifndef MAX_PATH
 #define MAX_PATH FILENAME_MAX
+#endif
 
 #include <windows.h>
 #include <shellapi.h>
@@ -90,7 +96,6 @@ extern GLOBALS Globals;
 void lmemcpy(void FAR * s1, void FAR * s2, unsigned length);
 int lstrnicmp(char FAR *s1, const char FAR *s2, int n);
 char FAR *lstrchr(const char FAR *s, int c);
-void lmemcpy(void FAR * s1, void FAR * s2, unsigned length);
 void FAR * lmemset (void FAR *start, int c, int len);
 
 #define GET_WM_COMMAND_ID(wp, lp)                   (wp)
@@ -113,11 +118,6 @@ typedef struct {
 #define GlobalAllocPtr(flags, cb) \
   (GlobalLock(GlobalAlloc((flags), (cb))))
 
-extern  unsigned short          GetDS( void );
-#pragma aux GetDS               = \
-        "mov    ax,ds"          \
-        value                   [ax];
-
 typedef struct
 {
 	WORD	size;
@@ -131,11 +131,6 @@ ATOM WINAPI FindAtomEx(LPATOMTABLE atomtable, LPCSTR str );
 UINT WINAPI GetAtomNameEx(LPATOMTABLE atomtable, ATOM atom, LPSTR buffer, int count );
 ATOM WINAPI AddAtomEx(LPATOMTABLE atomtable, LPCSTR str );
 
-extern  unsigned short          GetDS( void );
-#pragma aux GetDS               = \
-        "mov    ax,ds"          \
-        value                   [ax];
-
 #define DEFAULT_ATOMTABLE_SIZE    37
 #define MAX_ATOM_LEN              255
 #define MAXINTATOM          0xc000
@@ -143,6 +138,10 @@ extern  unsigned short          GetDS( void );
 #define ATOMTOHANDLE(atom)        ((HANDLE)(atom) << 2)
 #define HANDLETOATOM(handle)      ((ATOM)(0xc000 | ((handle) >> 2)))
 
+extern  unsigned short          GetDS( void );
+#pragma aux GetDS               = \
+        "mov    ax,ds"          \
+        value                   [ax];
 
 typedef struct
 {
@@ -182,7 +181,9 @@ typedef struct tagDROPFILESTRUCT {
     BOOL	fInNonClientArea;
 } DROPFILESTRUCT, FAR *LPDROPFILESTRUCT;
 
+#ifndef offsetof
 #define offsetof(s,m)       (size_t)&(((s*)NULL)->m)
+#endif
 #define FIELD_OFFSET(type, field) ((LONG)offsetof(type, field))
 
 BOOL CALLBACK AboutDlgProc(HWND, UINT, WPARAM, LPARAM);
@@ -423,6 +424,10 @@ extern KEYSTRUCT RootKey;
 
 #define DATMAGIC "SHCC3.10"
 
+/* REG.DAT structures are read/written verbatim; they must be packed
+   to 1 byte to match the on-disk format described in note.txt. */
+#pragma pack(push, 1)
+
 typedef struct tagDATHEADER {
 	char szSignature[8];	//0x0000  8 Byte  ASCII-Text: "SHCC3.10"
 	DWORD unk1;		//0x0008  DWord  ?
@@ -448,6 +453,8 @@ typedef struct tagDATTEXT {
 	WORD	offset;		//0x06    Word    Offset of the text-string inside the data-block
 } DATTEXT;
 
+#pragma pack(pop)
+
 /*
 Navigation-Info-Record
 
@@ -472,3 +479,5 @@ Offset  Size    Contents
 */
 
 BOOL InitReg();
+
+#endif /* SHELL_H */

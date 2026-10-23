@@ -25,14 +25,29 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "Shell.h"
+/*! @file Hook.c
+    @brief WH_SHELL hook and RegisterShellHook().
+*/
 
+#include "Shell.h"
 
 
 /*************************************************************************
  * ShellHookProc		[SHELL.103]
  * System-wide WH_SHELL hook.
  */
+
+/*! @brief System-wide WH_SHELL hook procedure.
+
+    Translates HSHELL_* codes into registered window messages posted to
+    the shell window registered via RegisterShellHook().
+
+    @param[in] code   Hook code.
+    @param[in] wParam Message-dependent parameter.
+    @param[in] lParam Message-dependent parameter.
+
+    @return Result of CallNextHookEx().
+*/
 LRESULT CALLBACK ShellHookProc(int code, WPARAM wParam, LPARAM lParam)
 {
     if (SHELL_hWnd)
@@ -72,7 +87,17 @@ From xoblite:
 
  */
 
+/*! @brief Register (or deregister) a shell window for system notifications.
 
+    @param[in] hWnd    Window to register (or NULL when deregistering).
+    @param[in] uAction RSH_DEREGISTER / RSH_REGISTER / RSH_REGISTER_PROGMAN /
+                       RSH_REGISTER_TASKMAN.
+
+    @return TRUE on success, FALSE otherwise.
+
+    @retval TRUE  The hook was installed or removed successfully.
+    @retval FALSE The action could not be performed.
+*/
 BOOL WINAPI RegisterShellHook(HWND hWnd, UINT uAction)
 {
 	MessageBox(0, "RegisterShellHook", "RegisterShellHook", MB_OK);

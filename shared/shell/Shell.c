@@ -31,6 +31,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+/*! @file Shell.c
+    @brief DLL entry point, LibMain() and WEP() for SHELL.DLL.
+*/
+
 #include "Shell.h"
 
 
@@ -44,6 +48,20 @@
  *  Success: TRUE. Initialization completed successfully.
  *  Failure: FALSE.
  */
+
+/*! @brief DLL entry point for SHELL.DLL.
+
+    @param[in] Reason    Reason code for the call.
+    @param[in] hInst     Instance handle of the library.
+    @param[in] ds        Data segment selector.
+    @param[in] HeapSize  Local heap size.
+    @param[in] res1      Reserved.
+    @param[in] res2      Reserved.
+
+    @return TRUE on success, FALSE on failure.
+
+    @retval TRUE Always returned by this stub implementation.
+*/
 BOOL WINAPI DllEntryPoint(DWORD Reason, HINSTANCE hInst,
 				WORD ds, WORD HeapSize, DWORD res1, WORD res2)
 {
@@ -52,6 +70,25 @@ BOOL WINAPI DllEntryPoint(DWORD Reason, HINSTANCE hInst,
 
 
 #pragma off (unreferenced);
+
+/*! @brief Library initialisation: create/load REG.DAT.
+
+    Allocates the registry global blocks and either loads REG.DAT from
+    the Windows directory or recreates it from the embedded resource
+    (type 100, id 100).
+
+    @param[in] hInstance     Instance handle of the library.
+    @param[in] wDataSegment  Data segment selector.
+    @param[in] wHeapSize     Local heap size.
+    @param[in] lpszCmdLine   Command line.
+
+    @return TRUE on success, FALSE otherwise.
+
+    @retval TRUE  The library initialised successfully, or was already
+                  initialised.
+    @retval FALSE Initialisation failed (missing strings, failed
+                  allocation, or failed file/resource access).
+*/
 BOOL WINAPI LibMain( HINSTANCE hInstance, WORD wDataSegment, WORD wHeapSize, LPSTR lpszCmdLine )
 #pragma on (unreferenced);
 {
@@ -119,6 +156,15 @@ BOOL WINAPI LibMain( HINSTANCE hInstance, WORD wDataSegment, WORD wHeapSize, LPS
 }
 
 #pragma off (unreferenced);
+
+/*! @brief Library termination: flush the in-memory registry to REG.DAT.
+
+    @param[in] bSystemExit Non-zero when the system is shutting down.
+
+    @return Always 1.
+
+    @retval 1 Always returned.
+*/
 int WINAPI WEP( int bSystemExit )
 #pragma on (unreferenced);
 {
@@ -170,4 +216,3 @@ int WINAPI WEP( int bSystemExit )
 	}
 	return( 1 );
 }
-
