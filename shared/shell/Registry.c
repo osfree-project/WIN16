@@ -37,9 +37,29 @@
 
 #include "Shell.h"
 
-//! Forward declaration; defined below.
+/*! @brief Find (and optionally create) a key by its backslash-separated path.
+
+    Defined below.
+
+    @param[in] lpKeyStruct Starting key.
+    @param[in] lpszSubKey  Path of subkeys, or NULL/empty for @p lpKeyStruct.
+    @param[in] wFlag       IFK_FIND (no create) or IFK_CREATE (create missing).
+
+    @return The target key, or NULL if not found and @p wFlag is IFK_FIND.
+
+    @retval NULL The key was not found.
+*/
 static LPKEYSTRUCT InternalFindKey(LPKEYSTRUCT,LPCSTR,WORD);
-//! Forward declaration; defined below.
+
+/*! @brief Allocate a new key and attach it as the last child of @p lpKeyStruct.
+
+    Defined below.
+
+    @param[in] lpKeyStruct Parent key.
+    @param[in] atomSubKey  Atom for the new key's name.
+
+    @return Pointer to the newly created KEYSTRUCT.
+*/
 static LPKEYSTRUCT InternalCreateKey(LPKEYSTRUCT,ATOM);
 
 /******************************************************************************/
@@ -123,6 +143,8 @@ static inline void fix_win16_hkey( HKEY *hkey )
     @param[in] str String to hash.
 
     @return Bucket index in [0, hashsize).
+
+    @retval 0 The hash table is uninitialised (@p hashsize is zero).
 */
 static WORD StringHash(LPCSTR str)
 {
