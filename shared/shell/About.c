@@ -21,12 +21,25 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+/*! @file About.c
+    @brief ShellAbout dialog implementation.
+*/
+
 #include "Shell.h"
 
 /*************************************************************************
  * ShellAbout	[SHELL.22]
- *
  */
+
+/*! @brief Display the standard "About" dialog.
+
+    @param[in] hWnd          Parent window handle.
+    @param[in] lpszCaption   Caption template. If it contains '#', the text
+                             after '#' is shown in the body and the part
+                             before it becomes the window caption.
+    @param[in] lpszAboutText Additional text shown in the dialog body.
+    @param[in] hIcon         Optional icon, or NULL to keep the default.
+*/
 void WINAPI ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText, HICON hIcon)
 {
 	DLGPROC	lpProc;
@@ -53,6 +66,18 @@ void WINAPI ShellAbout(HWND hWnd, LPCSTR lpszCaption, LPCSTR lpszAboutText, HICO
 	FreeProcInstance(lpProc); 
 }
 
+/*! @brief Dialog procedure for the Shell About dialog.
+
+    @param[in] hDlg   Dialog window handle.
+    @param[in] msg    Message identifier.
+    @param[in] wParam Message parameter.
+    @param[in] lParam Message parameter (points to SHELLABOUTDATA on WM_INITDIALOG).
+
+    @return TRUE when the message was handled, FALSE otherwise.
+
+    @retval TRUE  The message was handled.
+    @retval FALSE The message was not handled.
+*/
 BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	LPSHELLABOUTDATA sad;
