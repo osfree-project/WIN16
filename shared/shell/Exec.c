@@ -25,12 +25,29 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+/*! @file Exec.c
+    @brief ShellExecute, FindExecutable and executable search helpers.
+*/
+
 #include "Shell.h"
 
 /*************************************************************************
  * ShellExecute	[SHELL.20]
  *
  */
+
+/*! @brief Launch an executable via WinExec().
+
+    @param[in] hWnd        Parent window handle (unused).
+    @param[in] lpOperation Operation verb (unused; WinExec only opens).
+    @param[in] lpFile      Path of the executable to launch.
+    @param[in] lpParameters Command-line parameters (unused).
+    @param[in] lpDirectory Working directory (unused).
+    @param[in] nShowCmd    Show command passed to WinExec().
+
+    @return Instance handle of the launched application, as returned by
+            WinExec(); an SE_ERR_* value less than 32 on failure.
+*/
 HINSTANCE WINAPI ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile,
 		LPCSTR lpParameters, LPCSTR lpDirectory, int nShowCmd)
 {
@@ -46,12 +63,36 @@ HINSTANCE WINAPI ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile,
 }
 
 
-char *searchpath(const char *filename)
+/*! @brief Locate a file along %PATH% and copy the resolved path out.
+
+    @p filename is far (LPCSTR) while _searchenv() expects a near string;
+    the name is copied into a near buffer first. The result is copied
+    into @p fullpath with truncation, so a small buffer is safe.
+
+    @param[in]  filename Far string with the file name to search for.
+    @param[out] fullpath Near output buffer receiving the resolved path.
+    @param[in]  size     Size of @p fullpath in bytes.
+
+    @return TRUE when the file was found and @p fullpath is non-empty.
+
+    @retval TRUE  The file was found.
+    @retval FALSE The file was not found, or the buffer is too small.
+*/
+static BOOL searchpath(LPCSTR filename, char *fullpath, UINT size)
 {
-	char fullpath[_MAX_PATH];
-	_searchenv(filename, "PATH", fullpath);
-	if (fullpath[0] == '\0') return NULL;
-	return fullpath;
+    static char searchenv_buf[_MAX_PATH];
+    char        nearpath[_MAX_PATH];
+
+    if (!fullpath || size < 2) return FALSE;
+    fullpath[0] = '\0';
+
+    lstrcpyn(nearpath, filename, sizeof(nearpath));
+    _searchenv(nearpath, "PATH", searchenv_buf);
+
+    if (searchenv_buf[0] == '\0') return FALSE;
+
+    lstrcpyn(fullpath, searchenv_buf, size);
+    return TRUE;
 }
 
 
@@ -75,16 +116,35 @@ char *searchpath(const char *filename)
  * 4. Find association
  * 5. Find assicoated executable
  */
+
+/*! @brief Find the executable associated with a file by extension.
+
+    Checks win.ini [windows]/programs and [extensions] for the file's
+    extension and writes the resulting command line into @p lpResult.
+
+    @param[in]  lpPath    Current working directory (unused).
+    @param[in]  lpFile    Path of the file whose association to resolve.
+    @param[in]  lpVerb    Operation verb (e.g. "open"; unused here).
+    @param[out] lpResult  Buffer receiving the resolved command or path.
+    @param[in]  resultLen Size of @p lpResult (currently unused).
+
+    @return An SE_ERR_* value, 33 on success, or ERROR_INVALID_PARAMETER.
+
+    @retval ERROR_INVALID_PARAMETER @p lpResult was NULL.
+    @retval SE_ERR_FNF              The file (or its association) was not found.
+    @retval SE_ERR_NOASSOC          The file has no usable extension or association.
+    @retval 33                      Success; greater than 32 by convention.
+*/
 static UINT SHELL_FindExecutable(LPCSTR lpPath, LPCSTR lpFile, LPCSTR lpVerb,
                                  LPSTR lpResult, int resultLen)
 {
-    char *extension = NULL; /* pointer to file extension */
+    LPSTR extension = NULL; /* pointer to file extension */
     char classname[256];     /* registry name for this file type */
     LONG  classnamelen = sizeof(classname); /* length of above */
     char command[1024];     /* command from registry */
     char wBuffer[256];      /* Used to GetProfileString */
     UINT  retval = SE_ERR_NOASSOC;
-    char *tok;              /* token pointer */
+    LPSTR tok;              /* token pointer */
     char xlpFile[256];      /* result of SearchPath */
     DWORD attribs;           /* file attributes */
 
@@ -104,8 +164,9 @@ static UINT SHELL_FindExecutable(LPCSTR lpPath, LPCSTR lpFile, LPCSTR lpVerb,
         return SE_ERR_FNF; /* File not found. */
     }
 
-	// Search file in paths
-	lstrcpy(xlpFile, searchpath(lpFile));
+	/* Search file in paths */
+	if (!searchpath(lpFile, xlpFile, sizeof(xlpFile)))
+	    return SE_ERR_FNF;
 #if 0
     attribs = GetFileAttributes(lpFile);
     if (attribs!=INVALID_FILE_ATTRIBUTES && (attribs&FILE_ATTRIBUTE_DIRECTORY))
@@ -115,12 +176,6 @@ static UINT SHELL_FindExecutable(LPCSTR lpPath, LPCSTR lpFile, LPCSTR lpVerb,
     else
 #endif
     {
-        /* Did we get something? Anything? */
-        if (xlpFile[0]==0)
-        {
-//            TRACE("Returning SE_ERR_FNF\n");
-            return SE_ERR_FNF;
-        }
         /* First thing we need is the file's extension */
         extension = strrchr(xlpFile, '.'); /* Assume last "." is the one; */
         /* File->Run in progman uses */
@@ -154,7 +209,7 @@ static UINT SHELL_FindExecutable(LPCSTR lpPath, LPCSTR lpFile, LPCSTR lpVerb,
             tok = wBuffer;
             while (*tok)
             {
-                char *p = tok;
+                LPSTR p = tok;
                 while (*p && *p != ' ' && *p != '\t') p++;
                 if (*p)
                 {
@@ -162,7 +217,7 @@ static UINT SHELL_FindExecutable(LPCSTR lpPath, LPCSTR lpFile, LPCSTR lpVerb,
                     while (*p == ' ' || *p == '\t') p++;
                 }
 
-                if (strcmp(tok, &extension[1]) == 0) /* have to skip the leading "." */
+                if (lstrcmp(tok, &extension[1]) == 0) /* have to skip the leading "." */
                 {
                     lstrcpy(lpResult, xlpFile);
                     /* Need to perhaps check that the file has a path
@@ -237,12 +292,12 @@ static UINT SHELL_FindExecutable(LPCSTR lpPath, LPCSTR lpFile, LPCSTR lpVerb,
             if (*command)
             {
                 lstrcpy(lpResult, command);
-                tok = strchr(lpResult, '^'); /* should be ^.extension? */
+                tok = lstrchr(lpResult, '^'); /* should be ^.extension? */
                 if (tok != NULL)
                 {
                     tok[0] = '\0';
                     lstrcat(lpResult, xlpFile); /* what if no dir in xlpFile? */
-                    tok = strchr(command, '^'); /* see above */
+                    tok = lstrchr(command, '^'); /* see above */
                     if ((tok != NULL) && (lstrlen(tok)>5))
                     {
                         lstrcat(lpResult, &tok[5]);
@@ -282,10 +337,24 @@ static UINT SHELL_FindExecutable(LPCSTR lpPath, LPCSTR lpFile, LPCSTR lpVerb,
  *  characters of the extension, and expects to find an association for those.
  *  However other Windows versions behave sanely.
  */
+
+/*! @brief Return the executable associated with the specified file.
+
+    @param[in]  lpszFile Path of the file whose association to resolve.
+    @param[in]  lpszDir  Optional working directory to switch to during
+                         the lookup.
+    @param[out] lpResult Buffer receiving the executable path.
+
+    @return An HINSTANCE-style value: greater than 32 on success, or an
+            SE_ERR_* value on failure.
+
+    @retval SE_ERR_FNF @p lpszFile was NULL.
+*/
 HINSTANCE WINAPI FindExecutable(LPCSTR lpszFile, LPCSTR lpszDir, LPSTR lpResult)
 {
     HINSTANCE retval = SE_ERR_NOASSOC;
-    char old_dir[1024];
+    char old_dir[MAX_PATH];
+    char nearDir[MAX_PATH];
     char res[MAX_PATH];
 
     //APISTR((LF_APISTUB,"FindExecutable(LPCSTR=%s,LPCSTR=%s,LPSTR=%x)\n",
@@ -302,7 +371,9 @@ HINSTANCE WINAPI FindExecutable(LPCSTR lpszFile, LPCSTR lpszDir, LPSTR lpResult)
     if (lpszDir)
     {
         getcwd(old_dir, sizeof(old_dir));
-        chdir(lpszDir);
+        /* far -> near copy: chdir() only accepts near strings */
+        lstrcpyn(nearDir, lpszDir, sizeof(nearDir));
+        chdir(nearDir);
     }
 
 	LoadString(Globals.hInstance, IDS_OPEN, szOpen, sizeof(szOpen));
@@ -318,4 +389,3 @@ HINSTANCE WINAPI FindExecutable(LPCSTR lpszFile, LPCSTR lpszDir, LPSTR lpResult)
 
     return (HINSTANCE)retval;
 }
-
