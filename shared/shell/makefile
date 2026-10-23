@@ -11,7 +11,7 @@ TARGET_SUBCLASS = STATIC
 LICENSE         = LGPL-2.1-or-later
 LICENSE_CHECK   = 1
 
-DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
+#DEST = os2$(SEP)mdos$(SEP)winos2$(SEP)system
 
 !include $(%ROOT)tools/mk/build.mk
 
