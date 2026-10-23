@@ -93,6 +93,11 @@ extern GLOBALS Globals;
 #define IDS_NOCOMMDLG		226
 #define IDS_REGCLOSE		227
 
+/* Atom table */
+#define DEFAULT_ATOMTABLE_SIZE    37
+#define MAX_ATOM_LEN              255
+#define MAXINTATOM          0xc000
+
 void lmemcpy(void FAR * s1, void FAR * s2, unsigned length);
 int lstrnicmp(char FAR *s1, const char FAR *s2, int n);
 char FAR *lstrchr(const char FAR *s, int c);
@@ -121,7 +126,7 @@ typedef struct {
 typedef struct
 {
 	WORD	size;
-	HANDLE	entries[1];
+	HANDLE	entries[DEFAULT_ATOMTABLE_SIZE];
 } ATOMTABLE;
 typedef ATOMTABLE FAR *LPATOMTABLE;
 
@@ -130,10 +135,6 @@ ATOM WINAPI DeleteAtomEx(LPATOMTABLE atomtable, ATOM atom );
 ATOM WINAPI FindAtomEx(LPATOMTABLE atomtable, LPCSTR str );
 UINT WINAPI GetAtomNameEx(LPATOMTABLE atomtable, ATOM atom, LPSTR buffer, int count );
 ATOM WINAPI AddAtomEx(LPATOMTABLE atomtable, LPCSTR str );
-
-#define DEFAULT_ATOMTABLE_SIZE    37
-#define MAX_ATOM_LEN              255
-#define MAXINTATOM          0xc000
 
 #define ATOMTOHANDLE(atom)        ((HANDLE)(atom) << 2)
 #define HANDLETOATOM(handle)      ((ATOM)(0xc000 | ((handle) >> 2)))
@@ -438,6 +439,7 @@ typedef struct tagDATHEADER {
 	WORD  hashsize;		//0x00??  Word   Hash size
 	WORD  freeidx;		//0x00??  Word   Free index
 } DATHEADER;
+typedef DATHEADER FAR * LPDATHEADER;
 
 typedef struct tagDATNAVIGATION {
 	WORD	Next;	//0x00    Word    Next Key (same level)
@@ -445,13 +447,15 @@ typedef struct tagDATNAVIGATION {
 	WORD	Name;	//0x04    Word    Text-Info-Record Key-Namens
 	WORD	Value;	//0x06    Word    Text-Info-Record Key-Value (default)
 } DATNAVIGATION;
+typedef DATNAVIGATION FAR * LPDATNAVIGATION;
 
 typedef struct tagDATTEXT {
-	WORD	Index;		//0x00    Word    Entry Table Index * 2 + 1
+	WORD	Index;		//0x00    Word    Hash chain index (next entry in bucket)
 	WORD	RefCount;	//0x02    Word    number of references to this text
 	WORD	Length;		//0x04    Word    Text-length
 	WORD	offset;		//0x06    Word    Offset of the text-string inside the data-block
 } DATTEXT;
+typedef DATTEXT FAR * LPDATTEXT;
 
 #pragma pack(pop)
 

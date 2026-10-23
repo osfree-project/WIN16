@@ -8,6 +8,8 @@
  * Copyright 2002 Eric Pouech
  * Copyright 2023 Yuri Prokushev
  *
+ * SPDX-License-Identifier: LGPL-2.1-or-later
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
@@ -23,31 +25,34 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-/*
-  @todo This module uses its own global atom table. So, we need here something to replace.
+/*! @file Registry.c
+    @brief Windows 3.1 registry (in-memory tree, setup.reg loader).
 
-  https://devblogs.microsoft.com/oldnewthing/20080117-00/?p=23783
-  https://devblogs.microsoft.com/oldnewthing/20120521-00/?p=7573
-  
-*/
+    @todo This module uses its own global atom table. See:
+          https://devblogs.microsoft.com/oldnewthing/20080117-00/?p=23783
+          https://devblogs.microsoft.com/oldnewthing/20120521-00/?p=7573
 
-/* 
-
-  @todo Registry for now in memory only. See note.txt for REG.DAT format.
-
+    @todo Registry is in-memory only. See note.txt for the REG.DAT format.
 */
 
 #include "Shell.h"
 
-static BOOL InitReg();
+//! Forward declaration; defined below.
 static LPKEYSTRUCT InternalFindKey(LPKEYSTRUCT,LPCSTR,WORD);
+//! Forward declaration; defined below.
 static LPKEYSTRUCT InternalCreateKey(LPKEYSTRUCT,ATOM);
 
 /******************************************************************************/
 
+/*! @brief Read setup.reg and populate the in-memory registry.
+
+    Parses HKEY_CLASSES_ROOT\\<path> = <value> lines from setup.reg in
+    the Windows directory (or the current directory if the former is
+    unavailable) and creates the corresponding keys.
+*/
 static void ReadSetupReg()
 {
-    char buf[_MAX_PATH];
+    char buf[MAX_PATH];
     HFILE hf;
     LPSTR lpBuffer,ptr;
     char lpTmp[0x100];
@@ -56,7 +61,7 @@ static void ReadSetupReg()
     LPKEYSTRUCT lpKeyStruct;
     HKEY hk;
 
-	if (!GetWindowsDirectory(buf,_MAX_PATH)) getcwd(buf,_MAX_PATH);
+	if (!GetWindowsDirectory(buf,MAX_PATH)) getcwd(buf,MAX_PATH);
 	if (buf[lstrlen(buf)-1]!='\\') lstrcat(buf, "\\");
 	lstrcat(buf,"setup.reg");
 
@@ -97,72 +102,112 @@ static void ReadSetupReg()
     GlobalFreePtr(lpBuffer);
 }
 
-/* 0 and 1 are valid rootkeys in win16 shell.dll and are used by
- * some programs. Do not remove those cases. -MM
- */
+/*! @brief Map legacy HKEY values 0 and 1 to HKEY_CLASSES_ROOT.
+
+    0 and 1 are valid rootkeys in Win16 shell.dll and are used by some
+    programs. Do not remove those cases. -MM
+
+    @param[in,out] hkey Pointer to the HKEY to normalise in place.
+*/
 static inline void fix_win16_hkey( HKEY *hkey )
 {
     if (*hkey == 0 || *hkey == (HKEY)1) *hkey = HKEY_CLASSES_ROOT;
 }
 
+/*! @brief Compute the REG.DAT hash bucket for a string.
+
+    Uses the Windows 3.1 formula: sum(toupper(c)) % hashsize.
+    Confirmed against a real REG.DAT: ".classes" -> bucket 0x11 with
+    hashsize 37.
+
+    @param[in] str String to hash.
+
+    @return Bucket index in [0, hashsize).
+*/
 static WORD StringHash(LPCSTR str)
 {
 	WORD i, hash = 0;
 	LPDATHEADER lpDatHeader;
 
-//    TRACE("%x, %s, %x\n", entries, str, len);
-
 	lpDatHeader=(LPDATHEADER)GlobalLock(Globals.Registry);
 
-	for (i = 0; i < lstrlen(str); i++) hash ^= AnsiUpperChar(str[i]);
+	if (!lpDatHeader || !lpDatHeader->hashsize) {
+		GlobalUnlock(Globals.Registry);
+		return 0;
+	}
+
+	for (i = 0; i < lstrlen(str); i++) hash += (WORD)AnsiUpperChar(str[i]);
 	hash=hash % lpDatHeader->hashsize;
 	GlobalUnlock(Globals.Registry);
 	return hash;
 }
 
+/*! @brief Add a string to the REG.DAT text block (stub).
+
+    @todo This function is a work-in-progress. See note.txt, section
+          "Adding value to Registry", for the intended algorithm.
+
+    @param[in] str String to add.
+*/
 static void AddString(LPCSTR str)
 {
 	LPDATHEADER lpDatHeader;
-	LPDATNAVIGATION lpDatNavigation[1];
+	LPDATNAVIGATION lpDatNavigation;
 	WORD hash=StringHash(str);
 
-	lpDatHeader=(LPDATHEADER)GlobalLock(Globals.Registry);
+	(void)str;
 
+	lpDatHeader=(LPDATHEADER)GlobalLock(Globals.Registry);
 	lpDatNavigation=(LPDATNAVIGATION)GlobalLock(Globals.EntryTable);
-	if (lpDatNavigation[hash+1]==hash+1)	// Empty busket, so create new string
+
+	if (lpDatNavigation && lpDatHeader &&
+	    lpDatNavigation[hash+1].Next == hash+1)	/* Empty bucket */
 	{
-		lpDatHeader->dwEntries++;	// Add one more entry for string info
-		GlobalUnlock(Globals.EntryTable); // Allocate memory for it
-		GlobalReAlloc(Globals.EntryTable, lpDatHeader->dwEntries*sizeof(LPDATNAVIGATION), GMEM_MOVEABLE)
+		lpDatHeader->dwEntries++;
+		GlobalUnlock(Globals.EntryTable);
+		GlobalReAlloc(Globals.EntryTable,
+		              lpDatHeader->dwEntries*sizeof(DATNAVIGATION),
+		              GMEM_MOVEABLE);
 		lpDatNavigation=(LPDATNAVIGATION)GlobalLock(Globals.EntryTable);
-		// Fill string information entry
-		lpDatNavigation[lpDatHeader->dwEntries]->length=lstrlen(str);
-		// Allocame memory for string
+		/* TODO: fill in the new string entry. */
 	}
 
 	GlobalUnlock(Globals.EntryTable);
 	GlobalUnlock(Globals.Registry);
 }
 
-static BOOL InitReg()
-{
-	LPDATNAVIGATION lpDatNavigation[1];
-	lpDatNavigation=(LPDATNAVIGATION)GlobalLock(Globals.EntryTable);
-	GlobalUnlock(Globals.EntryTable);
+/*! @brief Initialise the in-memory registry tree.
 
+    Creates the ".classes" root atom and loads setup.reg.
+
+    @return TRUE on success.
+
+    @retval TRUE Always returned by this implementation.
+*/
+BOOL InitReg()
+{
     RootKey.hParentKey = (HKEY)0L;
     if (!RootKey.atomKey)
 	RootKey.atomKey = AddAtomEx(&AtomTable,".classes");
     RootKey.fOpen = TRUE;
     fRegInitialized = TRUE;
     ReadSetupReg();
-    
+
     return TRUE;
 }
 
 /******************************************************************************
  *           RegOpenKey   [SHELL.1]
  */
+
+/*! @brief Open an existing registry key.
+
+    @param[in]  hKey       Parent key handle (HKEY_CLASSES_ROOT, 0, or 1).
+    @param[in]  lpszSubKey Subkey path, or NULL/empty for @p hKey itself.
+    @param[out] phkResult  Receives the opened key handle.
+
+    @return ERROR_SUCCESS or ERROR_BADKEY.
+*/
 LONG WINAPI
 RegOpenKey(HKEY hKey, LPCSTR lpszSubKey, PHKEY phkResult)
 {
@@ -174,9 +219,6 @@ RegOpenKey(HKEY hKey, LPCSTR lpszSubKey, PHKEY phkResult)
 
     if (!fRegInitialized)
 	InitReg();
-
-//    APISTR((LF_APICALL,"RegOpenKey(HKEY=%x,LPCSTR=%s,PHKEY=%x)\n",
-//		hKey,HIWORD(lpszSubKey)?lpszSubKey:"NULL",phkResult));
 
     if (hKey == HKEY_CLASSES_ROOT)
 	lpKeyStruct = &RootKey;
@@ -190,13 +232,24 @@ RegOpenKey(HKEY hKey, LPCSTR lpszSubKey, PHKEY phkResult)
     else
 	rc = ERROR_BADKEY;
 
-//    APISTR((LF_APIRET,"RegOpenKey: returns LONG %d\n",rc));
     return rc;
 }
 
 /******************************************************************************
  *           RegCreateKey   [SHELL.2]
  */
+
+/*! @brief Create or open a registry key.
+
+    @param[in]  hKey       Parent key handle.
+    @param[in]  lpszSubKey Subkey path to create.
+    @param[out] phkResult  Receives the new key handle.
+
+    @return ERROR_SUCCESS on success, ERROR_BADKEY on failure.
+
+    @retval ERROR_SUCCESS The key was created or opened.
+    @retval ERROR_BADKEY  The parent key was invalid or the child could not be created.
+*/
 LONG WINAPI
 RegCreateKey(HKEY hKey, LPCSTR lpszSubKey, PHKEY phkResult)
 {
@@ -208,38 +261,40 @@ RegCreateKey(HKEY hKey, LPCSTR lpszSubKey, PHKEY phkResult)
     if (!fRegInitialized)
 	InitReg();
 
-//    APISTR((LF_APICALL,"RegCreateKey(HKEY=%x,LPCSTR=%s,PHKEY=%x)\n",
-//		hKey,HIWORD(lpszSubKey)?lpszSubKey:"NULL",phkResult));
-
     if (hKey == HKEY_CLASSES_ROOT) 
 	lpKeyStruct = &RootKey;
     else  {
 	lpKeyStruct = (LPKEYSTRUCT)hKey;
 	if (!lpKeyStruct || !lpKeyStruct->fOpen) {
-//    	    APISTR((LF_APIRET,"RegCreateKey: returns LONG %d\n",ERROR_BADKEY));
 	    return ERROR_BADKEY;
 	}
     }
     lpSubKey = InternalFindKey(lpKeyStruct,lpszSubKey,IFK_CREATE);
 
     if ((*phkResult = (HKEY)lpSubKey)) {
-//        APISTR((LF_APIRET,"RegCreateKey: returns LONG %d\n",ERROR_SUCCESS));
 	return (LONG)ERROR_SUCCESS;
     }
 
-//    APISTR((LF_APIRET,"RegCreateKey: returns LONG %d\n",ERROR_BADKEY));
     return ERROR_BADKEY;
 }
 
 /******************************************************************************
  *           RegCloseKey   [SHELL.3]
  */
+
+/*! @brief Close a registry key handle.
+
+    @param[in] hKey Key handle to close.
+
+    @return ERROR_SUCCESS or ERROR_BADKEY.
+
+    @retval ERROR_SUCCESS The key was closed.
+    @retval ERROR_BADKEY  The key handle was invalid.
+*/
 LONG WINAPI
 RegCloseKey(HKEY hKey)
 {
     LPKEYSTRUCT lpKeyStruct;
-
-//    APISTR((LF_APICALL,"RegCloseKey(HKEY=%x)\n",hKey));
 
     fix_win16_hkey( &hKey );
 
@@ -252,19 +307,29 @@ RegCloseKey(HKEY hKey)
 	lpKeyStruct = (LPKEYSTRUCT)hKey;
 
     if (!lpKeyStruct) {
-//    	APISTR((LF_APIRET,"RegCreateKey: returns LONG %d\n",ERROR_BADKEY));
 	return ERROR_BADKEY;
     }
 
     lpKeyStruct->fOpen = 0;
 
-//    APISTR((LF_APIRET,"RegCreateKey: returns LONG %d\n",ERROR_SUCCESS));
     return (LONG)ERROR_SUCCESS;
 }
 
 /******************************************************************************
  *           RegDeleteKey   [SHELL.4]
  */
+
+/*! @brief Delete a registry key and its subkeys.
+
+    @param[in] hKey       Parent key handle.
+    @param[in] lpszSubKey Subkey path to delete.
+
+    @return ERROR_SUCCESS, ERROR_BADKEY, or ERROR_ACCESS_DENIED.
+
+    @retval ERROR_SUCCESS       The key was deleted.
+    @retval ERROR_BADKEY        The key handle was invalid or the key not found.
+    @retval ERROR_ACCESS_DENIED Attempt to delete the root key itself.
+*/
 LONG WINAPI
 RegDeleteKey(HKEY hKey, LPCSTR lpszSubKey)
 {
@@ -275,23 +340,17 @@ RegDeleteKey(HKEY hKey, LPCSTR lpszSubKey)
     if (!fRegInitialized)
 	InitReg();
 
-//    APISTR((LF_APICALL,"RegDeleteKey(HKEY=%x,LPCSTR=%x)\n",
-//	hKey,lpszSubKey));
-
     lpKeyStruct = InternalFindKey((LPKEYSTRUCT)hKey,lpszSubKey,IFK_FIND);
 
     if (!lpKeyStruct || !lpKeyStruct->fOpen) {
-//    	APISTR((LF_APIRET,"RegDeleteKey: returns LONG %d\n",ERROR_BADKEY));
 	return ERROR_BADKEY;
     }
 
     if (lpKeyStruct == &RootKey) {
-//    	APISTR((LF_APIRET,"RegDeleteKey: returns LONG %d\n",ERROR_BADKEY));
 	return ERROR_ACCESS_DENIED;
     }
 
     if (lpKeyStruct->lpszValue)
-//	WinFree(lpKeyStruct->lpszValue);
 	GlobalFreePtr(lpKeyStruct->lpszValue);
 
     while (lpKeyStruct->hSubKey) 
@@ -311,16 +370,28 @@ RegDeleteKey(HKEY hKey, LPCSTR lpszSubKey)
 
     DeleteAtomEx(&AtomTable,lpKeyStruct->atomKey);
 
-//    WinFree((LPSTR)lpKeyStruct);
 	GlobalFreePtr((LPSTR)lpKeyStruct);
 
-//    APISTR((LF_APIRET,"RegDeleteKey: returns LONG %d\n",ERROR_SUCCESS));
     return ERROR_SUCCESS;
 }
 
 /******************************************************************************
  *           RegSetValue   [SHELL.5]
  */
+
+/*! @brief Set the default string value of a registry key.
+
+    @param[in] hKey       Parent key handle.
+    @param[in] lpszSubKey Subkey path, or NULL for @p hKey itself.
+    @param[in] fdwType    Value type; must be REG_SZ.
+    @param[in] lpszValue  Value string, or NULL/empty to clear.
+    @param[in] cb         Size of @p lpszValue (ignored).
+
+    @return ERROR_SUCCESS or ERROR_BADKEY.
+
+    @retval ERROR_SUCCESS The value was set.
+    @retval ERROR_BADKEY  The key was invalid or not found.
+*/
 LONG WINAPI
 RegSetValue(HKEY hKey, LPCSTR lpszSubKey,
 		DWORD fdwType, LPCSTR lpszValue, DWORD cb)
@@ -333,39 +404,29 @@ RegSetValue(HKEY hKey, LPCSTR lpszSubKey,
     if (!fRegInitialized)
 	InitReg();
 
-//    APISTR((LF_APICALL,
-//	"RegSetValue(HKEY=%x,LPCSTR=%x,DWORD=%x,LPCSTR=%s,DWORD=%x)\n",
-//		hKey,lpszSubKey,fdwType,
-//		HIWORD(lpszValue)?lpszValue:"NULL",cb));
-
     if (hKey == HKEY_CLASSES_ROOT)
 	lpKeyStruct = &RootKey;
     else
 	lpKeyStruct = (LPKEYSTRUCT)hKey;
 
     if (!lpKeyStruct || !(lpKeyStruct->fOpen)) {
-//        APISTR((LF_APIRET,"RegSetValue: returns LONG %d\n",ERROR_BADKEY));
 	return ERROR_BADKEY;
     }
 
     lpSubKeyStruct = InternalFindKey(lpKeyStruct,lpszSubKey,IFK_FIND);
 
     if (!lpSubKeyStruct) {
-//        APISTR((LF_APIRET,"RegQueryKey: returns LONG %d\n",ERROR_BADKEY));
 	return ERROR_BADKEY;
     }
 
     if (lpSubKeyStruct->lpszValue)
-//	WinFree(lpSubKeyStruct->lpszValue);
 	GlobalFreePtr(lpSubKeyStruct->lpszValue);
 
     if (lpszValue && (*lpszValue != 0)) {
-//	lpSubKeyStruct->lpszValue = (LPSTR) WinMalloc(lstrlen(lpszValue)+1);
 	lpSubKeyStruct->lpszValue = (LPSTR) GlobalAllocPtr(GPTR, lstrlen(lpszValue)+1);
 	lstrcpy(lpSubKeyStruct->lpszValue,lpszValue);
     }
-    
-//    APISTR((LF_APIRET,"RegQueryKey: returns LONG %d\n",ERROR_SUCCESS));
+
     return ERROR_SUCCESS;
 }
 
@@ -380,6 +441,19 @@ RegSetValue(HKEY hKey, LPCSTR lpszSubKey,
  *    mask out the high 16 bit.  This (not so much incidentally) hopefully fixes
  *    Aldus FH4)
  */
+
+/*! @brief Retrieve the default string value of a registry key.
+
+    @param[in]  hKey       Parent key handle.
+    @param[in]  lpszSubKey Subkey path, or NULL for @p hKey itself.
+    @param[out] lpszValue  Buffer receiving the value string.
+    @param[in,out] lpcb    Size of @p lpszValue; receives copied length.
+
+    @return ERROR_SUCCESS or ERROR_BADKEY.
+
+    @retval ERROR_SUCCESS The value was retrieved.
+    @retval ERROR_BADKEY  The key was invalid or not found.
+*/
 LONG WINAPI
 RegQueryValue(HKEY hKey, LPCSTR lpszSubKey, LPSTR lpszValue, LPLONG lpcb)
 {
@@ -393,22 +467,17 @@ RegQueryValue(HKEY hKey, LPCSTR lpszSubKey, LPSTR lpszValue, LPLONG lpcb)
     if (!fRegInitialized)
 	InitReg();
 
-//    APISTR((LF_APICALL,"RegQueryValue(HKEY=%x,LPCSTR=%s,LPSTR=%x,LONG *%x)\n",
-//		hKey,(lpszSubKey)?lpszSubKey:"NULL",lpszValue,lpcb));
-
     if (hKey == HKEY_CLASSES_ROOT)
 	lpKeyStruct = &RootKey;
     else 
 	lpKeyStruct = (LPKEYSTRUCT)hKey;
 
     if (!lpKeyStruct) {
-//    	APISTR((LF_APIRET,"RegQueryKey: returns LONG %d\n",ERROR_BADKEY));
 	return ERROR_BADKEY;
     }
 
 #ifdef LATER
     if (!(lpKeyStruct->fOpen)) {
-//    	APISTR((LF_APIRET,"RegQueryKey: returns LONG %d\n",ERROR_BADKEY));
 	return ERROR_BADKEY;
     }
 #endif
@@ -417,7 +486,6 @@ RegQueryValue(HKEY hKey, LPCSTR lpszSubKey, LPSTR lpszValue, LPLONG lpcb)
     lpSubKeyStruct = InternalFindKey(lpKeyStruct,lpszSubKey,IFK_FIND);
 
     if (!lpSubKeyStruct) {
-//    	APISTR((LF_APIRET,"RegQueryKey: returns LONG %d\n",ERROR_BADKEY));
 	return ERROR_BADKEY;
     }
 
@@ -430,14 +498,26 @@ RegQueryValue(HKEY hKey, LPCSTR lpszSubKey, LPSTR lpszValue, LPLONG lpcb)
 	lpszValue[0] = '\0';
 	*lpcb = 0;
     }
-    
-//    APISTR((LF_APIRET,"RegQueryKey: returns LONG %d\n",ERROR_SUCCESS));
+
     return ERROR_SUCCESS;
 }
 
 /******************************************************************************
  *           RegEnumKey   [SHELL.7]
  */
+
+/*! @brief Enumerate the subkeys of a registry key.
+
+    @param[in]  hKey       Parent key handle.
+    @param[in]  iSubKey    Zero-based index of the subkey to retrieve.
+    @param[out] lpszBuffer Buffer receiving the subkey name.
+    @param[in]  cbBuffer   Size of @p lpszBuffer.
+
+    @return ERROR_SUCCESS or ERROR_BADKEY.
+
+    @retval ERROR_SUCCESS The subkey name was retrieved.
+    @retval ERROR_BADKEY  The key handle or index was invalid.
+*/
 LONG WINAPI
 RegEnumKey(HKEY hKey, DWORD iSubKey, LPSTR lpszBuffer, DWORD cbBuffer)
 {
@@ -450,16 +530,12 @@ RegEnumKey(HKEY hKey, DWORD iSubKey, LPSTR lpszBuffer, DWORD cbBuffer)
     if (!fRegInitialized)
 	InitReg();
 
-//    APISTR((LF_APICALL,"RegEnumKey(HKEY=%x,DWORD=%x,LPSTR=%x,DWORD=%x)\n",
-//	hKey,iSubKey,lpszBuffer,cbBuffer));
-
     if (hKey == HKEY_CLASSES_ROOT)
 	lpKeyStruct = &RootKey;
     else
 	lpKeyStruct = (LPKEYSTRUCT)hKey;
 
     if (!lpKeyStruct) {
-//    	APISTR((LF_APIRET,"RegEnumKey: returns LONG %d\n",ERROR_BADKEY));
 	return ERROR_BADKEY;
     }
 
@@ -468,7 +544,6 @@ RegEnumKey(HKEY hKey, DWORD iSubKey, LPSTR lpszBuffer, DWORD cbBuffer)
 		i++,lpKeyStruct = (LPKEYSTRUCT)lpKeyStruct->hNext);
 
     if ((i != iSubKey) || (lpKeyStruct == NULL)) {
-//    	APISTR((LF_APIRET,"RegEnumKey: returns LONG %d\n",ERROR_BADKEY));
 	return ERROR_BADKEY;
     }
 
@@ -477,7 +552,6 @@ RegEnumKey(HKEY hKey, DWORD iSubKey, LPSTR lpszBuffer, DWORD cbBuffer)
     else
 	lpszBuffer[0] = '\0';
 
-//    APISTR((LF_APIRET,"RegEnumKey: returns LONG %d\n",ERROR_SUCCESS));
     return ERROR_SUCCESS;
 }
 
@@ -513,6 +587,20 @@ RegQueryValueEx
 
 #endif
 
+/******************************************************************************
+ *           InternalFindKey [Internal]
+ */
+
+/*! @brief Find (and optionally create) a key by its backslash-separated path.
+
+    @param[in] lpKeyStruct Starting key.
+    @param[in] lpszSubKey  Path of subkeys, or NULL/empty for @p lpKeyStruct.
+    @param[in] wFlag       IFK_FIND (no create) or IFK_CREATE (create missing).
+
+    @return The target key, or NULL if not found and @p wFlag is IFK_FIND.
+
+    @retval NULL The key was not found.
+*/
 static LPKEYSTRUCT
 InternalFindKey(LPKEYSTRUCT lpKeyStruct, LPCSTR lpszSubKey, WORD wFlag)
 {
@@ -534,7 +622,7 @@ InternalFindKey(LPKEYSTRUCT lpKeyStruct, LPCSTR lpszSubKey, WORD wFlag)
 		if (wFlag == IFK_CREATE)
 		    atomSubKey = AddAtomEx(&AtomTable,ptr);
 		else
-		    return (HKEY)0L;
+		    return NULL;
 	    for (lpKeyTmp = (LPKEYSTRUCT)lpKeyStruct->hSubKey;
 			lpKeyTmp;
 			lpKeyTmp = (LPKEYSTRUCT)lpKeyTmp->hNext) {
@@ -547,7 +635,7 @@ InternalFindKey(LPKEYSTRUCT lpKeyStruct, LPCSTR lpszSubKey, WORD wFlag)
 		if (wFlag == IFK_CREATE)
 		    lpKeyStruct = InternalCreateKey(lpKeyStruct,atomSubKey);
 		else
-		    return (HKEY)0L;
+		    return NULL;
 	    lpKeyStruct->fOpen = TRUE;
 	    if (lpTmp)
 		ptr = lpTmp + 1;
@@ -558,6 +646,17 @@ InternalFindKey(LPKEYSTRUCT lpKeyStruct, LPCSTR lpszSubKey, WORD wFlag)
     return lpKeyStruct;
 }
 
+/******************************************************************************
+ *           InternalCreateKey [Internal]
+ */
+
+/*! @brief Allocate a new key and attach it as the last child of @p lpKeyStruct.
+
+    @param[in] lpKeyStruct Parent key.
+    @param[in] atomSubKey  Atom for the new key's name.
+
+    @return Pointer to the newly created KEYSTRUCT.
+*/
 static LPKEYSTRUCT
 InternalCreateKey(LPKEYSTRUCT lpKeyStruct, ATOM atomSubKey)
 {
