@@ -96,6 +96,12 @@ extern GLOBALS Globals;
 /* String length limit for REG.DAT text entries */
 #define MAX_ATOM_LEN              255
 
+/* Source: Raymond Chen, "How did registry keys work in 16-bit Windows?",
+   The Old New Thing, 2008-01-17.
+   "The registry was stored in a single file, REG.DAT, which could not
+   exceed 64KB in size." */
+#define REG_DAT_MAX_SIZE  0x10000UL
+
 void lmemcpy(void FAR * s1, void FAR * s2, unsigned length);
 int lstrnicmp(char FAR *s1, const char FAR *s2, int n);
 char FAR *lstrchr(const char FAR *s, int c);
@@ -451,6 +457,29 @@ Offset  Size    Contents
 
 */
 
-BOOL InitReg();
+/* Source: Raymond Chen, "How did registry keys work in 16-bit Windows?",
+   The Old New Thing, 2008-01-17.
+
+   InitReg is called from every public Reg* function on first use.
+   RegSaveAndUnload is called when the open-key counter reaches zero,
+   and from WEP as a safety net. Both live in Registry.c. */
+
+/*! @brief Initialise the in-memory registry.
+
+    @return TRUE on success, FALSE on failure.
+
+    @retval TRUE  Registry is ready (or was already initialised).
+    @retval FALSE Loading REG.DAT or creating ".classes" failed.
+*/
+BOOL InitReg(void);
+
+/*! @brief Save REG.DAT to disk and free the three registry globals.
+
+    @return TRUE on success, FALSE on save failure.
+
+    @retval TRUE  Saved (or there was nothing to save); globals freed.
+    @retval FALSE RegSaveFile failed; globals freed anyway.
+*/
+BOOL RegSaveAndUnload(void);
 
 #endif /* SHELL_H */

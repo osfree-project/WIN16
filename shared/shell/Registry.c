@@ -33,6 +33,19 @@
     runtime KEYSTRUCT tree: an HKEY is the index of a dirent in the
     entry table. HKEY_CLASSES_ROOT is represented by 0 or 1, exactly as
     in Win16; both values are accepted interchangeably.
+
+    Loading and unloading follow the 16-bit Windows model documented in
+    Raymond Chen, "How did registry keys work in 16-bit Windows?",
+    The Old New Thing, 2008-01-17:
+
+      - the registry is loaded lazily on the first open
+      - a running count of open keys is kept
+      - when that count reaches zero, the registry is written back to
+        disk and unloaded from memory
+      - REG.DAT cannot exceed 64KB
+
+    All REG.DAT file I/O lives here. Shell.c only calls
+    RegSaveAndUnload from WEP.
 */
 
 #include "Shell.h"
@@ -49,13 +62,27 @@
     @brief Number of bytes to reserve after each string in the text block. */
 #define REG_TEXT_NUL 1
 
+/* Source: Raymond Chen, 2008-01-17.
+   "the registry kept a running count of how many registry keys were
+   open. When the matching number of RegCloseKey calls were made, the
+   registry was written back to disk and unloaded from memory." */
+/*! @brief Number of outstanding RegOpenKey / RegCreateKey handles. */
+static int g_OpenKeyCount = 0;
+
+/* Source: Raymond Chen, 2008-01-17.
+   "even if you reopened the key and got the same numeric value back,
+   it nevertheless increased the 'number of open registry keys' counter"
+
+   While parsing setup.reg at InitReg time we call the public RegXxx
+   functions internally; those calls must not affect the counter. */
+/*! @brief TRUE while ReadSetupReg is running. */
+static BOOL g_LoadingSetupReg = FALSE;
+
 /* ------------------------------------------------------------------ */
 /* Forward declarations                                                */
 /* ------------------------------------------------------------------ */
 
 /*! @brief Allocate a new dirent and attach it to a parent.
-
-    Defined below.
 
     @param[in] parentHkey Parent key (0/1 for root, or dirent index).
     @param[in] nameAtom   DATTEXT index for the new key's name.
@@ -63,6 +90,52 @@
     @return New dirent's HKEY, or 0 on failure.
 */
 static HKEY InternalCreateKey(HKEY parentHkey, ATOM nameAtom);
+
+/*! @brief Load REG.DAT or create it from the embedded resource.
+
+    Source: Raymond Chen, 2008-01-17 ("The first program to call
+    RegOpenKey caused the registry to be loaded").
+
+    @return TRUE on success, FALSE on failure.
+*/
+static BOOL EnsureLoaded(void);
+
+/*! @brief Load REG.DAT from an explicit path into the three globals.
+
+    @param[in] path Path to REG.DAT.
+
+    @return TRUE on success, FALSE on any read or validation error.
+
+    @retval TRUE  REG.DAT was read successfully into the three global blocks.
+    @retval FALSE File missing, malformed, or allocation failed.
+*/
+static BOOL RegLoadFile(LPCSTR path);
+
+/*! @brief Write the three registry globals to an explicit path.
+
+    @param[in] path Destination path.
+
+    @return TRUE on success, FALSE on write failure.
+
+    @retval TRUE  REG.DAT was written (or there was nothing to save).
+    @retval FALSE Open or write failed.
+*/
+static BOOL RegSaveFile(LPCSTR path);
+
+/*! @brief Write the embedded resource REG.DAT image to an explicit path.
+
+    Source: note.txt, "Initialization of REG.DAT":
+    "Initial content of REG.DAT taken from Resource type=100 id=100.
+    If REG.DAT doesn't exists, then it created from resource."
+
+    @param[in] path Destination path.
+
+    @return TRUE on success, FALSE on failure.
+
+    @retval TRUE  Resource was copied to disk.
+    @retval FALSE Resource missing, empty, or write failed.
+*/
+static BOOL CreateRegDatFromResource(LPCSTR path);
 
 /* ------------------------------------------------------------------ */
 /* Lock helpers                                                        */
@@ -119,8 +192,8 @@ static void RegUnlockText(void)
 
 /*! @brief Check whether @p hkey denotes HKEY_CLASSES_ROOT.
 
-    In Win16, 0 and 1 both identify HKEY_CLASSES_ROOT. This helper
-    accepts both spellings.
+    Source: note.txt: "0 or 1 is a value of HKEY_CLASSES_ROOT under
+    Windows 3.x."
 
     @param[in] hkey Key handle to test.
 
@@ -133,8 +206,8 @@ static int IsRootKey(HKEY hkey)
 
 /*! @brief Return the dirent index of the root key.
 
-    The root dirent is stored in tab[0].Sub. Returns 0 if the root
-    dirent is not yet created.
+    Source: note.txt: "tabent[0] is a root index. The second word has
+    the index of the root of the directory."
 
     @param[in] tab Locked entry table.
 
@@ -146,14 +219,284 @@ static WORD GetRootDirent(LPDATNAVIGATION tab)
 }
 
 /* ------------------------------------------------------------------ */
+/* REG.DAT file I/O                                                    */
+/* ------------------------------------------------------------------ */
+
+/*! @brief Load REG.DAT from an explicit path into the three globals.
+
+    @param[in] path Path to REG.DAT.
+
+    @return TRUE on success, FALSE on any read or validation error.
+
+    @retval TRUE  REG.DAT was read successfully into the three global blocks.
+    @retval FALSE File missing, malformed, or allocation failed.
+*/
+static BOOL RegLoadFile(LPCSTR path)
+{
+    DATHEADER hdr;
+    HFILE hf;
+    DWORD dwEntriesSize;
+    DWORD dwTextSize;
+    LPSTR lp;
+
+    hf = _lopen(path, 0);
+    if (hf == HFILE_ERROR)
+        return FALSE;
+
+    if (_lread(hf, (LPSTR)&hdr, sizeof(hdr)) != sizeof(hdr) ||
+        memcmp(hdr.szSignature, DATMAGIC, sizeof(hdr.szSignature)) != 0 ||
+        hdr.dwEntries == 0 || hdr.sizeDataBlock == 0 || hdr.hashsize == 0)
+    {
+        _lclose(hf);
+        return FALSE;
+    }
+
+    dwEntriesSize = hdr.dwEntries * sizeof(DATNAVIGATION);
+    dwTextSize    = hdr.sizeDataBlock;
+
+    Globals.Registry    = GlobalAlloc(GMEM_MOVEABLE | GMEM_LOWER, sizeof(DATHEADER));
+    Globals.EntryTable  = GlobalAlloc(GMEM_MOVEABLE | GMEM_LOWER, dwEntriesSize);
+    Globals.StringTable = GlobalAlloc(GMEM_MOVEABLE | GMEM_LOWER, dwTextSize);
+
+    if (!Globals.Registry || !Globals.EntryTable || !Globals.StringTable)
+        goto fail;
+
+    lp = GlobalLock(Globals.Registry);
+    if (!lp) goto fail;
+    lmemcpy(lp, &hdr, sizeof(DATHEADER));
+    GlobalUnlock(Globals.Registry);
+
+    _llseek(hf, hdr.unk1, 0);
+    lp = GlobalLock(Globals.EntryTable);
+    if (!lp) goto fail;
+    _lread(hf, lp, dwEntriesSize);
+    GlobalUnlock(Globals.EntryTable);
+
+    _llseek(hf, hdr.offsetDataBlock, 0);
+    lp = GlobalLock(Globals.StringTable);
+    if (!lp) goto fail;
+    _lread(hf, lp, dwTextSize);
+    GlobalUnlock(Globals.StringTable);
+
+    _lclose(hf);
+    return TRUE;
+
+fail:
+    if (Globals.Registry)    { GlobalFree(Globals.Registry);    Globals.Registry    = 0; }
+    if (Globals.EntryTable)  { GlobalFree(Globals.EntryTable);  Globals.EntryTable  = 0; }
+    if (Globals.StringTable) { GlobalFree(Globals.StringTable); Globals.StringTable = 0; }
+    _lclose(hf);
+    return FALSE;
+}
+
+/*! @brief Write the three registry globals to an explicit path.
+
+    @param[in] path Destination path.
+
+    @return TRUE on success, FALSE on write failure.
+
+    @retval TRUE  REG.DAT was written (or there was nothing to save).
+    @retval FALSE Open or write failed.
+*/
+static BOOL RegSaveFile(LPCSTR path)
+{
+    DATHEADER hdr;
+    HFILE hfRegistry;
+    LPSTR lpRegistry;
+    DWORD dwEntriesSize;
+    DWORD dwTextSize;
+
+    if (!Globals.Registry || !Globals.EntryTable || !Globals.StringTable)
+        return TRUE;
+
+    lpRegistry = GlobalLock(Globals.Registry);
+    if (!lpRegistry)
+        return FALSE;
+    lmemcpy(&hdr, lpRegistry, sizeof(DATHEADER));
+    GlobalUnlock(Globals.Registry);
+
+    dwEntriesSize = hdr.dwEntries * sizeof(DATNAVIGATION);
+    dwTextSize    = hdr.sizeDataBlock;
+
+    hfRegistry = _lcreat(path, 0);
+    if (hfRegistry == HFILE_ERROR)
+        return FALSE;
+
+    _lwrite(hfRegistry, (LPSTR)&hdr, sizeof(DATHEADER));
+
+    if (dwEntriesSize)
+    {
+        lpRegistry = GlobalLock(Globals.EntryTable);
+        if (lpRegistry)
+        {
+            _lwrite(hfRegistry, lpRegistry, dwEntriesSize);
+            GlobalUnlock(Globals.EntryTable);
+        }
+    }
+
+    if (dwTextSize)
+    {
+        lpRegistry = GlobalLock(Globals.StringTable);
+        if (lpRegistry)
+        {
+            _lwrite(hfRegistry, lpRegistry, dwTextSize);
+            GlobalUnlock(Globals.StringTable);
+        }
+    }
+
+    _lclose(hfRegistry);
+    return TRUE;
+}
+
+/*! @brief Write the embedded resource REG.DAT image to an explicit path.
+
+    Source: note.txt, "Initialization of REG.DAT":
+    "Initial content of REG.DAT taken from Resource type=100 id=100.
+    If REG.DAT doesn't exists, then it created from resource."
+
+    @param[in] path Destination path.
+
+    @return TRUE on success, FALSE on failure.
+
+    @retval TRUE  Resource was copied to disk.
+    @retval FALSE Resource missing, empty, or write failed.
+*/
+static BOOL CreateRegDatFromResource(LPCSTR path)
+{
+    HRSRC hrsrc;
+    HGLOBAL hres;
+    DWORD size;
+    LPSTR lp;
+    HFILE hf;
+    BOOL result = FALSE;
+
+    hrsrc = FindResource(Globals.hInstance, MAKEINTRESOURCE(100), MAKEINTRESOURCE(100));
+    if (!hrsrc)
+        return FALSE;
+
+    hres = LoadResource(Globals.hInstance, hrsrc);
+    if (!hres)
+        return FALSE;
+
+    size = SizeofResource(Globals.hInstance, hrsrc);
+    if (!size)
+    {
+        FreeResource(hres);
+        return FALSE;
+    }
+
+    lp = LockResource(hrsrc);
+    if (!lp)
+    {
+        FreeResource(hres);
+        return FALSE;
+    }
+
+    hf = _lcreat(path, 0);
+    if (hf != HFILE_ERROR)
+    {
+        if (_lwrite(hf, lp, size) != HFILE_ERROR)
+            result = TRUE;
+        _lclose(hf);
+    }
+
+    UnlockResource(hres);
+    FreeResource(hres);
+    return result;
+}
+
+/* ------------------------------------------------------------------ */
+/* Load / unload                                                       */
+/* ------------------------------------------------------------------ */
+
+/*! @brief Load REG.DAT or create it from the embedded resource.
+
+    Source: Raymond Chen, 2008-01-17 ("The first program to call
+    RegOpenKey caused the registry to be loaded"). Called from InitReg
+    on first use; does nothing if the three globals are already loaded.
+
+    @return TRUE on success, FALSE on failure.
+
+    @retval TRUE  Registry is loaded into the three globals.
+    @retval FALSE Loading REG.DAT (or creating it from the resource)
+                  failed.
+*/
+static BOOL EnsureLoaded(void)
+{
+    char szPath[MAX_PATH];
+    char szFilename[MAX_PATH];
+
+    if (Globals.Registry)
+        return TRUE;
+
+    if (!GetWindowsDirectory(szPath, sizeof(szPath)) ||
+        !LoadString(Globals.hInstance, IDS_REGISTRY, szFilename, sizeof(szFilename)))
+        return FALSE;
+
+    if (szPath[lstrlen(szPath)-1] != '\\') lstrcat(szPath, "\\");
+    lstrcat(szPath, szFilename);
+
+    /* Source: note.txt, "Initialization of REG.DAT": if REG.DAT does
+       not exist, create it from resource type=100 id=100 first. */
+    if (!RegLoadFile(szPath)) {
+        if (!CreateRegDatFromResource(szPath)) return FALSE;
+        if (!RegLoadFile(szPath)) return FALSE;
+    }
+    return TRUE;
+}
+
+/*! @brief Save REG.DAT to disk and free the three registry globals.
+
+    Source: Raymond Chen, 2008-01-17 ("When the matching number of
+    RegCloseKey calls were made, the registry was written back to disk
+    and unloaded from memory"). Called when the open-key counter
+    reaches zero, and from WEP as a safety net.
+
+    @return TRUE on success, FALSE on save failure.
+
+    @retval TRUE  Saved (or there was nothing to save); globals freed.
+    @retval FALSE RegSaveFile failed; globals freed anyway.
+*/
+BOOL RegSaveAndUnload(void)
+{
+    char szPath[MAX_PATH];
+    char szFilename[MAX_PATH];
+    BOOL saved = TRUE;
+
+    if (!Globals.Registry) {
+        fRegInitialized = FALSE;
+        return TRUE;
+    }
+
+    if (GetWindowsDirectory(szPath, sizeof(szPath)) &&
+        LoadString(Globals.hInstance, IDS_REGISTRY, szFilename, sizeof(szFilename)))
+    {
+        if (szPath[lstrlen(szPath)-1] != '\\') lstrcat(szPath, "\\");
+        lstrcat(szPath, szFilename);
+        saved = RegSaveFile(szPath);
+    }
+
+    GlobalFree(Globals.Registry);    Globals.Registry    = 0;
+    GlobalFree(Globals.EntryTable);  Globals.EntryTable  = 0;
+    GlobalFree(Globals.StringTable); Globals.StringTable = 0;
+    fRegInitialized = FALSE;
+    g_OpenKeyCount  = 0;
+
+    return saved;
+}
+
+/* ------------------------------------------------------------------ */
 /* Slot management                                                     */
 /* ------------------------------------------------------------------ */
 
 /*! @brief Allocate a slot in the entry table.
 
+    Source for the 64KB check: Raymond Chen, 2008-01-17.
+
     @return Index of the new slot, or 0 on failure.
 
-    @retval 0 Out of memory or GlobalReAlloc failed.
+    @retval 0 Out of memory, GlobalReAlloc failed, or the 64KB limit
+              would be exceeded.
 */
 static WORD RegAllocSlot(void)
 {
@@ -177,6 +520,14 @@ static WORD RegAllocSlot(void)
 
     idx = (WORD)hdr->dwEntries;
     newDwEntries = hdr->dwEntries + 1;
+
+    /* Source: Raymond Chen, 2008-01-17, "could not exceed 64KB". */
+    if ((DWORD)hdr->unk1 + newDwEntries * sizeof(DATNAVIGATION)
+        + hdr->sizeDataBlock > REG_DAT_MAX_SIZE) {
+        RegUnlockHdr();
+        return 0;
+    }
+
     hdr->dwEntries = newDwEntries;
     hdr->offsetDataBlock = hdr->unk1 + newDwEntries * sizeof(DATNAVIGATION);
     RegUnlockHdr();
@@ -223,6 +574,11 @@ static void RegFreeSlot(WORD idx)
 /* ------------------------------------------------------------------ */
 
 /*! @brief Find a string in the REG.DAT text block.
+
+    Source for hash: note.txt "hashindex=sum(toupper(s)) % hashsize",
+    confirmed against a real REG.DAT (.classes -> 0x11 with hashsize 37).
+    Source for the circular chain: note.txt "Data with the same hash
+    value are on a circular list".
 
     @param[in] str NUL-terminated string.
 
@@ -273,11 +629,19 @@ static ATOM RegFindString(LPCSTR str)
 
 /*! @brief Add a string to the REG.DAT text block, or bump RefCount.
 
+    Source for the prefix word: note.txt "Entries in text table are
+    preceded by a word at offset-2. This word has the value
+    (2*index)+1". Source for the no-NUL strings: note.txt "Following
+    the word, there are N bytes of data, as per the keyent/valent
+    entry length", confirmed against a real REG.DAT dump.
+    Source for the 64KB check: Raymond Chen, 2008-01-17.
+
     @param[in] str NUL-terminated string.
 
     @return DATTEXT index on success, 0 on failure.
 
-    @retval 0 Out of memory or the string was too long.
+    @retval 0 Out of memory, too long, or the 64KB limit would be
+              exceeded.
 */
 static ATOM RegAddString(LPCSTR str)
 {
@@ -314,6 +678,14 @@ static ATOM RegAddString(LPCSTR str)
     if (!hdr) { RegFreeSlot(new_idx); return 0; }
     old_size = hdr->sizeDataBlock;
     new_size = old_size + 2 + len + REG_TEXT_NUL;
+
+    /* Source: Raymond Chen, 2008-01-17, "could not exceed 64KB". */
+    if ((DWORD)hdr->unk1 + hdr->dwEntries * sizeof(DATNAVIGATION)
+        + new_size > REG_DAT_MAX_SIZE) {
+        RegUnlockHdr();
+        RegFreeSlot(new_idx);
+        return 0;
+    }
     RegUnlockHdr();
 
     if (!GlobalReAlloc(Globals.StringTable, new_size, GMEM_MOVEABLE)) {
@@ -401,9 +773,6 @@ static UINT RegGetString(ATOM atom, LPSTR buf, int count)
 
 /*! @brief Release one reference to a DATTEXT record.
 
-    If RefCount drops to zero, the slot is removed from its hash chain
-    and returned to the free list.
-
     @param[in] atom DATTEXT index.
 */
 static void RegDelString(ATOM atom)
@@ -476,8 +845,7 @@ static void RegDelString(ATOM atom)
     @param[in] lpszSubKey Backslash-separated path, or NULL/empty.
     @param[in] wFlag      IFK_FIND (no create) or IFK_CREATE.
 
-    @return Final HKEY (dirent index, or 0/1 for root), or 0 if not
-            found and @p wFlag is IFK_FIND.
+    @return Final HKEY, or 0 if not found and @p wFlag is IFK_FIND.
 
     @retval 0 The path was not found or could not be created.
 */
@@ -630,6 +998,7 @@ static void ReadSetupReg(void)
             if (RegCreateKey(0, ptr, &hk) == ERROR_SUCCESS) {
                 ptr += j + 3;
                 RegSetValue(hk, NULL, REG_SZ, ptr, lstrlen(ptr));
+                RegCloseKey(hk);
             }
         }
         ptr = &lpBuffer[i+1];
@@ -639,13 +1008,14 @@ static void ReadSetupReg(void)
 
 /*! @brief Initialise the in-memory registry.
 
-    Ensures the root dirent (".classes") exists, then loads setup.reg.
-    Safe to call multiple times.
+    Source: Raymond Chen, 2008-01-17 ("The first program to call
+    RegOpenKey caused the registry to be loaded"). InitReg is therefore
+    called from every public Reg* function on first use.
 
     @return TRUE on success, FALSE on failure.
 
     @retval TRUE  Registry is ready (or was already initialised).
-    @retval FALSE Allocation of the root dirent or of ".classes" failed.
+    @retval FALSE Loading REG.DAT or creating ".classes" failed.
 */
 BOOL InitReg(void)
 {
@@ -655,10 +1025,12 @@ BOOL InitReg(void)
     WORD rootIdx;
 
     if (fRegInitialized) return TRUE;
-    fRegInitialized = TRUE;
 
-    if (!Globals.Registry || !Globals.EntryTable || !Globals.StringTable)
-        return TRUE;
+    if (!Globals.Registry) {
+        if (!EnsureLoaded()) return FALSE;
+    }
+
+    fRegInitialized = TRUE;
 
     hdr = RegLockHdr();
     if (!hdr) return FALSE;
@@ -668,7 +1040,9 @@ BOOL InitReg(void)
     if (tab[0].Sub != 0) {
         RegUnlockTab();
         RegUnlockHdr();
+        g_LoadingSetupReg = TRUE;
         ReadSetupReg();
+        g_LoadingSetupReg = FALSE;
         return TRUE;
     }
     RegUnlockTab();
@@ -694,7 +1068,9 @@ BOOL InitReg(void)
         RegUnlockHdr();
     }
 
+    g_LoadingSetupReg = TRUE;
     ReadSetupReg();
+    g_LoadingSetupReg = FALSE;
     return TRUE;
 }
 
@@ -703,6 +1079,11 @@ BOOL InitReg(void)
  */
 
 /*! @brief Open an existing registry key.
+
+    Source: Raymond Chen, 2008-01-17. On success the open-key counter is
+    incremented; the caller must eventually call RegCloseKey for each
+    successful RegOpenKey, even when lpSubKey was empty and the same
+    numeric handle was returned.
 
     @param[in]  hKey       Parent key handle.
     @param[in]  lpszSubKey Subkey path, or NULL/empty for @p hKey itself.
@@ -717,12 +1098,23 @@ LONG WINAPI
 RegOpenKey(HKEY hKey, LPCSTR lpszSubKey, PHKEY phkResult)
 {
     HKEY found;
+    BOOL was_unloaded;
 
     if (!phkResult) return ERROR_BADKEY;
-    if (!fRegInitialized) InitReg();
+
+    was_unloaded = (Globals.Registry == 0);
+    if (!fRegInitialized) {
+        if (!InitReg()) return ERROR_BADKEY;
+    }
 
     found = InternalFindKey(hKey, lpszSubKey, IFK_FIND);
-    if (found) { *phkResult = found; return ERROR_SUCCESS; }
+    if (found) {
+        *phkResult = found;
+        if (!g_LoadingSetupReg) g_OpenKeyCount++;
+        return ERROR_SUCCESS;
+    }
+
+    if (was_unloaded && g_OpenKeyCount == 0) RegSaveAndUnload();
     *phkResult = 0;
     return ERROR_BADKEY;
 }
@@ -732,6 +1124,9 @@ RegOpenKey(HKEY hKey, LPCSTR lpszSubKey, PHKEY phkResult)
  */
 
 /*! @brief Create or open a registry key.
+
+    Source: Raymond Chen, 2008-01-17 (same counter semantics as
+    RegOpenKey).
 
     @param[in]  hKey       Parent key handle.
     @param[in]  lpszSubKey Subkey path to create.
@@ -746,12 +1141,23 @@ LONG WINAPI
 RegCreateKey(HKEY hKey, LPCSTR lpszSubKey, PHKEY phkResult)
 {
     HKEY found;
+    BOOL was_unloaded;
 
     if (!phkResult) return ERROR_BADKEY;
-    if (!fRegInitialized) InitReg();
+
+    was_unloaded = (Globals.Registry == 0);
+    if (!fRegInitialized) {
+        if (!InitReg()) return ERROR_BADKEY;
+    }
 
     found = InternalFindKey(hKey, lpszSubKey, IFK_CREATE);
-    if (found) { *phkResult = found; return ERROR_SUCCESS; }
+    if (found) {
+        *phkResult = found;
+        if (!g_LoadingSetupReg) g_OpenKeyCount++;
+        return ERROR_SUCCESS;
+    }
+
+    if (was_unloaded && g_OpenKeyCount == 0) RegSaveAndUnload();
     *phkResult = 0;
     return ERROR_BADKEY;
 }
@@ -761,6 +1167,11 @@ RegCreateKey(HKEY hKey, LPCSTR lpszSubKey, PHKEY phkResult)
  */
 
 /*! @brief Close a registry key handle.
+
+    Source: Raymond Chen, 2008-01-17 ("When the matching number of
+    RegCloseKey calls were made, the registry was written back to disk
+    and unloaded from memory"). RegCloseKey on the root also decrements
+    the counter, because RegOpenKey on root incremented it.
 
     @param[in] hKey Key handle to close.
 
@@ -774,8 +1185,15 @@ RegCloseKey(HKEY hKey)
 {
     LPDATHEADER hdr;
 
-    if (!fRegInitialized) InitReg();
-    if (IsRootKey(hKey)) return ERROR_SUCCESS;
+    if (IsRootKey(hKey)) {
+        if (g_OpenKeyCount > 0) {
+            g_OpenKeyCount--;
+            if (g_OpenKeyCount == 0) RegSaveAndUnload();
+        }
+        return ERROR_SUCCESS;
+    }
+
+    if (!fRegInitialized) return ERROR_BADKEY;
 
     hdr = RegLockHdr();
     if (!hdr) return ERROR_BADKEY;
@@ -784,6 +1202,12 @@ RegCloseKey(HKEY hKey)
         return ERROR_BADKEY;
     }
     RegUnlockHdr();
+
+    if (g_OpenKeyCount > 0) {
+        g_OpenKeyCount--;
+        if (g_OpenKeyCount == 0) RegSaveAndUnload();
+    }
+
     return ERROR_SUCCESS;
 }
 
