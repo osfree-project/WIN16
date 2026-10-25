@@ -6,6 +6,7 @@
 DIRS=applets
 
 DESCRIPTION = Janus Control Panel
+TARGET_PACKAGE = DISK02
 EXPORTS = MainWndProc
 
 # defines additional options for C compiler
