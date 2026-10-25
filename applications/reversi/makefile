@@ -4,6 +4,7 @@
 #
 
 DESCRIPTION = Janus Reversi
+TARGET_PACKAGE = DISK02
 
 EXPORTS =WndProc, dpProdInfo, dpEve
 

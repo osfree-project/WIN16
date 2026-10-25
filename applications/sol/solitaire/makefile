@@ -7,6 +7,7 @@ PROJ  = calc1
 PROJ1 = calc
 TRGT = $(PROJ1).exe
 DESC = Windows Calculator
+TARGET_PACKAGE = DISK02
 srcfiles = $(p)solcreate$(e) $(p)solgame$(e) $(p)solundo$(e) $(p)solitaire$(e)
 
 # defines additional options for C compiler

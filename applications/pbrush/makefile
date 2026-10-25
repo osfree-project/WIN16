@@ -5,6 +5,7 @@
 
 DESCRIPTION = Janus Paint
 TARGET_VERSION = 310
+TARGET_PACKAGE = DISK02
 
 EXPORTS = MainWndProc, CanvasWndProc, PaletteWndProc, TextEdit_SubclassProc, OpenDlgProc, SaveDlgProc, ColorDlgProc, ToolboxWndProc
 

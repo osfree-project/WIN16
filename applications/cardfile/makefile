@@ -4,6 +4,7 @@
 #
 
 DESCRIPTION = Janus Cardfile
+TARGET_PACKAGE = DISK02
 EXPORTS = FileOpenDlgProc, SearchDlgProc, AddDlgProc, IndexDlgProc, AboutDlgProc
 
 !include $(%ROOT)tools/mk/build.mk
