@@ -38,6 +38,16 @@
 #define MAX_PATH FILENAME_MAX
 #endif
 
+/* Target Windows version. Used by Exec.c to choose between the
+   Windows 3.1 REG.DAT lookup and the Windows 3.0 win.ini
+   [extensions] fallback.
+
+   Source: WINVER macro, Microsoft Windows SDK.
+   Overridable via -DWINVER=0x0300 on the compiler command line. */
+#ifndef WINVER
+#define WINVER 0x030A
+#endif
+
 #include <windows.h>
 #include <shellapi.h>
 
@@ -101,6 +111,31 @@ extern GLOBALS Globals;
    "The registry was stored in a single file, REG.DAT, which could not
    exceed 64KB in size." */
 #define REG_DAT_MAX_SIZE  0x10000UL
+
+/* ShellExecute / FindExecutable error codes.
+
+   Source: Microsoft Windows 3.1 SDK documentation,
+   ShellExecute() and FindExecutable(). These overlap with the WinExec
+   error codes: WinExec errors 0..21 are already SE_ERR_* compatible,
+   so ShellExecute passes them through unchanged. SE_ERR_NOASSOC (31)
+   is defined in <shellapi.h> and is not repeated here. */
+
+/*! @def SE_ERR_FNF
+    @brief File was not found. */
+#define SE_ERR_FNF              2
+/*! @def SE_ERR_PNF
+    @brief Path was not found. */
+#define SE_ERR_PNF              3
+/*! @def SE_ERR_ACCESSDENIED
+    @brief Attempt was made to dynamically link to a task, or there
+           was a sharing or network-protection error. */
+#define SE_ERR_ACCESSDENIED     5
+/*! @def SE_ERR_OOM
+    @brief Insufficient memory to start the application. */
+#define SE_ERR_OOM              8
+/*! @def SE_ERR_DLLNOTFOUND
+    @brief A required DLL was not found. */
+#define SE_ERR_DLLNOTFOUND     32
 
 void lmemcpy(void FAR * s1, void FAR * s2, unsigned length);
 int lstrnicmp(char FAR *s1, const char FAR *s2, int n);
@@ -171,8 +206,6 @@ BOOL CALLBACK AboutDlgProc(HWND, UINT, WPARAM, LPARAM);
 
 
 #define AnsiUpperChar(c) ((char)AnsiUpper((LPSTR)(unsigned char)(c)))
-
-#define SE_ERR_FNF 3
 
 #define RSH_DEREGISTER          0
 #define RSH_REGISTER            1

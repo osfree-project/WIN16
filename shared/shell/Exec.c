@@ -26,48 +26,46 @@
  */
 
 /*! @file Exec.c
-    @brief ShellExecute, FindExecutable and executable search helpers.
+    @brief ShellExecute and FindExecutable.
+
+    Windows version handling (see WINVER in Shell.h):
+
+      - WINVER >= 0x030A (Windows 3.1+): associations live in REG.DAT:
+            HKEY_CLASSES_ROOT\\.ext                 -> class name
+            HKEY_CLASSES_ROOT\\<class>\\shell\\<verb>\\command
+                                                    -> "cmd %1 ..."
+        Source: note.txt (REG.DAT layout) and the Windows 3.1 SDK
+        documentation of ShellExecute and FindExecutable.
+
+      - WINVER < 0x030A (Windows 3.0): associations live in
+        win.ini [extensions]:
+            [extensions]
+            txt=notepad.exe ^.txt
+            bmp=pbrush.exe ^.bmp /p
+        where '^' marks the placeholder for the file name, and the
+        bytes after "^.ext" are appended unchanged.
+        Source: Windows 3.0 SDK, WIN.INI file documentation.
+
+    ShellExecute returns the HINSTANCE of the launched application
+    (>32) on success, or a WinExec-style error code (<=32) on failure.
+    WinExec error codes 0..21 are part of the SE_ERR_* contract and
+    are passed through unchanged. SE_ERR_NOASSOC (31) is returned
+    when there is no association for the extension.
+
+    For executable files (.exe / .com / .bat / .pif) the registry and
+    win.ini are bypassed, and the file is passed to WinExec()
+    directly, concatenated with lpszParams. Source: Windows 3.1 SDK,
+    ShellExecute(): "If it is an executable file, this function opens
+    it, even if the string 'print' is pointed to by lpszOp."
 */
 
 #include "Shell.h"
 
 /*************************************************************************
- * ShellExecute	[SHELL.20]
- *
+ * Internal helpers
  */
 
-/*! @brief Launch an executable via WinExec().
-
-    @param[in] hWnd        Parent window handle (unused).
-    @param[in] lpOperation Operation verb (unused; WinExec only opens).
-    @param[in] lpFile      Path of the executable to launch.
-    @param[in] lpParameters Command-line parameters (unused).
-    @param[in] lpDirectory Working directory (unused).
-    @param[in] nShowCmd    Show command passed to WinExec().
-
-    @return Instance handle of the launched application, as returned by
-            WinExec(); an SE_ERR_* value less than 32 on failure.
-*/
-HINSTANCE WINAPI ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile,
-		LPCSTR lpParameters, LPCSTR lpDirectory, int nShowCmd)
-{
-    HINSTANCE hInst;
-    //APISTR((LF_APICALL,
-      //"ShellExecute(HWND=%x,LPCSTR=%x,LPCSTR=%s,LPCSTR=%x,LPCSTR=%s,int=%d)\n",
-	//hWnd,lpOperation,lpFile,lpParameters,lpDirectory,nShowCmd));
-	MessageBox(0, "ShellExecute", "ShellExecute", MB_OK);
-
-    hInst = WinExec(lpFile,nShowCmd);
-    //APISTR((LF_APIRET,"ShellExecute: returns HINSTANCE %x\n",hInst));
-    return hInst;
-}
-
-
 /*! @brief Locate a file along %PATH% and copy the resolved path out.
-
-    @p filename is far (LPCSTR) while _searchenv() expects a near string;
-    the name is copied into a near buffer first. The result is copied
-    into @p fullpath with truncation, so a small buffer is safe.
 
     @param[in]  filename Far string with the file name to search for.
     @param[out] fullpath Near output buffer receiving the resolved path.
@@ -81,7 +79,7 @@ HINSTANCE WINAPI ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile,
 static BOOL searchpath(LPCSTR filename, char *fullpath, UINT size)
 {
     static char searchenv_buf[_MAX_PATH];
-    char        nearpath[_MAX_PATH];
+    char        nearpath[MAX_PATH];
 
     if (!fullpath || size < 2) return FALSE;
     fullpath[0] = '\0';
@@ -95,297 +93,517 @@ static BOOL searchpath(LPCSTR filename, char *fullpath, UINT size)
     return TRUE;
 }
 
+/*! @brief Find the extension (including the leading dot) of a file.
+
+    Only the last '.' after the last backslash is treated as the
+    extension separator, so "C:\\a.b\\c" has no extension.
+
+    @param[in] nearfile Near string with the file path.
+
+    @return Pointer to the dot, or NULL if the file has no extension.
+
+    @retval NULL The file has no extension.
+*/
+static char *FindExtension(char *nearfile)
+{
+    char *p = NULL;
+    char *q;
+
+    for (q = nearfile; *q; q++) {
+        if (*q == '\\') p = NULL;
+        else if (*q == '.') p = q;
+    }
+    return p;
+}
+
+/*! @brief Extract the first token (the executable path) from a command.
+
+    Handles the two documented forms:
+        "C:\\Program Files\\foo.exe" %1
+        notepad.exe %1
+
+    @param[in,out] command Command line. On return, the first token is
+                           NUL-terminated in place.
+    @param[out]    exe     Near buffer receiving the executable path.
+    @param[in]     size    Size of @p exe in bytes.
+
+    @return TRUE on success, FALSE if the command is empty or has an
+            unbalanced quotation mark.
+
+    @retval FALSE The command is empty or has an unbalanced quotation
+                  mark.
+*/
+static BOOL ExtractFirstToken(char *command, char *exe, int size)
+{
+    char *p = command;
+    char *q;
+
+    while (*p == ' ' || *p == '\t') p++;
+
+    if (*p == '"') {
+        p++;
+        q = strchr(p, '"');
+        if (!q) return FALSE;
+        *q = '\0';
+    } else {
+        q = p;
+        while (*q && *q != ' ' && *q != '\t') q++;
+        *q = '\0';
+    }
+
+    if (!*p) return FALSE;
+
+    lstrcpyn(exe, p, size);
+    return TRUE;
+}
+
+/*! @brief Copy @p name to @p out, quoting it if it contains a space.
+
+    WinExec parses the command line and honours double quotes, so a path
+    like "C:\\My Files\\a.txt" must be quoted.
+
+    @param[out] out   Destination buffer.
+    @param[in]  size  Size of @p out in bytes.
+    @param[in]  name  Near path to copy.
+*/
+static void AppendQuoted(char *out, int size, char *name)
+{
+    BOOL spaces = (lstrchr(name, ' ') != NULL);
+
+    out[0] = '\0';
+    if (spaces) lstrcat(out, "\"");
+    lstrcat(out, name);
+    if (spaces) lstrcat(out, "\"");
+    (void)size;
+}
 
 /*************************************************************************
- *	SHELL_FindExecutable [Internal]
- *
- * Utility for code sharing between FindExecutable and ShellExecute
- * in:
- *      lpFile the name of a file
- *      lpVerb the operation on it (open)
- * out:
- *      lpResult a buffer, big enough :-(, to store the command to do the
- *              operation on the file
- *      key a buffer, big enough, to get the key name to do actually the
- *              command (it'll be used afterwards for more information
- *              on the operation)
- *
- * 1. Filename is empty?
- * 2. File name is executable?
- * 3. Executable found?
- * 4. Find association
- * 5. Find assicoated executable
+ * Windows 3.1+ : REG.DAT lookup
  */
 
-/*! @brief Find the executable associated with a file by extension.
+#if WINVER >= 0x030A
 
-    Checks win.ini [windows]/programs and [extensions] for the file's
-    extension and writes the resulting command line into @p lpResult.
+/*! @brief Resolve a class name for a file extension from REG.DAT.
 
-    @param[in]  lpPath    Current working directory (unused).
-    @param[in]  lpFile    Path of the file whose association to resolve.
-    @param[in]  lpVerb    Operation verb (e.g. "open"; unused here).
-    @param[out] lpResult  Buffer receiving the resolved command or path.
-    @param[in]  resultLen Size of @p lpResult (currently unused).
+    Source: note.txt and the Windows 3.1 registry layout.
+    HKEY_CLASSES_ROOT\\.ext has the class name as the default value.
 
-    @return An SE_ERR_* value, 33 on success, or ERROR_INVALID_PARAMETER.
+    @param[in]  ext        Far string, the extension including the dot.
+    @param[out] classname  Near output buffer.
+    @param[in]  size       Size of @p classname in bytes.
 
-    @retval ERROR_INVALID_PARAMETER @p lpResult was NULL.
-    @retval SE_ERR_FNF              The file (or its association) was not found.
-    @retval SE_ERR_NOASSOC          The file has no usable extension or association.
-    @retval 33                      Success; greater than 32 by convention.
+    @return TRUE on success, FALSE on failure.
+
+    @retval TRUE  A class name was found.
+    @retval FALSE REG.DAT has no association for @p ext.
 */
-static UINT SHELL_FindExecutable(LPCSTR lpPath, LPCSTR lpFile, LPCSTR lpVerb,
-                                 LPSTR lpResult, int resultLen)
+static BOOL RegLookupClass(LPCSTR ext, char *classname, int size)
 {
-    LPSTR extension = NULL; /* pointer to file extension */
-    char classname[256];     /* registry name for this file type */
-    LONG  classnamelen = sizeof(classname); /* length of above */
-    char command[1024];     /* command from registry */
-    char wBuffer[256];      /* Used to GetProfileString */
-    UINT  retval = SE_ERR_NOASSOC;
-    LPSTR tok;              /* token pointer */
-    char xlpFile[256];      /* result of SearchPath */
-    DWORD attribs;           /* file attributes */
+    LONG cb;
 
-//    TRACE("%s\n", debugstr_w(lpFile));
+    classname[0] = '\0';
+    cb = (LONG)size;
 
-    if (!lpResult)
-        return ERROR_INVALID_PARAMETER;
+    if (RegQueryValue(HKEY_CLASSES_ROOT, ext, classname, &cb) != ERROR_SUCCESS)
+        return FALSE;
 
-    xlpFile[0] = '\0';
-    lpResult[0] = '\0'; /* Start off with an empty return string */
+    return (classname[0] != '\0');
+}
 
-    /* trap NULL parameters on entry */
-    if (!lpFile)
-    {
-//        WARN("(lpFile=%s,lpResult=%s): NULL parameter\n",
-//             debugstr_w(lpFile), debugstr_w(lpResult));
-        return SE_ERR_FNF; /* File not found. */
+/*! @brief Resolve the command line for a class + verb from REG.DAT.
+
+    Source: note.txt and the Windows 3.1 registry layout.
+    HKEY_CLASSES_ROOT\\<class>\\shell\\<verb>\\command has the
+    command line as the default value.
+
+    @param[in]  classname Class name resolved by RegLookupClass.
+    @param[in]  verb      Verb ("open" or "print").
+    @param[out] command   Near output buffer.
+    @param[in]  size      Size of @p command in bytes.
+
+    @return TRUE on success, FALSE on failure.
+
+    @retval TRUE  A command line was found.
+    @retval FALSE No "command" subkey for this verb.
+*/
+static BOOL RegLookupCommand(LPCSTR classname, LPCSTR verb,
+                             char *command, int size)
+{
+    char keypath[512];
+    LONG cb;
+
+    wsprintf(keypath, "%s\\shell\\%s\\command", classname, verb);
+
+    command[0] = '\0';
+    cb = (LONG)size;
+    if (RegQueryValue(HKEY_CLASSES_ROOT, keypath, command, &cb) != ERROR_SUCCESS)
+        return FALSE;
+
+    return (command[0] != '\0');
+}
+
+/*! @brief Substitute %1 in a REG.DAT command with the file name.
+
+    Source: Windows 3.1 SDK documentation of ShellExecute only
+    documents %1 as a placeholder. The file name is quoted if it
+    contains spaces, because WinExec parses double quotes.
+
+    @param[in]  command  Near command template, NUL-terminated.
+    @param[in]  nearfile Near file name.
+    @param[out] expanded Near output buffer.
+    @param[in]  size     Size of @p expanded in bytes.
+*/
+static void ExpandCommandRegDat(LPCSTR command, LPCSTR nearfile,
+                                char *expanded, int size)
+{
+    BOOL quoted = (lstrchr(nearfile, ' ') != NULL);
+    LPCSTR src = command;
+    LPCSTR f;
+    int ofs = 0;
+
+    while (*src && ofs < size - MAX_PATH - 4) {
+        if (src[0] == '%' && src[1] == '1') {
+            if (quoted) expanded[ofs++] = '"';
+            for (f = nearfile; *f; f++) expanded[ofs++] = *f;
+            if (quoted) expanded[ofs++] = '"';
+            src += 2;
+        } else {
+            expanded[ofs++] = *src++;
+        }
+    }
+    expanded[ofs] = '\0';
+}
+
+#endif /* WINVER >= 0x030A */
+
+/*************************************************************************
+ * Windows 3.0 : win.ini [extensions] lookup
+ */
+
+#if WINVER < 0x030A
+
+/*! @brief Read the win.ini [extensions] entry for an extension.
+
+    Source: Microsoft Windows 3.0 SDK, WIN.INI file documentation.
+    The entry looks like:
+        [extensions]
+        txt=notepad.exe ^.txt
+        bmp=pbrush.exe ^.bmp /p
+    where '^' marks the placeholder for the file name.
+
+    @param[in]  ext     Far string, the extension including the dot.
+    @param[out] command Near output buffer receiving the raw entry.
+    @param[in]  size    Size of @p command in bytes.
+
+    @return TRUE on success, FALSE on failure.
+
+    @retval TRUE  A win.ini entry was found.
+    @retval FALSE win.ini has no [extensions] entry for @p ext.
+*/
+static BOOL WinIniLookupCommand(LPCSTR ext, char *command, int size)
+{
+    char key[32];
+
+    command[0] = '\0';
+    lstrcpyn(key, ext + 1, sizeof(key));   /* skip the leading dot */
+
+    LoadString(Globals.hInstance, IDS_EXTENSIONS, szExtensions,
+               sizeof(szExtensions));
+
+    if (GetProfileString(szExtensions, key, "", command, size) <= 0)
+        return FALSE;
+
+    return (command[0] != '\0');
+}
+
+/*! @brief Substitute '^' in a win.ini [extensions] entry.
+
+    The '^' is replaced by the file name. The bytes that follow
+    "^.ext" (for example " /p" in "pbrush.exe ^.bmp /p") are
+    appended unchanged. Source: Microsoft Windows 3.0 SDK, WIN.INI
+    file documentation.
+
+    @param[in,out] command  Near win.ini entry. The '^' is overwritten
+                            with NUL on return.
+    @param[in]     ext      Extension including the dot.
+    @param[in]     nearfile Near file name.
+    @param[out]    expanded Near output buffer.
+    @param[in]     size     Size of @p expanded in bytes.
+*/
+static void ExpandCommandWinIni(char *command, LPCSTR ext, LPCSTR nearfile,
+                                char *expanded, int size)
+{
+    char *tok;
+    int skip;
+
+    expanded[0] = '\0';
+
+    tok = lstrchr(command, '^');
+    if (!tok) {
+        lstrcpyn(expanded, command, size);
+        return;
     }
 
-	/* Search file in paths */
-	if (!searchpath(lpFile, xlpFile, sizeof(xlpFile)))
-	    return SE_ERR_FNF;
-#if 0
-    attribs = GetFileAttributes(lpFile);
-    if (attribs!=INVALID_FILE_ATTRIBUTES && (attribs&FILE_ATTRIBUTE_DIRECTORY))
+    /* "^" + "." + ext is the length of the placeholder. */
+    skip = 1 + lstrlen(ext);
+
+    *tok = '\0';   /* command now holds everything before '^' */
+
+    lstrcpyn(expanded, command, size);
+    lstrcat(expanded, nearfile);
+    lstrcat(expanded, tok + skip);
+}
+
+#endif /* WINVER < 0x030A */
+
+/*************************************************************************
+ * ShellExecute	[SHELL.20]
+ */
+
+/*! @brief Open or print a file using its association.
+
+    Source: Microsoft Windows 3.1 SDK, ShellExecute(). On
+    WINVER >= 0x030A associations are resolved through REG.DAT; on
+    WINVER < 0x030A through win.ini [extensions].
+
+    Executable files (.exe / .com / .bat / .pif) are passed to
+    WinExec() directly, bypassing the association tables. This matches
+    the documented behaviour: "If it is an executable file, this
+    function opens it, even if the string 'print' is pointed to by
+    lpszOp."
+
+    @param[in] hWnd         Parent window handle. In Win 3.1 this was
+                            the parent of any DDE error dialogs; since
+                            we do not implement DDE, it is informational.
+    @param[in] lpOperation  Verb ("open" or "print"), or NULL/empty
+                            for the default "open".
+    @param[in] lpFile       Path of the file to launch.
+    @param[in] lpParameters Parameters passed to the application when
+                            @p lpFile is an executable, or NULL.
+    @param[in] lpDirectory  Working directory, or NULL.
+    @param[in] nShowCmd     Show command passed to WinExec().
+
+    @return HINSTANCE of the launched application (>32) on success, or
+            an SE_ERR_* / WinExec error code (<=32) on failure.
+
+    @retval SE_ERR_FNF     @p lpFile was NULL or empty.
+    @retval SE_ERR_NOASSOC No association for the file's extension.
+    @retval SE_ERR_PNF     Path was not found (passed through from
+                           WinExec).
+    @retval SE_ERR_OOM     Out of memory (passed through from WinExec).
+*/
+HINSTANCE WINAPI ShellExecute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile,
+		LPCSTR lpParameters, LPCSTR lpDirectory, int nShowCmd)
+{
+    char        nearfile[MAX_PATH];
+    char        ext[MAX_PATH];
+    char        command[1024];
+    char        expanded[4096];
+    char        cmdline[2048];
+    char        old_dir[MAX_PATH];
+    char        nearDir[MAX_PATH];
+    LPSTR       p;
+    LPCSTR      verb;
+    BOOL        need_exe_quote;
+    HINSTANCE   hInst;
+
+    (void)hWnd;
+
+    if (!lpFile || !*lpFile)
+        return (HINSTANCE)SE_ERR_FNF;
+
+    lstrcpyn(nearfile, lpFile, sizeof(nearfile));
+
+    if (lpDirectory && *lpDirectory)
     {
-       lstrcpy(classname, "Folder");
+        getcwd(old_dir, sizeof(old_dir));
+        lstrcpyn(nearDir, lpDirectory, sizeof(nearDir));
+        chdir(nearDir);
     }
-    else
-#endif
+
+    p = FindExtension(nearfile);
+    if (!p)
     {
-        /* First thing we need is the file's extension */
-        extension = strrchr(xlpFile, '.'); /* Assume last "." is the one; */
-        /* File->Run in progman uses */
-        /* .\FILE.EXE :( */
-//        TRACE("xlpFile=%s,extension=%s\n", debugstr_w(xlpFile), debugstr_w(extension));
+        if (lpDirectory && *lpDirectory) chdir(old_dir);
+        return (HINSTANCE)SE_ERR_NOASSOC;
+    }
+    lstrcpyn(ext, p, sizeof(ext));
 
-        if (extension == NULL || extension[1]==0)
+    /* Executable file: run it directly, ignoring association and verb.
+       Source: Windows 3.1 SDK, ShellExecute(). */
+    if (lstrcmpi(ext, ".exe") == 0 ||
+        lstrcmpi(ext, ".com") == 0 ||
+        lstrcmpi(ext, ".bat") == 0 ||
+        lstrcmpi(ext, ".pif") == 0)
+    {
+        need_exe_quote = (lstrchr(nearfile, ' ') != NULL);
+
+        if (lpParameters && *lpParameters)
         {
-//            WARN("Returning SE_ERR_NOASSOC\n");
-            return SE_ERR_NOASSOC;
-        }
-
-        /* Three places to check: */
-        /* 1. win.ini, [windows], programs (NB no leading '.') */
-        /* 2. Registry, HKEY_CLASS_ROOT\<classname>\shell\open\command */
-        /* 3. win.ini, [extensions], extension (NB no leading '.' */
-        /* All I know of the order is that registry is checked before */
-        /* extensions; however, it'd make sense to check the programs */
-        /* section first, so that's what happens here. */
-
-        /* See if it's a program - if GetProfileString fails, we skip this
-         * section. Actually, if GetProfileString fails, we've probably
-         * got a lot more to worry about than running a program... */
-	LoadString(Globals.hInstance, IDS_WINDOWS, szWindows, sizeof(szWindows));
-	LoadString(Globals.hInstance, IDS_PROGRAMS, szPrograms, sizeof(szPrograms));
-	LoadString(Globals.hInstance, IDS_PROGRAMS_VALUE, szProgramsValue, sizeof(szProgramsValue));
-
-        if (GetProfileString(szWindows, szPrograms, szProgramsValue, wBuffer, sizeof(wBuffer)) > 0)
-        {
-            AnsiLower(wBuffer);
-            tok = wBuffer;
-            while (*tok)
-            {
-                LPSTR p = tok;
-                while (*p && *p != ' ' && *p != '\t') p++;
-                if (*p)
-                {
-                    *p++ = 0;
-                    while (*p == ' ' || *p == '\t') p++;
-                }
-
-                if (lstrcmp(tok, &extension[1]) == 0) /* have to skip the leading "." */
-                {
-                    lstrcpy(lpResult, xlpFile);
-                    /* Need to perhaps check that the file has a path
-                     * attached */
-//                    TRACE("found %s\n", debugstr_w(lpResult));
-                    return 33;
-                    /* Greater than 32 to indicate success */
-                }
-                tok = p;
-            }
-        }
-#if 0
-        /* Check registry */
-        if (RegQueryValue(HKEY_CLASSES_ROOT, extension, classname,
-                           &classnamelen) == ERROR_SUCCESS)
-        {
-            classnamelen /= sizeof(char);
-            if (classnamelen == ARRAY_SIZE(classname))
-		classnamelen--;
-            classname[classnamelen] = '\0';
-//            TRACE("File type: %s\n", debugstr_w(classname));
+            if (need_exe_quote)
+                wsprintf(cmdline, "\"%s\" %s", nearfile, lpParameters);
+            else
+                wsprintf(cmdline, "%s %s", nearfile, lpParameters);
         }
         else
-#endif
         {
-            *classname = '\0';
-        }
-    }
-
-#if 0
-    if (*classname)
-    {
-        /* pass the verb string to SHELL_FindExecutableByVerb() */
-        retval = SHELL_FindExecutableByVerb(lpVerb, key, classname, command, sizeof(command));
-
-	if (retval > 32)
-	{
-	    DWORD finishedLen;
-	    SHELL_ArgifyW(lpResult, resultLen, command, xlpFile, pidl, args, &finishedLen);
-	    if (finishedLen > resultLen)
-		ERR("Argify buffer not large enough.. truncated\n");
-
-	    /* Remove double quotation marks and command line arguments */
-	    if (*lpResult == '"')
-	    {
-		WCHAR *p = lpResult;
-		while (*(p + 1) != '"')
-		{
-		    *p = *(p + 1);
-		    p++;
-		}
-		*p = '\0';
-	    }
+            if (need_exe_quote)
+                wsprintf(cmdline, "\"%s\"", nearfile);
             else
-            {
-                /* Truncate on first space */
-		char FAR *p = lpResult;
-		while (*p != ' ' && *p != '\0')
-                    p++;
-                *p='\0';
-            }
-	}
-    }
-    else /* Check win.ini */
-#endif
-    {
-	/* Toss the leading dot */
-	LoadString(Globals.hInstance, IDS_EXTENSIONS, szExtensions, sizeof(szExtensions));
-	extension++;
-	if (GetProfileString(szExtensions, extension, "", command, sizeof(command)) > 0)
-        {
-            if (*command)
-            {
-                lstrcpy(lpResult, command);
-                tok = lstrchr(lpResult, '^'); /* should be ^.extension? */
-                if (tok != NULL)
-                {
-                    tok[0] = '\0';
-                    lstrcat(lpResult, xlpFile); /* what if no dir in xlpFile? */
-                    tok = lstrchr(command, '^'); /* see above */
-                    if ((tok != NULL) && (lstrlen(tok)>5))
-                    {
-                        lstrcat(lpResult, &tok[5]);
-                    }
-                }
-                retval = 33; /* FIXME - see above */
-            }
+                lstrcpyn(cmdline, nearfile, sizeof(cmdline));
         }
+
+        hInst = WinExec(cmdline, nShowCmd);
+
+        if (lpDirectory && *lpDirectory) chdir(old_dir);
+
+        /* WinExec errors 0..21 are already SE_ERR_* compatible. */
+        return hInst;
     }
 
-//    TRACE("returning %s\n", debugstr_w(lpResult));
-    return retval;
+    verb = (lpOperation && *lpOperation) ? lpOperation : "open";
+
+#if WINVER >= 0x030A
+    {
+        char classname[MAX_PATH];
+
+        if (!RegLookupClass(ext, classname, sizeof(classname)))
+        {
+            if (lpDirectory && *lpDirectory) chdir(old_dir);
+            return (HINSTANCE)SE_ERR_NOASSOC;
+        }
+
+        if (!RegLookupCommand(classname, verb, command, sizeof(command)))
+        {
+            if (lpDirectory && *lpDirectory) chdir(old_dir);
+            return (HINSTANCE)SE_ERR_NOASSOC;
+        }
+
+        ExpandCommandRegDat(command, nearfile, expanded, sizeof(expanded));
+    }
+#else  /* WINVER < 0x030A */
+    if (!WinIniLookupCommand(ext, command, sizeof(command)))
+    {
+        if (lpDirectory && *lpDirectory) chdir(old_dir);
+        return (HINSTANCE)SE_ERR_NOASSOC;
+    }
+
+    ExpandCommandWinIni(command, ext, nearfile, expanded, sizeof(expanded));
+    (void)verb;
+#endif
+
+    hInst = WinExec(expanded, nShowCmd);
+
+    if (lpDirectory && *lpDirectory) chdir(old_dir);
+
+    /* WinExec errors 0..21 are already SE_ERR_* compatible. */
+    return hInst;
 }
 
 /*************************************************************************
  * FindExecutable	[SHELL.21]
- *
- * This function returns the executable associated with the specified file
- * for the default verb.
- *
- * PARAMS
- *  lpFile   [I] The file to find the association for. This must refer to
- *               an existing file otherwise FindExecutable fails and returns
- *               SE_ERR_FNF.
- *  lpResult [O] Points to a buffer into which the executable path is
- *               copied. This parameter must not be NULL otherwise
- *               FindExecutable() segfaults. The buffer must be of size at
- *               least MAX_PATH characters.
- *
- * RETURNS
- *  A value greater than 32 on success, less than or equal to 32 otherwise.
- *  See the SE_ERR_* constants.
- *
- * NOTES
- *  On Windows XP and 2003, FindExecutable() seems to first convert the
- *  filename into 8.3 format, thus taking into account only the first three
- *  characters of the extension, and expects to find an association for those.
- *  However other Windows versions behave sanely.
  */
 
-/*! @brief Return the executable associated with the specified file.
+/*! @brief Return the executable associated with a file's extension.
+
+    Source: Microsoft Windows 3.1 SDK, FindExecutable(). On
+    WINVER >= 0x030A associations are resolved through REG.DAT; on
+    WINVER < 0x030A through win.ini [extensions].
 
     @param[in]  lpszFile Path of the file whose association to resolve.
-    @param[in]  lpszDir  Optional working directory to switch to during
-                         the lookup.
+    @param[in]  lpszDir  Optional working directory.
     @param[out] lpResult Buffer receiving the executable path.
 
-    @return An HINSTANCE-style value: greater than 32 on success, or an
-            SE_ERR_* value on failure.
+    @return Greater than 32 on success, or an SE_ERR_* value on failure.
 
-    @retval SE_ERR_FNF @p lpszFile was NULL.
+    @retval SE_ERR_FNF             @p lpszFile or @p lpResult was NULL,
+                                  or the executable was not found.
+    @retval SE_ERR_NOASSOC         No association for the extension.
+    @retval SE_ERR_ASSOCINCOMPLETE The command line has an unbalanced
+                                  quotation mark.
+    @retval 33                     Success; greater than 32, as in
+                                  Win 3.1.
 */
 HINSTANCE WINAPI FindExecutable(LPCSTR lpszFile, LPCSTR lpszDir, LPSTR lpResult)
 {
-    HINSTANCE retval = SE_ERR_NOASSOC;
-    char old_dir[MAX_PATH];
-    char nearDir[MAX_PATH];
-    char res[MAX_PATH];
+    char        nearfile[MAX_PATH];
+    char        ext[MAX_PATH];
+    char        command[1024];
+    char        exe[MAX_PATH];
+    char        fullpath[MAX_PATH];
+    char        old_dir[MAX_PATH];
+    char        nearDir[MAX_PATH];
+    LPSTR       p;
+    LPSTR       tok;
+    HINSTANCE   hInst = (HINSTANCE)SE_ERR_NOASSOC;
 
-    //APISTR((LF_APISTUB,"FindExecutable(LPCSTR=%s,LPCSTR=%s,LPSTR=%x)\n",
-	//lpszFile,lpszDir,lpResult));
-	MessageBox(0, "FindExecutable", "FindExecutable", MB_OK);
-   /* later, add a search for the application to match file if not .exe */
+    if (!lpResult) return (HINSTANCE)SE_ERR_FNF;
+    lpResult[0] = '\0';
+    if (!lpszFile || !*lpszFile) return (HINSTANCE)SE_ERR_FNF;
 
-//    TRACE("File %s, Dir %s\n", debugstr_w(lpFile), debugstr_w(lpDirectory));
+    lstrcpyn(nearfile, lpszFile, sizeof(nearfile));
 
-    lpResult[0] = '\0'; /* Start off with an empty return string */
-    if (lpszFile == NULL)
-	return (HINSTANCE)SE_ERR_FNF;
-
-    if (lpszDir)
+    if (lpszDir && *lpszDir)
     {
         getcwd(old_dir, sizeof(old_dir));
-        /* far -> near copy: chdir() only accepts near strings */
         lstrcpyn(nearDir, lpszDir, sizeof(nearDir));
         chdir(nearDir);
     }
 
-	LoadString(Globals.hInstance, IDS_OPEN, szOpen, sizeof(szOpen));
-    retval = SHELL_FindExecutable(lpszDir, lpszFile, szOpen, res, MAX_PATH);
+    p = FindExtension(nearfile);
+    if (!p)
+    {
+        if (lpszDir && *lpszDir) chdir(old_dir);
+        return (HINSTANCE)SE_ERR_NOASSOC;
+    }
+    lstrcpyn(ext, p, sizeof(ext));
 
-    if (retval > 32)
-        lstrcpy(lpResult, res);
+#if WINVER >= 0x030A
+    {
+        char classname[MAX_PATH];
 
-    if (lpszDir)
-        chdir(old_dir);
+        if (!RegLookupClass(ext, classname, sizeof(classname)))
+        {
+            if (lpszDir && *lpszDir) chdir(old_dir);
+            return (HINSTANCE)SE_ERR_NOASSOC;
+        }
 
-//    TRACE("returning %s\n", debugstr_w(lpResult));
+        if (!RegLookupCommand(classname, "open", command, sizeof(command)))
+        {
+            if (lpszDir && *lpszDir) chdir(old_dir);
+            return (HINSTANCE)SE_ERR_NOASSOC;
+        }
+    }
+#else  /* WINVER < 0x030A */
+    if (!WinIniLookupCommand(ext, command, sizeof(command)))
+    {
+        if (lpszDir && *lpszDir) chdir(old_dir);
+        return (HINSTANCE)SE_ERR_NOASSOC;
+    }
 
-    return (HINSTANCE)retval;
+    /* win.ini entry: "pbrush.exe ^.bmp /p". Truncate at '^' so that
+       only the executable (plus any fixed parameters before '^')
+       remains; the first token is what we need. */
+    tok = lstrchr(command, '^');
+    if (tok) *tok = '\0';
+#endif
+
+    if (!ExtractFirstToken(command, exe, sizeof(exe)))
+    {
+        if (lpszDir && *lpszDir) chdir(old_dir);
+        return (HINSTANCE)SE_ERR_ASSOCINCOMPLETE;
+    }
+
+    if (!searchpath(exe, fullpath, sizeof(fullpath)))
+    {
+        if (lpszDir && *lpszDir) chdir(old_dir);
+        return (HINSTANCE)SE_ERR_FNF;
+    }
+
+    lstrcpyn(lpResult, fullpath, MAX_PATH);
+    hInst = (HINSTANCE)33;
+
+    if (lpszDir && *lpszDir) chdir(old_dir);
+
+    return hInst;
 }
